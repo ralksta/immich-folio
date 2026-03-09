@@ -27,6 +27,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing slug or password' }, { status: 400 });
     }
 
+    // 🛡️ SECURITY: Validate input types and limit length to prevent DoS attacks
+    // (e.g. from extremely long strings being passed to expensive crypto functions)
+    if (typeof slug !== 'string' || slug.length > 100) {
+      return NextResponse.json({ error: 'Invalid slug format or length' }, { status: 400 });
+    }
+
+    if (typeof password !== 'string' || password.length > 100) {
+      return NextResponse.json({ error: 'Invalid password format or length' }, { status: 400 });
+    }
+
     if (!isProtected(slug)) {
       return NextResponse.json({ error: 'Album is not password-protected' }, { status: 400 });
     }
