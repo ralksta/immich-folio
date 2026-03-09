@@ -95,7 +95,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
       onTouchEnd={handleTouchEnd}
     >
       {/* Close button */}
-      <button className={styles.close} onClick={onClose} aria-label="Close">
+      <button className={styles.close} onClick={onClose} aria-label="Close" title="Close (Esc)">
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -114,6 +114,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
         className={`${styles.nav} ${styles.navPrev}`}
         onClick={onPrev}
         aria-label="Previous photo"
+        title="Previous photo (Left Arrow)"
       >
         <svg
           viewBox="0 0 24 24"
@@ -153,6 +154,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
         className={`${styles.nav} ${styles.navNext}`}
         onClick={onNext}
         aria-label="Next photo"
+        title="Next photo (Right Arrow)"
       >
         <svg
           viewBox="0 0 24 24"
@@ -176,6 +178,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
         className={styles.infoToggle}
         onClick={handleExifToggle}
         aria-label="Toggle photo info"
+        title="Toggle photo info"
       >
         {showExif ? 'Hide Info' : 'Info'}
       </button>

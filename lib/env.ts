@@ -14,8 +14,6 @@ export interface Env {
 }
 
 function parseEnv(): Env {
-  const errors: string[] = [];
-
   const urlRaw = process.env.IMMICH_API_URL;
   let apiUrl = '';
   if (urlRaw) {
@@ -29,10 +27,12 @@ function parseEnv(): Env {
   const apiKey = process.env.IMMICH_API_KEY || '';
 
   const cacheTtlStr = process.env.CACHE_TTL;
-  const cacheTtl = cacheTtlStr && !isNaN(parseInt(cacheTtlStr, 10)) ? parseInt(cacheTtlStr, 10) : 300;
+  const cacheTtl =
+    cacheTtlStr && !isNaN(parseInt(cacheTtlStr, 10)) ? parseInt(cacheTtlStr, 10) : 300;
 
   const rateLimitStr = process.env.RATE_LIMIT_RPM;
-  const rateLimit = rateLimitStr && !isNaN(parseInt(rateLimitStr, 10)) ? parseInt(rateLimitStr, 10) : 600;
+  const rateLimit =
+    rateLimitStr && !isNaN(parseInt(rateLimitStr, 10)) ? parseInt(rateLimitStr, 10) : 600;
 
   return {
     IMMICH_API_URL: apiUrl,

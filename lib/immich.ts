@@ -55,7 +55,6 @@ export interface ImmichExifInfo {
   description: string | null;
 }
 
-
 export type ImageSize = 'thumbnail' | 'preview' | 'original';
 
 /** Enriched subpage with album metadata (for rendering cards). */
@@ -324,7 +323,6 @@ class ImmichClient {
     cache.set(cacheKey, asset, this.config.cacheTtl);
     return asset;
   }
-
 
   /**
    * Check if the Immich server is reachable.

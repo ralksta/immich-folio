@@ -85,9 +85,9 @@ export function authenticate(slug: string, password: string): string | null {
   if (isBcryptHash(sp.password)) {
     console.error(
       `\n❌ SECURITY ERROR: Subpage "${slug}" is using an outdated bcrypt password hash.\n` +
-      `   Bcrypt dependency has been removed to reduce bundle size.\n` +
-      `   Please switch temporarily to plaintext in your gallery.yaml, log in again\n` +
-      `   to see your new secure "scrypt:..." hash in the logs, and update your file.\n`,
+        `   Bcrypt dependency has been removed to reduce bundle size.\n` +
+        `   Please switch temporarily to plaintext in your gallery.yaml, log in again\n` +
+        `   to see your new secure "scrypt:..." hash in the logs, and update your file.\n`,
     );
     return null;
   }
@@ -101,7 +101,7 @@ export function authenticate(slug: string, password: string): string | null {
       const recommendedHash = generateScryptHash(sp.password);
       console.warn(
         `\n⚠️  SECURITY WARNING: Subpage "${slug}" is using a plaintext password in gallery.yaml.\n` +
-        `   Please replace it with this native secure hash:\n\n   ${recommendedHash}\n`,
+          `   Please replace it with this native secure hash:\n\n   ${recommendedHash}\n`,
       );
     }
   }

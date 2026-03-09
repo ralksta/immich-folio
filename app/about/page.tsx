@@ -20,9 +20,11 @@ interface AboutFrontmatter {
   gear?: string[];
 }
 
+import { existsSync } from 'fs';
+
 function getAboutContent() {
   const filePath = join(process.cwd(), 'content', 'about.md');
-  if (!require('fs').existsSync(filePath)) {
+  if (!existsSync(filePath)) {
     return { meta: {} as AboutFrontmatter, body: '' };
   }
   const raw = readFileSync(filePath, 'utf-8');

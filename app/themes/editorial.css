@@ -181,7 +181,7 @@
   margin-bottom: 64px;
 }
 
-[data-preset='editorial'] .subpage-toc__entry+.subpage-toc__entry::before {
+[data-preset='editorial'] .subpage-toc__entry + .subpage-toc__entry::before {
   content: '/';
   padding: 0 12px;
   font-family: var(--font-caption);

@@ -197,8 +197,8 @@
 }
 
 /* HeroCarousel images fill the entire container */
-.hero--fullbleed>span,
-.hero--fullbleed>img {
+.hero--fullbleed > span,
+.hero--fullbleed > img {
   position: absolute !important;
   inset: 0;
   width: 100% !important;
@@ -218,14 +218,21 @@
   padding: 64px 40px;
   /* Multi-stop for contrast on any image brightness */
   background:
-    radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.0) 70%),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.15) 40%, rgba(0, 0, 0, 0.45) 100%);
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 70%),
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.4) 0%,
+      rgba(0, 0, 0, 0.15) 40%,
+      rgba(0, 0, 0, 0.45) 100%
+    );
 }
 
 .hero--fullbleed .hero__title {
   color: #fff;
   font-size: 4rem;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7), 0 8px 48px rgba(0, 0, 0, 0.6);
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.7),
+    0 8px 48px rgba(0, 0, 0, 0.6);
 }
 
 .hero--fullbleed .hero__subtitle {
@@ -299,7 +306,12 @@
   right: 0;
   z-index: 2;
   padding: 48px 40px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 50%, transparent 100%);
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.8) 0%,
+    rgba(0, 0, 0, 0.3) 50%,
+    transparent 100%
+  );
 }
 
 .hero--stacked .hero__title {
@@ -589,7 +601,7 @@
   align-items: center;
 }
 
-.subpage-toc__entry+.subpage-toc__entry::before {
+.subpage-toc__entry + .subpage-toc__entry::before {
   content: '·';
   padding: 0 12px;
   color: var(--text-muted);
@@ -657,7 +669,6 @@
   background: var(--border-subtle);
   width: 100%;
 }
-
 
 .subpage-grid {
   display: grid;
@@ -763,10 +774,12 @@
   flex-direction: column;
   justify-content: flex-end;
   padding: 24px;
-  background: linear-gradient(to top,
-      rgba(0, 0, 0, 0.8) 0%,
-      rgba(0, 0, 0, 0.3) 40%,
-      transparent 100%);
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.8) 0%,
+    rgba(0, 0, 0, 0.3) 40%,
+    transparent 100%
+  );
   opacity: 0;
   transition: opacity var(--transition-normal);
 }
@@ -981,10 +994,12 @@
 
 /* ── Loading States ───────────────────────────────── */
 .skeleton {
-  background: linear-gradient(90deg,
-      var(--bg-card) 0%,
-      var(--bg-card-hover) 50%,
-      var(--bg-card) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--bg-card) 0%,
+    var(--bg-card-hover) 50%,
+    var(--bg-card) 100%
+  );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s infinite;
   border-radius: var(--radius-sm);

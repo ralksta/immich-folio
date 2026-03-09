@@ -14,18 +14,19 @@ That's it. Your entire gallery switches to the minimal theme.
 
 ## Built-in Presets
 
-| Preset        | Style                          | Accent       | Fonts                              | Hero        | Frame        | Grain |
-| ------------- | ------------------------------ | ------------ | ---------------------------------- | ----------- | ------------ | ----- |
-| **studio**    | Leica-inspired, editorial      | 🔴 `#e60012` | Playfair Display + DM Sans         | Split       | Passepartout | ✓     |
-| **minimal**   | Swiss brutalist, high contrast | ⚫ `#000000` | Geist + IBM Plex Mono              | Fullbleed   | None         | ✗     |
-| **editorial** | Cinematic magazine, warm tones | 🟤 `#8B2500` | Bodoni Moda + Newsreader           | Split       | Shadow       | ✗     |
-| **classic**   | Gilded gallery, warm luxury    | 🟡 `#c49a3c` | Cinzel + Crimson Pro               | Minimal     | Passepartout | ✗     |
-| **noir**      | Darkroom analog, film noir     | 🟠 `#ff6b35` | Libre Baskerville + Source Sans 3  | Fullbleed   | Passepartout | ✓     |
-| **monograph** | Typographic, book-like         | ⬛ `#333333` | Instrument Serif + Inter           | Typographic | None         | ✗     |
+| Preset        | Style                          | Accent       | Fonts                             | Hero        | Frame        | Grain |
+| ------------- | ------------------------------ | ------------ | --------------------------------- | ----------- | ------------ | ----- |
+| **studio**    | Leica-inspired, editorial      | 🔴 `#e60012` | Playfair Display + DM Sans        | Split       | Passepartout | ✓     |
+| **minimal**   | Swiss brutalist, high contrast | ⚫ `#000000` | Geist + IBM Plex Mono             | Fullbleed   | None         | ✗     |
+| **editorial** | Cinematic magazine, warm tones | 🟤 `#8B2500` | Bodoni Moda + Newsreader          | Split       | Shadow       | ✗     |
+| **classic**   | Gilded gallery, warm luxury    | 🟡 `#c49a3c` | Cinzel + Crimson Pro              | Minimal     | Passepartout | ✗     |
+| **noir**      | Darkroom analog, film noir     | 🟠 `#ff6b35` | Libre Baskerville + Source Sans 3 | Fullbleed   | Passepartout | ✓     |
+| **monograph** | Typographic, book-like         | ⬛ `#333333` | Instrument Serif + Inter          | Typographic | None         | ✗     |
 
 Default is `studio` if no theme is specified.
 
 ### Theme Gallery
+
 _From top to bottom: Studio, Minimal, Editorial, Classic, Noir, Monograph_
 
 <p align="center">
@@ -38,6 +39,7 @@ _From top to bottom: Studio, Minimal, Editorial, Classic, Noir, Monograph_
 </p>
 
 ### Grid View Examples
+
 <p align="center">
   <img src="screenshots/theme-studio-grid.png" width="49%" alt="Studio grid" />
   <img src="screenshots/theme-minimal-grid.png" width="49%" alt="Minimal grid" />

@@ -198,7 +198,7 @@
   margin-bottom: 48px;
 }
 
-[data-preset='minimal'] .subpage-toc__entry+.subpage-toc__entry::before {
+[data-preset='minimal'] .subpage-toc__entry + .subpage-toc__entry::before {
   content: '—';
   padding: 0 10px;
   font-size: 0.6rem;
