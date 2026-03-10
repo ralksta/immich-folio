@@ -76,6 +76,17 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
     onSwipeRight: onPrev,
   });
 
+  // Listen for 'i' key to toggle EXIF
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'i' || e.key === 'I') {
+        handleExifToggle();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleExifToggle]);
+
   // Click on overlay background → close
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent) => {
@@ -95,7 +106,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
       onTouchEnd={handleTouchEnd}
     >
       {/* Close button */}
-      <button className={styles.close} onClick={onClose} aria-label="Close">
+      <button className={styles.close} onClick={onClose} aria-label="Close" title="Close (Esc)">
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -114,6 +125,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
         className={`${styles.nav} ${styles.navPrev}`}
         onClick={onPrev}
         aria-label="Previous photo"
+        title="Previous photo (Left arrow)"
       >
         <svg
           viewBox="0 0 24 24"
@@ -153,6 +165,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
         className={`${styles.nav} ${styles.navNext}`}
         onClick={onNext}
         aria-label="Next photo"
+        title="Next photo (Right arrow)"
       >
         <svg
           viewBox="0 0 24 24"
@@ -176,6 +189,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
         className={styles.infoToggle}
         onClick={handleExifToggle}
         aria-label="Toggle photo info"
+        title="Toggle photo info (i)"
       >
         {showExif ? 'Hide Info' : 'Info'}
       </button>
