@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Lightbox } from '@/components/Lightbox';
 import { FadeIn } from '@/components/FadeIn';
@@ -136,50 +136,56 @@ export function PhotoGrid({ assets, layout = 'masonry', gridStyle }: PhotoGridPr
     };
   }, [lightboxIndex, closeLightbox, goNext, goPrev]);
 
+  // Memoize grid items to prevent re-renders of the entire grid (which includes
+  // Image and FadeIn components) when navigating the lightbox.
+  const gridItems = useMemo(() => {
+    return assets.map((asset, index) => (
+      <FadeIn key={asset.id} delay={index < 12 ? index * 50 : 0}>
+        <div
+          className={`photo-grid__item${
+            layout === 'showcase' && index === 0 ? ' photo-grid__featured' : ''
+          }`}
+          onClick={() => openLightbox(index)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              openLightbox(index);
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label={`View photo ${index + 1}`}
+          style={{
+            ...(asset.dominantColor ? { backgroundColor: asset.dominantColor } : {}),
+            ...((layout === 'masonry' || layout === 'showcase') && asset.aspectRatio
+              ? { aspectRatio: `${asset.aspectRatio}` }
+              : {}),
+          }}
+        >
+          <Image
+            src={asset.thumbUrl}
+            alt=""
+            fill
+            sizes="(max-width: 600px) 50vw, (max-width: 1000px) 33vw, 25vw"
+            loading={index < 6 ? 'eager' : 'lazy'}
+            {...(asset.blurDataURL
+              ? { placeholder: 'blur' as const, blurDataURL: asset.blurDataURL }
+              : {})}
+          />
+          {(asset.camera || asset.lens) && (
+            <div className="photo-grid__item-exif">
+              {[asset.camera, asset.lens, asset.focalLength].filter(Boolean).join(' · ')}
+            </div>
+          )}
+        </div>
+      </FadeIn>
+    ));
+  }, [assets, layout, openLightbox]);
+
   return (
     <>
       <div className={`photo-grid photo-grid--${layout}`} style={gridStyle}>
-        {assets.map((asset, index) => (
-          <FadeIn key={asset.id} delay={index < 12 ? index * 50 : 0}>
-            <div
-              className={`photo-grid__item${
-                layout === 'showcase' && index === 0 ? ' photo-grid__featured' : ''
-              }`}
-              onClick={() => openLightbox(index)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  openLightbox(index);
-                }
-              }}
-              role="button"
-              tabIndex={0}
-              aria-label={`View photo ${index + 1}`}
-              style={{
-                ...(asset.dominantColor ? { backgroundColor: asset.dominantColor } : {}),
-                ...((layout === 'masonry' || layout === 'showcase') && asset.aspectRatio
-                  ? { aspectRatio: `${asset.aspectRatio}` }
-                  : {}),
-              }}
-            >
-              <Image
-                src={asset.thumbUrl}
-                alt=""
-                fill
-                sizes="(max-width: 600px) 50vw, (max-width: 1000px) 33vw, 25vw"
-                loading={index < 6 ? 'eager' : 'lazy'}
-                {...(asset.blurDataURL
-                  ? { placeholder: 'blur' as const, blurDataURL: asset.blurDataURL }
-                  : {})}
-              />
-              {(asset.camera || asset.lens) && (
-                <div className="photo-grid__item-exif">
-                  {[asset.camera, asset.lens, asset.focalLength].filter(Boolean).join(' · ')}
-                </div>
-              )}
-            </div>
-          </FadeIn>
-        ))}
+        {gridItems}
       </div>
 
       {lightboxIndex !== null && (
