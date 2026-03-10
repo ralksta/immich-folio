@@ -12,7 +12,12 @@ const AUTH_RPM = 10;
 
 export async function POST(request: NextRequest) {
   // ── Rate limiting (brute-force protection) ──────────
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
+  // Security: Prioritize request.ip and x-real-ip to prevent x-forwarded-for spoofing
+  const ip =
+    request.ip ??
+    request.headers.get('x-real-ip') ??
+    request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
+    'unknown';
   const { success } = checkRateLimit(`auth:${ip}`, AUTH_RPM);
 
   if (!success) {

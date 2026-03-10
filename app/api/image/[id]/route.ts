@@ -26,7 +26,12 @@ function widthToSize(w: number): ImageSize {
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // ── Rate limiting ──────────────────────────────────
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
+  // Security: Prioritize request.ip and x-real-ip to prevent x-forwarded-for spoofing
+  const ip =
+    request.ip ??
+    request.headers.get('x-real-ip') ??
+    request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
+    'unknown';
   const { success, remaining, resetAt } = checkRateLimit(ip, getConfig().rateLimitRpm);
 
   if (!success) {
