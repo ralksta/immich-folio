@@ -164,7 +164,7 @@
 }
 
 /* Main: extra generous margins */
-[data-preset='monograph']~body .main {
+[data-preset='monograph'] ~ body .main {
   padding: 80px 60px 120px;
 }
 
@@ -203,7 +203,7 @@
   border-bottom: none;
 }
 
-[data-preset='monograph'] .subpage-toc__entry+.subpage-toc__entry::before {
+[data-preset='monograph'] .subpage-toc__entry + .subpage-toc__entry::before {
   display: none;
 }
 

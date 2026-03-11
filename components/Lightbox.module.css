@@ -55,7 +55,9 @@
   -webkit-user-drag: none;
   opacity: 0;
   transform: scale(0.96);
-  transition: opacity var(--transition-normal), transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    opacity var(--transition-normal),
+    transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .imageLoaded {
@@ -251,7 +253,6 @@
 }
 
 @media (hover: none) {
-
   .close,
   .nav,
   .counter {

@@ -36,14 +36,14 @@ Immich Folio acts as a **secure reverse proxy** between your visitors and your p
 
 <br>
 
-| Concern | Protection |
-| --- | --- |
-| **Server exposure** | Immich URL never leaves your network — all requests proxy server-side |
-| **API key** | Stored only in `.env.local`, never in client code |
-| **Asset IDs** | Immich UUIDs encrypted (AES-256) into opaque tokens |
-| **Album scope** | Only albums in `gallery.yaml` are accessible |
-| **Password protection** | Per-subpage password support |
-| **Rate limiting** | Per-IP sliding-window rate limiter (configurable RPM) |
+| Concern                 | Protection                                                            |
+| ----------------------- | --------------------------------------------------------------------- |
+| **Server exposure**     | Immich URL never leaves your network — all requests proxy server-side |
+| **API key**             | Stored only in `.env.local`, never in client code                     |
+| **Asset IDs**           | Immich UUIDs encrypted (AES-256) into opaque tokens                   |
+| **Album scope**         | Only albums in `gallery.yaml` are accessible                          |
+| **Password protection** | Per-subpage password support                                          |
+| **Rate limiting**       | Per-IP sliding-window rate limiter (configurable RPM)                 |
 
 - Health check endpoint at `GET /api/health`
 - In-memory caching with configurable TTL

@@ -7,6 +7,7 @@ cp content/gallery.yaml.example content/gallery.yaml
 ```
 
 **Contents:**
+
 - [Hero Images](#hero-images)
 - [Standalone Albums](#standalone-albums)
 - [Subpages & Categories](#subpages)
@@ -33,7 +34,8 @@ hero:
 
 ## Standalone Albums
 
-Albums shown directly on the homepage as cards. 
+Albums shown directly on the homepage as cards.
+
 > [!NOTE]
 > The thumbnail image for each album grid card is automatically synced with the explicit **\"Cover Image\"** you select for that album inside the Immich Web UI.
 
@@ -50,15 +52,15 @@ The overall **Subpage Cover Image** shown on the homepage is automatically inher
 
 ```yaml
 subpages:
-  - name: Japan                    # → /japan
-    title: "Trip to Japan"         # Optional: overrides the page heading
-    subtitle: "2024 adventures"    # Optional: adds a subline under the heading
+  - name: Japan # → /japan
+    title: 'Trip to Japan' # Optional: overrides the page heading
+    subtitle: '2024 adventures' # Optional: adds a subline under the heading
     albums:
-      - 33333333-3333-3333-3333-333333333333  # Tokyo
-      - 44444444-4444-4444-4444-444444444444  # Kyoto
+      - 33333333-3333-3333-3333-333333333333 # Tokyo
+      - 44444444-4444-4444-4444-444444444444 # Kyoto
 
-  - name: Wedding – Smith         # → /wedding-smith
-    password: clientpass123        # Optional: password-protected
+  - name: Wedding – Smith # → /wedding-smith
+    password: clientpass123 # Optional: password-protected
     albums:
       - 55555555-5555-5555-5555-555555555555
 ```
@@ -67,9 +69,9 @@ Alternatively, you can use the object notation (recommended):
 
 ```yaml
 subpages:
-  "Japan":
-    title: "Trip to Japan"
-    subtitle: "2024 adventures"
+  'Japan':
+    title: 'Trip to Japan'
+    subtitle: '2024 adventures'
     albums:
       - 33333333-3333-3333-3333-333333333333
 ```
@@ -80,18 +82,18 @@ When a subpage contains many albums you can split them into **named sections**. 
 
 Each section can have:
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `title` | string | ✅ | Section heading + anchor name |
-| `description` | string | ➖ | Optional subline under the heading |
-| `albums` | list | ✅ | Album UUIDs (same format as regular albums) |
+| Field         | Type   | Required | Description                                 |
+| ------------- | ------ | -------- | ------------------------------------------- |
+| `title`       | string | ✅       | Section heading + anchor name               |
+| `description` | string | ➖       | Optional subline under the heading          |
+| `albums`      | list   | ✅       | Album UUIDs (same format as regular albums) |
 
 Within the `albums` list you can use a plain UUID or override the display title:
 
 ```yaml
 albums:
-  - "album-uuid"             # → uses the Immich album name
-  - "album-uuid": My Title   # → displays "My Title" instead
+  - 'album-uuid' # → uses the Immich album name
+  - 'album-uuid': My Title # → displays "My Title" instead
 ```
 
 **Full example:**
@@ -100,28 +102,27 @@ albums:
 subpages:
   - name: Japan
     title: Japan
-    subtitle: "Reisen durch ein Land voller Kontraste."
+    subtitle: 'Reisen durch ein Land voller Kontraste.'
     sections:
       - title: Tokyo
-        description: "Megacity, Neonlichter, Stille im Lärm."
+        description: 'Megacity, Neonlichter, Stille im Lärm.'
         albums:
-          - "33333333-3333-3333-3333-333333333333"
-          - "44444444-4444-4444-4444-444444444444": Shinjuku bei Nacht
+          - '33333333-3333-3333-3333-333333333333'
+          - '44444444-4444-4444-4444-444444444444': Shinjuku bei Nacht
 
       - title: Kyoto
-        description: "Tempel und Bambuswälder."
+        description: 'Tempel und Bambuswälder.'
         albums:
-          - "55555555-5555-5555-5555-555555555555": Fushimi Inari
-          - "66666666-6666-6666-6666-666666666666"
+          - '55555555-5555-5555-5555-555555555555': Fushimi Inari
+          - '66666666-6666-6666-6666-666666666666'
 
       - title: Osaka
-        albums:          # description is optional
-          - "77777777-7777-7777-7777-777777777777"
+        albums: # description is optional
+          - '77777777-7777-7777-7777-777777777777'
 ```
 
 > [!NOTE]
 > Each section title is automatically converted to a URL-safe anchor (`#tokyo`, `#kyoto`, …). The TOC appearance (separator character, numbering style, section rule) is fully controlled by the active theme.
-
 
 ## Grid Layout
 
@@ -130,17 +131,17 @@ Configure the photo grid globally or per-subpage:
 ```yaml
 # Global defaults
 grid:
-  columns: 3            # number of columns (default: 3)
-  gap: 12               # gap in pixels (default: 12)
-  aspectRatio: "1"       # "1", "3/2", "auto", etc. (default: "1")
-  layout: masonry        # "masonry" | "uniform" | "showcase" | "filmstrip" | "editorial-flow"
+  columns: 3 # number of columns (default: 3)
+  gap: 12 # gap in pixels (default: 12)
+  aspectRatio: '1' # "1", "3/2", "auto", etc. (default: "1")
+  layout: masonry # "masonry" | "uniform" | "showcase" | "filmstrip" | "editorial-flow"
 
 subpages:
   - name: Japan
-    grid:                # per-subpage override
+    grid: # per-subpage override
       columns: 4
       layout: uniform
-      aspectRatio: "3/2"
+      aspectRatio: '3/2'
     albums:
       - ...
 ```
@@ -150,7 +151,7 @@ subpages:
 Show camera/lens/settings when hovering over photos (enabled by default):
 
 ```yaml
-exifOnHover: false    # set to false to disable
+exifOnHover: false # set to false to disable
 ```
 
 ## Footer

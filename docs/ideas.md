@@ -4,14 +4,14 @@ Eine konsolidierte Liste an Features und Ideen für zukünftige Versionen, berei
 
 ## 🏆 Quick Wins (High Impact / Low Effort)
 
-| Idea | Effort | Impact |
-|------|--------|--------|
-| **Slideshow mode** | Low | High — exhibition ready (Auto-advance 3s/5s/10s) |
-| **Fullscreen API in lightbox** | Low | Medium — immersive (Chrome-free) |
-| **Download originals** | Low | High — client delivery (Button in lightbox) |
-| **Photo of the Day** | Low | Medium — return visits (Auto-rotate hero image) |
-| **Keyboard shortcut hints** | Low | Medium — `?` button for shortcuts (arrows, Esc, F) |
-| **Photo sharing** | Low | Medium — "Copy link" button in lightbox |
+| Idea                           | Effort | Impact                                             |
+| ------------------------------ | ------ | -------------------------------------------------- |
+| **Slideshow mode**             | Low    | High — exhibition ready (Auto-advance 3s/5s/10s)   |
+| **Fullscreen API in lightbox** | Low    | Medium — immersive (Chrome-free)                   |
+| **Download originals**         | Low    | High — client delivery (Button in lightbox)        |
+| **Photo of the Day**           | Low    | Medium — return visits (Auto-rotate hero image)    |
+| **Keyboard shortcut hints**    | Low    | Medium — `?` button for shortcuts (arrows, Esc, F) |
+| **Photo sharing**              | Low    | Medium — "Copy link" button in lightbox            |
 
 ---
 
@@ -29,7 +29,7 @@ Eine konsolidierte Liste an Features und Ideen für zukünftige Versionen, berei
 
 ## 📖 Deep Dive Feature Plan: Photo Stories / Essays
 
-*Vertical scroll format with images + text interspersed, like a photo essay. A major portfolio differentiator.*
+_Vertical scroll format with images + text interspersed, like a photo essay. A major portfolio differentiator._
 
 ### Proposed Architecture
 

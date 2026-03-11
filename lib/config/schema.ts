@@ -1,91 +1,91 @@
 export interface SubpageSectionConfig {
-    title: string;
-    slug: string;        // auto-derived from title, used as anchor
-    description?: string;
-    albumIds: string[];
+  title: string;
+  slug: string; // auto-derived from title, used as anchor
+  description?: string;
+  albumIds: string[];
 }
 
 export interface SubpageConfig {
-    name: string;
-    slug: string;
-    title?: string;
-    subtitle?: string;
-    albumIds: string[];  // flat list (all albums, incl. from sections)
-    sections?: SubpageSectionConfig[];
-    password?: string;
-    grid?: Partial<GridConfig>;
+  name: string;
+  slug: string;
+  title?: string;
+  subtitle?: string;
+  albumIds: string[]; // flat list (all albums, incl. from sections)
+  sections?: SubpageSectionConfig[];
+  password?: string;
+  grid?: Partial<GridConfig>;
 }
 
 export interface FooterConfig {
-    name?: string;
-    instagram?: string;
-    email?: string;
-    website?: string;
+  name?: string;
+  instagram?: string;
+  email?: string;
+  website?: string;
 }
 
 export interface LegalConfig {
-    enabled: boolean;
-    name: string;
-    address: string;
-    zipCity: string;
-    country: string;
-    email?: string;
-    phone?: string;
-    taxId?: string;
-    vatId?: string;
-    extraInfo?: string;
+  enabled: boolean;
+  name: string;
+  address: string;
+  zipCity: string;
+  country: string;
+  email?: string;
+  phone?: string;
+  taxId?: string;
+  vatId?: string;
+  extraInfo?: string;
 }
 
 export interface ThemeConfig {
-    preset: string;
-    accent: string;
-    fonts: { heading: string; body: string; caption: string };
-    radius: number;
-    photoFrame: 'none' | 'passepartout' | 'shadow';
-    grain: boolean;
-    headerDot: boolean;
-    heroStyle: 'split' | 'fullbleed' | 'minimal' | 'stacked' | 'typographic' | 'mosaic';
+  preset: string;
+  accent: string;
+  fonts: { heading: string; body: string; caption: string };
+  radius: number;
+  photoFrame: 'none' | 'passepartout' | 'shadow';
+  grain: boolean;
+  headerDot: boolean;
+  heroStyle: 'split' | 'fullbleed' | 'minimal' | 'stacked' | 'typographic' | 'mosaic';
 }
 
 export interface GridConfig {
-    columns: number;
-    gap: number;
-    aspectRatio: string;
-    layout: 'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow';
+  columns: number;
+  gap: number;
+  aspectRatio: string;
+  layout: 'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow';
 }
 
 export interface AppConfig {
-    immich: { apiUrl: string; apiKey: string };
-    authSecret: string;
-    albums: string[];
-    standaloneAlbums: string[];
-    subpages: SubpageConfig[];
-    siteTitle: string;
-    siteSubtitle: string;
-    seo: {
-        title: string;
-        description: string;
-        noIndex: boolean;
-        noFollow: boolean;
-    };
-    heroImages: string[];
-    exifOnHover: boolean;
-    grid: GridConfig;
-    theme: ThemeConfig;
-    footer: FooterConfig | null;
-    legal: LegalConfig;
-    map: boolean;
-    transitions: boolean;
-    albumOverrides: Record<string, string>;
-    cacheTtl: number;
-    rateLimitRpm: number;
-    needsSetup?: boolean;
+  immich: { apiUrl: string; apiKey: string };
+  authSecret: string;
+  albums: string[];
+  standaloneAlbums: string[];
+  subpages: SubpageConfig[];
+  siteTitle: string;
+  siteSubtitle: string;
+  seo: {
+    title: string;
+    description: string;
+    noIndex: boolean;
+    noFollow: boolean;
+  };
+  heroImages: string[];
+  exifOnHover: boolean;
+  grid: GridConfig;
+  theme: ThemeConfig;
+  footer: FooterConfig | null;
+  legal: LegalConfig;
+  map: boolean;
+  transitions: boolean;
+  albumOverrides: Record<string, string>;
+  cacheTtl: number;
+  rateLimitRpm: number;
+  needsSetup?: boolean;
 }
 
 export interface GalleryYaml {
-    hero?: string | string[];
-    albums?: string[];
-    subpages?:
+  hero?: string | string[];
+  albums?: string[];
+  subpages?:
     | Record<string, string[] | Array<string | Record<string, string>>>
     | Array<{
         name: string;
@@ -93,33 +93,33 @@ export interface GalleryYaml {
         subtitle?: string;
         albums?: Array<string | Record<string, string>>;
         sections?: Array<{
-            title: string;
-            description?: string;
-            albums: Array<string | Record<string, string>>;
+          title: string;
+          description?: string;
+          albums: Array<string | Record<string, string>>;
         }>;
         password?: string;
         grid?: {
-            columns?: number;
-            gap?: number;
-            aspectRatio?: string;
-            layout?: string;
+          columns?: number;
+          gap?: number;
+          aspectRatio?: string;
+          layout?: string;
         };
-    }>;
+      }>;
 }
 
 export interface SettingsYaml {
+  title?: string;
+  subtitle?: string;
+  seo?: {
     title?: string;
-    subtitle?: string;
-    seo?: {
-        title?: string;
-        description?: string;
-        noIndex?: boolean;
-        noFollow?: boolean;
-    };
-    exifOnHover?: boolean;
-    map?: boolean;
-    transitions?: boolean;
-    theme?:
+    description?: string;
+    noIndex?: boolean;
+    noFollow?: boolean;
+  };
+  exifOnHover?: boolean;
+  map?: boolean;
+  transitions?: boolean;
+  theme?:
     | string
     | {
         preset?: string;
@@ -130,22 +130,22 @@ export interface SettingsYaml {
         grain?: boolean;
         headerDot?: boolean;
         heroStyle?: string;
-    };
-    grid?: {
-        columns?: number;
-        gap?: number;
-        aspectRatio?: string;
-        layout?: string;
-    };
-    footer?: FooterConfig;
-    legal?: Partial<LegalConfig>;
+      };
+  grid?: {
+    columns?: number;
+    gap?: number;
+    aspectRatio?: string;
+    layout?: string;
+  };
+  footer?: FooterConfig;
+  legal?: Partial<LegalConfig>;
 }
 
 export function slugify(name: string): string {
-    return name
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
