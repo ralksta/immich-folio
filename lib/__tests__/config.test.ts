@@ -93,8 +93,8 @@ describe('buildSubpageGrid', () => {
   });
 
   it('handles all fields together', () => {
-    expect(
-      buildSubpageGrid({ columns: 3, gap: 16, aspectRatio: '1', layout: 'masonry' }),
-    ).toEqual({ grid: { columns: 3, gap: 16, aspectRatio: '1', layout: 'masonry' } });
+    expect(buildSubpageGrid({ columns: 3, gap: 16, aspectRatio: '1', layout: 'masonry' })).toEqual({
+      grid: { columns: 3, gap: 16, aspectRatio: '1', layout: 'masonry' },
+    });
   });
 });

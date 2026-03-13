@@ -38,7 +38,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (!success) {
     const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
     const userAgent = request.headers.get('user-agent') || 'unknown';
-    console.warn(`[Image API] ⚠️ Rate limit exceeded for IP: ${ip} (UA: ${userAgent}). Retry after ${retryAfter}s`);
+    console.warn(
+      `[Image API] ⚠️ Rate limit exceeded for IP: ${ip} (UA: ${userAgent}). Retry after ${retryAfter}s`,
+    );
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
