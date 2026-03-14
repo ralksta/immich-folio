@@ -17,9 +17,12 @@ export * from './theme';
 let _config: AppConfig | null = null;
 
 /** Converts raw YAML grid overrides into a typed partial GridConfig. */
-export function buildSubpageGrid(
-  raw?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string },
-): { grid: Partial<GridConfig> } | Record<string, never> {
+export function buildSubpageGrid(raw?: {
+  columns?: number;
+  gap?: number;
+  aspectRatio?: string;
+  layout?: string;
+}): { grid: Partial<GridConfig> } | Record<string, never> {
   if (!raw) return {};
   return {
     grid: {

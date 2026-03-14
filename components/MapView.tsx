@@ -46,7 +46,11 @@ export function MapView() {
       const res = await fetch('/api/map');
       if (!res.ok) {
         let detail = '';
-        try { detail = await res.text(); } catch { /* ignore */ }
+        try {
+          detail = await res.text();
+        } catch {
+          /* ignore */
+        }
         console.error('[Map] API error', res.status, detail);
         setError(`Failed to load map data (${res.status})`);
         setLoading(false);
@@ -91,7 +95,10 @@ export function MapView() {
         });
 
         const albumLinks = loc.albums
-          .map((a) => `<a href="${escapeHtml(a.url)}" class="map-popup__album-link">${escapeHtml(a.name)} →</a>`)
+          .map(
+            (a) =>
+              `<a href="${escapeHtml(a.url)}" class="map-popup__album-link">${escapeHtml(a.name)} →</a>`,
+          )
           .join('');
 
         const popupHtml = `

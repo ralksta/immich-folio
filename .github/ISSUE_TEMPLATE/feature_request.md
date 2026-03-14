@@ -1,7 +1,7 @@
 ---
 name: "\U0001F4A1 Feature request"
 about: Suggest an idea or improvement
-title: "[feat] "
+title: '[feat] '
 labels: enhancement
 assignees: ''
 ---

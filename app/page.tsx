@@ -192,7 +192,12 @@ export default async function HomePage() {
           ))}
         </div>
         <div className="hero__mosaic-overlay">
-          <HeroTextContent title={config.siteTitle} subtitle={config.siteSubtitle} subpages={subpages} albums={albums} />
+          <HeroTextContent
+            title={config.siteTitle}
+            subtitle={config.siteSubtitle}
+            subpages={subpages}
+            albums={albums}
+          />
         </div>
       </div>
     );
@@ -203,7 +208,12 @@ export default async function HomePage() {
     return (
       <div className="hero hero--minimal">
         <div className="hero__content">
-          <HeroTextContent title={config.siteTitle} subtitle={config.siteSubtitle} subpages={subpages} albums={albums} />
+          <HeroTextContent
+            title={config.siteTitle}
+            subtitle={config.siteSubtitle}
+            subpages={subpages}
+            albums={albums}
+          />
         </div>
       </div>
     );
@@ -215,7 +225,12 @@ export default async function HomePage() {
       <div className="hero hero--fullbleed">
         <HeroCarousel images={heroData} />
         <div className="hero__fullbleed-overlay">
-          <HeroTextContent title={config.siteTitle} subtitle={config.siteSubtitle} subpages={subpages} albums={albums} />
+          <HeroTextContent
+            title={config.siteTitle}
+            subtitle={config.siteSubtitle}
+            subpages={subpages}
+            albums={albums}
+          />
         </div>
       </div>
     );
@@ -227,7 +242,12 @@ export default async function HomePage() {
       {/* ── Left Panel ──────────────────────────────── */}
       <div className="hero__left">
         <div className="hero__content">
-          <HeroTextContent title={config.siteTitle} subtitle={config.siteSubtitle} subpages={subpages} albums={albums} />
+          <HeroTextContent
+            title={config.siteTitle}
+            subtitle={config.siteSubtitle}
+            subpages={subpages}
+            albums={albums}
+          />
         </div>
       </div>
 
