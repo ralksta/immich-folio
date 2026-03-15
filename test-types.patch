@@ -1,0 +1,11 @@
+--- scripts/screenshots.ts
++++ scripts/screenshots.ts
+@@ -35,7 +35,7 @@
+ export async function takeScreenshots() {
+
+   // Dynamic import for Playwright (may not be installed globally)
+-  const { chromium } = await import('playwright');
++  const { chromium } = await import('@playwright/test');
+   const browser = await chromium.launch();
+
+   try {

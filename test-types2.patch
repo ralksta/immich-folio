@@ -1,0 +1,12 @@
+--- scripts/screenshots.ts
++++ scripts/screenshots.ts
+@@ -226,7 +226,7 @@
+ /**
+  * Wait for all background images in the DOM to finish loading.
+  * This prevents capturing blurhash placeholders instead of real photos.
+  */
+-async function waitForImages(page: import('playwright').Page): Promise<void> {
++async function waitForImages(page: import('@playwright/test').Page): Promise<void> {
+   await page.waitForTimeout(1000); // Initial settle
+
+   await page.evaluate((timeout) => {

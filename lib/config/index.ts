@@ -49,7 +49,7 @@ export function getConfig(): AppConfig {
   const apiKey = env.IMMICH_API_KEY;
   let { AUTH_SECRET } = env;
   if (!AUTH_SECRET) {
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production' && !process.env.CI) {
       throw new Error(
         'SECURITY ERROR: AUTH_SECRET is not set in production. Please set a long random string as AUTH_SECRET in your .env.',
       );
