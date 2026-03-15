@@ -1,4 +1,3 @@
-## YYYY-MM-DD - [Memoize grid item re-rendering]
-
-**Learning:** `useMemo` can significantly boost the performance of long list or grid components (like `PhotoGrid` component) that otherwise gets re-rendered on simple interactions like navigating the image lightbox. Running standard formatting `pnpm format` applies huge changes across entire directories, so it's generally best to format and clean up ONLY modified files to avoid huge diff pollution in code review.
-**Action:** Be extremely cautious of running format/lint commands at the root codebase; specify only modified directories or files, or avoid formatting if it cascades globally. Focus on targeted memoization where state changes dictate expensive array mapping operations.
+## 2024-03-15 - [Faster Base64 Decoding in Node.js]
+**Learning:** `Buffer.from(..., 'base64')` is dramatically faster (often 10x+) than `Uint8Array.from(atob(...))` for base64 decoding in Node.js environments.
+**Action:** When performing base64 decoding in server-side Next.js code or utilities that might run in both client and server, use a fallback like `typeof Buffer !== 'undefined' ? Buffer.from(...) : Uint8Array.from(atob(...))` to get maximum performance in Node without breaking browser/Edge compatibility.

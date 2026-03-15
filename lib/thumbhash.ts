@@ -28,7 +28,10 @@ export function thumbHashToBlurDataUrl(base64: string): string {
   const cached = blurDataUrlCache.get(base64);
   if (cached) return cached;
 
-  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  const bytes =
+    typeof Buffer !== 'undefined'
+      ? Buffer.from(base64, 'base64')
+      : Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
   const url = thumbHashToDataURL(bytes);
   setCache(blurDataUrlCache, base64, url);
   return url;
@@ -42,7 +45,10 @@ export function thumbHashToDominantHex(base64: string): string {
   const cached = dominantHexCache.get(base64);
   if (cached) return cached;
 
-  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  const bytes =
+    typeof Buffer !== 'undefined'
+      ? Buffer.from(base64, 'base64')
+      : Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
   const { w, h, rgba } = thumbHashToRGBA(bytes);
 
   let r = 0,
