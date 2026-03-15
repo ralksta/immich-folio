@@ -1,7 +1,7 @@
 ---
 name: "\U0001F41B Bug report"
 about: Something isn't working as expected
-title: "[bug] "
+title: '[bug] '
 labels: bug
 assignees: ''
 ---
@@ -26,13 +26,13 @@ What actually happened. Include screenshots if relevant.
 
 ## Environment
 
-| Field | Value |
-|---|---|
-| immich-folio version | vX.X.X / commit SHA |
-| Immich version | |
-| Deployment | Docker / manual |
-| Browser | Chrome / Firefox / Safari |
-| OS | |
+| Field                | Value                     |
+| -------------------- | ------------------------- |
+| immich-folio version | vX.X.X / commit SHA       |
+| Immich version       |                           |
+| Deployment           | Docker / manual           |
+| Browser              | Chrome / Firefox / Safari |
+| OS                   |                           |
 
 ## `content/gallery.yaml` (redacted)
 
