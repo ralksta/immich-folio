@@ -35,7 +35,7 @@ async function main() {
   const originalYaml = fs.readFileSync(SETTINGS_YAML, 'utf8');
 
   // Dynamic import for Playwright (may not be installed globally)
-  const { chromium } = await import('playwright');
+  const { chromium } = await import('@playwright/test');
   const browser = await chromium.launch();
 
   try {
@@ -226,7 +226,7 @@ async function waitForServer(url: string, timeoutMs: number): Promise<void> {
  * Wait for all <img> elements to finish loading their full-resolution images.
  * This prevents capturing blurhash placeholders instead of real photos.
  */
-async function waitForImages(page: import('playwright').Page): Promise<void> {
+async function waitForImages(page: import('@playwright/test').Page): Promise<void> {
   await page.waitForTimeout(1000); // Initial settle
 
   await page.evaluate((timeout) => {
