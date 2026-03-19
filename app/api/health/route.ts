@@ -5,12 +5,24 @@
  * GET /api/health → { status, immich, uptime }
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { immich } from '@/lib/immich';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 const startTime = Date.now();
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // 🛡️ SECURITY: Protect health check from DoS attacks
+  const ip = getClientIp(request);
+  const { success } = checkRateLimit(`health:${ip}`, 60); // 60 requests per minute
+
+  if (!success) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+
   const immichOk = await immich.ping();
 
   const body = {
