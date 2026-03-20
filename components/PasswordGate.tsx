@@ -50,15 +50,12 @@ export default function PasswordGate({ slug, title }: PasswordGateProps) {
         <p className={styles.subtitle}>This gallery is password-protected.</p>
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          <label htmlFor="password" className={styles.srOnly}>
-            Password
-          </label>
           <input
-            id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter password"
+            aria-label="Password"
             className={styles.input}
             autoFocus
             required
