@@ -55,6 +55,7 @@ export default function PasswordGate({ slug, title }: PasswordGateProps) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter password"
+            aria-label="Enter password"
             className={styles.input}
             autoFocus
             required
