@@ -21,6 +21,18 @@ function setCache<K, V>(map: Map<K, V>, key: K, value: V) {
 }
 
 /**
+ * Fast base64 to Uint8Array decoder.
+ * Uses native Buffer in Node.js/Edge environments (~10x faster)
+ * and falls back to atob for browser client.
+ */
+function decodeBase64(base64: string): Uint8Array {
+  if (typeof Buffer !== 'undefined') {
+    return new Uint8Array(Buffer.from(base64, 'base64'));
+  }
+  return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+}
+
+/**
  * Convert an Immich base64-encoded ThumbHash into a tiny data URL
  * suitable for next/image's blurDataURL prop.
  */
@@ -28,7 +40,7 @@ export function thumbHashToBlurDataUrl(base64: string): string {
   const cached = blurDataUrlCache.get(base64);
   if (cached) return cached;
 
-  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  const bytes = decodeBase64(base64);
   const url = thumbHashToDataURL(bytes);
   setCache(blurDataUrlCache, base64, url);
   return url;
@@ -42,7 +54,7 @@ export function thumbHashToDominantHex(base64: string): string {
   const cached = dominantHexCache.get(base64);
   if (cached) return cached;
 
-  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  const bytes = decodeBase64(base64);
   const { w, h, rgba } = thumbHashToRGBA(bytes);
 
   let r = 0,
