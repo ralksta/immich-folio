@@ -7,14 +7,34 @@
  */
 
 import { ImageResponse } from 'next/og';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
+  // ── Rate limiting ──────────────────────────────────
+  const ip = getClientIp(request);
+  const config = getConfig();
+  const { success, remaining, resetAt } = checkRateLimit(`og:${ip}`, config.rateLimitRpm);
+
+  if (!success) {
+    const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(retryAfter),
+          'X-RateLimit-Remaining': '0',
+        },
+      },
+    );
+  }
+
   const { searchParams } = request.nextUrl;
   const title = (searchParams.get('title') || 'Gallery').slice(0, 200);
   const subtitle = (searchParams.get('subtitle') || '').slice(0, 100);
-  const { theme } = getConfig();
+  const { theme } = config;
 
   return new ImageResponse(
     <div
@@ -86,6 +106,7 @@ export async function GET(request: NextRequest) {
       height: 630,
       headers: {
         'Cache-Control': 'public, max-age=86400, s-maxage=86400',
+        'X-RateLimit-Remaining': String(remaining),
       },
     },
   );
