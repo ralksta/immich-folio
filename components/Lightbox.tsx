@@ -104,6 +104,9 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
       onClick={handleOverlayClick}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Image viewer"
     >
       {/* Close button */}
       <button className={styles.close} onClick={onClose} aria-label="Close" title="Close (Esc)">
@@ -188,6 +191,8 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
       <button
         className={styles.infoToggle}
         onClick={handleExifToggle}
+        aria-expanded={showExif}
+        aria-controls="exif-panel"
         aria-label="Toggle photo info"
         title="Toggle photo info (i)"
       >
@@ -196,7 +201,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
 
       {/* EXIF panel */}
       {showExif && (
-        <div className={styles.exifPanel}>
+        <div id="exif-panel" className={styles.exifPanel}>
           {exifLoading ? (
             <div className={styles.exifRow}>
               <span className={styles.exifLabel}>Loading...</span>
