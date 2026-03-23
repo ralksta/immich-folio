@@ -7,10 +7,23 @@
  */
 
 import { ImageResponse } from 'next/og';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
+  const ip = getClientIp(request);
+  const config = getConfig();
+
+  // Rate limit OG image generation to prevent CPU exhaustion DoS attacks
+  const { success, resetAt } = checkRateLimit(`og:${ip}`, config.rateLimitRpm);
+
+  if (!success) {
+    const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
+    console.warn(`[OG API] ⚠️ Rate limit exceeded for IP: ${ip}. Retry after ${retryAfter}s`);
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   const { searchParams } = request.nextUrl;
   const title = (searchParams.get('title') || 'Gallery').slice(0, 200);
   const subtitle = (searchParams.get('subtitle') || '').slice(0, 100);
