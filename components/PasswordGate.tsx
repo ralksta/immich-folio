@@ -51,6 +51,7 @@ export default function PasswordGate({ slug, title }: PasswordGateProps) {
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <input
+            id="password-input"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -59,13 +60,20 @@ export default function PasswordGate({ slug, title }: PasswordGateProps) {
             className={styles.input}
             autoFocus
             required
+            disabled={loading}
+            aria-invalid={!!error}
+            aria-describedby={error ? 'password-error' : undefined}
           />
           <button type="submit" className={styles.button} disabled={loading}>
             {loading ? 'Verifying…' : 'Enter'}
           </button>
         </form>
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && (
+          <p id="password-error" className={styles.error} role="alert" aria-live="polite">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );
