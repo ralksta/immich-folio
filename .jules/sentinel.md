@@ -8,3 +8,8 @@
 **Vulnerability:** The `/api/health` endpoint lacked downstream protection and made a live upstream request to the Immich server (`immich.ping()`) on every hit. An attacker could exhaust backend resources by spamming the health check endpoint.
 **Learning:** Returning HTTP 429 (rate limiting) on a health check endpoint is an architectural anti-pattern that breaks load balancers and container orchestrators (causing self-inflicted downtime).
 **Prevention:** To secure health checks that rely on upstream resources without breaking infrastructure polling, implement a short-lived in-memory cache (e.g., 10 seconds) for the upstream response rather than blocking the request entirely.
+
+## 2024-03-25 - [Missing Rate Limiting on Dynamic OG Image Generation]
+**Vulnerability:** The `/api/og` endpoint lacked rate limiting, making it vulnerable to DoS attacks. An attacker could rapidly request computationally expensive image generation, exhausting server CPU and memory resources.
+**Learning:** Endpoints that dynamically generate images (like Next.js `next/og` ImageResponse) are computationally intensive and must be protected with rate limiting to prevent resource exhaustion, even if they don't query a backend API.
+**Prevention:** Always implement rate limiting on dynamic resource generation endpoints, utilizing the shared `checkRateLimit` utility.
