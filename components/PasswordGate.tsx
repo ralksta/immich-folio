@@ -56,6 +56,9 @@ export default function PasswordGate({ slug, title }: PasswordGateProps) {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter password"
             aria-label="Enter password"
+            aria-invalid={!!error}
+            aria-describedby={error ? 'password-error' : undefined}
+            disabled={loading}
             className={styles.input}
             autoFocus
             required
@@ -65,7 +68,11 @@ export default function PasswordGate({ slug, title }: PasswordGateProps) {
           </button>
         </form>
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && (
+          <p id="password-error" role="alert" aria-live="polite" className={styles.error}>
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );
