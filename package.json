@@ -17,7 +17,7 @@
   "dependencies": {
     "js-yaml": "^4.1.1",
     "leaflet": "^1.9.4",
-    "next": "16.1.6",
+    "next": "16.2.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "thumbhash": "^0.1.1"
@@ -31,7 +31,7 @@
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "16.2.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "prettier": "^3.8.1",
