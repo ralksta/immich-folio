@@ -342,6 +342,7 @@ exifOnHover: ${exifOnHover}`;
                     max={6}
                     value={gridCols}
                     onChange={(e) => updateGridCols(Number(e.target.value))}
+                    aria-label="Grid Columns"
                     style={{ width: '100%', accentColor: '#e4e4e7', marginTop: 6 }}
                   />
                 </div>
@@ -353,6 +354,7 @@ exifOnHover: ${exifOnHover}`;
                     max={32}
                     value={gridGap}
                     onChange={(e) => updateGridGap(Number(e.target.value))}
+                    aria-label="Grid Gap"
                     style={{ width: '100%', accentColor: '#e4e4e7', marginTop: 6 }}
                   />
                 </div>

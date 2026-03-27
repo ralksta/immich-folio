@@ -1,4 +1,3 @@
-## 2024-03-XX - Lightbox Accessibility
-
-**Learning:** Found that Lightbox overlay has good keyboard navigation (esc/left/right) but lacked tooltip hints for those controls and lacked a shortcut for EXIF data toggle.
-**Action:** Added `i` shortcut and `title` attributes on interactive elements in Lightbox.
+## 2024-05-24 - Lightbox ARIA Attributes
+**Learning:** Adding `role="dialog"`, `aria-modal="true"`, and `aria-label` to custom modal/lightbox overlays ensures screen readers announce them properly instead of just falling back to reading inner content without context. Additionally, toggles that show/hide panels (like the EXIF info button) must use `aria-expanded` and link to the panel via `aria-controls` for proper screen reader communication.
+**Action:** When building or modifying custom overlays or toggle buttons in the future, always verify that ARIA attributes are set correctly to match the visual behavior.

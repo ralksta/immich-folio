@@ -7,14 +7,22 @@
  */
 
 import { ImageResponse } from 'next/og';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
+  const ip = getClientIp(request);
+  const { theme, rateLimitRpm } = getConfig();
+
+  const { success } = checkRateLimit(`og:${ip}`, rateLimitRpm);
+  if (!success) {
+    return new NextResponse('Too many requests', { status: 429 });
+  }
+
   const { searchParams } = request.nextUrl;
   const title = (searchParams.get('title') || 'Gallery').slice(0, 200);
   const subtitle = (searchParams.get('subtitle') || '').slice(0, 100);
-  const { theme } = getConfig();
 
   return new ImageResponse(
     <div

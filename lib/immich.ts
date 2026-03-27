@@ -72,6 +72,7 @@ export interface SubpageSummary {
 
 class ImmichClient {
   private hasLoggedAlbums = false;
+  private pendingAlbumsPromise: Promise<ImmichAlbum[]> | null = null;
 
   private get config() {
     return getConfig();
@@ -152,57 +153,69 @@ class ImmichClient {
     const cached = cache.get<ImmichAlbum[]>(cacheKey);
     if (cached) return cached;
 
-    const all = await this.request<ImmichAlbum[]>('/albums?shared=true');
-    if (!all) return [];
-
-    const allowedIds = new Set(this.config.albums);
-    const filtered = all
-      .filter((album) => allowedIds.has(album.id))
-      .map((album) => {
-        const name = this.config.albumOverrides[album.id] ?? album.albumName;
-        return {
-          ...album,
-          albumName: name,
-          slug: slugify(name),
-        };
-      });
-
-    // Log album summary on first load so admins can see what's published
-    if (!this.hasLoggedAlbums) {
-      this.hasLoggedAlbums = true;
-      console.log('\n[Lightbox] Published albums:');
-      console.log('─'.repeat(80));
-
-      // Log standalone albums
-      const standaloneIds = new Set(this.config.standaloneAlbums);
-      const standalone = filtered.filter((a) => standaloneIds.has(a.id));
-      if (standalone.length > 0) {
-        console.log('  Standalone:');
-        for (const a of standalone) {
-          console.log(`    📷 ${a.albumName}`);
-          console.log(`       URL: /${a.slug}  •  ${a.assetCount} photos  •  ID: ${a.id}`);
-        }
-      }
-
-      // Log subpage groupings
-      for (const sp of this.config.subpages) {
-        const spAlbums = filtered.filter((a) => sp.albumIds.includes(a.id));
-        console.log(`  📁 ${sp.name} (/${sp.slug}):`);
-        for (const a of spAlbums) {
-          console.log(`    📷 ${a.albumName}`);
-          console.log(`       URL: /${sp.slug}/${a.slug}  •  ${a.assetCount} photos`);
-        }
-      }
-
-      const missing = this.config.albums.filter((id) => !all.some((a) => a.id === id));
-      if (missing.length > 0) {
-        console.warn(`  ⚠️  Unknown album IDs: ${missing.join(', ')}`);
-      }
-      console.log('─'.repeat(80) + '\n');
+    if (this.pendingAlbumsPromise) {
+      return this.pendingAlbumsPromise;
     }
 
-    cache.set(cacheKey, filtered, this.config.cacheTtl);
-    return filtered;
+    this.pendingAlbumsPromise = (async () => {
+      try {
+        const all = await this.request<ImmichAlbum[]>('/albums?shared=true');
+        if (!all) return [];
+
+        const allowedIds = new Set(this.config.albums);
+        const filtered = all
+          .filter((album) => allowedIds.has(album.id))
+          .map((album) => {
+            const name = this.config.albumOverrides[album.id] ?? album.albumName;
+            return {
+              ...album,
+              albumName: name,
+              slug: slugify(name),
+            };
+          });
+
+        // Log album summary on first load so admins can see what's published
+        if (!this.hasLoggedAlbums) {
+          this.hasLoggedAlbums = true;
+          console.log('\n[Lightbox] Published albums:');
+          console.log('─'.repeat(80));
+
+          // Log standalone albums
+          const standaloneIds = new Set(this.config.standaloneAlbums);
+          const standalone = filtered.filter((a) => standaloneIds.has(a.id));
+          if (standalone.length > 0) {
+            console.log('  Standalone:');
+            for (const a of standalone) {
+              console.log(`    📷 ${a.albumName}`);
+              console.log(`       URL: /${a.slug}  •  ${a.assetCount} photos  •  ID: ${a.id}`);
+            }
+          }
+
+          // Log subpage groupings
+          for (const sp of this.config.subpages) {
+            const spAlbums = filtered.filter((a) => sp.albumIds.includes(a.id));
+            console.log(`  📁 ${sp.name} (/${sp.slug}):`);
+            for (const a of spAlbums) {
+              console.log(`    📷 ${a.albumName}`);
+              console.log(`       URL: /${sp.slug}/${a.slug}  •  ${a.assetCount} photos`);
+            }
+          }
+
+          const missing = this.config.albums.filter((id) => !all.some((a) => a.id === id));
+          if (missing.length > 0) {
+            console.warn(`  ⚠️  Unknown album IDs: ${missing.join(', ')}`);
+          }
+          console.log('─'.repeat(80) + '\n');
+        }
+
+        cache.set(cacheKey, filtered, this.config.cacheTtl);
+        return filtered;
+      } finally {
+        this.pendingAlbumsPromise = null;
+      }
+    })();
+
+    return this.pendingAlbumsPromise;
   }
 
   /**
