@@ -63,8 +63,9 @@ export function checkRateLimit(
   // New window or expired
   if (!entry || now > entry.expiresAt) {
     if (store.size >= MAX_STORE_ENTRIES) {
-      // Store is completely full with active IPs -> block to prevent memory exhaustion & rate limit bypass
-      return { success: false, remaining: 0, resetAt: now + windowMs };
+      // Evict oldest entry to prevent memory exhaustion without causing a global DoS
+      const firstKey = store.keys().next().value;
+      if (firstKey) store.delete(firstKey);
     }
     const resetAt = now + windowMs;
     store.set(key, { count: 1, expiresAt: resetAt });
