@@ -1,3 +1,3 @@
-## 2024-05-24 - Lightbox ARIA Attributes
-**Learning:** Adding `role="dialog"`, `aria-modal="true"`, and `aria-label` to custom modal/lightbox overlays ensures screen readers announce them properly instead of just falling back to reading inner content without context. Additionally, toggles that show/hide panels (like the EXIF info button) must use `aria-expanded` and link to the panel via `aria-controls` for proper screen reader communication.
-**Action:** When building or modifying custom overlays or toggle buttons in the future, always verify that ARIA attributes are set correctly to match the visual behavior.
+## 2024-03-28 - Initial focus management for modals
+**Learning:** For modal dialogues and full-screen overlays (like lightboxes), it's crucial for accessibility to actively manage initial keyboard focus when the modal opens, so that screen readers and keyboard users do not have to tab through the underlying page.
+**Action:** Always add a `useRef` to an appropriate interactive element inside the modal (like the Close button or the modal container itself) and call `.focus()` in a `useEffect` on mount.

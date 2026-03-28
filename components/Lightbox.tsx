@@ -34,11 +34,19 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
 
   const current = assets[currentIndex];
   const [mounted, setMounted] = useState(false);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
 
   // Mount guard — createPortal needs document.body (client-only)
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Auto-focus the close button on mount for accessibility
+  useEffect(() => {
+    if (mounted) {
+      closeBtnRef.current?.focus();
+    }
+  }, [mounted]);
 
   // Reset EXIF data when switching images; refetch if panel is open
   useEffect(() => {
@@ -109,7 +117,13 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
       aria-label="Image viewer"
     >
       {/* Close button */}
-      <button className={styles.close} onClick={onClose} aria-label="Close" title="Close (Esc)">
+      <button
+        ref={closeBtnRef}
+        className={styles.close}
+        onClick={onClose}
+        aria-label="Close"
+        title="Close (Esc)"
+      >
         <svg
           viewBox="0 0 24 24"
           fill="none"
