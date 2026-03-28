@@ -1,6 +1,7 @@
 ## Summary
 
 <!-- What does this PR do? Reference the issue it closes if applicable. -->
+
 Closes #
 
 ## Type of change

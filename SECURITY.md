@@ -4,10 +4,10 @@
 
 Only the latest release on `main` is actively maintained.
 
-| Version | Supported |
-|---|---|
-| `main` (latest) | ✅ |
-| older commits | ❌ |
+| Version         | Supported |
+| --------------- | --------- |
+| `main` (latest) | ✅        |
+| older commits   | ❌        |
 
 ## Reporting a Vulnerability
 
