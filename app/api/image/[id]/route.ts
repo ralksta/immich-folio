@@ -27,7 +27,8 @@ function widthToSize(w: number): ImageSize {
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // ── Rate limiting ──────────────────────────────────
   const ip = getClientIp(request);
-  const { success, remaining, resetAt } = checkRateLimit(ip, getConfig().rateLimitRpm);
+  const rateLimitRpm = getConfig().rateLimitRpm;
+  const { success, remaining, resetAt } = checkRateLimit(ip, rateLimitRpm);
 
   if (!success) {
     const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
@@ -35,7 +36,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     console.warn(
       `[Image API] ⚠️ Rate limit exceeded for IP: ${ip} (UA: ${userAgent}). Retry after ${retryAfter}s`,
     );
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(retryAfter),
+          'X-RateLimit-Limit': String(rateLimitRpm),
+          'X-RateLimit-Remaining': '0',
+        },
+      },
+    );
   }
 
   const { id: token } = await params;
@@ -68,7 +79,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return new NextResponse(null, {
       status: 304,
       headers: {
-        'ETag': etag,
+        ETag: etag,
         'Cache-Control': 'public, max-age=31536000, immutable',
         'X-RateLimit-Remaining': String(remaining),
       },
@@ -87,7 +98,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       : result.contentType,
     // Images are immutable once uploaded to Immich — cache aggressively
     'Cache-Control': 'public, max-age=31536000, immutable',
-    'ETag': etag,
+    ETag: etag,
     'X-RateLimit-Remaining': String(remaining),
   };
 

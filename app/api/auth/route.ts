@@ -13,10 +13,21 @@ const AUTH_RPM = 10;
 export async function POST(request: NextRequest) {
   // ── Rate limiting (brute-force protection) ──────────
   const ip = getClientIp(request);
-  const { success } = checkRateLimit(`auth:${ip}`, AUTH_RPM);
+  const { success, resetAt } = checkRateLimit(`auth:${ip}`, AUTH_RPM);
 
   if (!success) {
-    return NextResponse.json({ error: 'Too many attempts, try again later' }, { status: 429 });
+    const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
+    return NextResponse.json(
+      { error: 'Too many attempts, try again later' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(retryAfter),
+          'X-RateLimit-Limit': String(AUTH_RPM),
+          'X-RateLimit-Remaining': '0',
+        },
+      },
+    );
   }
 
   try {

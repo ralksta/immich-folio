@@ -26,7 +26,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (!success) {
     const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
     console.warn(`[EXIF API] ⚠️ Rate limit exceeded for IP: ${ip}. Retry after ${retryAfter}s`);
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(retryAfter),
+          'X-RateLimit-Limit': String(config.rateLimitRpm),
+          'X-RateLimit-Remaining': '0',
+        },
+      },
+    );
   }
 
   const { id: token } = await params;
