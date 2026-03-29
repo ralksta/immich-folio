@@ -20,6 +20,7 @@ export function BackLink({ href, label }: BackLinkProps) {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
+        aria-hidden="true"
       >
         <polyline points="15 18 9 12 15 6" />
       </svg>

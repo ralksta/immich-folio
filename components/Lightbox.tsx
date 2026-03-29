@@ -117,6 +117,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          aria-hidden="true"
         >
           <line x1="18" y1="6" x2="6" y2="18" />
           <line x1="6" y1="6" x2="18" y2="18" />
@@ -137,6 +138,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          aria-hidden="true"
         >
           <polyline points="15 18 9 12 15 6" />
         </svg>
@@ -177,6 +179,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          aria-hidden="true"
         >
           <polyline points="9 6 15 12 9 18" />
         </svg>
