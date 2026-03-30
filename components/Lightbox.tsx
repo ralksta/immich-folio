@@ -111,6 +111,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
       {/* Close button */}
       <button className={styles.close} onClick={onClose} aria-label="Close" title="Close (Esc)">
         <svg
+          aria-hidden="true"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -131,6 +132,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
         title="Previous photo (Left arrow)"
       >
         <svg
+          aria-hidden="true"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -171,6 +173,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
         title="Next photo (Right arrow)"
       >
         <svg
+          aria-hidden="true"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
