@@ -7,3 +7,6 @@
 
 **Learning:** When using `Promise.all` to fetch dependent data in parallel (e.g., getting multiple subpages and standalone albums that internally call a shared `getAlbums` function), the internal cache might not be populated in time. This leads to redundant concurrent network requests to the upstream server.
 **Action:** Implement Promise deduplication (request coalescing) by caching the pending Promise itself (e.g., in a `this.pendingPromise` class field) rather than just the final result. Return the pending Promise to subsequent callers until it resolves, ensuring only one network request is made.
+## $(date +%Y-%m-%d) - [Deduplicate concurrent API requests via Promise caching]
+**Learning:** Extending the earlier learning, it's not just the global `getAlbums` that can suffer from redundant requests. Fine-grained functions like `getAssetInfo` (called per-image) and `getAlbum` (called per-album) are also susceptible when resolving lists of IDs in parallel if the cache is cold.
+**Action:** Use a `Map<string, Promise>` to deduplicate parameterized calls (like fetching by ID) to ensure only one inflight request exists per unique resource ID, protecting the backend from spikes.
