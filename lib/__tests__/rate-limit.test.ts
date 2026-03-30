@@ -59,9 +59,9 @@ describe('checkRateLimit', () => {
   });
 
   it('does not crash when store is at capacity and still accepts new IPs', () => {
-    // Fill the store beyond MAX_STORE_ENTRIES (1 000 in test env or 10 000 in prod)
+    // Fill the store beyond MAX_STORE_ENTRIES (10_000 in prod)
     // by hammering with unique IPs; evictIfFull must silently evict stale entries.
-    const uniqueIps = Array.from({ length: 200 }, (_, i) => `evict-test-ip-${i}-${Date.now()}`);
+    const uniqueIps = Array.from({ length: 10005 }, (_, i) => `evict-test-ip-${i}-${Date.now()}`);
     for (const ip of uniqueIps) {
       checkRateLimit(ip, 5);
     }
