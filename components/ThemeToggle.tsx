@@ -63,6 +63,7 @@ export function ThemeToggle() {
       {theme === 'dark' ? (
         // Sun icon
         <svg
+          aria-hidden="true"
           width="16"
           height="16"
           viewBox="0 0 24 24"
@@ -85,6 +86,7 @@ export function ThemeToggle() {
       ) : (
         // Moon icon
         <svg
+          aria-hidden="true"
           width="16"
           height="16"
           viewBox="0 0 24 24"

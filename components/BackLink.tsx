@@ -14,6 +14,7 @@ export function BackLink({ href, label }: BackLinkProps) {
   return (
     <Link href={href} className="album-header__back" aria-label={`Back to ${label}`}>
       <svg
+        aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"

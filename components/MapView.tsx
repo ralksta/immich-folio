@@ -151,7 +151,10 @@ export function MapView() {
 
   if (error) {
     return (
-      <div className="map-container__loading" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+      <div
+        className="map-container__loading"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}
+      >
         <p>{error}</p>
       </div>
     );
@@ -162,27 +165,30 @@ export function MapView() {
       {loading && (
         <div
           className="map-container__loading"
-          style={{ 
-            position: 'absolute', 
-            inset: 0, 
+          role="alert"
+          aria-live="polite"
+          style={{
+            position: 'absolute',
+            inset: 0,
             zIndex: 1000,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             background: 'rgba(0, 0, 0, 0.5)',
-            color: '#fff'
+            color: '#fff',
           }}
         >
-          <svg 
-            width="24" 
-            height="24" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
+          <svg
+            aria-hidden="true"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             style={{ animation: 'spin 1s linear infinite', marginBottom: '8px' }}
           >
             <circle cx="12" cy="12" r="10" strokeOpacity="0.25"></circle>
