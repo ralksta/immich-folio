@@ -96,7 +96,12 @@ export function authenticate(slug: string, password: string): string | null {
     isValid = verifyScrypt(password, sp.password);
   } else {
     // Plaintext fallback (deprecated)
-    isValid = password === sp.password;
+    // To prevent timing attacks when comparing variable-length secrets (like plaintext passwords in lib/auth.ts),
+    // hash both values with a fixed-length algorithm (e.g., SHA-256) before using crypto.timingSafeEqual.
+    const expectedHash = crypto.createHash('sha256').update(sp.password).digest();
+    const inputHash = crypto.createHash('sha256').update(password).digest();
+    isValid = crypto.timingSafeEqual(inputHash, expectedHash);
+
     if (isValid) {
       const recommendedHash = generateScryptHash(sp.password);
       console.warn(
