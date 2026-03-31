@@ -93,7 +93,7 @@ export function DevToolbar() {
     // Update accent + fonts
     const accent = PRESET_ACCENTS[p] || 'var(--accent-studio, #e60012)';
     setVar('--accent', accent);
-    // Note: since accent might be a CSS var, appending hex opacity won't work in all browsers if it's a var, 
+    // Note: since accent might be a CSS var, appending hex opacity won't work in all browsers if it's a var,
     // but we provide it for backward compatibility where possible. Or use color-mix if supported.
     // For now we set it to same var or use a generic dim if needed.
     setVar('--accent-dim', `color-mix(in srgb, ${accent} 12%, transparent)`);

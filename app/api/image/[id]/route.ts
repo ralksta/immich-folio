@@ -68,7 +68,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return new NextResponse(null, {
       status: 304,
       headers: {
-        'ETag': etag,
+        ETag: etag,
         'Cache-Control': 'public, max-age=31536000, immutable',
         'X-RateLimit-Remaining': String(remaining),
       },
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       : result.contentType,
     // Images are immutable once uploaded to Immich — cache aggressively
     'Cache-Control': 'public, max-age=31536000, immutable',
-    'ETag': etag,
+    ETag: etag,
     'X-RateLimit-Remaining': String(remaining),
   };
 

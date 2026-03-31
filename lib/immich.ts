@@ -73,6 +73,8 @@ export interface SubpageSummary {
 class ImmichClient {
   private hasLoggedAlbums = false;
   private pendingAlbumsPromise: Promise<ImmichAlbum[]> | null = null;
+  private pendingAlbumPromises = new Map<string, Promise<ImmichAlbum | null>>();
+  private pendingAssetPromises = new Map<string, Promise<ImmichAsset | null>>();
 
   private get config() {
     return getConfig();
@@ -269,6 +271,7 @@ class ImmichClient {
 
   /**
    * Get a single album with its assets.
+   * Uses Promise deduplication to prevent concurrent duplicate requests.
    */
   async getAlbum(albumId: string): Promise<ImmichAlbum | null> {
     // Security: only serve configured albums
@@ -281,18 +284,30 @@ class ImmichClient {
     const cached = cache.get<ImmichAlbum>(cacheKey);
     if (cached) return cached;
 
-    const album = await this.request<ImmichAlbum>(`/albums/${encodeURIComponent(albumId)}`);
-    if (!album) return null;
+    const pending = this.pendingAlbumPromises.get(albumId);
+    if (pending) return pending;
 
-    // Filter out trashed assets
-    album.assets = (album.assets || []).filter((a) => !a.isTrashed);
+    const promise = (async () => {
+      try {
+        const album = await this.request<ImmichAlbum>(`/albums/${encodeURIComponent(albumId)}`);
+        if (!album) return null;
 
-    const name = this.config.albumOverrides[album.id] ?? album.albumName;
-    album.albumName = name;
-    album.slug = slugify(name);
+        // Filter out trashed assets
+        album.assets = (album.assets || []).filter((a) => !a.isTrashed);
 
-    cache.set(cacheKey, album, this.config.cacheTtl);
-    return album;
+        const name = this.config.albumOverrides[album.id] ?? album.albumName;
+        album.albumName = name;
+        album.slug = slugify(name);
+
+        cache.set(cacheKey, album, this.config.cacheTtl);
+        return album;
+      } finally {
+        this.pendingAlbumPromises.delete(albumId);
+      }
+    })();
+
+    this.pendingAlbumPromises.set(albumId, promise);
+    return promise;
   }
 
   /**
@@ -324,17 +339,30 @@ class ImmichClient {
 
   /**
    * Get asset info including EXIF data.
+   * Uses Promise deduplication to prevent concurrent duplicate requests.
    */
   async getAssetInfo(assetId: string): Promise<ImmichAsset | null> {
     const cacheKey = `asset-${assetId}`;
     const cached = cache.get<ImmichAsset>(cacheKey);
     if (cached) return cached;
 
-    const asset = await this.request<ImmichAsset>(`/assets/${encodeURIComponent(assetId)}`);
-    if (!asset) return null;
+    const pending = this.pendingAssetPromises.get(assetId);
+    if (pending) return pending;
 
-    cache.set(cacheKey, asset, this.config.cacheTtl);
-    return asset;
+    const promise = (async () => {
+      try {
+        const asset = await this.request<ImmichAsset>(`/assets/${encodeURIComponent(assetId)}`);
+        if (!asset) return null;
+
+        cache.set(cacheKey, asset, this.config.cacheTtl);
+        return asset;
+      } finally {
+        this.pendingAssetPromises.delete(assetId);
+      }
+    })();
+
+    this.pendingAssetPromises.set(assetId, promise);
+    return promise;
   }
 
   /**
