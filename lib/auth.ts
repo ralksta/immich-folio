@@ -96,7 +96,11 @@ export function authenticate(slug: string, password: string): string | null {
     isValid = verifyScrypt(password, sp.password);
   } else {
     // Plaintext fallback (deprecated)
-    isValid = password === sp.password;
+    // Hash both to a fixed length before constant-time comparison to prevent timing and length attacks
+    const attemptHash = crypto.createHash('sha256').update(password).digest();
+    const storedHash = crypto.createHash('sha256').update(sp.password).digest();
+    isValid = crypto.timingSafeEqual(attemptHash, storedHash);
+
     if (isValid) {
       const recommendedHash = generateScryptHash(sp.password);
       console.warn(
