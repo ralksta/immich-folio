@@ -40,6 +40,7 @@ export function Footer() {
               aria-label="Instagram"
             >
               <svg
+                aria-hidden="true"
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"
@@ -58,6 +59,7 @@ export function Footer() {
           {footer?.email && (
             <a href={`mailto:${footer.email}`} className="footer__link" aria-label="Email">
               <svg
+                aria-hidden="true"
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"
@@ -81,6 +83,7 @@ export function Footer() {
               aria-label="Website"
             >
               <svg
+                aria-hidden="true"
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"
