@@ -73,6 +73,7 @@ export interface SubpageSummary {
 class ImmichClient {
   private hasLoggedAlbums = false;
   private pendingAlbumsPromise: Promise<ImmichAlbum[]> | null = null;
+  private pendingAlbumPromises = new Map<string, Promise<ImmichAlbum | null>>();
 
   private get config() {
     return getConfig();
@@ -281,18 +282,31 @@ class ImmichClient {
     const cached = cache.get<ImmichAlbum>(cacheKey);
     if (cached) return cached;
 
-    const album = await this.request<ImmichAlbum>(`/albums/${encodeURIComponent(albumId)}`);
-    if (!album) return null;
+    if (this.pendingAlbumPromises.has(albumId)) {
+      return this.pendingAlbumPromises.get(albumId)!;
+    }
 
-    // Filter out trashed assets
-    album.assets = (album.assets || []).filter((a) => !a.isTrashed);
+    const promise = (async () => {
+      try {
+        const album = await this.request<ImmichAlbum>(`/albums/${encodeURIComponent(albumId)}`);
+        if (!album) return null;
 
-    const name = this.config.albumOverrides[album.id] ?? album.albumName;
-    album.albumName = name;
-    album.slug = slugify(name);
+        // Filter out trashed assets
+        album.assets = (album.assets || []).filter((a) => !a.isTrashed);
 
-    cache.set(cacheKey, album, this.config.cacheTtl);
-    return album;
+        const name = this.config.albumOverrides[album.id] ?? album.albumName;
+        album.albumName = name;
+        album.slug = slugify(name);
+
+        cache.set(cacheKey, album, this.config.cacheTtl);
+        return album;
+      } finally {
+        this.pendingAlbumPromises.delete(albumId);
+      }
+    })();
+
+    this.pendingAlbumPromises.set(albumId, promise);
+    return promise;
   }
 
   /**
