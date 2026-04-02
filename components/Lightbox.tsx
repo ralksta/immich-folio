@@ -71,6 +71,15 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
     preload(currentIndex - 1);
   }, [currentIndex, assets]);
 
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-focus the close button when lightbox opens
+  useEffect(() => {
+    if (mounted && closeButtonRef.current) {
+      closeButtonRef.current.focus();
+    }
+  }, [mounted]);
+
   const { handleTouchStart, handleTouchEnd } = useSwipe({
     onSwipeLeft: onNext,
     onSwipeRight: onPrev,
@@ -109,7 +118,13 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
       aria-label="Image viewer"
     >
       {/* Close button */}
-      <button className={styles.close} onClick={onClose} aria-label="Close" title="Close (Esc)">
+      <button
+        ref={closeButtonRef}
+        className={styles.close}
+        onClick={onClose}
+        aria-label="Close"
+        title="Close (Esc)"
+      >
         <svg
           aria-hidden="true"
           viewBox="0 0 24 24"
