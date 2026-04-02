@@ -15,9 +15,17 @@ export async function GET(request: NextRequest) {
   const ip = getClientIp(request);
   const { theme, rateLimitRpm } = getConfig();
 
-  const { success } = checkRateLimit(`og:${ip}`, rateLimitRpm);
+  const { success, remaining, resetAt } = checkRateLimit(`og:${ip}`, rateLimitRpm);
   if (!success) {
-    return new NextResponse('Too many requests', { status: 429 });
+    const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
+    return new NextResponse('Too many requests', {
+      status: 429,
+      headers: {
+        'Retry-After': String(retryAfter),
+        'X-RateLimit-Limit': String(rateLimitRpm),
+        'X-RateLimit-Remaining': String(remaining),
+      },
+    });
   }
 
   const { searchParams } = request.nextUrl;
