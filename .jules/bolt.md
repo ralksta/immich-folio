@@ -7,3 +7,8 @@
 
 **Learning:** When using `Promise.all` to fetch dependent data in parallel (e.g., getting multiple subpages and standalone albums that internally call a shared `getAlbums` function), the internal cache might not be populated in time. This leads to redundant concurrent network requests to the upstream server.
 **Action:** Implement Promise deduplication (request coalescing) by caching the pending Promise itself (e.g., in a `this.pendingPromise` class field) rather than just the final result. Return the pending Promise to subsequent callers until it resolves, ensuring only one network request is made.
+
+## 2024-07-02 - [Optimize memory allocation for base64 decoding]
+
+**Learning:** Node.js `Buffer` inherits directly from `Uint8Array`. When passing binary data to libraries that expect a `Uint8Array` (like `thumbhash`), wrapping a Node.js `Buffer` inside `new Uint8Array(Buffer.from(...))` creates a completely unnecessary memory copy and allocation of the underlying ArrayBuffer.
+**Action:** Return the `Buffer` instance directly when a `Uint8Array` is expected in Node.js environments. This saves memory allocation and speeds up operations, especially for functions that run frequently like `thumbHashToBlurDataUrl`.
