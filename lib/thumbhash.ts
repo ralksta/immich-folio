@@ -24,10 +24,14 @@ function setCache<K, V>(map: Map<K, V>, key: K, value: V) {
  * Fast base64 to Uint8Array decoder.
  * Uses native Buffer in Node.js/Edge environments (~10x faster)
  * and falls back to atob for browser client.
+ *
+ * Performance note: Buffer inherits from Uint8Array, so we can return
+ * it directly without wrapping it in a new Uint8Array(...) to prevent
+ * an unnecessary memory allocation and copy.
  */
 function decodeBase64(base64: string): Uint8Array {
   if (typeof Buffer !== 'undefined') {
-    return new Uint8Array(Buffer.from(base64, 'base64'));
+    return Buffer.from(base64, 'base64');
   }
   return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 }
