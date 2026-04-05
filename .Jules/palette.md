@@ -5,3 +5,7 @@
 ## 2024-05-25 - SVG Icon Accessibility
 **Learning:** Adding `aria-hidden="true"` to decorative `<svg>` icons within interactive elements (like `<button>` or `<a>`) that already have an `aria-label` is crucial. Otherwise, screen readers may read the raw vector nodes or fall back to confusing announcements in addition to the label. Similarly, when adding text to visual spinners, use `role="alert"` and `aria-live="polite"` on the container while hiding the SVG graphic.
 **Action:** When adding or modifying interactive elements with icon graphics, always ensure the graphic is explicitly hidden from screen readers using `aria-hidden="true"` if a text alternative (`aria-label`) is provided.
+
+## 2024-05-26 - Consolidation of Screen Reader Announcements for Interactive Cards
+**Learning:** For interactive card components (like album covers in a grid) that combine multiple pieces of information (e.g., a title, a photo count, an image), it's best to apply a single, comprehensive `aria-label` to the parent interactive container (the `<Link>` or `<button>`). To prevent screen readers from reading the content redundantly or without context, child visual elements (like titles or badges) should be hidden using `aria-hidden="true"`, and decorative images must have an empty `alt=""`.
+**Action:** When building custom interactive "cards" that link to content, use a comprehensive `aria-label` on the root interactive element and hide the inner textual/visual elements from assistive technology.
