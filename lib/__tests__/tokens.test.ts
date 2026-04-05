@@ -40,10 +40,23 @@ describe('tokens', () => {
   });
 
   describe('decodeAssetId', () => {
-    it('round-trips a valid UUID', () => {
+    it('round-trips a valid UUID (GCM)', () => {
       const token = encodeAssetId(SAMPLE_UUID);
       const decoded = decodeAssetId(token);
       expect(decoded).toBe(SAMPLE_UUID);
+    });
+
+    it('decodes legacy AES-256-CBC tokens for backwards compatibility', async () => {
+      const crypto = await import('crypto');
+      // Manually create a legacy CBC token
+      const authSecret = 'test-auth-secret-32-chars-long-min';
+      const key = crypto.createHash('sha256').update(authSecret).digest();
+      const iv = crypto.createHash('sha256').update(SAMPLE_UUID).digest().subarray(0, 16);
+      const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+      const encrypted = Buffer.concat([cipher.update(SAMPLE_UUID, 'utf8'), cipher.final()]);
+      const legacyToken = Buffer.concat([iv, encrypted]).toString('base64url');
+
+      expect(decodeAssetId(legacyToken)).toBe(SAMPLE_UUID);
     });
 
     it('returns null for a garbage string', () => {
