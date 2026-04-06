@@ -25,6 +25,11 @@ const nextConfig: NextConfig = {
             value: 'max-age=31536000; includeSubDomains',
           },
           { key: 'X-DNS-Prefetch-Control', value: 'off' },
+          {
+            key: 'Content-Security-Policy-Report-Only',
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.basemaps.cartocdn.com; font-src 'self'; connect-src 'self';",
+          },
         ],
       },
     ];
