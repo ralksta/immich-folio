@@ -29,12 +29,13 @@ function getKey(): Buffer {
 export function encodeAssetId(assetId: string): string {
   const key = getKey();
   // Deterministic IV from asset ID (same input → same token).
-  // SHA-256 slice → first 16 bytes. MD5 was deprecated for cryptographic use.
-  const iv = crypto.createHash('sha256').update(assetId).digest().subarray(0, 16);
-  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+  // SHA-256 slice → first 12 bytes. MD5 was deprecated for cryptographic use.
+  const iv = crypto.createHash('sha256').update(assetId).digest().subarray(0, 12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
   const encrypted = Buffer.concat([cipher.update(assetId, 'utf8'), cipher.final()]);
-  // Compact: base64url(iv + ciphertext)
-  return Buffer.concat([iv, encrypted]).toString('base64url');
+  const authTag = cipher.getAuthTag();
+  // Compact: base64url(iv + authTag + ciphertext)
+  return Buffer.concat([iv, authTag, encrypted]).toString('base64url');
 }
 
 /**
@@ -45,18 +46,37 @@ export function decodeAssetId(token: string): string | null {
   try {
     const key = getKey();
     const data = Buffer.from(token, 'base64url');
-    if (data.length < 17) return null; // iv(16) + at least 1 byte
-
-    const iv = data.subarray(0, 16);
-    const encrypted = data.subarray(16);
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-    const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]).toString(
-      'utf8',
-    );
-
-    // Validate it looks like a UUID
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(decrypted) ? decrypted : null;
+
+    // Try GCM first (iv: 12, authTag: 16, encrypted: >=1)
+    if (data.length >= 29) {
+      try {
+        const iv = data.subarray(0, 12);
+        const authTag = data.subarray(12, 28);
+        const encrypted = data.subarray(28);
+        const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+        decipher.setAuthTag(authTag);
+        const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]).toString(
+          'utf8',
+        );
+        if (uuidRegex.test(decrypted)) return decrypted;
+      } catch {
+        // Fall back to CBC if GCM fails
+      }
+    }
+
+    // Legacy fallback: CBC (iv: 16, encrypted: >=1)
+    if (data.length >= 17) {
+      const iv = data.subarray(0, 16);
+      const encrypted = data.subarray(16);
+      const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+      const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]).toString(
+        'utf8',
+      );
+      if (uuidRegex.test(decrypted)) return decrypted;
+    }
+
+    return null;
   } catch {
     return null;
   }
