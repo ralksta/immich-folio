@@ -40,10 +40,25 @@ describe('tokens', () => {
   });
 
   describe('decodeAssetId', () => {
-    it('round-trips a valid UUID', () => {
+    it('round-trips a valid UUID (aes-256-gcm)', () => {
       const token = encodeAssetId(SAMPLE_UUID);
       const decoded = decodeAssetId(token);
       expect(decoded).toBe(SAMPLE_UUID);
+    });
+
+    it('correctly decodes legacy aes-256-cbc tokens', () => {
+      // This token was generated with aes-256-cbc for SAMPLE_UUID with the mock authSecret
+      // 'test-auth-secret-32-chars-long-min'
+      const legacyToken = 'o6nh7ZcyyrKIaBJ74A8c6RIsO99JKNIh96zjIqE8bl9VLmdQBiqVXAbjpZvJ9-d1beN1PCjzeeyhFcewCM8Szw';
+      const decoded = decodeAssetId(legacyToken);
+      expect(decoded).toBe(SAMPLE_UUID);
+    });
+
+    it('returns null for an invalid gcm token (bad tag/ciphertext)', () => {
+      const token = encodeAssetId(SAMPLE_UUID);
+      // Mangle the last character
+      const badToken = token.slice(0, -1) + (token.endsWith('a') ? 'b' : 'a');
+      expect(decodeAssetId(badToken)).toBeNull();
     });
 
     it('returns null for a garbage string', () => {

@@ -9,3 +9,7 @@
 **Vulnerability:** Comparing variable-length plaintext passwords using strict equality (`===`) or `crypto.timingSafeEqual` with unequal lengths, which leaks length information and enables timing attacks.
 **Learning:** When comparing variable-length secrets (like plaintext fallback passwords), both values must be hashed to a fixed-length algorithm (like SHA-256) first to ensure identical input lengths for the secure comparison, preventing side-channel leaks.
 **Prevention:** Always hash variable-length secrets to a fixed length before passing them to `crypto.timingSafeEqual`.
+## 2026-04-09 - Upgrade AES-CBC to Authenticated AES-GCM for tokens
+**Vulnerability:** Deterministic AES-256-CBC without a MAC (Message Authentication Code) was used for encoding Asset IDs. This configuration is vulnerable to padding oracle attacks and ciphertext tampering.
+**Learning:** Legacy tokens in production will break if the decryption algorithm length checks are not handled gracefully. Since AES-256-CBC payloads are 64 bytes (base64url decoded) and AES-256-GCM (with 16-byte auth tag) are 68 bytes, we can safely fallback to AES-CBC for exactly 64-byte payloads without needing explicit versioning bytes in the payload.
+**Prevention:** Always use authenticated encryption (like AES-GCM or ChaCha20-Poly1305) when encrypting data, even if it is simply for obfuscation.

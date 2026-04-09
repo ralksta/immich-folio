@@ -31,10 +31,11 @@ export function encodeAssetId(assetId: string): string {
   // Deterministic IV from asset ID (same input → same token).
   // SHA-256 slice → first 16 bytes. MD5 was deprecated for cryptographic use.
   const iv = crypto.createHash('sha256').update(assetId).digest().subarray(0, 16);
-  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
   const encrypted = Buffer.concat([cipher.update(assetId, 'utf8'), cipher.final()]);
-  // Compact: base64url(iv + ciphertext)
-  return Buffer.concat([iv, encrypted]).toString('base64url');
+  const authTag = cipher.getAuthTag();
+  // Compact: base64url(iv + authTag + ciphertext)
+  return Buffer.concat([iv, authTag, encrypted]).toString('base64url');
 }
 
 /**
@@ -48,11 +49,22 @@ export function decodeAssetId(token: string): string | null {
     if (data.length < 17) return null; // iv(16) + at least 1 byte
 
     const iv = data.subarray(0, 16);
-    const encrypted = data.subarray(16);
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-    const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]).toString(
-      'utf8',
-    );
+    let decrypted: string;
+
+    // aes-256-gcm: iv(16) + authTag(16) + ciphertext(36) = 68 bytes
+    // aes-256-cbc: iv(16) + ciphertext(48) = 64 bytes
+    // Legacy fallback based on length:
+    if (data.length === 64) {
+      const encrypted = data.subarray(16);
+      const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+      decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8');
+    } else {
+      const authTag = data.subarray(16, 32);
+      const encrypted = data.subarray(32);
+      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+      decipher.setAuthTag(authTag);
+      decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8');
+    }
 
     // Validate it looks like a UUID
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
