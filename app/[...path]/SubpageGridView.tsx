@@ -27,12 +27,10 @@ interface SubpageGridViewProps {
 
 function AlbumGrid({
   albums,
-  albumMap,
   placeholderMap,
   slug,
 }: {
   albums: SubpageAlbum[];
-  albumMap: Map<string, SubpageAlbum>;
   placeholderMap: Map<string, Placeholder | null>;
   slug: string;
 }) {
@@ -46,23 +44,28 @@ function AlbumGrid({
             href={`/${slug}/${album.slug}`}
             className="subpage-grid__item"
             style={ph?.dominantColor ? { backgroundColor: ph.dominantColor } : undefined}
+            aria-label={`${album.albumName}, ${album.assetCount} ${album.assetCount === 1 ? 'photo' : 'photos'}`}
           >
             {album.albumThumbnailAssetId ? (
               <Image
                 src={imageUrl(album.albumThumbnailAssetId, 'preview')}
-                alt={album.albumName}
+                alt=""
                 fill
                 sizes="(max-width: 600px) 100vw, (max-width: 1000px) 50vw, 33vw"
                 loading="lazy"
                 {...(ph ? { placeholder: 'blur' as const, blurDataURL: ph.blurDataURL } : {})}
               />
             ) : (
-              <div className="skeleton" style={{ width: '100%', height: '100%' }} />
+              <div
+                className="skeleton"
+                style={{ width: '100%', height: '100%' }}
+                aria-hidden="true"
+              />
             )}
-            <span className="subpage-grid__item-badge">
+            <span className="subpage-grid__item-badge" aria-hidden="true">
               {album.assetCount} {album.assetCount === 1 ? 'photo' : 'photos'}
             </span>
-            <div className="subpage-grid__item-overlay">
+            <div className="subpage-grid__item-overlay" aria-hidden="true">
               <span className="subpage-grid__item-title">{album.albumName}</span>
               <span className="subpage-grid__item-count">
                 {album.assetCount} {album.assetCount === 1 ? 'photo' : 'photos'}
@@ -126,23 +129,13 @@ export function SubpageGridView({
                 {sec.description && <p className="subpage-section__desc">{sec.description}</p>}
                 <div className="subpage-section__rule" aria-hidden="true" />
               </header>
-              <AlbumGrid
-                albums={sectionAlbums}
-                albumMap={albumMap}
-                placeholderMap={placeholderMap}
-                slug={slug}
-              />
+              <AlbumGrid albums={sectionAlbums} placeholderMap={placeholderMap} slug={slug} />
             </section>
           );
         })
       ) : (
         /* Flat layout (no sections) */
-        <AlbumGrid
-          albums={albums}
-          albumMap={albumMap}
-          placeholderMap={placeholderMap}
-          slug={slug}
-        />
+        <AlbumGrid albums={albums} placeholderMap={placeholderMap} slug={slug} />
       )}
     </div>
   );
