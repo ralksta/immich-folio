@@ -35,7 +35,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     console.warn(
       `[Image API] ⚠️ Rate limit exceeded for IP: ${ip} (UA: ${userAgent}). Retry after ${retryAfter}s`,
     );
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(retryAfter),
+          'X-RateLimit-Limit': String(getConfig().rateLimitRpm),
+          'X-RateLimit-Remaining': String(remaining),
+        },
+      },
+    );
   }
 
   const { id: token } = await params;

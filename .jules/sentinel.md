@@ -9,3 +9,7 @@
 **Vulnerability:** Comparing variable-length plaintext passwords using strict equality (`===`) or `crypto.timingSafeEqual` with unequal lengths, which leaks length information and enables timing attacks.
 **Learning:** When comparing variable-length secrets (like plaintext fallback passwords), both values must be hashed to a fixed-length algorithm (like SHA-256) first to ensure identical input lengths for the secure comparison, preventing side-channel leaks.
 **Prevention:** Always hash variable-length secrets to a fixed length before passing them to `crypto.timingSafeEqual`.
+## 2026-04-10 - Standardize Rate Limit Response Headers
+**Vulnerability:** Rate limits were not sending Retry-After and X-RateLimit headers. Unhandled variables would crash routes on rejection.
+**Learning:** Destructuring assignment on Rate Limit checks must be careful not to introduce unhandled exceptions. Destructure carefully or use the object directly. Providing remaining and resetAt on Rate Limits lets users effectively implement a retry/backoff mechanism.
+**Prevention:** Carefully verify that variables are declared and bound before reading them. Add rate limit response headers on 429 requests.
