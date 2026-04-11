@@ -74,6 +74,7 @@ class ImmichClient {
   private hasLoggedAlbums = false;
   private pendingAlbumsPromise: Promise<ImmichAlbum[]> | null = null;
   private pendingAlbumPromises = new Map<string, Promise<ImmichAlbum | null>>();
+  private pendingAssetPromises = new Map<string, Promise<ImmichAsset | null>>();
 
   private get config() {
     return getConfig();
@@ -344,11 +345,26 @@ class ImmichClient {
     const cached = cache.get<ImmichAsset>(cacheKey);
     if (cached) return cached;
 
-    const asset = await this.request<ImmichAsset>(`/assets/${encodeURIComponent(assetId)}`);
-    if (!asset) return null;
+    // Promise deduplication: prevent concurrent requests for the same asset
+    // by returning the pending promise to subsequent callers.
+    if (this.pendingAssetPromises.has(assetId)) {
+      return this.pendingAssetPromises.get(assetId)!;
+    }
 
-    cache.set(cacheKey, asset, this.config.cacheTtl);
-    return asset;
+    const promise = (async () => {
+      try {
+        const asset = await this.request<ImmichAsset>(`/assets/${encodeURIComponent(assetId)}`);
+        if (!asset) return null;
+
+        cache.set(cacheKey, asset, this.config.cacheTtl);
+        return asset;
+      } finally {
+        this.pendingAssetPromises.delete(assetId);
+      }
+    })();
+
+    this.pendingAssetPromises.set(assetId, promise);
+    return promise;
   }
 
   /**
