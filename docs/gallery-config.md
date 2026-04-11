@@ -64,8 +64,8 @@ subpages:
     albums:
       - 55555555-5555-5555-5555-555555555555
       - 66666666-6666-6666-6666-666666666666:
-          title: "Private Highlights"
-          password: "album-secret-123" # Optional: album-level protection
+          title: 'Private Highlights'
+          password: 'album-secret-123' # Optional: album-level protection
 ```
 
 Alternatively, you can use the object notation (recommended):
@@ -99,7 +99,7 @@ albums:
   - 'album-uuid': My Title # → displays "My Title" instead
   - 'album-uuid':
       title: My Private Title
-      password: "secure-password" # → adds a password gate to this specific album
+      password: 'secure-password' # → adds a password gate to this specific album
 ```
 
 **Full example:**
