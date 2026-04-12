@@ -12,7 +12,12 @@
 import { NextRequest } from 'next/server';
 
 export function getClientIp(request: NextRequest): string {
+  // Prefer the framework-provided IP which is often safely populated
+  // on trusted platforms (like Vercel). Fallback to headers only if necessary.
+  // Note: relying purely on headers makes the app vulnerable to IP spoofing
+  // if not behind a trusted proxy.
   return (
+    request.ip ??
     request.headers.get('x-real-ip') ??
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
     'unknown'

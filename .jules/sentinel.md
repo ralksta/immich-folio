@@ -9,3 +9,8 @@
 **Vulnerability:** Comparing variable-length plaintext passwords using strict equality (`===`) or `crypto.timingSafeEqual` with unequal lengths, which leaks length information and enables timing attacks.
 **Learning:** When comparing variable-length secrets (like plaintext fallback passwords), both values must be hashed to a fixed-length algorithm (like SHA-256) first to ensure identical input lengths for the secure comparison, preventing side-channel leaks.
 **Prevention:** Always hash variable-length secrets to a fixed length before passing them to `crypto.timingSafeEqual`.
+
+## 2024-05-18 - [Padding Oracle Risk in Obfuscation Tokens]
+**Vulnerability:** Deterministic AES-256-CBC token encryption without authentication tags (e.g. HMAC) exposes the app to padding oracle attacks. Since these tokens obfuscate asset IDs via URL parameters, attackers might manipulate the ciphertext and observe server responses.
+**Learning:** Even for simple obfuscation (non-k-anonymous caching), deterministic encryption should use an authenticated mode like AES-256-GCM. Appending the auth tag enables validation before decryption.
+**Prevention:** Upgrade legacy AES-256-CBC tokens to AES-256-GCM. Retain backward compatibility by trying GCM first (by validating buffer lengths and catching errors) before falling back to CBC for legacy tokens.

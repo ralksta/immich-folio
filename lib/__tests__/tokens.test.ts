@@ -18,12 +18,13 @@ describe('tokens', () => {
   });
 
   describe('encodeAssetId', () => {
-    it('produces a non-empty base64url string', () => {
+    it('produces a non-empty base64url string with v2 prefix', () => {
       const token = encodeAssetId(SAMPLE_UUID);
       expect(token).toBeTruthy();
       expect(typeof token).toBe('string');
-      // base64url characters only
-      expect(token).toMatch(/^[A-Za-z0-9_-]+$/);
+      expect(token.startsWith('v2:')).toBe(true);
+      // base64url characters only for the payload
+      expect(token.slice(3)).toMatch(/^[A-Za-z0-9_-]+$/);
     });
 
     it('is deterministic — same input yields same token', () => {
