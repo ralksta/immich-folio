@@ -31,6 +31,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
   const { exifData, exifLoading, fetchExif, clearExif } = useExif();
   const [imageLoaded, setImageLoaded] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
 
   const current = assets[currentIndex];
   const [mounted, setMounted] = useState(false);
@@ -39,6 +40,13 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Auto-focus the close button when the modal mounts
+  useEffect(() => {
+    if (mounted) {
+      closeBtnRef.current?.focus();
+    }
+  }, [mounted]);
 
   // Reset EXIF data when switching images; refetch if panel is open
   useEffect(() => {
@@ -109,7 +117,13 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
       aria-label="Image viewer"
     >
       {/* Close button */}
-      <button className={styles.close} onClick={onClose} aria-label="Close" title="Close (Esc)">
+      <button
+        ref={closeBtnRef}
+        className={styles.close}
+        onClick={onClose}
+        aria-label="Close"
+        title="Close (Esc)"
+      >
         <svg
           aria-hidden="true"
           viewBox="0 0 24 24"
