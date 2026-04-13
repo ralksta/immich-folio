@@ -5,3 +5,7 @@
 ## 2024-05-25 - SVG Icon Accessibility
 **Learning:** Adding `aria-hidden="true"` to decorative `<svg>` icons within interactive elements (like `<button>` or `<a>`) that already have an `aria-label` is crucial. Otherwise, screen readers may read the raw vector nodes or fall back to confusing announcements in addition to the label. Similarly, when adding text to visual spinners, use `role="alert"` and `aria-live="polite"` on the container while hiding the SVG graphic.
 **Action:** When adding or modifying interactive elements with icon graphics, always ensure the graphic is explicitly hidden from screen readers using `aria-hidden="true"` if a text alternative (`aria-label`) is provided.
+
+## 2026-04-13 - Focus-Visible for Custom Elements
+**Learning:** Custom interactive elements semantically marked as buttons (e.g., `<div role="button" tabIndex={0}>`) do not automatically inherit native `<button>` focus-visible styles. This breaks keyboard accessibility visually because users cannot tell which item is focused.
+**Action:** When creating custom elements with `role="button"` or other interactive roles, explicitly add them to the focus-visible style definitions (e.g., `[role="button"]:focus-visible`) alongside native elements to ensure clear visual feedback.
