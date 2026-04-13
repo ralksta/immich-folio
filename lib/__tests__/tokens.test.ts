@@ -23,7 +23,7 @@ describe('tokens', () => {
       expect(token).toBeTruthy();
       expect(typeof token).toBe('string');
       // base64url characters only
-      expect(token).toMatch(/^[A-Za-z0-9_-]+$/);
+      expect(token).toMatch(/^v2:[A-Za-z0-9_-]+$/);
     });
 
     it('is deterministic — same input yields same token', () => {
@@ -59,5 +59,20 @@ describe('tokens', () => {
       const short = Buffer.from('shortdata').toString('base64url');
       expect(decodeAssetId(short)).toBeNull();
     });
+  });
+});
+
+describe('decodeAssetId legacy v1 support', () => {
+  it('decodes legacy v1 AES-256-CBC token', () => {
+    // Create a legacy v1 token manually since encodeAssetId now creates v2 tokens
+    const crypto = require('crypto');
+    const key = crypto.createHash('sha256').update('test-auth-secret-32-chars-long-min').digest();
+    const iv = crypto.createHash('sha256').update(SAMPLE_UUID).digest().subarray(0, 16);
+    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+    const encrypted = Buffer.concat([cipher.update(SAMPLE_UUID, 'utf8'), cipher.final()]);
+    const legacyToken = Buffer.concat([iv, encrypted]).toString('base64url');
+
+    const decoded = decodeAssetId(legacyToken);
+    expect(decoded).toBe(SAMPLE_UUID);
   });
 });
