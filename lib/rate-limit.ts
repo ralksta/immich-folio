@@ -12,8 +12,9 @@
 import { NextRequest } from 'next/server';
 
 export function getClientIp(request: NextRequest): string {
+  const ip = (request as NextRequest & { ip?: string }).ip;
   return (
-    request.ip ??
+    ip ??
     request.headers.get('x-real-ip') ??
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
     'unknown'
