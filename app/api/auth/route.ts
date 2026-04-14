@@ -41,9 +41,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (!isProtected(slug, type)) {
-      return NextResponse.json({
-        error: `${type === 'subpage' ? 'Subpage' : 'Album'} is not password-protected`,
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: `${type === 'subpage' ? 'Subpage' : 'Album'} is not password-protected`,
+        },
+        { status: 400 },
+      );
     }
 
     const setCookie = authenticate(slug, password, type);

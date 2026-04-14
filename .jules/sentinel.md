@@ -9,3 +9,7 @@
 **Vulnerability:** Comparing variable-length plaintext passwords using strict equality (`===`) or `crypto.timingSafeEqual` with unequal lengths, which leaks length information and enables timing attacks.
 **Learning:** When comparing variable-length secrets (like plaintext fallback passwords), both values must be hashed to a fixed-length algorithm (like SHA-256) first to ensure identical input lengths for the secure comparison, preventing side-channel leaks.
 **Prevention:** Always hash variable-length secrets to a fixed length before passing them to `crypto.timingSafeEqual`.
+## 2024-05-18 - [Prevent IP Spoofing in Rate Limiter]
+**Vulnerability:** Rate limiting implementation in `lib/rate-limit.ts` relied entirely on the `x-forwarded-for` and `x-real-ip` headers. Attackers can trivially spoof these headers, effectively bypassing brute-force protection mechanisms, particularly on sensitive auth endpoints (`app/api/auth/route.ts`).
+**Learning:** Never trust client-provided HTTP headers like `X-Forwarded-For` for security controls like rate-limiting. Framework-provided IP properties (e.g., `request.ip` in Next.js/Vercel) are properly resolved by the platform's trusted infrastructure, ensuring spoofed headers are overridden or ignored.
+**Prevention:** Always prioritize `request.ip` before falling back to HTTP headers when resolving client IP addresses for rate limiting or security logging.
