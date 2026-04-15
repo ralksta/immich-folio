@@ -18,12 +18,11 @@ describe('tokens', () => {
   });
 
   describe('encodeAssetId', () => {
-    it('produces a non-empty base64url string', () => {
+    it('produces a non-empty string with v2: prefix', () => {
       const token = encodeAssetId(SAMPLE_UUID);
       expect(token).toBeTruthy();
       expect(typeof token).toBe('string');
-      // base64url characters only
-      expect(token).toMatch(/^[A-Za-z0-9_-]+$/);
+      expect(token).toMatch(/^v2:[A-Za-z0-9_-]+$/);
     });
 
     it('is deterministic — same input yields same token', () => {
@@ -43,6 +42,20 @@ describe('tokens', () => {
     it('round-trips a valid UUID', () => {
       const token = encodeAssetId(SAMPLE_UUID);
       const decoded = decodeAssetId(token);
+      expect(decoded).toBe(SAMPLE_UUID);
+    });
+
+    it('round-trips a legacy aes-256-cbc token', async () => {
+      // Manually encode using legacy method
+      const crypto = await import('crypto');
+      const authSecret = 'test-auth-secret-32-chars-long-min';
+      const key = crypto.createHash('sha256').update(authSecret).digest();
+      const iv = crypto.createHash('sha256').update(SAMPLE_UUID).digest().subarray(0, 16);
+      const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+      const encrypted = Buffer.concat([cipher.update(SAMPLE_UUID, 'utf8'), cipher.final()]);
+      const legacyToken = Buffer.concat([iv, encrypted]).toString('base64url');
+
+      const decoded = decodeAssetId(legacyToken);
       expect(decoded).toBe(SAMPLE_UUID);
     });
 
