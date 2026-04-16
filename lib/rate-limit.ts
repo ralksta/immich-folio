@@ -12,8 +12,12 @@
 import { NextRequest } from 'next/server';
 
 export function getClientIp(request: NextRequest): string {
+  // In Next.js App Router (unlike middleware), `request.ip` might not be typed on `NextRequest`,
+  // but it is sometimes provided by the underlying framework (e.g. Vercel) dynamically.
+  // We use `any` casting or `headers` lookup to properly fetch the IP depending on the deployment.
+  const ip = (request as any).ip;
   return (
-    request.ip ??
+    ip ??
     request.headers.get('x-real-ip') ??
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
     'unknown'
