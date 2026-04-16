@@ -1,11 +1,4 @@
-## 2024-05-18 - Unprotected Dynamic Image Generation Endpoints
-
-**Vulnerability:** The `/api/og` route generates an `ImageResponse` dynamically using `next/og`. Because this operation is computationally expensive and memory-intensive, unauthenticated endpoints lacking rate limiting act as prominent Denial of Service (DoS) vectors. Attackers can flood the endpoint with varying parameters, forcing the server to continually spawn compute-heavy tasks until resources are exhausted and the instance crashes or latency spikes to unacceptable levels.
-
-**Learning:** Next.js dynamic endpoints that do not hit external upstream APIs or databases (like image generation with `next/og`) are often overlooked for rate limiting. Rate limiting is just as critical for protecting local compute resources as it is for protecting downstream API quotas or databases. Any route performing on-the-fly heavy processing must implement throttling.
-
-**Prevention:** Apply the shared `checkRateLimit` utility (from `@/lib/rate-limit`) to all computationally expensive endpoints (such as `next/og` usage), even if they do not explicitly query external services. Ensure `getConfig().rateLimitRpm` is passed as the threshold to maintain configurable global protection.
-## 2024-05-18 - [Preventing Timing Attacks on Variable-Length Secrets]
-**Vulnerability:** Comparing variable-length plaintext passwords using strict equality (`===`) or `crypto.timingSafeEqual` with unequal lengths, which leaks length information and enables timing attacks.
-**Learning:** When comparing variable-length secrets (like plaintext fallback passwords), both values must be hashed to a fixed-length algorithm (like SHA-256) first to ensure identical input lengths for the secure comparison, preventing side-channel leaks.
-**Prevention:** Always hash variable-length secrets to a fixed length before passing them to `crypto.timingSafeEqual`.
+## 2024-05-18 - [Fix IP Spoofing in Rate Limiter]
+**Vulnerability:** Rate Limiting Bypass via IP Spoofing. The `getClientIp` function prioritized `x-real-ip` and `x-forwarded-for` HTTP headers over `request.ip`. Because HTTP headers can be easily manipulated by clients, attackers could inject forged headers to spoof their IP address and bypass rate limits, rendering brute-force protection and DoS mitigation ineffective.
+**Learning:** Next.js `NextRequest.ip` is populated accurately by the hosting platform in production environments (like Vercel). However, in local development, it might be undefined, leading developers to fallback to headers. Prioritizing easily manipulated headers over framework-provided trusted values creates a severe security risk.
+**Prevention:** Always prioritize framework-provided trusted IP variables (like `request.ip` or socket remote addresses) over client-provided headers (`x-forwarded-for`). If headers must be used as fallbacks (e.g., when behind a specific known reverse proxy), validate the headers against a list of trusted proxy IPs or ensure the proxy itself strictly overwrites them and strips client-injected values.

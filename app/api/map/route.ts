@@ -10,17 +10,16 @@ import { getConfig } from '@/lib/config';
 import { imageUrl } from '@/lib/urls';
 import { isAuthenticated } from '@/lib/auth';
 import { getMapData } from '@/lib/mapService';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  // Rate limit: 120 requests/minute per IP (map data is cached client-side; this guards against abuse)
-  const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
-    request.headers.get('x-real-ip') ??
-    '127.0.0.1';
-  const rl = checkRateLimit(ip, 120);
+  const config = getConfig();
+
+  // Rate limit: (map data is cached client-side; this guards against abuse)
+  const ip = getClientIp(request);
+  const rl = checkRateLimit(`map:${ip}`, config.rateLimitRpm);
   if (!rl.success) {
     return NextResponse.json(
       { error: 'Too many requests' },
@@ -28,14 +27,12 @@ export async function GET(request: NextRequest) {
         status: 429,
         headers: {
           'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)),
-          'X-RateLimit-Limit': '120',
+          'X-RateLimit-Limit': String(config.rateLimitRpm),
           'X-RateLimit-Remaining': '0',
         },
       },
     );
   }
-
-  const config = getConfig();
 
   if (!config.map) {
     return NextResponse.json({ error: 'Map is not enabled' }, { status: 404 });
