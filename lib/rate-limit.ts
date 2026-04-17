@@ -13,6 +13,7 @@ import { NextRequest } from 'next/server';
 
 export function getClientIp(request: NextRequest): string {
   return (
+    // @ts-expect-error - request.ip is removed from NextRequest type in v15 but may be populated by hosting providers
     request.ip ??
     request.headers.get('x-real-ip') ??
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
