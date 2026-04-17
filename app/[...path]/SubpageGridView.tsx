@@ -27,12 +27,11 @@ interface SubpageGridViewProps {
 
 function AlbumGrid({
   albums,
-  albumMap,
+
   placeholderMap,
   slug,
 }: {
   albums: SubpageAlbum[];
-  albumMap: Map<string, SubpageAlbum>;
   placeholderMap: Map<string, Placeholder | null>;
   slug: string;
 }) {
@@ -126,23 +125,13 @@ export function SubpageGridView({
                 {sec.description && <p className="subpage-section__desc">{sec.description}</p>}
                 <div className="subpage-section__rule" aria-hidden="true" />
               </header>
-              <AlbumGrid
-                albums={sectionAlbums}
-                albumMap={albumMap}
-                placeholderMap={placeholderMap}
-                slug={slug}
-              />
+              <AlbumGrid albums={sectionAlbums} placeholderMap={placeholderMap} slug={slug} />
             </section>
           );
         })
       ) : (
         /* Flat layout (no sections) */
-        <AlbumGrid
-          albums={albums}
-          albumMap={albumMap}
-          placeholderMap={placeholderMap}
-          slug={slug}
-        />
+        <AlbumGrid albums={albums} placeholderMap={placeholderMap} slug={slug} />
       )}
     </div>
   );

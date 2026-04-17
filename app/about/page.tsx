@@ -3,7 +3,7 @@
  * Reads content from content/about.md (frontmatter + markdown body).
  */
 
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import yaml from 'js-yaml';
 import Image from 'next/image';
@@ -22,7 +22,7 @@ interface AboutFrontmatter {
 
 function getAboutContent() {
   const filePath = join(process.cwd(), 'content', 'about.md');
-  if (!require('fs').existsSync(filePath)) {
+  if (!existsSync(filePath)) {
     return { meta: {} as AboutFrontmatter, body: '' };
   }
   const raw = readFileSync(filePath, 'utf-8');
