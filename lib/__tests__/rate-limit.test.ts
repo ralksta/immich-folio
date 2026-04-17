@@ -1,5 +1,38 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { NextRequest } from 'next/server';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+
+describe('getClientIp', () => {
+  it('prioritizes request.ip over headers', () => {
+    const req = new NextRequest('http://localhost');
+    // @ts-expect-error - overriding read-only property for testing
+    req.ip = '1.2.3.4';
+    req.headers.set('x-real-ip', '5.6.7.8');
+    req.headers.set('x-forwarded-for', '9.10.11.12');
+
+    expect(getClientIp(req)).toBe('1.2.3.4');
+  });
+
+  it('falls back to x-real-ip if request.ip is missing', () => {
+    const req = new NextRequest('http://localhost');
+    req.headers.set('x-real-ip', '5.6.7.8');
+    req.headers.set('x-forwarded-for', '9.10.11.12');
+
+    expect(getClientIp(req)).toBe('5.6.7.8');
+  });
+
+  it('falls back to x-forwarded-for if request.ip and x-real-ip are missing', () => {
+    const req = new NextRequest('http://localhost');
+    req.headers.set('x-forwarded-for', '9.10.11.12, 192.168.1.1');
+
+    expect(getClientIp(req)).toBe('9.10.11.12');
+  });
+
+  it('returns "unknown" if no IP is provided', () => {
+    const req = new NextRequest('http://localhost');
+    expect(getClientIp(req)).toBe('unknown');
+  });
+});
 
 describe('checkRateLimit', () => {
   // Use unique IP prefixes per test to avoid cross-contamination
