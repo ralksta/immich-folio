@@ -27,7 +27,10 @@ function setCache<K, V>(map: Map<K, V>, key: K, value: V) {
  */
 function decodeBase64(base64: string): Uint8Array {
   if (typeof Buffer !== 'undefined') {
-    return new Uint8Array(Buffer.from(base64, 'base64'));
+    // ⚡ Bolt: Return Buffer directly instead of wrapping in new Uint8Array.
+    // Buffer inherits from Uint8Array, so returning it directly prevents
+    // unnecessary memory allocation and copying.
+    return Buffer.from(base64, 'base64');
   }
   return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 }
