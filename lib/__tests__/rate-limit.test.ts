@@ -1,5 +1,48 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { NextRequest } from 'next/server';
+
+describe('getClientIp', () => {
+  it('prioritizes request.ip', () => {
+    const request = new NextRequest('http://localhost', {
+      headers: {
+        'x-real-ip': '2.2.2.2',
+        'x-forwarded-for': '3.3.3.3',
+      },
+    });
+    // @ts-expect-error - overriding read-only property for testing
+    request.ip = '1.1.1.1';
+
+    expect(getClientIp(request)).toBe('1.1.1.1');
+  });
+
+  it('falls back to x-real-ip if request.ip is absent', () => {
+    const request = new NextRequest('http://localhost', {
+      headers: {
+        'x-real-ip': '2.2.2.2',
+        'x-forwarded-for': '3.3.3.3',
+      },
+    });
+
+    expect(getClientIp(request)).toBe('2.2.2.2');
+  });
+
+  it('falls back to x-forwarded-for if request.ip and x-real-ip are absent', () => {
+    const request = new NextRequest('http://localhost', {
+      headers: {
+        'x-forwarded-for': '3.3.3.3, 4.4.4.4',
+      },
+    });
+
+    expect(getClientIp(request)).toBe('3.3.3.3');
+  });
+
+  it('falls back to unknown if no IP is found', () => {
+    const request = new NextRequest('http://localhost');
+
+    expect(getClientIp(request)).toBe('unknown');
+  });
+});
 
 describe('checkRateLimit', () => {
   // Use unique IP prefixes per test to avoid cross-contamination

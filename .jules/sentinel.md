@@ -9,3 +9,7 @@
 **Vulnerability:** Comparing variable-length plaintext passwords using strict equality (`===`) or `crypto.timingSafeEqual` with unequal lengths, which leaks length information and enables timing attacks.
 **Learning:** When comparing variable-length secrets (like plaintext fallback passwords), both values must be hashed to a fixed-length algorithm (like SHA-256) first to ensure identical input lengths for the secure comparison, preventing side-channel leaks.
 **Prevention:** Always hash variable-length secrets to a fixed length before passing them to `crypto.timingSafeEqual`.
+## 2024-05-25 - Rate Limit IP Spoofing
+**Vulnerability:** The rate limiter and Map API used `x-real-ip` and `x-forwarded-for` HTTP headers to determine the client IP without checking `request.ip`.
+**Learning:** This allows an attacker to easily spoof their IP address by injecting a custom `x-forwarded-for` header, bypassing rate limiting mechanisms, including the critical 10 RPM brute-force protection on the auth endpoint. `request.ip` represents the actual TCP connection IP or the IP populated by a trusted edge proxy (like Vercel/Next.js).
+**Prevention:** Always prioritize `request.ip` over HTTP headers for rate limiting and IP-based security controls. Centralize IP retrieval into a single, verified function (`getClientIp`) rather than inline header reading.

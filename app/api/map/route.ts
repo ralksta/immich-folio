@@ -10,16 +10,13 @@ import { getConfig } from '@/lib/config';
 import { imageUrl } from '@/lib/urls';
 import { isAuthenticated } from '@/lib/auth';
 import { getMapData } from '@/lib/mapService';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   // Rate limit: 120 requests/minute per IP (map data is cached client-side; this guards against abuse)
-  const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
-    request.headers.get('x-real-ip') ??
-    '127.0.0.1';
+  const ip = getClientIp(request);
   const rl = checkRateLimit(ip, 120);
   if (!rl.success) {
     return NextResponse.json(
