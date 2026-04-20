@@ -12,8 +12,11 @@
 import { NextRequest } from 'next/server';
 
 export function getClientIp(request: NextRequest): string {
+  // @ts-expect-error - request.ip may be populated by Vercel/proxies but was removed from NextRequest types
+  const ip = request.ip as string | undefined;
+
   return (
-    request.ip ??
+    ip ??
     request.headers.get('x-real-ip') ??
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
     'unknown'
