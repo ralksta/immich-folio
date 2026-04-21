@@ -12,7 +12,11 @@
 import { NextRequest } from 'next/server';
 
 export function getClientIp(request: NextRequest): string {
+  // @ts-expect-error - Next.js 15 removed request.ip but hosting platforms like Vercel still populate it
+  const ip = request.ip as string | undefined;
+
   return (
+    ip ??
     request.headers.get('x-real-ip') ??
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
     'unknown'
