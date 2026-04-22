@@ -33,31 +33,35 @@ export async function getMapData(): Promise<MapLocation[]> {
     albumMeta.set(a.id, { name: a.albumName, slug: a.slug, subpageSlug: sp?.slug });
   }
 
-  // Fetch full album data (with assets) for each
-  const fullAlbums = await Promise.all(albums.map((a) => immich.getAlbum(a.id)));
-
   // Bucket assets by city+country
   const buckets = new Map<
     string,
     { lats: number[]; lngs: number[]; count: number; coverAssetId: string; albumIds: Set<string> }
   >();
 
-  for (const album of fullAlbums) {
-    if (!album) continue;
-    for (const asset of album.assets) {
-      const exif = asset.exifInfo;
-      if (!exif?.latitude || !exif?.longitude || !exif?.city || !exif?.country) continue;
+  // Fetch full album data (with assets) for each in chunks to prevent OOM while maintaining speed
+  const CHUNK_SIZE = 10;
+  for (let i = 0; i < albums.length; i += CHUNK_SIZE) {
+    const chunk = albums.slice(i, i + CHUNK_SIZE);
+    const fullAlbumsChunk = await Promise.all(chunk.map((a) => immich.getAlbum(a.id)));
 
-      const key = `${exif.city}|${exif.country}`;
-      let bucket = buckets.get(key);
-      if (!bucket) {
-        bucket = { lats: [], lngs: [], count: 0, coverAssetId: asset.id, albumIds: new Set() };
-        buckets.set(key, bucket);
+    for (const album of fullAlbumsChunk) {
+      if (!album) continue;
+      for (const asset of album.assets) {
+        const exif = asset.exifInfo;
+        if (!exif?.latitude || !exif?.longitude || !exif?.city || !exif?.country) continue;
+
+        const key = `${exif.city}|${exif.country}`;
+        let bucket = buckets.get(key);
+        if (!bucket) {
+          bucket = { lats: [], lngs: [], count: 0, coverAssetId: asset.id, albumIds: new Set() };
+          buckets.set(key, bucket);
+        }
+        bucket.lats.push(exif.latitude);
+        bucket.lngs.push(exif.longitude);
+        bucket.count++;
+        bucket.albumIds.add(album.id);
       }
-      bucket.lats.push(exif.latitude);
-      bucket.lngs.push(exif.longitude);
-      bucket.count++;
-      bucket.albumIds.add(album.id);
     }
   }
 
