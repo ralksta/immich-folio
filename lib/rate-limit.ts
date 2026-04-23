@@ -67,10 +67,12 @@ export function checkRateLimit(
   // New window or expired
   if (!entry || now > entry.expiresAt) {
     if (store.size >= MAX_STORE_ENTRIES) {
-      // Store is full. Prevent adding new entries to mitigate cache flooding
-      // where an attacker spams spoofed IPs to evict legitimate users.
-      // Deny new unrecognized IPs to fail securely during an active flood.
-      return { success: false, remaining: 0, resetAt: now + windowMs };
+      // Store is full. Evict the oldest entry to prevent cache flooding
+      // DOS attacks, which could otherwise block all legitimate users.
+      const oldestKey = store.keys().next().value;
+      if (oldestKey !== undefined) {
+        store.delete(oldestKey);
+      }
     }
     const resetAt = now + windowMs;
     store.set(key, { count: 1, expiresAt: resetAt });

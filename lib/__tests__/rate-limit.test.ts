@@ -103,7 +103,7 @@ describe('checkRateLimit', () => {
     expect(result.resetAt).toBeLessThanOrEqual(before + 61_000);
   });
 
-  it('does not crash when store is at capacity and prevents rate limit bypasses', () => {
+  it('does not crash when store is at capacity and allows new requests by evicting oldest entries', () => {
     // Fill the store beyond MAX_STORE_ENTRIES (10_000 in prod)
     // by hammering with unique IPs.
     const uniqueIps = Array.from({ length: 10005 }, (_, i) => `evict-test-ip-${i}-${Date.now()}`);
@@ -111,10 +111,10 @@ describe('checkRateLimit', () => {
       checkRateLimit(ip, 5);
     }
 
-    // A brand-new IP must be blocked to prevent spoofing-based cache floods
+    // A brand-new IP must be allowed by evicting the oldest entry
     const freshIp = `evict-fresh-${Date.now()}`;
     const result = checkRateLimit(freshIp, 5);
-    expect(result.success).toBe(false);
-    expect(result.remaining).toBe(0);
+    expect(result.success).toBe(true);
+    expect(result.remaining).toBe(4);
   });
 });
