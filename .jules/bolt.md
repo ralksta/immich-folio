@@ -11,3 +11,7 @@
 
 **Learning:** `Buffer` inherits from `Uint8Array` in Node.js. Passing a `Buffer` into `new Uint8Array(...)` creates a completely new `ArrayBuffer` and copies all elements, which is an O(N) memory allocation and copy.
 **Action:** When decoding base64 strings or similar byte streams in Node.js where a `Uint8Array` is expected, return `Buffer.from(data, 'base64')` directly instead of wrapping it.
+## 2024-05-30 - [Chunked Promise.all for unbounded network requests]
+
+**Learning:** When fetching an unbounded or potentially large collection of items (like a list of photo albums) using a network API, mapping over the array with a single `Promise.all` can result in hundreds or thousands of simultaneous network requests. This can overwhelm the Node.js event loop, trigger downstream rate limiting or DoS protection, and cause Out of Memory (OOM) crashes as all response payloads are accumulated simultaneously in memory.
+**Action:** Replace single unbounded `Promise.all` calls with a `for` loop that slices the input array into chunks (e.g., 10 items per chunk). Call `Promise.all` on each chunk sequentially and push the results into an aggregator array. This balances concurrency (speed) with memory/network constraints.
