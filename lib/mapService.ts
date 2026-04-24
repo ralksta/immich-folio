@@ -34,7 +34,15 @@ export async function getMapData(): Promise<MapLocation[]> {
   }
 
   // Fetch full album data (with assets) for each
-  const fullAlbums = await Promise.all(albums.map((a) => immich.getAlbum(a.id)));
+  // Process in chunks of 10 to balance network speed and prevent Out of Memory (OOM)
+  // crashes from fetching thousands of assets simultaneously.
+  const fullAlbums: (Awaited<ReturnType<typeof immich.getAlbum>> | null)[] = [];
+  const chunkSize = 10;
+  for (let i = 0; i < albums.length; i += chunkSize) {
+    const chunk = albums.slice(i, i + chunkSize);
+    const chunkResults = await Promise.all(chunk.map((a) => immich.getAlbum(a.id)));
+    fullAlbums.push(...chunkResults);
+  }
 
   // Bucket assets by city+country
   const buckets = new Map<
