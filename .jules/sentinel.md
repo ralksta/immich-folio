@@ -13,3 +13,7 @@
 **Vulnerability:** The rate limiter implemented an LRU/FIFO map to track API request limits, evicting the oldest tracked IP when maximum capacity was reached. An attacker could flood the store with randomly spoofed IP headers, continuously evicting legitimate users' IP addresses. This allowed the attacker to effectively bypass their own rate limit and subject the upstream server to DoS.
 **Learning:** Evicting entries from a security control store (like a rate limit map) under pressure turns the limit into a revolving door if an attacker controls the keys (e.g., via IP spoofing headers).
 **Prevention:** Rather than evicting old entries when an in-memory rate limit store is full, the correct security posture is to fail closed (or block new keys) until entries naturally expire, preserving tracking on existing keys.
+## 2024-05-18 - IP Spoofing in API routes
+**Vulnerability:** The `/api/map` endpoint manually extracted the client IP address from the `x-forwarded-for` and `x-real-ip` headers instead of using a safe, centralized utility. If the proxy layer doesn't strip these headers properly, an attacker can spoof their IP address to bypass rate limits or access controls.
+**Learning:** Hardcoding HTTP header checks for client IPs introduces spoofing vulnerabilities.
+**Prevention:** Always use a central utility like `getClientIp(request)` that correctly handles framework quirks and prioritizes reliable sources (like `request.ip`) over spoofable headers.
