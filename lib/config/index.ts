@@ -47,17 +47,11 @@ export function getConfig(): AppConfig {
 
   const apiUrl = env.IMMICH_API_URL;
   const apiKey = env.IMMICH_API_KEY;
-  let { AUTH_SECRET } = env;
+  const { AUTH_SECRET } = env;
   if (!AUTH_SECRET) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error(
-        'SECURITY ERROR: AUTH_SECRET is not set in production. Please set a long random string as AUTH_SECRET in your .env.',
-      );
-    }
-    console.warn(
-      '\n⚠️  SECURITY WARNING: AUTH_SECRET is not set. Falling back to IMMICH_API_KEY.\n   Please set a long random string as AUTH_SECRET in your .env for better security.\n',
+    throw new Error(
+      'SECURITY ERROR: AUTH_SECRET is not set. Please set a long random string as AUTH_SECRET in your .env.',
     );
-    AUTH_SECRET = apiKey;
   }
   const authSecret = AUTH_SECRET;
 
