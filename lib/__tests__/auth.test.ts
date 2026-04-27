@@ -10,7 +10,7 @@ vi.mock('@/lib/config', () => ({
         name: 'Private',
         slug: 'private',
         albumIds: ['00000000-0000-0000-0000-000000000001'],
-        password: 'secret123',
+        password: 'scrypt:f1f58b70cdb41c088fa7732409aa68ba:025c02d3436d6c71cc24044909a56a26cfe2083133caaf395c2cf3a2cbd43b1f9ed75ef68aa4eb2a53912f9550e61a28dce63ada9ddab25f683039e678c1e1e5',
       },
       {
         name: 'Public',

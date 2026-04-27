@@ -35,15 +35,6 @@ function verifyScrypt(password: string, stored: string): boolean {
   }
 }
 
-/**
- * Helper to generate an scrypt string to print in logs.
- */
-function generateScryptHash(password: string): string {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
-  return `scrypt:${salt}:${hash}`;
-}
-
 function hmac(data: string): string {
   return crypto.createHmac('sha256', getConfig().authSecret).update(data).digest('hex');
 }
@@ -109,19 +100,14 @@ export function authenticate(
   if (storedPassword.startsWith('scrypt:')) {
     isValid = verifyScrypt(password, storedPassword);
   } else {
-    // Plaintext fallback (deprecated)
-    // Hash both to a fixed length before constant-time comparison to prevent timing and length attacks
-    const attemptHash = crypto.createHash('sha256').update(password).digest();
-    const storedHash = crypto.createHash('sha256').update(storedPassword).digest();
-    isValid = crypto.timingSafeEqual(attemptHash, storedHash);
-
-    if (isValid) {
-      const recommendedHash = generateScryptHash(storedHash.toString('hex'));
-      console.warn(
-        `\n⚠️  SECURITY WARNING: ${type === 'subpage' ? 'Subpage' : 'Album'} "${key}" is using a plaintext password in gallery.yaml.\n` +
-          `   Please replace it with this native secure hash:\n\n   ${recommendedHash}\n`,
-      );
-    }
+    // Plaintext fallback has been removed for security
+    console.error(
+      `\n❌ SECURITY ERROR: ${type === 'subpage' ? 'Subpage' : 'Album'} "${key}" is using a plaintext password.\n` +
+        `   Plaintext passwords are no longer supported.\n` +
+        `   Generate a secure scrypt hash using this command:\n\n` +
+        `   node -e "const c=require('crypto');const s=c.randomBytes(16).toString('hex');console.log('scrypt:'+s+':'+c.scryptSync('YOUR_PASSWORD',s,64).toString('hex'))"\n`,
+    );
+    return null;
   }
 
   if (!isValid) return null;
