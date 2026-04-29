@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { env } from '../env';
 import { loadYaml, validateUuid } from './parser';
 import { resolveTheme, VALID_LAYOUTS } from './theme';
@@ -16,6 +17,7 @@ export * from './schema';
 export * from './theme';
 
 let _config: AppConfig | null = null;
+let _devAuthSecret: string | null = null;
 
 /** Converts raw YAML grid overrides into a typed partial GridConfig. */
 export function buildSubpageGrid(raw?: {
@@ -55,9 +57,12 @@ export function getConfig(): AppConfig {
       );
     }
     console.warn(
-      '\n⚠️  SECURITY WARNING: AUTH_SECRET is not set. Falling back to IMMICH_API_KEY.\n   Please set a long random string as AUTH_SECRET in your .env for better security.\n',
+      '\n⚠️  SECURITY WARNING: AUTH_SECRET is not set. Using a temporary random secret.\n   Please set a long random string as AUTH_SECRET in your .env for persistent sessions.\n',
     );
-    AUTH_SECRET = apiKey;
+    if (!_devAuthSecret) {
+      _devAuthSecret = crypto.randomBytes(32).toString('hex');
+    }
+    AUTH_SECRET = _devAuthSecret;
   }
   const authSecret = AUTH_SECRET;
 
