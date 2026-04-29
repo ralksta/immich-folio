@@ -14,3 +14,7 @@
 ## 2026-04-24 - [OOM prevention through promise chunking]
 **Learning:** When fetching unbounded large collections (like photo albums and their assets), using concurrent `Promise.all` over the entire array can cause Node.js Out of Memory (OOM) crashes.
 **Action:** Instead of `Promise.all(array.map(...))`, use a chunked data fetching approach (e.g., `Promise.all` within a `for` loop processing chunks of e.g. 10 items) to balance memory constraints with concurrent network speed.
+## 2024-05-30 - [O(1) memory for large dataset map bucketing]
+
+**Learning:** When grouping large datasets (e.g., thousands of map coordinates into geographical clusters), array allocations (`[].push()`) followed by a `reduce` operation create significant O(N) memory overhead per bucket.
+**Action:** Replace memory-heavy array collections with running statistical accumulators (e.g., `latSum`, `lngSum`, `count`) directly on the bucket. This reduces bucket memory from O(N) to O(1) and completely eliminates expensive post-processing loops.
