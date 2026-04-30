@@ -9,3 +9,7 @@
 ## 2024-05-26 - Interactive Card ARIA Labels
 **Learning:** When building interactive card components that contain multiple pieces of text or badges (like titles and photo counts), screen readers may announce them in a fragmented or confusing way.
 **Action:** Always apply a comprehensive `aria-label` to the parent link/container that encompasses all meaningful visual data (e.g., titles and item counts). Use `aria-hidden="true"` on redundant text or visual child elements, and set `alt=""` on decorative images to consolidate screen reader announcements into a single, accurate interaction point.
+
+## 2024-06-12 - PhotoGrid ARIA Labels
+**Learning:** Interactive grid elements (acting as buttons) that trigger a modal lightbox must use `aria-haspopup="dialog"` to properly communicate to screen readers that clicking them will open a dialog. In addition, when these grid items have supplementary text containers (like EXIF data) and a comprehensive aria-label on the parent container, the child elements should be marked with `aria-hidden="true"` to prevent redundant/fragmented reading by screen readers.
+**Action:** When creating or updating interactive elements that open modals, always include `aria-haspopup="dialog"`. Ensure any internal supplementary text overlays are hidden from screen readers (`aria-hidden="true"`) if the parent element already provides an accurate `aria-label`.

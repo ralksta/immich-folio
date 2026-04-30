@@ -153,6 +153,7 @@ export function PhotoGrid({ assets, layout = 'masonry', gridStyle }: PhotoGridPr
             }
           }}
           role="button"
+          aria-haspopup="dialog"
           tabIndex={0}
           aria-label={`View photo ${index + 1}`}
           style={{
@@ -173,7 +174,7 @@ export function PhotoGrid({ assets, layout = 'masonry', gridStyle }: PhotoGridPr
               : {})}
           />
           {(asset.camera || asset.lens) && (
-            <div className="photo-grid__item-exif">
+            <div className="photo-grid__item-exif" aria-hidden="true">
               {[asset.camera, asset.lens, asset.focalLength].filter(Boolean).join(' · ')}
             </div>
           )}
