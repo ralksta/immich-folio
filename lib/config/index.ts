@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { env } from '../env';
 import { loadYaml, validateUuid } from './parser';
 import { resolveTheme, VALID_LAYOUTS } from './theme';
@@ -16,6 +17,7 @@ export * from './schema';
 export * from './theme';
 
 let _config: AppConfig | null = null;
+let _fallbackSecret: string | null = null;
 
 /** Converts raw YAML grid overrides into a typed partial GridConfig. */
 export function buildSubpageGrid(raw?: {
@@ -54,10 +56,13 @@ export function getConfig(): AppConfig {
         'SECURITY ERROR: AUTH_SECRET is not set in production. Please set a long random string as AUTH_SECRET in your .env.',
       );
     }
+    if (!_fallbackSecret) {
+      _fallbackSecret = crypto.randomBytes(32).toString('hex');
+    }
     console.warn(
-      '\n⚠️  SECURITY WARNING: AUTH_SECRET is not set. Falling back to IMMICH_API_KEY.\n   Please set a long random string as AUTH_SECRET in your .env for better security.\n',
+      '\n⚠️  SECURITY WARNING: AUTH_SECRET is not set. Generating a temporary random secret for this session.\n   Please set a long random string as AUTH_SECRET in your .env for better security.\n',
     );
-    AUTH_SECRET = apiKey;
+    AUTH_SECRET = _fallbackSecret;
   }
   const authSecret = AUTH_SECRET;
 
