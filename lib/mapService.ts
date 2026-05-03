@@ -45,9 +45,10 @@ export async function getMapData(): Promise<MapLocation[]> {
   }
 
   // Bucket assets by city+country
+  // ⚡ Bolt: Use running sum accumulators instead of arrays to reduce memory from O(N) to O(1)
   const buckets = new Map<
     string,
-    { lats: number[]; lngs: number[]; count: number; coverAssetId: string; albumIds: Set<string> }
+    { latSum: number; lngSum: number; count: number; coverAssetId: string; albumIds: Set<string> }
   >();
 
   for (const album of fullAlbums) {
@@ -59,11 +60,11 @@ export async function getMapData(): Promise<MapLocation[]> {
       const key = `${exif.city}|${exif.country}`;
       let bucket = buckets.get(key);
       if (!bucket) {
-        bucket = { lats: [], lngs: [], count: 0, coverAssetId: asset.id, albumIds: new Set() };
+        bucket = { latSum: 0, lngSum: 0, count: 0, coverAssetId: asset.id, albumIds: new Set() };
         buckets.set(key, bucket);
       }
-      bucket.lats.push(exif.latitude);
-      bucket.lngs.push(exif.longitude);
+      bucket.latSum += exif.latitude;
+      bucket.lngSum += exif.longitude;
       bucket.count++;
       bucket.albumIds.add(album.id);
     }
@@ -73,8 +74,8 @@ export async function getMapData(): Promise<MapLocation[]> {
   const locations: MapLocation[] = [];
   for (const [key, bucket] of buckets) {
     const [city, country] = key.split('|');
-    const lat = bucket.lats.reduce((a, b) => a + b, 0) / bucket.lats.length;
-    const lng = bucket.lngs.reduce((a, b) => a + b, 0) / bucket.lngs.length;
+    const lat = bucket.latSum / bucket.count;
+    const lng = bucket.lngSum / bucket.count;
     locations.push({
       city,
       country,
