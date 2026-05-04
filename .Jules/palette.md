@@ -9,3 +9,7 @@
 ## 2024-05-26 - Interactive Card ARIA Labels
 **Learning:** When building interactive card components that contain multiple pieces of text or badges (like titles and photo counts), screen readers may announce them in a fragmented or confusing way.
 **Action:** Always apply a comprehensive `aria-label` to the parent link/container that encompasses all meaningful visual data (e.g., titles and item counts). Use `aria-hidden="true"` on redundant text or visual child elements, and set `alt=""` on decorative images to consolidate screen reader announcements into a single, accurate interaction point.
+
+## 2024-05-27 - Lightbox Trigger ARIA Attributes
+**Learning:** Interactive elements that trigger a modal or lightbox (such as image grid items) must include the `aria-haspopup="dialog"` attribute to correctly inform assistive technologies of their behavior.
+**Action:** When creating custom interactive items that open a dialog or lightbox, always ensure `aria-haspopup="dialog"` is present on the triggering element to provide proper context to screen reader users.
