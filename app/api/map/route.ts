@@ -43,13 +43,22 @@ export async function GET(request: NextRequest) {
 
   const locations = await getMapData();
 
+  // Memoize auth checks to prevent redundant HMAC calculations
+  const authCache = new Map<string, boolean>();
+
   // Filter locations and albums based on auth
   const publicLocations = locations
     .map((loc) => {
       // Only keep albums the user is allowed to see
       const allowedAlbums = loc.albums.filter((a) => {
         if (!a.subpageSlug) return true; // Standalone albums are public
-        return isAuthenticated(a.subpageSlug, getCookie);
+
+        let isAuth = authCache.get(a.subpageSlug);
+        if (isAuth === undefined) {
+          isAuth = isAuthenticated(a.subpageSlug, getCookie);
+          authCache.set(a.subpageSlug, isAuth);
+        }
+        return isAuth;
       });
 
       if (allowedAlbums.length === 0) return null;
