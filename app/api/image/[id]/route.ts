@@ -81,10 +81,30 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
   }
 
+  // Strict Content-Type validation to prevent stored XSS
+  let contentType = result.contentType.toLowerCase().split(';')[0];
+  const safeTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'image/avif',
+    'image/heic',
+    'image/heif',
+    'image/tiff',
+    'video/mp4',
+    'video/webm',
+    'video/quicktime',
+  ];
+
+  if (result.contentType.includes('application/octet-stream')) {
+    contentType = 'image/jpeg';
+  } else if (!safeTypes.includes(contentType)) {
+    contentType = 'application/octet-stream';
+  }
+
   const headers: Record<string, string> = {
-    'Content-Type': result.contentType.includes('application/octet-stream')
-      ? 'image/jpeg'
-      : result.contentType,
+    'Content-Type': contentType,
     // Images are immutable once uploaded to Immich — cache aggressively
     'Cache-Control': 'public, max-age=31536000, immutable',
     ETag: etag,
