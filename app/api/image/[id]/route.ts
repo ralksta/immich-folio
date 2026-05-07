@@ -81,10 +81,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
   }
 
+  // Security: Prevent stored XSS by enforcing safe content types.
+  // SVGs, XML, and non-image/video types are forced to octet-stream to prevent script execution.
+  let safeContentType = result.contentType;
+  if (safeContentType.includes('application/octet-stream')) {
+    safeContentType = 'image/jpeg';
+  } else if (
+    (!safeContentType.startsWith('image/') && !safeContentType.startsWith('video/')) ||
+    safeContentType.includes('svg') ||
+    safeContentType.includes('xml')
+  ) {
+    safeContentType = 'application/octet-stream';
+  }
+
   const headers: Record<string, string> = {
-    'Content-Type': result.contentType.includes('application/octet-stream')
-      ? 'image/jpeg'
-      : result.contentType,
+    'Content-Type': safeContentType,
     // Images are immutable once uploaded to Immich — cache aggressively
     'Cache-Control': 'public, max-age=31536000, immutable',
     ETag: etag,
