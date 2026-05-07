@@ -9,3 +9,7 @@
 ## 2024-05-26 - Interactive Card ARIA Labels
 **Learning:** When building interactive card components that contain multiple pieces of text or badges (like titles and photo counts), screen readers may announce them in a fragmented or confusing way.
 **Action:** Always apply a comprehensive `aria-label` to the parent link/container that encompasses all meaningful visual data (e.g., titles and item counts). Use `aria-hidden="true"` on redundant text or visual child elements, and set `alt=""` on decorative images to consolidate screen reader announcements into a single, accurate interaction point.
+
+## 2025-05-07 - Skip-to-Content Navigation
+**Learning:** Keyboard users and screen readers need a way to bypass repetitive header navigation links. Without a visually hidden skip link that becomes visible on focus, these users must tab through every nav item before reaching the main content on every page load.
+**Action:** Always include a "Skip to content" link as the first focusable element in the DOM, anchored to the main content container. Ensure the main container has `tabIndex={-1}` so it can programmatically receive focus without interrupting normal tab flow.

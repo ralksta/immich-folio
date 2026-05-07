@@ -7,6 +7,27 @@
 
 @import url('./tokens.css');
 
+/* ── Skip to content link ─────────────────────────── */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 8px 16px;
+  z-index: 1000;
+  transition: top 0.2s ease;
+  border-bottom-right-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: 2px solid var(--text-primary);
+}
+
 /* ── Header / Navigation ──────────────────────────── */
 .header {
   position: fixed;

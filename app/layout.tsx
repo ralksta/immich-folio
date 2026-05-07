@@ -90,6 +90,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="stylesheet" href={fontsUrl} />
       </head>
       <body>
+        <a href="#main-content" className="skip-link">
+          Skip to content
+        </a>
         <header className="header">
           <nav className="header__nav">
             <Link href="/" className="header__nav-link">
@@ -107,7 +110,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ThemeToggle />
           </nav>
         </header>
-        <main className="main">{children}</main>
+        <main id="main-content" tabIndex={-1} className="main">
+          {children}
+        </main>
         <Footer />
         <ScrollToTop />
         {process.env.NODE_ENV === 'development' && <DevToolbarLoader />}
