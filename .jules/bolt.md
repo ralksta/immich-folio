@@ -18,3 +18,7 @@
 ## 2024-05-30 - [O(1) Memory Bucketing for Coordinate Aggregation]
 **Learning:** When bucketing or grouping large datasets (e.g., thousands of map coordinates into geographical clusters), array allocations (`[].push()`) followed by `reduce` operations create an O(N) memory overhead per bucket and expensive post-processing loops.
 **Action:** Replace memory-heavy array collections with running statistical accumulators (e.g., `latSum`, `lngSum`, `count`) directly on the bucket. This reduces bucket memory from O(N) to O(1).
+
+## 2024-05-31 - [Memoize Repeated Auth Checks in Loops]
+**Learning:** Checking authentication inside a loop (like `Array.prototype.filter`) over a large dataset can trigger redundant, expensive operations such as cryptographic comparisons (e.g. `crypto.timingSafeEqual`) or repeated configuration reads, particularly when many items share the same authorization context (e.g., `subpageSlug`).
+**Action:** Use a local, request-scoped `Map` to memoize the result of authentication checks. Store the check result against the shared context key (e.g., the slug) so subsequent items with the same context bypass the expensive logic.
