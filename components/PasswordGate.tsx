@@ -66,7 +66,28 @@ export default function PasswordGate({ slug, title, type = 'subpage' }: Password
             aria-describedby={error ? 'password-error' : undefined}
           />
           <button type="submit" className={styles.button} disabled={loading}>
-            {loading ? 'Verifying…' : 'Enter'}
+            {loading ? (
+              <>
+                <svg
+                  aria-hidden="true"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={styles.spinner}
+                >
+                  <circle cx="12" cy="12" r="10" strokeOpacity="0.25"></circle>
+                  <path d="M12 2a10 10 0 0 1 10 10"></path>
+                </svg>
+                Verifying…
+              </>
+            ) : (
+              'Enter'
+            )}
           </button>
         </form>
 
