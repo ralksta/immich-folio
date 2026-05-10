@@ -81,10 +81,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
   }
 
+  // 🛡️ SECURITY: Prevent Stored XSS via SVG/XML files.
+  // API routes bypass the global Next.js CSP, so we must strictly control the Content-Type.
+  let contentType = result.contentType.toLowerCase();
+  if (
+    contentType.includes('svg') ||
+    contentType.includes('xml') ||
+    contentType.includes('html') ||
+    (!contentType.startsWith('image/') && !contentType.startsWith('video/'))
+  ) {
+    contentType = 'application/octet-stream';
+  }
+
   const headers: Record<string, string> = {
-    'Content-Type': result.contentType.includes('application/octet-stream')
-      ? 'image/jpeg'
-      : result.contentType,
+    'Content-Type': contentType.includes('application/octet-stream') ? 'image/jpeg' : contentType,
     // Images are immutable once uploaded to Immich — cache aggressively
     'Cache-Control': 'public, max-age=31536000, immutable',
     ETag: etag,
