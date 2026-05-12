@@ -21,3 +21,8 @@
 **Vulnerability:** The plaintext password fallback logic incorrectly generated a recommended `scrypt` hash using the SHA256 hashed password rather than the raw `storedPassword`. This leads to generating an invalid `scrypt` hash that would fail authentication if the user updated their configuration with it. Furthermore, hashing variable-length secrets with SHA256 before `crypto.timingSafeEqual` prevents timing attacks, but using a non-keyed hash like SHA256 may leave it vulnerable. HMAC-SHA256 keyed with a secret provides better security.
 **Learning:** When generating a secure hash recommendation for users migrating from plaintext, ensure the raw input is used, not an intermediate hash intended for timing-safe comparison.
 **Prevention:** Generate the `scrypt` hash directly from the raw secret string (`storedPassword`). Always use HMAC keyed with a secret for hashing variable-length passwords prior to constant-time comparison.
+
+## 2024-05-12 - [Strict Content-Type Validation for Stored XSS Prevention]
+**Vulnerability:** The image proxy API endpoint served user-uploaded content (like SVGs or HTML) with its original content type, which could execute malicious scripts since API routes are excluded from Next.js CSP.
+**Learning:** Endpoints proxying user-generated files must strictly validate and sanitize the `Content-Type` header (forcing safe types or falling back to `application/octet-stream`) to prevent Stored XSS.
+**Prevention:** Always implement an explicit allowlist or strict fallback logic for `Content-Type` headers on proxied user content, evaluating positive mappings before negative fallbacks.
