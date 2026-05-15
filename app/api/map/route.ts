@@ -43,13 +43,25 @@ export async function GET(request: NextRequest) {
 
   const locations = await getMapData();
 
+  // ⚡ Bolt: Memoize auth checks to avoid redundant HMAC calculations
+  // when multiple locations/albums share the same subpage slug.
+  const authCache = new Map<string, boolean>();
+  const isSubpageAuthenticated = (slug: string) => {
+    let result = authCache.get(slug);
+    if (result === undefined) {
+      result = isAuthenticated(slug, getCookie);
+      authCache.set(slug, result);
+    }
+    return result;
+  };
+
   // Filter locations and albums based on auth
   const publicLocations = locations
     .map((loc) => {
       // Only keep albums the user is allowed to see
       const allowedAlbums = loc.albums.filter((a) => {
         if (!a.subpageSlug) return true; // Standalone albums are public
-        return isAuthenticated(a.subpageSlug, getCookie);
+        return isSubpageAuthenticated(a.subpageSlug);
       });
 
       if (allowedAlbums.length === 0) return null;
