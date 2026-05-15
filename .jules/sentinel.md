@@ -21,3 +21,8 @@
 **Vulnerability:** The plaintext password fallback logic incorrectly generated a recommended `scrypt` hash using the SHA256 hashed password rather than the raw `storedPassword`. This leads to generating an invalid `scrypt` hash that would fail authentication if the user updated their configuration with it. Furthermore, hashing variable-length secrets with SHA256 before `crypto.timingSafeEqual` prevents timing attacks, but using a non-keyed hash like SHA256 may leave it vulnerable. HMAC-SHA256 keyed with a secret provides better security.
 **Learning:** When generating a secure hash recommendation for users migrating from plaintext, ensure the raw input is used, not an intermediate hash intended for timing-safe comparison.
 **Prevention:** Generate the `scrypt` hash directly from the raw secret string (`storedPassword`). Always use HMAC keyed with a secret for hashing variable-length passwords prior to constant-time comparison.
+
+## 2024-05-24 - API Routes Excluded from Next.js CSP
+**Vulnerability:** Stored XSS via Image Proxy Content-Type bypass.
+**Learning:** The Content Security Policy (CSP) defined in `middleware.ts` uses a matcher that excludes API routes (`/api/*`). Therefore, endpoints serving user-controlled content (like `app/api/image/[id]/route.ts`) are not protected by CSP and must strictly validate `Content-Type`.
+**Prevention:** Implement strict positive validation of `Content-Type` headers in API routes (e.g., blocking `svg`/`xml`, enforcing `image/` or `video/`, falling back to `application/octet-stream`) using lowercase normalization to prevent case-sensitive bypasses.
