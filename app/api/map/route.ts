@@ -44,12 +44,18 @@ export async function GET(request: NextRequest) {
   const locations = await getMapData();
 
   // Filter locations and albums based on auth
+  const authCache = new Map<string, boolean>();
+
   const publicLocations = locations
     .map((loc) => {
       // Only keep albums the user is allowed to see
       const allowedAlbums = loc.albums.filter((a) => {
         if (!a.subpageSlug) return true; // Standalone albums are public
-        return isAuthenticated(a.subpageSlug, getCookie);
+
+        if (!authCache.has(a.subpageSlug)) {
+          authCache.set(a.subpageSlug, isAuthenticated(a.subpageSlug, getCookie));
+        }
+        return authCache.get(a.subpageSlug)!;
       });
 
       if (allowedAlbums.length === 0) return null;
