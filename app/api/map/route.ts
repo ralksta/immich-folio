@@ -43,13 +43,24 @@ export async function GET(request: NextRequest) {
 
   const locations = await getMapData();
 
+  // ⚡ Bolt: Memoize authentication checks per subpageSlug using a request-scoped Map.
+  // This avoids redundant expensive operations like HMAC calculations and configuration
+  // lookups within the map/filter loop when multiple items share the same context.
+  const authCache = new Map<string, boolean>();
+
   // Filter locations and albums based on auth
   const publicLocations = locations
     .map((loc) => {
       // Only keep albums the user is allowed to see
       const allowedAlbums = loc.albums.filter((a) => {
         if (!a.subpageSlug) return true; // Standalone albums are public
-        return isAuthenticated(a.subpageSlug, getCookie);
+
+        let isAuthed = authCache.get(a.subpageSlug);
+        if (isAuthed === undefined) {
+          isAuthed = isAuthenticated(a.subpageSlug, getCookie);
+          authCache.set(a.subpageSlug, isAuthed);
+        }
+        return isAuthed;
       });
 
       if (allowedAlbums.length === 0) return null;
