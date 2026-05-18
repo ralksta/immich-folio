@@ -200,8 +200,23 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
       </button>
 
       {/* Counter */}
-      <div className={styles.counter}>
-        {currentIndex + 1} / {assets.length}
+      <div className={styles.counter} aria-live="polite" aria-atomic="true">
+        <span
+          style={{
+            position: 'absolute',
+            width: 1,
+            height: 1,
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            borderWidth: 0,
+          }}
+        >
+          Photo {currentIndex + 1} of {assets.length}
+        </span>
+        <span aria-hidden="true">
+          {currentIndex + 1} / {assets.length}
+        </span>
       </div>
 
       {/* EXIF toggle */}
