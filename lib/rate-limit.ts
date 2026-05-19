@@ -33,12 +33,7 @@ export function getClientIp(request: NextRequest): string {
 
   // Fallback for self-hosted environments without explicit trusted proxies:
   // We have to trust headers as a best-effort, but this is vulnerable to spoofing.
-  return (
-    directIp ??
-    xRealIp ??
-    xForwardedFor?.split(',')[0].trim() ??
-    'unknown'
-  );
+  return directIp ?? xRealIp ?? xForwardedFor?.split(',')[0].trim() ?? 'unknown';
 }
 
 interface RateLimitEntry {
