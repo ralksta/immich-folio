@@ -81,10 +81,24 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
   }
 
+  const rawContentType = result.contentType.toLowerCase();
+  let contentType = rawContentType.includes('application/octet-stream')
+    ? 'image/jpeg'
+    : rawContentType;
+
+  // 🛡️ SECURITY: Prevent Stored XSS via malicious content types (e.g., SVG, HTML, XML)
+  // that could be uploaded to Immich and served via this un-CSP'd proxy route.
+  if (
+    contentType.includes('svg') ||
+    contentType.includes('html') ||
+    contentType.includes('xml') ||
+    (!contentType.startsWith('image/') && !contentType.startsWith('video/'))
+  ) {
+    contentType = 'application/octet-stream';
+  }
+
   const headers: Record<string, string> = {
-    'Content-Type': result.contentType.includes('application/octet-stream')
-      ? 'image/jpeg'
-      : result.contentType,
+    'Content-Type': contentType,
     // Images are immutable once uploaded to Immich — cache aggressively
     'Cache-Control': 'public, max-age=31536000, immutable',
     ETag: etag,
