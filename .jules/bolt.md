@@ -18,3 +18,7 @@
 ## 2024-05-30 - [O(1) Memory Bucketing for Coordinate Aggregation]
 **Learning:** When bucketing or grouping large datasets (e.g., thousands of map coordinates into geographical clusters), array allocations (`[].push()`) followed by `reduce` operations create an O(N) memory overhead per bucket and expensive post-processing loops.
 **Action:** Replace memory-heavy array collections with running statistical accumulators (e.g., `latSum`, `lngSum`, `count`) directly on the bucket. This reduces bucket memory from O(N) to O(1).
+
+## 2024-05-26 - Memoize Authentication Checks in Data Processing Loops
+**Learning:** The `isAuthenticated` function involves computing an HMAC-SHA256 token and performing a `timingSafeEqual` comparison. Calling this repeatedly inside `.map()` or `.filter()` loops on large collections with duplicate contexts (like `subpageSlug`) creates a significant CPU bottleneck.
+**Action:** Use request-scoped memoization (e.g., a `Map`) when iterating over collections that require authorization checks on repeated parent scopes to avoid redundant expensive cryptography and config lookups.

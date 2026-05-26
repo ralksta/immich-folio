@@ -43,13 +43,24 @@ export async function GET(request: NextRequest) {
 
   const locations = await getMapData();
 
+  // ⚡ Bolt: Memoize expensive authentication checks per request
+  // Avoids redundant HMAC calculations and config lookups for the same subpage
+  const authCache = new Map<string, boolean>();
+
   // Filter locations and albums based on auth
   const publicLocations = locations
     .map((loc) => {
       // Only keep albums the user is allowed to see
       const allowedAlbums = loc.albums.filter((a) => {
         if (!a.subpageSlug) return true; // Standalone albums are public
-        return isAuthenticated(a.subpageSlug, getCookie);
+
+        if (authCache.has(a.subpageSlug)) {
+          return authCache.get(a.subpageSlug)!;
+        }
+
+        const isAuth = isAuthenticated(a.subpageSlug, getCookie);
+        authCache.set(a.subpageSlug, isAuth);
+        return isAuth;
       });
 
       if (allowedAlbums.length === 0) return null;
