@@ -9,3 +9,7 @@
 ## 2024-05-26 - Interactive Card ARIA Labels
 **Learning:** When building interactive card components that contain multiple pieces of text or badges (like titles and photo counts), screen readers may announce them in a fragmented or confusing way.
 **Action:** Always apply a comprehensive `aria-label` to the parent link/container that encompasses all meaningful visual data (e.g., titles and item counts). Use `aria-hidden="true"` on redundant text or visual child elements, and set `alt=""` on decorative images to consolidate screen reader announcements into a single, accurate interaction point.
+
+## 2024-05-27 - Screen Reader Navigation Counters
+**Learning:** Numeric counters (like '1 / 5') in navigation components such as lightboxes are often not announced correctly or lack context for screen readers. Using `aria-live="polite"` and `aria-atomic="true"` on the counter wrapper, along with a visually hidden context-rich text (e.g., 'Photo 1 of 5'), ensures correct and meaningful announcements when navigating.
+**Action:** When building pagination or slider counters, always wrap them in an `aria-live` region, hide the visual numeric layout using `aria-hidden="true"`, and provide a visually hidden span with a descriptive text format.
