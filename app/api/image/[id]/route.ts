@@ -81,10 +81,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
   }
 
+  let safeType = result.contentType.toLowerCase();
+
+  if (safeType.includes('application/octet-stream')) {
+    safeType = 'image/jpeg';
+  } else if (safeType.includes('svg') || safeType.includes('xml')) {
+    safeType = 'application/octet-stream';
+  } else if (!safeType.startsWith('image/') && !safeType.startsWith('video/')) {
+    safeType = 'application/octet-stream';
+  }
+
   const headers: Record<string, string> = {
-    'Content-Type': result.contentType.includes('application/octet-stream')
-      ? 'image/jpeg'
-      : result.contentType,
+    'Content-Type': safeType,
     // Images are immutable once uploaded to Immich — cache aggressively
     'Cache-Control': 'public, max-age=31536000, immutable',
     ETag: etag,
