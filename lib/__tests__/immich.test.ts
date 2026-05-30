@@ -14,6 +14,7 @@ vi.mock('../config', async () => {
       standaloneAlbums: ['album-1'],
       subpages: [],
       albumOverrides: { 'album-1': 'Override Name' },
+      albumDescriptions: {},
       cacheTtl: 0,
     }),
   };

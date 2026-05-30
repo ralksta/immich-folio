@@ -44,8 +44,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
   }
 
+  let contentType = result.contentType.toLowerCase();
+  if (!contentType.startsWith('video/') && !contentType.startsWith('audio/')) {
+    contentType = 'application/octet-stream';
+  }
+
   const headers: Record<string, string> = {
-    'Content-Type': result.contentType,
+    'Content-Type': contentType,
     // Videos are immutable once uploaded — cache aggressively
     'Cache-Control': 'public, max-age=31536000, immutable',
     'Accept-Ranges': 'bytes',
