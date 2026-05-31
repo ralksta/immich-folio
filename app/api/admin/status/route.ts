@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 import { immich } from '@/lib/immich';
 import { cache } from '@/lib/cache';
-import { getBackups, readGalleryYaml, readSettingsYaml } from '@/lib/admin/yaml-service';
+import { listBackups, readGalleryYaml, readSettingsYaml } from '@/lib/admin/yaml-service';
 
 export async function GET() {
   if (!isAdminEnabled()) {
@@ -38,8 +38,8 @@ export async function GET() {
   }
 
   // 3. Backup Info
-  const galleryBackups = await getBackups('gallery.yaml');
-  const settingsBackups = await getBackups('settings.yaml');
+  const galleryBackups = await listBackups('gallery.yaml');
+  const settingsBackups = await listBackups('settings.yaml');
   const backupCount = galleryBackups.length + settingsBackups.length;
   
   // Find timestamp of the latest backup

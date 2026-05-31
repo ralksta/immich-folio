@@ -49,6 +49,12 @@ interface Settings {
   };
 }
 
+const PRESETS = ['studio', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
+const LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow'];
+const PHOTO_FRAMES = ['none', 'passepartout', 'shadow'];
+const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic'];
+const ASPECT_RATIOS = ['1', '3/2', '2/3', '16/9', 'auto'];
+
 const THEME_INFO: Record<string, { desc: string; label: string; accent: string; bg: string; tile: string }> = {
   studio: {
     label: 'Studio',
