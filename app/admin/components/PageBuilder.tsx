@@ -22,6 +22,97 @@ import { CSS } from '@dnd-kit/utilities';
 import AlbumPicker from './AlbumPicker';
 import AssetPicker from './AssetPicker';
 
+// ── Icons ──────────────────────────────────────────────────────
+const Icons = {
+  Drag: () => (
+    <svg width="12" height="18" viewBox="0 0 12 18" fill="currentColor" className="svg-icon svg-drag">
+      <circle cx="2" cy="2" r="1.5" />
+      <circle cx="2" cy="9" r="1.5" />
+      <circle cx="2" cy="16" r="1.5" />
+      <circle cx="10" cy="2" r="1.5" />
+      <circle cx="10" cy="9" r="1.5" />
+      <circle cx="10" cy="16" r="1.5" />
+    </svg>
+  ),
+  Edit: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  ),
+  Trash: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
+      <path d="M3 6h18" />
+      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+    </svg>
+  ),
+  Close: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  ),
+  Folder: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
+      <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+    </svg>
+  ),
+  Camera: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
+      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3Z" />
+      <circle cx="12" cy="13" r="3" />
+    </svg>
+  ),
+  ExternalLink: () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
+    </svg>
+  ),
+  Search: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  ),
+  Lock: () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
+      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  ),
+  Plus: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
+      <path d="M5 12h14M12 5v14" />
+    </svg>
+  ),
+  Home: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  ),
+  Copy: () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
+      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </svg>
+  ),
+  Check: () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  ),
+  Image: () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
+      <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+      <circle cx="9" cy="9" r="2" />
+      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+    </svg>
+  ),
+};
+
 // ── Types ──────────────────────────────────────────────────────
 interface AlbumEntry {
   id: string;
@@ -51,6 +142,13 @@ interface GalleryState {
   hero: string[];
   albums: AlbumEntry[];
   subpages: Subpage[];
+}
+
+interface ActiveEditAlbumAddress {
+  type: 'standalone' | 'subpage' | 'section';
+  subpageIndex?: number;
+  sectionIndex?: number;
+  albumIndex: number;
 }
 
 interface ImmichAlbumInfo {
@@ -136,11 +234,11 @@ function SortableHeroTile({
   return (
     <div ref={setNodeRef} style={style} className="hero-tile" {...attributes}>
       <div className="hero-tile-drag" {...listeners} title="Drag to reorder">
-        ⠿
+        <Icons.Drag />
       </div>
       <img src={`/api/admin/thumbnail/${id}`} alt="" loading="lazy" />
       <button className="hero-tile-remove" onClick={onRemove} title="Remove">
-        ×
+        <Icons.Close />
       </button>
       <span className="hero-tile-index">{index + 1}</span>
     </div>
@@ -156,7 +254,7 @@ function SortableAlbumCard({
   count,
   thumbnailId,
   onRemove,
-  onUpdate,
+  onEdit,
 }: {
   album: AlbumEntry;
   index: number;
@@ -164,7 +262,7 @@ function SortableAlbumCard({
   count: number;
   thumbnailId: string | null;
   onRemove: () => void;
-  onUpdate: (updates: Partial<AlbumEntry>) => void;
+  onEdit: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: `album-${album.id}-${index}`,
@@ -185,7 +283,7 @@ function SortableAlbumCard({
         count={count}
         thumbnailId={thumbnailId}
         onRemove={onRemove}
-        onUpdate={onUpdate}
+        onEdit={onEdit}
         dragListeners={listeners}
       />
     </div>
@@ -231,13 +329,15 @@ function SortableSubpageTile({
       {...attributes}
     >
       <div className="subpage-tile-drag" {...listeners} title="Drag to reorder">
-        ⠿
+        <Icons.Drag />
       </div>
       <div className="subpage-tile-cover">
         {firstThumb ? (
           <img src={`/api/admin/thumbnail/${firstThumb}`} alt="" loading="lazy" />
         ) : (
-          <div className="subpage-tile-placeholder">📂</div>
+          <div className="subpage-tile-placeholder">
+            <Icons.Folder />
+          </div>
         )}
       </div>
       <div className="subpage-tile-info">
@@ -265,8 +365,14 @@ export default function PageBuilder() {
     subpageIndex?: number;
     sectionIndex?: number;
   } | null>(null);
-  const [showHeroPicker, setShowHeroPicker] = useState(false);
+  const [heroPickerTarget, setHeroPickerTarget] = useState<{
+    albumId?: string;
+    onSelect: (assetId: string) => void;
+    currentAssetIds?: string[];
+    title?: string;
+  } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingAlbumAddress, setEditingAlbumAddress] = useState<ActiveEditAlbumAddress | null>(null);
 
   // DnD sensors
   const sensors = useSensors(
@@ -449,7 +555,7 @@ export default function PageBuilder() {
   // ── Hero Picker ──────────────────────────────────────────────
   function handleHeroSelect(assetId: string) {
     setGallery((g) => ({ ...g, hero: [...g.hero, assetId] }));
-    setShowHeroPicker(false);
+    setHeroPickerTarget(null);
     markDirty();
   }
 
@@ -808,9 +914,18 @@ export default function PageBuilder() {
       {/* Hero Section */}
       <section className="builder-section">
         <div className="builder-section-header">
-          <h2>🏠 Homepage Hero</h2>
-          <button className="admin-btn admin-btn-sm" onClick={() => setShowHeroPicker(true)}>
-            + Add Hero
+          <h2><Icons.Home /> Homepage Hero</h2>
+          <button
+            className="admin-btn admin-btn-sm"
+            onClick={() =>
+              setHeroPickerTarget({
+                onSelect: handleHeroSelect,
+                currentAssetIds: gallery.hero,
+                title: 'Pick Hero Image for Homepage',
+              })
+            }
+          >
+            <Icons.Plus /> Add Hero
           </button>
         </div>
         <DndContext
@@ -881,14 +996,7 @@ export default function PageBuilder() {
                     count={getAlbumCount(album.id)}
                     thumbnailId={getAlbumThumbnailId(album.id)}
                     onRemove={() => removeStandaloneAlbum(originalIndex)}
-                    onUpdate={(updates) => {
-                      setGallery((g) => {
-                        const albums = [...g.albums];
-                        albums[originalIndex] = { ...albums[originalIndex], ...updates };
-                        return { ...g, albums };
-                      });
-                      markDirty();
-                    }}
+                    onEdit={() => setEditingAlbumAddress({ type: 'standalone', albumIndex: originalIndex })}
                   />
                 );
               })}
@@ -1065,18 +1173,7 @@ export default function PageBuilder() {
                                 count={getAlbumCount(album.id)}
                                 thumbnailId={getAlbumThumbnailId(album.id)}
                                 onRemove={() => removeSubpageAlbum(spIndex, aIndex)}
-                                onUpdate={(updates) => {
-                                  setGallery((g) => {
-                                    const subpages = [...g.subpages];
-                                    const sp2 = { ...subpages[spIndex] };
-                                    const albums = [...sp2.albums];
-                                    albums[aIndex] = { ...albums[aIndex], ...updates };
-                                    sp2.albums = albums;
-                                    subpages[spIndex] = sp2;
-                                    return { ...g, subpages };
-                                  });
-                                  markDirty();
-                                }}
+                                onEdit={() => setEditingAlbumAddress({ type: 'subpage', subpageIndex: spIndex, albumIndex: aIndex })}
                               />
                             ))}
                           </div>
@@ -1104,7 +1201,7 @@ export default function PageBuilder() {
                               onClick={() => removeSection(spIndex, secIndex)}
                               title="Remove section"
                             >
-                              ×
+                              <Icons.Close />
                             </button>
                           </div>
                           <div className="admin-field">
@@ -1128,22 +1225,7 @@ export default function PageBuilder() {
                                 count={getAlbumCount(album.id)}
                                 thumbnailId={getAlbumThumbnailId(album.id)}
                                 onRemove={() => removeSectionAlbum(spIndex, secIndex, aIndex)}
-                                onUpdate={(updates) => {
-                                  setGallery((g) => {
-                                    const subpages = [...g.subpages];
-                                    const sp2 = { ...subpages[spIndex] };
-                                    const sections = [...(sp2.sections || [])];
-                                    const sec2 = { ...sections[secIndex] };
-                                    const albums = [...sec2.albums];
-                                    albums[aIndex] = { ...albums[aIndex], ...updates };
-                                    sec2.albums = albums;
-                                    sections[secIndex] = sec2;
-                                    sp2.sections = sections;
-                                    subpages[spIndex] = sp2;
-                                    return { ...g, subpages };
-                                  });
-                                  markDirty();
-                                }}
+                                onEdit={() => setEditingAlbumAddress({ type: 'section', subpageIndex: spIndex, sectionIndex: secIndex, albumIndex: aIndex })}
                               />
                             ))}
                           </div>
@@ -1194,16 +1276,246 @@ export default function PageBuilder() {
         />
       )}
 
+      {/* Slide-over Drawer for Album Details */}
+      {(() => {
+        if (!editingAlbumAddress) return null;
+        const info = getEditingAlbumInfo(editingAlbumAddress);
+        if (!info) return null;
+        const { album, name, count, thumbnailId, onUpdate, onRemove } = info;
+        const heroThumb = album.heroImage || thumbnailId;
+
+        return (
+          <div className="album-drawer-overlay open" onClick={() => setEditingAlbumAddress(null)}>
+            <div className="album-drawer" onClick={(e) => e.stopPropagation()}>
+              <div className="album-drawer-header">
+                <h3>
+                  <Icons.Camera /> Edit Album Details
+                </h3>
+                <button
+                  className="admin-btn-icon"
+                  onClick={() => setEditingAlbumAddress(null)}
+                  title="Close details"
+                >
+                  <Icons.Close />
+                </button>
+              </div>
+              <div className="album-drawer-body">
+                {/* Album Cover / Hero Preview */}
+                <div className="drawer-hero-section">
+                  <div className="drawer-hero-cover">
+                    {heroThumb ? (
+                      <img src={`/api/admin/thumbnail/${heroThumb}`} alt="" loading="lazy" />
+                    ) : (
+                      <div className="drawer-hero-placeholder">
+                        <Icons.Camera />
+                      </div>
+                    )}
+                  </div>
+                  <div className="drawer-hero-meta">
+                    <span className="drawer-hero-name">{name}</span>
+                    <span className="drawer-hero-count">{count} photos</span>
+                  </div>
+                </div>
+
+                {/* Form Fields */}
+                <div className="admin-field">
+                  <label>Title override</label>
+                  <input
+                    value={album.title || ''}
+                    onChange={(e) => onUpdate({ title: e.target.value || undefined })}
+                    placeholder={name}
+                  />
+                </div>
+
+                <div className="admin-field">
+                  <label>Description</label>
+                  <textarea
+                    value={album.description || ''}
+                    onChange={(e) => onUpdate({ description: e.target.value || undefined })}
+                    placeholder="Optional description for visitors"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="admin-field">
+                  <label>Password protection</label>
+                  <div className="input-with-icon">
+                    <input
+                      type="password"
+                      value={album.password || ''}
+                      onChange={(e) => onUpdate({ password: e.target.value || undefined })}
+                      placeholder="Leave empty for public access"
+                    />
+                  </div>
+                </div>
+
+                {/* Hero Image Selection */}
+                <div className="admin-field">
+                  <label>Custom Hero Image</label>
+                  <div className="album-hero-field">
+                    {album.heroImage ? (
+                      <div className="album-hero-preview">
+                        <img src={`/api/admin/thumbnail/${album.heroImage}`} alt="Hero" />
+                        <button
+                          className="album-hero-remove"
+                          onClick={() => onUpdate({ heroImage: undefined })}
+                          title="Remove custom hero image"
+                        >
+                          <Icons.Close />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="album-hero-empty">Using default album cover</span>
+                    )}
+                    <button
+                      className="admin-btn admin-btn-sm"
+                      onClick={() =>
+                        setHeroPickerTarget({
+                          albumId: album.id,
+                          onSelect: (assetId) => {
+                            onUpdate({ heroImage: assetId });
+                            setHeroPickerTarget(null);
+                          },
+                          currentAssetIds: album.heroImage ? [album.heroImage] : [],
+                          title: `Pick Hero Image for ${name}`,
+                        })
+                      }
+                    >
+                      <Icons.Image /> {album.heroImage ? 'Change Image' : 'Pick Hero Image'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Technical UUID */}
+                <div className="drawer-uuid-section">
+                  <label className="admin-field-label">IMMICH ALBUM UUID</label>
+                  <div className="uuid-copy-box">
+                    <code>{album.id}</code>
+                    <button
+                      className="uuid-copy-btn"
+                      onClick={() => {
+                        navigator.clipboard.writeText(album.id);
+                      }}
+                      title="Copy UUID"
+                    >
+                      <Icons.Copy />
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="album-drawer-footer">
+                <button
+                  className="admin-btn admin-btn-primary"
+                  onClick={() => setEditingAlbumAddress(null)}
+                >
+                  Done
+                </button>
+                <button
+                  className="admin-btn admin-btn-ghost admin-btn-danger"
+                  onClick={onRemove}
+                >
+                  <Icons.Trash /> Remove Album
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Hero Asset Picker Modal */}
-      {showHeroPicker && (
+      {heroPickerTarget && (
         <AssetPicker
-          onSelect={handleHeroSelect}
-          onClose={() => setShowHeroPicker(false)}
-          currentAssetIds={gallery.hero}
+          albumId={heroPickerTarget.albumId}
+          onSelect={heroPickerTarget.onSelect}
+          onClose={() => setHeroPickerTarget(null)}
+          currentAssetIds={heroPickerTarget.currentAssetIds}
+          title={heroPickerTarget.title}
         />
       )}
     </div>
   );
+
+  function getEditingAlbumInfo(addr: ActiveEditAlbumAddress) {
+    let album: AlbumEntry;
+    let name: string;
+    let count: number;
+    let thumbnailId: string | null;
+    let onUpdate: (updates: Partial<AlbumEntry>) => void;
+    let onRemove: () => void;
+
+    if (addr.type === 'standalone') {
+      album = gallery.albums[addr.albumIndex];
+      if (!album) return null;
+      name = getAlbumName(album.id);
+      count = getAlbumCount(album.id);
+      thumbnailId = getAlbumThumbnailId(album.id);
+      onUpdate = (updates) => {
+        setGallery((g) => {
+          const albums = [...g.albums];
+          albums[addr.albumIndex] = { ...albums[addr.albumIndex], ...updates };
+          return { ...g, albums };
+        });
+        markDirty();
+      };
+      onRemove = () => {
+        removeStandaloneAlbum(addr.albumIndex);
+      };
+    } else if (addr.type === 'subpage') {
+      const sp = gallery.subpages[addr.subpageIndex!];
+      if (!sp) return null;
+      album = sp.albums[addr.albumIndex];
+      if (!album) return null;
+      name = getAlbumName(album.id);
+      count = getAlbumCount(album.id);
+      thumbnailId = getAlbumThumbnailId(album.id);
+      onUpdate = (updates) => {
+        setGallery((g) => {
+          const subpages = [...g.subpages];
+          const sp2 = { ...subpages[addr.subpageIndex!] };
+          const albums = [...sp2.albums];
+          albums[addr.albumIndex] = { ...albums[addr.albumIndex], ...updates };
+          sp2.albums = albums;
+          subpages[addr.subpageIndex!] = sp2;
+          return { ...g, subpages };
+        });
+        markDirty();
+      };
+      onRemove = () => {
+        removeSubpageAlbum(addr.subpageIndex!, addr.albumIndex);
+      };
+    } else {
+      const sp = gallery.subpages[addr.subpageIndex!];
+      if (!sp) return null;
+      const sec = sp.sections?.[addr.sectionIndex!];
+      if (!sec) return null;
+      album = sec.albums[addr.albumIndex];
+      if (!album) return null;
+      name = getAlbumName(album.id);
+      count = getAlbumCount(album.id);
+      thumbnailId = getAlbumThumbnailId(album.id);
+      onUpdate = (updates) => {
+        setGallery((g) => {
+          const subpages = [...g.subpages];
+          const sp2 = { ...subpages[addr.subpageIndex!] };
+          const sections = [...(sp2.sections || [])];
+          const sec2 = { ...sections[addr.sectionIndex!] };
+          const albums = [...sec2.albums];
+          albums[addr.albumIndex] = { ...albums[addr.albumIndex], ...updates };
+          sec2.albums = albums;
+          sections[addr.sectionIndex!] = sec2;
+          sp2.sections = sections;
+          subpages[addr.subpageIndex!] = sp2;
+          return { ...g, subpages };
+        });
+        markDirty();
+      };
+      onRemove = () => {
+        removeSectionAlbum(addr.subpageIndex!, addr.sectionIndex!, addr.albumIndex);
+      };
+    }
+
+    return { album, name, count, thumbnailId, onUpdate, onRemove };
+  }
 
   function getAllUsedAlbumIds(): Set<string> {
     const ids = new Set<string>();
@@ -1224,7 +1536,7 @@ interface AlbumCardProps {
   count: number;
   thumbnailId: string | null;
   onRemove: () => void;
-  onUpdate: (updates: Partial<AlbumEntry>) => void;
+  onEdit: () => void;
   dragListeners?: Record<string, unknown>;
 }
 
@@ -1234,112 +1546,66 @@ function AlbumCard({
   count,
   thumbnailId,
   onRemove,
-  onUpdate,
+  onEdit,
   dragListeners,
 }: AlbumCardProps) {
-  const [expanded, setExpanded] = useState(false);
-  const [showHeroPicker, setShowHeroPicker] = useState(false);
+  const heroThumb = album.heroImage || thumbnailId;
+  const hasPassword = !!album.password;
+  const hasTitleOverride = !!album.title;
+  const hasDescription = !!album.description;
 
   return (
-    <div className="album-tile">
+    <div className={`album-tile ${hasPassword ? 'has-password' : ''}`}>
       <div className="album-tile-cover">
         {dragListeners && (
           <div className="album-tile-drag" {...dragListeners} title="Drag to reorder">
-            ⠿
+            <Icons.Drag />
           </div>
         )}
-        {thumbnailId ? (
-          <img src={`/api/admin/thumbnail/${thumbnailId}`} alt="" loading="lazy" />
+        {heroThumb ? (
+          <img src={`/api/admin/thumbnail/${heroThumb}`} alt="" loading="lazy" />
         ) : (
-          <div className="album-tile-placeholder">📷</div>
+          <div className="album-tile-placeholder">
+            <Icons.Camera />
+          </div>
         )}
         <div className="album-tile-overlay">
           <button
             className="album-tile-btn"
-            onClick={() => setExpanded(!expanded)}
+            onClick={onEdit}
             title="Edit details"
           >
-            ✏️
+            <Icons.Edit />
           </button>
-          <button className="album-tile-btn" onClick={onRemove} title="Remove">
-            ×
+          <button
+            className="album-tile-btn album-tile-btn-danger"
+            onClick={onRemove}
+            title="Remove album"
+          >
+            <Icons.Trash />
           </button>
         </div>
       </div>
       <div className="album-tile-info">
-        <span className="album-tile-name">{album.title || name}</span>
-        <span className="album-tile-count">{count} photos</span>
-      </div>
-      {expanded && (
-        <div className="album-tile-details">
-          <div className="admin-field">
-            <label>Title override</label>
-            <input
-              value={album.title || ''}
-              onChange={(e) => onUpdate({ title: e.target.value || undefined })}
-              placeholder={name}
-            />
-          </div>
-          <div className="admin-field">
-            <label>Description</label>
-            <input
-              value={album.description || ''}
-              onChange={(e) => onUpdate({ description: e.target.value || undefined })}
-              placeholder="Optional description"
-            />
-          </div>
-          <div className="admin-field">
-            <label>Password</label>
-            <input
-              type="password"
-              value={album.password || ''}
-              onChange={(e) => onUpdate({ password: e.target.value || undefined })}
-              placeholder="Leave empty for public"
-            />
-          </div>
-          {/* Hero Image */}
-          <div className="admin-field">
-            <label>Hero Image</label>
-            <div className="album-hero-field">
-              {album.heroImage ? (
-                <div className="album-hero-preview">
-                  <img src={`/api/admin/thumbnail/${album.heroImage}`} alt="Hero" />
-                  <button
-                    className="album-hero-remove"
-                    onClick={() => onUpdate({ heroImage: undefined })}
-                    title="Remove hero image"
-                  >
-                    ×
-                  </button>
-                </div>
-              ) : (
-                <span className="album-hero-empty">No hero image set</span>
-              )}
-              <button
-                className="admin-btn admin-btn-xs"
-                onClick={() => setShowHeroPicker(true)}
-              >
-                {album.heroImage ? 'Change' : '+ Pick'}
-              </button>
-            </div>
-          </div>
-          <div className="album-tile-uuid">
-            <code>{album.id}</code>
+        <div className="album-tile-title-row">
+          <span className={`album-tile-name ${hasTitleOverride ? 'custom-title' : ''}`} title={album.title || name}>
+            {album.title || name}
+          </span>
+          <div className="album-tile-badges">
+            {hasPassword && (
+              <span className="badge badge-password" title="Password protected">
+                <Icons.Lock />
+              </span>
+            )}
+            {album.heroImage && (
+              <span className="badge badge-hero" title="Custom Hero Image set">
+                <Icons.Image />
+              </span>
+            )}
           </div>
         </div>
-      )}
-      {showHeroPicker && (
-        <AssetPicker
-          albumId={album.id}
-          onSelect={(assetId) => {
-            onUpdate({ heroImage: assetId });
-            setShowHeroPicker(false);
-          }}
-          onClose={() => setShowHeroPicker(false)}
-          currentAssetIds={album.heroImage ? [album.heroImage] : []}
-          title="Pick Hero Image for Album"
-        />
-      )}
+        <span className="album-tile-count">{count} photos</span>
+      </div>
     </div>
   );
 }

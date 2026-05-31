@@ -1726,3 +1726,415 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Premium Slide-over Drawer & Badges Redesign ──────────────── */
+
+/* Inline SVG Icon Global Styling */
+.svg-icon {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
+  stroke-width: 2px;
+  transition: transform 0.2s ease, color 0.15s ease;
+}
+
+.svg-drag {
+  width: 12px;
+  height: 18px;
+}
+
+h2 .svg-icon,
+h3 .svg-icon {
+  margin-right: 0.5rem;
+  font-size: 1.15em;
+  color: var(--admin-accent);
+}
+
+/* Album Card Simplification & Grid Spacing */
+.album-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.25rem;
+  margin: 0.5rem 0 1.25rem;
+}
+
+.album-tile {
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.album-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--admin-border-hover);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme='light'] .album-tile:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.album-tile-cover {
+  aspect-ratio: 16 / 11;
+  border-bottom: 1px solid var(--admin-border);
+  position: relative;
+  background: var(--admin-bg-elevated);
+  overflow: hidden;
+}
+
+.album-tile-placeholder {
+  color: var(--admin-text-muted);
+  font-size: 1.75rem;
+}
+
+.album-tile-overlay {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.album-tile-btn {
+  background: rgba(17, 17, 17, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.album-tile-btn:hover {
+  background: var(--admin-accent);
+  color: #000;
+  border-color: var(--admin-accent);
+}
+
+.album-tile-btn-danger:hover {
+  background: var(--admin-error) !important;
+  color: #fff !important;
+  border-color: var(--admin-error) !important;
+}
+
+.album-tile-info {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.album-tile-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.album-tile-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--admin-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.album-tile-name.custom-title {
+  color: var(--admin-accent);
+  font-style: italic;
+}
+
+/* Badges for status indications */
+.album-tile-badges {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.album-tile-badges .badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  background: var(--admin-bg-elevated);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text-secondary);
+}
+
+.album-tile-badges .badge-password {
+  color: var(--admin-accent);
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.album-tile-badges .badge-hero {
+  color: var(--admin-success);
+  border-color: rgba(74, 222, 128, 0.3);
+  background: rgba(74, 222, 128, 0.05);
+}
+
+/* ── Drawer Component styling ── */
+.album-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--admin-overlay);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.album-drawer-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.album-drawer {
+  width: 100%;
+  max-width: 460px;
+  height: 100%;
+  background: var(--admin-bg-raised);
+  border-left: 1px solid var(--admin-border);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.album-drawer-overlay.open .album-drawer {
+  transform: translateX(0);
+}
+
+.album-drawer-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--admin-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--admin-bg-elevated);
+}
+
+.album-drawer-header h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.album-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.album-drawer-body::-webkit-scrollbar {
+  width: 6px;
+}
+.album-drawer-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.album-drawer-body::-webkit-scrollbar-thumb {
+  background: var(--admin-border);
+  border-radius: 3px;
+}
+.album-drawer-body::-webkit-scrollbar-thumb:hover {
+  background: var(--admin-border-hover);
+}
+
+.album-drawer-footer {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid var(--admin-border);
+  background: var(--admin-bg-elevated);
+  display: flex;
+  gap: 0.75rem;
+}
+
+.album-drawer-footer .admin-btn {
+  flex: 1;
+}
+
+/* Drawer Hero Preview Banner */
+.drawer-hero-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--admin-bg-elevated);
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+}
+
+.drawer-hero-cover {
+  width: 90px;
+  height: 60px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--admin-bg);
+  border: 1px solid var(--admin-border);
+  flex-shrink: 0;
+}
+
+.drawer-hero-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.drawer-hero-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--admin-text-muted);
+  font-size: 1.25rem;
+}
+
+.drawer-hero-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.drawer-hero-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--admin-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawer-hero-count {
+  font-size: 0.75rem;
+  color: var(--admin-text-secondary);
+}
+
+/* Drawer Copy UUID element */
+.drawer-uuid-section {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--admin-border);
+}
+
+.drawer-uuid-section label {
+  font-size: 0.7rem;
+  color: var(--admin-text-muted);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.35rem;
+  letter-spacing: 0.05em;
+}
+
+.uuid-copy-box {
+  display: flex;
+  align-items: center;
+  background: var(--admin-bg-input);
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  padding: 0.4rem 0.5rem 0.4rem 0.75rem;
+  gap: 0.5rem;
+}
+
+.uuid-copy-box code {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--admin-text-secondary);
+  flex: 1;
+  word-break: break-all;
+  user-select: all;
+}
+
+.uuid-copy-btn {
+  background: none;
+  border: none;
+  color: var(--admin-text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.uuid-copy-btn:hover {
+  color: var(--admin-accent);
+  background: var(--admin-bg-elevated);
+}
+
+/* Section Card Improvements */
+.section-card {
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.section-card:hover {
+  border-color: var(--admin-border-hover);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+  border-bottom: 1px solid var(--admin-border);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.section-title-input {
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  color: var(--admin-text) !important;
+  border-radius: 6px !important;
+}
+
+.section-desc-input {
+  border-color: transparent !important;
+  background: transparent !important;
+  padding-left: 0.4rem !important;
+  color: var(--admin-text-secondary) !important;
+}
+
+.section-desc-input:focus {
+  border-color: var(--admin-border) !important;
+  background: var(--admin-bg-input) !important;
+}
+
+/* ── Modern Subpage Details Spacing ── */
+.subpage-detail {
+  margin-top: 1.5rem;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-bg-elevated);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='light'] .subpage-detail {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+}
+
+.subpage-meta {
+  padding: 1.25rem;
+  background: var(--admin-bg-raised);
+  border-bottom: 1px solid var(--admin-border);
+}
