@@ -6,6 +6,9 @@ All gallery structure is defined in `content/gallery.yaml`. Copy the example to 
 cp content/gallery.yaml.example content/gallery.yaml
 ```
 
+> [!TIP]
+> Prefer a visual interface? Enable the **[Admin Panel](admin-panel.md)** by setting `ADMIN_PASSWORD` in your environment. It provides a drag-and-drop page builder that writes to these same YAML files automatically.
+
 **Contents:**
 
 - [Hero Images](#hero-images)

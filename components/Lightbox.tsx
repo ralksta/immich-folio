@@ -67,10 +67,10 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
     }
   }, [showExif, current, fetchExif]);
 
-  // Preload adjacent images
+  // Preload adjacent images (skip videos — they stream on demand)
   useEffect(() => {
     const preload = (index: number) => {
-      if (index >= 0 && index < assets.length) {
+      if (index >= 0 && index < assets.length && assets[index].type !== 'video') {
         const img = new Image();
         img.src = assets[index].previewUrl;
       }
@@ -158,25 +158,41 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
         </svg>
       </button>
 
-      {/* Image */}
+      {/* Image or Video */}
       <div
         className={styles.imageContainer}
         style={{
           backgroundColor: current.dominantColor || '#000',
-          backgroundImage: current.blurDataURL ? `url(${current.blurDataURL})` : undefined,
+          backgroundImage:
+            current.type !== 'video' && current.blurDataURL
+              ? `url(${current.blurDataURL})`
+              : undefined,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          className={`${styles.image}${imageLoaded ? ` ${styles.imageLoaded}` : ''}`}
-          src={current.previewUrl}
-          alt=""
-          draggable={false}
-          onLoad={() => setImageLoaded(true)}
-          onError={() => console.error(`[Lightbox] Failed to load image: ${current.previewUrl}`)}
-        />
+        {current.type === 'video' && current.videoUrl ? (
+          // eslint-disable-next-line jsx-a11y/media-has-caption
+          <video
+            className={`${styles.image}${imageLoaded ? ` ${styles.imageLoaded}` : ''}`}
+            src={current.videoUrl}
+            controls
+            autoPlay={false}
+            playsInline
+            onCanPlay={() => setImageLoaded(true)}
+            onError={() => console.error(`[Lightbox] Failed to load video: ${current.videoUrl}`)}
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            className={`${styles.image}${imageLoaded ? ` ${styles.imageLoaded}` : ''}`}
+            src={current.previewUrl}
+            alt=""
+            draggable={false}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => console.error(`[Lightbox] Failed to load image: ${current.previewUrl}`)}
+          />
+        )}
       </div>
 
       {/* Next button */}
@@ -200,8 +216,13 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
       </button>
 
       {/* Counter */}
-      <div className={styles.counter}>
-        {currentIndex + 1} / {assets.length}
+      <div className={styles.counter} aria-live="polite" aria-atomic="true">
+        <span className="sr-only">
+          Photo {currentIndex + 1} of {assets.length}
+        </span>
+        <span aria-hidden="true">
+          {currentIndex + 1} / {assets.length}
+        </span>
       </div>
 
       {/* EXIF toggle */}

@@ -18,3 +18,6 @@
 ## 2024-05-30 - [O(1) Memory Bucketing for Coordinate Aggregation]
 **Learning:** When bucketing or grouping large datasets (e.g., thousands of map coordinates into geographical clusters), array allocations (`[].push()`) followed by `reduce` operations create an O(N) memory overhead per bucket and expensive post-processing loops.
 **Action:** Replace memory-heavy array collections with running statistical accumulators (e.g., `latSum`, `lngSum`, `count`) directly on the bucket. This reduces bucket memory from O(N) to O(1).
+## 2024-05-29 - Memoize repeated auth checks in Map API
+**Learning:** When filtering map locations, the API performs redundant `isAuthenticated` checks for albums within the same subpage slug. Since each check involves cryptographic operations (HMAC calculations), doing this repeatedly in a nested filter loop severely impacts performance for galleries with many geotagged photos.
+**Action:** Use a request-scoped `Map` to memoize the results of `isAuthenticated` calls within the route handler, preventing redundant cryptographic operations for the same subpage context.

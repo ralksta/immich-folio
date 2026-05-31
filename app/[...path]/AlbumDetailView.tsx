@@ -3,6 +3,7 @@ import type { PhotoItem } from './PhotoGrid';
 import { PhotoGrid } from './PhotoGrid';
 import { BackLink } from '@/components/BackLink';
 import type { GridConfig } from '@/lib/config';
+import Image from 'next/image';
 import React from 'react';
 
 interface AlbumDetailViewProps {
@@ -13,6 +14,8 @@ interface AlbumDetailViewProps {
   backLinkHref: string;
   backLinkLabel: string;
   subtitle?: string;
+  heroImageUrl?: string;
+  heroBlurDataURL?: string;
 }
 
 export function AlbumDetailView({
@@ -23,10 +26,26 @@ export function AlbumDetailView({
   backLinkHref,
   backLinkLabel,
   subtitle,
+  heroImageUrl,
+  heroBlurDataURL,
 }: AlbumDetailViewProps) {
   return (
     <>
-      <div className="album-header">
+      {heroImageUrl && (
+        <div className="album-hero">
+          <Image
+            src={heroImageUrl}
+            alt={album.albumName}
+            fill
+            priority
+            sizes="100vw"
+            style={{ objectFit: 'cover' }}
+            {...(heroBlurDataURL ? { placeholder: 'blur' as const, blurDataURL: heroBlurDataURL } : {})}
+          />
+          <div className="album-hero__overlay" />
+        </div>
+      )}
+      <div className={`album-header${heroImageUrl ? ' album-header--has-hero' : ''}`}>
         <BackLink href={backLinkHref} label={backLinkLabel} />
         <h1 className="album-header__title">{album.albumName}</h1>
         {subtitle && (
@@ -34,9 +53,9 @@ export function AlbumDetailView({
             {subtitle}
           </p>
         )}
+        {album.description && <p className="album-header__description">{album.description}</p>}
         <p className="album-header__meta">
           {images.length} {images.length === 1 ? 'photo' : 'photos'}
-          {album.description && ` · ${album.description}`}
         </p>
       </div>
       <PhotoGrid assets={images} layout={layout} gridStyle={gridStyle} />

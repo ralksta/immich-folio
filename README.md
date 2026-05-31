@@ -31,6 +31,14 @@ Immich Folio acts as a **secure reverse proxy** between your visitors and your p
 - **Markdown about page** — `content/about.md` with frontmatter for portrait, name, location, and gear list
 - **Dynamic OG images** — auto-generated social preview images per album
 
+### Admin Panel
+
+- **Visual page builder** — drag & drop interface to manage hero images, standalone albums, subpages, and sections
+- **Album picker** — browse all shared Immich albums with search, see photo counts, and add them with one click
+- **Settings editor** — configure theme, grid layout, footer, legal/impressum, and SEO from a visual UI
+- **Live YAML sync** — changes are written directly to `gallery.yaml` and `settings.yaml` with automatic backups
+- **Password protected** — secured with its own admin password, separate from album passwords
+
 <details>
 <summary><strong>Security &amp; Infrastructure</strong></summary>
 
@@ -84,6 +92,7 @@ SITE_TITLE=My Photography            # default: "Gallery"
 SITE_SUBTITLE=A visual journal        # default: empty
 CACHE_TTL=300                          # seconds, default: 300
 RATE_LIMIT_RPM=120                     # requests/min/IP, default: 120
+ADMIN_PASSWORD=your-secure-password   # enables /admin panel
 ```
 
 ### Gallery Config
@@ -168,6 +177,20 @@ photos.example.com {
 ```
 
 </details>
+
+## Admin Panel
+
+A built-in visual editor at `/admin` lets you manage your gallery without editing YAML files manually.
+
+**Enable it** by setting `ADMIN_PASSWORD` in your environment:
+
+```env
+ADMIN_PASSWORD=your-secure-admin-password
+```
+
+Then navigate to `http://your-site/admin` and log in.
+
+→ **[Admin Panel Guide](docs/admin-panel.md)**
 
 ## Tech Stack
 

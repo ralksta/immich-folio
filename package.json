@@ -15,11 +15,14 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "js-yaml": "^4.1.1",
     "leaflet": "^1.9.4",
     "next": "16.2.4",
-    "react": "19.2.5",
-    "react-dom": "19.2.5",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
     "thumbhash": "^0.1.1"
   },
   "devDependencies": {

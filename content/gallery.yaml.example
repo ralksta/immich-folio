@@ -25,6 +25,7 @@ subpages:
       - "album-uuid-5"
       - "album-uuid-6":
           title: "Private Project #7"
+          description: "Shot on 35mm film in Vienna, spring 2025." # Optional: shown below album title
           password: "scrypt:..." # Recommended: secure hash (generated via logs)
 
 # ── Subpage with Sections ──────────────────────────────────────────

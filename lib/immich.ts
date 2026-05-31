@@ -109,6 +109,52 @@ class ImmichClient {
   }
 
   /**
+   * Stream a video from Immich with optional Range header forwarding.
+   * Range support is required for `<video>` seeking in browsers.
+   */
+  async streamVideo(
+    assetId: string,
+    rangeHeader?: string | null,
+  ): Promise<{
+    stream: ReadableStream;
+    contentType: string;
+    contentLength: string | null;
+    contentRange: string | null;
+    status: 200 | 206;
+  } | null> {
+    if (this.config.needsSetup || !this.config.immich.apiUrl) return null;
+
+    const endpoint = `/assets/${encodeURIComponent(assetId)}/video/playback`;
+    const url = `${this.config.immich.apiUrl}${endpoint}`;
+    try {
+      const headers: Record<string, string> = {
+        'x-api-key': this.config.immich.apiKey,
+      };
+      if (rangeHeader) {
+        headers['Range'] = rangeHeader;
+      }
+
+      const res = await fetch(url, { headers });
+
+      if ((!res.ok && res.status !== 206) || !res.body) {
+        console.error(`[Immich] Failed to stream video ${assetId}: ${res.status}`);
+        return null;
+      }
+
+      return {
+        stream: res.body,
+        contentType: res.headers.get('Content-Type') || 'video/mp4',
+        contentLength: res.headers.get('Content-Length'),
+        contentRange: res.headers.get('Content-Range'),
+        status: res.status === 206 ? 206 : 200,
+      };
+    } catch (error) {
+      console.error(`[Immich] Video stream error for ${assetId}:`, error);
+      return null;
+    }
+  }
+
+  /**
    * Stream a binary response from Immich (for image proxying).
    */
   async streamAsset(
@@ -169,9 +215,11 @@ class ImmichClient {
           .filter((album) => allowedIds.has(album.id))
           .map((album) => {
             const name = this.config.albumOverrides[album.id] ?? album.albumName;
+            const description = this.config.albumDescriptions[album.id] ?? album.description ?? '';
             return {
               ...album,
               albumName: name,
+              description,
               slug: slugify(name),
             };
           });
@@ -296,7 +344,9 @@ class ImmichClient {
         album.assets = (album.assets || []).filter((a) => !a.isTrashed);
 
         const name = this.config.albumOverrides[album.id] ?? album.albumName;
+        const description = this.config.albumDescriptions[album.id] ?? album.description ?? '';
         album.albumName = name;
+        album.description = description;
         album.slug = slugify(name);
 
         cache.set(cacheKey, album, this.config.cacheTtl);
@@ -366,6 +416,26 @@ class ImmichClient {
 
     this.pendingAssetPromises.set(assetId, promise);
     return promise;
+  }
+
+  /**
+   * Invalidate the cache for a specific album (by Immich UUID) and the
+   * shared albums-list entry. Called by the webhook handler after an
+   * album.updated / album.assetAdded event from Immich.
+   */
+  invalidateAlbum(albumId: string): void {
+    cache.delete(`album-${albumId}`);
+    cache.delete('albums-list');
+    console.log(`[Immich] 🔄 Cache invalidated for album ${albumId}`);
+  }
+
+  /**
+   * Invalidate all album caches at once (e.g. on a full sync event).
+   */
+  invalidateAll(): void {
+    cache.clear();
+    this.hasLoggedAlbums = false;
+    console.log('[Immich] 🔄 Full cache cleared');
   }
 
   /**

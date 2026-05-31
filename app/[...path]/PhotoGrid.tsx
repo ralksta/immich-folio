@@ -15,9 +15,11 @@ import { FadeIn } from '@/components/FadeIn';
 
 export interface PhotoItem {
   id: string;
+  type: 'image' | 'video';
   thumbUrl: string;
   previewUrl: string;
   originalUrl: string;
+  videoUrl?: string;
   exifUrl: string;
   blurDataURL?: string;
   dominantColor?: string;
@@ -173,6 +175,14 @@ export function PhotoGrid({ assets, layout = 'masonry', gridStyle }: PhotoGridPr
               ? { placeholder: 'blur' as const, blurDataURL: asset.blurDataURL }
               : {})}
           />
+          {asset.type === 'video' && (
+            <div className="photo-grid__item-play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="12" fillOpacity="0.55" />
+                <polygon points="10,8 10,16 17,12" fill="white" />
+              </svg>
+            </div>
+          )}
           {(asset.camera || asset.lens) && (
             <div className="photo-grid__item-exif" aria-hidden="true">
               {[asset.camera, asset.lens, asset.focalLength].filter(Boolean).join(' · ')}

@@ -837,8 +837,30 @@
 }
 
 /* ── Photo Grid (Album Detail) ────────────────────── */
+/* ── Album Hero Image ────────────────────────────────────────── */
+.album-hero {
+  position: relative;
+  width: 100%;
+  height: clamp(240px, 40vw, 520px);
+  overflow: hidden;
+  margin-bottom: 0;
+}
+
+.album-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, var(--bg-primary, #fff) 100%);
+  pointer-events: none;
+}
+
 .album-header {
   margin-bottom: 40px;
+}
+
+.album-header--has-hero {
+  margin-top: -60px;
+  position: relative;
+  z-index: 1;
 }
 
 .album-header__back {
@@ -867,10 +889,19 @@
   letter-spacing: 0.02em;
 }
 
+.album-header__description {
+  margin-top: 12px;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+  line-height: 1.6;
+  max-width: 640px;
+}
+
 .album-header__meta {
   margin-top: 8px;
   font-size: 0.9rem;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-weight: 300;
 }
 
@@ -1024,6 +1055,27 @@
 
 .photo-grid__item:hover .photo-grid__item-exif {
   opacity: 1;
+}
+
+.photo-grid__item-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.photo-grid__item-play svg {
+  width: 48px;
+  height: 48px;
+  color: white;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+  transition: transform var(--transition-fast);
+}
+
+.photo-grid__item:hover .photo-grid__item-play svg {
+  transform: scale(1.1);
 }
 
 /* ── Loading States ───────────────────────────────── */

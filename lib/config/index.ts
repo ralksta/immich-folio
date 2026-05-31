@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { env } from '../env';
-import { loadYaml, validateUuid } from './parser';
+import { loadYaml, clearYamlCache, validateUuid } from './parser';
 import { resolveTheme, VALID_LAYOUTS } from './theme';
 import {
   slugify,
@@ -18,6 +18,12 @@ export * from './theme';
 
 let _config: AppConfig | null = null;
 let _fallbackSecret: string | null = null;
+
+/** Invalidate the cached config so the next getConfig() call re-reads YAML files. */
+export function invalidateConfigCache(): void {
+  _config = null;
+  clearYamlCache();
+}
 
 /** Converts raw YAML grid overrides into a typed partial GridConfig. */
 export function buildSubpageGrid(raw?: {
@@ -44,8 +50,11 @@ export function buildSubpageGrid(raw?: {
 }
 
 export function getConfig(): AppConfig {
-  const isDev = process.env.NODE_ENV !== 'production';
-  if (_config && !isDev) return _config;
+  // _config is a per-worker in-memory cache.
+  // invalidateConfigCache() clears it + the underlying YAML mtime cache,
+  // so after an admin save every worker re-parses on next request.
+  // In dev we always re-parse so hot-reload works.
+  if (_config && process.env.NODE_ENV === 'production') return _config;
 
   const apiUrl = env.IMMICH_API_URL;
   const apiKey = env.IMMICH_API_KEY;
@@ -95,7 +104,9 @@ export function getConfig(): AppConfig {
       map: false,
       transitions: false,
       albumOverrides: {},
+      albumDescriptions: {},
       albumPasswords: {},
+      albumHeroImages: {},
       cacheTtl: env.CACHE_TTL * 1000,
       rateLimitRpm: env.RATE_LIMIT_RPM,
       trustedProxies: env.TRUSTED_PROXIES,
@@ -107,10 +118,14 @@ export function getConfig(): AppConfig {
   const theme = resolveTheme(settings.theme);
 
   const albumOverrides: Record<string, string> = {};
+  const albumDescriptions: Record<string, string> = {};
   const albumPasswords: Record<string, string> = {};
+  const albumHeroImages: Record<string, string> = {};
 
   function processAlbumEntry(
-    entry: string | Record<string, string | { title: string; password?: string }>,
+    entry:
+      | string
+      | Record<string, string | { title: string; description?: string; password?: string; heroImage?: string }>,
     context: string,
   ): string {
     if (typeof entry === 'string') {
@@ -123,7 +138,9 @@ export function getConfig(): AppConfig {
       albumOverrides[validatedUuid] = value;
     } else {
       if (value.title) albumOverrides[validatedUuid] = value.title;
+      if (value.description) albumDescriptions[validatedUuid] = value.description;
       if (value.password) albumPasswords[validatedUuid] = value.password;
+      if (value.heroImage) albumHeroImages[validatedUuid] = value.heroImage;
     }
     return validatedUuid;
   }
@@ -271,7 +288,9 @@ export function getConfig(): AppConfig {
     map: settings.map === true,
     transitions: settings.transitions !== false,
     albumOverrides,
+    albumDescriptions,
     albumPasswords,
+    albumHeroImages,
     cacheTtl: env.CACHE_TTL * 1000,
     rateLimitRpm: env.RATE_LIMIT_RPM,
     trustedProxies: env.TRUSTED_PROXIES,

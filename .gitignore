@@ -53,6 +53,7 @@ Thumbs.db
 
 # ── Deployment ───────────────────────────────────────
 .vercel
+docker-compose.override.yml
 
 # ── User Content (personal gallery config) ───────────
 content/settings.yaml

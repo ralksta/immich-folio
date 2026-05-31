@@ -1,0 +1,21 @@
+# Copy this file to docker-compose.override.yml and adjust for your server.
+# This file is git-ignored — your local changes won't conflict with pulls.
+#
+# Example: add external network, healthcheck, or other server-specific settings.
+
+services:
+  lightbox:
+    networks:
+      - default
+      - immich_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:7211/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  immich_network:
+    external: true
+    name: immich-app_default

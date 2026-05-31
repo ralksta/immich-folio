@@ -2,39 +2,41 @@ import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 
-// ⚡ Bolt Optimization: Cache parsed YAML to prevent repetitive synchronous
-// file I/O and expensive parsing during production runtime.
-const yamlCache = new Map<string, unknown>();
+interface YamlCacheEntry {
+  data: unknown;
+  mtimeMs: number;
+}
+
+// mtime-based cache: re-reads the file if it has been modified since last parse.
+// Works correctly across admin saves without requiring a Docker restart.
+const yamlCache = new Map<string, YamlCacheEntry>();
+
+export function clearYamlCache(): void {
+  yamlCache.clear();
+}
 
 export function loadYaml<T>(filename: string): T | null {
-  const isProd = process.env.NODE_ENV === 'production';
-
-  if (isProd && yamlCache.has(filename)) {
-    const cached = yamlCache.get(filename);
-    // ⚡ Bolt Optimization: Use `structuredClone` to prevent caller mutations
-    // from corrupting the cached object state, while preserving JS native types.
-    return cached === null ? null : structuredClone(cached as T);
-  }
-
   const yamlPath = path.join(process.cwd(), 'content', filename);
 
-  if (!fs.existsSync(yamlPath)) {
-    // ⚡ Bolt Optimization: Implement negative caching for missing files.
-    if (isProd) {
-      yamlCache.set(filename, null);
-    }
+  let mtimeMs = 0;
+  try {
+    mtimeMs = fs.statSync(yamlPath).mtimeMs;
+  } catch {
+    // File does not exist
+    yamlCache.delete(filename);
     return null;
+  }
+
+  const cached = yamlCache.get(filename);
+  if (cached && cached.mtimeMs === mtimeMs) {
+    return cached.data === null ? null : structuredClone(cached.data as T);
   }
 
   const raw = fs.readFileSync(yamlPath, 'utf8');
   const parsed = (yaml.load(raw) || {}) as T;
 
-  if (isProd) {
-    yamlCache.set(filename, parsed);
-    return structuredClone(parsed);
-  }
-
-  return parsed;
+  yamlCache.set(filename, { data: parsed, mtimeMs });
+  return structuredClone(parsed);
 }
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

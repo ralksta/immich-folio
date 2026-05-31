@@ -13,3 +13,7 @@
 ## 2025-05-07 - Skip-to-Content Navigation
 **Learning:** Keyboard users and screen readers need a way to bypass repetitive header navigation links. Without a visually hidden skip link that becomes visible on focus, these users must tab through every nav item before reaching the main content on every page load.
 **Action:** Always include a "Skip to content" link as the first focusable element in the DOM, anchored to the main content container. Ensure the main container has `tabIndex={-1}` so it can programmatically receive focus without interrupting normal tab flow.
+
+## 2024-06-18 - Dynamic Numeric Counters ARIA
+**Learning:** When displaying dynamic numeric text changes during navigation (like a lightbox image counter), the visual presentation (e.g., "1 / 5") does not provide sufficient context for screen reader users and might not be announced automatically.
+**Action:** Wrap the counter container with `aria-live="polite"` and `aria-atomic="true"`. Use `.sr-only` to provide a context-rich screen reader string (e.g., "Photo 1 of 5") and hide the visual short-hand using `aria-hidden="true"`.

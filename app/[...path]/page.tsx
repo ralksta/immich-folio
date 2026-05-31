@@ -20,6 +20,7 @@ import { PhotoGrid, type PhotoItem } from './PhotoGrid';
 import {
   imageUrl,
   exifUrl,
+  videoUrl,
   assetPlaceholder,
   assetExifSummary,
   assetAspectRatio,
@@ -50,7 +51,7 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
     const album = await immich.getAlbumBySlug(path[1], slug);
     if (album) {
       title = album.albumName;
-      const count = album.assets.filter((a) => a.type === 'IMAGE').length;
+      const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
       subtitle = `${count} photo${count === 1 ? '' : 's'}`;
     }
   } else if (immich.isSubpageSlug(slug)) {
@@ -61,7 +62,7 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
         const album = await immich.getAlbumBySlug(result.albums[0].slug, slug);
         if (album) {
           title = album.albumName;
-          const count = album.assets.filter((a) => a.type === 'IMAGE').length;
+          const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
           subtitle = `${count} photo${count === 1 ? '' : 's'}`;
         }
       } else {
@@ -72,7 +73,7 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
     const album = await immich.getAlbumBySlug(slug);
     if (album) {
       title = album.albumName;
-      const count = album.assets.filter((a) => a.type === 'IMAGE').length;
+      const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
       subtitle = `${count} photo${count === 1 ? '' : 's'}`;
     }
   }
@@ -89,15 +90,18 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
 /** Map Immich assets to PhotoItem props for the grid/lightbox. */
 function toPhotoItems(assets: ImmichAsset[], showExif: boolean): PhotoItem[] {
   return assets
-    .filter((a) => a.type === 'IMAGE')
+    .filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO')
     .map((a) => {
       const ph = assetPlaceholder(a);
-      const exif = showExif ? assetExifSummary(a) : undefined;
+      const exif = showExif && a.type === 'IMAGE' ? assetExifSummary(a) : undefined;
+      const isVideo = a.type === 'VIDEO';
       return {
         id: a.id,
+        type: isVideo ? 'video' : 'image',
         thumbUrl: imageUrl(a.id, 'preview'),
         previewUrl: imageUrl(a.id, 'preview'),
         originalUrl: imageUrl(a.id, 'original'),
+        ...(isVideo ? { videoUrl: videoUrl(a.id) } : {}),
         exifUrl: exifUrl(a.id),
         ...(ph ? { blurDataURL: ph.blurDataURL, dominantColor: ph.dominantColor } : {}),
         ...(exif ?? {}),
@@ -127,6 +131,21 @@ async function gateIfProtected(
   }
 
   return <PasswordGate slug={key} title={title} type={type} />;
+}
+
+/** Fetch hero image URL + blur placeholder for an album if configured. */
+async function getAlbumHeroData(
+  albumId: string,
+  config: ReturnType<typeof getConfig>,
+): Promise<{ heroImageUrl: string; heroBlurDataURL?: string } | null> {
+  const heroAssetId = config.albumHeroImages[albumId];
+  if (!heroAssetId) return null;
+  const asset = await immich.getAssetInfo(heroAssetId);
+  const ph = asset ? assetPlaceholder(asset) : null;
+  return {
+    heroImageUrl: imageUrl(heroAssetId, 'preview'),
+    heroBlurDataURL: ph?.blurDataURL,
+  };
 }
 
 export default async function PathPage({ params }: PathPageProps) {
@@ -174,6 +193,8 @@ export default async function PathPage({ params }: PathPageProps) {
     const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
     if (albumGate) return albumGate;
 
+    const heroData = await getAlbumHeroData(album.id, config);
+
     return (
       <AlbumDetailView
         album={album}
@@ -182,6 +203,7 @@ export default async function PathPage({ params }: PathPageProps) {
         gridStyle={buildGridStyle(spGrid)}
         backLinkHref={`/${subpageSlug}`}
         backLinkLabel={`Back to ${subpageName}`}
+        {...heroData}
       />
     );
   }
@@ -213,6 +235,8 @@ export default async function PathPage({ params }: PathPageProps) {
       const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
       if (albumGate) return albumGate;
 
+      const heroData = await getAlbumHeroData(album.id, config);
+
       return (
         <AlbumDetailView
           album={album}
@@ -222,15 +246,22 @@ export default async function PathPage({ params }: PathPageProps) {
           subtitle={result.subpage.subtitle}
           backLinkHref="/"
           backLinkLabel="Back to Gallery"
+          {...heroData}
         />
       );
     }
 
     // ── Multiple albums → show album grid ─────────────────────
 
+    // Override albumThumbnailAssetId with the configured hero image (if any)
+    const albumsWithHero = albums.map((album) => {
+      const heroId = config.albumHeroImages[album.id];
+      return heroId ? { ...album, albumThumbnailAssetId: heroId } : album;
+    });
+
     // Batch-fetch ThumbHash for album cover placeholders
     const coverPlaceholders = await Promise.all(
-      albums.map(async (album) => {
+      albumsWithHero.map(async (album) => {
         if (!album.albumThumbnailAssetId) return null;
         const asset = await immich.getAssetInfo(album.albumThumbnailAssetId);
         return asset ? assetPlaceholder(asset) : null;
@@ -242,7 +273,7 @@ export default async function PathPage({ params }: PathPageProps) {
         slug={slug}
         title={result.subpage.title || result.subpage.name}
         subtitle={result.subpage.subtitle}
-        albums={albums}
+        albums={albumsWithHero}
         coverPlaceholders={coverPlaceholders}
         sections={result.subpage.sections}
       />
@@ -261,6 +292,8 @@ export default async function PathPage({ params }: PathPageProps) {
   const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
   if (albumGate) return albumGate;
 
+  const heroData = await getAlbumHeroData(album.id, config);
+
   return (
     <AlbumDetailView
       album={album}
@@ -269,6 +302,7 @@ export default async function PathPage({ params }: PathPageProps) {
       gridStyle={buildGridStyle()}
       backLinkHref="/"
       backLinkLabel="Back to Gallery"
+      {...heroData}
     />
   );
 }

@@ -25,6 +25,13 @@ export function exifUrl(assetId: string): string {
 }
 
 /**
+ * Generate a public video proxy URL for an asset.
+ */
+export function videoUrl(assetId: string): string {
+  return `/api/video/${encodeAssetId(assetId)}`;
+}
+
+/**
  * Placeholder data derived from an asset's ThumbHash.
  */
 export interface PlaceholderData {

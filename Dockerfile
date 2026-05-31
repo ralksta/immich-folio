@@ -34,12 +34,17 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# su-exec for dropping privileges in entrypoint
+RUN apk add --no-cache su-exec
+
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/content ./content
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --chmod=755 docker-entrypoint.sh ./docker-entrypoint.sh
 
-USER nextjs
+# Content dir must be writable for admin saves (ownership fixed at runtime)
+RUN chown -R nextjs:nodejs /app/content
 
 EXPOSE 7211
 
@@ -49,4 +54,6 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:7211/api/health || exit 1
 
-CMD ["node", "server.js"]
+# Run as root initially so entrypoint can fix bind-mount permissions,
+# then drops to nextjs user via su-exec
+CMD ["./docker-entrypoint.sh"]

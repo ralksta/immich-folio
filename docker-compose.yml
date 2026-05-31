@@ -2,7 +2,6 @@ services:
   lightbox:
     build:
       context: .
-      network: host
     container_name: immich-folio
     restart: unless-stopped
     ports:
@@ -11,4 +10,4 @@ services:
       - path: .env.local
         required: false
     volumes:
-      - ./content:/app/content:ro
+      - ./content:/app/content

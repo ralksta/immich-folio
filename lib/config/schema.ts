@@ -21,11 +21,15 @@ export interface SubpageObjectValue {
   subtitle?: string;
   password?: string;
   grid?: Partial<GridConfig>;
-  albums?: Array<string | Record<string, string | { title: string; password?: string }>>;
+  albums?: Array<
+    string | Record<string, string | { title: string; description?: string; password?: string }>
+  >;
   sections?: Array<{
     title: string;
     description?: string;
-    albums: Array<string | Record<string, string | { title: string; password?: string }>>;
+    albums: Array<
+      string | Record<string, string | { title: string; description?: string; password?: string }>
+    >;
   }>;
 }
 
@@ -91,27 +95,36 @@ export interface AppConfig {
   map: boolean;
   transitions: boolean;
   albumOverrides: Record<string, string>;
+  albumDescriptions: Record<string, string>;
   albumPasswords: Record<string, string>;
+  albumHeroImages: Record<string, string>;
   cacheTtl: number;
   rateLimitRpm: number;
   trustedProxies: string[];
   needsSetup?: boolean;
 }
 
+export interface AlbumEntryObject {
+  title: string;
+  description?: string;
+  password?: string;
+  heroImage?: string;
+}
+
 export interface GalleryYaml {
   hero?: string | string[];
-  albums?: string[];
+  albums?: Array<string | Record<string, string | AlbumEntryObject>>;
   subpages?:
     | Record<string, string[] | Array<string | Record<string, string>>>
     | Array<{
         name: string;
         title?: string;
         subtitle?: string;
-        albums?: Array<string | Record<string, string | { title: string; password?: string }>>;
+        albums?: Array<string | Record<string, string | AlbumEntryObject>>;
         sections?: Array<{
           title: string;
           description?: string;
-          albums: Array<string | Record<string, string | { title: string; password?: string }>>;
+          albums: Array<string | Record<string, string | AlbumEntryObject>>;
         }>;
         password?: string;
         grid?: {
