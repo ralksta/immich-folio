@@ -266,6 +266,7 @@ export default function PageBuilder() {
     sectionIndex?: number;
   } | null>(null);
   const [showHeroPicker, setShowHeroPicker] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // DnD sensors
   const sensors = useSensors(
@@ -717,6 +718,39 @@ export default function PageBuilder() {
     );
   }
 
+  // Filter standalone albums
+  const filteredAlbums = gallery.albums.filter((album) => {
+    if (!searchQuery) return true;
+    const name = getAlbumName(album.id).toLowerCase();
+    const description = (album.description || '').toLowerCase();
+    const overrideTitle = (album.title || '').toLowerCase();
+    const query = searchQuery.toLowerCase();
+    return name.includes(query) || description.includes(query) || overrideTitle.includes(query) || album.id.toLowerCase().includes(query);
+  });
+
+  // Filter subpages
+  const filteredSubpages = gallery.subpages
+    .map((sp, index) => ({ sp, index }))
+    .filter(({ sp }) => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      const name = sp.name.toLowerCase();
+      const title = (sp.title || '').toLowerCase();
+      const subtitle = (sp.subtitle || '').toLowerCase();
+      
+      if (name.includes(query) || title.includes(query) || subtitle.includes(query)) return true;
+      
+      const albums = sp.albums || [];
+      const hasMatchingAlbum = albums.some((a) => {
+        const aName = getAlbumName(a.id).toLowerCase();
+        const aTitle = (a.title || '').toLowerCase();
+        const aDesc = (a.description || '').toLowerCase();
+        return aName.includes(query) || aTitle.includes(query) || aDesc.includes(query) || a.id.toLowerCase().includes(query);
+      });
+      
+      return hasMatchingAlbum;
+    });
+
   return (
     <div className="page-builder">
       {/* Save Bar */}
@@ -749,6 +783,25 @@ export default function PageBuilder() {
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="builder-search-container">
+        <div className="builder-search-wrapper">
+          <span className="builder-search-icon">🔍</span>
+          <input
+            type="text"
+            className="builder-search-input"
+            placeholder="Search albums or subpages..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button className="builder-search-clear" onClick={() => setSearchQuery('')} title="Clear search">
+              ×
+            </button>
+          )}
         </div>
       </div>
 
@@ -805,34 +858,40 @@ export default function PageBuilder() {
           onDragEnd={handleAlbumDragEnd}
         >
           <SortableContext
-            items={gallery.albums.map((a, i) => `album-${a.id}-${i}`)}
+            items={filteredAlbums.map((a) => {
+              const originalIndex = gallery.albums.findIndex((x) => x.id === a.id);
+              return `album-${a.id}-${originalIndex}`;
+            })}
             strategy={verticalListSortingStrategy}
           >
             <div className="album-list">
-              {gallery.albums.length === 0 && (
+              {filteredAlbums.length === 0 && (
                 <p className="empty-hint">
-                  No standalone albums. These show directly on the homepage.
+                  {searchQuery ? 'No matching standalone albums found.' : 'No standalone albums. These show directly on the homepage.'}
                 </p>
               )}
-              {gallery.albums.map((album, i) => (
-                <SortableAlbumCard
-                  key={`${album.id}-${i}`}
-                  album={album}
-                  index={i}
-                  name={getAlbumName(album.id)}
-                  count={getAlbumCount(album.id)}
-                  thumbnailId={getAlbumThumbnailId(album.id)}
-                  onRemove={() => removeStandaloneAlbum(i)}
-                  onUpdate={(updates) => {
-                    setGallery((g) => {
-                      const albums = [...g.albums];
-                      albums[i] = { ...albums[i], ...updates };
-                      return { ...g, albums };
-                    });
-                    markDirty();
-                  }}
-                />
-              ))}
+              {filteredAlbums.map((album) => {
+                const originalIndex = gallery.albums.findIndex((a) => a.id === album.id);
+                return (
+                  <SortableAlbumCard
+                    key={`${album.id}-${originalIndex}`}
+                    album={album}
+                    index={originalIndex}
+                    name={getAlbumName(album.id)}
+                    count={getAlbumCount(album.id)}
+                    thumbnailId={getAlbumThumbnailId(album.id)}
+                    onRemove={() => removeStandaloneAlbum(originalIndex)}
+                    onUpdate={(updates) => {
+                      setGallery((g) => {
+                        const albums = [...g.albums];
+                        albums[originalIndex] = { ...albums[originalIndex], ...updates };
+                        return { ...g, albums };
+                      });
+                      markDirty();
+                    }}
+                  />
+                );
+              })}
             </div>
           </SortableContext>
         </DndContext>
@@ -853,6 +912,12 @@ export default function PageBuilder() {
           </p>
         )}
 
+        {gallery.subpages.length > 0 && filteredSubpages.length === 0 && (
+          <p className="empty-hint">
+            No matching subpages found.
+          </p>
+        )}
+
         {/* Collapsed overview grid with DnD */}
         <DndContext
           sensors={sensors}
@@ -860,17 +925,17 @@ export default function PageBuilder() {
           onDragEnd={handleSubpageDragEnd}
         >
           <SortableContext
-            items={gallery.subpages.map((_, i) => `subpage-${i}`)}
+            items={filteredSubpages.map(({ index }) => `subpage-${index}`)}
             strategy={horizontalListSortingStrategy}
           >
             <div className="subpage-grid">
-              {gallery.subpages.map((sp, spIndex) => (
+              {filteredSubpages.map(({ sp, index }) => (
                 <SortableSubpageTile
-                  key={`subpage-${spIndex}`}
+                  key={`subpage-${index}`}
                   sp={sp}
-                  spIndex={spIndex}
-                  isActive={expandedSubpage === spIndex}
-                  onClick={() => setExpandedSubpage(expandedSubpage === spIndex ? null : spIndex)}
+                  spIndex={index}
+                  isActive={expandedSubpage === index}
+                  onClick={() => setExpandedSubpage(expandedSubpage === index ? null : index)}
                   getFirstThumb={getFirstSubpageThumb}
                 />
               ))}

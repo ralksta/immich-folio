@@ -49,11 +49,50 @@ interface Settings {
   };
 }
 
-const PRESETS = ['studio', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
-const LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow'];
-const PHOTO_FRAMES = ['none', 'passepartout', 'shadow'];
-const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic'];
-const ASPECT_RATIOS = ['1', '3/2', '2/3', '16/9', 'auto'];
+const THEME_INFO: Record<string, { desc: string; label: string; accent: string; bg: string; tile: string }> = {
+  studio: {
+    label: 'Studio',
+    desc: 'Clean, high-contrast grid with sans-serif type.',
+    bg: '#141414',
+    tile: '#242424',
+    accent: '#e60012',
+  },
+  minimal: {
+    label: 'Minimal',
+    desc: 'Pure raw layouts with tiny gaps and high whitespace.',
+    bg: '#ffffff',
+    tile: '#f3f3f3',
+    accent: '#111111',
+  },
+  editorial: {
+    label: 'Editorial',
+    desc: 'Warm backgrounds, elegant serifs and large headers.',
+    bg: '#fbf9f4',
+    tile: '#e5dfd4',
+    accent: '#b89053',
+  },
+  classic: {
+    label: 'Classic',
+    desc: 'Soft traditional photographer portfolio with shadows.',
+    bg: '#f7f7f7',
+    tile: '#ffffff',
+    accent: '#444444',
+  },
+  noir: {
+    label: 'Noir',
+    desc: 'High drama absolute pitch black, stark high-fashion look.',
+    bg: '#000000',
+    tile: '#151515',
+    accent: '#ffffff',
+  },
+  monograph: {
+    label: 'Monograph',
+    desc: 'Typewriter monospace font, grid borders and document feel.',
+    bg: '#f4f4f6',
+    tile: '#ffffff',
+    accent: '#555555',
+  },
+};
 
 export default function SettingsEditor() {
   const [settings, setSettings] = useState<Settings>({});
@@ -66,6 +105,16 @@ export default function SettingsEditor() {
   useEffect(() => {
     loadSettings();
   }, []);
+
+  // Sync picked accent color to the admin panel UI immediately for live premium feel
+  useEffect(() => {
+    if (settings.theme?.accent) {
+      document.documentElement.style.setProperty('--admin-accent', settings.theme.accent);
+    }
+    return () => {
+      document.documentElement.style.removeProperty('--admin-accent');
+    };
+  }, [settings.theme?.accent]);
 
   // ── Keyboard shortcut: ⌘+S / Ctrl+S ─────────────────────────
   const handleSaveRef = useCallback(() => {
@@ -291,16 +340,36 @@ export default function SettingsEditor() {
               <h3>Theme</h3>
               <div className="admin-field">
                 <label>Preset</label>
-                <div className="preset-grid">
-                  {PRESETS.map((p) => (
-                    <button
-                      key={p}
-                      className={`preset-btn ${(settings.theme?.preset || 'studio') === p ? 'active' : ''}`}
-                      onClick={() => update('theme.preset', p)}
-                    >
-                      {p}
-                    </button>
-                  ))}
+                <div className="preset-card-grid">
+                  {PRESETS.map((p) => {
+                    const info = THEME_INFO[p] || { label: p, desc: '', bg: '#fff', tile: '#eee', accent: '#333' };
+                    const isActive = (settings.theme?.preset || 'studio') === p;
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        className={`preset-card ${isActive ? 'active' : ''}`}
+                        onClick={() => update('theme.preset', p)}
+                        style={{ '--preset-accent': info.accent } as React.CSSProperties}
+                      >
+                        <div className="preset-card-preview" style={{ backgroundColor: info.bg }}>
+                          <div className="mini-header">
+                            <span className="mini-dot" style={{ backgroundColor: info.accent }}></span>
+                            <span className="mini-line" style={{ backgroundColor: isActive ? info.accent : 'var(--admin-border)' }}></span>
+                          </div>
+                          <div className="mini-grid">
+                            <div className="mini-tile" style={{ backgroundColor: info.tile }}></div>
+                            <div className="mini-tile" style={{ backgroundColor: info.tile }}></div>
+                            <div className="mini-tile" style={{ backgroundColor: info.tile }}></div>
+                          </div>
+                        </div>
+                        <div className="preset-card-info">
+                          <span className="preset-card-name">{info.label}</span>
+                          <span className="preset-card-desc">{info.desc}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               <div className="admin-field">

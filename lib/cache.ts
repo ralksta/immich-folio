@@ -12,6 +12,10 @@ class MemoryCache {
   private store = new Map<string, CacheEntry<unknown>>();
   private maxEntries = 200;
 
+  get size(): number {
+    return this.store.size;
+  }
+
   get<T>(key: string): T | null {
     const entry = this.store.get(key);
     if (!entry) return null;
