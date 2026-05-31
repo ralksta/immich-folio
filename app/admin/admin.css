@@ -1882,18 +1882,20 @@ h3 .svg-icon {
   background: rgba(74, 222, 128, 0.05);
 }
 
-/* ── Drawer Component styling ── */
+/* ── Breitwand-Kiste Centered Modal styling ── */
 .album-drawer-overlay {
   position: fixed;
   inset: 0;
   z-index: 1000;
   background: var(--admin-overlay);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .album-drawer-overlay.open {
@@ -1903,19 +1905,21 @@ h3 .svg-icon {
 
 .album-drawer {
   width: 100%;
-  max-width: 460px;
-  height: 100%;
+  max-width: 840px;
+  max-height: 90vh;
   background: var(--admin-bg-raised);
-  border-left: 1px solid var(--admin-border);
-  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
-  transform: translateX(100%);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  transform: scale(0.95) translateY(10px);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .album-drawer-overlay.open .album-drawer {
-  transform: translateX(0);
+  transform: scale(1) translateY(0);
 }
 
 .album-drawer-header {
@@ -1928,7 +1932,7 @@ h3 .svg-icon {
 }
 
 .album-drawer-header h3 {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 700;
   margin: 0;
   display: flex;
@@ -1936,13 +1940,54 @@ h3 .svg-icon {
   gap: 0.5rem;
 }
 
+/* 2-Column Body Layout */
 .album-drawer-body {
   flex: 1;
   overflow-y: auto;
-  padding: 1.5rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1.2fr 1.8fr;
+  min-height: 0;
+}
+
+@media (max-width: 768px) {
+  .album-drawer-body {
+    grid-template-columns: 1fr;
+  }
+  .album-drawer {
+    max-height: 95vh;
+  }
+}
+
+.modal-left-column {
+  padding: 1.75rem;
+  background: var(--admin-bg-elevated);
+  border-right: 1px solid var(--admin-border);
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .modal-left-column {
+    border-right: none;
+    border-bottom: 1px solid var(--admin-border);
+    padding: 1.25rem;
+  }
+}
+
+.modal-right-column {
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .modal-right-column {
+    padding: 1.25rem;
+  }
 }
 
 .album-drawer-body::-webkit-scrollbar {
@@ -1960,72 +2005,84 @@ h3 .svg-icon {
 }
 
 .album-drawer-footer {
-  padding: 1.25rem 1.5rem;
+  padding: 1rem 1.5rem;
   border-top: 1px solid var(--admin-border);
   background: var(--admin-bg-elevated);
   display: flex;
+  justify-content: space-between;
   gap: 0.75rem;
 }
 
-.album-drawer-footer .admin-btn {
-  flex: 1;
-}
-
-/* Drawer Hero Preview Banner */
-.drawer-hero-section {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: var(--admin-bg-elevated);
-  border: 1px solid var(--admin-border);
+/* Left Column Cover Preview */
+.modal-cover-container {
+  width: 100%;
+  aspect-ratio: 16 / 10;
   border-radius: 10px;
-}
-
-.drawer-hero-cover {
-  width: 90px;
-  height: 60px;
-  border-radius: 6px;
   overflow: hidden;
-  background: var(--admin-bg);
   border: 1px solid var(--admin-border);
-  flex-shrink: 0;
+  background: var(--admin-bg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.drawer-hero-cover img {
+.modal-cover-container img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
-.drawer-hero-placeholder {
+.modal-cover-placeholder {
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--admin-text-muted);
-  font-size: 1.25rem;
+  font-size: 2.5rem;
 }
 
-.drawer-hero-meta {
+/* Album metadata card in left column */
+.modal-meta-box {
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  gap: 0.25rem;
 }
 
-.drawer-hero-name {
-  font-size: 0.9rem;
-  font-weight: 600;
+.modal-album-title {
+  font-size: 1.1rem;
+  font-weight: 700;
   color: var(--admin-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.drawer-hero-count {
-  font-size: 0.75rem;
+.modal-album-subtitle {
+  font-size: 0.8rem;
   color: var(--admin-text-secondary);
+}
+
+.modal-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--admin-text-secondary);
+}
+
+.modal-info-item {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dashed var(--admin-border);
+  padding-bottom: 0.25rem;
+}
+
+.modal-info-label {
+  color: var(--admin-text-muted);
+}
+
+.modal-info-value {
+  font-weight: 600;
 }
 
 /* Drawer Copy UUID element */
