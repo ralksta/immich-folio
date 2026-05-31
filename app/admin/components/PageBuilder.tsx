@@ -94,7 +94,10 @@ function serializeAlbumEntries(
   entries: AlbumEntry[],
 ): Array<
   | string
-  | Record<string, string | { title: string; description?: string; password?: string; heroImage?: string }>
+  | Record<
+      string,
+      string | { title: string; description?: string; password?: string; heroImage?: string }
+    >
 > {
   return entries.map((entry) => {
     if (!entry.title && !entry.description && !entry.password && !entry.heroImage) return entry.id;
@@ -1250,10 +1253,7 @@ function AlbumCard({
               ) : (
                 <span className="album-hero-empty">No hero image set</span>
               )}
-              <button
-                className="admin-btn admin-btn-xs"
-                onClick={() => setShowHeroPicker(true)}
-              >
+              <button className="admin-btn admin-btn-xs" onClick={() => setShowHeroPicker(true)}>
                 {album.heroImage ? 'Change' : '+ Pick'}
               </button>
             </div>
