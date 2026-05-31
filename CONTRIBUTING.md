@@ -20,8 +20,9 @@ cd immich-folio
 npm install
 
 # 3. Configure
-cp content/gallery.example.yaml content/gallery.yaml
-# Edit .env or set IMMICH_URL + IMMICH_API_KEY
+cp .env.local.example .env.local
+cp content/gallery.yaml.example content/gallery.yaml
+# Edit .env.local or set IMMICH_API_URL + IMMICH_API_KEY
 
 # 4. Run
 npm run dev       # http://localhost:3000

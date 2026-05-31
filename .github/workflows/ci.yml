@@ -39,6 +39,6 @@ jobs:
         run: npm run build
         env:
           # Minimal env vars so Next.js build doesn't bail early on env validation
-          IMMICH_URL: http://localhost:2283
+          IMMICH_API_URL: http://localhost:2283
           IMMICH_API_KEY: placeholder-key-for-ci
           AUTH_SECRET: placeholder-secret-for-ci-builds-must-be-32-chars-long
