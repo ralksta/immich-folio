@@ -25,3 +25,8 @@
 **Vulnerability:** Asset proxy routes (`/api/image/*`, `/api/video/*`) directly served the upstream `Content-Type` header without validation. Since these API routes are explicitly excluded from the Next.js Content Security Policy (CSP) matcher, returning types like `image/svg+xml` or `text/html` would execute scripts directly in the user's browser, leading to Stored XSS.
 **Learning:** Endpoints that serve user-controlled content and are not protected by global CSP headers require strict MIME-type validation. An attacker could upload an SVG containing malicious scripts and retrieve it via these proxy endpoints to bypass standard security controls.
 **Prevention:** Always sanitize the `Content-Type` header on proxy endpoints. First convert it to lowercase, remap required generic types (like `application/octet-stream` to `image/jpeg`), and finally enforce a strict positive allowlist (`startsWith('image/')` and `!includes('svg')`) before falling back to `application/octet-stream`.
+
+## 2024-06-03 - Missing Rate Limiting and DoS vulnerability on Admin Auth
+**Vulnerability:** Admin authentication endpoint lacks rate limiting and password length validation.
+**Learning:** High privileged endpoints need strict rate limiting, and unbounded password lengths can be used for DoS via excessive hashing.
+**Prevention:** Always implement rate limiting on authentication routes and clamp password lengths to reasonable maximums before hashing.
