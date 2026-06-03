@@ -172,7 +172,8 @@ export default function SettingsEditor() {
     setSettings((s) => {
       const copy = structuredClone(s);
       const parts = path.split('.');
-      let obj = copy;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let obj: any = copy;
       for (let i = 0; i < parts.length - 1; i++) {
         if (!obj[parts[i]]) obj[parts[i]] = {};
         obj = obj[parts[i]];
@@ -196,8 +197,10 @@ export default function SettingsEditor() {
     // Clean up empty objects
     const cleaned = structuredClone(settings);
     for (const key of Object.keys(cleaned)) {
-      if (typeof cleaned[key] === 'object' && Object.keys(cleaned[key]).length === 0) {
-        delete cleaned[key];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (typeof (cleaned as any)[key] === 'object' && Object.keys((cleaned as any)[key]).length === 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (cleaned as any)[key];
       }
     }
 
