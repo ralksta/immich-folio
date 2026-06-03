@@ -170,7 +170,7 @@ export default function SettingsEditor() {
 
   function update(path: string, value: unknown) {
     setSettings((s) => {
-      const copy = JSON.parse(JSON.stringify(s));
+      const copy = structuredClone(s);
       const parts = path.split('.');
       let obj = copy;
       for (let i = 0; i < parts.length - 1; i++) {
@@ -194,7 +194,7 @@ export default function SettingsEditor() {
     setSaveMessage('');
 
     // Clean up empty objects
-    const cleaned = JSON.parse(JSON.stringify(settings));
+    const cleaned = structuredClone(settings);
     for (const key of Object.keys(cleaned)) {
       if (typeof cleaned[key] === 'object' && Object.keys(cleaned[key]).length === 0) {
         delete cleaned[key];
