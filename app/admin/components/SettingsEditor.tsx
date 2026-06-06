@@ -173,7 +173,9 @@ export default function SettingsEditor() {
 
   function update(path: string, value: unknown) {
     setSettings((s) => {
-      const copy = structuredClone(s);
+      // Cast to any to allow dynamic nested object assignment
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const copy = structuredClone(s) as any;
       const parts = path.split('.');
       let obj = copy;
       for (let i = 0; i < parts.length - 1; i++) {
@@ -197,7 +199,9 @@ export default function SettingsEditor() {
     setSaveMessage('');
 
     // Clean up empty objects
-    const cleaned = structuredClone(settings);
+    // Cast to any to allow dynamic property deletion
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cleaned = structuredClone(settings) as any;
     for (const key of Object.keys(cleaned)) {
       if (typeof cleaned[key] === 'object' && Object.keys(cleaned[key]).length === 0) {
         delete cleaned[key];
