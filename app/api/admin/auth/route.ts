@@ -7,9 +7,30 @@ import {
   COOKIE_NAME,
   SESSION_DURATION_MS,
 } from '@/lib/admin/auth';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+
+const AUTH_RPM = 10;
 
 /** POST: Login with admin password. */
 export async function POST(request: NextRequest) {
+  // ── Rate limiting (brute-force protection) ──────────
+  const ip = getClientIp(request);
+  const { success, remaining, resetAt } = checkRateLimit(`admin-auth:${ip}`, AUTH_RPM);
+
+  if (!success) {
+    return NextResponse.json(
+      { error: 'Too many attempts, try again later' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(Math.ceil((resetAt - Date.now()) / 1000)),
+          'X-RateLimit-Limit': String(AUTH_RPM),
+          'X-RateLimit-Remaining': String(remaining),
+        },
+      },
+    );
+  }
+
   if (!isAdminEnabled()) {
     return NextResponse.json(
       { error: 'Admin panel is not enabled. Set ADMIN_PASSWORD in your environment.' },
@@ -18,8 +39,8 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
-  if (!body?.password || typeof body.password !== 'string') {
-    return NextResponse.json({ error: 'Password is required' }, { status: 400 });
+  if (!body?.password || typeof body.password !== 'string' || body.password.length > 100) {
+    return NextResponse.json({ error: 'Invalid password format or length' }, { status: 400 });
   }
 
   if (!verifyAdminPassword(body.password)) {
