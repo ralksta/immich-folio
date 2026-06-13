@@ -37,8 +37,8 @@ export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }:
       <div className="picker-modal" onClick={(e) => e.stopPropagation()}>
         <div className="picker-header">
           <h3>Select Album</h3>
-          <button className="admin-btn-icon" onClick={onClose}>
-            ×
+          <button className="admin-btn-icon" onClick={onClose} aria-label="Close" title="Close">
+            <span aria-hidden="true">×</span>
           </button>
         </div>
 
