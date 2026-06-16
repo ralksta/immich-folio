@@ -55,7 +55,10 @@ const PHOTO_FRAMES = ['none', 'passepartout', 'shadow'];
 const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic'];
 const ASPECT_RATIOS = ['1', '3/2', '2/3', '16/9', 'auto'];
 
-const THEME_INFO: Record<string, { desc: string; label: string; accent: string; bg: string; tile: string }> = {
+const THEME_INFO: Record<
+  string,
+  { desc: string; label: string; accent: string; bg: string; tile: string }
+> = {
   studio: {
     label: 'Studio',
     desc: 'Clean, high-contrast grid with sans-serif type.',
@@ -348,7 +351,13 @@ export default function SettingsEditor() {
                 <label>Preset</label>
                 <div className="preset-card-grid">
                   {PRESETS.map((p) => {
-                    const info = THEME_INFO[p] || { label: p, desc: '', bg: '#fff', tile: '#eee', accent: '#333' };
+                    const info = THEME_INFO[p] || {
+                      label: p,
+                      desc: '',
+                      bg: '#fff',
+                      tile: '#eee',
+                      accent: '#333',
+                    };
                     const isActive = (settings.theme?.preset || 'studio') === p;
                     return (
                       <button
@@ -360,8 +369,16 @@ export default function SettingsEditor() {
                       >
                         <div className="preset-card-preview" style={{ backgroundColor: info.bg }}>
                           <div className="mini-header">
-                            <span className="mini-dot" style={{ backgroundColor: info.accent }}></span>
-                            <span className="mini-line" style={{ backgroundColor: isActive ? info.accent : 'var(--admin-border)' }}></span>
+                            <span
+                              className="mini-dot"
+                              style={{ backgroundColor: info.accent }}
+                            ></span>
+                            <span
+                              className="mini-line"
+                              style={{
+                                backgroundColor: isActive ? info.accent : 'var(--admin-border)',
+                              }}
+                            ></span>
                           </div>
                           <div className="mini-grid">
                             <div className="mini-tile" style={{ backgroundColor: info.tile }}></div>

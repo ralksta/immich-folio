@@ -61,25 +61,26 @@ Singleton `ImmichClient` class exported as `immich`. All Immich API calls are se
 
 ### API routes (`app/api/`)
 
-| Route | Purpose |
-|---|---|
-| `GET /api/image/[id]` | Image proxy — decodes token, rate-limits, streams from Immich |
-| `GET /api/exif/[id]` | EXIF data for lightbox panel |
-| `POST /api/auth` | Password submission → sets `HttpOnly` cookie |
-| `GET /api/og` | Dynamic OG image generation (rate-limited) |
-| `GET /api/map` | Aggregated GPS coordinates for map view |
-| `GET /api/health` | Health check |
-| `GET/POST/DELETE /api/admin/auth` | Admin login, session check, logout |
-| `GET/PUT /api/admin/gallery` | Read/write `gallery.yaml` |
-| `GET/PUT /api/admin/settings` | Read/write `settings.yaml` |
-| `GET /api/admin/albums` | Browse all shared Immich albums (admin-only) |
-| `POST /api/admin/reload` | Invalidate config + Immich cache |
+| Route                             | Purpose                                                       |
+| --------------------------------- | ------------------------------------------------------------- |
+| `GET /api/image/[id]`             | Image proxy — decodes token, rate-limits, streams from Immich |
+| `GET /api/exif/[id]`              | EXIF data for lightbox panel                                  |
+| `POST /api/auth`                  | Password submission → sets `HttpOnly` cookie                  |
+| `GET /api/og`                     | Dynamic OG image generation (rate-limited)                    |
+| `GET /api/map`                    | Aggregated GPS coordinates for map view                       |
+| `GET /api/health`                 | Health check                                                  |
+| `GET/POST/DELETE /api/admin/auth` | Admin login, session check, logout                            |
+| `GET/PUT /api/admin/gallery`      | Read/write `gallery.yaml`                                     |
+| `GET/PUT /api/admin/settings`     | Read/write `settings.yaml`                                    |
+| `GET /api/admin/albums`           | Browse all shared Immich albums (admin-only)                  |
+| `POST /api/admin/reload`          | Invalidate config + Immich cache                              |
 
 The image proxy maps requested pixel widths (`?w=`) to Immich size tiers: `≤250px→thumbnail`, `≤1440px→preview`, `>1440px→original`.
 
 ### Routing (`app/[...path]/page.tsx`)
 
 Single catch-all route handles three cases:
+
 1. `/[subpage-slug]/[album-slug]` — renders album detail with back-link to subpage
 2. `/[subpage-slug]` — if subpage has >1 album, renders `SubpageGridView`; if exactly 1 album, renders `AlbumDetailView` directly
 3. `/[album-slug]` — standalone album detail
