@@ -21,3 +21,6 @@
 ## 2024-05-29 - Memoize repeated auth checks in Map API
 **Learning:** When filtering map locations, the API performs redundant `isAuthenticated` checks for albums within the same subpage slug. Since each check involves cryptographic operations (HMAC calculations), doing this repeatedly in a nested filter loop severely impacts performance for galleries with many geotagged photos.
 **Action:** Use a request-scoped `Map` to memoize the results of `isAuthenticated` calls within the route handler, preventing redundant cryptographic operations for the same subpage context.
+## 2024-05-20 - Deep Cloning Performance
+**Learning:** `JSON.parse(JSON.stringify())` is used for deep cloning but incurs expensive serialization/deserialization overhead. In TypeScript, `structuredClone` natively handles deep clones more efficiently, but preserves strict typing and requires casting (`as any`) for dynamic index mutations.
+**Action:** Default to the native `structuredClone()` for deep object copying instead of JSON serialization to save compute cycles.
