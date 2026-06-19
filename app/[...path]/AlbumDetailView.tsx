@@ -40,7 +40,9 @@ export function AlbumDetailView({
             priority
             sizes="100vw"
             style={{ objectFit: 'cover' }}
-            {...(heroBlurDataURL ? { placeholder: 'blur' as const, blurDataURL: heroBlurDataURL } : {})}
+            {...(heroBlurDataURL
+              ? { placeholder: 'blur' as const, blurDataURL: heroBlurDataURL }
+              : {})}
           />
           <div className="album-hero__overlay" />
         </div>
