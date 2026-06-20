@@ -17,3 +17,7 @@
 ## 2024-06-18 - Dynamic Numeric Counters ARIA
 **Learning:** When displaying dynamic numeric text changes during navigation (like a lightbox image counter), the visual presentation (e.g., "1 / 5") does not provide sufficient context for screen reader users and might not be announced automatically.
 **Action:** Wrap the counter container with `aria-live="polite"` and `aria-atomic="true"`. Use `.sr-only` to provide a context-rich screen reader string (e.g., "Photo 1 of 5") and hide the visual short-hand using `aria-hidden="true"`.
+
+## 2024-06-20 - Icon Props and Accessibility
+**Learning:** When adding `aria-hidden="true"` to icon components to hide them from screen readers, ensure that the icon component actually accepts and spreads props. If the component does not accept props (like `Icons.Close`), passing `aria-hidden` will cause TypeScript compilation errors.
+**Action:** Always check the type definition of an icon component before passing accessibility attributes to it. If the component does not accept props, wrap it in a `<span aria-hidden="true">` instead.
