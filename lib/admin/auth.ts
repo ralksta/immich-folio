@@ -56,15 +56,12 @@ export function verifyAdminPassword(password: string): boolean {
   const adminPw = env.ADMIN_PASSWORD;
   if (!adminPw) return false;
 
-  // Constant-time comparison
-  const pwBuf = Buffer.from(password);
-  const expectedBuf = Buffer.from(adminPw);
-  if (pwBuf.length !== expectedBuf.length) {
-    // Still do a comparison to prevent timing attacks on length
-    crypto.timingSafeEqual(pwBuf, Buffer.alloc(pwBuf.length));
-    return false;
-  }
-  return crypto.timingSafeEqual(pwBuf, expectedBuf);
+  // Hash both to a fixed length before constant-time comparison to prevent timing and length attacks
+  const secret = env.AUTH_SECRET || 'dev-fallback-secret';
+  const attemptHash = crypto.createHmac('sha256', secret).update(password).digest();
+  const storedHash = crypto.createHmac('sha256', secret).update(adminPw).digest();
+
+  return crypto.timingSafeEqual(attemptHash, storedHash);
 }
 
 /** Check if the current request has a valid admin session. */
