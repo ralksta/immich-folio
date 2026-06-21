@@ -17,3 +17,6 @@
 ## 2024-06-18 - Dynamic Numeric Counters ARIA
 **Learning:** When displaying dynamic numeric text changes during navigation (like a lightbox image counter), the visual presentation (e.g., "1 / 5") does not provide sufficient context for screen reader users and might not be announced automatically.
 **Action:** Wrap the counter container with `aria-live="polite"` and `aria-atomic="true"`. Use `.sr-only` to provide a context-rich screen reader string (e.g., "Photo 1 of 5") and hide the visual short-hand using `aria-hidden="true"`.
+## 2024-06-21 - Add ARIA Labels to Admin Icon Buttons
+**Learning:** Icon-only buttons using text characters like "✕" or "🗑" in the admin panel lacked `aria-label` and `aria-hidden` attributes, making them inaccessible to screen readers.
+**Action:** Always ensure icon-only buttons include descriptive `aria-label` attributes and text-based icons are wrapped in `<span aria-hidden="true">` to prevent screen readers from announcing confusing characters.
