@@ -30,6 +30,8 @@ export function createAdminToken(): string {
 
 /** Verify a session token. Returns true if valid. */
 export function verifyAdminToken(token: string): boolean {
+  if (!token || token.length > 1024) return false;
+
   const parts = token.split('.');
   if (parts.length !== 2) return false;
 
@@ -37,7 +39,14 @@ export function verifyAdminToken(token: string): boolean {
   const key = getSigningKey();
   const expectedSig = crypto.createHmac('sha256', key).update(data).digest('base64url');
 
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) {
+  const sigBuf = Buffer.from(sig);
+  const expectedSigBuf = Buffer.from(expectedSig);
+
+  if (sigBuf.length !== expectedSigBuf.length) {
+    return false;
+  }
+
+  if (!crypto.timingSafeEqual(sigBuf, expectedSigBuf)) {
     return false;
   }
 
@@ -56,15 +65,15 @@ export function verifyAdminPassword(password: string): boolean {
   const adminPw = env.ADMIN_PASSWORD;
   if (!adminPw) return false;
 
-  // Constant-time comparison
-  const pwBuf = Buffer.from(password);
-  const expectedBuf = Buffer.from(adminPw);
-  if (pwBuf.length !== expectedBuf.length) {
-    // Still do a comparison to prevent timing attacks on length
-    crypto.timingSafeEqual(pwBuf, Buffer.alloc(pwBuf.length));
-    return false;
-  }
-  return crypto.timingSafeEqual(pwBuf, expectedBuf);
+  if (password.length > 1024) return false;
+
+  // Hash both to a fixed length before constant-time comparison to prevent timing and length attacks,
+  // and to avoid memory exhaustion from allocating massive buffers for variable-length inputs.
+  const key = getSigningKey();
+  const attemptHash = crypto.createHmac('sha256', key).update(password).digest();
+  const storedHash = crypto.createHmac('sha256', key).update(adminPw).digest();
+
+  return crypto.timingSafeEqual(attemptHash, storedHash);
 }
 
 /** Check if the current request has a valid admin session. */
