@@ -37,7 +37,15 @@ export function verifyAdminToken(token: string): boolean {
   const key = getSigningKey();
   const expectedSig = crypto.createHmac('sha256', key).update(data).digest('base64url');
 
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) {
+  const sigBuf = Buffer.from(sig);
+  const expectedBuf = Buffer.from(expectedSig);
+
+  if (sigBuf.length !== expectedBuf.length) {
+    crypto.timingSafeEqual(sigBuf, Buffer.alloc(sigBuf.length));
+    return false;
+  }
+
+  if (!crypto.timingSafeEqual(sigBuf, expectedBuf)) {
     return false;
   }
 
