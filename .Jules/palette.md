@@ -17,3 +17,7 @@
 ## 2024-06-18 - Dynamic Numeric Counters ARIA
 **Learning:** When displaying dynamic numeric text changes during navigation (like a lightbox image counter), the visual presentation (e.g., "1 / 5") does not provide sufficient context for screen reader users and might not be announced automatically.
 **Action:** Wrap the counter container with `aria-live="polite"` and `aria-atomic="true"`. Use `.sr-only` to provide a context-rich screen reader string (e.g., "Photo 1 of 5") and hide the visual short-hand using `aria-hidden="true"`.
+
+## 2024-05-27 - Text-based Icon Accessibility
+**Learning:** When using text characters (like '×') as visual icons within interactive elements (`<button>`), screen readers may announce the character confusingly (e.g., "times" or "multiply").
+**Action:** Always wrap the visual text character in a `<span aria-hidden="true">` to hide it from screen readers, and add a clear, descriptive `aria-label` to the parent `<button>` to ensure correct semantic announcement.
