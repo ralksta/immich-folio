@@ -904,8 +904,8 @@ export default function PageBuilder() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
-            <button className="builder-search-clear" onClick={() => setSearchQuery('')} title="Clear search">
-              ×
+            <button className="builder-search-clear" onClick={() => setSearchQuery('')} title="Clear search" aria-label="Clear search">
+              <span aria-hidden="true">×</span>
             </button>
           )}
         </div>
