@@ -172,7 +172,6 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
         }}
       >
         {current.type === 'video' && current.videoUrl ? (
-          // eslint-disable-next-line jsx-a11y/media-has-caption
           <video
             className={`${styles.image}${imageLoaded ? ` ${styles.imageLoaded}` : ''}`}
             src={current.videoUrl}
