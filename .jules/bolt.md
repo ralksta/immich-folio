@@ -21,3 +21,7 @@
 ## 2024-05-29 - Memoize repeated auth checks in Map API
 **Learning:** When filtering map locations, the API performs redundant `isAuthenticated` checks for albums within the same subpage slug. Since each check involves cryptographic operations (HMAC calculations), doing this repeatedly in a nested filter loop severely impacts performance for galleries with many geotagged photos.
 **Action:** Use a request-scoped `Map` to memoize the results of `isAuthenticated` calls within the route handler, preventing redundant cryptographic operations for the same subpage context.
+
+## 2024-06-27 - Replace JSON.parse(JSON.stringify) with structuredClone
+**Learning:** `structuredClone` preserves strict typing in TS, requiring casting (e.g., `as any`) if the cloned object requires dynamic string-key mutations not defined in its interface.
+**Action:** When swapping `JSON.parse(JSON.stringify)` for `structuredClone` in TypeScript where index access operations occur, ensure the clone's type is adjusted (e.g. `as any`) to prevent "Element implicitly has an 'any' type because expression of type 'string' can't be used to index" compiler errors.
