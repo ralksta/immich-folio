@@ -904,8 +904,8 @@ export default function PageBuilder() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
-            <button className="builder-search-clear" onClick={() => setSearchQuery('')} title="Clear search">
-              ×
+            <button className="builder-search-clear" onClick={() => setSearchQuery('')} title="Clear search" aria-label="Clear search">
+              <span aria-hidden="true">×</span>
             </button>
           )}
         </div>
@@ -1077,16 +1077,18 @@ export default function PageBuilder() {
                         rel="noopener noreferrer"
                         className="admin-btn-icon"
                         title="Preview this page"
+                        aria-label="Preview this page"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        ↗
+                        <span aria-hidden="true">↗</span>
                       </a>
                       <button
                         className="admin-btn-icon"
                         onClick={() => setExpandedSubpage(null)}
                         title="Collapse"
+                        aria-label="Collapse"
                       >
-                        ✕
+                        <span aria-hidden="true">✕</span>
                       </button>
                       <button
                         className="admin-btn-icon admin-btn-icon-danger"
