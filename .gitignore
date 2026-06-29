@@ -45,6 +45,9 @@ Thumbs.db
 # ── Agent & Dev Tools ────────────────────────────────
 .agent/
 .Jules/
+.jules/
+.claude/
+.planning/
 
 # ── One-off Scripts (Root) ───────────────────────────
 /check_albums.js
