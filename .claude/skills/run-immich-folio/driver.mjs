@@ -24,7 +24,9 @@ try {
   const page = await ctx.newPage();
 
   const consoleErrors = [];
-  page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
+  page.on('console', (m) => {
+    if (m.type() === 'error') consoleErrors.push(m.text());
+  });
 
   // ── 1. Homepage ──────────────────────────────────────────────
   console.log('[1/4] Homepage...');
@@ -40,7 +42,7 @@ try {
   // Grab the first subpage link from the header nav (skip "Home" and "About")
   const firstSubpageHref = await page.$eval(
     '.header__nav a:not([href="/"]):not([href="/about"]):not([href="/map"])',
-    el => el.getAttribute('href'),
+    (el) => el.getAttribute('href'),
   );
   if (!firstSubpageHref) throw new Error('No subpage nav link found');
   console.log(`[2/4] Subpage: ${firstSubpageHref}`);
@@ -77,10 +79,10 @@ try {
   if (health.status !== 'ok') throw new Error(`Health check failed: ${JSON.stringify(health)}`);
 
   // ── Summary ───────────────────────────────────────────────────
-  const appErrors = consoleErrors.filter(e => !e.includes('eval() is not supported'));
+  const appErrors = consoleErrors.filter((e) => !e.includes('eval() is not supported'));
   if (appErrors.length > 0) {
     console.warn(`\n⚠  Console errors (${appErrors.length}):`);
-    appErrors.forEach(e => console.warn('  ', e));
+    appErrors.forEach((e) => console.warn('  ', e));
   }
 
   console.log(`\n✓ All checks passed. Screenshots in ${SHOTS}/`);

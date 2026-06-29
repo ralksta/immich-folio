@@ -41,7 +41,7 @@ export async function GET() {
   const galleryBackups = await listBackups('gallery.yaml');
   const settingsBackups = await listBackups('settings.yaml');
   const backupCount = galleryBackups.length + settingsBackups.length;
-  
+
   // Find timestamp of the latest backup
   let lastBackup: string | null = null;
   const allBackups = [...galleryBackups, ...settingsBackups].sort().reverse();
@@ -60,7 +60,7 @@ export async function GET() {
       status: immichOk ? 'connected' : 'disconnected',
     },
     config: {
-      status: (galleryValid && settingsValid) ? 'valid' : 'invalid',
+      status: galleryValid && settingsValid ? 'valid' : 'invalid',
       gallery: galleryValid ? 'valid' : 'invalid',
       settings: settingsValid ? 'valid' : 'invalid',
     },

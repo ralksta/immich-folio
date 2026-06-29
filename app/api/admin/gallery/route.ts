@@ -45,7 +45,10 @@ export async function PUT(request: Request) {
     immich.invalidateAll();
     // Revalidate all pages so the homepage picks up new hero images immediately
     revalidatePath('/', 'layout');
-    return NextResponse.json({ success: true, message: 'Saved successfully. Backup of previous version created.' });
+    return NextResponse.json({
+      success: true,
+      message: 'Saved successfully. Backup of previous version created.',
+    });
   } catch (err) {
     console.error('[Admin] Failed to write gallery.yaml:', err);
     return NextResponse.json({ error: 'Failed to save gallery config' }, { status: 500 });
