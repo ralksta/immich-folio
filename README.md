@@ -95,6 +95,20 @@ RATE_LIMIT_RPM=120                     # requests/min/IP, default: 120
 ADMIN_PASSWORD=your-secure-password   # enables /admin panel
 ```
 
+### Immich API Key Permissions
+
+Create a dedicated API key in Immich under **Account Settings → API Keys**. Immich Folio only needs **read access** — it never modifies your library.
+
+| Permission | Required | Used for |
+|---|---|---|
+| `album.read` | ✅ Yes | List and fetch album metadata & photo lists |
+| `asset.read` | ✅ Yes | Fetch asset metadata, EXIF data, thumbnails, previews, and originals |
+| `asset.view` | ✅ Yes | Stream image/video files (thumbnail, preview, video playback) |
+
+> **No write permissions needed.** `album.create`, `asset.upload`, `asset.delete`, etc. can all be left **off**.
+
+> **Tip (Admin Panel):** The Admin Panel also uses `POST /search/metadata` to browse your full library for the hero image picker. This is covered by `asset.read` — no additional permission required.
+
 ### Gallery Config
 
 All gallery structure — hero images, albums, subpages, grid layout, footer — is defined in `content/gallery.yaml`.
