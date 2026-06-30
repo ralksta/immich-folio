@@ -202,7 +202,8 @@ exifOnHover: ${exifOnHover}`;
       {/* ── Floating Toggle Button — bottom-left ── */}
       <button
         onClick={() => setOpen(!open)}
-        aria-label="Dev Toolbar"
+        aria-label={open ? 'Close Dev Toolbar' : 'Open Dev Toolbar'}
+        aria-expanded={open}
         style={{
           position: 'fixed',
           bottom: 20,
@@ -224,7 +225,7 @@ exifOnHover: ${exifOnHover}`;
           boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
         }}
       >
-        {open ? '✕' : '🎨'}
+        <span aria-hidden="true">{open ? '✕' : '🎨'}</span>
       </button>
 
       {/* ── Panel — anchored bottom-left ────────── */}
