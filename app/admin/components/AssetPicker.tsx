@@ -114,8 +114,8 @@ export default function AssetPicker({
       <div className="asset-picker-modal" onClick={(e) => e.stopPropagation()}>
         <div className="picker-header">
           <h3>{title || 'Select Hero Image'}</h3>
-          <button className="admin-btn-icon" onClick={onClose}>
-            ×
+          <button className="admin-btn-icon" onClick={onClose} aria-label="Close asset picker">
+            <span aria-hidden="true">×</span>
           </button>
         </div>
 
