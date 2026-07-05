@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import {
   verifyAdminPassword,
   createAdminToken,
@@ -14,6 +15,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: 'Admin panel is not enabled. Set ADMIN_PASSWORD in your environment.' },
       { status: 403 },
+    );
+  }
+
+  const ip = getClientIp(request);
+  const rateLimit = checkRateLimit(ip, 5);
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: 'Too many attempts. Please try again later.' },
+      { status: 429 },
     );
   }
 
