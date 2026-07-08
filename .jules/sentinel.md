@@ -1,0 +1,4 @@
+## 2024-07-08 - Cryptographic Vulnerabilities in Admin Authentication
+**Vulnerability:** Admin authentication lacked maximum string length checks, resulting in DoS via unbounded buffer allocation. Additionally, `crypto.timingSafeEqual` was exposed to unhandled exceptions when byte lengths mismatched, and variable-length secrets were not hashed before comparison, leaking length via side-channel timing attacks.
+**Learning:** Using `Buffer.from()` or `Buffer.alloc()` on raw, unbounded user input (like a password) allows instant memory exhaustion attacks. `crypto.timingSafeEqual` always throws if buffer lengths are different, meaning raw inputs must be length-checked or hashed first.
+**Prevention:** Always enforce strict maximum length limits on user input before processing. When comparing variable-length secrets, hash both to a fixed length (e.g. SHA-256) first before performing `crypto.timingSafeEqual`.
