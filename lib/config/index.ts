@@ -125,7 +125,10 @@ export function getConfig(): AppConfig {
   function processAlbumEntry(
     entry:
       | string
-      | Record<string, string | { title: string; description?: string; password?: string; heroImage?: string }>,
+      | Record<
+          string,
+          string | { title: string; description?: string; password?: string; heroImage?: string }
+        >,
     context: string,
   ): string {
     if (typeof entry === 'string') {

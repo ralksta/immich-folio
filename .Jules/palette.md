@@ -1,0 +1,3 @@
+## 2024-07-09 - Accessible Icon Buttons
+**Learning:** Found several text-based icon buttons in the admin and dev toolbar components (using characters like '×', '✕', '↑', '🎨') that lack screen reader accessibility. Although some have `aria-label` or `title`, the text character itself is announced by screen readers, which can be confusing (e.g., "times" or "multiplication X" instead of "close").
+**Action:** When using text characters as icons in buttons, wrap the character in a `<span aria-hidden="true">` to hide it from screen readers, and rely on the `aria-label` on the parent button for accessibility.

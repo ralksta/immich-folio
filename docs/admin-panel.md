@@ -38,6 +38,7 @@ Add Immich asset UUIDs for the homepage hero carousel. Supports single or multip
 Albums displayed directly on the homepage. Click **+ Add Album** to open the Album Picker and select from your Immich library.
 
 Each album card supports:
+
 - **Title override** — display a custom name instead of the Immich album name
 - **Description** — shown below the album title on the subpage
 - **Password** — protect individual albums with a password
@@ -47,6 +48,7 @@ Each album card supports:
 Group albums under custom URL paths (e.g., `/japan`, `/wedding-smith`).
 
 Each subpage has:
+
 - **Name** — used for navigation and URL generation (auto-slugified)
 - **Title** — optional display title (defaults to name)
 - **Subtitle** — optional text shown below the page heading
@@ -64,14 +66,14 @@ Use the **↑/↓** buttons on subpages to change their display order. The order
 
 The **Settings** tab lets you configure global site behavior:
 
-| Section   | Controls                                                         |
-| --------- | ---------------------------------------------------------------- |
-| General   | Site title, subtitle, language, EXIF on hover, map, transitions  |
-| Theme     | Preset, accent color, photo frame, hero style, grain, header dot |
-| Grid      | Layout mode, columns, gap, aspect ratio                          |
-| Footer    | Name, Instagram, email, website                                  |
-| Legal     | Impressum toggle and all legal fields                            |
-| SEO       | Meta title, description, noindex, nofollow                       |
+| Section | Controls                                                         |
+| ------- | ---------------------------------------------------------------- |
+| General | Site title, subtitle, language, EXIF on hover, map, transitions  |
+| Theme   | Preset, accent color, photo frame, hero style, grain, header dot |
+| Grid    | Layout mode, columns, gap, aspect ratio                          |
+| Footer  | Name, Instagram, email, website                                  |
+| Legal   | Impressum toggle and all legal fields                            |
+| SEO     | Meta title, description, noindex, nofollow                       |
 
 Changes are applied immediately after saving — no server restart required.
 
@@ -86,14 +88,14 @@ When adding albums, a modal overlay shows **all shared albums** from your Immich
 
 ## Security
 
-| Aspect         | Implementation                                              |
-| -------------- | ----------------------------------------------------------- |
-| Authentication | HMAC-signed session token in an `HttpOnly` cookie           |
-| Session expiry | 24 hours (automatic logout)                                 |
-| Password check | Constant-time comparison to prevent timing attacks          |
-| Cookie flags   | `HttpOnly`, `Secure` (in production), `SameSite=Strict`    |
-| Rate limiting  | Admin endpoints share the global rate limiter               |
-| Robots         | `/admin` is marked `noindex, nofollow` in metadata          |
+| Aspect         | Implementation                                          |
+| -------------- | ------------------------------------------------------- |
+| Authentication | HMAC-signed session token in an `HttpOnly` cookie       |
+| Session expiry | 24 hours (automatic logout)                             |
+| Password check | Constant-time comparison to prevent timing attacks      |
+| Cookie flags   | `HttpOnly`, `Secure` (in production), `SameSite=Strict` |
+| Rate limiting  | Admin endpoints share the global rate limiter           |
+| Robots         | `/admin` is marked `noindex, nofollow` in metadata      |
 
 > [!NOTE]
 > The admin panel uses its own session management, completely separate from album password protection. Admin sessions use `AUTH_SECRET` for token signing.
@@ -125,7 +127,7 @@ services:
     environment:
       - ADMIN_PASSWORD=your-secure-password
     volumes:
-      - ./content:/app/content  # Must be writable for admin panel
+      - ./content:/app/content # Must be writable for admin panel
 ```
 
 > [!IMPORTANT]
@@ -134,6 +136,7 @@ services:
 ### Reload Button
 
 The admin header includes a **↻ Reload** button that:
+
 1. Invalidates the in-memory config cache
 2. Clears the Immich album/asset cache
 3. Forces the next request to re-read all YAML files

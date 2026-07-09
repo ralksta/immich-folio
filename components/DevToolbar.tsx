@@ -224,7 +224,7 @@ exifOnHover: ${exifOnHover}`;
           boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
         }}
       >
-        {open ? '✕' : '🎨'}
+        {open ? <span aria-hidden="true">✕</span> : <span aria-hidden="true">🎨</span>}
       </button>
 
       {/* ── Panel — anchored bottom-left ────────── */}

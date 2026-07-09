@@ -38,7 +38,7 @@ export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }:
         <div className="picker-header">
           <h3>Select Album</h3>
           <button className="admin-btn-icon" onClick={onClose}>
-            ×
+            <span aria-hidden="true">×</span>
           </button>
         </div>
 

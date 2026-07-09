@@ -99,11 +99,11 @@ ADMIN_PASSWORD=your-secure-password   # enables /admin panel
 
 Create a dedicated API key in Immich under **Account Settings → API Keys**. Immich Folio only needs **read access** — it never modifies your library.
 
-| Permission | Required | Used for |
-|---|---|---|
-| `album.read` | ✅ Yes | List and fetch album metadata & photo lists |
-| `asset.read` | ✅ Yes | Fetch asset metadata, EXIF data, thumbnails, previews, and originals |
-| `asset.view` | ✅ Yes | Stream image/video files (thumbnail, preview, video playback) |
+| Permission   | Required | Used for                                                             |
+| ------------ | -------- | -------------------------------------------------------------------- |
+| `album.read` | ✅ Yes   | List and fetch album metadata & photo lists                          |
+| `asset.read` | ✅ Yes   | Fetch asset metadata, EXIF data, thumbnails, previews, and originals |
+| `asset.view` | ✅ Yes   | Stream image/video files (thumbnail, preview, video playback)        |
 
 > **No write permissions needed.** `album.create`, `asset.upload`, `asset.delete`, etc. can all be left **off**.
 

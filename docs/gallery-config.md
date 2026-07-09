@@ -196,26 +196,27 @@ Your bio text here. Supports full Markdown.
 
 - **Album UUIDs**: In Immich, go to Albums → click an album → the UUID is in the URL bar
 - **Asset UUIDs**: Click any photo → the UUID is in the URL bar
- 
+
 ## System & Security
- 
+
 Advanced system settings are configured via environment variables in your `.env` or `.env.local` file.
- 
+
 ### Rate Limiting
- 
+
 To protect against brute-force attacks and resource exhaustion, Immich Folio includes an in-memory rate limiter.
- 
+
 - `RATE_LIMIT_RPM`: Maximum requests per minute per IP (default: `1500` for general API, `120` for map data).
- 
+
 ### Trusted Proxies
- 
+
 If you are running Immich Folio behind a reverse proxy (like Nginx, Traefik, Caddy, or Cloudflare), you should configure trusted proxies to prevent IP spoofing.
- 
+
 - `TRUSTED_PROXIES`: A comma-separated list of IP addresses of your proxies.
- 
+
 Example:
+
 ```bash
 TRUSTED_PROXIES=127.0.0.1,172.18.0.1
 ```
- 
+
 When set, the rate limiter will only trust `X-Forwarded-For` and `X-Real-IP` headers if the request directly comes from one of these IPs. If not set, headers are trusted as a best-effort, which is less secure in public-facing environments.

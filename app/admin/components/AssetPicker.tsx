@@ -115,7 +115,7 @@ export default function AssetPicker({
         <div className="picker-header">
           <h3>{title || 'Select Hero Image'}</h3>
           <button className="admin-btn-icon" onClick={onClose}>
-            ×
+            <span aria-hidden="true">×</span>
           </button>
         </div>
 
