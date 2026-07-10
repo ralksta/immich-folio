@@ -1,0 +1,4 @@
+## 2024-07-10 - DoS and Timing Vulnerabilities in Admin Authentication
+**Vulnerability:** `crypto.timingSafeEqual` was used with unconstrained, variable-length inputs in `verifyAdminToken` and `verifyAdminPassword`. Unconstrained string inputs could cause memory exhaustion (via `Buffer.alloc` or large strings), and `timingSafeEqual` crashes if the buffer lengths do not match exactly, causing unhandled exceptions (DoS).
+**Learning:** The legacy implementation incorrectly assumed `Buffer.alloc(pwBuf.length)` would safely mitigate timing attacks without considering memory exhaustion or length-based differences. Unconstrained authentication payloads are a DoS vector.
+**Prevention:** Always enforce a maximum string length check on inputs *before* cryptographic operations. Always explicitly verify that buffer lengths match before calling `crypto.timingSafeEqual`, or hash both variable-length inputs to a fixed length (e.g., using HMAC-SHA256) first.
