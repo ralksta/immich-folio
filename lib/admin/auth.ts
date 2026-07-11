@@ -30,6 +30,9 @@ export function createAdminToken(): string {
 
 /** Verify a session token. Returns true if valid. */
 export function verifyAdminToken(token: string): boolean {
+  // 🛡️ SECURITY: Enforce max length to prevent DoS
+  if (token.length > 500) return false;
+
   const parts = token.split('.');
   if (parts.length !== 2) return false;
 
@@ -37,7 +40,16 @@ export function verifyAdminToken(token: string): boolean {
   const key = getSigningKey();
   const expectedSig = crypto.createHmac('sha256', key).update(data).digest('base64url');
 
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) {
+  const sigBuf = Buffer.from(sig);
+  const expectedBuf = Buffer.from(expectedSig);
+
+  // 🛡️ SECURITY: Ensure equal buffer length to prevent unhandled exceptions in timingSafeEqual
+  if (sigBuf.length !== expectedBuf.length) {
+    crypto.timingSafeEqual(sigBuf, Buffer.alloc(sigBuf.length));
+    return false;
+  }
+
+  if (!crypto.timingSafeEqual(sigBuf, expectedBuf)) {
     return false;
   }
 
@@ -56,15 +68,14 @@ export function verifyAdminPassword(password: string): boolean {
   const adminPw = env.ADMIN_PASSWORD;
   if (!adminPw) return false;
 
-  // Constant-time comparison
-  const pwBuf = Buffer.from(password);
-  const expectedBuf = Buffer.from(adminPw);
-  if (pwBuf.length !== expectedBuf.length) {
-    // Still do a comparison to prevent timing attacks on length
-    crypto.timingSafeEqual(pwBuf, Buffer.alloc(pwBuf.length));
-    return false;
-  }
-  return crypto.timingSafeEqual(pwBuf, expectedBuf);
+  // 🛡️ SECURITY: Enforce max length to prevent DoS via massive buffer allocation
+  if (password.length > 100) return false;
+
+  // 🛡️ SECURITY: Hash to a fixed length to prevent side-channel timing attacks leaking length
+  const pwHash = crypto.createHash('sha256').update(password).digest();
+  const expectedHash = crypto.createHash('sha256').update(adminPw).digest();
+
+  return crypto.timingSafeEqual(pwHash, expectedHash);
 }
 
 /** Check if the current request has a valid admin session. */
