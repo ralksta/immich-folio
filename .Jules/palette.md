@@ -1,0 +1,3 @@
+## 2026-07-11 - Text-based Icon Buttons A11y
+**Learning:** When using visual text characters (like "×") as icons in buttons, they are inherently poorly read or invisible to screen readers without proper labeling. Adding `aria-label` to the parent `<button>` provides the accessible name, but the inner visual character must also be explicitly hidden using `<span aria-hidden="true">` to prevent redundant or confusing screen reader announcements.
+**Action:** When implementing or fixing icon-only buttons that rely on text characters rather than SVGs, always apply this pattern: `<button aria-label="Descriptive Action"><span aria-hidden="true">character</span></button>`.
