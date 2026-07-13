@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import {
   verifyAdminPassword,
   createAdminToken,
@@ -10,6 +11,23 @@ import {
 
 /** POST: Login with admin password. */
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const { success, remaining, resetAt } = checkRateLimit(`admin-auth:${ip}`, 10);
+
+  if (!success) {
+    return NextResponse.json(
+      { error: 'Too many attempts, try again later' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(Math.ceil((resetAt - Date.now()) / 1000)),
+          'X-RateLimit-Limit': '10',
+          'X-RateLimit-Remaining': String(remaining),
+        },
+      },
+    );
+  }
+
   if (!isAdminEnabled()) {
     return NextResponse.json(
       { error: 'Admin panel is not enabled. Set ADMIN_PASSWORD in your environment.' },
