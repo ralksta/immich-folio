@@ -34,7 +34,7 @@ export function ScrollToTop() {
       tabIndex={visible ? 0 : -1}
       aria-hidden={!visible}
     >
-      ↑
+      <span aria-hidden="true">↑</span>
     </button>
   );
 }
