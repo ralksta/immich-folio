@@ -30,6 +30,7 @@ export function createAdminToken(): string {
 
 /** Verify a session token. Returns true if valid. */
 export function verifyAdminToken(token: string): boolean {
+  if (token.length > 4096) return false;
   const parts = token.split('.');
   if (parts.length !== 2) return false;
 
@@ -37,7 +38,13 @@ export function verifyAdminToken(token: string): boolean {
   const key = getSigningKey();
   const expectedSig = crypto.createHmac('sha256', key).update(data).digest('base64url');
 
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) {
+  const providedSigBuf = Buffer.from(sig);
+  const expectedSigBuf = Buffer.from(expectedSig);
+
+  const providedHash = crypto.createHash('sha256').update(providedSigBuf).digest();
+  const expectedHash = crypto.createHash('sha256').update(expectedSigBuf).digest();
+
+  if (!crypto.timingSafeEqual(providedHash, expectedHash)) {
     return false;
   }
 
@@ -53,18 +60,15 @@ export function verifyAdminToken(token: string): boolean {
 
 /** Verify admin password. */
 export function verifyAdminPassword(password: string): boolean {
+  if (password.length > 1024) return false;
   const adminPw = env.ADMIN_PASSWORD;
   if (!adminPw) return false;
 
   // Constant-time comparison
-  const pwBuf = Buffer.from(password);
-  const expectedBuf = Buffer.from(adminPw);
-  if (pwBuf.length !== expectedBuf.length) {
-    // Still do a comparison to prevent timing attacks on length
-    crypto.timingSafeEqual(pwBuf, Buffer.alloc(pwBuf.length));
-    return false;
-  }
-  return crypto.timingSafeEqual(pwBuf, expectedBuf);
+  const pwHash = crypto.createHash('sha256').update(password).digest();
+  const expectedHash = crypto.createHash('sha256').update(adminPw).digest();
+
+  return crypto.timingSafeEqual(pwHash, expectedHash);
 }
 
 /** Check if the current request has a valid admin session. */
