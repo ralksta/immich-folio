@@ -1,0 +1,3 @@
+## 2024-07-15 - ARIA Labels for Bare Text Icon Buttons
+**Learning:** Found a specific pattern in the admin component modal headers (`AssetPicker`, `AlbumPicker`, and `PageBuilder` clear search buttons) using bare text characters (`×`) as the close action without ARIA descriptions, which breaks accessibility for screen reader users by misrepresenting standard button actions as disjoint text.
+**Action:** Consistently wrap non-semantic text-based icons in `<span aria-hidden="true">` and provide a standard, descriptive `aria-label` directly on the parent `<button>` across the design system to guarantee correct announcement.
