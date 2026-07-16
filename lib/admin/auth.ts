@@ -30,6 +30,9 @@ export function createAdminToken(): string {
 
 /** Verify a session token. Returns true if valid. */
 export function verifyAdminToken(token: string): boolean {
+  // 🛡️ SECURITY: Enforce maximum string length to prevent DoS via memory exhaustion
+  if (token.length > 500) return false;
+
   const parts = token.split('.');
   if (parts.length !== 2) return false;
 
@@ -37,7 +40,12 @@ export function verifyAdminToken(token: string): boolean {
   const key = getSigningKey();
   const expectedSig = crypto.createHmac('sha256', key).update(data).digest('base64url');
 
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) {
+  // 🛡️ SECURITY: Hash inputs to a fixed length before comparison to prevent
+  // length mismatch errors in timingSafeEqual and side-channel timing attacks.
+  const sigHash = crypto.createHash('sha256').update(sig).digest();
+  const expectedSigHash = crypto.createHash('sha256').update(expectedSig).digest();
+
+  if (!crypto.timingSafeEqual(sigHash, expectedSigHash)) {
     return false;
   }
 
@@ -53,18 +61,18 @@ export function verifyAdminToken(token: string): boolean {
 
 /** Verify admin password. */
 export function verifyAdminPassword(password: string): boolean {
+  // 🛡️ SECURITY: Enforce maximum string length to prevent DoS via memory exhaustion
+  if (password.length > 100) return false;
+
   const adminPw = env.ADMIN_PASSWORD;
   if (!adminPw) return false;
 
-  // Constant-time comparison
-  const pwBuf = Buffer.from(password);
-  const expectedBuf = Buffer.from(adminPw);
-  if (pwBuf.length !== expectedBuf.length) {
-    // Still do a comparison to prevent timing attacks on length
-    crypto.timingSafeEqual(pwBuf, Buffer.alloc(pwBuf.length));
-    return false;
-  }
-  return crypto.timingSafeEqual(pwBuf, expectedBuf);
+  // 🛡️ SECURITY: Hash inputs to a fixed length before comparison to prevent
+  // side-channel timing attacks that leak length information.
+  const pwHash = crypto.createHash('sha256').update(password).digest();
+  const expectedHash = crypto.createHash('sha256').update(adminPw).digest();
+
+  return crypto.timingSafeEqual(pwHash, expectedHash);
 }
 
 /** Check if the current request has a valid admin session. */
