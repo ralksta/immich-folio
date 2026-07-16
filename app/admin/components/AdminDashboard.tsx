@@ -89,18 +89,22 @@ export default function AdminDashboard({ onLogout }: Props) {
             >
               <span className="status-dot"></span>
               <span className="status-text">
-                {statusLoading ? 'Checking...' : status?.immich?.status === 'connected' ? 'System OK' : 'System Degraded'}
+                {statusLoading
+                  ? 'Checking...'
+                  : status?.immich?.status === 'connected'
+                    ? 'System OK'
+                    : 'System Degraded'}
               </span>
             </button>
-            
+
             {showStatus && (
               <>
                 <div className="status-dropdown-backdrop" onClick={() => setShowStatus(false)} />
                 <div className="status-dropdown">
                   <div className="status-dropdown-header">
                     <h4>System Diagnostics</h4>
-                    <button 
-                      className="status-refresh-btn" 
+                    <button
+                      className="status-refresh-btn"
                       onClick={fetchStatus}
                       disabled={statusLoading}
                       title="Refresh diagnostics"
@@ -111,13 +115,17 @@ export default function AdminDashboard({ onLogout }: Props) {
                   <div className="status-dropdown-body">
                     <div className="status-item">
                       <span className="status-label">Immich Connection</span>
-                      <span className={`status-val ${status?.immich?.status === 'connected' ? 'ok' : 'error'}`}>
+                      <span
+                        className={`status-val ${status?.immich?.status === 'connected' ? 'ok' : 'error'}`}
+                      >
                         {status?.immich?.status === 'connected' ? 'Connected' : 'Disconnected'}
                       </span>
                     </div>
                     <div className="status-item">
                       <span className="status-label">Config Integrity</span>
-                      <span className={`status-val ${status?.config?.status === 'valid' ? 'ok' : 'error'}`}>
+                      <span
+                        className={`status-val ${status?.config?.status === 'valid' ? 'ok' : 'error'}`}
+                      >
                         {status?.config?.status === 'valid' ? 'Valid' : 'Degraded'}
                       </span>
                     </div>
@@ -128,7 +136,9 @@ export default function AdminDashboard({ onLogout }: Props) {
                     <div className="status-item">
                       <span className="status-label">Latest Backup</span>
                       <span className="status-val" title={status?.backups?.lastBackup || 'None'}>
-                        {status?.backups?.lastBackup ? new Date(status.backups.lastBackup).toLocaleDateString() : 'None'}
+                        {status?.backups?.lastBackup
+                          ? new Date(status.backups.lastBackup).toLocaleDateString()
+                          : 'None'}
                       </span>
                     </div>
                     <div className="status-item">
@@ -148,7 +158,7 @@ export default function AdminDashboard({ onLogout }: Props) {
             className="admin-btn admin-btn-ghost"
             title="Open site in new tab"
           >
-            ↗ Site
+            <span aria-hidden="true">↗</span> Site
           </a>
           <button
             className="admin-btn admin-btn-ghost"
