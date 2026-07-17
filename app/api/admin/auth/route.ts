@@ -7,9 +7,16 @@ import {
   COOKIE_NAME,
   SESSION_DURATION_MS,
 } from '@/lib/admin/auth';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 /** POST: Login with admin password. */
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const { success } = checkRateLimit(ip, 5);
+  if (!success) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   if (!isAdminEnabled()) {
     return NextResponse.json(
       { error: 'Admin panel is not enabled. Set ADMIN_PASSWORD in your environment.' },
