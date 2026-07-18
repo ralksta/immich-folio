@@ -20,6 +20,32 @@ interface FadeInProps {
   className?: string;
 }
 
+const callbacks = new WeakMap<Element, () => void>();
+
+let sharedObserver: IntersectionObserver | null = null;
+
+function getObserver() {
+  if (typeof window === 'undefined') return null;
+
+  if (!sharedObserver) {
+    sharedObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const callback = callbacks.get(entry.target);
+            if (callback) {
+              callback();
+              sharedObserver?.unobserve(entry.target);
+            }
+          }
+        }
+      },
+      { threshold: 0.1 },
+    );
+  }
+  return sharedObserver;
+}
+
 export function FadeIn({ children, delay = 0, direction = 'up', className }: FadeInProps) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -37,18 +63,18 @@ export function FadeIn({ children, delay = 0, direction = 'up', className }: Fad
       return;
     }
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          reveal();
-          observer.unobserve(el);
-        }
-      },
-      { threshold: 0.1 },
-    );
+    const observer = getObserver();
+    if (observer) {
+      callbacks.set(el, reveal);
+      observer.observe(el);
+    }
 
-    observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      if (observer) {
+        observer.unobserve(el);
+        callbacks.delete(el);
+      }
+    };
   }, [reveal]);
 
   return (
