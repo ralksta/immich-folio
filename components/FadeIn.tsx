@@ -20,6 +20,34 @@ interface FadeInProps {
   className?: string;
 }
 
+type RevealCallback = () => void;
+// Shared WeakMap to track per-element callbacks, preventing memory leaks when elements are removed
+const callbackMap = new WeakMap<Element, RevealCallback>();
+// Singleton IntersectionObserver to reduce instantiation overhead for large lists/grids
+let sharedObserver: IntersectionObserver | null = null;
+
+function getSharedObserver() {
+  if (typeof window === 'undefined') return null;
+  if (!sharedObserver) {
+    sharedObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const callback = callbackMap.get(entry.target);
+            if (callback) {
+              callback();
+              sharedObserver?.unobserve(entry.target);
+              callbackMap.delete(entry.target);
+            }
+          }
+        });
+      },
+      { threshold: 0.1 },
+    );
+  }
+  return sharedObserver;
+}
+
 export function FadeIn({ children, delay = 0, direction = 'up', className }: FadeInProps) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -37,18 +65,18 @@ export function FadeIn({ children, delay = 0, direction = 'up', className }: Fad
       return;
     }
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          reveal();
-          observer.unobserve(el);
-        }
-      },
-      { threshold: 0.1 },
-    );
+    const observer = getSharedObserver();
+    if (observer) {
+      callbackMap.set(el, reveal);
+      observer.observe(el);
+    }
 
-    observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      if (observer) {
+        observer.unobserve(el);
+        callbackMap.delete(el);
+      }
+    };
   }, [reveal]);
 
   return (
