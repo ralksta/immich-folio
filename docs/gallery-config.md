@@ -208,14 +208,37 @@ To protect against brute-force attacks and resource exhaustion, Immich Folio inc
 - `RATE_LIMIT_RPM`: Maximum requests per minute per IP (default: `1500` for general API, `120` for map data).
  
 ### Trusted Proxies
- 
-If you are running Immich Folio behind a reverse proxy (like Nginx, Traefik, Caddy, or Cloudflare), you should configure trusted proxies to prevent IP spoofing.
- 
-- `TRUSTED_PROXIES`: A comma-separated list of IP addresses of your proxies.
- 
-Example:
+
+If you run Immich Folio behind a reverse proxy (nginx, Traefik, Caddy, Cloudflare), tell it how many proxies sit in front. Without this, the rate limiter reads a client-supplied header and an attacker can pick their own bucket — defeating brute-force protection on the password endpoints.
+
+- `TRUSTED_PROXY_HOPS`: Number of reverse proxies in front of the app (default: `0`).
+
 ```bash
-TRUSTED_PROXIES=127.0.0.1,172.18.0.1
+# nginx / Traefik / Caddy directly in front of the app
+TRUSTED_PROXY_HOPS=1
+
+# Cloudflare in front of nginx
+TRUSTED_PROXY_HOPS=2
 ```
- 
-When set, the rate limiter will only trust `X-Forwarded-For` and `X-Real-IP` headers if the request directly comes from one of these IPs. If not set, headers are trusted as a best-effort, which is less secure in public-facing environments.
+
+The client IP is taken that many entries from the **right** of `X-Forwarded-For`. Proxies append the address they actually observed, so everything to the left is client-supplied and ignored — a visitor sending `X-Forwarded-For: 1.1.1.1` cannot influence which bucket they land in.
+
+> ⚠️ **The app must be reachable only through the proxy.** Bind it to localhost (`127.0.0.1:3000`) or keep it on an internal Docker network. If clients can connect directly they control the entire header, and no setting can recover the real IP.
+
+Matching nginx config:
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+`$proxy_add_x_forwarded_for` is the important one: it *appends* the real peer address rather than overwriting the header.
+
+#### Migrating from `TRUSTED_PROXIES`
+
+`TRUSTED_PROXIES` has been removed. It matched proxy IPs against the socket peer address, which a self-hosted Next.js server never exposes — so the check never passed. Setting it silently put **every visitor into one shared rate-limit bucket**, letting a single client trip the limit for the entire site. If it is still set, the app assumes `TRUSTED_PROXY_HOPS=1` and logs a warning; replace it with an explicit value.

@@ -14,10 +14,12 @@ import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
+/** Map data is cached client-side, so a low limit is plenty. */
+const MAP_RPM = 120;
+
 export async function GET(request: NextRequest) {
-  // Rate limit: 120 requests/minute per IP (map data is cached client-side; this guards against abuse)
   const ip = getClientIp(request);
-  const rl = checkRateLimit(ip, 120);
+  const rl = checkRateLimit(`map:${ip}`, MAP_RPM);
   if (!rl.success) {
     return NextResponse.json(
       { error: 'Too many requests' },

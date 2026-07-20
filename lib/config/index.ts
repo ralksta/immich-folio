@@ -93,7 +93,7 @@ export function getConfig(): AppConfig {
       albumHeroImages: {},
       cacheTtl: env.CACHE_TTL * 1000,
       rateLimitRpm: env.RATE_LIMIT_RPM,
-      trustedProxies: env.TRUSTED_PROXIES,
+      trustedProxyHops: env.TRUSTED_PROXY_HOPS,
       needsSetup: true,
     };
     return _config;
@@ -277,7 +277,7 @@ export function getConfig(): AppConfig {
     albumHeroImages,
     cacheTtl: env.CACHE_TTL * 1000,
     rateLimitRpm: env.RATE_LIMIT_RPM,
-    trustedProxies: env.TRUSTED_PROXIES,
+    trustedProxyHops: env.TRUSTED_PROXY_HOPS,
     needsSetup: false,
   };
   return _config;

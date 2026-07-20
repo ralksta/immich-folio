@@ -1,48 +1,87 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
+
+let mockHops = 0;
+vi.mock('@/lib/config', () => ({
+  getConfig: () => ({ trustedProxyHops: mockHops }),
+}));
+
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
-describe('getClientIp', () => {
-  it('prioritizes request.ip when present', () => {
-    const req = {
-      ip: '1.2.3.4',
-      headers: new Headers({
-        'x-real-ip': '5.6.7.8',
-        'x-forwarded-for': '9.10.11.12',
-      }),
-    } as unknown as NextRequest;
+function req(headers: Record<string, string>, ip?: string): NextRequest {
+  return { ...(ip ? { ip } : {}), headers: new Headers(headers) } as unknown as NextRequest;
+}
 
-    expect(getClientIp(req)).toBe('1.2.3.4');
+describe('getClientIp with no proxy configured (TRUSTED_PROXY_HOPS=0)', () => {
+  beforeEach(() => {
+    mockHops = 0;
   });
 
-  it('falls back to x-real-ip if request.ip is missing', () => {
-    const req = {
-      headers: new Headers({
-        'x-real-ip': '5.6.7.8',
-        'x-forwarded-for': '9.10.11.12',
-      }),
-    } as unknown as NextRequest;
-
-    expect(getClientIp(req)).toBe('5.6.7.8');
+  it('prioritizes request.ip when the platform provides it', () => {
+    expect(req({ 'x-real-ip': '5.6.7.8' }, '1.2.3.4')).toBeTruthy();
+    expect(getClientIp(req({ 'x-real-ip': '5.6.7.8' }, '1.2.3.4'))).toBe('1.2.3.4');
   });
 
-  it('falls back to x-forwarded-for if request.ip and x-real-ip are missing', () => {
-    const req = {
-      headers: new Headers({
-        'x-forwarded-for': '9.10.11.12, 13.14.15.16',
-      }),
-    } as unknown as NextRequest;
-
-    // Should take the first IP from x-forwarded-for list
-    expect(getClientIp(req)).toBe('9.10.11.12');
+  it('falls back to headers on a best-effort basis', () => {
+    expect(getClientIp(req({ 'x-real-ip': '5.6.7.8' }))).toBe('5.6.7.8');
+    expect(getClientIp(req({ 'x-forwarded-for': '9.10.11.12, 13.14.15.16' }))).toBe('9.10.11.12');
   });
 
-  it('returns unknown if no IP headers are present', () => {
-    const req = {
-      headers: new Headers(),
-    } as unknown as NextRequest;
+  it('returns unknown if no IP information is available at all', () => {
+    expect(getClientIp(req({}))).toBe('unknown');
+  });
+});
 
-    expect(getClientIp(req)).toBe('unknown');
+describe('getClientIp behind one trusted proxy (TRUSTED_PROXY_HOPS=1, e.g. nginx)', () => {
+  beforeEach(() => {
+    mockHops = 1;
+  });
+
+  it('takes the rightmost X-Forwarded-For entry, which the proxy appended itself', () => {
+    // nginx `$proxy_add_x_forwarded_for` appends the real peer address, so the
+    // last entry is authoritative no matter what the client sent.
+    expect(getClientIp(req({ 'x-forwarded-for': '203.0.113.9' }))).toBe('203.0.113.9');
+  });
+
+  it('ignores client-supplied entries to the left of the appended one', () => {
+    // The attacker sends `X-Forwarded-For: 1.1.1.1`; nginx appends their real IP.
+    const spoofed = req({ 'x-forwarded-for': '1.1.1.1, 203.0.113.9' });
+    expect(getClientIp(spoofed)).toBe('203.0.113.9');
+  });
+
+  it('cannot be pinned to an attacker-chosen bucket by a long forged chain', () => {
+    const forged = req({ 'x-forwarded-for': '1.1.1.1, 2.2.2.2, 3.3.3.3, 203.0.113.9' });
+    expect(getClientIp(forged)).toBe('203.0.113.9');
+  });
+
+  it('does not trust a spoofed X-Real-IP over the appended X-Forwarded-For entry', () => {
+    const spoofed = req({ 'x-real-ip': '1.1.1.1', 'x-forwarded-for': '9.9.9.9, 203.0.113.9' });
+    expect(getClientIp(spoofed)).toBe('203.0.113.9');
+  });
+
+  it('accepts X-Real-IP when the proxy sets only that header (nginx overwrites it)', () => {
+    expect(getClientIp(req({ 'x-real-ip': '203.0.113.9' }))).toBe('203.0.113.9');
+  });
+
+  it('refuses to identify a request that did not traverse the proxy', () => {
+    // No proxy headers at all, yet hops are configured: the request reached the
+    // app directly. Fall back to unknown rather than to a spoofable value.
+    expect(getClientIp(req({}))).toBe('unknown');
+  });
+});
+
+describe('getClientIp behind two trusted proxies (TRUSTED_PROXY_HOPS=2)', () => {
+  beforeEach(() => {
+    mockHops = 2;
+  });
+
+  it('skips both proxy hops from the right', () => {
+    const r = req({ 'x-forwarded-for': '203.0.113.9, 10.0.0.5' });
+    expect(getClientIp(r)).toBe('203.0.113.9');
+  });
+
+  it('returns unknown when the chain is shorter than the configured hop count', () => {
+    expect(getClientIp(req({ 'x-forwarded-for': '10.0.0.5' }))).toBe('unknown');
   });
 });
 

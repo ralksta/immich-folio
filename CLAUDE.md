@@ -92,7 +92,7 @@ Per-subpage and per-album password gating using HMAC tokens in `HttpOnly` cookie
 
 ### Rate limiting (`lib/rate-limit.ts`)
 
-In-memory sliding-window rate limiter. Important: **in-memory only** — does not work across multiple Node.js instances. Uses FIFO eviction (not reject-on-full) to prevent DoS via store flooding. Configurable via `RATE_LIMIT_RPM`. Trusted proxy IPs must be set via `TRUSTED_PROXIES` env var to safely trust `X-Forwarded-For` headers.
+In-memory sliding-window rate limiter. Important: **in-memory only** — does not work across multiple Node.js instances. Uses FIFO eviction (not reject-on-full) to prevent DoS via store flooding. Configurable via `RATE_LIMIT_RPM`. `TRUSTED_PROXY_HOPS` must be set to the number of reverse proxies in front of the app (nginx = 1); the client IP is then read that many entries from the right of `X-Forwarded-For`, which proxies append to. Without it the IP comes from a spoofable header. Bucket keys are namespaced per endpoint (`image:`, `map:`, `auth:`, …) so limits don't collide.
 
 ### Theming system
 
