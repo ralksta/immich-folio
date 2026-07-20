@@ -1,9 +1,9 @@
 /**
- * FadeIn — scroll-reveal wrapper using IntersectionObserver.
+ * FadeIn — scroll-reveal wrapper using a shared IntersectionObserver.
  *
  * Wraps children in a div that fades/slides in when it enters the viewport.
  * Supports an optional stagger delay for grid items.
- * On the homepage (no scroll), acts as a simple load-in animation.
+ * Uses a singleton IntersectionObserver for better performance with many items.
  */
 
 'use client';
@@ -18,6 +18,32 @@ interface FadeInProps {
   direction?: 'up' | 'none';
   /** CSS class name for the wrapper */
   className?: string;
+}
+
+const revealCallbacks = new WeakMap<Element, () => void>();
+let sharedObserver: IntersectionObserver | null = null;
+
+function getSharedObserver() {
+  if (typeof window === 'undefined') return null;
+  if (!sharedObserver) {
+    sharedObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const el = entry.target;
+            const reveal = revealCallbacks.get(el);
+            if (reveal) {
+              reveal();
+              sharedObserver?.unobserve(el);
+              revealCallbacks.delete(el);
+            }
+          }
+        });
+      },
+      { threshold: 0.1 },
+    );
+  }
+  return sharedObserver;
 }
 
 export function FadeIn({ children, delay = 0, direction = 'up', className }: FadeInProps) {
@@ -37,18 +63,18 @@ export function FadeIn({ children, delay = 0, direction = 'up', className }: Fad
       return;
     }
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          reveal();
-          observer.unobserve(el);
-        }
-      },
-      { threshold: 0.1 },
-    );
+    const observer = getSharedObserver();
+    if (observer) {
+      revealCallbacks.set(el, reveal);
+      observer.observe(el);
+    }
 
-    observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      if (observer) {
+        observer.unobserve(el);
+        revealCallbacks.delete(el);
+      }
+    };
   }, [reveal]);
 
   return (

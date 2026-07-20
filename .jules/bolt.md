@@ -1,0 +1,3 @@
+## 2024-05-19 - IntersectionObserver Shared Singleton Pattern
+**Learning:** Using IntersectionObserver for scroll animations (like `FadeIn.tsx`) created O(n) instances when mapped across large photo grids. This caused excessive memory usage and initialization overhead, slowing down initial load time significantly as many items are tracked individually.
+**Action:** When components like list items or grid elements use scroll animations, replace individual `new IntersectionObserver()` calls per element with a singleton pattern combined with a `WeakMap`. This registers a callback for each element to be run by one shared observer, drastically reducing overhead.
