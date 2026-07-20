@@ -8,6 +8,7 @@
 
 import crypto from 'crypto';
 import { getConfig } from './config';
+import { isUuid } from './uuid';
 
 let _key: Buffer | null = null;
 
@@ -72,8 +73,7 @@ export function decodeAssetId(token: string): string | null {
     }
 
     // Validate it looks like a UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(decrypted) ? decrypted : null;
+    return isUuid(decrypted) ? decrypted : null;
   } catch {
     return null;
   }

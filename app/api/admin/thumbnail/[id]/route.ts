@@ -6,11 +6,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 import { getConfig } from '@/lib/config';
+import { isUuid } from '@/lib/uuid';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!isAdminEnabled()) {
     return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
   }
@@ -25,22 +23,17 @@ export async function GET(
 
   const { id: assetId } = await params;
 
-  // Validate it looks like a UUID
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(assetId)) {
+  if (!isUuid(assetId)) {
     return NextResponse.json({ error: 'Invalid asset ID' }, { status: 400 });
   }
 
   try {
-    const res = await fetch(
-      `${config.immich.apiUrl}/assets/${assetId}/thumbnail?size=thumbnail`,
-      {
-        headers: {
-          'x-api-key': config.immich.apiKey,
-          Accept: 'application/octet-stream',
-        },
+    const res = await fetch(`${config.immich.apiUrl}/assets/${assetId}/thumbnail?size=thumbnail`, {
+      headers: {
+        'x-api-key': config.immich.apiKey,
+        Accept: 'application/octet-stream',
       },
-    );
+    });
 
     if (!res.ok) {
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
