@@ -43,28 +43,50 @@ export async function GET(request: NextRequest) {
 
   const locations = await getMapData();
 
-  // Filter locations and albums based on auth
-  const authCache = new Map<string, boolean>();
+  // Filter locations and albums based on auth.
+  // An album is visible only if BOTH its subpage gate (if any) and its own
+  // album-level password gate are satisfied. Standalone albums are NOT
+  // implicitly public — they can carry their own password.
+  const subpageAuthCache = new Map<string, boolean>();
+  const albumAuthCache = new Map<string, boolean>();
+
+  const isSubpageAllowed = (slug: string): boolean => {
+    const cached = subpageAuthCache.get(slug);
+    if (cached !== undefined) return cached;
+    const result = isAuthenticated(slug, getCookie);
+    subpageAuthCache.set(slug, result);
+    return result;
+  };
+
+  const isAlbumAllowed = (albumId: string): boolean => {
+    const cached = albumAuthCache.get(albumId);
+    if (cached !== undefined) return cached;
+    const result = isAuthenticated(albumId, getCookie, 'album');
+    albumAuthCache.set(albumId, result);
+    return result;
+  };
+
   const publicLocations = locations
     .map((loc) => {
-      // Only keep albums the user is allowed to see
-      const allowedAlbums = loc.albums.filter((a) => {
-        if (!a.subpageSlug) return true; // Standalone albums are public
-        if (authCache.has(a.subpageSlug)) return authCache.get(a.subpageSlug)!;
-        const result = isAuthenticated(a.subpageSlug, getCookie);
-        authCache.set(a.subpageSlug, result);
-        return result;
-      });
+      const allowedAlbums = loc.albums.filter(
+        (a) => (!a.subpageSlug || isSubpageAllowed(a.subpageSlug)) && isAlbumAllowed(a.id),
+      );
 
       if (allowedAlbums.length === 0) return null;
+
+      // Aggregate over visible albums only, so neither the marker position,
+      // the photo count, nor the cover asset reveals a protected album.
+      const photoCount = allowedAlbums.reduce((sum, a) => sum + a.photoCount, 0);
+      const latSum = allowedAlbums.reduce((sum, a) => sum + a.latSum, 0);
+      const lngSum = allowedAlbums.reduce((sum, a) => sum + a.lngSum, 0);
 
       return {
         city: loc.city,
         country: loc.country,
-        lat: loc.lat,
-        lng: loc.lng,
-        photoCount: loc.photoCount, // Note: This count might be slightly off if some photos are in hidden albums
-        coverUrl: imageUrl(loc.coverAssetId, 'thumbnail'),
+        lat: latSum / photoCount,
+        lng: lngSum / photoCount,
+        photoCount,
+        coverUrl: imageUrl(allowedAlbums[0].coverAssetId, 'thumbnail'),
         albums: allowedAlbums.map((a) => ({
           name: a.name,
           url: a.subpageSlug ? `/${a.subpageSlug}/${a.slug}` : `/${a.slug}`,

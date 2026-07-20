@@ -1,5 +1,5 @@
-import crypto from 'crypto';
 import { env } from '../env';
+import { resolveAuthSecret } from '../secret';
 import { loadYaml, clearYamlCache, validateUuid } from './parser';
 import { resolveTheme, VALID_LAYOUTS } from './theme';
 import {
@@ -17,7 +17,6 @@ export * from './schema';
 export * from './theme';
 
 let _config: AppConfig | null = null;
-let _fallbackSecret: string | null = null;
 
 /** Invalidate the cached config so the next getConfig() call re-reads YAML files. */
 export function invalidateConfigCache(): void {
@@ -58,22 +57,7 @@ export function getConfig(): AppConfig {
 
   const apiUrl = env.IMMICH_API_URL;
   const apiKey = env.IMMICH_API_KEY;
-  let { AUTH_SECRET } = env;
-  if (!AUTH_SECRET) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error(
-        'SECURITY ERROR: AUTH_SECRET is not set in production. Please set a long random string as AUTH_SECRET in your .env.',
-      );
-    }
-    if (!_fallbackSecret) {
-      _fallbackSecret = crypto.randomBytes(32).toString('hex');
-    }
-    console.warn(
-      '\n⚠️  SECURITY WARNING: AUTH_SECRET is not set. Generating a temporary random secret for this session.\n   Please set a long random string as AUTH_SECRET in your .env for better security.\n',
-    );
-    AUTH_SECRET = _fallbackSecret;
-  }
-  const authSecret = AUTH_SECRET;
+  const authSecret = resolveAuthSecret();
 
   const gallery = loadYaml<GalleryYaml>('gallery.yaml');
   const settings = loadYaml<SettingsYaml>('settings.yaml') || {};

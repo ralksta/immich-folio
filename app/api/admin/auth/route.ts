@@ -7,9 +7,25 @@ import {
   COOKIE_NAME,
   SESSION_DURATION_MS,
 } from '@/lib/admin/auth';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+
+/** Admin login attempts per minute per IP — the highest-value credential in the app. */
+const ADMIN_AUTH_RPM = 5;
 
 /** POST: Login with admin password. */
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const rl = checkRateLimit(`admin-auth:${ip}`, ADMIN_AUTH_RPM);
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) },
+      },
+    );
+  }
+
   if (!isAdminEnabled()) {
     return NextResponse.json(
       { error: 'Admin panel is not enabled. Set ADMIN_PASSWORD in your environment.' },

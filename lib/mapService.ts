@@ -2,15 +2,30 @@ import { immich } from './immich';
 import { getConfig } from './config';
 import { cache } from './cache';
 
+/**
+ * One album's contribution to a location marker.
+ *
+ * Aggregation is deliberately kept per-album (rather than pre-summed) so the
+ * API layer can drop albums the viewer is not authorized to see *before*
+ * computing coords, counts and the cover asset. Summing here would leak
+ * protected albums into every marker.
+ */
+export interface MapAlbumEntry {
+  id: string;
+  name: string;
+  slug: string;
+  subpageSlug?: string;
+  photoCount: number;
+  latSum: number;
+  lngSum: number;
+  coverAssetId: string;
+}
+
 /** A clustered map marker — one per unique city/country. */
 export interface MapLocation {
   city: string;
   country: string;
-  lat: number;
-  lng: number;
-  photoCount: number;
-  coverAssetId: string;
-  albums: { name: string; slug: string; subpageSlug?: string }[];
+  albums: MapAlbumEntry[];
 }
 
 /**
@@ -50,60 +65,50 @@ export async function getMapData(): Promise<MapLocation[]> {
         fullAlbums.push(...chunkResults);
       }
 
-      // Bucket assets by city+country
-      const buckets = new Map<
-        string,
-        {
-          latSum: number;
-          lngSum: number;
-          count: number;
-          coverAssetId: string;
-          albumIds: Set<string>;
-        }
-      >();
+      // Bucket assets by city+country, keeping each album's contribution separate
+      const buckets = new Map<string, Map<string, MapAlbumEntry>>();
 
       for (const album of fullAlbums) {
         if (!album) continue;
+        const meta = albumMeta.get(album.id);
+        if (!meta) continue;
+
         for (const asset of album.assets) {
           const exif = asset.exifInfo;
           if (!exif?.latitude || !exif?.longitude || !exif?.city || !exif?.country) continue;
 
           const key = `${exif.city}|${exif.country}`;
-          let bucket = buckets.get(key);
-          if (!bucket) {
-            bucket = {
+          let byAlbum = buckets.get(key);
+          if (!byAlbum) {
+            byAlbum = new Map();
+            buckets.set(key, byAlbum);
+          }
+
+          let entry = byAlbum.get(album.id);
+          if (!entry) {
+            entry = {
+              id: album.id,
+              name: meta.name,
+              slug: meta.slug,
+              subpageSlug: meta.subpageSlug,
+              photoCount: 0,
               latSum: 0,
               lngSum: 0,
-              count: 0,
               coverAssetId: asset.id,
-              albumIds: new Set(),
             };
-            buckets.set(key, bucket);
+            byAlbum.set(album.id, entry);
           }
-          bucket.latSum += exif.latitude;
-          bucket.lngSum += exif.longitude;
-          bucket.count++;
-          bucket.albumIds.add(album.id);
+          entry.latSum += exif.latitude;
+          entry.lngSum += exif.longitude;
+          entry.photoCount++;
         }
       }
 
       // Convert buckets to MapLocation[]
       const locations: MapLocation[] = [];
-      for (const [key, bucket] of buckets) {
+      for (const [key, byAlbum] of buckets) {
         const [city, country] = key.split('|');
-        const lat = bucket.latSum / bucket.count;
-        const lng = bucket.lngSum / bucket.count;
-        locations.push({
-          city,
-          country,
-          lat,
-          lng,
-          photoCount: bucket.count,
-          coverAssetId: bucket.coverAssetId,
-          albums: [...bucket.albumIds]
-            .map((id) => albumMeta.get(id))
-            .filter((m): m is NonNullable<typeof m> => !!m),
-        });
+        locations.push({ city, country, albums: [...byAlbum.values()] });
       }
 
       cache.set(cacheKey, locations, config.cacheTtl);

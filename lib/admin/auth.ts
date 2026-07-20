@@ -5,14 +5,20 @@
 
 import crypto from 'crypto';
 import { env } from '../env';
+import { resolveAuthSecret } from '../secret';
 import { cookies } from 'next/headers';
 
 const COOKIE_NAME = 'folio_admin_session';
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function getSigningKey(): Buffer {
-  const secret = env.AUTH_SECRET || 'dev-fallback-secret';
-  return crypto.createHash('sha256').update(`admin:${secret}`).digest();
+  // Bind the key to ADMIN_PASSWORD as well, so rotating the password
+  // immediately invalidates every outstanding session token.
+  const secret = resolveAuthSecret();
+  return crypto
+    .createHash('sha256')
+    .update(`admin:${secret}:${env.ADMIN_PASSWORD ?? ''}`)
+    .digest();
 }
 
 /** Create a signed session token. */
@@ -37,7 +43,12 @@ export function verifyAdminToken(token: string): boolean {
   const key = getSigningKey();
   const expectedSig = crypto.createHmac('sha256', key).update(data).digest('base64url');
 
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) {
+  // timingSafeEqual throws on length mismatch — guard first so a malformed
+  // cookie yields a clean 401 instead of an unhandled RangeError (500).
+  const sigBuf = Buffer.from(sig);
+  const expectedBuf = Buffer.from(expectedSig);
+  if (sigBuf.length !== expectedBuf.length) return false;
+  if (!crypto.timingSafeEqual(sigBuf, expectedBuf)) {
     return false;
   }
 
