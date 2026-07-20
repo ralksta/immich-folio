@@ -59,6 +59,11 @@ Immich Folio acts as a **secure reverse proxy** between your visitors and your p
 
 </details>
 
+## Requirements
+
+- **Immich 3.0 or newer.** Immich 3.0 changed how album assets are retrieved; earlier versions are not supported as of v0.9.0. On an older server, albums render with the correct title but no photos, and the map stays empty — the app logs a warning naming this as the likely cause.
+- Node.js 20+ (or just use the Docker image)
+
 ## Quick Start
 
 ```bash
@@ -91,19 +96,23 @@ IMMICH_API_KEY=your-api-key
 SITE_TITLE=My Photography            # default: "Gallery"
 SITE_SUBTITLE=A visual journal        # default: empty
 CACHE_TTL=300                          # seconds, default: 300
-RATE_LIMIT_RPM=120                     # requests/min/IP, default: 120
+RATE_LIMIT_RPM=1500                    # requests/min/IP, default: 1500
+AUTH_SECRET=long-random-string        # required in production
+TRUSTED_PROXY_HOPS=1                   # reverse proxies in front, default: 0
 ADMIN_PASSWORD=your-secure-password   # enables /admin panel
 ```
+
+> Behind a reverse proxy, set `TRUSTED_PROXY_HOPS` to the number of proxies in front of the app (nginx/Traefik/Caddy = 1; Cloudflare in front of nginx = 2). Without it the client IP is read from a header the client itself can set, which defeats the brute-force limits on the password endpoints. See [Trusted Proxies](docs/gallery-config.md#trusted-proxies).
 
 ### Immich API Key Permissions
 
 Create a dedicated API key in Immich under **Account Settings → API Keys**. Immich Folio only needs **read access** — it never modifies your library.
 
-| Permission | Required | Used for |
-|---|---|---|
-| `album.read` | ✅ Yes | List and fetch album metadata & photo lists |
-| `asset.read` | ✅ Yes | Fetch asset metadata, EXIF data, thumbnails, previews, and originals |
-| `asset.view` | ✅ Yes | Stream image/video files (thumbnail, preview, video playback) |
+| Permission   | Required | Used for                                                             |
+| ------------ | -------- | -------------------------------------------------------------------- |
+| `album.read` | ✅ Yes   | List and fetch album metadata & photo lists                          |
+| `asset.read` | ✅ Yes   | Fetch asset metadata, EXIF data, thumbnails, previews, and originals |
+| `asset.view` | ✅ Yes   | Stream image/video files (thumbnail, preview, video playback)        |
 
 > **No write permissions needed.** `album.create`, `asset.upload`, `asset.delete`, etc. can all be left **off**.
 

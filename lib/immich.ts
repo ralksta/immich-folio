@@ -391,6 +391,16 @@ class ImmichClient {
         ]);
         if (!album) return null;
 
+        // An album that Immich says has photos but returns none is almost
+        // always a server older than 3.0, where metadata search behaves
+        // differently. Say so instead of rendering a silently empty gallery.
+        if (album.assetCount > 0 && assets.length === 0) {
+          console.warn(
+            `[Immich] Album "${album.albumName}" reports ${album.assetCount} assets but the metadata search returned none. ` +
+              `Immich Folio requires Immich 3.0 or newer.`,
+          );
+        }
+
         // Filter out trashed assets
         album.assets = assets.filter((a) => !a.isTrashed);
 
