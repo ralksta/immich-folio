@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 
 // Mock config to provide a predictable API key and subpage config
 vi.mock('@/lib/config', () => ({
@@ -91,5 +91,62 @@ describe('isAuthenticated', () => {
   it('returns true for non-protected pages (no auth needed)', () => {
     const getCookie = () => undefined;
     expect(isAuthenticated('public', getCookie)).toBe(true);
+  });
+});
+
+describe('token expiry', () => {
+  function tokenFor(slug: string, password: string): string {
+    return authenticate(slug, password)!.split('=')[1].split(';')[0];
+  }
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('rejects a token once its embedded expiry has passed', () => {
+    const token = tokenFor('private', 'secret123');
+    const getCookie = (name: string) => (name === 'lb_auth_private' ? token : undefined);
+    expect(isAuthenticated('private', getCookie)).toBe(true);
+
+    // Previously the 24h lifetime lived only in the cookie's Max-Age, so a
+    // captured token replayed via curl worked forever.
+    vi.useFakeTimers();
+    vi.setSystemTime(Date.now() + 25 * 60 * 60 * 1000);
+    expect(isAuthenticated('private', getCookie)).toBe(false);
+  });
+
+  it('still accepts a token just before it expires', () => {
+    const token = tokenFor('private', 'secret123');
+    const getCookie = (name: string) => (name === 'lb_auth_private' ? token : undefined);
+
+    vi.useFakeTimers();
+    vi.setSystemTime(Date.now() + 23 * 60 * 60 * 1000);
+    expect(isAuthenticated('private', getCookie)).toBe(true);
+  });
+
+  it('rejects a token whose expiry was tampered with', () => {
+    const token = tokenFor('private', 'secret123');
+    const [, sig] = token.split('.');
+    const farFuture = Date.now() + 365 * 24 * 60 * 60 * 1000;
+
+    // The expiry is covered by the HMAC, so extending it invalidates the token.
+    const getCookie = (name: string) =>
+      name === 'lb_auth_private' ? `${farFuture}.${sig}` : undefined;
+    expect(isAuthenticated('private', getCookie)).toBe(false);
+  });
+
+  it('rejects malformed and legacy tokens without throwing', () => {
+    for (const value of ['', '.', 'abc', 'abc.def', `${Date.now() + 1000}.`, 'deadbeef']) {
+      const getCookie = (name: string) => (name === 'lb_auth_private' ? value : undefined);
+      expect(() => isAuthenticated('private', getCookie)).not.toThrow();
+      expect(isAuthenticated('private', getCookie)).toBe(false);
+    }
+  });
+
+  it('sets a cookie Max-Age consistent with the embedded expiry', () => {
+    const cookie = authenticate('private', 'secret123')!;
+    const maxAge = Number(cookie.match(/Max-Age=(\d+)/)![1]);
+    const exp = Number(cookie.split('=')[1].split(';')[0].split('.')[0]);
+    expect(Math.abs(exp - (Date.now() + maxAge * 1000))).toBeLessThan(2000);
   });
 });

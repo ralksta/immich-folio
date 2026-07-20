@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 import { getConfig } from '@/lib/config';
+import { isUuid } from '@/lib/uuid';
 
 interface ImmichAlbumDetail {
   assets: Array<{
@@ -35,8 +36,14 @@ export async function GET(
 
   const { albumId } = await params;
 
+  // Without this, `..%2f..%2fusers` resolves inside fetch() to an arbitrary
+  // Immich endpoint, called with the server's API key.
+  if (!isUuid(albumId)) {
+    return NextResponse.json({ error: 'Invalid album ID' }, { status: 400 });
+  }
+
   try {
-    const res = await fetch(`${config.immich.apiUrl}/albums/${albumId}`, {
+    const res = await fetch(`${config.immich.apiUrl}/albums/${encodeURIComponent(albumId)}`, {
       headers: {
         'x-api-key': config.immich.apiKey,
         Accept: 'application/json',

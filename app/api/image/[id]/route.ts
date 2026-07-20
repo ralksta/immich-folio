@@ -27,7 +27,7 @@ function widthToSize(w: number): ImageSize {
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // ── Rate limiting ──────────────────────────────────
   const ip = getClientIp(request);
-  const { success, remaining, resetAt } = checkRateLimit(ip, getConfig().rateLimitRpm);
+  const { success, remaining, resetAt } = checkRateLimit(`image:${ip}`, getConfig().rateLimitRpm);
 
   if (!success) {
     const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);

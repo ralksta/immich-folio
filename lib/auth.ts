@@ -48,9 +48,17 @@ function hmac(data: string): string {
   return crypto.createHmac('sha256', getConfig().authSecret).update(data).digest('hex');
 }
 
-function authToken(key: string, passwordSecret: string): string {
-  // Use the hash/password as part of the HMAC for a secure, unique session token
-  return hmac(`${key}:${passwordSecret}`);
+/**
+ * Build a session token of the form `<expiryEpochMs>.<hmac>`.
+ *
+ * The expiry is part of the signed payload, so it cannot be extended by the
+ * client. Without it the token was a pure function of (slug, password) and
+ * therefore valid forever — the 24h lifetime existed only as the cookie's
+ * Max-Age, which the client enforces and an attacker replaying a captured
+ * token simply ignores.
+ */
+function authToken(key: string, passwordSecret: string, expiresAt: number): string {
+  return `${expiresAt}.${hmac(`${key}:${passwordSecret}:${expiresAt}`)}`;
 }
 
 function cookieName(key: string, type: 'subpage' | 'album'): string {
@@ -132,8 +140,8 @@ export function authenticate(
 
   if (!isValid) return null;
 
-  const token = authToken(key, storedPassword);
   const maxAge = TOKEN_EXPIRY_HOURS * 60 * 60;
+  const token = authToken(key, storedPassword, Date.now() + maxAge * 1000);
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
 
   return `${cookieName(key, type)}=${token}; HttpOnly; Path=/; Max-Age=${maxAge}; SameSite=Strict${secure}`;
@@ -154,10 +162,21 @@ export function isAuthenticated(
   const cookie = getCookie(cookieName(key, type));
   if (!cookie) return false;
 
-  const expected = authToken(key, storedPassword);
+  // Legacy tokens (bare HMAC, no expiry) do not parse here and are rejected;
+  // the visitor simply re-enters the password.
+  const sep = cookie.indexOf('.');
+  if (sep === -1) return false;
+
+  const expiresAt = Number(cookie.slice(0, sep));
+  if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) return false;
+
+  const expected = authToken(key, storedPassword, expiresAt);
   // Constant-time comparison to prevent timing attacks
   try {
-    return crypto.timingSafeEqual(Buffer.from(cookie, 'hex'), Buffer.from(expected, 'hex'));
+    const a = Buffer.from(cookie, 'utf8');
+    const b = Buffer.from(expected, 'utf8');
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(a, b);
   } catch {
     return false;
   }

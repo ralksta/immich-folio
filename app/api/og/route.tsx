@@ -11,11 +11,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
+/**
+ * OG image rendering runs satori + resvg per request and each unique ?title
+ * misses every cache tier, so this is far more expensive than an image proxy
+ * hit. It must not inherit RATE_LIMIT_RPM (default 1500) — that turns the
+ * endpoint into an unauthenticated CPU amplifier.
+ */
+const OG_RPM = 30;
+
 export async function GET(request: NextRequest) {
   const ip = getClientIp(request);
-  const { theme, rateLimitRpm } = getConfig();
+  const { theme } = getConfig();
 
-  const { success } = checkRateLimit(`og:${ip}`, rateLimitRpm);
+  const { success } = checkRateLimit(`og:${ip}`, OG_RPM);
   if (!success) {
     return new NextResponse('Too many requests', { status: 429 });
   }

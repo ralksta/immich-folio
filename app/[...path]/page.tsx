@@ -25,6 +25,7 @@ import {
   assetExifSummary,
   assetAspectRatio,
 } from '@/lib/urls';
+import { encodeAssetId } from '@/lib/tokens';
 import { getConfig, type GridConfig } from '@/lib/config';
 import { isProtected, isAuthenticated } from '@/lib/auth';
 import PasswordGate from '@/components/PasswordGate';
@@ -96,7 +97,9 @@ function toPhotoItems(assets: ImmichAsset[], showExif: boolean): PhotoItem[] {
       const exif = showExif && a.type === 'IMAGE' ? assetExifSummary(a) : undefined;
       const isVideo = a.type === 'VIDEO';
       return {
-        id: a.id,
+        // Opaque token, never the raw Immich UUID — this object is serialized
+        // into the RSC payload and shipped to the browser. Used only as a React key.
+        id: encodeAssetId(a.id),
         type: isVideo ? 'video' : 'image',
         thumbUrl: imageUrl(a.id, 'preview'),
         previewUrl: imageUrl(a.id, 'preview'),

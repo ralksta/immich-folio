@@ -100,7 +100,7 @@ export interface AppConfig {
   albumHeroImages: Record<string, string>;
   cacheTtl: number;
   rateLimitRpm: number;
-  trustedProxies: string[];
+  trustedProxyHops: number;
   needsSetup?: boolean;
 }
 

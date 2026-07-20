@@ -80,16 +80,19 @@ class ImmichClient {
     return getConfig();
   }
 
-  private async request<T>(endpoint: string): Promise<T | null> {
+  private async request<T>(endpoint: string, body?: unknown): Promise<T | null> {
     if (this.config.needsSetup) return null;
 
     const url = `${this.config.immich.apiUrl}${endpoint}`;
     try {
       const res = await fetch(url, {
+        method: body === undefined ? 'GET' : 'POST',
         headers: {
           'x-api-key': this.config.immich.apiKey,
           Accept: 'application/json',
+          ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
         },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       });
 
       if (!res.ok) {
@@ -320,6 +323,49 @@ class ImmichClient {
   /**
    * Get a single album with its assets.
    */
+  /**
+   * Fetch every asset belonging to an album.
+   *
+   * Immich 3.x no longer embeds assets in `GET /albums/:id` — the response
+   * still carries `assetCount` but `assets` comes back empty, and
+   * `?withoutAssets=false` does not change that. Metadata search is the
+   * supported replacement.
+   *
+   * `withExif` is required: without it the response omits `exifInfo`, and the
+   * grid (aspect ratios), the lightbox EXIF panel and the map (GPS) all go
+   * blank even though the images themselves load.
+   */
+  private async fetchAlbumAssets(albumId: string): Promise<ImmichAsset[]> {
+    const PAGE_SIZE = 1000; // Immich rejects size > 1000 with a validation error
+    const MAX_PAGES = 100; // Backstop against a malformed nextPage looping forever
+    const assets: ImmichAsset[] = [];
+    let page = 1;
+
+    for (let i = 0; i < MAX_PAGES; i++) {
+      const res = await this.request<{
+        assets?: { items?: ImmichAsset[]; nextPage?: string | null };
+      }>('/search/metadata', {
+        albumIds: [albumId],
+        withExif: true,
+        size: PAGE_SIZE,
+        page,
+      });
+
+      const items = res?.assets?.items;
+      if (!items?.length) break;
+      assets.push(...items);
+
+      // nextPage is a string page number, or null on the last page. The
+      // response's `total` only counts the current page, so it cannot bound
+      // this loop.
+      const next = Number(res?.assets?.nextPage);
+      if (!Number.isFinite(next) || next <= page) break;
+      page = next;
+    }
+
+    return assets;
+  }
+
   async getAlbum(albumId: string): Promise<ImmichAlbum | null> {
     // Security: only serve configured albums
     if (!this.config.albums.includes(albumId)) {
@@ -337,11 +383,34 @@ class ImmichClient {
 
     const promise = (async () => {
       try {
-        const album = await this.request<ImmichAlbum>(`/albums/${encodeURIComponent(albumId)}`);
+        // Metadata and assets come from two different endpoints (see
+        // fetchAlbumAssets); they are independent, so fetch them together.
+        const [album, assets] = await Promise.all([
+          this.request<ImmichAlbum>(`/albums/${encodeURIComponent(albumId)}`),
+          this.fetchAlbumAssets(albumId),
+        ]);
         if (!album) return null;
 
+        // An album that Immich says has photos but returns none is almost
+        // always a server older than 3.0, where metadata search behaves
+        // differently. Say so instead of rendering a silently empty gallery.
+        if (album.assetCount > 0 && assets.length === 0) {
+          console.warn(
+            `[Immich] Album "${album.albumName}" reports ${album.assetCount} assets but the metadata search returned none. ` +
+              `Immich Folio requires Immich 3.0 or newer.`,
+          );
+        }
+
         // Filter out trashed assets
-        album.assets = (album.assets || []).filter((a) => !a.isTrashed);
+        album.assets = assets.filter((a) => !a.isTrashed);
+
+        // The album endpoint used to return assets in the album's configured
+        // order. Metadata search happens to default to fileCreatedAt desc, but
+        // that is not contractual — sort explicitly so 'asc' albums are right.
+        const dir = album.order === 'asc' ? 1 : -1;
+        album.assets.sort(
+          (a, b) => dir * (Date.parse(a.fileCreatedAt) - Date.parse(b.fileCreatedAt)),
+        );
 
         const name = this.config.albumOverrides[album.id] ?? album.albumName;
         const description = this.config.albumDescriptions[album.id] ?? album.description ?? '';
