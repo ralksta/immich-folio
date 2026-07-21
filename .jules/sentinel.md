@@ -1,0 +1,4 @@
+## 2025-02-28 - Fix timing side-channel and DoS risk on admin password
+**Vulnerability:** The admin password comparison leaked the length of the secret because `crypto.timingSafeEqual` was used on raw strings converted to variable-length buffers. A mismatch in length triggered an early return, and even the "dummy" check used `Buffer.alloc(pwBuf.length)` which allocates memory proportional to the attacker's input, causing a DoS risk if the input length was massive.
+**Learning:** `crypto.timingSafeEqual` must strictly receive buffers of identical length. Using `Buffer.alloc` with an unconstrained attacker-controlled length creates an immediate out-of-memory DoS vector.
+**Prevention:** Always enforce a maximum string length check on inputs *before* authentication logic. Hash variable-length secrets to a fixed length (e.g., using HMAC-SHA256) before using `crypto.timingSafeEqual` to prevent side-channel timing attacks that leak length information.
