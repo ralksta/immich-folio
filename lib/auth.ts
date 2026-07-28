@@ -118,6 +118,8 @@ export function authenticate(
     isValid = verifyScrypt(password, storedPassword);
   } else {
     // Plaintext fallback (deprecated)
+    if (password.length > 1024) return null;
+
     // Hash both to a fixed length before constant-time comparison to prevent timing and length attacks
     const attemptHash = crypto
       .createHmac('sha256', getConfig().authSecret)
