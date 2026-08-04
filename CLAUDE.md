@@ -119,9 +119,11 @@ Visual page builder and settings editor at `/admin`. Enabled by setting `ADMIN_P
 
 After saving, `invalidateConfigCache()` is called so the next request picks up the new YAML without restart.
 
-### Middleware (`middleware.ts`)
+### Proxy (`proxy.ts`)
 
 Applies CSP (with per-request nonce), HSTS, and other security headers on all non-API, non-static routes. The nonce is passed to pages via the `x-nonce` request header.
+
+Next.js 16 renamed the `middleware` file convention to `proxy`: the file is `proxy.ts` and it exports `proxy()` (not `middleware()`). The `config.matcher` export is unchanged.
 
 ## Code conventions
 

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 /**
  * Required for the CSP nonce. The admin page is a pure client component, so
  * Next.js would statically prerender it at build time — and a prerendered HTML
- * file cannot carry the per-request nonce that middleware.ts issues. Since the
+ * file cannot carry the per-request nonce that proxy.ts issues. Since the
  * CSP uses 'strict-dynamic' (which makes 'self' inert), unnonced script tags
  * are blocked and the panel never hydrates. Rendering per request lets Next.js
  * stamp the nonce onto the script tags it emits.

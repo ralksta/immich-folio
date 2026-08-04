@@ -2,10 +2,10 @@ import type { NextConfig } from 'next';
 
 /**
  * Static security headers, applied to every response including /api and static
- * assets, which middleware does not cover.
+ * assets, which the proxy does not cover.
  *
  * The Content-Security-Policy is deliberately NOT set here: it needs a
- * per-request nonce and is owned exclusively by middleware.ts. Keeping the two
+ * per-request nonce and is owned exclusively by proxy.ts. Keeping the two
  * layers disjoint avoids emitting the same header twice with conflicting
  * values, which browsers may resolve by ignoring the header altogether.
  */
