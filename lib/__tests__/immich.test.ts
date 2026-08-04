@@ -12,7 +12,7 @@ vi.mock('../config', async () => {
       immich: { apiUrl: 'http://immich.test/api', apiKey: 'test-key' },
       authSecret: 'test-auth-secret-32-chars-long-min',
       albums: ['album-1', 'album-2'],
-      standaloneAlbums: ['album-1'],
+      standaloneAlbums: ['album-2', 'album-1'],
       subpages: [],
       albumOverrides: { 'album-1': 'Override Name' },
       albumDescriptions: {},
@@ -75,6 +75,24 @@ describe('ImmichClient', () => {
       expect(albums[0].id).toBe('album-1');
       expect(albums[0].albumName).toBe('Override Name');
       expect(albums[0].slug).toBe('override-name');
+    });
+  });
+
+  describe('getStandaloneAlbums()', () => {
+    it('orders albums by gallery.yaml order, not Immich API order', async () => {
+      // The Immich API returns albums in its own (creation/update) order;
+      // the config lists album-2 first, so that must win on the homepage.
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: { get: () => 'application/json' },
+        json: async () => [
+          { id: 'album-1', albumName: 'First in API', assetCount: 1 },
+          { id: 'album-2', albumName: 'Second in API', assetCount: 1 },
+        ],
+      });
+
+      const albums = await immich.getStandaloneAlbums();
+      expect(albums.map((a) => a.id)).toEqual(['album-2', 'album-1']);
     });
   });
 
