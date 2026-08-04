@@ -5,6 +5,7 @@
  */
 
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import Link from 'next/link';
 import './globals.css';
 import { SubpageNav } from '@/components/SubpageNav';
@@ -13,6 +14,7 @@ import { ScrollToTop } from '@/components/ScrollToTop';
 import { Footer } from '@/components/Footer';
 import { SetupScreen } from '@/components/SetupScreen';
 import { getConfig, getGoogleFontsUrl, AppConfig } from '@/lib/config';
+import { isAdminPath } from '@/lib/admin/paths';
 // DevToolbarLoader is a Client Component (ssr: false is only allowed there)
 import { DevToolbarLoader } from '@/components/DevToolbarLoader';
 
@@ -47,7 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const config = getConfig();
   const { theme } = config;
   const fontsUrl = getGoogleFontsUrl(theme);
@@ -63,7 +65,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     '--radius-lg': `${theme.radius * 2}px`,
   };
 
-  if ((config as AppConfig & { needsSetup?: boolean }).needsSetup) {
+  // /admin stays reachable during setup — it is the tool that completes the
+  // setup, so the setup screen must not lock it out (#326).
+  const pathname = (await headers()).get('x-pathname');
+  if ((config as AppConfig & { needsSetup?: boolean }).needsSetup && !isAdminPath(pathname)) {
     return (
       <html lang="en" suppressHydrationWarning>
         <body>
