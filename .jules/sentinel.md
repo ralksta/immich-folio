@@ -1,0 +1,4 @@
+## 2024-08-04 - Fix DoS and timing attack in admin auth
+**Vulnerability:** Admin authentication lacked maximum length constraints on password inputs, and `verifyAdminPassword` used `Buffer.alloc` with the input's length when comparing mismatched lengths. This allowed potential memory exhaustion (DoS) and CPU spikes, while still leaking length information via timing differences.
+**Learning:** Even when `timingSafeEqual` is used, supplying a variable length to `Buffer.alloc(input.length)` creates a DoS vector if the input is unconstrained. Additionally, comparing to an all-zeros buffer doesn't fully mask length-dependent timing.
+**Prevention:** Always enforce a maximum string length limit on authentication inputs before processing. Additionally, when comparing variable-length secrets, hash both inputs to a fixed length before calling `crypto.timingSafeEqual`.

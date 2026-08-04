@@ -34,8 +34,8 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
-  if (!body?.password || typeof body.password !== 'string') {
-    return NextResponse.json({ error: 'Password is required' }, { status: 400 });
+  if (!body?.password || typeof body.password !== 'string' || body.password.length > 100) {
+    return NextResponse.json({ error: 'Invalid password format or length' }, { status: 400 });
   }
 
   if (!verifyAdminPassword(body.password)) {
