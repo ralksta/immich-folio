@@ -276,8 +276,11 @@ class ImmichClient {
    */
   async getStandaloneAlbums(): Promise<ImmichAlbum[]> {
     const albums = await this.getAlbums();
-    const standaloneIds = new Set(this.config.standaloneAlbums);
-    return albums.filter((a) => standaloneIds.has(a.id));
+    // The API returns albums in its own order; gallery.yaml order wins.
+    const orderIdx = new Map(this.config.standaloneAlbums.map((id, i) => [id, i]));
+    return albums
+      .filter((a) => orderIdx.has(a.id))
+      .sort((a, b) => orderIdx.get(a.id)! - orderIdx.get(b.id)!);
   }
 
   /**

@@ -16,11 +16,8 @@ import {
 export * from './schema';
 export * from './theme';
 
-let _config: AppConfig | null = null;
-
-/** Invalidate the cached config so the next getConfig() call re-reads YAML files. */
+/** Invalidate the cached YAML so the next getConfig() call re-parses the files. */
 export function invalidateConfigCache(): void {
-  _config = null;
   clearYamlCache();
 }
 
@@ -49,12 +46,10 @@ export function buildSubpageGrid(raw?: {
 }
 
 export function getConfig(): AppConfig {
-  // _config is a per-worker in-memory cache.
-  // invalidateConfigCache() clears it + the underlying YAML mtime cache,
-  // so after an admin save every worker re-parses on next request.
-  // In dev we always re-parse so hot-reload works.
-  if (_config && process.env.NODE_ENV === 'production') return _config;
-
+  // No in-memory config cache: admin saves can land in a different
+  // worker/process than page rendering, so a per-worker cache goes stale
+  // until restart. Freshness comes from the mtime-checked YAML cache in
+  // loadYaml() — a statSync per file, negligible next to Immich API calls.
   const apiUrl = env.IMMICH_API_URL;
   const apiKey = env.IMMICH_API_KEY;
   const authSecret = resolveAuthSecret();
@@ -64,7 +59,7 @@ export function getConfig(): AppConfig {
 
   if (!gallery || !apiKey || !apiUrl) {
     // Return dummy config if gallery.yaml is missing
-    _config = {
+    return {
       immich: { apiUrl: `${apiUrl}/api`, apiKey },
       authSecret,
       albums: [],
@@ -96,7 +91,6 @@ export function getConfig(): AppConfig {
       trustedProxyHops: env.TRUSTED_PROXY_HOPS,
       needsSetup: true,
     };
-    return _config;
   }
 
   const theme = resolveTheme(settings.theme);
@@ -215,7 +209,7 @@ export function getConfig(): AppConfig {
   const subpageAlbumIds = new Set(subpages.flatMap((sp) => sp.albumIds));
   const allAlbumIds = [...new Set([...standaloneAlbumIds, ...subpageAlbumIds])];
 
-  _config = {
+  return {
     immich: { apiUrl: `${apiUrl}/api`, apiKey },
     authSecret,
     albums: allAlbumIds,
@@ -280,5 +274,4 @@ export function getConfig(): AppConfig {
     trustedProxyHops: env.TRUSTED_PROXY_HOPS,
     needsSetup: false,
   };
-  return _config;
 }
