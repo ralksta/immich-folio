@@ -23,6 +23,9 @@ export function middleware(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
+  // Layouts cannot read the request URL; the root layout needs the pathname
+  // to keep /admin reachable while the app is in setup mode.
+  requestHeaders.set('x-pathname', request.nextUrl.pathname);
   requestHeaders.set('Content-Security-Policy', cspDirectives);
 
   const response = NextResponse.next({
