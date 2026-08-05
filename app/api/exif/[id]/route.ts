@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { immich, ImmichUnavailableError } from '@/lib/immich';
 import { decodeAssetId } from '@/lib/tokens';
 import { getConfig } from '@/lib/config';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const config = getConfig();
@@ -24,9 +24,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { success, resetAt } = checkRateLimit(`exif:${ip}`, config.rateLimitRpm);
 
   if (!success) {
-    const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
+    const retryAfter = retryAfterSeconds(resetAt);
     console.warn(`[EXIF API] ⚠️ Rate limit exceeded for IP: ${ip}. Retry after ${retryAfter}s`);
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(retryAfter), 'Cache-Control': 'no-store' },
+      },
+    );
   }
 
   const { id: token } = await params;

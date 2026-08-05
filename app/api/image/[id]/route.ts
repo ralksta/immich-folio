@@ -12,7 +12,7 @@ import { immich, ImmichUnavailableError } from '@/lib/immich';
 import { resolveImageSize } from '@/lib/imageSize';
 import { decodeAssetId } from '@/lib/tokens';
 import { getConfig } from '@/lib/config';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // ── Rate limiting ──────────────────────────────────
@@ -20,12 +20,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { success, remaining, resetAt } = checkRateLimit(`image:${ip}`, getConfig().rateLimitRpm);
 
   if (!success) {
-    const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
+    const retryAfter = retryAfterSeconds(resetAt);
     const userAgent = request.headers.get('user-agent') || 'unknown';
     console.warn(
       `[Image API] ⚠️ Rate limit exceeded for IP: ${ip} (UA: ${userAgent}). Retry after ${retryAfter}s`,
     );
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    // Without Retry-After the browser and next/image back off on their own
+    // schedule — a retry storm against a server that just said it was
+    // overloaded, and one page issues ~50 of these requests. no-store because
+    // the success path serves this URL as `immutable`.
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(retryAfter), 'Cache-Control': 'no-store' },
+      },
+    );
   }
 
   const { id: token } = await params;

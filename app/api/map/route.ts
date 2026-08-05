@@ -11,7 +11,7 @@ import { imageUrl } from '@/lib/urls';
 import { isAuthenticated } from '@/lib/auth';
 import { getMapData } from '@/lib/mapService';
 import { ImmichUnavailableError } from '@/lib/immich';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       {
         status: 429,
         headers: {
-          'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)),
+          'Retry-After': String(retryAfterSeconds(rl.resetAt)),
           'X-RateLimit-Limit': '120',
           'X-RateLimit-Remaining': '0',
         },

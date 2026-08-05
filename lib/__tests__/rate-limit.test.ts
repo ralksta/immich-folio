@@ -6,7 +6,12 @@ vi.mock('@/lib/config', () => ({
   getConfig: () => ({ trustedProxyHops: mockHops }),
 }));
 
-import { checkRateLimit, getClientIp, __resetProxyWarningForTests } from '@/lib/rate-limit';
+import {
+  checkRateLimit,
+  getClientIp,
+  retryAfterSeconds,
+  __resetProxyWarningForTests,
+} from '@/lib/rate-limit';
 
 function req(headers: Record<string, string>, ip?: string): NextRequest {
   return { ...(ip ? { ip } : {}), headers: new Headers(headers) } as unknown as NextRequest;
@@ -144,6 +149,24 @@ describe('diagnosing an unidentifiable client', () => {
     mockHops = 0;
     expect(getClientIp(req({}))).toBe('unknown');
     expect(warn).not.toHaveBeenCalled();
+  });
+});
+
+describe('retryAfterSeconds', () => {
+  it('rounds up, so a client never retries before the window closes', () => {
+    expect(retryAfterSeconds(Date.now() + 1500)).toBe(2);
+    expect(retryAfterSeconds(Date.now() + 30_000)).toBe(30);
+  });
+
+  // The reason this is a function rather than an inline Math.ceil. Every route
+  // had its own copy, and each shared this edge: a window on the point of
+  // expiring gives 0, and `Retry-After: 0` tells the client to retry at once —
+  // the opposite of what a 429 means. A past resetAt gives a negative number,
+  // which is not valid HTTP at all.
+  it('never returns zero or a negative value', () => {
+    expect(retryAfterSeconds(Date.now())).toBe(1);
+    expect(retryAfterSeconds(Date.now() + 10)).toBe(1);
+    expect(retryAfterSeconds(Date.now() - 60_000)).toBe(1);
   });
 });
 

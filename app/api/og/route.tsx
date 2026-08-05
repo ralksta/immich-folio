@@ -9,7 +9,7 @@
 import { ImageResponse } from 'next/og';
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 
 /**
  * OG image rendering runs satori + resvg per request and each unique ?title
@@ -23,9 +23,15 @@ export async function GET(request: NextRequest) {
   const ip = getClientIp(request);
   const { theme } = getConfig();
 
-  const { success } = checkRateLimit(`og:${ip}`, OG_RPM);
+  const { success, resetAt } = checkRateLimit(`og:${ip}`, OG_RPM);
   if (!success) {
-    return new NextResponse('Too many requests', { status: 429 });
+    return new NextResponse('Too many requests', {
+      status: 429,
+      headers: {
+        'Retry-After': String(retryAfterSeconds(resetAt)),
+        'Cache-Control': 'no-store',
+      },
+    });
   }
 
   const { searchParams } = request.nextUrl;

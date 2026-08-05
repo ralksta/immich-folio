@@ -113,6 +113,18 @@ export function getClientIp(request: NextRequest): string {
   return xRealIp ?? xForwardedFor?.split(',')[0].trim() ?? UNIDENTIFIED;
 }
 
+/**
+ * Seconds a client should wait before retrying, for the `Retry-After` header.
+ *
+ * Floored at 1. The obvious `Math.ceil((resetAt - Date.now()) / 1000)` yields 0
+ * — or a negative number — when the window is on the point of expiring, and
+ * `Retry-After: 0` tells the client to retry immediately, which is the opposite
+ * of what a 429 is for. A negative value is not valid HTTP at all.
+ */
+export function retryAfterSeconds(resetAt: number): number {
+  return Math.max(1, Math.ceil((resetAt - Date.now()) / 1000));
+}
+
 interface RateLimitEntry {
   count: number;
   expiresAt: number;
