@@ -279,11 +279,15 @@ export default function SettingsEditor() {
       <div className={`save-bar ${dirty ? 'dirty' : ''}`}>
         <div className="save-bar-left">
           {dirty && <span className="unsaved-badge">Unsaved changes</span>}
-          {saveMessage && (
+          {saveMessage ? (
             <span
               className={`save-message ${saveMessage.startsWith('Error') ? 'error' : 'success'}`}
             >
               {saveMessage}
+            </span>
+          ) : (
+            <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+              ⚡ Live Sync (No Docker restart required)
             </span>
           )}
         </div>

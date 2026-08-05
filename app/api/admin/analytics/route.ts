@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { getConfigOrNull } from '@/lib/config';
 
 const ANALYTICS_FILE = path.join(process.cwd(), 'content', 'analytics.json');
 
 export async function GET() {
   try {
+    const config = getConfigOrNull();
     let data;
     try {
       const raw = await fs.readFile(ANALYTICS_FILE, 'utf8');
@@ -33,6 +35,7 @@ export async function GET() {
       .slice(0, 10);
 
     return NextResponse.json({
+      trackingEnabled: config?.analytics !== false,
       summary: data.summary,
       days: data.days,
       topPages,

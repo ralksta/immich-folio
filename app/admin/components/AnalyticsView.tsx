@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import * as Icons from './Icons';
 
 interface AnalyticsData {
+  trackingEnabled?: boolean;
   summary: {
     totalViews: number;
     lastUpdated: string;
@@ -86,6 +87,15 @@ export default function AnalyticsView() {
           <Icons.IconRefresh size={14} /> Refresh
         </button>
       </div>
+
+      {data.trackingEnabled === false && (
+        <div className="backup-status-alert error" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Icons.IconLock size={16} />
+          <span>
+            <strong>Analytics Tracking is Currently Disabled.</strong> No new visitor views are being recorded. You can re-enable tracking anytime under <em>Settings &rarr; General</em>.
+          </span>
+        </div>
+      )}
 
       {/* Top Metric Cards */}
       <div className="analytics-metrics-grid">
