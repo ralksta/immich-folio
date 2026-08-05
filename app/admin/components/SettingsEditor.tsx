@@ -11,6 +11,7 @@ interface Settings {
   exifOnHover?: boolean;
   map?: boolean;
   transitions?: boolean;
+  analytics?: boolean;
   theme?: {
     preset?: string;
     accent?: string;
@@ -394,6 +395,20 @@ export default function SettingsEditor() {
                     <span className="toggle-card-desc">Enable subtle fade-in animations between page navigation</span>
                   </div>
                   <div className={`switch-toggle ${settings.transitions !== false ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${settings.analytics !== false ? 'active' : ''}`}
+                  onClick={() => update('analytics', settings.analytics === false)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title"><Icons.IconTarget size={16} /> Privacy Analytics Tracking</span>
+                    <span className="toggle-card-desc">Record aggregate pageview statistics in Analytics tab (Default: Enabled)</span>
+                  </div>
+                  <div className={`switch-toggle ${settings.analytics !== false ? 'on' : ''}`}>
                     <span className="switch-slider" />
                   </div>
                 </button>

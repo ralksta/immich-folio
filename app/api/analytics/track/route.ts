@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { getConfigOrNull } from '@/lib/config';
 
 const CONTENT_DIR = path.join(process.cwd(), 'content');
 const ANALYTICS_FILE = path.join(CONTENT_DIR, 'analytics.json');
@@ -40,6 +41,11 @@ async function saveAnalytics(data: AnalyticsData) {
 
 export async function POST(req: Request) {
   try {
+    const config = getConfigOrNull();
+    if (config?.analytics === false) {
+      return NextResponse.json({ ok: true, trackingDisabled: true });
+    }
+
     const body = await req.json();
     const pagePath = (body.path || '/').split('?')[0];
     const userAgent = req.headers.get('user-agent') || '';

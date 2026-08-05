@@ -94,6 +94,7 @@ export interface AppConfig {
   legal: LegalConfig;
   map: boolean;
   transitions: boolean;
+  analytics: boolean;
   albumOverrides: Record<string, string>;
   albumDescriptions: Record<string, string>;
   albumPasswords: Record<string, string>;
@@ -161,6 +162,7 @@ export interface SettingsYaml {
   exifOnHover?: boolean;
   map?: boolean;
   transitions?: boolean;
+  analytics?: boolean;
   theme?:
     | string
     | {
