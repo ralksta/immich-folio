@@ -34,7 +34,7 @@ export interface PhotoItem {
 
 interface PhotoGridProps {
   assets: PhotoItem[];
-  layout?: 'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow';
+  layout?: 'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow' | 'essay';
   gridStyle?: React.CSSProperties;
   watermark?: LightboxWatermark;
 }

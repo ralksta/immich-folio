@@ -72,7 +72,7 @@ export const VALID_HERO_STYLES = [
   'typographic',
   'mosaic',
 ];
-export const VALID_LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow'];
+export const VALID_LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow', 'essay'];
 
 export function resolveTheme(raw?: SettingsYaml['theme']): ThemeConfig {
   if (!raw) return { ...THEME_PRESETS.studio };

@@ -31,6 +31,8 @@ import { isProtected, isAuthenticated } from '@/lib/auth';
 import PasswordGate from '@/components/PasswordGate';
 import { AlbumDetailView } from './AlbumDetailView';
 import { SubpageGridView } from './SubpageGridView';
+import { EssayView } from './EssayView';
+import { parseEssayMarkdown, loadEssayFromFile } from '@/lib/essay';
 
 // Render at request time — requires live Immich connection
 export const dynamic = 'force-dynamic';
@@ -237,6 +239,57 @@ export default async function PathPage({ params }: PathPageProps) {
     }
 
     const { albums } = result;
+
+    // ── Photo Essay / Storytelling Mode ───────────────────────
+    const isEssay =
+      result.subpage.grid?.layout === 'essay' ||
+      !!result.subpage.essayFile ||
+      !!result.subpage.essayText;
+
+    if (isEssay) {
+      let essayParsed = result.subpage.essayText
+        ? parseEssayMarkdown(result.subpage.essayText)
+        : result.subpage.essayFile
+        ? loadEssayFromFile(result.subpage.essayFile)
+        : null;
+
+      // Fetch assets from all subpage albums
+      const allAlbums = await Promise.all(
+        albums.map((a) => immich.getAlbumBySlug(a.slug, slug))
+      );
+      const allAssets = allAlbums.flatMap((a) => (a ? a.assets : []));
+      const images = toPhotoItems(allAssets, config.exifOnHover);
+
+      // Fallback structured essay if layout: 'essay' is set without custom markdown file
+      if (!essayParsed) {
+        essayParsed = {
+          frontmatter: {
+            title: result.subpage.title || result.subpage.name,
+            subtitle: result.subpage.subtitle,
+          },
+          blocks: albums.flatMap((a) => [
+            { type: 'heading' as const, level: 2, text: a.albumName },
+            ...a.assets.map((asset) => ({
+              type: 'photo' as const,
+              assetId: encodeAssetId(asset.id),
+              caption: asset.exifInfo?.description || undefined,
+              layout: 'contained' as const,
+            })),
+          ]),
+          referencedAssetIds: [],
+        };
+      }
+
+      return (
+        <EssayView
+          essay={essayParsed}
+          assets={images}
+          title={result.subpage.title || result.subpage.name}
+          subtitle={result.subpage.subtitle}
+          watermark={config.watermark}
+        />
+      );
+    }
 
     // ── Single album → full-bleed (skip album grid) ──────────
     if (albums.length === 1) {

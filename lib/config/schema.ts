@@ -15,6 +15,8 @@ export interface SubpageConfig {
   password?: string;
   grid?: Partial<GridConfig>;
   proofing?: boolean;
+  essayFile?: string;
+  essayText?: string;
 }
 
 export interface SubpageObjectValue {
@@ -23,6 +25,8 @@ export interface SubpageObjectValue {
   password?: string;
   grid?: Partial<GridConfig>;
   proofing?: boolean;
+  essayFile?: string;
+  essayText?: string;
   albums?: Array<
     string | Record<string, string | { title: string; description?: string; password?: string }>
   >;
@@ -70,7 +74,7 @@ export interface GridConfig {
   columns: number;
   gap: number;
   aspectRatio: string;
-  layout: 'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow';
+  layout: 'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow' | 'essay';
 }
 
 export interface AppConfig {
@@ -147,6 +151,9 @@ export interface GalleryYaml {
           albums: Array<string | Record<string, string | AlbumEntryObject>>;
         }>;
         password?: string;
+        proofing?: boolean;
+        essayFile?: string;
+        essayText?: string;
         grid?: {
           columns?: number;
           gap?: number;

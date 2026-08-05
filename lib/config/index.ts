@@ -194,6 +194,9 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         albumIds,
         sections,
         password: sp.password,
+        proofing: sp.proofing,
+        essayFile: sp.essayFile,
+        essayText: sp.essayText,
         ...buildSubpageGrid(sp.grid),
       };
     });
@@ -215,6 +218,9 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         subtitle: sp.subtitle,
         albumIds: albumEntries.map((entry) => processAlbumEntry(entry, `subpage "${name}"`)),
         password: sp.password,
+        proofing: sp.proofing,
+        essayFile: sp.essayFile,
+        essayText: sp.essayText,
         ...buildSubpageGrid(sp.grid),
       };
     });
