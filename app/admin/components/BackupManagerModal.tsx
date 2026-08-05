@@ -11,6 +11,7 @@ interface Props {
 
 export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }: Props) {
   const [activeTab, setActiveTab] = useState<'gallery' | 'settings'>('gallery');
+  const [showAllBackups, setShowAllBackups] = useState(false);
   const [backups, setBackups] = useState<{ gallery: BackupItem[]; settings: BackupItem[] }>({
     gallery: [],
     settings: [],
@@ -43,6 +44,7 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
       fetchBackups();
       setConfirmFilename(null);
       setSuccessMsg(null);
+      setShowAllBackups(false);
     }
   }, [isOpen, fetchBackups]);
 
@@ -78,6 +80,9 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
   }
 
   const currentList = backups[activeTab] || [];
+  const INITIAL_VISIBLE_COUNT = 3;
+  const visibleList = showAllBackups ? currentList : currentList.slice(0, INITIAL_VISIBLE_COUNT);
+  const hiddenCount = currentList.length - INITIAL_VISIBLE_COUNT;
 
   return (
     <div className="backup-modal-backdrop" onClick={onClose}>
@@ -101,6 +106,7 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
             onClick={() => {
               setActiveTab('gallery');
               setConfirmFilename(null);
+              setShowAllBackups(false);
             }}
           >
             Gallery Backups ({backups.gallery.length})
@@ -110,6 +116,7 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
             onClick={() => {
               setActiveTab('settings');
               setConfirmFilename(null);
+              setShowAllBackups(false);
             }}
           >
             Settings Backups ({backups.settings.length})
@@ -157,7 +164,7 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
             <div className="backup-empty">No backups available yet for {activeTab}.yaml</div>
           ) : (
             <div className="backup-list">
-              {currentList.map((item) => {
+              {visibleList.map((item) => {
                 const dateObj = item.timestamp ? new Date(item.timestamp) : null;
                 const formattedDate = dateObj && !isNaN(dateObj.getTime())
                   ? dateObj.toLocaleString('de-DE', {
@@ -191,6 +198,17 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
                   </div>
                 );
               })}
+
+              {currentList.length > INITIAL_VISIBLE_COUNT && (
+                <button
+                  className="backup-toggle-btn"
+                  onClick={() => setShowAllBackups(!showAllBackups)}
+                >
+                  {showAllBackups
+                    ? '▲ Ältere Einträge einklappen'
+                    : `▼ Ältere Einträge anzeigen (${hiddenCount} weitere)`}
+                </button>
+              )}
             </div>
           )}
         </div>
