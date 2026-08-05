@@ -122,7 +122,18 @@ export function getConfig(): AppConfig {
       if (value.title) albumOverrides[validatedUuid] = value.title;
       if (value.description) albumDescriptions[validatedUuid] = value.description;
       if (value.password) albumPasswords[validatedUuid] = value.password;
-      if (value.heroImage) albumHeroImages[validatedUuid] = value.heroImage;
+      // The album ID (the key) is validated above; the hero asset ID is a
+      // separate UUID and was previously stored raw. It flows to encodeAssetId
+      // via app/[...path]/page.tsx, which encrypts whatever it is handed — so a
+      // typo here produced a well-formed URL that 404s forever, with nothing in
+      // the log naming the cause. Every other ID in this file goes through
+      // validateUuid; this one was the gap.
+      if (value.heroImage) {
+        albumHeroImages[validatedUuid] = validateUuid(
+          value.heroImage,
+          `${context} heroImage for album ${validatedUuid}`,
+        );
+      }
     }
     return validatedUuid;
   }
