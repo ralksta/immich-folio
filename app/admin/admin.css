@@ -3069,6 +3069,213 @@ h3 .svg-icon {
   flex: 1;
 }
 
+/* ── Subpage Tile Badges & Hover Actions ─────────────────────── */
+.subpage-badge-protected {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  color: #ffca28;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 202, 40, 0.3);
+  z-index: 2;
+}
+
+.subpage-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.subpage-tile:hover .subpage-hover-overlay {
+  opacity: 1;
+}
+
+.hover-action-btn {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--admin-accent, #e60012);
+  padding: 0.4rem 0.85rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.subpage-tile-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.subpage-tile-slug {
+  font-size: 0.7rem;
+  color: var(--admin-text-muted);
+  font-family: var(--font-mono, monospace);
+  background: var(--admin-bg-input);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* ── Subpage Slide-Over Drawer Modal ──────────────────────────── */
+.subpage-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 999;
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.subpage-drawer-container {
+  width: 100%;
+  max-width: 620px;
+  height: 100vh;
+  background: var(--admin-bg-card, #181818);
+  border-left: 1px solid var(--admin-border, #333);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.subpage-drawer-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--admin-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--admin-bg-raised);
+}
+
+.subpage-drawer-breadcrumb {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.subpage-drawer-title {
+  margin: 0.2rem 0 0 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.subpage-drawer-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.subpage-drawer-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.subpage-drawer-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--admin-border);
+  background: var(--admin-bg-raised);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.input-slug-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-slug-preview {
+  position: absolute;
+  right: 12px;
+  font-size: 0.75rem;
+  font-family: var(--font-mono, monospace);
+  color: var(--admin-text-muted);
+  pointer-events: none;
+  background: var(--admin-bg-elevated);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.password-input-wrapper input {
+  padding-left: 2.25rem !important;
+}
+
+/* ── Dynamic Floating Save Bar ───────────────────────────────── */
+.floating-save-bar {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--admin-bg-raised, #1f1f1f);
+  border: 1px solid var(--admin-border-hover, #444);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 0.75rem 1.25rem;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: calc(100% - 3rem);
+  max-width: 800px;
+  transition: all 0.25s ease;
+}
+
+.badge-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff9800;
+  display: inline-block;
+  margin-right: 6px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(255, 152, 0, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
+}
+
+
 
 
 
