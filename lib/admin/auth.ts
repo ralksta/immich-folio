@@ -11,6 +11,15 @@ import { cookies } from 'next/headers';
 const COOKIE_NAME = 'folio_admin_session';
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
+/**
+ * Longest password attempt the login endpoint will look at.
+ *
+ * Generous enough that no real passphrase hits it — the point is only to keep
+ * an unbounded request body out of the hashing path, not to constrain what
+ * users may choose.
+ */
+export const MAX_PASSWORD_LENGTH = 1024;
+
 function getSigningKey(): Buffer {
   // Bind the key to ADMIN_PASSWORD as well, so rotating the password
   // immediately invalidates every outstanding session token.
@@ -62,20 +71,28 @@ export function verifyAdminToken(token: string): boolean {
   }
 }
 
-/** Verify admin password. */
+/**
+ * Verify admin password.
+ *
+ * Both sides are HMAC'd to a fixed 32 bytes before the constant-time compare.
+ * Comparing the raw strings meant `timingSafeEqual` could only run when the
+ * lengths already matched, so the early return on a length mismatch leaked how
+ * long ADMIN_PASSWORD is. Hashing first makes every attempt take the same path.
+ *
+ * Keyed with AUTH_SECRET rather than a bare digest, matching how `lib/auth.ts`
+ * compares subpage passwords: the intermediate values are then useless to
+ * anyone who cannot also read the secret.
+ */
 export function verifyAdminPassword(password: string): boolean {
   const adminPw = env.ADMIN_PASSWORD;
   if (!adminPw) return false;
+  if (password.length > MAX_PASSWORD_LENGTH) return false;
 
-  // Constant-time comparison
-  const pwBuf = Buffer.from(password);
-  const expectedBuf = Buffer.from(adminPw);
-  if (pwBuf.length !== expectedBuf.length) {
-    // Still do a comparison to prevent timing attacks on length
-    crypto.timingSafeEqual(pwBuf, Buffer.alloc(pwBuf.length));
-    return false;
-  }
-  return crypto.timingSafeEqual(pwBuf, expectedBuf);
+  const secret = resolveAuthSecret();
+  const attemptHash = crypto.createHmac('sha256', secret).update(password).digest();
+  const expectedHash = crypto.createHmac('sha256', secret).update(adminPw).digest();
+
+  return crypto.timingSafeEqual(attemptHash, expectedHash);
 }
 
 /** Check if the current request has a valid admin session. */

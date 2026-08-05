@@ -6,6 +6,7 @@ import {
   isAdminEnabled,
   COOKIE_NAME,
   SESSION_DURATION_MS,
+  MAX_PASSWORD_LENGTH,
 } from '@/lib/admin/auth';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 
@@ -36,6 +37,11 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   if (!body?.password || typeof body.password !== 'string') {
     return NextResponse.json({ error: 'Password is required' }, { status: 400 });
+  }
+  // Reject before hashing rather than after: nothing downstream should have to
+  // carry an unbounded request body.
+  if (body.password.length > MAX_PASSWORD_LENGTH) {
+    return NextResponse.json({ error: 'Password is too long' }, { status: 400 });
   }
 
   if (!verifyAdminPassword(body.password)) {
