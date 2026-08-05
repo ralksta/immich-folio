@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 let mockHops = 0;
@@ -6,7 +6,7 @@ vi.mock('@/lib/config', () => ({
   getConfig: () => ({ trustedProxyHops: mockHops }),
 }));
 
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIp, __resetProxyWarningForTests } from '@/lib/rate-limit';
 
 function req(headers: Record<string, string>, ip?: string): NextRequest {
   return { ...(ip ? { ip } : {}), headers: new Headers(headers) } as unknown as NextRequest;
@@ -82,6 +82,68 @@ describe('getClientIp behind two trusted proxies (TRUSTED_PROXY_HOPS=2)', () => 
 
   it('returns unknown when the chain is shorter than the configured hop count', () => {
     expect(getClientIp(req({ 'x-forwarded-for': '10.0.0.5' }))).toBe('unknown');
+  });
+});
+
+/**
+ * Falling back to the shared 'unknown' bucket is correct — trusting a spoofable
+ * header would be worse — but silent. Every unidentified request shares one
+ * bucket per endpoint, and a 50-photo grid issues ~50 /api/image requests, so
+ * the default 1500 rpm is collectively spent by ~30 page loads a minute.
+ * Visitors get 429s with nothing in the log naming the cause.
+ */
+describe('diagnosing an unidentifiable client', () => {
+  let warn: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    __resetProxyWarningForTests();
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  // Without this the spies stack on console.warn across tests and call counts
+  // accumulate, which silently turns every assertion below into a false pass
+  // or a confusing failure.
+  afterEach(() => warn.mockRestore());
+
+  it('warns when the forwarded chain is shorter than the configured hops', () => {
+    mockHops = 2;
+    expect(getClientIp(req({ 'x-forwarded-for': '203.0.113.9' }))).toBe('unknown');
+
+    expect(warn).toHaveBeenCalledOnce();
+    const message = String(warn.mock.calls[0][0]);
+    expect(message).toContain('TRUSTED_PROXY_HOPS is 2');
+    expect(message).toContain('1 entry');
+  });
+
+  it('warns when neither forwarding header is present', () => {
+    mockHops = 1;
+    expect(getClientIp(req({}))).toBe('unknown');
+    expect(String(warn.mock.calls[0][0])).toContain('neither X-Forwarded-For nor X-Real-IP');
+  });
+
+  it('explains why X-Real-IP was not trusted at more than one hop', () => {
+    mockHops = 2;
+    expect(getClientIp(req({ 'x-real-ip': '203.0.113.9' }))).toBe('unknown');
+    expect(String(warn.mock.calls[0][0])).toContain('single hop');
+  });
+
+  it('warns once per process, not once per request', () => {
+    mockHops = 2;
+    for (let i = 0; i < 50; i++) getClientIp(req({}));
+    expect(warn).toHaveBeenCalledOnce();
+  });
+
+  it('stays silent while clients are being identified correctly', () => {
+    mockHops = 1;
+    expect(getClientIp(req({ 'x-forwarded-for': '203.0.113.9' }))).toBe('203.0.113.9');
+    expect(getClientIp(req({ 'x-real-ip': '203.0.113.9' }))).toBe('203.0.113.9');
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('stays silent at hops=0, where the shared bucket is expected, not a misconfiguration', () => {
+    mockHops = 0;
+    expect(getClientIp(req({}))).toBe('unknown');
+    expect(warn).not.toHaveBeenCalled();
   });
 });
 
