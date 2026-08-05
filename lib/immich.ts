@@ -127,6 +127,28 @@ class ImmichClient {
     return getConfig();
   }
 
+  /** Cache write that carries the configured stale window. */
+  private cacheSet<T>(key: string, data: T): void {
+    cache.set(key, data, this.config.cacheTtl, this.config.staleMaxAge);
+  }
+
+  /**
+   * Last resort when Immich is unavailable: hand back the most recent known
+   * good answer rather than failing the page. Only successes ever reach the
+   * cache, so this cannot resurrect an outage — and past staleMaxAge the entry
+   * is gone and the error propagates as before.
+   */
+  private staleOrThrow<T>(cacheKey: string, error: unknown, label: string): T {
+    if (error instanceof ImmichUnavailableError) {
+      const stale = cache.getStale<T>(cacheKey);
+      if (stale !== null) {
+        console.warn(`[Immich] ⚠️ Upstream unavailable — serving stale ${label}`);
+        return stale;
+      }
+    }
+    throw error;
+  }
+
   private async request<T>(endpoint: string, body?: unknown): Promise<T | null> {
     if (this.config.needsSetup) return null;
 
@@ -402,8 +424,10 @@ class ImmichClient {
           console.log('─'.repeat(80) + '\n');
         }
 
-        cache.set(cacheKey, filtered, this.config.cacheTtl);
+        this.cacheSet(cacheKey, filtered);
         return filtered;
+      } catch (error) {
+        return this.staleOrThrow<ImmichAlbum[]>(cacheKey, error, 'album list');
       } finally {
         this.pendingAlbumsPromise = null;
       }
@@ -565,8 +589,10 @@ class ImmichClient {
         album.description = description;
         album.slug = slugify(name);
 
-        cache.set(cacheKey, album, this.config.cacheTtl);
+        this.cacheSet(cacheKey, album);
         return album;
+      } catch (error) {
+        return this.staleOrThrow<ImmichAlbum>(cacheKey, error, `album ${albumId}`);
       } finally {
         this.pendingAlbumPromises.delete(albumId);
       }
@@ -629,8 +655,10 @@ class ImmichClient {
           return null;
         }
 
-        cache.set(cacheKey, asset, this.config.cacheTtl);
+        this.cacheSet(cacheKey, asset);
         return asset;
+      } catch (error) {
+        return this.staleOrThrow<ImmichAsset>(cacheKey, error, `asset ${assetId}`);
       } finally {
         this.pendingAssetPromises.delete(assetId);
       }
