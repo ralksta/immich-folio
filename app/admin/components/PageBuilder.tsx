@@ -133,6 +133,7 @@ interface Subpage {
   title?: string;
   subtitle?: string;
   password?: string;
+  enabled?: boolean;
   sections?: Section[];
   albums: AlbumEntry[];
   grid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
@@ -333,6 +334,12 @@ function SortableSubpageTile({
         <Icons.Drag />
       </div>
 
+      {sp.enabled === false && (
+        <span className="subpage-badge-protected" style={{ background: '#e60012', color: '#fff' }} title="Page is disabled">
+          Disabled
+        </span>
+      )}
+
       {sp.password && (
         <span className="subpage-badge-protected" title="Password protected">
           <Icons.Lock /> Password
@@ -465,6 +472,7 @@ export default function PageBuilder() {
         title: sp.title as string | undefined,
         subtitle: sp.subtitle as string | undefined,
         password: sp.password as string | undefined,
+        enabled: sp.enabled !== false,
         albums: parseAlbumEntries(sp.albums as Array<string | Record<string, string>> | undefined),
         sections: sp.sections
           ? (sp.sections as Array<Record<string, unknown>>).map((sec) => ({
@@ -478,7 +486,7 @@ export default function PageBuilder() {
     } else if (raw.subpages && typeof raw.subpages === 'object') {
       subpages = Object.entries(raw.subpages as Record<string, unknown>).map(([name, value]) => {
         if (Array.isArray(value)) {
-          return { name, albums: parseAlbumEntries(value), sections: undefined };
+          return { name, albums: parseAlbumEntries(value), sections: undefined, enabled: true };
         }
         const sp = value as Record<string, unknown>;
         return {
@@ -486,6 +494,7 @@ export default function PageBuilder() {
           title: sp.title as string | undefined,
           subtitle: sp.subtitle as string | undefined,
           password: sp.password as string | undefined,
+          enabled: sp.enabled !== false,
           albums: parseAlbumEntries(
             sp.albums as Array<string | Record<string, string>> | undefined,
           ),
@@ -522,6 +531,7 @@ export default function PageBuilder() {
         if (sp.title) entry.title = sp.title;
         if (sp.subtitle) entry.subtitle = sp.subtitle;
         if (sp.password) entry.password = sp.password;
+        if (sp.enabled === false) entry.enabled = false;
         if (sp.grid) entry.grid = sp.grid;
 
         if (sp.sections && sp.sections.length > 0) {
@@ -1233,6 +1243,30 @@ export default function PageBuilder() {
                               placeholder="Leave empty for public access"
                             />
                           </div>
+                        </div>
+
+                        <div className="admin-field" style={{ marginTop: '1rem' }}>
+                          <label>Page Visibility Status</label>
+                          <button
+                            type="button"
+                            className={`admin-toggle-card ${sp.enabled !== false ? 'active' : ''}`}
+                            onClick={() => updateSubpage(spIndex, { enabled: sp.enabled === false })}
+                            style={{ padding: '10px 14px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '8px', cursor: 'pointer' }}
+                          >
+                            <div className="toggle-card-info" style={{ textAlign: 'left' }}>
+                              <span className="toggle-card-title" style={{ fontWeight: 600 }}>
+                                {sp.enabled !== false ? '🟢 Page Active (Published)' : '🔴 Page Disabled (Hidden)'}
+                              </span>
+                              <span className="toggle-card-desc" style={{ fontSize: '0.8rem', display: 'block', opacity: 0.75 }}>
+                                {sp.enabled !== false
+                                  ? 'Visible in header menu and reachable via URL'
+                                  : 'Hidden from navigation menu. Returns 404 if accessed directly.'}
+                              </span>
+                            </div>
+                            <div className={`switch-toggle ${sp.enabled !== false ? 'on' : ''}`}>
+                              <span className="switch-slider" />
+                            </div>
+                          </button>
                         </div>
                       </div>
 

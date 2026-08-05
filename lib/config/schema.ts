@@ -17,6 +17,7 @@ export interface SubpageConfig {
   proofing?: boolean;
   essayFile?: string;
   essayText?: string;
+  enabled?: boolean;
 }
 
 export interface SubpageObjectValue {
@@ -27,6 +28,7 @@ export interface SubpageObjectValue {
   proofing?: boolean;
   essayFile?: string;
   essayText?: string;
+  enabled?: boolean;
   albums?: Array<
     string | Record<string, string | { title: string; description?: string; password?: string }>
   >;
@@ -154,6 +156,7 @@ export interface GalleryYaml {
         proofing?: boolean;
         essayFile?: string;
         essayText?: string;
+        enabled?: boolean;
         grid?: {
           columns?: number;
           gap?: number;

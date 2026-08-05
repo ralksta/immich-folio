@@ -197,6 +197,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         proofing: sp.proofing,
         essayFile: sp.essayFile,
         essayText: sp.essayText,
+        enabled: sp.enabled !== false,
         ...buildSubpageGrid(sp.grid),
       };
     });
@@ -207,6 +208,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
           name,
           slug: slugify(name),
           albumIds: value.map((entry) => processAlbumEntry(entry, `subpage "${name}"`)),
+          enabled: true,
         };
       }
       const sp = value as SubpageObjectValue;
@@ -221,6 +223,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         proofing: sp.proofing,
         essayFile: sp.essayFile,
         essayText: sp.essayText,
+        enabled: sp.enabled !== false,
         ...buildSubpageGrid(sp.grid),
       };
     });

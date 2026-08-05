@@ -103,4 +103,16 @@ describe('deriveGallery accepts valid structures', () => {
     expect(result.albumDescriptions[A]).toBe('A note');
     expect(result.albumHeroImages[A]).toBe(B);
   });
+
+  it('parses enabled property on subpages correctly', () => {
+    const result = deriveGallery({
+      subpages: [
+        { name: 'Active Page', albums: [A], enabled: true },
+        { name: 'Disabled Page', albums: [B], enabled: false },
+      ],
+    } as unknown as GalleryYaml);
+
+    expect(result.subpages[0].enabled).toBe(true);
+    expect(result.subpages[1].enabled).toBe(false);
+  });
 });
