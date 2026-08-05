@@ -73,57 +73,28 @@ export function buildSubpageGrid(raw?: {
   };
 }
 
-export function getConfig(): AppConfig {
-  // No in-memory config cache: admin saves can land in a different
-  // worker/process than page rendering, so a per-worker cache goes stale
-  // until restart. Freshness comes from the mtime-checked YAML cache in
-  // loadYaml() — a statSync per file, negligible next to Immich API calls.
-  const apiUrl = env.IMMICH_API_URL;
-  const apiKey = env.IMMICH_API_KEY;
-  const authSecret = resolveAuthSecret();
+/** The parts of AppConfig that come from gallery.yaml. */
+export interface GalleryDerivation {
+  albums: string[];
+  standaloneAlbums: string[];
+  subpages: SubpageConfig[];
+  albumOverrides: Record<string, string>;
+  albumDescriptions: Record<string, string>;
+  albumPasswords: Record<string, string>;
+  albumHeroImages: Record<string, string>;
+}
 
-  const gallery = loadYaml<GalleryYaml>('gallery.yaml');
-  const settings = loadYaml<SettingsYaml>('settings.yaml') || {};
-
-  if (!gallery || !apiKey || !apiUrl) {
-    // Return dummy config if gallery.yaml is missing
-    return {
-      immich: { apiUrl: `${apiUrl}/api`, apiKey },
-      authSecret,
-      albums: [],
-      standaloneAlbums: [],
-      subpages: [],
-      siteTitle: env.SITE_TITLE || 'Immich Folio',
-      siteSubtitle: env.SITE_SUBTITLE || 'Setup Required',
-      lang: 'en',
-      seo: {
-        title: 'Setup Required',
-        description: 'Please configure Immich Folio',
-        noIndex: true,
-        noFollow: true,
-      },
-      heroImages: [],
-      exifOnHover: true,
-      grid: { columns: 3, gap: 12, aspectRatio: '1', layout: 'masonry' },
-      theme: resolveTheme('studio'),
-      footer: null,
-      legal: { enabled: false, name: '', address: '', zipCity: '', country: '' },
-      map: false,
-      transitions: false,
-      albumOverrides: {},
-      albumDescriptions: {},
-      albumPasswords: {},
-      albumHeroImages: {},
-      cacheTtl: env.CACHE_TTL * 1000,
-      immichTimeoutMs: env.IMMICH_TIMEOUT_MS,
-      rateLimitRpm: env.RATE_LIMIT_RPM,
-      trustedProxyHops: env.TRUSTED_PROXY_HOPS,
-      needsSetup: true,
-    };
-  }
-
-  const theme = resolveTheme(settings.theme);
-
+/**
+ * Derive the gallery half of AppConfig, throwing on a structure that cannot be
+ * represented: no albums and no subpages, a subpage with no name, a subpage
+ * with neither albums nor sections.
+ *
+ * Extracted from getConfig() so the admin PUT can run the *real* derivation
+ * against a proposed gallery before writing it. Re-implementing the three
+ * checks in the route would guarantee drift; write-then-verify-then-roll-back
+ * would leave a window where other requests read the broken config.
+ */
+export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   const albumOverrides: Record<string, string> = {};
   const albumDescriptions: Record<string, string> = {};
   const albumPasswords: Record<string, string> = {};
@@ -253,10 +224,82 @@ export function getConfig(): AppConfig {
   const allAlbumIds = [...new Set([...standaloneAlbumIds, ...subpageAlbumIds])];
 
   return {
+    albums: allAlbumIds,
+    standaloneAlbums: standaloneAlbumIds.filter((id) => !subpageAlbumIds.has(id)),
+    subpages,
+    albumOverrides,
+    albumDescriptions,
+    albumPasswords,
+    albumHeroImages,
+  };
+}
+
+export function getConfig(): AppConfig {
+  // No in-memory config cache: admin saves can land in a different
+  // worker/process than page rendering, so a per-worker cache goes stale
+  // until restart. Freshness comes from the mtime-checked YAML cache in
+  // loadYaml() — a statSync per file, negligible next to Immich API calls.
+  const apiUrl = env.IMMICH_API_URL;
+  const apiKey = env.IMMICH_API_KEY;
+  const authSecret = resolveAuthSecret();
+
+  const gallery = loadYaml<GalleryYaml>('gallery.yaml');
+  const settings = loadYaml<SettingsYaml>('settings.yaml') || {};
+
+  if (!gallery || !apiKey || !apiUrl) {
+    // Return dummy config if gallery.yaml is missing
+    return {
+      immich: { apiUrl: `${apiUrl}/api`, apiKey },
+      authSecret,
+      albums: [],
+      standaloneAlbums: [],
+      subpages: [],
+      siteTitle: env.SITE_TITLE || 'Immich Folio',
+      siteSubtitle: env.SITE_SUBTITLE || 'Setup Required',
+      lang: 'en',
+      seo: {
+        title: 'Setup Required',
+        description: 'Please configure Immich Folio',
+        noIndex: true,
+        noFollow: true,
+      },
+      heroImages: [],
+      exifOnHover: true,
+      grid: { columns: 3, gap: 12, aspectRatio: '1', layout: 'masonry' },
+      theme: resolveTheme('studio'),
+      footer: null,
+      legal: { enabled: false, name: '', address: '', zipCity: '', country: '' },
+      map: false,
+      transitions: false,
+      albumOverrides: {},
+      albumDescriptions: {},
+      albumPasswords: {},
+      albumHeroImages: {},
+      cacheTtl: env.CACHE_TTL * 1000,
+      immichTimeoutMs: env.IMMICH_TIMEOUT_MS,
+      rateLimitRpm: env.RATE_LIMIT_RPM,
+      trustedProxyHops: env.TRUSTED_PROXY_HOPS,
+      needsSetup: true,
+    };
+  }
+
+  const theme = resolveTheme(settings.theme);
+
+  const {
+    albums: allAlbumIds,
+    standaloneAlbums,
+    subpages,
+    albumOverrides,
+    albumDescriptions,
+    albumPasswords,
+    albumHeroImages,
+  } = deriveGallery(gallery);
+
+  return {
     immich: { apiUrl: `${apiUrl}/api`, apiKey },
     authSecret,
     albums: allAlbumIds,
-    standaloneAlbums: standaloneAlbumIds.filter((id) => !subpageAlbumIds.has(id)),
+    standaloneAlbums,
     subpages,
     siteTitle: settings.title ?? env.SITE_TITLE,
     siteSubtitle: settings.subtitle ?? env.SITE_SUBTITLE,
