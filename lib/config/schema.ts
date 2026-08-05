@@ -14,6 +14,7 @@ export interface SubpageConfig {
   sections?: SubpageSectionConfig[];
   password?: string;
   grid?: Partial<GridConfig>;
+  proofing?: boolean;
 }
 
 export interface SubpageObjectValue {
@@ -21,6 +22,7 @@ export interface SubpageObjectValue {
   subtitle?: string;
   password?: string;
   grid?: Partial<GridConfig>;
+  proofing?: boolean;
   albums?: Array<
     string | Record<string, string | { title: string; description?: string; password?: string }>
   >;
@@ -96,6 +98,10 @@ export interface AppConfig {
   map: boolean;
   transitions: boolean;
   analytics: boolean;
+  proofing: {
+    enabled: boolean;
+    allowMailto: boolean;
+  };
   albumOverrides: Record<string, string>;
   albumDescriptions: Record<string, string>;
   albumPasswords: Record<string, string>;
@@ -165,6 +171,10 @@ export interface SettingsYaml {
   map?: boolean;
   transitions?: boolean;
   analytics?: boolean;
+  proofing?: {
+    enabled?: boolean;
+    allowMailto?: boolean;
+  };
   theme?:
     | string
     | {

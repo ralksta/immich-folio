@@ -273,6 +273,7 @@ export function getConfig(): AppConfig {
       map: false,
       transitions: false,
       analytics: true,
+      proofing: { enabled: false, allowMailto: false },
       albumOverrides: {},
       albumDescriptions: {},
       albumPasswords: {},
@@ -357,6 +358,10 @@ export function getConfig(): AppConfig {
     map: settings.map === true,
     transitions: settings.transitions !== false,
     analytics: settings.analytics !== false,
+    proofing: {
+      enabled: settings.proofing?.enabled !== false,
+      allowMailto: settings.proofing?.allowMailto !== false,
+    },
     protection: settings.protection,
     watermark: settings.watermark,
     albumOverrides,

@@ -55,6 +55,10 @@ interface Settings {
     disableRightClick?: boolean;
     disableImageDrag?: boolean;
   };
+  proofing?: {
+    enabled?: boolean;
+    allowMailto?: boolean;
+  };
   watermark?: {
     enabled?: boolean;
     text?: string;
@@ -410,10 +414,24 @@ export default function SettingsEditor() {
                   onClick={() => update('analytics', settings.analytics === false)}
                 >
                   <div className="toggle-card-info">
-                    <span className="toggle-card-title"><Icons.IconTarget size={16} /> Privacy Analytics Tracking</span>
-                    <span className="toggle-card-desc">Record aggregate pageview statistics in Analytics tab (Default: Enabled)</span>
+                    <span className="toggle-card-title"><Icons.IconBarChart size={16} /> Analytics Tracking</span>
+                    <span className="toggle-card-desc">Collect anonymous privacy-friendly visit statistics</span>
                   </div>
                   <div className={`switch-toggle ${settings.analytics !== false ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${settings.proofing?.enabled !== false ? 'active' : ''}`}
+                  onClick={() => update('proofing.enabled', settings.proofing?.enabled === false)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title"><Icons.IconHeart size={16} /> Client Proofing &amp; Favorites</span>
+                    <span className="toggle-card-desc">Allow visitors &amp; clients to heart, filter, and export favorite photo selections</span>
+                  </div>
+                  <div className={`switch-toggle ${settings.proofing?.enabled !== false ? 'on' : ''}`}>
                     <span className="switch-slider" />
                   </div>
                 </button>

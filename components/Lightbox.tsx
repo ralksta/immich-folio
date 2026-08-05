@@ -17,6 +17,7 @@ import type { PhotoItem } from '@/app/[...path]/PhotoGrid';
 import { useExif } from '@/hooks/useExif';
 import { useSwipe } from '@/hooks/useSwipe';
 import styles from './Lightbox.module.css';
+import { useProofing } from './ProofingContext';
 
 export interface LightboxWatermark {
   enabled?: boolean;
@@ -42,6 +43,8 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev, waterm
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
   const current = assets[currentIndex];
+  const proofing = useProofing();
+  const isFav = proofing && current ? proofing.isFavorite(current.id) : false;
   const [mounted, setMounted] = useState(false);
 
   // Mount guard — createPortal needs document.body (client-only)
@@ -247,6 +250,23 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev, waterm
           {currentIndex + 1} / {assets.length}
         </span>
       </div>
+
+      {/* Proofing favorite button */}
+      {proofing && current && (
+        <button
+          className={styles.infoToggle}
+          style={{
+            right: '6.5rem',
+            color: isFav ? '#ff4d4f' : 'inherit',
+            fontWeight: isFav ? 600 : 400,
+          }}
+          onClick={() => proofing.toggleFavorite(current.id)}
+          aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
+          title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          {isFav ? '❤️ Saved' : '🤍 Favorite'}
+        </button>
+      )}
 
       {/* EXIF toggle */}
       <button
