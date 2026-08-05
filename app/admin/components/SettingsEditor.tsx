@@ -301,7 +301,11 @@ export default function SettingsEditor() {
         <div className="settings-content">
           {activeSection === 'general' && (
             <div className="settings-panel">
-              <h3>General</h3>
+              <div className="settings-section-header">
+                <h3>⚙️ General Site Settings</h3>
+                <p className="settings-section-sub">Configure basic site identity, language, and core feature toggles.</p>
+              </div>
+
               <div className="admin-field">
                 <label>Site Title</label>
                 <input
@@ -324,38 +328,63 @@ export default function SettingsEditor() {
                   value={settings.lang || 'en'}
                   onChange={(e) => update('lang', e.target.value)}
                 >
-                  <option value="en">English</option>
-                  <option value="de">Deutsch</option>
-                  <option value="fr">Français</option>
-                  <option value="es">Español</option>
-                  <option value="ja">日本語</option>
+                  <option value="en">🇺🇸 English</option>
+                  <option value="de">🇩🇪 Deutsch</option>
+                  <option value="fr">🇫🇷 Français</option>
+                  <option value="es">🇪🇸 Español</option>
+                  <option value="ja">🇯🇵 日本語</option>
                 </select>
               </div>
-              <div className="admin-field-checks">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.exifOnHover !== false}
-                    onChange={(e) => update('exifOnHover', e.target.checked)}
-                  />
-                  EXIF on Hover
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.map === true}
-                    onChange={(e) => update('map', e.target.checked)}
-                  />
-                  Map enabled
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.transitions !== false}
-                    onChange={(e) => update('transitions', e.target.checked)}
-                  />
-                  Page Transitions
-                </label>
+
+              <div className="settings-section-divider" />
+
+              <div className="settings-section-header">
+                <h3>🎛️ Interactive Features</h3>
+                <p className="settings-section-sub">Enable or disable interactive widgets and page effects.</p>
+              </div>
+
+              <div className="admin-toggle-cards-grid">
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${settings.exifOnHover !== false ? 'active' : ''}`}
+                  onClick={() => update('exifOnHover', settings.exifOnHover === false)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title">📷 EXIF Data on Hover</span>
+                    <span className="toggle-card-desc">Display camera gear, lens, aperture &amp; shutter speed on hover</span>
+                  </div>
+                  <div className={`switch-toggle ${settings.exifOnHover !== false ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${settings.map === true ? 'active' : ''}`}
+                  onClick={() => update('map', !settings.map)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title">🗺️ Interactive GPS Map</span>
+                    <span className="toggle-card-desc">Enable /map view showing photo locations on a world map</span>
+                  </div>
+                  <div className={`switch-toggle ${settings.map === true ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${settings.transitions !== false ? 'active' : ''}`}
+                  onClick={() => update('transitions', settings.transitions === false)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title">✨ Smooth Page Transitions</span>
+                    <span className="toggle-card-desc">Enable subtle fade-in animations between page navigation</span>
+                  </div>
+                  <div className={`switch-toggle ${settings.transitions !== false ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
               </div>
             </div>
           )}
@@ -637,24 +666,120 @@ export default function SettingsEditor() {
 
           {activeSection === 'grid' && (
             <div className="settings-panel">
-              <h3>Grid Layout</h3>
+              <div className="settings-section-header">
+                <h3>📐 Grid &amp; Layout Engine</h3>
+                <p className="settings-section-sub">Configure photography gallery column structures and thumbnail aspect ratios.</p>
+              </div>
+
               <div className="admin-field">
-                <label>Layout</label>
-                <div className="preset-grid">
-                  {LAYOUTS.map((l) => (
-                    <button
-                      key={l}
-                      className={`preset-btn ${(settings.grid?.layout || 'masonry') === l ? 'active' : ''}`}
-                      onClick={() => update('grid.layout', l)}
-                    >
-                      {l}
-                    </button>
-                  ))}
+                <label>Layout Algorithm</label>
+                <div className="preset-card-grid">
+                  {LAYOUTS.map((l) => {
+                    const info = {
+                      masonry: { label: 'Masonry', desc: 'Dynamic pinterest-style staggered columns' },
+                      uniform: { label: 'Uniform Grid', desc: 'Clean equal aspect ratio grid' },
+                      showcase: { label: 'Showcase', desc: 'Featured hero photos mixed with smaller tiles' },
+                      filmstrip: { label: 'Filmstrip', desc: 'Horizontal scrollable film strip timeline' },
+                      'editorial-flow': { label: 'Editorial Flow', desc: 'Magazine story layout with varying photo sizes' },
+                    }[l] || { label: l, desc: '' };
+                    const isActive = (settings.grid?.layout || 'masonry') === l;
+
+                    return (
+                      <button
+                        key={l}
+                        type="button"
+                        className={`preset-card grid-layout-card ${isActive ? 'active' : ''}`}
+                        onClick={() => update('grid.layout', l)}
+                      >
+                        <div className="grid-card-preview">
+                          <div className={`mini-layout-demo layout-demo-${l}`}>
+                            {l === 'masonry' && (
+                              <div className="demo-masonry-col-group">
+                                <div className="demo-col"><div className="demo-tile h-high" /><div className="demo-tile h-low" /></div>
+                                <div className="demo-col"><div className="demo-tile h-low" /><div className="demo-tile h-high" /></div>
+                                <div className="demo-col"><div className="demo-tile h-med" /><div className="demo-tile h-med" /></div>
+                              </div>
+                            )}
+                            {l === 'uniform' && (
+                              <div className="demo-uniform-grid">
+                                <div className="demo-tile" /><div className="demo-tile" /><div className="demo-tile" />
+                                <div className="demo-tile" /><div className="demo-tile" /><div className="demo-tile" />
+                              </div>
+                            )}
+                            {l === 'showcase' && (
+                              <div className="demo-showcase-grid">
+                                <div className="demo-tile hero-tile" />
+                                <div className="demo-col"><div className="demo-tile" /><div className="demo-tile" /></div>
+                              </div>
+                            )}
+                            {l === 'filmstrip' && (
+                              <div className="demo-filmstrip-row">
+                                <div className="demo-tile strip" /><div className="demo-tile strip" /><div className="demo-tile strip" />
+                              </div>
+                            )}
+                            {l === 'editorial-flow' && (
+                              <div className="demo-editorial-flow">
+                                <div className="demo-tile wide" />
+                                <div className="demo-row"><div className="demo-tile" /><div className="demo-tile" /></div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="preset-card-info">
+                          <span className="preset-card-name">{info.label}</span>
+                          <span className="preset-card-desc">{info.desc}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
+
+              <div className="admin-field">
+                <label>Aspect Ratio</label>
+                <div className="preset-card-grid">
+                  {ASPECT_RATIOS.map((r) => {
+                    const info = {
+                      '1': { label: 'Square (1:1)', desc: '1:1 ratio square crops' },
+                      '3/2': { label: 'Landscape (3:2)', desc: 'Standard 35mm DSLR landscape' },
+                      '2/3': { label: 'Portrait (2:3)', desc: 'Vertical portrait orientation' },
+                      '16/9': { label: 'Cinema (16:9)', desc: 'Widescreen 16:9 cinematic ratio' },
+                      auto: { label: 'Original Auto', desc: 'Uncropped original image proportions' },
+                    }[r] || { label: r, desc: '' };
+                    const isActive = (settings.grid?.aspectRatio || '1') === r;
+
+                    return (
+                      <button
+                        key={r}
+                        type="button"
+                        className={`preset-card ratio-card ${isActive ? 'active' : ''}`}
+                        onClick={() => update('grid.aspectRatio', r)}
+                      >
+                        <div className="ratio-card-preview">
+                          <div className={`mini-aspect-box ratio-${r.replace('/', '-')}`}>
+                            <div className="mini-aspect-inner" />
+                          </div>
+                        </div>
+                        <div className="preset-card-info">
+                          <span className="preset-card-name">{info.label}</span>
+                          <span className="preset-card-desc">{info.desc}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="settings-section-divider" />
+
+              <div className="settings-section-header">
+                <h3>🎛️ Spacing &amp; Columns</h3>
+                <p className="settings-section-sub">Adjust column counts and grid gap spacing.</p>
+              </div>
+
               <div className="admin-field-row">
                 <div className="admin-field">
-                  <label>Columns</label>
+                  <label>Columns (1 - 6)</label>
                   <input
                     type="number"
                     min={1}
@@ -664,7 +789,7 @@ export default function SettingsEditor() {
                   />
                 </div>
                 <div className="admin-field">
-                  <label>Gap (px)</label>
+                  <label>Gap Spacing (px)</label>
                   <input
                     type="number"
                     min={0}
@@ -674,28 +799,18 @@ export default function SettingsEditor() {
                   />
                 </div>
               </div>
-              <div className="admin-field">
-                <label>Aspect Ratio</label>
-                <div className="preset-grid">
-                  {ASPECT_RATIOS.map((r) => (
-                    <button
-                      key={r}
-                      className={`preset-btn ${(settings.grid?.aspectRatio || '1') === r ? 'active' : ''}`}
-                      onClick={() => update('grid.aspectRatio', r)}
-                    >
-                      {r === '1' ? 'Square' : r}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           )}
 
           {activeSection === 'footer' && (
             <div className="settings-panel">
-              <h3>Footer</h3>
+              <div className="settings-section-header">
+                <h3>🦶 Footer &amp; Social Links</h3>
+                <p className="settings-section-sub">Display branding, Instagram, email and website links in portfolio footer.</p>
+              </div>
+
               <div className="admin-field">
-                <label>Name</label>
+                <label>Footer Brand Name</label>
                 <input
                   value={settings.footer?.name || ''}
                   onChange={(e) => update('footer.name', e.target.value)}
@@ -710,59 +825,73 @@ export default function SettingsEditor() {
                   placeholder="https://instagram.com/your-handle"
                 />
               </div>
-              <div className="admin-field">
-                <label>Email</label>
-                <input
-                  value={settings.footer?.email || ''}
-                  onChange={(e) => update('footer.email', e.target.value)}
-                  placeholder="hello@example.com"
-                />
-              </div>
-              <div className="admin-field">
-                <label>Website</label>
-                <input
-                  value={settings.footer?.website || ''}
-                  onChange={(e) => update('footer.website', e.target.value)}
-                  placeholder="https://example.com"
-                />
+              <div className="admin-field-row">
+                <div className="admin-field">
+                  <label>Contact Email</label>
+                  <input
+                    value={settings.footer?.email || ''}
+                    onChange={(e) => update('footer.email', e.target.value)}
+                    placeholder="hello@example.com"
+                  />
+                </div>
+                <div className="admin-field">
+                  <label>Personal Website</label>
+                  <input
+                    value={settings.footer?.website || ''}
+                    onChange={(e) => update('footer.website', e.target.value)}
+                    placeholder="https://example.com"
+                  />
+                </div>
               </div>
             </div>
           )}
 
           {activeSection === 'legal' && (
             <div className="settings-panel">
-              <h3>Legal / Impressum</h3>
-              <div className="admin-field-checks">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.legal?.enabled === true}
-                    onChange={(e) => update('legal.enabled', e.target.checked)}
-                  />
-                  Enable Impressum page
-                </label>
+              <div className="settings-section-header">
+                <h3>⚖️ Legal Notice &amp; Impressum</h3>
+                <p className="settings-section-sub">Configure required legal disclosure page for EU / German Telemediengesetz compliance.</p>
               </div>
+
+              <div className="admin-toggle-cards-grid" style={{ marginBottom: '1.25rem' }}>
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${settings.legal?.enabled === true ? 'active' : ''}`}
+                  onClick={() => update('legal.enabled', !settings.legal?.enabled)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title">📜 Enable Impressum Page (/impressum)</span>
+                    <span className="toggle-card-desc">Automatically generates and links /impressum in footer</span>
+                  </div>
+                  <div className={`switch-toggle ${settings.legal?.enabled === true ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+              </div>
+
               {settings.legal?.enabled && (
                 <>
-                  <div className="admin-field">
-                    <label>Full Name</label>
-                    <input
-                      value={settings.legal?.name || ''}
-                      onChange={(e) => update('legal.name', e.target.value)}
-                      placeholder="Max Mustermann"
-                    />
-                  </div>
-                  <div className="admin-field">
-                    <label>Address</label>
-                    <input
-                      value={settings.legal?.address || ''}
-                      onChange={(e) => update('legal.address', e.target.value)}
-                      placeholder="Musterstraße 1"
-                    />
+                  <div className="admin-field-row">
+                    <div className="admin-field">
+                      <label>Full Name / Business Name</label>
+                      <input
+                        value={settings.legal?.name || ''}
+                        onChange={(e) => update('legal.name', e.target.value)}
+                        placeholder="Max Mustermann"
+                      />
+                    </div>
+                    <div className="admin-field">
+                      <label>Street Address</label>
+                      <input
+                        value={settings.legal?.address || ''}
+                        onChange={(e) => update('legal.address', e.target.value)}
+                        placeholder="Musterstraße 1"
+                      />
+                    </div>
                   </div>
                   <div className="admin-field-row">
                     <div className="admin-field">
-                      <label>ZIP & City</label>
+                      <label>ZIP &amp; City</label>
                       <input
                         value={settings.legal?.zipCity || ''}
                         onChange={(e) => update('legal.zipCity', e.target.value)}
@@ -780,7 +909,7 @@ export default function SettingsEditor() {
                   </div>
                   <div className="admin-field-row">
                     <div className="admin-field">
-                      <label>Email</label>
+                      <label>Legal Email</label>
                       <input
                         value={settings.legal?.email || ''}
                         onChange={(e) => update('legal.email', e.target.value)}
@@ -788,7 +917,7 @@ export default function SettingsEditor() {
                       />
                     </div>
                     <div className="admin-field">
-                      <label>Phone</label>
+                      <label>Phone Number</label>
                       <input
                         value={settings.legal?.phone || ''}
                         onChange={(e) => update('legal.phone', e.target.value)}
@@ -797,11 +926,11 @@ export default function SettingsEditor() {
                     </div>
                   </div>
                   <div className="admin-field">
-                    <label>Extra Info</label>
+                    <label>Additional Disclosures / Tax ID</label>
                     <textarea
                       value={settings.legal?.extraInfo || ''}
                       onChange={(e) => update('legal.extraInfo', e.target.value)}
-                      placeholder="Verantwortlich für den Inhalt..."
+                      placeholder="Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV..."
                       rows={3}
                     />
                   </div>
@@ -812,41 +941,83 @@ export default function SettingsEditor() {
 
           {activeSection === 'seo' && (
             <div className="settings-panel">
-              <h3>SEO & Metadata</h3>
+              <div className="settings-section-header">
+                <h3>🔍 Search Engine Optimization (SEO)</h3>
+                <p className="settings-section-sub">Customize search engine metadata, OpenGraph tags, and indexing rules.</p>
+              </div>
+
+              {/* Live Google Search Result Snippet Card */}
+              <div className="google-snippet-preview">
+                <div className="google-snippet-header">
+                  <span>🔍 Google Search Result Preview</span>
+                </div>
+                <div className="google-snippet-card">
+                  <div className="google-snippet-url">
+                    https://yourportfolio.com <span className="google-snippet-arrow">▼</span>
+                  </div>
+                  <div className="google-snippet-title">
+                    {settings.seo?.title || settings.title || 'My Photography Portfolio'}
+                  </div>
+                  <div className="google-snippet-desc">
+                    {settings.seo?.description || settings.subtitle || 'A curated selection of photography work.'}
+                  </div>
+                </div>
+              </div>
+
               <div className="admin-field">
-                <label>SEO Title</label>
+                <label>SEO Meta Title</label>
                 <input
                   value={settings.seo?.title || ''}
                   onChange={(e) => update('seo.title', e.target.value)}
-                  placeholder="Overrides site title for search engines"
+                  placeholder="Overrides default site title for Google search results"
                 />
               </div>
+
               <div className="admin-field">
-                <label>SEO Description</label>
+                <label>SEO Meta Description</label>
                 <textarea
                   value={settings.seo?.description || ''}
                   onChange={(e) => update('seo.description', e.target.value)}
-                  placeholder="A curated selection of photography work."
+                  placeholder="A curated selection of photography work..."
                   rows={3}
                 />
               </div>
-              <div className="admin-field-checks">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.seo?.noIndex === true}
-                    onChange={(e) => update('seo.noIndex', e.target.checked)}
-                  />
-                  noindex (hide from search engines)
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.seo?.noFollow === true}
-                    onChange={(e) => update('seo.noFollow', e.target.checked)}
-                  />
-                  nofollow (don&apos;t follow links)
-                </label>
+
+              <div className="settings-section-divider" />
+
+              <div className="settings-section-header">
+                <h3>🤖 Search Crawler Directives</h3>
+                <p className="settings-section-sub">Control how Googlebot and other web crawlers index your site.</p>
+              </div>
+
+              <div className="admin-toggle-cards-grid">
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${settings.seo?.noIndex === true ? 'active' : ''}`}
+                  onClick={() => update('seo.noIndex', !settings.seo?.noIndex)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title">🚫 noindex (Hide from Google)</span>
+                    <span className="toggle-card-desc">Instructs search engines NOT to index this site in search results</span>
+                  </div>
+                  <div className={`switch-toggle ${settings.seo?.noIndex === true ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${settings.seo?.noFollow === true ? 'active' : ''}`}
+                  onClick={() => update('seo.noFollow', !settings.seo?.noFollow)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title">🔗 nofollow (Block Link Following)</span>
+                    <span className="toggle-card-desc">Instructs search engine crawlers not to follow outgoing links</span>
+                  </div>
+                  <div className={`switch-toggle ${settings.seo?.noFollow === true ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
               </div>
             </div>
           )}
