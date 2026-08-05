@@ -53,8 +53,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   );
 
   // ── Browser Cache Optimization ─────────────────────
-  // Use the opaque token to generate a safe ETag without leaking Immich UUIDs
-  const etag = `W/"${token}-${size}"`;
+  // Use the opaque token to generate a safe ETag without leaking Immich UUIDs.
+  // IMAGE_CACHE_VERSION participates so that a bump is not defeated by a client
+  // replaying the old ETag against the new URL — the response is served
+  // `immutable`, so this only matters after expiry or a cache eviction, but a
+  // matching ETag across two different URLs would be wrong either way.
+  const cacheVersion = request.nextUrl.searchParams.get('v') ?? '';
+  const etag = `W/"${token}-${size}${cacheVersion ? `-${cacheVersion}` : ''}"`;
   if (request.headers.get('if-none-match') === etag) {
     return new NextResponse(null, {
       status: 304,

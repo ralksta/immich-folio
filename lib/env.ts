@@ -9,6 +9,7 @@ export interface Env {
   SITE_TITLE: string;
   SITE_SUBTITLE: string;
   CACHE_TTL: number;
+  IMAGE_CACHE_VERSION: string;
   IMMICH_TIMEOUT_MS: number;
   RATE_LIMIT_RPM: number;
   AUTH_SECRET?: string;
@@ -47,6 +48,19 @@ function parseEnv(): Env {
   const timeoutMs =
     timeoutStr && !isNaN(parseInt(timeoutStr, 10)) ? parseInt(timeoutStr, 10) : 15000;
 
+  // Manual cache-buster for image and video URLs. Empty by default, so normal
+  // operation is untouched.
+  //
+  // Image responses are served `immutable` for a year, which means the browser
+  // does not revalidate at all — not even the ETag is consulted. That is the
+  // right default (these URLs are content-addressed by an encrypted asset ID),
+  // but it leaves no way to push a changed rendition: Immich regenerates
+  // thumbnails and previews when a job is re-run or a photo is rotated, and the
+  // asset ID — hence the token, hence the URL — stays the same. Bumping this
+  // value changes every image URL at once and is the only escape hatch short of
+  // rotating AUTH_SECRET.
+  const imageCacheVersion = (process.env.IMAGE_CACHE_VERSION || '').trim();
+
   const rateLimitStr = process.env.RATE_LIMIT_RPM;
   const rateLimit =
     rateLimitStr && !isNaN(parseInt(rateLimitStr, 10)) ? parseInt(rateLimitStr, 10) : 1500;
@@ -77,6 +91,8 @@ function parseEnv(): Env {
     SITE_TITLE: process.env.SITE_TITLE || 'Gallery',
     SITE_SUBTITLE: process.env.SITE_SUBTITLE || '',
     CACHE_TTL: Math.max(0, cacheTtl),
+    // Kept URL-safe: this value is appended to every image and video URL.
+    IMAGE_CACHE_VERSION: encodeURIComponent(imageCacheVersion),
     // A sub-second budget would abort healthy requests; 0 must not mean "no timeout".
     IMMICH_TIMEOUT_MS: Math.max(1000, timeoutMs),
     RATE_LIMIT_RPM: Math.max(1, rateLimit),

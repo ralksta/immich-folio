@@ -4,8 +4,22 @@
  */
 
 import { encodeAssetId } from './tokens';
+import { env } from './env';
 import { thumbHashToBlurDataUrl, thumbHashToDominantHex } from './thumbhash';
 import type { ImmichAsset } from './immich';
+
+/**
+ * Optional cache-buster, appended to every image and video URL.
+ *
+ * These responses are served `immutable` for a year, so the browser never
+ * revalidates and the ETag is never consulted — the URL is the only thing that
+ * can invalidate a browser cache. Setting IMAGE_CACHE_VERSION changes all of
+ * them at once, which is what you want after Immich regenerates thumbnails or a
+ * photo is rotated: the asset ID does not change, so nothing else would.
+ *
+ * Empty by default — the returned URLs are then byte-identical to before.
+ */
+const cacheBuster = env.IMAGE_CACHE_VERSION ? `&v=${env.IMAGE_CACHE_VERSION}` : '';
 
 /**
  * Generate a public image proxy URL for an asset.
@@ -14,7 +28,7 @@ export function imageUrl(
   assetId: string,
   size: 'thumbnail' | 'preview' | 'original' = 'preview',
 ): string {
-  return `/api/image/${encodeAssetId(assetId)}?size=${size}`;
+  return `/api/image/${encodeAssetId(assetId)}?size=${size}${cacheBuster}`;
 }
 
 /**
@@ -28,7 +42,9 @@ export function exifUrl(assetId: string): string {
  * Generate a public video proxy URL for an asset.
  */
 export function videoUrl(assetId: string): string {
-  return `/api/video/${encodeAssetId(assetId)}`;
+  // No `size` here, so the buster is the only query parameter.
+  const v = cacheBuster ? `?${cacheBuster.slice(1)}` : '';
+  return `/api/video/${encodeAssetId(assetId)}${v}`;
 }
 
 /**
