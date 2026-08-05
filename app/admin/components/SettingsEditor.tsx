@@ -361,8 +361,12 @@ export default function SettingsEditor() {
           )}
 
           {activeSection === 'theme' && (
-            <div className="settings-panel">
-              <h3>Theme</h3>
+            <div className="settings-panel theme-settings-panel">
+              <div className="settings-section-header">
+                <h3>🎨 Theme Presets & Color Mode</h3>
+                <p className="settings-section-sub">Choose a typography preset and preview in Light or Dark mode.</p>
+              </div>
+
               <div className="admin-field">
                 <label>Preset</label>
                 <div className="preset-card-grid">
@@ -397,48 +401,85 @@ export default function SettingsEditor() {
                   })}
                 </div>
               </div>
+
               <div className="admin-field">
-                <label>Color Mode (Light / Dark Preview)</label>
+                <label>Color Mode</label>
                 <p style={{ fontSize: '0.78rem', color: 'var(--admin-text-muted)', margin: '0.25rem 0 0.6rem', lineHeight: '1.4' }}>
-                  Theme presets like <strong>Editorial</strong>, <strong>Minimal</strong> &amp; <strong>Classic</strong> feature warm light/cream backgrounds (e.g. <code>#faf8f4</code>) in Light Mode and charcoal in Dark Mode.
+                  Presets like <strong>Editorial</strong>, <strong>Minimal</strong> &amp; <strong>Classic</strong> feature warm light/cream backgrounds in Light Mode and charcoal in Dark Mode.
                 </p>
-                <div className="radio-group">
-                  <label>
-                    <input
-                      type="radio"
-                      name="themeMode"
-                      checked={currentMode === 'light'}
-                      onChange={() => toggleMode('light')}
-                    />
+                <div className="segmented-control">
+                  <button
+                    type="button"
+                    className={`segment-btn ${currentMode === 'light' ? 'active' : ''}`}
+                    onClick={() => toggleMode('light')}
+                  >
                     ☀️ Light Mode (Cream / Beige)
-                  </label>
-                  <label>
-                    <input
-                      type="radio"
-                      name="themeMode"
-                      checked={currentMode === 'dark'}
-                      onChange={() => toggleMode('dark')}
-                    />
+                  </button>
+                  <button
+                    type="button"
+                    className={`segment-btn ${currentMode === 'dark' ? 'active' : ''}`}
+                    onClick={() => toggleMode('dark')}
+                  >
                     🌙 Dark Mode (Charcoal)
-                  </label>
+                  </button>
                 </div>
               </div>
+
+              <div className="settings-section-divider" />
+
+              <div className="settings-section-header">
+                <h3>🎯 Accent Color</h3>
+                <p className="settings-section-sub">Pick a primary accent color for links, buttons, and highlights.</p>
+              </div>
+
               <div className="admin-field">
-                <label>Accent Color</label>
-                <div className="color-field">
-                  <input
-                    type="color"
-                    value={settings.theme?.accent || '#e60012'}
-                    onChange={(e) => update('theme.accent', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    value={settings.theme?.accent || ''}
-                    onChange={(e) => update('theme.accent', e.target.value)}
-                    placeholder="#e60012"
-                  />
+                <div className="accent-picker-wrapper">
+                  <div className="color-swatches-row">
+                    {[
+                      { hex: '#e60012', name: 'Studio Red' },
+                      { hex: '#b89053', name: 'Editorial Gold' },
+                      { hex: '#10b981', name: 'Emerald' },
+                      { hex: '#3b82f6', name: 'Sapphire' },
+                      { hex: '#8b5cf6', name: 'Violet' },
+                      { hex: '#ffffff', name: 'Monochrome White' },
+                      { hex: '#000000', name: 'Obsidian Black' },
+                    ].map((swatch) => {
+                      const isSelected = (settings.theme?.accent || '#e60012').toLowerCase() === swatch.hex.toLowerCase();
+                      return (
+                        <button
+                          key={swatch.hex}
+                          type="button"
+                          className={`color-swatch-btn ${isSelected ? 'active' : ''}`}
+                          style={{ backgroundColor: swatch.hex }}
+                          onClick={() => update('theme.accent', swatch.hex)}
+                          title={swatch.name}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="color-field">
+                    <input
+                      type="color"
+                      value={settings.theme?.accent || '#e60012'}
+                      onChange={(e) => update('theme.accent', e.target.value)}
+                    />
+                    <input
+                      type="text"
+                      value={settings.theme?.accent || ''}
+                      onChange={(e) => update('theme.accent', e.target.value)}
+                      placeholder="#e60012"
+                    />
+                  </div>
                 </div>
               </div>
+
+              <div className="settings-section-divider" />
+
+              <div className="settings-section-header">
+                <h3>🖼️ Photo Frame &amp; Layout</h3>
+                <p className="settings-section-sub">Customize image presentation borders and hero layouts.</p>
+              </div>
+
               <div className="admin-field">
                 <label>Photo Frame</label>
                 <div className="preset-card-grid">
@@ -554,23 +595,42 @@ export default function SettingsEditor() {
                   })}
                 </div>
               </div>
-              <div className="admin-field-checks">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.theme?.grain === true}
-                    onChange={(e) => update('theme.grain', e.target.checked)}
-                  />
-                  Film Grain
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.theme?.headerDot !== false}
-                    onChange={(e) => update('theme.headerDot', e.target.checked)}
-                  />
-                  Header Dot
-                </label>
+
+              <div className="settings-section-divider" />
+
+              <div className="settings-section-header">
+                <h3>✨ Finishing Touches</h3>
+                <p className="settings-section-sub">Enable optional visual effects and indicators.</p>
+              </div>
+
+              <div className="admin-toggle-cards-grid">
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${settings.theme?.grain === true ? 'active' : ''}`}
+                  onClick={() => update('theme.grain', !settings.theme?.grain)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title">🎞️ Film Grain Texture</span>
+                    <span className="toggle-card-desc">Adds analog noise overlay across portfolio background</span>
+                  </div>
+                  <div className={`switch-toggle ${settings.theme?.grain === true ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${settings.theme?.headerDot !== false ? 'active' : ''}`}
+                  onClick={() => update('theme.headerDot', settings.theme?.headerDot === false)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title">🔴 Header Accent Dot</span>
+                    <span className="toggle-card-desc">Displays accent dot next to active section header</span>
+                  </div>
+                  <div className={`switch-toggle ${settings.theme?.headerDot !== false ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
               </div>
             </div>
           )}

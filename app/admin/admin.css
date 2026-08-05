@@ -2721,6 +2721,182 @@ h3 .svg-icon {
   box-shadow: 0 0 0 1px var(--admin-accent, #e60012);
 }
 
+/* ── Theme Settings Section Upgrades ─────────────────────────── */
+.theme-settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.settings-section-header {
+  margin-bottom: 0.5rem;
+}
+
+.settings-section-header h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.settings-section-sub {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--admin-text-muted);
+}
+
+.settings-section-divider {
+  height: 1px;
+  background: var(--admin-border);
+  margin: 0.75rem 0;
+}
+
+/* Segmented Control (Mode Toggle) */
+.segmented-control {
+  display: inline-flex;
+  background: var(--admin-bg-input, #1c1c1c);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--admin-border, #333);
+  gap: 4px;
+}
+
+.segment-btn {
+  padding: 0.5rem 1.1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--admin-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.segment-btn:hover {
+  color: var(--admin-text);
+}
+
+.segment-btn.active {
+  background: var(--admin-bg-elevated, #2d2d2d);
+  color: var(--admin-text, #ffffff);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Accent Color Swatches */
+.accent-picker-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.color-swatches-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.color-swatch-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.color-swatch-btn:hover {
+  transform: scale(1.15);
+}
+
+.color-swatch-btn.active {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px var(--admin-accent, #e60012);
+  transform: scale(1.15);
+}
+
+/* Custom Toggle Cards Grid */
+.admin-toggle-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.admin-toggle-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.admin-toggle-card:hover {
+  border-color: var(--admin-border-hover);
+  background: var(--admin-bg-elevated);
+}
+
+.admin-toggle-card.active {
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 1px var(--admin-accent);
+}
+
+.toggle-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-right: 1rem;
+}
+
+.toggle-card-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.toggle-card-desc {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  line-height: 1.3;
+}
+
+/* iOS Style Switch Slider */
+.switch-toggle {
+  width: 42px;
+  height: 24px;
+  background: var(--admin-border, #444);
+  border-radius: 12px;
+  position: relative;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.switch-toggle.on {
+  background: var(--admin-accent, #e60012);
+}
+
+.switch-slider {
+  width: 18px;
+  height: 18px;
+  background: #ffffff;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.switch-toggle.on .switch-slider {
+  transform: translateX(18px);
+}
+
+
 
 
 
