@@ -2629,5 +2629,98 @@ h3 .svg-icon {
   gap: 0.25rem;
 }
 
+/* ── Global Button System ────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+}
+
+.btn-sm {
+  padding: 0.35rem 0.65rem !important;
+  font-size: 0.75rem !important;
+  border-radius: 6px !important;
+}
+
+.btn-secondary {
+  background: var(--admin-bg-elevated, #242424);
+  border-color: var(--admin-border, #333333);
+  color: var(--admin-text, #ffffff);
+}
+
+.btn-secondary:hover {
+  background: var(--admin-bg-raised, #2e2e2e);
+  border-color: var(--admin-border-hover, #444444);
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.btn-outline-danger {
+  background: transparent;
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+}
+
+.btn-outline-danger:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #ef4444;
+}
+
+/* ── Preset Grid & Buttons (Grid Layout & Aspect Ratio) ───────── */
+.preset-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.preset-btn {
+  padding: 0.45rem 0.85rem;
+  background: var(--admin-bg-input, #1c1c1c);
+  border: 1px solid var(--admin-border, #333333);
+  border-radius: 8px;
+  color: var(--admin-text-secondary, #cccccc);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-transform: capitalize;
+}
+
+.preset-btn:hover {
+  background: var(--admin-bg-elevated, #282828);
+  border-color: var(--admin-border-hover, #555555);
+  color: var(--admin-text, #ffffff);
+}
+
+.preset-btn.active {
+  background: var(--admin-bg-elevated, #2a2a2a);
+  border-color: var(--admin-accent, #e60012);
+  color: var(--admin-accent, #e60012);
+  font-weight: 600;
+  box-shadow: 0 0 0 1px var(--admin-accent, #e60012);
+}
+
+
 
 
