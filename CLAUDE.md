@@ -52,7 +52,7 @@ Singleton `ImmichClient` class exported as `immich`. All Immich API calls are se
 
 - **Album allowlist** — `getAlbums()` fetches `?shared=true` albums but only returns IDs listed in `config.albums`. Requests for unlisted albums are silently rejected.
 - **Request coalescing** — pending promises are stored in `Map<id, Promise>` fields to deduplicate concurrent requests for the same album/asset (important for `Promise.all` calls in grids).
-- **In-memory LRU cache** (`lib/cache.ts`) — 200-entry LRU, configurable TTL via `CACHE_TTL`. Cache keys: `albums-list`, `album-<id>`, `asset-<id>`.
+- **In-memory LRU cache** (`lib/cache.ts`) — 200-entry LRU. Entries carry two deadlines: `staleAt` (the `CACHE_TTL` window, after which `get()` reports a miss) and `hardExpiresAt` (`STALE_MAX_AGE`, after which the entry is dropped). Between the two, `getStale()` still returns the data — `lib/immich.ts` falls back to it when a request fails with `ImmichUnavailableError`, so the gallery keeps serving the last known albums during an Immich outage instead of erroring. Definitive 404s are cached as a `MISSING` sentinel under the normal TTL and are deliberately excluded from the stale window. Cache keys: `albums-list`, `album-<id>`, `asset-<id>`.
 - **Image streaming** — `streamAsset()` proxies binary responses; never loads the full image into memory.
 
 ### Asset token security (`lib/tokens.ts`)
@@ -61,19 +61,19 @@ Singleton `ImmichClient` class exported as `immich`. All Immich API calls are se
 
 ### API routes (`app/api/`)
 
-| Route | Purpose |
-|---|---|
-| `GET /api/image/[id]` | Image proxy — decodes token, rate-limits, streams from Immich |
-| `GET /api/exif/[id]` | EXIF data for lightbox panel |
-| `POST /api/auth` | Password submission → sets `HttpOnly` cookie |
-| `GET /api/og` | Dynamic OG image generation (rate-limited) |
-| `GET /api/map` | Aggregated GPS coordinates for map view |
-| `GET /api/health` | Health check |
-| `GET/POST/DELETE /api/admin/auth` | Admin login, session check, logout |
-| `GET/PUT /api/admin/gallery` | Read/write `gallery.yaml` |
-| `GET/PUT /api/admin/settings` | Read/write `settings.yaml` |
-| `GET /api/admin/albums` | Browse all shared Immich albums (admin-only) |
-| `POST /api/admin/reload` | Invalidate config + Immich cache |
+| Route                             | Purpose                                                       |
+| --------------------------------- | ------------------------------------------------------------- |
+| `GET /api/image/[id]`             | Image proxy — decodes token, rate-limits, streams from Immich |
+| `GET /api/exif/[id]`              | EXIF data for lightbox panel                                  |
+| `POST /api/auth`                  | Password submission → sets `HttpOnly` cookie                  |
+| `GET /api/og`                     | Dynamic OG image generation (rate-limited)                    |
+| `GET /api/map`                    | Aggregated GPS coordinates for map view                       |
+| `GET /api/health`                 | Health check                                                  |
+| `GET/POST/DELETE /api/admin/auth` | Admin login, session check, logout                            |
+| `GET/PUT /api/admin/gallery`      | Read/write `gallery.yaml`                                     |
+| `GET/PUT /api/admin/settings`     | Read/write `settings.yaml`                                    |
+| `GET /api/admin/albums`           | Browse all shared Immich albums (admin-only)                  |
+| `POST /api/admin/reload`          | Invalidate config + Immich cache                              |
 
 The image proxy maps requested pixel widths (`?w=`) to Immich size tiers: `≤250px→thumbnail`, `≤1440px→preview`, `>1440px→original` (`lib/imageSize.ts`).
 
@@ -82,6 +82,7 @@ The image proxy maps requested pixel widths (`?w=`) to Immich size tiers: `≤25
 ### Routing (`app/[...path]/page.tsx`)
 
 Single catch-all route handles three cases:
+
 1. `/[subpage-slug]/[album-slug]` — renders album detail with back-link to subpage
 2. `/[subpage-slug]` — if subpage has >1 album, renders `SubpageGridView`; if exactly 1 album, renders `AlbumDetailView` directly
 3. `/[album-slug]` — standalone album detail
@@ -134,3 +135,4 @@ Next.js 16 renamed the `middleware` file convention to `proxy`: the file is `pro
 - **All Immich data flows server-side** — raw asset UUIDs must never appear in client-rendered HTML or JS. Always use `encodeAssetId()` / `imageUrl()` / `exifUrl()` from `lib/urls.ts` before passing IDs to components.
 - **Rate-limit all expensive endpoints** — apply `checkRateLimit` from `lib/rate-limit.ts` to any route doing heavy computation or upstream API calls.
 - **Commit style** — Conventional Commits: `feat:`, `fix:`, `security:`, `docs:`, `chore:`.
+- **Route handlers are testable** — `vitest.config.ts` includes `app/**/__tests__/**/*.test.ts`. Logic that lives in a route (auth guards, header sanitisation) belongs in a route-level test; do not extract it into `lib/` purely to make it reachable by the test runner.

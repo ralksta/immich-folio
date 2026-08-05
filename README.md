@@ -96,6 +96,7 @@ IMMICH_API_KEY=your-api-key
 SITE_TITLE=My Photography            # default: "Gallery"
 SITE_SUBTITLE=A visual journal        # default: empty
 CACHE_TTL=300                          # seconds, default: 300
+STALE_MAX_AGE=86400                    # seconds an expired cache entry survives during an outage, default: 86400 (24h), 0 disables
 IMMICH_TIMEOUT_MS=15000                # Immich response wait, default: 15000
 IMAGE_CACHE_VERSION=1                  # bump to bust browser image caches, default: off
 RATE_LIMIT_RPM=1500                    # requests/min/IP, default: 1500
@@ -190,6 +191,16 @@ The container includes a built-in health check at `/api/health`:
 ```bash
 curl http://localhost:7211/api/health
 ```
+
+### Behaviour when Immich is unreachable
+
+Immich Folio buffers your gallery rather than merely proxying it:
+
+- Album and asset pages keep serving the last known good data for up to `STALE_MAX_AGE`, so a restarting or briefly unreachable Immich does not take the public site down with it.
+- Once nothing cached is left, they return `503`, never `404` — a `404` would tell search engines to drop a URL for content that still exists.
+- Outages are never cached, so the gallery recovers as soon as Immich does.
+
+The cache lives in the process, so it is empty right after a container restart.
 
 ### Reverse Proxy
 
