@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import PageBuilder from './PageBuilder';
 import SettingsEditor from './SettingsEditor';
+import BackupManagerModal from './BackupManagerModal';
 
 interface Props {
   onLogout: () => void;
@@ -14,8 +15,9 @@ export default function AdminDashboard({ onLogout }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('pages');
   const [saving, setSaving] = useState(false);
 
-  // Diagnostics state
+  // Diagnostics & Backup state
   const [showStatus, setShowStatus] = useState(false);
+  const [showBackupModal, setShowBackupModal] = useState(false);
   const [status, setStatus] = useState<any>(null);
   const [statusLoading, setStatusLoading] = useState(false);
 
@@ -136,6 +138,17 @@ export default function AdminDashboard({ onLogout }: Props) {
                       <span className="status-val">{status?.cache?.size ?? 0} items</span>
                     </div>
                   </div>
+                  <div className="status-dropdown-footer">
+                    <button
+                      className="admin-btn admin-btn-sm"
+                      onClick={() => {
+                        setShowStatus(false);
+                        setShowBackupModal(true);
+                      }}
+                    >
+                      📦 Manage Backups
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -150,6 +163,13 @@ export default function AdminDashboard({ onLogout }: Props) {
           >
             ↗ Site
           </a>
+          <button
+            className="admin-btn admin-btn-ghost"
+            onClick={() => setShowBackupModal(true)}
+            title="Manage config backups & restore"
+          >
+            📦 Backups
+          </button>
           <button
             className="admin-btn admin-btn-ghost"
             onClick={handleReload}
@@ -168,6 +188,14 @@ export default function AdminDashboard({ onLogout }: Props) {
         {activeTab === 'pages' && <PageBuilder />}
         {activeTab === 'settings' && <SettingsEditor />}
       </main>
+
+      <BackupManagerModal
+        isOpen={showBackupModal}
+        onClose={() => setShowBackupModal(false)}
+        onRestoreSuccess={() => {
+          fetchStatus();
+        }}
+      />
     </div>
   );
 }
