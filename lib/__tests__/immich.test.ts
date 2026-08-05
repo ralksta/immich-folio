@@ -188,11 +188,65 @@ describe('ImmichClient', () => {
         const pending = immich.streamAsset('asset-1');
         await vi.advanceTimersByTimeAsync(15001);
 
-        await expect(pending).resolves.toBeNull();
+        await expect(pending).rejects.toBeInstanceOf(ImmichUnavailableError);
         expect(captured?.aborted).toBe(true);
       } finally {
         vi.useRealTimers();
       }
+    });
+  });
+
+  // The image/video routes serve these URLs with `immutable` on success and turn
+  // a null into a 404. A bare 404 is heuristically cacheable, so an outage that
+  // looked like "missing" could pin a broken image in the browser cache.
+  describe('stream failures distinguish gone from unavailable', () => {
+    const streamRes = (status: number) => ({
+      ok: status >= 200 && status < 300,
+      status,
+      body: null,
+      headers: { get: () => null },
+    });
+
+    it('streamAsset returns null for a genuinely missing asset', async () => {
+      mockFetch.mockResolvedValueOnce(streamRes(404));
+      await expect(immich.streamAsset('asset-1')).resolves.toBeNull();
+    });
+
+    it('streamAsset throws when Immich errors rather than reporting it missing', async () => {
+      mockFetch.mockResolvedValueOnce(streamRes(500));
+      await expect(immich.streamAsset('asset-1')).rejects.toBeInstanceOf(ImmichUnavailableError);
+    });
+
+    it('streamAsset throws when the network is unreachable', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+      await expect(immich.streamAsset('asset-1')).rejects.toBeInstanceOf(ImmichUnavailableError);
+    });
+
+    it('streamAsset throws on a 200 with no body', async () => {
+      mockFetch.mockResolvedValueOnce(streamRes(200));
+      await expect(immich.streamAsset('asset-1')).rejects.toBeInstanceOf(ImmichUnavailableError);
+    });
+
+    it('streamVideo returns null for a genuinely missing video', async () => {
+      mockFetch.mockResolvedValueOnce(streamRes(404));
+      await expect(immich.streamVideo('asset-1')).resolves.toBeNull();
+    });
+
+    it('streamVideo throws when Immich errors', async () => {
+      mockFetch.mockResolvedValueOnce(streamRes(502));
+      await expect(immich.streamVideo('asset-1')).rejects.toBeInstanceOf(ImmichUnavailableError);
+    });
+
+    it('streamVideo still accepts a 206 partial response for seeking', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 206,
+        body: new ReadableStream(),
+        headers: { get: () => null },
+      });
+
+      const result = await immich.streamVideo('asset-1', 'bytes=0-1023');
+      expect(result?.status).toBe(206);
     });
   });
 

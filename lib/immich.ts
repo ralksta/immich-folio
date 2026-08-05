@@ -211,9 +211,19 @@ class ImmichClient {
 
       const res = await fetch(url, { headers, signal: controller.signal });
 
-      if ((!res.ok && res.status !== 206) || !res.body) {
+      if (!res.ok && res.status !== 206) {
         console.error(`[Immich] Failed to stream video ${assetId}: ${res.status}`);
+        if (res.status !== 404 && res.status !== 410) {
+          throw new ImmichUnavailableError(
+            `Immich returned ${res.status} streaming video ${assetId}`,
+            res.status,
+          );
+        }
         return null;
+      }
+
+      if (!res.body) {
+        throw new ImmichUnavailableError(`Immich returned an empty body for video ${assetId}`);
       }
 
       return {
@@ -224,13 +234,18 @@ class ImmichClient {
         status: res.status === 206 ? 206 : 200,
       };
     } catch (error) {
+      if (error instanceof ImmichUnavailableError) throw error;
       console.error(
         isTimeout(error)
           ? `[Immich] Video ${assetId} did not respond within ${this.config.immichTimeoutMs}ms`
           : `[Immich] Video stream error for ${assetId}:`,
         error,
       );
-      return null;
+      throw new ImmichUnavailableError(
+        isTimeout(error)
+          ? `Immich did not respond within ${this.config.immichTimeoutMs}ms for video ${assetId}`
+          : `Cannot reach Immich to stream video ${assetId}`,
+      );
     } finally {
       clearTimeout(timer);
     }
@@ -265,9 +280,19 @@ class ImmichClient {
         signal: controller.signal,
       });
 
-      if (!res.ok || !res.body) {
+      if (!res.ok) {
         console.error(`[Immich] Failed to stream ${assetId}: ${res.status}`);
+        if (res.status !== 404 && res.status !== 410) {
+          throw new ImmichUnavailableError(
+            `Immich returned ${res.status} streaming asset ${assetId}`,
+            res.status,
+          );
+        }
         return null;
+      }
+
+      if (!res.body) {
+        throw new ImmichUnavailableError(`Immich returned an empty body for asset ${assetId}`);
       }
 
       return {
@@ -276,13 +301,18 @@ class ImmichClient {
         contentLength: res.headers.get('Content-Length'),
       };
     } catch (error) {
+      if (error instanceof ImmichUnavailableError) throw error;
       console.error(
         isTimeout(error)
           ? `[Immich] Asset ${assetId} did not respond within ${this.config.immichTimeoutMs}ms`
           : `[Immich] Stream error for ${assetId}:`,
         error,
       );
-      return null;
+      throw new ImmichUnavailableError(
+        isTimeout(error)
+          ? `Immich did not respond within ${this.config.immichTimeoutMs}ms for asset ${assetId}`
+          : `Cannot reach Immich to stream asset ${assetId}`,
+      );
     } finally {
       clearTimeout(timer);
     }

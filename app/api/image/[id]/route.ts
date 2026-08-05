@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { immich, ImageSize } from '@/lib/immich';
+import { immich, ImageSize, ImmichUnavailableError } from '@/lib/immich';
 import { decodeAssetId } from '@/lib/tokens';
 import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
@@ -75,10 +75,29 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     });
   }
 
-  const result = await immich.streamAsset(assetId, size);
+  let result;
+  try {
+    result = await immich.streamAsset(assetId, size);
+  } catch (error) {
+    // An outage must not look like a deleted photo. These URLs are served with
+    // `immutable` on success, and a bare 404 is heuristically cacheable — so
+    // without no-store the browser can pin a broken image for the whole session.
+    if (error instanceof ImmichUnavailableError) {
+      console.error(`[Image API] Immich unavailable for ${assetId}:`, error.message);
+      return NextResponse.json(
+        { error: 'Immich is currently unavailable' },
+        { status: 503, headers: { 'Retry-After': '30', 'Cache-Control': 'no-store' } },
+      );
+    }
+    throw error;
+  }
+
   if (!result) {
     console.error(`[Image API] ❌ Asset not found in Immich: ${assetId} (Size: ${size})`);
-    return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
+    return NextResponse.json(
+      { error: 'Asset not found' },
+      { status: 404, headers: { 'Cache-Control': 'no-store' } },
+    );
   }
 
   let contentType = result.contentType.toLowerCase();

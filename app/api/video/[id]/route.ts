@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { immich } from '@/lib/immich';
+import { immich, ImmichUnavailableError } from '@/lib/immich';
 import { decodeAssetId } from '@/lib/tokens';
 import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
@@ -38,10 +38,28 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   // Forward Range header from browser (needed for <video> seeking)
   const rangeHeader = request.headers.get('range');
 
-  const result = await immich.streamVideo(assetId, rangeHeader);
+  let result;
+  try {
+    result = await immich.streamVideo(assetId, rangeHeader);
+  } catch (error) {
+    // Same reasoning as the image route: an outage mid-playback must not be
+    // cached as a permanently missing video.
+    if (error instanceof ImmichUnavailableError) {
+      console.error(`[Video API] Immich unavailable for ${assetId}:`, error.message);
+      return NextResponse.json(
+        { error: 'Immich is currently unavailable' },
+        { status: 503, headers: { 'Retry-After': '30', 'Cache-Control': 'no-store' } },
+      );
+    }
+    throw error;
+  }
+
   if (!result) {
     console.error(`[Video API] ❌ Asset not found in Immich: ${assetId}`);
-    return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
+    return NextResponse.json(
+      { error: 'Asset not found' },
+      { status: 404, headers: { 'Cache-Control': 'no-store' } },
+    );
   }
 
   let contentType = result.contentType.toLowerCase();
