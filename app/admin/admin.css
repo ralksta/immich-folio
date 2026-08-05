@@ -700,6 +700,7 @@
 }
 
 .subpage-tile {
+  position: relative;
   background: var(--admin-bg-raised);
   border: 1px solid var(--admin-border);
   border-radius: 10px;
@@ -719,6 +720,7 @@
 }
 
 .subpage-tile-cover {
+  position: relative;
   aspect-ratio: 16 / 10;
   background: var(--admin-bg-elevated);
   overflow: hidden;
