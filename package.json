@@ -21,8 +21,8 @@
     "js-yaml": "^4.2.0",
     "leaflet": "^1.9.4",
     "next": "16.2.12",
-    "react": "19.2.7",
-    "react-dom": "19.2.7",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "thumbhash": "^0.1.1"
   },
   "devDependencies": {
