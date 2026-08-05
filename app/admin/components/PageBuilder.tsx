@@ -335,7 +335,7 @@ function SortableSubpageTile({
 
       {sp.password && (
         <span className="subpage-badge-protected" title="Password protected">
-          🔒 Password
+          <Icons.Lock /> Password
         </span>
       )}
 
@@ -348,7 +348,7 @@ function SortableSubpageTile({
           </div>
         )}
         <div className="subpage-hover-overlay">
-          <span className="hover-action-btn">✏️ Edit Page</span>
+          <span className="hover-action-btn"><Icons.Edit /> Edit Page</span>
         </div>
       </div>
       <div className="subpage-tile-info">
@@ -357,7 +357,7 @@ function SortableSubpageTile({
           <span className="subpage-tile-slug">/{slug}</span>
         </div>
         <span className="subpage-tile-meta">
-          📁 {totalAlbums} album{totalAlbums !== 1 ? 's' : ''}
+          <Icons.Folder /> {totalAlbums} album{totalAlbums !== 1 ? 's' : ''}
         </span>
       </div>
     </div>
@@ -909,7 +909,7 @@ export default function PageBuilder() {
       {/* Search Bar */}
       <div className="builder-search-container">
         <div className="builder-search-wrapper">
-          <span className="builder-search-icon">🔍</span>
+          <span className="builder-search-icon"><Icons.Search /></span>
           <input
             type="text"
             className="builder-search-input"
@@ -1143,7 +1143,7 @@ export default function PageBuilder() {
                         <div className="admin-field">
                           <label>Password Protection (optional)</label>
                           <div className="password-input-wrapper">
-                            <span className="password-icon">🔒</span>
+                            <span className="password-icon"><Icons.Lock /></span>
                             <input
                               type="password"
                               value={sp.password || ''}
@@ -1290,7 +1290,7 @@ export default function PageBuilder() {
                           setExpandedSubpage(null);
                         }}
                       >
-                        🗑 Delete Subpage
+                        <Icons.Trash /> Delete Subpage
                       </button>
                       <button
                         className="admin-btn admin-btn-primary admin-btn-sm"

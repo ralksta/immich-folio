@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { BackupItem } from '@/app/api/admin/backups/route';
+import * as Icons from './Icons';
 
 interface Props {
   isOpen: boolean;
@@ -204,9 +205,10 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
                   className="backup-toggle-btn"
                   onClick={() => setShowAllBackups(!showAllBackups)}
                 >
+                  <Icons.IconChevronDown size={14} style={{ transform: showAllBackups ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
                   {showAllBackups
-                    ? '▲ Ältere Einträge einklappen'
-                    : `▼ Ältere Einträge anzeigen (${hiddenCount} weitere)`}
+                    ? 'Ältere Einträge einklappen'
+                    : `Ältere Einträge anzeigen (${hiddenCount} weitere)`}
                 </button>
               )}
             </div>

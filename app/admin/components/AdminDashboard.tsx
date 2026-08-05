@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import PageBuilder from './PageBuilder';
 import SettingsEditor from './SettingsEditor';
 import BackupManagerModal from './BackupManagerModal';
+import * as Icons from './Icons';
 
 interface Props {
   onLogout: () => void;
@@ -146,7 +147,7 @@ export default function AdminDashboard({ onLogout }: Props) {
                         setShowBackupModal(true);
                       }}
                     >
-                      📦 Manage Backups
+                      <Icons.IconArchive size={14} /> Manage Backups
                     </button>
                   </div>
                 </div>
@@ -161,14 +162,14 @@ export default function AdminDashboard({ onLogout }: Props) {
             className="admin-btn admin-btn-ghost"
             title="Open site in new tab"
           >
-            ↗ Site
+            <Icons.IconLink size={14} /> Site
           </a>
           <button
             className="admin-btn admin-btn-ghost"
             onClick={() => setShowBackupModal(true)}
             title="Manage config backups & restore"
           >
-            📦 Backups
+            <Icons.IconArchive size={14} /> Backups
           </button>
           <button
             className="admin-btn admin-btn-ghost"
@@ -176,7 +177,7 @@ export default function AdminDashboard({ onLogout }: Props) {
             disabled={saving}
             title="Reload config & clear cache"
           >
-            ↻ Reload
+            <Icons.IconRefresh size={14} /> Reload
           </button>
           <button className="admin-btn admin-btn-ghost" onClick={handleLogout}>
             Logout

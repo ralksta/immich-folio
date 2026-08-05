@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import * as Icons from './Icons';
 
 interface Settings {
   title?: string;
@@ -302,7 +303,7 @@ export default function SettingsEditor() {
           {activeSection === 'general' && (
             <div className="settings-panel">
               <div className="settings-section-header">
-                <h3>⚙️ General Site Settings</h3>
+                <h3><Icons.IconGear size={18} /> General Site Settings</h3>
                 <p className="settings-section-sub">Configure basic site identity, language, and core feature toggles.</p>
               </div>
 
@@ -328,18 +329,18 @@ export default function SettingsEditor() {
                   value={settings.lang || 'en'}
                   onChange={(e) => update('lang', e.target.value)}
                 >
-                  <option value="en">🇺🇸 English</option>
-                  <option value="de">🇩🇪 Deutsch</option>
-                  <option value="fr">🇫🇷 Français</option>
-                  <option value="es">🇪🇸 Español</option>
-                  <option value="ja">🇯🇵 日本語</option>
+                  <option value="en">English (US)</option>
+                  <option value="de">Deutsch (DE)</option>
+                  <option value="fr">Français (FR)</option>
+                  <option value="es">Español (ES)</option>
+                  <option value="ja">日本語 (JA)</option>
                 </select>
               </div>
 
               <div className="settings-section-divider" />
 
               <div className="settings-section-header">
-                <h3>🎛️ Interactive Features</h3>
+                <h3><Icons.IconSparkles size={18} /> Interactive Features</h3>
                 <p className="settings-section-sub">Enable or disable interactive widgets and page effects.</p>
               </div>
 
@@ -350,7 +351,7 @@ export default function SettingsEditor() {
                   onClick={() => update('exifOnHover', settings.exifOnHover === false)}
                 >
                   <div className="toggle-card-info">
-                    <span className="toggle-card-title">📷 EXIF Data on Hover</span>
+                    <span className="toggle-card-title"><Icons.IconCamera size={16} /> EXIF Data on Hover</span>
                     <span className="toggle-card-desc">Display camera gear, lens, aperture &amp; shutter speed on hover</span>
                   </div>
                   <div className={`switch-toggle ${settings.exifOnHover !== false ? 'on' : ''}`}>
@@ -364,7 +365,7 @@ export default function SettingsEditor() {
                   onClick={() => update('map', !settings.map)}
                 >
                   <div className="toggle-card-info">
-                    <span className="toggle-card-title">🗺️ Interactive GPS Map</span>
+                    <span className="toggle-card-title"><Icons.IconMap size={16} /> Interactive GPS Map</span>
                     <span className="toggle-card-desc">Enable /map view showing photo locations on a world map</span>
                   </div>
                   <div className={`switch-toggle ${settings.map === true ? 'on' : ''}`}>
@@ -378,7 +379,7 @@ export default function SettingsEditor() {
                   onClick={() => update('transitions', settings.transitions === false)}
                 >
                   <div className="toggle-card-info">
-                    <span className="toggle-card-title">✨ Smooth Page Transitions</span>
+                    <span className="toggle-card-title"><Icons.IconSparkles size={16} /> Smooth Page Transitions</span>
                     <span className="toggle-card-desc">Enable subtle fade-in animations between page navigation</span>
                   </div>
                   <div className={`switch-toggle ${settings.transitions !== false ? 'on' : ''}`}>
@@ -392,7 +393,7 @@ export default function SettingsEditor() {
           {activeSection === 'theme' && (
             <div className="settings-panel theme-settings-panel">
               <div className="settings-section-header">
-                <h3>🎨 Theme Presets & Color Mode</h3>
+                <h3><Icons.IconPalette size={18} /> Theme Presets &amp; Color Mode</h3>
                 <p className="settings-section-sub">Choose a typography preset and preview in Light or Dark mode.</p>
               </div>
 
@@ -442,14 +443,14 @@ export default function SettingsEditor() {
                     className={`segment-btn ${currentMode === 'light' ? 'active' : ''}`}
                     onClick={() => toggleMode('light')}
                   >
-                    ☀️ Light Mode (Cream / Beige)
+                    <Icons.IconSun size={14} /> Light Mode (Cream / Beige)
                   </button>
                   <button
                     type="button"
                     className={`segment-btn ${currentMode === 'dark' ? 'active' : ''}`}
                     onClick={() => toggleMode('dark')}
                   >
-                    🌙 Dark Mode (Charcoal)
+                    <Icons.IconMoon size={14} /> Dark Mode (Charcoal)
                   </button>
                 </div>
               </div>
@@ -457,7 +458,7 @@ export default function SettingsEditor() {
               <div className="settings-section-divider" />
 
               <div className="settings-section-header">
-                <h3>🎯 Accent Color</h3>
+                <h3><Icons.IconTarget size={18} /> Accent Color</h3>
                 <p className="settings-section-sub">Pick a primary accent color for links, buttons, and highlights.</p>
               </div>
 
@@ -505,7 +506,7 @@ export default function SettingsEditor() {
               <div className="settings-section-divider" />
 
               <div className="settings-section-header">
-                <h3>🖼️ Photo Frame &amp; Layout</h3>
+                <h3><Icons.IconFrame size={18} /> Photo Frame &amp; Layout</h3>
                 <p className="settings-section-sub">Customize image presentation borders and hero layouts.</p>
               </div>
 
@@ -628,7 +629,7 @@ export default function SettingsEditor() {
               <div className="settings-section-divider" />
 
               <div className="settings-section-header">
-                <h3>✨ Finishing Touches</h3>
+                <h3><Icons.IconSparkles size={18} /> Finishing Touches</h3>
                 <p className="settings-section-sub">Enable optional visual effects and indicators.</p>
               </div>
 
@@ -639,7 +640,7 @@ export default function SettingsEditor() {
                   onClick={() => update('theme.grain', !settings.theme?.grain)}
                 >
                   <div className="toggle-card-info">
-                    <span className="toggle-card-title">🎞️ Film Grain Texture</span>
+                    <span className="toggle-card-title"><Icons.IconFilm size={16} /> Film Grain Texture</span>
                     <span className="toggle-card-desc">Adds analog noise overlay across portfolio background</span>
                   </div>
                   <div className={`switch-toggle ${settings.theme?.grain === true ? 'on' : ''}`}>
@@ -653,7 +654,7 @@ export default function SettingsEditor() {
                   onClick={() => update('theme.headerDot', settings.theme?.headerDot === false)}
                 >
                   <div className="toggle-card-info">
-                    <span className="toggle-card-title">🔴 Header Accent Dot</span>
+                    <span className="toggle-card-title"><Icons.IconTarget size={16} /> Header Accent Dot</span>
                     <span className="toggle-card-desc">Displays accent dot next to active section header</span>
                   </div>
                   <div className={`switch-toggle ${settings.theme?.headerDot !== false ? 'on' : ''}`}>
@@ -667,7 +668,7 @@ export default function SettingsEditor() {
           {activeSection === 'grid' && (
             <div className="settings-panel">
               <div className="settings-section-header">
-                <h3>📐 Grid &amp; Layout Engine</h3>
+                <h3><Icons.IconGrid size={18} /> Grid &amp; Layout Engine</h3>
                 <p className="settings-section-sub">Configure photography gallery column structures and thumbnail aspect ratios.</p>
               </div>
 
@@ -773,7 +774,7 @@ export default function SettingsEditor() {
               <div className="settings-section-divider" />
 
               <div className="settings-section-header">
-                <h3>🎛️ Spacing &amp; Columns</h3>
+                <h3><Icons.IconColumns size={18} /> Spacing &amp; Columns</h3>
                 <p className="settings-section-sub">Adjust column counts and grid gap spacing.</p>
               </div>
 
@@ -805,7 +806,7 @@ export default function SettingsEditor() {
           {activeSection === 'footer' && (
             <div className="settings-panel">
               <div className="settings-section-header">
-                <h3>🦶 Footer &amp; Social Links</h3>
+                <h3><Icons.IconLink size={18} /> Footer &amp; Social Links</h3>
                 <p className="settings-section-sub">Display branding, Instagram, email and website links in portfolio footer.</p>
               </div>
 
@@ -849,7 +850,7 @@ export default function SettingsEditor() {
           {activeSection === 'legal' && (
             <div className="settings-panel">
               <div className="settings-section-header">
-                <h3>⚖️ Legal Notice &amp; Impressum</h3>
+                <h3><Icons.IconScale size={18} /> Legal Notice &amp; Impressum</h3>
                 <p className="settings-section-sub">Configure required legal disclosure page for EU / German Telemediengesetz compliance.</p>
               </div>
 
@@ -860,7 +861,7 @@ export default function SettingsEditor() {
                   onClick={() => update('legal.enabled', !settings.legal?.enabled)}
                 >
                   <div className="toggle-card-info">
-                    <span className="toggle-card-title">📜 Enable Impressum Page (/impressum)</span>
+                    <span className="toggle-card-title"><Icons.IconFileText size={16} /> Enable Impressum Page (/impressum)</span>
                     <span className="toggle-card-desc">Automatically generates and links /impressum in footer</span>
                   </div>
                   <div className={`switch-toggle ${settings.legal?.enabled === true ? 'on' : ''}`}>
@@ -942,14 +943,14 @@ export default function SettingsEditor() {
           {activeSection === 'seo' && (
             <div className="settings-panel">
               <div className="settings-section-header">
-                <h3>🔍 Search Engine Optimization (SEO)</h3>
+                <h3><Icons.IconSearch size={18} /> Search Engine Optimization (SEO)</h3>
                 <p className="settings-section-sub">Customize search engine metadata, OpenGraph tags, and indexing rules.</p>
               </div>
 
               {/* Live Google Search Result Snippet Card */}
               <div className="google-snippet-preview">
                 <div className="google-snippet-header">
-                  <span>🔍 Google Search Result Preview</span>
+                  <span><Icons.IconGlobe size={14} /> Google Search Result Preview</span>
                 </div>
                 <div className="google-snippet-card">
                   <div className="google-snippet-url">
@@ -986,7 +987,7 @@ export default function SettingsEditor() {
               <div className="settings-section-divider" />
 
               <div className="settings-section-header">
-                <h3>🤖 Search Crawler Directives</h3>
+                <h3><Icons.IconGlobe size={18} /> Search Crawler Directives</h3>
                 <p className="settings-section-sub">Control how Googlebot and other web crawlers index your site.</p>
               </div>
 
@@ -997,7 +998,7 @@ export default function SettingsEditor() {
                   onClick={() => update('seo.noIndex', !settings.seo?.noIndex)}
                 >
                   <div className="toggle-card-info">
-                    <span className="toggle-card-title">🚫 noindex (Hide from Google)</span>
+                    <span className="toggle-card-title"><Icons.IconBan size={16} /> noindex (Hide from Google)</span>
                     <span className="toggle-card-desc">Instructs search engines NOT to index this site in search results</span>
                   </div>
                   <div className={`switch-toggle ${settings.seo?.noIndex === true ? 'on' : ''}`}>
@@ -1011,7 +1012,7 @@ export default function SettingsEditor() {
                   onClick={() => update('seo.noFollow', !settings.seo?.noFollow)}
                 >
                   <div className="toggle-card-info">
-                    <span className="toggle-card-title">🔗 nofollow (Block Link Following)</span>
+                    <span className="toggle-card-title"><Icons.IconLink size={16} /> nofollow (Block Link Following)</span>
                     <span className="toggle-card-desc">Instructs search engine crawlers not to follow outgoing links</span>
                   </div>
                   <div className={`switch-toggle ${settings.seo?.noFollow === true ? 'on' : ''}`}>
