@@ -75,7 +75,9 @@ Singleton `ImmichClient` class exported as `immich`. All Immich API calls are se
 | `GET /api/admin/albums` | Browse all shared Immich albums (admin-only) |
 | `POST /api/admin/reload` | Invalidate config + Immich cache |
 
-The image proxy maps requested pixel widths (`?w=`) to Immich size tiers: `≤250px→thumbnail`, `≤1440px→preview`, `>1440px→original`.
+The image proxy maps requested pixel widths (`?w=`) to Immich size tiers: `≤250px→thumbnail`, `≤1440px→preview`, `>1440px→original` (`lib/imageSize.ts`).
+
+`?size=` (written by `lib/urls.ts`) acts as a **ceiling**, not an override. When both parameters are present the smaller tier wins, so `?w=` can narrow the request but never widen it — `next/image` emits widths up to 3840, so letting width win outright would serve full-size originals to every large display.
 
 ### Routing (`app/[...path]/page.tsx`)
 
@@ -119,9 +121,11 @@ Visual page builder and settings editor at `/admin`. Enabled by setting `ADMIN_P
 
 After saving, `invalidateConfigCache()` is called so the next request picks up the new YAML without restart.
 
-### Middleware (`middleware.ts`)
+### Proxy (`proxy.ts`)
 
 Applies CSP (with per-request nonce), HSTS, and other security headers on all non-API, non-static routes. The nonce is passed to pages via the `x-nonce` request header.
+
+Next.js 16 renamed the `middleware` file convention to `proxy`: the file is `proxy.ts` and it exports `proxy()` (not `middleware()`). The `config.matcher` export is unchanged.
 
 ## Code conventions
 

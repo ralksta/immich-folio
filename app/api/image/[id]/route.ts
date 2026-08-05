@@ -8,21 +8,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { immich, ImageSize } from '@/lib/immich';
+import { immich, ImmichUnavailableError } from '@/lib/immich';
+import { resolveImageSize } from '@/lib/imageSize';
 import { decodeAssetId } from '@/lib/tokens';
 import { getConfig } from '@/lib/config';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
-
-const VALID_SIZES: ImageSize[] = ['thumbnail', 'preview', 'original'];
-
-/**
- * Map a requested pixel width to the best Immich size tier.
- */
-function widthToSize(w: number): ImageSize {
-  if (w <= 250) return 'thumbnail';
-  if (w <= 1440) return 'preview';
-  return 'original';
-}
+import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // ── Rate limiting ──────────────────────────────────
@@ -30,12 +20,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { success, remaining, resetAt } = checkRateLimit(`image:${ip}`, getConfig().rateLimitRpm);
 
   if (!success) {
-    const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
+    const retryAfter = retryAfterSeconds(resetAt);
     const userAgent = request.headers.get('user-agent') || 'unknown';
     console.warn(
       `[Image API] ⚠️ Rate limit exceeded for IP: ${ip} (UA: ${userAgent}). Retry after ${retryAfter}s`,
     );
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    // Without Retry-After the browser and next/image back off on their own
+    // schedule — a retry storm against a server that just said it was
+    // overloaded, and one page issues ~50 of these requests. no-store because
+    // the success path serves this URL as `immutable`.
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(retryAfter), 'Cache-Control': 'no-store' },
+      },
+    );
   }
 
   const { id: token } = await params;
@@ -47,23 +47,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
   }
 
-  // Determine size: prefer explicit ?size=, then infer from ?w=
-  const sizeParam = request.nextUrl.searchParams.get('size');
-  const widthParam = request.nextUrl.searchParams.get('w');
-
-  let size: ImageSize = 'preview';
-  if (sizeParam && VALID_SIZES.includes(sizeParam as ImageSize)) {
-    size = sizeParam as ImageSize;
-  } else if (widthParam) {
-    const w = parseInt(widthParam, 10);
-    if (!isNaN(w) && w > 0) {
-      size = widthToSize(w);
-    }
-  }
+  const size = resolveImageSize(
+    request.nextUrl.searchParams.get('size'),
+    request.nextUrl.searchParams.get('w'),
+  );
 
   // ── Browser Cache Optimization ─────────────────────
-  // Use the opaque token to generate a safe ETag without leaking Immich UUIDs
-  const etag = `W/"${token}-${size}"`;
+  // Use the opaque token to generate a safe ETag without leaking Immich UUIDs.
+  // IMAGE_CACHE_VERSION participates so that a bump is not defeated by a client
+  // replaying the old ETag against the new URL — the response is served
+  // `immutable`, so this only matters after expiry or a cache eviction, but a
+  // matching ETag across two different URLs would be wrong either way.
+  const cacheVersion = request.nextUrl.searchParams.get('v') ?? '';
+  const etag = `W/"${token}-${size}${cacheVersion ? `-${cacheVersion}` : ''}"`;
   if (request.headers.get('if-none-match') === etag) {
     return new NextResponse(null, {
       status: 304,
@@ -75,10 +71,29 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     });
   }
 
-  const result = await immich.streamAsset(assetId, size);
+  let result;
+  try {
+    result = await immich.streamAsset(assetId, size);
+  } catch (error) {
+    // An outage must not look like a deleted photo. These URLs are served with
+    // `immutable` on success, and a bare 404 is heuristically cacheable — so
+    // without no-store the browser can pin a broken image for the whole session.
+    if (error instanceof ImmichUnavailableError) {
+      console.error(`[Image API] Immich unavailable for ${assetId}:`, error.message);
+      return NextResponse.json(
+        { error: 'Immich is currently unavailable' },
+        { status: 503, headers: { 'Retry-After': '30', 'Cache-Control': 'no-store' } },
+      );
+    }
+    throw error;
+  }
+
   if (!result) {
     console.error(`[Image API] ❌ Asset not found in Immich: ${assetId} (Size: ${size})`);
-    return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
+    return NextResponse.json(
+      { error: 'Asset not found' },
+      { status: 404, headers: { 'Cache-Control': 'no-store' } },
+    );
   }
 
   let contentType = result.contentType.toLowerCase();

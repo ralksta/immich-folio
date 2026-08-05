@@ -99,6 +99,8 @@ export interface AppConfig {
   albumPasswords: Record<string, string>;
   albumHeroImages: Record<string, string>;
   cacheTtl: number;
+  /** Response-wait budget for Immich API calls. Does not cap image/video body transfer. */
+  immichTimeoutMs: number;
   rateLimitRpm: number;
   trustedProxyHops: number;
   needsSetup?: boolean;

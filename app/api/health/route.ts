@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { immich } from '@/lib/immich';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 import { getConfig } from '@/lib/config';
 
 const startTime = Date.now();
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       {
         status: 429,
         headers: {
-          'Retry-After': String(Math.ceil((resetAt - Date.now()) / 1000)),
+          'Retry-After': String(retryAfterSeconds(resetAt)),
           'X-RateLimit-Limit': String(rateLimitRpm),
           'X-RateLimit-Remaining': String(remaining),
         },

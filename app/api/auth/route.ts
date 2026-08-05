@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, isProtected } from '@/lib/auth';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 
 /** Tight limit for auth attempts — 10 per minute per IP. */
 const AUTH_RPM = 10;
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       {
         status: 429,
         headers: {
-          'Retry-After': String(Math.ceil((resetAt - Date.now()) / 1000)),
+          'Retry-After': String(retryAfterSeconds(resetAt)),
           'X-RateLimit-Limit': String(AUTH_RPM),
           'X-RateLimit-Remaining': String(remaining),
         },
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const setCookie = authenticate(slug, password, type);
+    const setCookie = await authenticate(slug, password, type);
     if (!setCookie) {
       return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
     }

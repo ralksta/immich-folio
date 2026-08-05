@@ -7,7 +7,7 @@ import {
   COOKIE_NAME,
   SESSION_DURATION_MS,
 } from '@/lib/admin/auth';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 
 /** Admin login attempts per minute per IP — the highest-value credential in the app. */
 const ADMIN_AUTH_RPM = 5;
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       { error: 'Too many requests' },
       {
         status: 429,
-        headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) },
+        headers: { 'Retry-After': String(retryAfterSeconds(rl.resetAt)) },
       },
     );
   }

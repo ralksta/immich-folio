@@ -11,6 +11,9 @@ import type { GalleryYaml, SettingsYaml } from '../config/schema';
 const CONTENT_DIR = path.join(process.cwd(), 'content');
 const MAX_BACKUPS = 10; // Keep last 10 backups per file
 
+/** Disambiguates temp files within one process; the pid covers across them. */
+let tmpCounter = 0;
+
 /** Read gallery.yaml and return parsed content. */
 export async function readGalleryYaml(): Promise<GalleryYaml | null> {
   try {
@@ -71,10 +74,23 @@ async function writeYamlFile(filename: string, data: unknown): Promise<void> {
       sortKeys: false,
     });
 
-  // Atomic write: write to temp file, then rename
-  const tmpPath = `${filePath}.tmp`;
-  await fs.writeFile(tmpPath, content, 'utf8');
-  await fs.rename(tmpPath, filePath);
+  // Atomic write: write to a *unique* temp file, then rename.
+  //
+  // The rename is what makes this atomic; the temp filename is what did not.
+  // With a constant `${filePath}.tmp`, two saves of the same file in flight at
+  // once shared it — the second writeFile could interleave with the first's
+  // rename, leaving one save's bytes published under the other's, or a
+  // truncated mix. A double-clicked Save in the page builder is enough.
+  const tmpPath = `${filePath}.${process.pid}.${++tmpCounter}.tmp`;
+  try {
+    await fs.writeFile(tmpPath, content, 'utf8');
+    await fs.rename(tmpPath, filePath);
+  } catch (err) {
+    // Do not leave litter in content/ behind a failed save. Cleanup failure is
+    // not worth masking the real error with.
+    await fs.unlink(tmpPath).catch(() => {});
+    throw err;
+  }
 
   console.log(`[Admin] ✅ Saved ${filename}`);
 }
@@ -103,16 +119,32 @@ export async function listBackups(filename: string): Promise<string[]> {
   }
 }
 
+/**
+ * Names this service actually produces, and the only ones it will restore from.
+ *
+ * `[\w-]` matches neither `/` nor `.`, and the anchors leave no room for a
+ * prefix, so a `..` segment cannot match. Without this, `path.join` happily
+ * resolves `../../../../etc/passwd` and the copy below writes an arbitrary
+ * readable file over content/settings.yaml — which the admin GET endpoints then
+ * hand straight back.
+ */
+const BACKUP_FILENAME = /^(gallery|settings)\.yaml\.[\w-]+\.(pre-restore\.)?bak$/;
+
 /** Restore a specific backup. */
 export async function restoreBackup(backupFilename: string): Promise<void> {
+  const match = BACKUP_FILENAME.exec(backupFilename);
+  // The basename check is redundant against the regex above, and kept
+  // deliberately: it keeps the guarantee if that pattern is ever loosened.
+  if (!match || path.basename(backupFilename) !== backupFilename) {
+    throw new Error(`Refusing to restore from an unrecognised backup name: "${backupFilename}"`);
+  }
+
   const backupDir = path.join(CONTENT_DIR, '.backups');
   const backupPath = path.join(backupDir, backupFilename);
 
-  // Determine the original filename
-  const originalFilename = backupFilename.includes('gallery.yaml')
-    ? 'gallery.yaml'
-    : 'settings.yaml';
-
+  // Derived from the matched group, never from a substring search on the input:
+  // `includes('gallery.yaml')` would let the caller pick the destination.
+  const originalFilename = `${match[1]}.yaml`;
   const targetPath = path.join(CONTENT_DIR, originalFilename);
 
   // Create a backup of current state first

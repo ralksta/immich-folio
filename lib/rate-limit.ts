@@ -15,6 +15,39 @@ import { getConfig } from './config';
 /** Bucket key used when the client cannot be identified with any confidence. */
 const UNIDENTIFIED = 'unknown';
 
+let warnedUnidentified = false;
+
+/**
+ * Falling back to the shared bucket is the *correct* behaviour — the
+ * alternative is trusting a spoofable header — but it is silent, and silence is
+ * the problem. Every unidentified request shares one bucket per endpoint, and
+ * this is an image proxy: a single 50-photo grid issues ~50 `/api/image`
+ * requests, so the default 1500 rpm is collectively spent by roughly 30 page
+ * loads a minute. Visitors then see 429s with nothing in the log pointing at
+ * the proxy configuration that caused it.
+ *
+ * Warn once per process: enough to diagnose, not enough to flood the log.
+ */
+function unidentified(hops: number, detail: string): string {
+  if (!warnedUnidentified) {
+    warnedUnidentified = true;
+    console.warn(
+      `\n⚠️  Rate limiting cannot identify clients: ${detail}\n` +
+        `   TRUSTED_PROXY_HOPS is ${hops}, so the client IP is read ${hops} entr${hops === 1 ? 'y' : 'ies'} from the\n` +
+        `   right of X-Forwarded-For. Unidentified requests all share ONE bucket per\n` +
+        `   endpoint, which an image proxy exhausts quickly — expect 429s for everyone.\n` +
+        `   Set TRUSTED_PROXY_HOPS to the number of proxies actually in front of the app\n` +
+        `   (nginx/Traefik/Caddy = 1; add 1 for each additional layer, e.g. Cloudflare = 2).\n`,
+    );
+  }
+  return UNIDENTIFIED;
+}
+
+/** Test seam: the warning is once-per-process, which tests need to re-arm. */
+export function __resetProxyWarningForTests(): void {
+  warnedUnidentified = false;
+}
+
 /**
  * Resolve the client IP to use as a rate-limit bucket key.
  *
@@ -52,19 +85,44 @@ export function getClientIp(request: NextRequest): string {
         .filter(Boolean);
       // Chain shorter than the configured hop count means the request did not
       // traverse the full proxy chain — do not fall back to a spoofable entry.
-      return chain[chain.length - hops] ?? UNIDENTIFIED;
+      const ip = chain[chain.length - hops];
+      if (ip) return ip;
+
+      return unidentified(
+        hops,
+        `X-Forwarded-For carries ${chain.length} entr${chain.length === 1 ? 'y' : 'ies'}, ` +
+          `fewer than the ${hops} configured hop${hops === 1 ? '' : 's'}`,
+      );
     }
     // nginx's `proxy_set_header X-Real-IP $remote_addr` overwrites rather than
     // appends, so it is trustworthy — but only for a single hop, since an outer
     // proxy would leave an inner proxy's value in place.
     if (xRealIp && hops === 1) return xRealIp;
-    return UNIDENTIFIED;
+
+    return unidentified(
+      hops,
+      xRealIp
+        ? 'no X-Forwarded-For header, and X-Real-IP is only trustworthy at a single hop'
+        : 'neither X-Forwarded-For nor X-Real-IP was present',
+    );
   }
 
   // No proxy declared: headers are best-effort only. This still separates
   // honest clients into their own buckets, but a deliberate attacker can spoof
   // them. Set TRUSTED_PROXY_HOPS if you run behind a reverse proxy.
   return xRealIp ?? xForwardedFor?.split(',')[0].trim() ?? UNIDENTIFIED;
+}
+
+/**
+ * Seconds a client should wait before retrying, for the `Retry-After` header.
+ *
+ * Floored at 1. The obvious `Math.ceil((resetAt - Date.now()) / 1000)` yields 0
+ * — or a negative number — when the window is on the point of expiring, and
+ * `Retry-After: 0` tells the client to retry immediately, which is the opposite
+ * of what a 429 is for. A negative value is not valid HTTP at all.
+ */
+export function retryAfterSeconds(resetAt: number): number {
+  return Math.max(1, Math.ceil((resetAt - Date.now()) / 1000));
 }
 
 interface RateLimitEntry {

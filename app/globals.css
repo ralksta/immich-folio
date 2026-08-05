@@ -1289,6 +1289,55 @@
   font-weight: 300;
 }
 
+.empty-state__title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.empty-state__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 32px;
+}
+
+/* Matches the PasswordGate button, the only other action button in the app. */
+.empty-state__button {
+  padding: 12px 24px;
+  background: var(--accent);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+
+.empty-state__button:hover {
+  opacity: 0.9;
+}
+
+.empty-state__button--quiet {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.empty-state__button--quiet:hover {
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+  opacity: 1;
+}
+
 /* ── Theme Conditionals ──────────────────────────── */
 /* Features toggled via data attributes on <html>, set by theme config */
 

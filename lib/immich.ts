@@ -57,6 +57,53 @@ export interface ImmichExifInfo {
 
 export type ImageSize = 'thumbnail' | 'preview' | 'original';
 
+/**
+ * Thrown when Immich could not answer: transport failure, an error status, or
+ * a non-JSON body where JSON was requested.
+ *
+ * This is deliberately distinct from a `null` return, which means Immich *did*
+ * answer and said the resource does not exist. Conflating the two made every
+ * album URL render a hard 404 while Immich was down — including albums that
+ * exist — because the page calls `notFound()` on a null album. Only 404/410
+ * are treated as "gone"; everything else is an outage and must surface as one.
+ */
+/**
+ * Cache sentinel for "Immich answered, and the resource does not exist".
+ *
+ * The cache cannot tell a miss from a stored null — both read back as null — so
+ * absence is recorded as a distinct object identity instead.
+ *
+ * Only definitive 404/410 answers are stored. An outage throws
+ * `ImmichUnavailableError` and is never cached: pinning one would keep the
+ * gallery broken long after Immich recovered.
+ *
+ * Stored under the normal `cacheTtl` rather than a shorter negative TTL. A 404
+ * from Immich is as authoritative as a 200, and both invalidation paths
+ * (the Immich webhook and the admin panel's save/reload) clear it immediately —
+ * so a corrected asset ID takes effect at once rather than waiting out a TTL.
+ */
+const MISSING = Object.freeze({ __immichMissing: true });
+type Missing = typeof MISSING;
+
+/**
+ * `AbortSignal.timeout()` rejects with a `TimeoutError`; an explicit
+ * `controller.abort()` rejects with an `AbortError`. Both mean we gave up
+ * waiting, and both arrive as a plain DOMException.
+ */
+function isTimeout(error: unknown): boolean {
+  return error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
+}
+
+export class ImmichUnavailableError extends Error {
+  readonly status?: number;
+
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = 'ImmichUnavailableError';
+    this.status = status;
+  }
+}
+
 /** Enriched subpage with album metadata (for rendering cards). */
 export interface SubpageSummary {
   name: string;
@@ -84,8 +131,10 @@ class ImmichClient {
     if (this.config.needsSetup) return null;
 
     const url = `${this.config.immich.apiUrl}${endpoint}`;
+
+    let res: Response;
     try {
-      const res = await fetch(url, {
+      res = await fetch(url, {
         method: body === undefined ? 'GET' : 'POST',
         headers: {
           'x-api-key': this.config.immich.apiKey,
@@ -93,21 +142,54 @@ class ImmichClient {
           ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
         },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        // JSON payloads are small, so one budget can cover the whole exchange.
+        // Without it the only ceiling is undici's default, measured in minutes.
+        signal: AbortSignal.timeout(this.config.immichTimeoutMs),
       });
-
-      if (!res.ok) {
-        console.error(`[Immich] ${res.status} ${res.statusText} for ${endpoint}`);
-        return null;
-      }
-
-      const contentType = res.headers.get('Content-Type') || '';
-      if (contentType.includes('application/json')) {
-        return (await res.json()) as T;
-      }
-      return null;
     } catch (error) {
       console.error(`[Immich] Failed to reach ${url}:`, error);
+      throw new ImmichUnavailableError(
+        isTimeout(error)
+          ? `Immich did not respond within ${this.config.immichTimeoutMs}ms for ${endpoint}`
+          : `Cannot reach Immich for ${endpoint}`,
+      );
+    }
+
+    if (!res.ok) {
+      console.error(`[Immich] ${res.status} ${res.statusText} for ${endpoint}`);
+      // Only "gone" means gone. A 5xx, a rate limit, or a rejected API key all
+      // mean Immich cannot serve us right now — rendering those as a missing
+      // album would tell visitors and crawlers the content no longer exists.
+      if (res.status !== 404 && res.status !== 410) {
+        throw new ImmichUnavailableError(
+          `Immich returned ${res.status} ${res.statusText} for ${endpoint}`,
+          res.status,
+        );
+      }
       return null;
+    }
+
+    const contentType = res.headers.get('Content-Type') || '';
+    if (!contentType.includes('application/json')) {
+      // We always send Accept: application/json. Anything else is a gateway or
+      // proxy error page, not a valid answer about the resource.
+      throw new ImmichUnavailableError(
+        `Immich returned non-JSON (${contentType || 'no Content-Type'}) for ${endpoint}`,
+      );
+    }
+
+    try {
+      return (await res.json()) as T;
+    } catch (error) {
+      // The timeout also covers the body read, so an abort can surface here.
+      if (isTimeout(error)) {
+        console.error(`[Immich] Timed out reading ${url}`);
+        throw new ImmichUnavailableError(
+          `Immich did not respond within ${this.config.immichTimeoutMs}ms for ${endpoint}`,
+        );
+      }
+      console.error(`[Immich] Malformed JSON from ${url}:`, error);
+      throw new ImmichUnavailableError(`Immich returned malformed JSON for ${endpoint}`);
     }
   }
 
@@ -129,6 +211,14 @@ class ImmichClient {
 
     const endpoint = `/assets/${encodeURIComponent(assetId)}/video/playback`;
     const url = `${this.config.immich.apiUrl}${endpoint}`;
+
+    // Bound the wait for response *headers* only. The `finally` clears the timer
+    // the moment they arrive, so the body may then stream for as long as it
+    // needs — a whole-request timeout would truncate playback mid-video and
+    // break seeking, since every range request would restart the clock.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.config.immichTimeoutMs);
+
     try {
       const headers: Record<string, string> = {
         'x-api-key': this.config.immich.apiKey,
@@ -137,11 +227,21 @@ class ImmichClient {
         headers['Range'] = rangeHeader;
       }
 
-      const res = await fetch(url, { headers });
+      const res = await fetch(url, { headers, signal: controller.signal });
 
-      if ((!res.ok && res.status !== 206) || !res.body) {
+      if (!res.ok && res.status !== 206) {
         console.error(`[Immich] Failed to stream video ${assetId}: ${res.status}`);
+        if (res.status !== 404 && res.status !== 410) {
+          throw new ImmichUnavailableError(
+            `Immich returned ${res.status} streaming video ${assetId}`,
+            res.status,
+          );
+        }
         return null;
+      }
+
+      if (!res.body) {
+        throw new ImmichUnavailableError(`Immich returned an empty body for video ${assetId}`);
       }
 
       return {
@@ -152,8 +252,20 @@ class ImmichClient {
         status: res.status === 206 ? 206 : 200,
       };
     } catch (error) {
-      console.error(`[Immich] Video stream error for ${assetId}:`, error);
-      return null;
+      if (error instanceof ImmichUnavailableError) throw error;
+      console.error(
+        isTimeout(error)
+          ? `[Immich] Video ${assetId} did not respond within ${this.config.immichTimeoutMs}ms`
+          : `[Immich] Video stream error for ${assetId}:`,
+        error,
+      );
+      throw new ImmichUnavailableError(
+        isTimeout(error)
+          ? `Immich did not respond within ${this.config.immichTimeoutMs}ms for video ${assetId}`
+          : `Cannot reach Immich to stream video ${assetId}`,
+      );
+    } finally {
+      clearTimeout(timer);
     }
   }
 
@@ -172,16 +284,33 @@ class ImmichClient {
         : `/assets/${encodeURIComponent(assetId)}/thumbnail?size=${size}`;
 
     const url = `${this.config.immich.apiUrl}${endpoint}`;
+
+    // Headers-only timeout, same reasoning as streamVideo: an original-size
+    // photo is legitimately slow to transfer and must not be capped.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.config.immichTimeoutMs);
+
     try {
       const res = await fetch(url, {
         headers: {
           'x-api-key': this.config.immich.apiKey,
         },
+        signal: controller.signal,
       });
 
-      if (!res.ok || !res.body) {
+      if (!res.ok) {
         console.error(`[Immich] Failed to stream ${assetId}: ${res.status}`);
+        if (res.status !== 404 && res.status !== 410) {
+          throw new ImmichUnavailableError(
+            `Immich returned ${res.status} streaming asset ${assetId}`,
+            res.status,
+          );
+        }
         return null;
+      }
+
+      if (!res.body) {
+        throw new ImmichUnavailableError(`Immich returned an empty body for asset ${assetId}`);
       }
 
       return {
@@ -190,8 +319,20 @@ class ImmichClient {
         contentLength: res.headers.get('Content-Length'),
       };
     } catch (error) {
-      console.error(`[Immich] Stream error for ${assetId}:`, error);
-      return null;
+      if (error instanceof ImmichUnavailableError) throw error;
+      console.error(
+        isTimeout(error)
+          ? `[Immich] Asset ${assetId} did not respond within ${this.config.immichTimeoutMs}ms`
+          : `[Immich] Stream error for ${assetId}:`,
+        error,
+      );
+      throw new ImmichUnavailableError(
+        isTimeout(error)
+          ? `Immich did not respond within ${this.config.immichTimeoutMs}ms for asset ${assetId}`
+          : `Cannot reach Immich to stream asset ${assetId}`,
+      );
+    } finally {
+      clearTimeout(timer);
     }
   }
 
@@ -377,8 +518,8 @@ class ImmichClient {
     }
 
     const cacheKey = `album-${albumId}`;
-    const cached = cache.get<ImmichAlbum>(cacheKey);
-    if (cached) return cached;
+    const cached = cache.get<ImmichAlbum | Missing>(cacheKey);
+    if (cached) return cached === MISSING ? null : (cached as ImmichAlbum);
 
     if (this.pendingAlbumPromises.has(albumId)) {
       return this.pendingAlbumPromises.get(albumId)!;
@@ -392,7 +533,10 @@ class ImmichClient {
           this.request<ImmichAlbum>(`/albums/${encodeURIComponent(albumId)}`),
           this.fetchAlbumAssets(albumId),
         ]);
-        if (!album) return null;
+        if (!album) {
+          cache.set(cacheKey, MISSING, this.config.cacheTtl);
+          return null;
+        }
 
         // An album that Immich says has photos but returns none is almost
         // always a server older than 3.0, where metadata search behaves
@@ -464,8 +608,8 @@ class ImmichClient {
    */
   async getAssetInfo(assetId: string): Promise<ImmichAsset | null> {
     const cacheKey = `asset-${assetId}`;
-    const cached = cache.get<ImmichAsset>(cacheKey);
-    if (cached) return cached;
+    const cached = cache.get<ImmichAsset | Missing>(cacheKey);
+    if (cached) return cached === MISSING ? null : (cached as ImmichAsset);
 
     // ⚡ Bolt: Deduplicate concurrent requests for the same asset ID.
     // If a request for this asset is already in flight (e.g. from Promise.all in a grid),
@@ -477,7 +621,13 @@ class ImmichClient {
     const promise = (async () => {
       try {
         const asset = await this.request<ImmichAsset>(`/assets/${encodeURIComponent(assetId)}`);
-        if (!asset) return null;
+        if (!asset) {
+          // The homepage looks up every gallery.yaml hero ID on each render
+          // (app/page.tsx), and those pages are force-dynamic — so a hero photo
+          // deleted from Immich otherwise costs an upstream 404 every time.
+          cache.set(cacheKey, MISSING, this.config.cacheTtl);
+          return null;
+        }
 
         cache.set(cacheKey, asset, this.config.cacheTtl);
         return asset;
@@ -514,8 +664,14 @@ class ImmichClient {
    * Check if the Immich server is reachable.
    */
   async ping(): Promise<boolean> {
-    const res = await this.request<{ res: string }>('/server/ping');
-    return !!res;
+    try {
+      const res = await this.request<{ res: string }>('/server/ping');
+      return !!res;
+    } catch {
+      // "Is Immich reachable?" — unreachable is the answer, not an exception.
+      // Both callers (/api/health, /api/admin/status) render this as a status.
+      return false;
+    }
   }
 }
 
