@@ -356,8 +356,8 @@ export default function SettingsEditor() {
               <div className="settings-section-divider" />
 
               <div className="settings-section-header">
-                <h3><Icons.IconSparkles size={18} /> Interactive Features</h3>
-                <p className="settings-section-sub">Enable or disable interactive widgets and page effects.</p>
+                <h3><Icons.IconSparkles size={18} /> Portfolio Features &amp; Modules</h3>
+                <p className="settings-section-sub">Enable or disable optional portfolio modules, privacy analytics, and map widgets.</p>
               </div>
 
               <div className="admin-toggle-cards-grid">

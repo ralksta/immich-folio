@@ -18,15 +18,23 @@ import { useExif } from '@/hooks/useExif';
 import { useSwipe } from '@/hooks/useSwipe';
 import styles from './Lightbox.module.css';
 
+export interface LightboxWatermark {
+  enabled?: boolean;
+  text?: string;
+  opacity?: number;
+  position?: 'bottom-right' | 'bottom-left' | 'center' | string;
+}
+
 interface LightboxProps {
   assets: PhotoItem[];
   currentIndex: number;
   onClose: () => void;
   onNext: () => void;
   onPrev: () => void;
+  watermark?: LightboxWatermark;
 }
 
-export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: LightboxProps) {
+export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev, watermark }: LightboxProps) {
   const [showExif, setShowExif] = useState(false);
   const { exifData, exifLoading, fetchExif, clearExif } = useExif();
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -192,6 +200,21 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
             onLoad={() => setImageLoaded(true)}
             onError={() => console.error(`[Lightbox] Failed to load image: ${current.previewUrl}`)}
           />
+        )}
+
+        {watermark?.enabled && watermark.text && (
+          <div
+            className={`${styles.watermark} ${
+              watermark.position === 'bottom-left'
+                ? styles.watermark_bottom_left
+                : watermark.position === 'center'
+                ? styles.watermark_center
+                : styles.watermark_bottom_right
+            }`}
+            style={{ opacity: (watermark.opacity ?? 50) / 100 }}
+          >
+            {watermark.text}
+          </div>
         )}
       </div>
 

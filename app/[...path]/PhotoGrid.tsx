@@ -34,6 +34,7 @@ interface PhotoGridProps {
   assets: PhotoItem[];
   layout?: 'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow';
   gridStyle?: React.CSSProperties;
+  watermark?: LightboxWatermark;
 }
 
 /** Parse `#photo-N` from a hash string. Returns index or null. */
@@ -205,6 +206,7 @@ export function PhotoGrid({ assets, layout = 'masonry', gridStyle }: PhotoGridPr
           onClose={closeLightbox}
           onNext={goNext}
           onPrev={goPrev}
+          watermark={watermark}
         />
       )}
     </>

@@ -204,6 +204,7 @@ export default async function PathPage({ params }: PathPageProps) {
         gridStyle={buildGridStyle(spGrid)}
         backLinkHref={`/${subpageSlug}`}
         backLinkLabel={`Back to ${subpageName}`}
+        watermark={config.watermark}
         {...heroData}
       />
     );
@@ -247,6 +248,7 @@ export default async function PathPage({ params }: PathPageProps) {
           subtitle={result.subpage.subtitle}
           backLinkHref="/"
           backLinkLabel="Back to Gallery"
+          watermark={config.watermark}
           {...heroData}
         />
       );
@@ -303,6 +305,7 @@ export default async function PathPage({ params }: PathPageProps) {
       gridStyle={buildGridStyle()}
       backLinkHref="/"
       backLinkLabel="Back to Gallery"
+      watermark={config.watermark}
       {...heroData}
     />
   );
