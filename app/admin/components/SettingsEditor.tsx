@@ -441,32 +441,118 @@ export default function SettingsEditor() {
               </div>
               <div className="admin-field">
                 <label>Photo Frame</label>
-                <div className="radio-group">
-                  {PHOTO_FRAMES.map((f) => (
-                    <label key={f}>
-                      <input
-                        type="radio"
-                        name="photoFrame"
-                        checked={(settings.theme?.photoFrame || 'none') === f}
-                        onChange={() => update('theme.photoFrame', f)}
-                      />
-                      {f}
-                    </label>
-                  ))}
+                <div className="preset-card-grid">
+                  {PHOTO_FRAMES.map((f) => {
+                    const info = {
+                      none: { label: 'None', desc: 'Flush image with crisp edges' },
+                      passepartout: { label: 'Passepartout', desc: 'Classic gallery matting border' },
+                      shadow: { label: 'Shadow', desc: 'Soft floating drop shadow' },
+                    }[f] || { label: f, desc: '' };
+                    const isActive = (settings.theme?.photoFrame || 'none') === f;
+
+                    return (
+                      <button
+                        key={f}
+                        type="button"
+                        className={`preset-card frame-card ${isActive ? 'active' : ''}`}
+                        onClick={() => update('theme.photoFrame', f)}
+                      >
+                        <div className="frame-card-preview">
+                          <div className={`mini-frame-demo frame-${f}`}>
+                            <div className="mini-frame-photo" />
+                          </div>
+                        </div>
+                        <div className="preset-card-info">
+                          <span className="preset-card-name">{info.label}</span>
+                          <span className="preset-card-desc">{info.desc}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
+
               <div className="admin-field">
                 <label>Hero Style</label>
-                <select
-                  value={settings.theme?.heroStyle || 'split'}
-                  onChange={(e) => update('theme.heroStyle', e.target.value)}
-                >
-                  {HERO_STYLES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                <div className="preset-card-grid">
+                  {HERO_STYLES.map((s) => {
+                    const info = {
+                      split: { label: 'Split', desc: 'Side-by-side title & photo' },
+                      fullbleed: { label: 'Fullbleed', desc: 'Edge-to-edge full width banner' },
+                      minimal: { label: 'Minimal', desc: 'Centered title with subtle photo' },
+                      stacked: { label: 'Stacked', desc: 'Title stacked directly over photo' },
+                      typographic: { label: 'Typographic', desc: 'Oversized magazine masthead' },
+                      mosaic: { label: 'Mosaic', desc: 'Dynamic photo collage layout' },
+                    }[s] || { label: s, desc: '' };
+                    const isActive = (settings.theme?.heroStyle || 'split') === s;
+
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        className={`preset-card hero-card ${isActive ? 'active' : ''}`}
+                        onClick={() => update('theme.heroStyle', s)}
+                      >
+                        <div className="hero-card-preview">
+                          <div className={`mini-hero-demo hero-demo-${s}`}>
+                            {s === 'split' && (
+                              <>
+                                <div className="hero-demo-text">
+                                  <div className="demo-line title" />
+                                  <div className="demo-line sub" />
+                                </div>
+                                <div className="hero-demo-photo" />
+                              </>
+                            )}
+                            {s === 'fullbleed' && (
+                              <div className="hero-demo-full">
+                                <div className="demo-line title light" />
+                              </div>
+                            )}
+                            {s === 'minimal' && (
+                              <>
+                                <div className="hero-demo-center-text">
+                                  <div className="demo-line title short" />
+                                </div>
+                                <div className="hero-demo-photo small" />
+                              </>
+                            )}
+                            {s === 'stacked' && (
+                              <>
+                                <div className="hero-demo-text">
+                                  <div className="demo-line title" />
+                                </div>
+                                <div className="hero-demo-photo banner" />
+                              </>
+                            )}
+                            {s === 'typographic' && (
+                              <>
+                                <div className="demo-line title giant" />
+                                <div className="hero-demo-grid2">
+                                  <div className="hero-demo-photo" />
+                                  <div className="hero-demo-photo" />
+                                </div>
+                              </>
+                            )}
+                            {s === 'mosaic' && (
+                              <div className="hero-demo-mosaic">
+                                <div className="hero-demo-photo big" />
+                                <div className="hero-demo-photo-col">
+                                  <div className="hero-demo-photo" />
+                                  <div className="hero-demo-photo" />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="preset-card-info">
+                          <span className="preset-card-name">{info.label}</span>
+                          <span className="preset-card-desc">{info.desc}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
               <div className="admin-field-checks">
                 <label>

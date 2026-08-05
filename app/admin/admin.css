@@ -2463,4 +2463,171 @@ h3 .svg-icon {
   color: var(--admin-accent);
 }
 
+/* ── Visual Cards for Photo Frame & Hero Style ────────────────── */
+.frame-card-preview,
+.hero-card-preview {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--admin-bg-elevated);
+  border-bottom: 1px solid var(--admin-border);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Photo Frame Demos */
+.mini-frame-demo {
+  width: 70%;
+  height: 70%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.mini-frame-photo {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #444, #222);
+  border-radius: 2px;
+}
+
+.mini-frame-demo.frame-none .mini-frame-photo {
+  border: none;
+}
+
+.mini-frame-demo.frame-passepartout {
+  padding: 6px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.mini-frame-demo.frame-shadow .mini-frame-photo {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Hero Style Demos */
+.mini-hero-demo {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.25rem;
+}
+
+.demo-line {
+  height: 3px;
+  background: var(--admin-text-muted);
+  border-radius: 2px;
+}
+
+.demo-line.title {
+  width: 80%;
+  height: 5px;
+  background: var(--admin-accent);
+}
+
+.demo-line.title.giant {
+  width: 95%;
+  height: 8px;
+  margin-bottom: 0.2rem;
+}
+
+.demo-line.title.short {
+  width: 50%;
+  margin: 0 auto;
+}
+
+.demo-line.title.light {
+  width: 60%;
+  background: #ffffff;
+}
+
+.demo-line.sub {
+  width: 50%;
+}
+
+.hero-demo-split {
+  align-items: center;
+}
+
+.hero-demo-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.hero-demo-photo {
+  flex: 1;
+  height: 100%;
+  background: linear-gradient(135deg, #3a3a3a, #1a1a1a);
+  border-radius: 3px;
+}
+
+.hero-demo-photo.small {
+  height: 60%;
+  width: 80%;
+  margin: 0 auto;
+}
+
+.hero-demo-photo.banner {
+  width: 100%;
+  height: 65%;
+}
+
+.hero-demo-full {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #555, #111);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-demo-minimal,
+.hero-demo-stacked {
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero-demo-center-text {
+  text-align: center;
+  width: 100%;
+  margin-bottom: 0.2rem;
+}
+
+.hero-demo-typographic {
+  flex-direction: column;
+}
+
+.hero-demo-grid2 {
+  display: flex;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.hero-demo-mosaic {
+  display: flex;
+  gap: 0.25rem;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-demo-photo.big {
+  flex: 1.5;
+}
+
+.hero-demo-photo-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+
 
