@@ -1135,7 +1135,7 @@ export default function PageBuilder() {
                                 <div className="preview-albums-grid">
                                   {sec.albums.map((alb, aIdx) => {
                                     const immichAlb = immichAlbums.find((a) => a.id === alb.id);
-                                    const thumb = alb.heroImage || immichAlb?.thumb;
+                                    const thumb = alb.heroImage || immichAlb?.thumbnailAssetId;
 
                                     return (
                                       <div key={aIdx} className="preview-album-tile">
@@ -1147,7 +1147,7 @@ export default function PageBuilder() {
                                           )}
                                         </div>
                                         <span className="preview-album-title">
-                                          {alb.title || immichAlb?.name || alb.id}
+                                          {alb.title || immichAlb?.albumName || alb.id}
                                         </span>
                                       </div>
                                     );
@@ -1159,7 +1159,7 @@ export default function PageBuilder() {
                             <div className="preview-albums-grid">
                               {sp.albums.map((alb, aIdx) => {
                                 const immichAlb = immichAlbums.find((a) => a.id === alb.id);
-                                const thumb = alb.heroImage || immichAlb?.thumb;
+                                const thumb = alb.heroImage || immichAlb?.thumbnailAssetId;
 
                                 return (
                                   <div key={aIdx} className="preview-album-tile">
@@ -1171,7 +1171,7 @@ export default function PageBuilder() {
                                       )}
                                     </div>
                                     <span className="preview-album-title">
-                                      {alb.title || immichAlb?.name || alb.id}
+                                      {alb.title || immichAlb?.albumName || alb.id}
                                     </span>
                                   </div>
                                 );
