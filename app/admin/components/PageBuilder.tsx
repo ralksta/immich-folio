@@ -21,6 +21,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import AlbumPicker from './AlbumPicker';
 import AssetPicker from './AssetPicker';
+import { EssayBlockEditor } from './EssayBlockEditor';
 
 // ── Icons ──────────────────────────────────────────────────────
 const Icons = {
@@ -134,6 +135,8 @@ interface Subpage {
   subtitle?: string;
   password?: string;
   enabled?: boolean;
+  essayText?: string;
+  essayFile?: string;
   sections?: Section[];
   albums: AlbumEntry[];
   grid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
@@ -473,6 +476,8 @@ export default function PageBuilder() {
         subtitle: sp.subtitle as string | undefined,
         password: sp.password as string | undefined,
         enabled: sp.enabled !== false,
+        essayText: sp.essayText as string | undefined,
+        essayFile: sp.essayFile as string | undefined,
         albums: parseAlbumEntries(sp.albums as Array<string | Record<string, string>> | undefined),
         sections: sp.sections
           ? (sp.sections as Array<Record<string, unknown>>).map((sec) => ({
@@ -495,6 +500,8 @@ export default function PageBuilder() {
           subtitle: sp.subtitle as string | undefined,
           password: sp.password as string | undefined,
           enabled: sp.enabled !== false,
+          essayText: sp.essayText as string | undefined,
+          essayFile: sp.essayFile as string | undefined,
           albums: parseAlbumEntries(
             sp.albums as Array<string | Record<string, string>> | undefined,
           ),
@@ -532,6 +539,8 @@ export default function PageBuilder() {
         if (sp.subtitle) entry.subtitle = sp.subtitle;
         if (sp.password) entry.password = sp.password;
         if (sp.enabled === false) entry.enabled = false;
+        if (sp.essayText) entry.essayText = sp.essayText;
+        if (sp.essayFile) entry.essayFile = sp.essayFile;
         if (sp.grid) entry.grid = sp.grid;
 
         if (sp.sections && sp.sections.length > 0) {
@@ -1268,7 +1277,50 @@ export default function PageBuilder() {
                             </div>
                           </button>
                         </div>
+                        <div className="admin-field" style={{ marginTop: '1rem' }}>
+                          <label>Page Layout Style</label>
+                          <select
+                            value={sp.grid?.layout || 'masonry'}
+                            onChange={(e) => {
+                              const newLayout = e.target.value;
+                              updateSubpage(spIndex, {
+                                grid: { ...(sp.grid || {}), layout: newLayout },
+                              });
+                            }}
+                            style={{ padding: '8px 12px', borderRadius: '6px', width: '100%', fontSize: '0.9rem' }}
+                          >
+                            <option value="masonry">📷 Masonry Grid (Dynamic Height)</option>
+                            <option value="uniform">🔲 Uniform Grid (Square Tiles)</option>
+                            <option value="showcase">⭐ Showcase (Featured First Asset)</option>
+                            <option value="filmstrip">🎞️ Filmstrip (Horizontal Scroll)</option>
+                            <option value="editorial-flow">📰 Editorial Flow</option>
+                            <option value="essay">📖 Photo Essay Mode (Storytelling Editor)</option>
+                          </select>
+                        </div>
                       </div>
+
+                      {/* Visual Photo Essay Builder (if layout === 'essay') */}
+                      {(sp.grid?.layout === 'essay' || sp.essayText != null) && (
+                        <div className="subpage-drawer-section" style={{ background: 'var(--admin-surface, rgba(255,255,255,0.02))', padding: '1rem', borderRadius: '8px', border: '1px solid var(--admin-border, rgba(255,255,255,0.1))' }}>
+                          <div style={{ marginBottom: '1rem' }}>
+                            <h4 style={{ margin: 0, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span>📖 Storytelling &amp; Photo Essay Builder</span>
+                            </h4>
+                            <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', opacity: 0.75 }}>
+                              Compose text, quotes, and fullbleed/wide photos visually.
+                            </p>
+                          </div>
+
+                          <EssayBlockEditor
+                            markdown={sp.essayText || ''}
+                            onChange={(newMarkdown) => updateSubpage(spIndex, { essayText: newMarkdown })}
+                            onSelectPhoto={(callback) => {
+                              setPickerTarget({ type: 'subpage', subpageIndex: spIndex });
+                              // We can pass a photo picker handler if needed
+                            }}
+                          />
+                        </div>
+                      )}
 
                       <div className="settings-section-divider" />
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseEssayMarkdown, parseFrontmatter, sanitizeHtml, renderInlineMarkdown } from '../essay';
+import { parseEssayMarkdown, parseFrontmatter, sanitizeHtml, renderInlineMarkdown, serializeEssayMarkdown } from '../essay';
 
 describe('Essay Parser', () => {
   it('sanitizes script tags to prevent XSS', () => {
@@ -94,5 +94,27 @@ A closing paragraph with **bold** details.`;
     expect(parsed.referencedAssetIds).toContain('asset-1');
     expect(parsed.referencedAssetIds).toContain('asset-2');
     expect(parsed.referencedAssetIds).toContain('asset-3');
+  });
+
+  it('serializes structured essay blocks back to markdown', () => {
+    const parsed = {
+      frontmatter: { title: 'Story Title', author: 'Author' },
+      blocks: [
+        { type: 'heading' as const, level: 1, text: 'Chapter One' },
+        { type: 'paragraph' as const, html: 'This is <strong>bold</strong> text.' },
+        { type: 'quote' as const, text: 'A great quote', author: 'Person' },
+        { type: 'photo' as const, assetId: 'photo-1', caption: 'Caption', layout: 'fullbleed' as const },
+        { type: 'photo-pair' as const, assetIds: ['p1', 'p2'] as [string, string], caption: 'Pair caption' },
+      ],
+      referencedAssetIds: ['photo-1', 'p1', 'p2'],
+    };
+
+    const markdown = serializeEssayMarkdown(parsed);
+    expect(markdown).toContain('title: "Story Title"');
+    expect(markdown).toContain('# Chapter One');
+    expect(markdown).toContain('This is **bold** text.');
+    expect(markdown).toContain('> A great quote -- Person');
+    expect(markdown).toContain('![photo-1:fullbleed](Caption)');
+    expect(markdown).toContain('![p1, p2](Pair caption)');
   });
 });

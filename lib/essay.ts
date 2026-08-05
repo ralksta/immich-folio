@@ -1,6 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-
 export interface EssayFrontmatter {
   title?: string;
   subtitle?: string;
@@ -189,20 +186,88 @@ export function parseEssayMarkdown(rawContent: string): ParsedEssay {
 
 /** Load and parse an essay file from content/essays/ */
 export function loadEssayFromFile(filename: string): ParsedEssay | null {
+  if (typeof window !== 'undefined') return null;
   try {
-    const filePath = path.isAbsolute(filename)
-      ? filename
-      : path.join(process.cwd(), 'content', 'essays', filename);
+    // Dynamic require for Node.js modules so client bundler doesn't fail
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const nodeFs = require('fs');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const nodePath = require('path');
 
-    if (!fs.existsSync(filePath)) {
+    const filePath = nodePath.isAbsolute(filename)
+      ? filename
+      : nodePath.join(process.cwd(), 'content', 'essays', filename);
+
+    if (!nodeFs.existsSync(filePath)) {
       console.warn(`[Essay] File not found: ${filePath}`);
       return null;
     }
 
-    const content = fs.readFileSync(filePath, 'utf-8');
+    const content = nodeFs.readFileSync(filePath, 'utf-8');
     return parseEssayMarkdown(content);
   } catch (error) {
     console.error(`[Essay] Failed to load essay file "${filename}":`, error);
     return null;
   }
+}
+
+/** Converts a ParsedEssay structure back into clean Markdown syntax */
+export function serializeEssayMarkdown(essay: ParsedEssay): string {
+  const lines: string[] = [];
+
+  // Frontmatter
+  const fmKeys = Object.keys(essay.frontmatter) as Array<keyof EssayFrontmatter>;
+  if (fmKeys.length > 0 && fmKeys.some((k) => essay.frontmatter[k])) {
+    lines.push('---');
+    for (const key of fmKeys) {
+      const val = essay.frontmatter[key];
+      if (val) {
+        lines.push(`${key}: "${val.replace(/"/g, '\\"')}"`);
+      }
+    }
+    lines.push('---');
+    lines.push('');
+  }
+
+  // Blocks
+  for (const block of essay.blocks) {
+    switch (block.type) {
+      case 'heading': {
+        const hashes = '#'.repeat(Math.min(Math.max(block.level, 1), 6));
+        lines.push(`${hashes} ${block.text}`);
+        break;
+      }
+      case 'paragraph': {
+        const text = block.html.replace(/<[^>]+>/g, (tag) => {
+          if (tag.startsWith('<strong>') || tag.startsWith('<b>')) return '**';
+          if (tag.startsWith('</strong>') || tag.startsWith('</b>')) return '**';
+          if (tag.startsWith('<em>') || tag.startsWith('<i>')) return '*';
+          if (tag.startsWith('</em>') || tag.startsWith('</i>')) return '*';
+          return '';
+        });
+        lines.push(text);
+        break;
+      }
+      case 'quote': {
+        const authorSuffix = block.author ? ` -- ${block.author}` : '';
+        const text = block.text.replace(/<[^>]+>/g, '');
+        lines.push(`> ${text}${authorSuffix}`);
+        break;
+      }
+      case 'photo': {
+        const layoutSuffix = block.layout !== 'contained' ? `:${block.layout}` : '';
+        const caption = block.caption ? block.caption.replace(/<[^>]+>/g, '') : '';
+        lines.push(`![${block.assetId}${layoutSuffix}](${caption})`);
+        break;
+      }
+      case 'photo-pair': {
+        const caption = block.caption ? block.caption.replace(/<[^>]+>/g, '') : '';
+        lines.push(`![${block.assetIds[0]}, ${block.assetIds[1]}](${caption})`);
+        break;
+      }
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n').trim();
 }
