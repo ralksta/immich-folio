@@ -134,4 +134,28 @@ describe('verifyAdminPassword', () => {
     expect(verifyAdminPassword('')).toBe(false);
     expect(verifyAdminPassword('anything')).toBe(false);
   });
+
+  // The comparison used to run on the raw strings, so a length mismatch
+  // returned before timingSafeEqual could. That early exit is what leaked the
+  // length of ADMIN_PASSWORD; a wrong password of the *right* length has to be
+  // rejected by the same code path as any other.
+  it('rejects a wrong password of exactly the right length', async () => {
+    const { verifyAdminPassword } = await loadAuth();
+    const sameLength = 'x'.repeat(ADMIN_PASSWORD.length);
+    expect(sameLength).toHaveLength(ADMIN_PASSWORD.length);
+    expect(sameLength).not.toBe(ADMIN_PASSWORD);
+    expect(verifyAdminPassword(sameLength)).toBe(false);
+  });
+
+  it('rejects an oversized attempt without hashing it', async () => {
+    const { verifyAdminPassword, MAX_PASSWORD_LENGTH } = await loadAuth();
+    expect(verifyAdminPassword('x'.repeat(MAX_PASSWORD_LENGTH + 1))).toBe(false);
+  });
+
+  // A cap that a real passphrase could hit would be a lockout, not a fix.
+  it('still accepts the configured password when it is long', async () => {
+    const { verifyAdminPassword, MAX_PASSWORD_LENGTH } = await loadAuth();
+    expect(ADMIN_PASSWORD.length).toBeLessThanOrEqual(MAX_PASSWORD_LENGTH);
+    expect(verifyAdminPassword(ADMIN_PASSWORD)).toBe(true);
+  });
 });
