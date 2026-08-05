@@ -67,6 +67,15 @@ export type ImageSize = 'thumbnail' | 'preview' | 'original';
  * exist — because the page calls `notFound()` on a null album. Only 404/410
  * are treated as "gone"; everything else is an outage and must surface as one.
  */
+/**
+ * `AbortSignal.timeout()` rejects with a `TimeoutError`; an explicit
+ * `controller.abort()` rejects with an `AbortError`. Both mean we gave up
+ * waiting, and both arrive as a plain DOMException.
+ */
+function isTimeout(error: unknown): boolean {
+  return error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
+}
+
 export class ImmichUnavailableError extends Error {
   readonly status?: number;
 
@@ -115,10 +124,17 @@ class ImmichClient {
           ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
         },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        // JSON payloads are small, so one budget can cover the whole exchange.
+        // Without it the only ceiling is undici's default, measured in minutes.
+        signal: AbortSignal.timeout(this.config.immichTimeoutMs),
       });
     } catch (error) {
       console.error(`[Immich] Failed to reach ${url}:`, error);
-      throw new ImmichUnavailableError(`Cannot reach Immich for ${endpoint}`);
+      throw new ImmichUnavailableError(
+        isTimeout(error)
+          ? `Immich did not respond within ${this.config.immichTimeoutMs}ms for ${endpoint}`
+          : `Cannot reach Immich for ${endpoint}`,
+      );
     }
 
     if (!res.ok) {
@@ -147,6 +163,13 @@ class ImmichClient {
     try {
       return (await res.json()) as T;
     } catch (error) {
+      // The timeout also covers the body read, so an abort can surface here.
+      if (isTimeout(error)) {
+        console.error(`[Immich] Timed out reading ${url}`);
+        throw new ImmichUnavailableError(
+          `Immich did not respond within ${this.config.immichTimeoutMs}ms for ${endpoint}`,
+        );
+      }
       console.error(`[Immich] Malformed JSON from ${url}:`, error);
       throw new ImmichUnavailableError(`Immich returned malformed JSON for ${endpoint}`);
     }
@@ -170,6 +193,14 @@ class ImmichClient {
 
     const endpoint = `/assets/${encodeURIComponent(assetId)}/video/playback`;
     const url = `${this.config.immich.apiUrl}${endpoint}`;
+
+    // Bound the wait for response *headers* only. The `finally` clears the timer
+    // the moment they arrive, so the body may then stream for as long as it
+    // needs — a whole-request timeout would truncate playback mid-video and
+    // break seeking, since every range request would restart the clock.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.config.immichTimeoutMs);
+
     try {
       const headers: Record<string, string> = {
         'x-api-key': this.config.immich.apiKey,
@@ -178,7 +209,7 @@ class ImmichClient {
         headers['Range'] = rangeHeader;
       }
 
-      const res = await fetch(url, { headers });
+      const res = await fetch(url, { headers, signal: controller.signal });
 
       if ((!res.ok && res.status !== 206) || !res.body) {
         console.error(`[Immich] Failed to stream video ${assetId}: ${res.status}`);
@@ -193,8 +224,15 @@ class ImmichClient {
         status: res.status === 206 ? 206 : 200,
       };
     } catch (error) {
-      console.error(`[Immich] Video stream error for ${assetId}:`, error);
+      console.error(
+        isTimeout(error)
+          ? `[Immich] Video ${assetId} did not respond within ${this.config.immichTimeoutMs}ms`
+          : `[Immich] Video stream error for ${assetId}:`,
+        error,
+      );
       return null;
+    } finally {
+      clearTimeout(timer);
     }
   }
 
@@ -213,11 +251,18 @@ class ImmichClient {
         : `/assets/${encodeURIComponent(assetId)}/thumbnail?size=${size}`;
 
     const url = `${this.config.immich.apiUrl}${endpoint}`;
+
+    // Headers-only timeout, same reasoning as streamVideo: an original-size
+    // photo is legitimately slow to transfer and must not be capped.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.config.immichTimeoutMs);
+
     try {
       const res = await fetch(url, {
         headers: {
           'x-api-key': this.config.immich.apiKey,
         },
+        signal: controller.signal,
       });
 
       if (!res.ok || !res.body) {
@@ -231,8 +276,15 @@ class ImmichClient {
         contentLength: res.headers.get('Content-Length'),
       };
     } catch (error) {
-      console.error(`[Immich] Stream error for ${assetId}:`, error);
+      console.error(
+        isTimeout(error)
+          ? `[Immich] Asset ${assetId} did not respond within ${this.config.immichTimeoutMs}ms`
+          : `[Immich] Stream error for ${assetId}:`,
+        error,
+      );
       return null;
+    } finally {
+      clearTimeout(timer);
     }
   }
 

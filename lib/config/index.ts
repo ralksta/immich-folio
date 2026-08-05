@@ -87,6 +87,7 @@ export function getConfig(): AppConfig {
       albumPasswords: {},
       albumHeroImages: {},
       cacheTtl: env.CACHE_TTL * 1000,
+      immichTimeoutMs: env.IMMICH_TIMEOUT_MS,
       rateLimitRpm: env.RATE_LIMIT_RPM,
       trustedProxyHops: env.TRUSTED_PROXY_HOPS,
       needsSetup: true,
@@ -103,7 +104,10 @@ export function getConfig(): AppConfig {
   function processAlbumEntry(
     entry:
       | string
-      | Record<string, string | { title: string; description?: string; password?: string; heroImage?: string }>,
+      | Record<
+          string,
+          string | { title: string; description?: string; password?: string; heroImage?: string }
+        >,
     context: string,
   ): string {
     if (typeof entry === 'string') {
@@ -270,6 +274,7 @@ export function getConfig(): AppConfig {
     albumPasswords,
     albumHeroImages,
     cacheTtl: env.CACHE_TTL * 1000,
+    immichTimeoutMs: env.IMMICH_TIMEOUT_MS,
     rateLimitRpm: env.RATE_LIMIT_RPM,
     trustedProxyHops: env.TRUSTED_PROXY_HOPS,
     needsSetup: false,

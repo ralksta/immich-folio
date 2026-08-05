@@ -17,6 +17,7 @@ vi.mock('../config', async () => {
       albumOverrides: { 'album-1': 'Override Name' },
       albumDescriptions: {},
       cacheTtl: 0,
+      immichTimeoutMs: 15000,
     }),
   };
 });
@@ -109,6 +110,89 @@ describe('ImmichClient', () => {
         mockFetch.mockResolvedValueOnce({ ok: false, status: 502, statusText: 'Bad Gateway' });
         await expect((immich as any).request('/test')).rejects.toMatchObject({ status: 502 });
       });
+    });
+  });
+
+  // Without a budget the only ceiling is undici's default, measured in minutes.
+  // Every page is force-dynamic, so an Immich that accepts connections but never
+  // answers would hold each visitor's render open for that whole window.
+  describe('timeouts', () => {
+    const timeoutError = () => {
+      const err = new Error('The operation was aborted due to timeout');
+      err.name = 'TimeoutError';
+      return err;
+    };
+
+    it('sends an abort signal with every JSON request', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: { get: () => 'application/json' },
+        json: async () => ({}),
+      });
+
+      await (immich as any).request('/test');
+      expect(mockFetch.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
+    });
+
+    it('reports a timed-out request as unavailable, not as a missing resource', async () => {
+      mockFetch.mockRejectedValueOnce(timeoutError());
+
+      await expect((immich as any).request('/test')).rejects.toBeInstanceOf(ImmichUnavailableError);
+    });
+
+    it('names the budget in the error so a misconfigured timeout is diagnosable', async () => {
+      mockFetch.mockRejectedValueOnce(timeoutError());
+      await expect((immich as any).request('/test')).rejects.toThrow(/15000ms/);
+    });
+
+    // The stream methods deliberately use a headers-only timeout. A whole-request
+    // timeout would truncate a large original photo or a long video mid-transfer.
+    it('stops the clock once stream headers arrive, so a slow body is not truncated', async () => {
+      vi.useFakeTimers();
+      try {
+        let captured: AbortSignal | undefined;
+        mockFetch.mockImplementation(async (_url: string, init: { signal?: AbortSignal }) => {
+          captured = init.signal;
+          return {
+            ok: true,
+            status: 200,
+            body: new ReadableStream(),
+            headers: { get: () => null },
+          };
+        });
+
+        const result = await immich.streamAsset('asset-1');
+        expect(result).not.toBeNull();
+
+        // Far beyond the 15s budget: a whole-request timeout would abort here
+        // and kill an in-progress download.
+        vi.advanceTimersByTime(60 * 60 * 1000);
+        expect(captured?.aborted).toBe(false);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('still aborts a stream that never returns headers', async () => {
+      vi.useFakeTimers();
+      try {
+        let captured: AbortSignal | undefined;
+        mockFetch.mockImplementation(
+          (_url: string, init: { signal?: AbortSignal }) =>
+            new Promise((_resolve, reject) => {
+              captured = init.signal;
+              init.signal?.addEventListener('abort', () => reject(timeoutError()));
+            }),
+        );
+
+        const pending = immich.streamAsset('asset-1');
+        await vi.advanceTimersByTimeAsync(15001);
+
+        await expect(pending).resolves.toBeNull();
+        expect(captured?.aborted).toBe(true);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 

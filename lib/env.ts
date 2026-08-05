@@ -9,6 +9,7 @@ export interface Env {
   SITE_TITLE: string;
   SITE_SUBTITLE: string;
   CACHE_TTL: number;
+  IMMICH_TIMEOUT_MS: number;
   RATE_LIMIT_RPM: number;
   AUTH_SECRET?: string;
   TRUSTED_PROXY_HOPS: number;
@@ -34,6 +35,17 @@ function parseEnv(): Env {
   const cacheTtlStr = process.env.CACHE_TTL;
   const cacheTtl =
     cacheTtlStr && !isNaN(parseInt(cacheTtlStr, 10)) ? parseInt(cacheTtlStr, 10) : 300;
+
+  // How long to wait on Immich before giving up. Without an explicit budget the
+  // only ceiling is undici's built-in default (minutes), and since every page is
+  // force-dynamic an Immich that accepts connections but never answers would
+  // hold each visitor's render open for that entire window.
+  //
+  // This bounds the wait for a *response*, not the transfer of an image or video
+  // body — those are legitimately slow and are not capped by this value.
+  const timeoutStr = process.env.IMMICH_TIMEOUT_MS;
+  const timeoutMs =
+    timeoutStr && !isNaN(parseInt(timeoutStr, 10)) ? parseInt(timeoutStr, 10) : 15000;
 
   const rateLimitStr = process.env.RATE_LIMIT_RPM;
   const rateLimit =
@@ -65,6 +77,8 @@ function parseEnv(): Env {
     SITE_TITLE: process.env.SITE_TITLE || 'Gallery',
     SITE_SUBTITLE: process.env.SITE_SUBTITLE || '',
     CACHE_TTL: Math.max(0, cacheTtl),
+    // A sub-second budget would abort healthy requests; 0 must not mean "no timeout".
+    IMMICH_TIMEOUT_MS: Math.max(1000, timeoutMs),
     RATE_LIMIT_RPM: Math.max(1, rateLimit),
     AUTH_SECRET: process.env.AUTH_SECRET,
     TRUSTED_PROXY_HOPS: trustedProxyHops,
