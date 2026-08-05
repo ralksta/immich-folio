@@ -83,6 +83,7 @@ export interface AppConfig {
   seo: {
     title: string;
     description: string;
+    titleTemplate: string;
     noIndex: boolean;
     noFollow: boolean;
   };
@@ -156,6 +157,7 @@ export interface SettingsYaml {
   seo?: {
     title?: string;
     description?: string;
+    titleTemplate?: string;
     noIndex?: boolean;
     noFollow?: boolean;
   };

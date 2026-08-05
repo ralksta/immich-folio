@@ -47,6 +47,7 @@ interface Settings {
   seo?: {
     title?: string;
     description?: string;
+    titleTemplate?: string;
     noIndex?: boolean;
     noFollow?: boolean;
   };
@@ -1002,6 +1003,24 @@ export default function SettingsEditor() {
                   onChange={(e) => update('seo.title', e.target.value)}
                   placeholder="Overrides default site title for Google search results"
                 />
+              </div>
+
+              <div className="admin-field">
+                <label>Subpage Title Template</label>
+                <input
+                  value={settings.seo?.titleTemplate || ''}
+                  onChange={(e) => update('seo.titleTemplate', e.target.value)}
+                  placeholder={`%s | ${settings.seo?.title || settings.title || 'My Portfolio'}`}
+                />
+                <p style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '4px' }}>
+                  Template for subpages &amp; albums. Use <code>%s</code> as placeholder for the page title.
+                  <br />
+                  <strong>Preview:</strong>{' '}
+                  {(
+                    settings.seo?.titleTemplate ||
+                    `%s | ${settings.seo?.title || settings.title || 'My Portfolio'}`
+                  ).replace('%s', 'Landscapes')}
+                </p>
               </div>
 
               <div className="admin-field">

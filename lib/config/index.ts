@@ -260,6 +260,7 @@ export function getConfig(): AppConfig {
       seo: {
         title: 'Setup Required',
         description: 'Please configure Immich Folio',
+        titleTemplate: '%s | Setup Required',
         noIndex: true,
         noFollow: true,
       },
@@ -296,6 +297,8 @@ export function getConfig(): AppConfig {
     albumHeroImages,
   } = deriveGallery(gallery);
 
+  const siteSeoTitle = settings.seo?.title || settings.title || env.SITE_TITLE || 'Gallery';
+
   return {
     immich: { apiUrl: `${apiUrl}/api`, apiKey },
     authSecret,
@@ -306,12 +309,13 @@ export function getConfig(): AppConfig {
     siteSubtitle: settings.subtitle ?? env.SITE_SUBTITLE,
     lang: settings.lang ?? 'en',
     seo: {
-      title: settings.seo?.title || settings.title || env.SITE_TITLE || 'Gallery',
+      title: siteSeoTitle,
       description:
         settings.seo?.description ||
         settings.subtitle ||
         env.SITE_SUBTITLE ||
         'A curated photography portfolio',
+      titleTemplate: settings.seo?.titleTemplate || `%s | ${siteSeoTitle}`,
       noIndex: settings.seo?.noIndex === true,
       noFollow: settings.seo?.noFollow === true,
     },

@@ -46,18 +46,13 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
   const slug = path[0];
   let title = slug;
   let subtitle = '';
-
-  if (path.length === 2) {
-    const album = await immich.getAlbumBySlug(path[1], slug);
-    if (album) {
-      title = album.albumName;
-      const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
-      subtitle = `${count} photo${count === 1 ? '' : 's'}`;
-    }
-  } else if (immich.isSubpageSlug(slug)) {
+  let description: string | undefined = undefined;
+  if (path.length === 1 && immich.isSubpageSlug(slug)) {
     const result = await immich.getSubpageAlbums(slug);
     if (result) {
-      // Single album → use album name; multiple → use subpage name
+      if (result.subpage.subtitle) {
+        description = result.subpage.subtitle;
+      }
       if (result.albums.length === 1) {
         const album = await immich.getAlbumBySlug(result.albums[0].slug, slug);
         if (album) {
@@ -66,8 +61,15 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
           subtitle = `${count} photo${count === 1 ? '' : 's'}`;
         }
       } else {
-        title = result.subpage.name;
+        title = result.subpage.title || result.subpage.name;
       }
+    }
+  } else if (path.length === 2) {
+    const album = await immich.getAlbumBySlug(path[1], slug);
+    if (album) {
+      title = album.albumName;
+      const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
+      subtitle = `${count} photo${count === 1 ? '' : 's'}`;
     }
   } else {
     const album = await immich.getAlbumBySlug(slug);
@@ -82,8 +84,18 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
 
   return {
     title,
-    openGraph: { title, images: [ogUrl] },
-    twitter: { card: 'summary_large_image', title, images: [ogUrl] },
+    description: description || (subtitle ? `${title} — ${subtitle}` : undefined),
+    openGraph: {
+      title,
+      description: description || (subtitle ? `${title} — ${subtitle}` : undefined),
+      images: [ogUrl],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: description || (subtitle ? `${title} — ${subtitle}` : undefined),
+      images: [ogUrl],
+    },
   };
 }
 

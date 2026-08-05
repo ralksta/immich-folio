@@ -35,7 +35,10 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 
   return {
-    title: siteTitle,
+    title: {
+      default: siteTitle,
+      template: config.seo.titleTemplate,
+    },
     description: siteDescription,
     robots,
     icons: {
