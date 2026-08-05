@@ -75,7 +75,9 @@ Singleton `ImmichClient` class exported as `immich`. All Immich API calls are se
 | `GET /api/admin/albums` | Browse all shared Immich albums (admin-only) |
 | `POST /api/admin/reload` | Invalidate config + Immich cache |
 
-The image proxy maps requested pixel widths (`?w=`) to Immich size tiers: `≤250px→thumbnail`, `≤1440px→preview`, `>1440px→original`.
+The image proxy maps requested pixel widths (`?w=`) to Immich size tiers: `≤250px→thumbnail`, `≤1440px→preview`, `>1440px→original` (`lib/imageSize.ts`).
+
+`?size=` (written by `lib/urls.ts`) acts as a **ceiling**, not an override. When both parameters are present the smaller tier wins, so `?w=` can narrow the request but never widen it — `next/image` emits widths up to 3840, so letting width win outright would serve full-size originals to every large display.
 
 ### Routing (`app/[...path]/page.tsx`)
 

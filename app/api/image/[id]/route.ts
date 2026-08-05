@@ -8,21 +8,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { immich, ImageSize, ImmichUnavailableError } from '@/lib/immich';
+import { immich, ImmichUnavailableError } from '@/lib/immich';
+import { resolveImageSize } from '@/lib/imageSize';
 import { decodeAssetId } from '@/lib/tokens';
 import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
-
-const VALID_SIZES: ImageSize[] = ['thumbnail', 'preview', 'original'];
-
-/**
- * Map a requested pixel width to the best Immich size tier.
- */
-function widthToSize(w: number): ImageSize {
-  if (w <= 250) return 'thumbnail';
-  if (w <= 1440) return 'preview';
-  return 'original';
-}
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // ── Rate limiting ──────────────────────────────────
@@ -47,19 +37,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
   }
 
-  // Determine size: prefer explicit ?size=, then infer from ?w=
-  const sizeParam = request.nextUrl.searchParams.get('size');
-  const widthParam = request.nextUrl.searchParams.get('w');
-
-  let size: ImageSize = 'preview';
-  if (sizeParam && VALID_SIZES.includes(sizeParam as ImageSize)) {
-    size = sizeParam as ImageSize;
-  } else if (widthParam) {
-    const w = parseInt(widthParam, 10);
-    if (!isNaN(w) && w > 0) {
-      size = widthToSize(w);
-    }
-  }
+  const size = resolveImageSize(
+    request.nextUrl.searchParams.get('size'),
+    request.nextUrl.searchParams.get('w'),
+  );
 
   // ── Browser Cache Optimization ─────────────────────
   // Use the opaque token to generate a safe ETag without leaking Immich UUIDs
