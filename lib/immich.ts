@@ -57,6 +57,26 @@ export interface ImmichExifInfo {
 
 export type ImageSize = 'thumbnail' | 'preview' | 'original';
 
+/**
+ * Thrown when Immich could not answer: transport failure, an error status, or
+ * a non-JSON body where JSON was requested.
+ *
+ * This is deliberately distinct from a `null` return, which means Immich *did*
+ * answer and said the resource does not exist. Conflating the two made every
+ * album URL render a hard 404 while Immich was down — including albums that
+ * exist — because the page calls `notFound()` on a null album. Only 404/410
+ * are treated as "gone"; everything else is an outage and must surface as one.
+ */
+export class ImmichUnavailableError extends Error {
+  readonly status?: number;
+
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = 'ImmichUnavailableError';
+    this.status = status;
+  }
+}
+
 /** Enriched subpage with album metadata (for rendering cards). */
 export interface SubpageSummary {
   name: string;
@@ -84,8 +104,10 @@ class ImmichClient {
     if (this.config.needsSetup) return null;
 
     const url = `${this.config.immich.apiUrl}${endpoint}`;
+
+    let res: Response;
     try {
-      const res = await fetch(url, {
+      res = await fetch(url, {
         method: body === undefined ? 'GET' : 'POST',
         headers: {
           'x-api-key': this.config.immich.apiKey,
@@ -94,20 +116,39 @@ class ImmichClient {
         },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       });
-
-      if (!res.ok) {
-        console.error(`[Immich] ${res.status} ${res.statusText} for ${endpoint}`);
-        return null;
-      }
-
-      const contentType = res.headers.get('Content-Type') || '';
-      if (contentType.includes('application/json')) {
-        return (await res.json()) as T;
-      }
-      return null;
     } catch (error) {
       console.error(`[Immich] Failed to reach ${url}:`, error);
+      throw new ImmichUnavailableError(`Cannot reach Immich for ${endpoint}`);
+    }
+
+    if (!res.ok) {
+      console.error(`[Immich] ${res.status} ${res.statusText} for ${endpoint}`);
+      // Only "gone" means gone. A 5xx, a rate limit, or a rejected API key all
+      // mean Immich cannot serve us right now — rendering those as a missing
+      // album would tell visitors and crawlers the content no longer exists.
+      if (res.status !== 404 && res.status !== 410) {
+        throw new ImmichUnavailableError(
+          `Immich returned ${res.status} ${res.statusText} for ${endpoint}`,
+          res.status,
+        );
+      }
       return null;
+    }
+
+    const contentType = res.headers.get('Content-Type') || '';
+    if (!contentType.includes('application/json')) {
+      // We always send Accept: application/json. Anything else is a gateway or
+      // proxy error page, not a valid answer about the resource.
+      throw new ImmichUnavailableError(
+        `Immich returned non-JSON (${contentType || 'no Content-Type'}) for ${endpoint}`,
+      );
+    }
+
+    try {
+      return (await res.json()) as T;
+    } catch (error) {
+      console.error(`[Immich] Malformed JSON from ${url}:`, error);
+      throw new ImmichUnavailableError(`Immich returned malformed JSON for ${endpoint}`);
     }
   }
 
@@ -514,8 +555,14 @@ class ImmichClient {
    * Check if the Immich server is reachable.
    */
   async ping(): Promise<boolean> {
-    const res = await this.request<{ res: string }>('/server/ping');
-    return !!res;
+    try {
+      const res = await this.request<{ res: string }>('/server/ping');
+      return !!res;
+    } catch {
+      // "Is Immich reachable?" — unreachable is the answer, not an exception.
+      // Both callers (/api/health, /api/admin/status) render this as a status.
+      return false;
+    }
   }
 }
 

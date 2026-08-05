@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { immich } from '@/lib/immich';
+import { immich, ImmichUnavailableError } from '@/lib/immich';
 import { decodeAssetId } from '@/lib/tokens';
 import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
@@ -37,7 +37,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
   }
 
-  const asset = await immich.getAssetInfo(assetId);
+  let asset;
+  try {
+    asset = await immich.getAssetInfo(assetId);
+  } catch (error) {
+    // Immich is down, not "this asset has no EXIF" — say so, so the lightbox
+    // can retry rather than caching a 404 for a photo that does have data.
+    if (error instanceof ImmichUnavailableError) {
+      console.error(`[EXIF API] Immich unavailable for ${assetId}:`, error.message);
+      return NextResponse.json(
+        { error: 'Immich is currently unavailable' },
+        { status: 503, headers: { 'Retry-After': '30', 'Cache-Control': 'no-store' } },
+      );
+    }
+    throw error;
+  }
+
   if (!asset?.exifInfo) {
     return NextResponse.json({ error: 'No EXIF data' }, { status: 404 });
   }

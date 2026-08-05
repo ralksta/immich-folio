@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { immich } from '../immich';
+import { immich, ImmichUnavailableError } from '../immich';
 import * as config from '../config';
 import { cache } from '../cache';
 
@@ -56,6 +56,94 @@ describe('ImmichClient', () => {
 
       const result = await (immich as any).request('/test');
       expect(result).toBeNull();
+    });
+
+    // A null return means "Immich answered: this does not exist" and the page
+    // turns it into notFound(). Every other failure must be distinguishable,
+    // or an outage renders a hard 404 for albums that do exist.
+    describe('distinguishes "gone" from "unavailable"', () => {
+      it('returns null for 410 Gone', async () => {
+        mockFetch.mockResolvedValueOnce({ ok: false, status: 410, statusText: 'Gone' });
+        await expect((immich as any).request('/test')).resolves.toBeNull();
+      });
+
+      it('throws on a 5xx instead of reporting the resource as missing', async () => {
+        mockFetch.mockResolvedValueOnce({
+          ok: false,
+          status: 503,
+          statusText: 'Service Unavailable',
+        });
+
+        await expect((immich as any).request('/test')).rejects.toBeInstanceOf(
+          ImmichUnavailableError,
+        );
+      });
+
+      it('throws on a rejected API key rather than 404-ing every album', async () => {
+        mockFetch.mockResolvedValueOnce({ ok: false, status: 401, statusText: 'Unauthorized' });
+        await expect((immich as any).request('/test')).rejects.toBeInstanceOf(
+          ImmichUnavailableError,
+        );
+      });
+
+      it('throws when the network is unreachable', async () => {
+        mockFetch.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+        await expect((immich as any).request('/test')).rejects.toBeInstanceOf(
+          ImmichUnavailableError,
+        );
+      });
+
+      it('throws when a gateway returns an HTML error page instead of JSON', async () => {
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          headers: { get: () => 'text/html' },
+          json: async () => ({}),
+        });
+
+        await expect((immich as any).request('/test')).rejects.toBeInstanceOf(
+          ImmichUnavailableError,
+        );
+      });
+
+      it('carries the upstream status for logging', async () => {
+        mockFetch.mockResolvedValueOnce({ ok: false, status: 502, statusText: 'Bad Gateway' });
+        await expect((immich as any).request('/test')).rejects.toMatchObject({ status: 502 });
+      });
+    });
+  });
+
+  // The regression this whole error type exists to prevent.
+  describe('outage handling', () => {
+    it('getAlbum propagates an outage instead of returning null', async () => {
+      // Not mockResolvedValueOnce: getAlbum fires the album and metadata-search
+      // requests concurrently, so both need the failing response.
+      mockFetch.mockResolvedValue({ ok: false, status: 500, statusText: 'Internal Server Error' });
+
+      await expect(immich.getAlbum('album-1')).rejects.toBeInstanceOf(ImmichUnavailableError);
+    });
+
+    it('getAlbums propagates an outage instead of returning an empty list', async () => {
+      // Returning [] here would render the homepage as "this gallery has no
+      // albums" while Immich is merely down.
+      mockFetch.mockResolvedValue({ ok: false, status: 500, statusText: 'Internal Server Error' });
+
+      await expect(immich.getAlbums()).rejects.toBeInstanceOf(ImmichUnavailableError);
+    });
+
+    it('a failed album does not leave a stale entry in the in-flight map', async () => {
+      mockFetch.mockResolvedValue({ ok: false, status: 500, statusText: 'Internal Server Error' });
+      await expect(immich.getAlbum('album-1')).rejects.toBeInstanceOf(ImmichUnavailableError);
+
+      // A stranded pending promise would make every later call replay the
+      // failure forever, even after Immich recovers.
+      expect((immich as any).pendingAlbumPromises.has('album-1')).toBe(false);
+      expect((immich as any).pendingAlbumsPromise).toBeNull();
+    });
+
+    it('ping reports unreachable as false rather than throwing', async () => {
+      // /api/health and /api/admin/status render this as a status field.
+      mockFetch.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+      await expect(immich.ping()).resolves.toBe(false);
     });
   });
 

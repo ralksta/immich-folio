@@ -10,6 +10,7 @@ import { getConfig } from '@/lib/config';
 import { imageUrl } from '@/lib/urls';
 import { isAuthenticated } from '@/lib/auth';
 import { getMapData } from '@/lib/mapService';
+import { ImmichUnavailableError } from '@/lib/immich';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -43,7 +44,21 @@ export async function GET(request: NextRequest) {
   const cookieStore = await cookies();
   const getCookie = (name: string) => cookieStore.get(name)?.value;
 
-  const locations = await getMapData();
+  let locations;
+  try {
+    locations = await getMapData();
+  } catch (error) {
+    // Without this the map would render as "no photos anywhere" during an
+    // Immich outage, which is indistinguishable from a gallery with no GPS data.
+    if (error instanceof ImmichUnavailableError) {
+      console.error('[Map API] Immich unavailable:', error.message);
+      return NextResponse.json(
+        { error: 'Immich is currently unavailable' },
+        { status: 503, headers: { 'Retry-After': '30', 'Cache-Control': 'no-store' } },
+      );
+    }
+    throw error;
+  }
 
   // Filter locations and albums based on auth.
   // An album is visible only if BOTH its subpage gate (if any) and its own
