@@ -7,6 +7,7 @@ import { promises as fsPromises } from 'fs';
 import { join } from 'path';
 import yaml from 'js-yaml';
 import Image from 'next/image';
+import type { Metadata } from 'next';
 import { imageUrl, assetPlaceholder } from '@/lib/urls';
 import { immich } from '@/lib/immich';
 import './about.css';
@@ -44,6 +45,26 @@ async function getAboutContent() {
   }
 
   return { meta, body: body.trim() };
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { meta, body } = await getAboutContent();
+  const title = meta.name ? `About — ${meta.name}` : 'About';
+  const description = body ? body.slice(0, 160).replace(/\s+/g, ' ').trim() : undefined;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  };
 }
 
 export default async function AboutPage() {
