@@ -50,7 +50,7 @@ function buildPhotoHash(index: number): string {
   return `#photo-${index + 1}`; // 1-indexed for user-friendliness
 }
 
-export function PhotoGrid({ assets, layout = 'masonry', gridStyle }: PhotoGridProps) {
+export function PhotoGrid({ assets, layout = 'masonry', gridStyle, watermark }: PhotoGridProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   // ── Initial hash check (Client-only to avoid hydration mismatch) ──
