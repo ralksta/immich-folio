@@ -13,13 +13,18 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { Footer } from '@/components/Footer';
 import { SetupScreen } from '@/components/SetupScreen';
-import { getConfig, getGoogleFontsUrl, AppConfig } from '@/lib/config';
+import { getConfigOrNull, getGoogleFontsUrl, AppConfig } from '@/lib/config';
 import { isAdminPath } from '@/lib/admin/paths';
 // DevToolbarLoader is a Client Component (ssr: false is only allowed there)
 import { DevToolbarLoader } from '@/components/DevToolbarLoader';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const config = getConfig();
+  const config = getConfigOrNull();
+  if (!config) {
+    // Nothing to describe, and nothing that should be indexed while broken.
+    return { title: 'Setup Required', robots: { index: false, follow: false } };
+  }
+
   const siteTitle = config.seo.title;
   const siteDescription = config.seo.description;
   const robots = {
@@ -50,7 +55,22 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const config = getConfig();
+  const config = getConfigOrNull();
+  const pathname = (await headers()).get('x-pathname');
+
+  // gallery.yaml exists but cannot be derived — an empty gallery, a nameless
+  // subpage, a subpage with no albums. The admin page builder can write all
+  // three, and this layout is what /admin renders inside, so throwing here
+  // would take down the only tool that can undo the save. Render the minimum
+  // that keeps /admin usable and show everyone else the setup screen.
+  if (!config) {
+    return (
+      <html lang="en" suppressHydrationWarning>
+        <body>{isAdminPath(pathname) ? children : <SetupScreen />}</body>
+      </html>
+    );
+  }
+
   const { theme } = config;
   const fontsUrl = getGoogleFontsUrl(theme);
 
@@ -67,7 +87,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   // /admin stays reachable during setup — it is the tool that completes the
   // setup, so the setup screen must not lock it out (#326).
-  const pathname = (await headers()).get('x-pathname');
   if ((config as AppConfig & { needsSetup?: boolean }).needsSetup && !isAdminPath(pathname)) {
     return (
       <html lang="en" suppressHydrationWarning>

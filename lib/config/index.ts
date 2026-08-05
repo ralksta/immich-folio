@@ -21,6 +21,34 @@ export function invalidateConfigCache(): void {
   clearYamlCache();
 }
 
+/**
+ * getConfig(), but returns null instead of throwing on a gallery.yaml that
+ * cannot be derived.
+ *
+ * getConfig() throws for three shapes the admin page builder is able to write:
+ * a gallery with neither albums nor subpages, a subpage with no name, and a
+ * subpage with neither albums nor sections. A throw inside a *layout* is not
+ * caught by app/error.tsx — that needs a global-error boundary — so the site
+ * and /admin would go down together, locking the user out of the only tool that
+ * can undo the save. That is issue #326's failure mode reached through an
+ * invalid config rather than a missing one.
+ *
+ * Callers should treat null exactly like `needsSetup`: show the setup screen,
+ * and keep /admin reachable.
+ */
+export function getConfigOrNull(): AppConfig | null {
+  try {
+    return getConfig();
+  } catch (error) {
+    console.error(
+      '[Folio] content/gallery.yaml could not be loaded — serving the setup screen. ' +
+        'Fix the file or restore a backup from content/.backups/:',
+      error,
+    );
+    return null;
+  }
+}
+
 /** Converts raw YAML grid overrides into a typed partial GridConfig. */
 export function buildSubpageGrid(raw?: {
   columns?: number;
