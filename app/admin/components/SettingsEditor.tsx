@@ -49,6 +49,16 @@ interface Settings {
     noIndex?: boolean;
     noFollow?: boolean;
   };
+  protection?: {
+    disableRightClick?: boolean;
+    disableImageDrag?: boolean;
+  };
+  watermark?: {
+    enabled?: boolean;
+    text?: string;
+    opacity?: number;
+    position?: 'bottom-right' | 'bottom-left' | 'center';
+  };
 }
 
 const PRESETS = ['studio', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
@@ -259,6 +269,7 @@ export default function SettingsEditor() {
     { id: 'footer', label: 'Footer' },
     { id: 'legal', label: 'Legal' },
     { id: 'seo', label: 'SEO' },
+    { id: 'security', label: 'Security & Protection' },
   ];
 
   return (
@@ -1020,6 +1031,106 @@ export default function SettingsEditor() {
                   </div>
                 </button>
               </div>
+            </div>
+          )}
+
+          {activeSection === 'security' && (
+            <div className="settings-panel">
+              <div className="settings-section-header">
+                <h3><Icons.IconShieldCheck size={18} /> Asset Protection &amp; Watermark</h3>
+                <p className="settings-section-sub">Configure image protection rules, right-click prevention, and watermark overlay.</p>
+              </div>
+
+              <div className="admin-toggle-cards-grid">
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${settings.protection?.disableRightClick === true ? 'active' : ''}`}
+                  onClick={() => update('protection.disableRightClick', !settings.protection?.disableRightClick)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title"><Icons.IconLock size={16} /> Disable Right-Click Menu</span>
+                    <span className="toggle-card-desc">Prevents context menu on portfolio images to hinder unauthorized downloads</span>
+                  </div>
+                  <div className={`switch-toggle ${settings.protection?.disableRightClick === true ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${settings.protection?.disableImageDrag === true ? 'active' : ''}`}
+                  onClick={() => update('protection.disableImageDrag', !settings.protection?.disableImageDrag)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title"><Icons.IconBan size={16} /> Disable Image Dragging</span>
+                    <span className="toggle-card-desc">Prevents visitors from dragging images off the portfolio page</span>
+                  </div>
+                  <div className={`switch-toggle ${settings.protection?.disableImageDrag === true ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+              </div>
+
+              <div className="settings-section-divider" />
+
+              <div className="settings-section-header">
+                <h3><Icons.IconSparkles size={18} /> Dynamic Watermark Overlay</h3>
+                <p className="settings-section-sub">Overlay copyright branding text on Lightbox images.</p>
+              </div>
+
+              <div className="admin-toggle-cards-grid" style={{ marginBottom: '1.25rem' }}>
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${settings.watermark?.enabled === true ? 'active' : ''}`}
+                  onClick={() => update('watermark.enabled', !settings.watermark?.enabled)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title"><Icons.IconFrame size={16} /> Enable Watermark</span>
+                    <span className="toggle-card-desc">Overlay copyright text on portfolio image views</span>
+                  </div>
+                  <div className={`switch-toggle ${settings.watermark?.enabled === true ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+              </div>
+
+              {settings.watermark?.enabled && (
+                <>
+                  <div className="admin-field">
+                    <label>Watermark Text</label>
+                    <input
+                      value={settings.watermark?.text || ''}
+                      onChange={(e) => update('watermark.text', e.target.value)}
+                      placeholder="© Ralfo Photography"
+                    />
+                  </div>
+
+                  <div className="admin-field-row">
+                    <div className="admin-field">
+                      <label>Position</label>
+                      <select
+                        value={settings.watermark?.position || 'bottom-right'}
+                        onChange={(e) => update('watermark.position', e.target.value)}
+                      >
+                        <option value="bottom-right">Bottom Right</option>
+                        <option value="bottom-left">Bottom Left</option>
+                        <option value="center">Center Overlay</option>
+                      </select>
+                    </div>
+                    <div className="admin-field">
+                      <label>Opacity ({Math.round((settings.watermark?.opacity ?? 0.3) * 100)}%)</label>
+                      <input
+                        type="range"
+                        min="0.1"
+                        max="0.8"
+                        step="0.05"
+                        value={settings.watermark?.opacity ?? 0.3}
+                        onChange={(e) => update('watermark.opacity', parseFloat(e.target.value))}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>

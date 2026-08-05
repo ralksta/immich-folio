@@ -17,6 +17,8 @@ import { getConfigOrNull, getGoogleFontsUrl, AppConfig } from '@/lib/config';
 import { isAdminPath } from '@/lib/admin/paths';
 // DevToolbarLoader is a Client Component (ssr: false is only allowed there)
 import { DevToolbarLoader } from '@/components/DevToolbarLoader';
+import AssetProtection from '@/components/AssetProtection';
+import AnalyticsTracker from '@/components/AnalyticsTracker';
 
 export async function generateMetadata(): Promise<Metadata> {
   const config = getConfigOrNull();
@@ -145,6 +147,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </main>
             <Footer />
             <ScrollToTop />
+            <AssetProtection
+              disableRightClick={config.protection?.disableRightClick}
+              disableImageDrag={config.protection?.disableImageDrag}
+            />
+            <AnalyticsTracker />
             {process.env.NODE_ENV === 'development' && <DevToolbarLoader />}
           </>
         )}

@@ -171,6 +171,16 @@ export interface SettingsYaml {
   };
   footer?: FooterConfig;
   legal?: Partial<LegalConfig>;
+  protection?: {
+    disableRightClick?: boolean;
+    disableImageDrag?: boolean;
+  };
+  watermark?: {
+    enabled?: boolean;
+    text?: string;
+    opacity?: number;
+    position?: 'bottom-right' | 'bottom-left' | 'center';
+  };
 }
 
 export function slugify(name: string): string {

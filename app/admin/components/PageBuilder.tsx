@@ -374,6 +374,7 @@ export default function PageBuilder() {
   const [dirty, setDirty] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [expandedSubpage, setExpandedSubpage] = useState<number | null>(null);
+  const [drawerMode, setDrawerMode] = useState<'edit' | 'preview'>('edit');
   const [pickerTarget, setPickerTarget] = useState<{
     type: 'standalone' | 'subpage' | 'section';
     subpageIndex?: number;
@@ -1080,12 +1081,31 @@ export default function PageBuilder() {
                         <h3 className="subpage-drawer-title">{sp.title || sp.name || 'Untitled Page'}</h3>
                       </div>
                       <div className="subpage-drawer-header-actions">
+                        <div className="segmented-control" style={{ padding: '2px' }}>
+                          <button
+                            type="button"
+                            className={`segment-btn ${drawerMode === 'edit' ? 'active' : ''}`}
+                            onClick={() => setDrawerMode('edit')}
+                            style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
+                          >
+                            <Icons.Edit /> Edit
+                          </button>
+                          <button
+                            type="button"
+                            className={`segment-btn ${drawerMode === 'preview' ? 'active' : ''}`}
+                            onClick={() => setDrawerMode('preview')}
+                            style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
+                          >
+                            <Icons.Search /> Live Preview
+                          </button>
+                        </div>
+
                         <a
                           href={`/${slugify(sp.name)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="admin-btn admin-btn-xs admin-btn-ghost"
-                          title="Preview live subpage"
+                          title="Open live page in new tab"
                         >
                           /{slugify(sp.name)} ↗
                         </a>
@@ -1100,7 +1120,69 @@ export default function PageBuilder() {
                     </div>
 
                     <div className="subpage-drawer-body">
-                      {/* Name & URL Slug */}
+                      {drawerMode === 'preview' ? (
+                        <div className="drawer-live-preview-panel">
+                          <div className="preview-hero-banner">
+                            <h2 className="preview-hero-title">{sp.title || sp.name || 'Untitled Page'}</h2>
+                            {sp.subtitle && <p className="preview-hero-sub">{sp.subtitle}</p>}
+                          </div>
+
+                          {sp.sections && sp.sections.length > 0 ? (
+                            sp.sections.map((sec, sIdx) => (
+                              <div key={sIdx} className="preview-section-group">
+                                <h3 className="preview-section-title">{sec.title || 'Untitled Section'}</h3>
+                                {sec.description && <p className="preview-section-desc">{sec.description}</p>}
+                                <div className="preview-albums-grid">
+                                  {sec.albums.map((alb, aIdx) => {
+                                    const info = typeof alb === 'object' ? alb : { id: alb };
+                                    const immichAlb = immichAlbums.find((a) => a.id === info.id);
+                                    const thumb = info.coverAssetId || immichAlb?.thumb;
+
+                                    return (
+                                      <div key={aIdx} className="preview-album-tile">
+                                        <div className="preview-album-cover">
+                                          {thumb ? (
+                                            <img src={`/api/admin/thumbnail/${thumb}`} alt="" />
+                                          ) : (
+                                            <div className="subpage-tile-placeholder"><Icons.Folder /></div>
+                                          )}
+                                        </div>
+                                        <span className="preview-album-title">
+                                          {info.customTitle || immichAlb?.name || info.id}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="preview-albums-grid">
+                              {sp.albums.map((alb, aIdx) => {
+                                const info = typeof alb === 'object' ? alb : { id: alb };
+                                const immichAlb = immichAlbums.find((a) => a.id === info.id);
+                                const thumb = info.coverAssetId || immichAlb?.thumb;
+
+                                return (
+                                  <div key={aIdx} className="preview-album-tile">
+                                    <div className="preview-album-cover">
+                                      {thumb ? (
+                                        <img src={`/api/admin/thumbnail/${thumb}`} alt="" />
+                                      ) : (
+                                        <div className="subpage-tile-placeholder"><Icons.Folder /></div>
+                                      )}
+                                    </div>
+                                    <span className="preview-album-title">
+                                      {info.customTitle || immichAlb?.name || info.id}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <>
                       <div className="subpage-drawer-section">
                         <div className="admin-field">
                           <label>Page Name (URL Identifier)</label>
@@ -1280,6 +1362,8 @@ export default function PageBuilder() {
                           </button>
                         )}
                       </div>
+                        </>
+                      )}
                     </div>
 
                     <div className="subpage-drawer-footer">

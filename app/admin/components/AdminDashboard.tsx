@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import PageBuilder from './PageBuilder';
 import SettingsEditor from './SettingsEditor';
+import AnalyticsView from './AnalyticsView';
 import BackupManagerModal from './BackupManagerModal';
 import * as Icons from './Icons';
 
@@ -10,7 +11,7 @@ interface Props {
   onLogout: () => void;
 }
 
-type Tab = 'pages' | 'settings';
+type Tab = 'pages' | 'settings' | 'analytics';
 
 export default function AdminDashboard({ onLogout }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('pages');
@@ -76,6 +77,12 @@ export default function AdminDashboard({ onLogout }: Props) {
               onClick={() => setActiveTab('settings')}
             >
               Settings
+            </button>
+            <button
+              className={`admin-tab ${activeTab === 'analytics' ? 'active' : ''}`}
+              onClick={() => setActiveTab('analytics')}
+            >
+              Analytics
             </button>
           </nav>
         </div>
@@ -188,6 +195,7 @@ export default function AdminDashboard({ onLogout }: Props) {
       <main className="admin-main">
         {activeTab === 'pages' && <PageBuilder />}
         {activeTab === 'settings' && <SettingsEditor />}
+        {activeTab === 'analytics' && <AnalyticsView />}
       </main>
 
       <BackupManagerModal
