@@ -10,7 +10,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import { Lightbox } from '@/components/Lightbox';
+import { Lightbox, type LightboxWatermark } from '@/components/Lightbox';
 import { FadeIn } from '@/components/FadeIn';
 
 export interface PhotoItem {
