@@ -10,13 +10,13 @@
  *     with back-link to the subpage
  */
 
-import Link from 'next/link';
-import Image from 'next/image';
 import { cookies } from 'next/headers';
 import type { Metadata } from 'next';
 import { immich, type ImmichAsset } from '@/lib/immich';
 import { notFound } from 'next/navigation';
-import { PhotoGrid, type PhotoItem } from './PhotoGrid';
+// Only the type: rendering moved to AlbumDetailView/SubpageGridView, which
+// import the component themselves.
+import type { PhotoItem } from './PhotoGrid';
 import {
   imageUrl,
   exifUrl,
@@ -29,7 +29,6 @@ import { encodeAssetId } from '@/lib/tokens';
 import { getConfig, type GridConfig } from '@/lib/config';
 import { isProtected, isAuthenticated } from '@/lib/auth';
 import PasswordGate from '@/components/PasswordGate';
-import { BackLink } from '@/components/BackLink';
 import { AlbumDetailView } from './AlbumDetailView';
 import { SubpageGridView } from './SubpageGridView';
 
