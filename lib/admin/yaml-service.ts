@@ -103,16 +103,32 @@ export async function listBackups(filename: string): Promise<string[]> {
   }
 }
 
+/**
+ * Names this service actually produces, and the only ones it will restore from.
+ *
+ * `[\w-]` matches neither `/` nor `.`, and the anchors leave no room for a
+ * prefix, so a `..` segment cannot match. Without this, `path.join` happily
+ * resolves `../../../../etc/passwd` and the copy below writes an arbitrary
+ * readable file over content/settings.yaml — which the admin GET endpoints then
+ * hand straight back.
+ */
+const BACKUP_FILENAME = /^(gallery|settings)\.yaml\.[\w-]+\.(pre-restore\.)?bak$/;
+
 /** Restore a specific backup. */
 export async function restoreBackup(backupFilename: string): Promise<void> {
+  const match = BACKUP_FILENAME.exec(backupFilename);
+  // The basename check is redundant against the regex above, and kept
+  // deliberately: it keeps the guarantee if that pattern is ever loosened.
+  if (!match || path.basename(backupFilename) !== backupFilename) {
+    throw new Error(`Refusing to restore from an unrecognised backup name: "${backupFilename}"`);
+  }
+
   const backupDir = path.join(CONTENT_DIR, '.backups');
   const backupPath = path.join(backupDir, backupFilename);
 
-  // Determine the original filename
-  const originalFilename = backupFilename.includes('gallery.yaml')
-    ? 'gallery.yaml'
-    : 'settings.yaml';
-
+  // Derived from the matched group, never from a substring search on the input:
+  // `includes('gallery.yaml')` would let the caller pick the destination.
+  const originalFilename = `${match[1]}.yaml`;
   const targetPath = path.join(CONTENT_DIR, originalFilename);
 
   // Create a backup of current state first
