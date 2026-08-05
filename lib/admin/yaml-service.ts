@@ -11,6 +11,9 @@ import type { GalleryYaml, SettingsYaml } from '../config/schema';
 const CONTENT_DIR = path.join(process.cwd(), 'content');
 const MAX_BACKUPS = 10; // Keep last 10 backups per file
 
+/** Disambiguates temp files within one process; the pid covers across them. */
+let tmpCounter = 0;
+
 /** Read gallery.yaml and return parsed content. */
 export async function readGalleryYaml(): Promise<GalleryYaml | null> {
   try {
@@ -71,10 +74,23 @@ async function writeYamlFile(filename: string, data: unknown): Promise<void> {
       sortKeys: false,
     });
 
-  // Atomic write: write to temp file, then rename
-  const tmpPath = `${filePath}.tmp`;
-  await fs.writeFile(tmpPath, content, 'utf8');
-  await fs.rename(tmpPath, filePath);
+  // Atomic write: write to a *unique* temp file, then rename.
+  //
+  // The rename is what makes this atomic; the temp filename is what did not.
+  // With a constant `${filePath}.tmp`, two saves of the same file in flight at
+  // once shared it — the second writeFile could interleave with the first's
+  // rename, leaving one save's bytes published under the other's, or a
+  // truncated mix. A double-clicked Save in the page builder is enough.
+  const tmpPath = `${filePath}.${process.pid}.${++tmpCounter}.tmp`;
+  try {
+    await fs.writeFile(tmpPath, content, 'utf8');
+    await fs.rename(tmpPath, filePath);
+  } catch (err) {
+    // Do not leave litter in content/ behind a failed save. Cleanup failure is
+    // not worth masking the real error with.
+    await fs.unlink(tmpPath).catch(() => {});
+    throw err;
+  }
 
   console.log(`[Admin] ✅ Saved ${filename}`);
 }
