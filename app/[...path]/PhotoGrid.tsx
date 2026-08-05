@@ -18,7 +18,6 @@ export interface PhotoItem {
   type: 'image' | 'video';
   thumbUrl: string;
   previewUrl: string;
-  originalUrl: string;
   videoUrl?: string;
   exifUrl: string;
   blurDataURL?: string;

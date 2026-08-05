@@ -103,7 +103,6 @@ function toPhotoItems(assets: ImmichAsset[], showExif: boolean): PhotoItem[] {
         type: isVideo ? 'video' : 'image',
         thumbUrl: imageUrl(a.id, 'preview'),
         previewUrl: imageUrl(a.id, 'preview'),
-        originalUrl: imageUrl(a.id, 'original'),
         ...(isVideo ? { videoUrl: videoUrl(a.id) } : {}),
         exifUrl: exifUrl(a.id),
         ...(ph ? { blurDataURL: ph.blurDataURL, dominantColor: ph.dominantColor } : {}),
