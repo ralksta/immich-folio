@@ -351,6 +351,8 @@ export function getConfig(): AppConfig {
     },
     map: settings.map === true,
     transitions: settings.transitions !== false,
+    protection: settings.protection,
+    watermark: settings.watermark,
     albumOverrides,
     albumDescriptions,
     albumPasswords,

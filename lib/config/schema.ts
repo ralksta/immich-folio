@@ -104,6 +104,16 @@ export interface AppConfig {
   rateLimitRpm: number;
   trustedProxyHops: number;
   needsSetup?: boolean;
+  protection?: {
+    disableRightClick?: boolean;
+    disableImageDrag?: boolean;
+  };
+  watermark?: {
+    enabled?: boolean;
+    text?: string;
+    opacity?: number;
+    position?: 'bottom-right' | 'bottom-left' | 'center';
+  };
 }
 
 export interface AlbumEntryObject {
