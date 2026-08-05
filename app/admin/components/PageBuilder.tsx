@@ -1305,16 +1305,6 @@ export default function PageBuilder() {
             </div>
           </div>
         )}
-                      >
-                        + Add Album (outside sections)
-                      </button>
-                    )}
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-        )}
       </section>
 
       {/* Album Picker Modal */}
