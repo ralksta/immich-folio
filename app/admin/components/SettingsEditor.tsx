@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Settings {
   title?: string;
@@ -101,26 +102,43 @@ const THEME_INFO: Record<string, { desc: string; label: string; accent: string; 
 };
 
 export default function SettingsEditor() {
+  const router = useRouter();
   const [settings, setSettings] = useState<Settings>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [activeSection, setActiveSection] = useState('general');
+  const [currentMode, setCurrentMode] = useState<'dark' | 'light'>('dark');
 
   useEffect(() => {
     loadSettings();
+    if (typeof window !== 'undefined') {
+      const mode = (document.documentElement.getAttribute('data-theme') as 'dark' | 'light') || 'dark';
+      setCurrentMode(mode);
+    }
   }, []);
 
-  // Sync picked accent color to the admin panel UI immediately for live premium feel
+  // Sync picked preset & accent color to document element immediately for live feedback
   useEffect(() => {
-    if (settings.theme?.accent) {
-      document.documentElement.style.setProperty('--admin-accent', settings.theme.accent);
+    if (typeof document !== 'undefined') {
+      if (settings.theme?.preset) {
+        document.documentElement.setAttribute('data-preset', settings.theme.preset);
+      }
+      if (settings.theme?.accent) {
+        document.documentElement.style.setProperty('--accent', settings.theme.accent);
+        document.documentElement.style.setProperty('--admin-accent', settings.theme.accent);
+      }
     }
-    return () => {
-      document.documentElement.style.removeProperty('--admin-accent');
-    };
-  }, [settings.theme?.accent]);
+  }, [settings.theme?.preset, settings.theme?.accent]);
+
+  const toggleMode = (mode: 'dark' | 'light') => {
+    setCurrentMode(mode);
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', mode);
+      localStorage.setItem('theme', mode);
+    }
+  };
 
   // ── Keyboard shortcut: ⌘+S / Ctrl+S ─────────────────────────
   const handleSaveRef = useCallback(() => {
@@ -212,6 +230,7 @@ export default function SettingsEditor() {
         const data = await res.json();
         setDirty(false);
         setSaveMessage(data.message || 'Saved!');
+        router.refresh();
         setTimeout(() => setSaveMessage(''), 5000);
       } else {
         const err = await res.json();
@@ -376,6 +395,32 @@ export default function SettingsEditor() {
                       </button>
                     );
                   })}
+                </div>
+              </div>
+              <div className="admin-field">
+                <label>Color Mode (Light / Dark Preview)</label>
+                <p style={{ fontSize: '0.78rem', color: 'var(--admin-text-muted)', margin: '0.25rem 0 0.6rem', lineHeight: '1.4' }}>
+                  Theme presets like <strong>Editorial</strong>, <strong>Minimal</strong> &amp; <strong>Classic</strong> feature warm light/cream backgrounds (e.g. <code>#faf8f4</code>) in Light Mode and charcoal in Dark Mode.
+                </p>
+                <div className="radio-group">
+                  <label>
+                    <input
+                      type="radio"
+                      name="themeMode"
+                      checked={currentMode === 'light'}
+                      onChange={() => toggleMode('light')}
+                    />
+                    ☀️ Light Mode (Cream / Beige)
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name="themeMode"
+                      checked={currentMode === 'dark'}
+                      onChange={() => toggleMode('dark')}
+                    />
+                    🌙 Dark Mode (Charcoal)
+                  </label>
                 </div>
               </div>
               <div className="admin-field">
