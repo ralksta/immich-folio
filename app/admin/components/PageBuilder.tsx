@@ -1134,9 +1134,8 @@ export default function PageBuilder() {
                                 {sec.description && <p className="preview-section-desc">{sec.description}</p>}
                                 <div className="preview-albums-grid">
                                   {sec.albums.map((alb, aIdx) => {
-                                    const info = typeof alb === 'object' ? alb : { id: alb };
-                                    const immichAlb = immichAlbums.find((a) => a.id === info.id);
-                                    const thumb = info.coverAssetId || immichAlb?.thumb;
+                                    const immichAlb = immichAlbums.find((a) => a.id === alb.id);
+                                    const thumb = alb.heroImage || immichAlb?.thumb;
 
                                     return (
                                       <div key={aIdx} className="preview-album-tile">
@@ -1148,7 +1147,7 @@ export default function PageBuilder() {
                                           )}
                                         </div>
                                         <span className="preview-album-title">
-                                          {info.customTitle || immichAlb?.name || info.id}
+                                          {alb.title || immichAlb?.name || alb.id}
                                         </span>
                                       </div>
                                     );
@@ -1159,9 +1158,8 @@ export default function PageBuilder() {
                           ) : (
                             <div className="preview-albums-grid">
                               {sp.albums.map((alb, aIdx) => {
-                                const info = typeof alb === 'object' ? alb : { id: alb };
-                                const immichAlb = immichAlbums.find((a) => a.id === info.id);
-                                const thumb = info.coverAssetId || immichAlb?.thumb;
+                                const immichAlb = immichAlbums.find((a) => a.id === alb.id);
+                                const thumb = alb.heroImage || immichAlb?.thumb;
 
                                 return (
                                   <div key={aIdx} className="preview-album-tile">
@@ -1173,7 +1171,7 @@ export default function PageBuilder() {
                                       )}
                                     </div>
                                     <span className="preview-album-title">
-                                      {info.customTitle || immichAlb?.name || info.id}
+                                      {alb.title || immichAlb?.name || alb.id}
                                     </span>
                                   </div>
                                 );
