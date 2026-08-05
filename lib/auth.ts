@@ -19,14 +19,34 @@ function isBcryptHash(str: string): boolean {
 }
 
 /**
+ * scrypt on the libuv threadpool rather than the main thread.
+ *
+ * scryptSync costs ~23ms per call, and that is 23ms during which the process
+ * serves nothing else. The /api/auth rate limit (10/min) is keyed on the client
+ * IP, but with the default TRUSTED_PROXY_HOPS=0 that IP comes from a spoofable
+ * header (see lib/rate-limit.ts), so an attacker rotating the header gets
+ * effectively unlimited buckets — each request buying 23ms of dead process.
+ * Running async does not stop the spoofing, but it removes the amplification
+ * that made it worth doing.
+ */
+function scryptAsync(password: string, salt: string, keylen: number): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    crypto.scrypt(password, salt, keylen, (err, derivedKey) => {
+      if (err) reject(err);
+      else resolve(derivedKey);
+    });
+  });
+}
+
+/**
  * Native SCrypt verify (format: 'scrypt:salt:hash_hex')
  */
-function verifyScrypt(password: string, stored: string): boolean {
+async function verifyScrypt(password: string, stored: string): Promise<boolean> {
   if (!stored.startsWith('scrypt:')) return false;
 
   try {
     const [, salt, hashHex] = stored.split(':');
-    const key = crypto.scryptSync(password, salt, 64);
+    const key = await scryptAsync(password, salt, 64);
     const expectedKey = Buffer.from(hashHex, 'hex');
     if (key.length !== expectedKey.length) return false;
     return crypto.timingSafeEqual(key, expectedKey);
@@ -38,9 +58,9 @@ function verifyScrypt(password: string, stored: string): boolean {
 /**
  * Helper to generate an scrypt string to print in logs.
  */
-function generateScryptHash(password: string): string {
+async function generateScryptHash(password: string): Promise<string> {
   const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+  const hash = (await scryptAsync(password, salt, 64)).toString('hex');
   return `scrypt:${salt}:${hash}`;
 }
 
@@ -94,11 +114,11 @@ export function isProtected(key: string, type: 'subpage' | 'album' = 'subpage'):
  * Validate a password attempt and return a Set-Cookie header value on success.
  * Returns null if the password is wrong.
  */
-export function authenticate(
+export async function authenticate(
   key: string,
   password: string,
   type: 'subpage' | 'album' = 'subpage',
-): string | null {
+): Promise<string | null> {
   const storedPassword = findPassword(key, type);
   if (!storedPassword) return null;
 
@@ -115,7 +135,7 @@ export function authenticate(
   }
 
   if (storedPassword.startsWith('scrypt:')) {
-    isValid = verifyScrypt(password, storedPassword);
+    isValid = await verifyScrypt(password, storedPassword);
   } else {
     // Plaintext fallback (deprecated)
     // Hash both to a fixed length before constant-time comparison to prevent timing and length attacks
@@ -130,7 +150,7 @@ export function authenticate(
     isValid = crypto.timingSafeEqual(attemptHash, storedHash);
 
     if (isValid) {
-      const recommendedHash = generateScryptHash(storedPassword);
+      const recommendedHash = await generateScryptHash(storedPassword);
       console.warn(
         `\n⚠️  SECURITY WARNING: ${type === 'subpage' ? 'Subpage' : 'Album'} "${key}" is using a plaintext password in gallery.yaml.\n` +
           `   Please replace it with this native secure hash:\n\n   ${recommendedHash}\n`,

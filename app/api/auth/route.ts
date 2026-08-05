@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const setCookie = authenticate(slug, password, type);
+    const setCookie = await authenticate(slug, password, type);
     if (!setCookie) {
       return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
     }
