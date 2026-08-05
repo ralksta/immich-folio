@@ -16,7 +16,10 @@ vi.mock('../config', async () => {
       subpages: [],
       albumOverrides: { 'album-1': 'Override Name' },
       albumDescriptions: {},
-      cacheTtl: 0,
+      // Non-zero: a 0 TTL expires an entry in the same millisecond it is
+      // written, which would make any caching assertion flaky. Isolation comes
+      // from the cache.clear() in beforeEach, not from an unusable TTL.
+      cacheTtl: 60_000,
       immichTimeoutMs: 15000,
     }),
   };
@@ -247,6 +250,64 @@ describe('ImmichClient', () => {
 
       const result = await immich.streamVideo('asset-1', 'bytes=0-1023');
       expect(result?.status).toBe(206);
+    });
+  });
+
+  // Measured before the fix: 5 sequential lookups of a missing asset produced 5
+  // upstream fetches. The homepage resolves every gallery.yaml hero ID on each
+  // render and is force-dynamic, so a hero photo deleted from Immich cost one
+  // 404 round-trip per page view, indefinitely.
+  describe('negative caching', () => {
+    const notFound = { ok: false, status: 404, statusText: 'Not Found' };
+
+    it('queries Immich once for a repeatedly-requested missing asset', async () => {
+      mockFetch.mockResolvedValue(notFound);
+
+      for (let i = 0; i < 5; i++) {
+        await expect(immich.getAssetInfo('missing-asset')).resolves.toBeNull();
+      }
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('queries Immich once for a repeatedly-requested missing album', async () => {
+      mockFetch.mockResolvedValue(notFound);
+
+      for (let i = 0; i < 3; i++) {
+        await expect(immich.getAlbum('album-1')).resolves.toBeNull();
+      }
+
+      // One album request + one metadata-search request, from the first call only.
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not cache an outage, which would outlive the recovery', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 503, statusText: 'Unavailable' });
+      await expect(immich.getAssetInfo('asset-1')).rejects.toBeInstanceOf(ImmichUnavailableError);
+
+      // Immich recovers: the very next call must reach it, not replay the failure.
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: { get: () => 'application/json' },
+        json: async () => ({ id: 'asset-1' }),
+      });
+
+      await expect(immich.getAssetInfo('asset-1')).resolves.toMatchObject({ id: 'asset-1' });
+    });
+
+    it('a cached absence is cleared by invalidation, so a fix takes effect at once', async () => {
+      mockFetch.mockResolvedValue(notFound);
+      await expect(immich.getAssetInfo('asset-1')).resolves.toBeNull();
+
+      immich.invalidateAll();
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        headers: { get: () => 'application/json' },
+        json: async () => ({ id: 'asset-1' }),
+      });
+
+      await expect(immich.getAssetInfo('asset-1')).resolves.toMatchObject({ id: 'asset-1' });
     });
   });
 

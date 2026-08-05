@@ -68,6 +68,24 @@ export type ImageSize = 'thumbnail' | 'preview' | 'original';
  * are treated as "gone"; everything else is an outage and must surface as one.
  */
 /**
+ * Cache sentinel for "Immich answered, and the resource does not exist".
+ *
+ * The cache cannot tell a miss from a stored null — both read back as null — so
+ * absence is recorded as a distinct object identity instead.
+ *
+ * Only definitive 404/410 answers are stored. An outage throws
+ * `ImmichUnavailableError` and is never cached: pinning one would keep the
+ * gallery broken long after Immich recovered.
+ *
+ * Stored under the normal `cacheTtl` rather than a shorter negative TTL. A 404
+ * from Immich is as authoritative as a 200, and both invalidation paths
+ * (the Immich webhook and the admin panel's save/reload) clear it immediately —
+ * so a corrected asset ID takes effect at once rather than waiting out a TTL.
+ */
+const MISSING = Object.freeze({ __immichMissing: true });
+type Missing = typeof MISSING;
+
+/**
  * `AbortSignal.timeout()` rejects with a `TimeoutError`; an explicit
  * `controller.abort()` rejects with an `AbortError`. Both mean we gave up
  * waiting, and both arrive as a plain DOMException.
@@ -500,8 +518,8 @@ class ImmichClient {
     }
 
     const cacheKey = `album-${albumId}`;
-    const cached = cache.get<ImmichAlbum>(cacheKey);
-    if (cached) return cached;
+    const cached = cache.get<ImmichAlbum | Missing>(cacheKey);
+    if (cached) return cached === MISSING ? null : (cached as ImmichAlbum);
 
     if (this.pendingAlbumPromises.has(albumId)) {
       return this.pendingAlbumPromises.get(albumId)!;
@@ -515,7 +533,10 @@ class ImmichClient {
           this.request<ImmichAlbum>(`/albums/${encodeURIComponent(albumId)}`),
           this.fetchAlbumAssets(albumId),
         ]);
-        if (!album) return null;
+        if (!album) {
+          cache.set(cacheKey, MISSING, this.config.cacheTtl);
+          return null;
+        }
 
         // An album that Immich says has photos but returns none is almost
         // always a server older than 3.0, where metadata search behaves
@@ -587,8 +608,8 @@ class ImmichClient {
    */
   async getAssetInfo(assetId: string): Promise<ImmichAsset | null> {
     const cacheKey = `asset-${assetId}`;
-    const cached = cache.get<ImmichAsset>(cacheKey);
-    if (cached) return cached;
+    const cached = cache.get<ImmichAsset | Missing>(cacheKey);
+    if (cached) return cached === MISSING ? null : (cached as ImmichAsset);
 
     // ⚡ Bolt: Deduplicate concurrent requests for the same asset ID.
     // If a request for this asset is already in flight (e.g. from Promise.all in a grid),
@@ -600,7 +621,13 @@ class ImmichClient {
     const promise = (async () => {
       try {
         const asset = await this.request<ImmichAsset>(`/assets/${encodeURIComponent(assetId)}`);
-        if (!asset) return null;
+        if (!asset) {
+          // The homepage looks up every gallery.yaml hero ID on each render
+          // (app/page.tsx), and those pages are force-dynamic — so a hero photo
+          // deleted from Immich otherwise costs an upstream 404 every time.
+          cache.set(cacheKey, MISSING, this.config.cacheTtl);
+          return null;
+        }
 
         cache.set(cacheKey, asset, this.config.cacheTtl);
         return asset;
