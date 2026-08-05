@@ -189,9 +189,14 @@ describe('ImmichClient', () => {
         );
 
         const pending = immich.streamAsset('asset-1');
+        // Attach the rejection handler *before* advancing timers: the abort
+        // fires during advanceTimersByTimeAsync, and a promise that rejects
+        // with no handler yet attached is reported as an unhandled rejection,
+        // which fails the whole vitest run.
+        const rejects = expect(pending).rejects.toBeInstanceOf(ImmichUnavailableError);
         await vi.advanceTimersByTimeAsync(15001);
 
-        await expect(pending).rejects.toBeInstanceOf(ImmichUnavailableError);
+        await rejects;
         expect(captured?.aborted).toBe(true);
       } finally {
         vi.useRealTimers();
