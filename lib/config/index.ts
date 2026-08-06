@@ -1,4 +1,5 @@
 import { env } from '../env';
+import { getInstallCredentials } from '../install';
 import { resolveAuthSecret } from '../secret';
 import { loadYaml, clearYamlCache, validateUuid } from './parser';
 import { resolveTheme, VALID_LAYOUTS } from './theme';
@@ -25,13 +26,15 @@ export function invalidateConfigCache(): void {
  * getConfig(), but returns null instead of throwing on a gallery.yaml that
  * cannot be derived.
  *
- * getConfig() throws for three shapes the admin page builder is able to write:
- * a gallery with neither albums nor subpages, a subpage with no name, and a
- * subpage with neither albums nor sections. A throw inside a *layout* is not
- * caught by app/error.tsx — that needs a global-error boundary — so the site
- * and /admin would go down together, locking the user out of the only tool that
- * can undo the save. That is issue #326's failure mode reached through an
- * invalid config rather than a missing one.
+ * getConfig() throws for two shapes the admin page builder is able to write:
+ * a subpage with no name, and a subpage with neither albums nor sections. A
+ * throw inside a *layout* is not caught by app/error.tsx — that needs a
+ * global-error boundary — so the site and /admin would go down together,
+ * locking the user out of the only tool that can undo the save. That is issue
+ * #326's failure mode reached through an invalid config rather than a missing
+ * one. (A gallery with no albums and no subpages is deliberately NOT one of
+ * these: the install wizard can finish without selecting an album, so an empty
+ * gallery is a valid, rendered state.)
  *
  * Callers should treat null exactly like `needsSetup`: show the setup screen,
  * and keep /admin reachable.
@@ -86,13 +89,16 @@ export interface GalleryDerivation {
 
 /**
  * Derive the gallery half of AppConfig, throwing on a structure that cannot be
- * represented: no albums and no subpages, a subpage with no name, a subpage
- * with neither albums nor sections.
+ * represented: a subpage with no name, a subpage with neither albums nor
+ * sections. A gallery with no albums and no subpages is NOT an error — the
+ * install wizard may finish without selecting an album, and the empty gallery
+ * still renders (title, hero-less homepage) so the owner can add albums later
+ * in /admin.
  *
  * Extracted from getConfig() so the admin PUT can run the *real* derivation
- * against a proposed gallery before writing it. Re-implementing the three
- * checks in the route would guarantee drift; write-then-verify-then-roll-back
- * would leave a window where other requests read the broken config.
+ * against a proposed gallery before writing it. Re-implementing the checks in
+ * the route would guarantee drift; write-then-verify-then-roll-back would leave
+ * a window where other requests read the broken config.
  */
 export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   const albumOverrides: Record<string, string> = {};
@@ -140,15 +146,6 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   const standaloneAlbumIds = (gallery.albums ?? []).map((entry) =>
     processAlbumEntry(entry, 'gallery.yaml albums'),
   );
-  if (
-    standaloneAlbumIds.length === 0 &&
-    (!gallery.subpages ||
-      (Array.isArray(gallery.subpages)
-        ? gallery.subpages.length === 0
-        : Object.keys(gallery.subpages).length === 0))
-  ) {
-    throw new Error('gallery.yaml must define at least one album or subpage');
-  }
 
   let subpages: SubpageConfig[] = [];
 
@@ -248,9 +245,13 @@ export function getConfig(): AppConfig {
   // worker/process than page rendering, so a per-worker cache goes stale
   // until restart. Freshness comes from the mtime-checked YAML cache in
   // loadYaml() — a statSync per file, negligible next to Immich API calls.
-  const apiUrl = env.IMMICH_API_URL;
-  const apiKey = env.IMMICH_API_KEY;
+  const { apiUrl, apiKey } = getInstallCredentials();
   const authSecret = resolveAuthSecret();
+
+  // The API URL may already end with /api (normalizeApiBase in the wizard,
+  // or a user-supplied env var), or it may be a bare host.  Appending
+  // unconditionally produces a double suffix in the first case.
+  const immichApiUrl = apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
 
   const gallery = loadYaml<GalleryYaml>('gallery.yaml');
   const settings = loadYaml<SettingsYaml>('settings.yaml') || {};
@@ -258,7 +259,7 @@ export function getConfig(): AppConfig {
   if (!gallery || !apiKey || !apiUrl) {
     // Return dummy config if gallery.yaml is missing
     return {
-      immich: { apiUrl: `${apiUrl}/api`, apiKey },
+      immich: { apiUrl: immichApiUrl, apiKey },
       authSecret,
       albums: [],
       standaloneAlbums: [],
@@ -283,6 +284,7 @@ export function getConfig(): AppConfig {
       transitions: false,
       analytics: true,
       proofing: { enabled: false, allowMailto: false },
+      aboutEnabled: true,
       albumOverrides: {},
       albumDescriptions: {},
       albumPasswords: {},
@@ -311,7 +313,7 @@ export function getConfig(): AppConfig {
   const siteSeoTitle = settings.seo?.title || settings.title || env.SITE_TITLE || 'Gallery';
 
   return {
-    immich: { apiUrl: `${apiUrl}/api`, apiKey },
+    immich: { apiUrl: immichApiUrl, apiKey },
     authSecret,
     albums: allAlbumIds,
     standaloneAlbums,
@@ -374,6 +376,7 @@ export function getConfig(): AppConfig {
     },
     protection: settings.protection,
     watermark: settings.watermark,
+    aboutEnabled: settings.about?.enabled !== false,
     albumOverrides,
     albumDescriptions,
     albumPasswords,

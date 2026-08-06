@@ -10,6 +10,8 @@ import Image from 'next/image';
 import type { Metadata } from 'next';
 import { imageUrl, assetPlaceholder } from '@/lib/urls';
 import { immich } from '@/lib/immich';
+import { getConfig } from '@/lib/config';
+import { notFound } from 'next/navigation';
 import './about.css';
 
 export const dynamic = 'force-dynamic';
@@ -68,6 +70,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
+  const config = getConfig();
+  if (!config.aboutEnabled) notFound();
+
   const { meta, body } = await getAboutContent();
 
   // Fetch ThumbHash for portrait placeholder

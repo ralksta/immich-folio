@@ -8,12 +8,13 @@
 
 import crypto from 'crypto';
 import { env } from './env';
+import { getInstallCredentials } from './install';
 
 let _fallbackSecret: string | null = null;
 let _warned = false;
 
 export function resolveAuthSecret(): string {
-  const secret = env.AUTH_SECRET;
+  const secret = env.AUTH_SECRET || getInstallCredentials().authSecret;
   if (secret) return secret;
 
   if (process.env.NODE_ENV === 'production') {

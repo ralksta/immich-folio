@@ -100,6 +100,48 @@ const ROUTES: {
       { params: Promise.resolve({ albumId: 'a1' }) },
     ],
   },
+  {
+    name: 'GET /api/admin/about',
+    path: 'about',
+    load: () => import('../about/route'),
+    method: 'GET',
+    args: () => [],
+  },
+  {
+    name: 'PUT /api/admin/about',
+    path: 'about',
+    load: () => import('../about/route'),
+    method: 'PUT',
+    args: () => [new Request('http://localhost/api/admin/about', { method: 'PUT', body: '{}' })],
+  },
+  {
+    name: 'PUT /api/admin/favicon',
+    path: 'favicon',
+    load: () => import('../favicon/route'),
+    method: 'PUT',
+    args: () => [new Request('http://localhost/api/admin/favicon', { method: 'PUT' })],
+  },
+  {
+    name: 'GET /api/admin/analytics',
+    path: 'analytics',
+    load: () => import('../analytics/route'),
+    method: 'GET',
+    args: () => [],
+  },
+  {
+    name: 'GET /api/admin/backups',
+    path: 'backups',
+    load: () => import('../backups/route'),
+    method: 'GET',
+    args: () => [],
+  },
+  {
+    name: 'POST /api/admin/backups',
+    path: 'backups',
+    load: () => import('../backups/route'),
+    method: 'POST',
+    args: () => [new Request('http://localhost/api/admin/backups', { method: 'POST' })],
+  },
 ];
 
 describe('admin route guards', () => {
@@ -144,7 +186,7 @@ describe('admin route guards', () => {
           if (entry.name === '__tests__') continue;
           walk(full);
         } else if (entry.name === 'route.ts') {
-          found.push(path.relative(adminDir, path.dirname(full)));
+          found.push(path.relative(adminDir, path.dirname(full)).replace(/\\/g, '/'));
         }
       }
     };

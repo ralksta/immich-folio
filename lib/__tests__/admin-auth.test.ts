@@ -9,6 +9,15 @@ const AUTH_SECRET = 'test-auth-secret-32-chars-long-min';
 
 vi.mock('../env', () => ({
   env: {
+    IMMICH_API_URL: '',
+    IMMICH_API_KEY: '',
+    SITE_TITLE: 'Test',
+    SITE_SUBTITLE: '',
+    CACHE_TTL: 300,
+    IMAGE_CACHE_VERSION: '',
+    IMMICH_TIMEOUT_MS: 15000,
+    RATE_LIMIT_RPM: 1500,
+    TRUSTED_PROXY_HOPS: 0,
     get AUTH_SECRET() {
       return process.env.__TEST_AUTH_SECRET;
     },
@@ -16,6 +25,21 @@ vi.mock('../env', () => ({
       return process.env.__TEST_ADMIN_PASSWORD;
     },
   },
+}));
+
+vi.mock('../install', () => ({
+  getInstallCredentials() {
+    return {
+      apiUrl: '',
+      apiKey: '',
+      authSecret: process.env.__TEST_AUTH_SECRET || '',
+      adminPassword: process.env.__TEST_ADMIN_PASSWORD || '',
+    };
+  },
+  isInstalled: () => false,
+  isInstallPath: () => false,
+  normalizeApiBase: (): string => '',
+  completeInstall: () => {},
 }));
 
 /** Import fresh so module-level state cannot leak between cases. */
@@ -73,9 +97,14 @@ describe('admin session tokens', () => {
 
   it('throws rather than signing with a guessable secret when AUTH_SECRET is unset in production', async () => {
     delete process.env.__TEST_AUTH_SECRET;
-    vi.stubEnv('NODE_ENV', 'production');
-    const { createAdminToken } = await loadAuth();
-    expect(() => createAdminToken()).toThrow(/AUTH_SECRET/);
+    const prevNodeEnv = process.env.NODE_ENV;
+    (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
+    try {
+      const { createAdminToken } = await loadAuth();
+      expect(() => createAdminToken()).toThrow(/AUTH_SECRET/);
+    } finally {
+      (process.env as Record<string, string | undefined>).NODE_ENV = prevNodeEnv;
+    }
   });
 
   it('returns false (not throw) for a malformed cookie with a short signature', async () => {

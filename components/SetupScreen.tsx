@@ -29,13 +29,36 @@ export function SetupScreen() {
           style={{
             fontSize: '1.125rem',
             opacity: 0.7,
-            marginBottom: '2rem',
+            marginBottom: '1.5rem',
             lineHeight: 1.5,
           }}
         >
           Immich Folio is running, but it looks like your configuration files or environment
           variables are missing.
         </p>
+
+        {/* Deliberately a hard <a>, not <Link>: the root layout renders the
+            setup screen instead of children, and Next.js reuses that shared
+            layout on client-side navigation — so a <Link> to /install would
+            leave the setup screen on screen until a manual refresh. A hard
+            navigation re-runs the server render with the new pathname. */}
+        <a
+          href="/install"
+          style={{
+            display: 'inline-block',
+            backgroundColor: '#111111',
+            color: '#ffffff',
+            textDecoration: 'none',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '6px',
+            fontSize: '0.95rem',
+            fontWeight: 500,
+            marginBottom: '1.5rem',
+          }}
+        >
+          Open install wizard
+        </a>
+
         <div
           style={{
             backgroundColor: 'rgba(0, 0, 0, 0.03)',
@@ -46,8 +69,8 @@ export function SetupScreen() {
           }}
         >
           <p style={{ marginBottom: '1rem' }}>
-            To get started, follow these steps in your repository or mounted <code>content/</code>{' '}
-            volume:
+            Prefer to configure manually? Follow these steps in your repository or mounted{' '}
+            <code>content/</code> volume:
           </p>
           <ol style={{ margin: 0, paddingLeft: '1.25rem' }}>
             <li style={{ marginBottom: '0.5rem' }}>

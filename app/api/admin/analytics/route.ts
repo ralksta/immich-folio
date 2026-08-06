@@ -2,10 +2,17 @@ import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 import { getConfigOrNull } from '@/lib/config';
+import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 
 const ANALYTICS_FILE = path.join(process.cwd(), 'content', 'analytics.json');
 
 export async function GET() {
+  if (!isAdminEnabled()) {
+    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
+  }
+  if (!(await isAdminAuthenticated())) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const config = getConfigOrNull();
     let data;

@@ -4,7 +4,7 @@
  */
 
 import crypto from 'crypto';
-import { env } from '../env';
+import { getInstallCredentials } from '../install';
 import { resolveAuthSecret } from '../secret';
 import { cookies } from 'next/headers';
 
@@ -20,14 +20,16 @@ const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
  */
 export const MAX_PASSWORD_LENGTH = 1024;
 
+/** Admin password as configured — env wins, wizard-installed value as fallback. */
+function getAdminPassword(): string {
+  return getInstallCredentials().adminPassword;
+}
+
 function getSigningKey(): Buffer {
   // Bind the key to ADMIN_PASSWORD as well, so rotating the password
   // immediately invalidates every outstanding session token.
   const secret = resolveAuthSecret();
-  return crypto
-    .createHash('sha256')
-    .update(`admin:${secret}:${env.ADMIN_PASSWORD ?? ''}`)
-    .digest();
+  return crypto.createHash('sha256').update(`admin:${secret}:${getAdminPassword()}`).digest();
 }
 
 /** Create a signed session token. */
@@ -84,7 +86,7 @@ export function verifyAdminToken(token: string): boolean {
  * anyone who cannot also read the secret.
  */
 export function verifyAdminPassword(password: string): boolean {
-  const adminPw = env.ADMIN_PASSWORD;
+  const adminPw = getAdminPassword();
   if (!adminPw) return false;
   if (password.length > MAX_PASSWORD_LENGTH) return false;
 
@@ -105,7 +107,7 @@ export async function isAdminAuthenticated(): Promise<boolean> {
 
 /** Check if admin panel is enabled (password is set). */
 export function isAdminEnabled(): boolean {
-  return !!env.ADMIN_PASSWORD;
+  return !!getAdminPassword();
 }
 
 export { COOKIE_NAME, SESSION_DURATION_MS };

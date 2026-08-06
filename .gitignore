@@ -62,6 +62,8 @@ docker-compose.override.yml
 content/settings.yaml
 content/gallery.yaml
 content/about.md
+# Credentials written by the /install wizard (never committed)
+content/install.json
 
 # ── Internal Dev Docs ────────────────────────────────
 docs/dev/

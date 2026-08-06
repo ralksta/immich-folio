@@ -65,6 +65,7 @@ interface Settings {
     opacity?: number;
     position?: 'bottom-right' | 'bottom-left' | 'center';
   };
+  about?: { enabled?: boolean };
 }
 
 const PRESETS = ['studio', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
@@ -127,6 +128,22 @@ export default function SettingsEditor() {
   const [saveMessage, setSaveMessage] = useState('');
   const [activeSection, setActiveSection] = useState('general');
   const [currentMode, setCurrentMode] = useState<'dark' | 'light'>('dark');
+
+  // About content state (independent of main settings save)
+  const [aboutMeta, setAboutMeta] = useState<{
+    portrait?: string;
+    name?: string;
+    location?: string;
+    gear?: string[];
+  }>({});
+  const [aboutBody, setAboutBody] = useState('');
+  const [aboutLoading, setAboutLoading] = useState(false);
+  const [aboutSaving, setAboutSaving] = useState(false);
+  const [aboutDirty, setAboutDirty] = useState(false);
+  const [aboutMessage, setAboutMessage] = useState('');
+  const [aboutGearText, setAboutGearText] = useState('');
+  const [faviconUploading, setFaviconUploading] = useState(false);
+  const [faviconMessage, setFaviconMessage] = useState('');
 
   useEffect(() => {
     loadSettings();
@@ -260,6 +277,68 @@ export default function SettingsEditor() {
     }
   }
 
+  async function loadAboutContent() {
+    setAboutLoading(true);
+    try {
+      const res = await fetch('/api/admin/about');
+      if (res.ok) {
+        const data = await res.json();
+        setAboutMeta(data.meta || {});
+        setAboutBody(data.body || '');
+        setAboutGearText(data.meta?.gear?.join('\n') || '');
+      }
+    } catch (err) {
+      console.error('Failed to load about content:', err);
+    } finally {
+      setAboutLoading(false);
+    }
+  }
+
+  async function saveAboutContent() {
+    setAboutSaving(true);
+    setAboutMessage('');
+    const cleanedMeta = { ...aboutMeta };
+    for (const [k, v] of Object.entries(cleanedMeta)) {
+      if (v === '' || v === undefined) delete cleanedMeta[k as keyof typeof cleanedMeta];
+    }
+    const gearLines = aboutGearText
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (gearLines.length > 0) {
+      cleanedMeta.gear = gearLines;
+    } else {
+      delete cleanedMeta.gear;
+    }
+
+    try {
+      const res = await fetch('/api/admin/about', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ meta: cleanedMeta, body: aboutBody }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAboutDirty(false);
+        setAboutMessage(data.message || 'Saved!');
+        setTimeout(() => setAboutMessage(''), 4000);
+      } else {
+        const err = await res.json();
+        setAboutMessage(`Error: ${err.error}`);
+      }
+    } catch {
+      setAboutMessage('Error: Failed to save');
+    } finally {
+      setAboutSaving(false);
+    }
+  }
+
+  function updateAboutMeta(key: string, value: unknown) {
+    setAboutMeta((m) => ({ ...m, [key]: value }));
+    setAboutDirty(true);
+    setAboutMessage('');
+  }
+
   if (loading) {
     return (
       <div className="admin-loading">
@@ -276,6 +355,7 @@ export default function SettingsEditor() {
     { id: 'legal', label: 'Legal' },
     { id: 'seo', label: 'SEO' },
     { id: 'security', label: 'Security & Protection' },
+    { id: 'about', label: 'About' },
   ];
 
   return (
@@ -312,7 +392,10 @@ export default function SettingsEditor() {
             <button
               key={sec.id}
               className={`settings-nav-item ${activeSection === sec.id ? 'active' : ''}`}
-              onClick={() => setActiveSection(sec.id)}
+              onClick={() => {
+                setActiveSection(sec.id);
+                if (sec.id === 'about') loadAboutContent();
+              }}
             >
               {sec.label}
             </button>
@@ -435,6 +518,66 @@ export default function SettingsEditor() {
                     <span className="switch-slider" />
                   </div>
                 </button>
+
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${settings.about?.enabled !== false ? 'active' : ''}`}
+                  onClick={() => update('about.enabled', settings.about?.enabled === false)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title"><Icons.IconGear size={16} /> About Page</span>
+                    <span className="toggle-card-desc">Show a portrait, bio, and gear section on your portfolio</span>
+                  </div>
+                  <div className={`switch-toggle ${settings.about?.enabled !== false ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+              </div>
+
+              <div className="admin-field">
+                <label>Favicon</label>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <input
+                    type="file"
+                    accept=".svg,.png,.ico,.jpg,.jpeg"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setFaviconMessage('');
+                      setFaviconUploading(true);
+                      const form = new FormData();
+                      form.append('file', file);
+                      try {
+                        const res = await fetch('/api/admin/favicon', { method: 'PUT', body: form });
+                        const data = await res.json();
+                        if (res.ok) {
+                          setFaviconMessage(data.message);
+                        } else {
+                          setFaviconMessage(`Error: ${data.error}`);
+                        }
+                      } catch {
+                        setFaviconMessage('Error: Upload failed');
+                      } finally {
+                        setFaviconUploading(false);
+                        e.target.value = '';
+                      }
+                    }}
+                    disabled={faviconUploading}
+                    style={{ fontSize: '0.8rem' }}
+                  />
+                  {faviconUploading && <div className="admin-spinner" />}
+                </div>
+                {faviconMessage && (
+                  <p
+                    className={`save-message ${faviconMessage.startsWith('Error') ? 'error' : 'success'}`}
+                    style={{ marginTop: '0.3rem', fontSize: '0.75rem' }}
+                  >
+                    {faviconMessage}
+                  </p>
+                )}
+                <span className="admin-field-hint" style={{ display: 'block', marginTop: '0.2rem' }}>
+                  SVG, PNG, ICO, or JPEG - max 512 kB
+                </span>
               </div>
             </div>
           )}
@@ -1184,6 +1327,93 @@ export default function SettingsEditor() {
                         onChange={(e) => update('watermark.opacity', parseFloat(e.target.value))}
                       />
                     </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {activeSection === 'about' && (
+            <div className="settings-panel">
+              <h3>About Page</h3>
+              <p className="admin-field-hint">
+                Edit the portrait, biography and gear shown on the About page.
+                Use the General settings to show or hide the About page link.
+              </p>
+
+              {aboutLoading ? (
+                <div className="admin-spinner" style={{ margin: '2rem auto' }} />
+              ) : (
+                <>
+                  <div className="admin-field">
+                    <label>Portrait Asset ID</label>
+                    <input
+                      value={aboutMeta.portrait || ''}
+                      onChange={(e) => updateAboutMeta('portrait', e.target.value)}
+                      placeholder="Immich asset UUID for the portrait photo"
+                    />
+                  </div>
+                  <div className="admin-field">
+                    <label>Name</label>
+                    <input
+                      value={aboutMeta.name || ''}
+                      onChange={(e) => updateAboutMeta('name', e.target.value)}
+                      placeholder="Your name"
+                    />
+                  </div>
+                  <div className="admin-field">
+                    <label>Location</label>
+                    <input
+                      value={aboutMeta.location || ''}
+                      onChange={(e) => updateAboutMeta('location', e.target.value)}
+                      placeholder="City, Country"
+                    />
+                  </div>
+                  <div className="admin-field">
+                    <label>Gear (one per line)</label>
+                    <textarea
+                      value={aboutGearText}
+                      onChange={(e) => {
+                        setAboutGearText(e.target.value);
+                        setAboutDirty(true);
+                        setAboutMessage('');
+                      }}
+                      placeholder={`Leica Q3\nSummilux 35mm f/1.4`}
+                      rows={4}
+                    />
+                  </div>
+                  <div className="admin-field">
+                    <label>Biography (Markdown)</label>
+                    <textarea
+                      value={aboutBody}
+                      onChange={(e) => {
+                        setAboutBody(e.target.value);
+                        setAboutDirty(true);
+                        setAboutMessage('');
+                      }}
+                      placeholder="Photographer based in..."
+                      rows={6}
+                    />
+                  </div>
+
+                  <div className="save-bar" style={{ marginTop: '1rem', padding: '0.75rem 0' }}>
+                    <div className="save-bar-left">
+                      {aboutDirty && <span className="unsaved-badge">Unsaved changes</span>}
+                      {aboutMessage && (
+                        <span
+                          className={`save-message ${aboutMessage.startsWith('Error') ? 'error' : 'success'}`}
+                        >
+                          {aboutMessage}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      className="admin-btn admin-btn-primary"
+                      onClick={saveAboutContent}
+                      disabled={!aboutDirty || aboutSaving}
+                    >
+                      {aboutSaving ? 'Saving...' : 'Save About'}
+                    </button>
                   </div>
                 </>
               )}

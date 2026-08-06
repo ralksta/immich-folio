@@ -31,10 +31,6 @@ const B = '22222222-2222-2222-2222-222222222222';
  * shapes the page builder can produce.
  */
 describe('deriveGallery rejects what the site cannot load', () => {
-  it('rejects a gallery with neither albums nor subpages', () => {
-    expect(() => deriveGallery({ albums: [] } as GalleryYaml)).toThrow(/at least one album/i);
-  });
-
   it('rejects a subpage with no name', () => {
     expect(() =>
       deriveGallery({ albums: [A], subpages: [{ albums: [A] }] } as unknown as GalleryYaml),
@@ -67,6 +63,15 @@ describe('deriveGallery rejects what the site cannot load', () => {
 });
 
 describe('deriveGallery accepts valid structures', () => {
+  it('derives an empty gallery (no albums or subpages)', () => {
+    // The install wizard can finish without selecting an album, so an empty
+    // gallery must be a valid, rendered state rather than an error.
+    const result = deriveGallery({ albums: [] } as GalleryYaml);
+    expect(result.albums).toEqual([]);
+    expect(result.standaloneAlbums).toEqual([]);
+    expect(result.subpages).toEqual([]);
+  });
+
   it('derives standalone albums', () => {
     const result = deriveGallery({ albums: [A, B] } as GalleryYaml);
     expect(result.albums).toEqual([A, B]);
