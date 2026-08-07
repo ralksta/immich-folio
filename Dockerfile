@@ -51,8 +51,12 @@ EXPOSE 7211
 ENV PORT=7211
 ENV HOSTNAME="0.0.0.0"
 
+# 127.0.0.1 statt localhost: der Server bindet auf 0.0.0.0 (siehe HOSTNAME oben),
+# lauscht also nur auf IPv4. In Alpine loest 'localhost' zuerst nach ::1 auf, und
+# wget bleibt bei diesem ersten Ergebnis — der Check schlaegt dauerhaft mit
+# "Connection refused" fehl und der Container gilt als unhealthy.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:7211/api/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:7211/api/health || exit 1
 
 # Run as root initially so entrypoint can fix bind-mount permissions,
 # then drops to nextjs user via su-exec
