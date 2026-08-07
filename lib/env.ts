@@ -9,6 +9,7 @@ export interface Env {
   SITE_TITLE: string;
   SITE_SUBTITLE: string;
   CACHE_TTL: number;
+  STALE_MAX_AGE: number;
   IMAGE_CACHE_VERSION: string;
   IMMICH_TIMEOUT_MS: number;
   RATE_LIMIT_RPM: number;
@@ -36,6 +37,13 @@ function parseEnv(): Env {
   const cacheTtlStr = process.env.CACHE_TTL;
   const cacheTtl =
     cacheTtlStr && !isNaN(parseInt(cacheTtlStr, 10)) ? parseInt(cacheTtlStr, 10) : 300;
+
+  // How long an expired cache entry may still be served while Immich is
+  // unreachable. Keeps the public gallery online across an Immich restart
+  // instead of showing an error page. 0 disables the fallback.
+  const staleMaxAgeStr = process.env.STALE_MAX_AGE;
+  const staleMaxAge =
+    staleMaxAgeStr && !isNaN(parseInt(staleMaxAgeStr, 10)) ? parseInt(staleMaxAgeStr, 10) : 86400; // 24 hours
 
   // How long to wait on Immich before giving up. Without an explicit budget the
   // only ceiling is undici's built-in default (minutes), and since every page is
@@ -91,6 +99,7 @@ function parseEnv(): Env {
     SITE_TITLE: process.env.SITE_TITLE || 'Gallery',
     SITE_SUBTITLE: process.env.SITE_SUBTITLE || '',
     CACHE_TTL: Math.max(0, cacheTtl),
+    STALE_MAX_AGE: Math.max(0, staleMaxAge),
     // Kept URL-safe: this value is appended to every image and video URL.
     IMAGE_CACHE_VERSION: encodeURIComponent(imageCacheVersion),
     // A sub-second budget would abort healthy requests; 0 must not mean "no timeout".

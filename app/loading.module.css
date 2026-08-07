@@ -1,0 +1,47 @@
+/* Skeleton placeholders shown while a dynamic page waits on Immich. */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns, 3), 1fr);
+  gap: var(--grid-gap, 12px);
+}
+
+.tile {
+  aspect-ratio: var(--grid-aspect-ratio, 1);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+.heading {
+  height: 2.5rem;
+  width: min(320px, 60%);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  margin-bottom: 24px;
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .heading {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

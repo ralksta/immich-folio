@@ -20,6 +20,7 @@ vi.mock('../config', async () => {
       // written, which would make any caching assertion flaky. Isolation comes
       // from the cache.clear() in beforeEach, not from an unusable TTL.
       cacheTtl: 60_000,
+      staleMaxAge: 86_400_000,
       immichTimeoutMs: 15000,
     }),
   };
@@ -494,5 +495,70 @@ describe('ImmichClient', () => {
       album = await immich.getAlbum('album-1');
       expect(album?.assets.map((a) => a.id)).toEqual(['new', 'mid', 'old']);
     });
+  });
+});
+
+describe('stale fallback when Immich is unavailable', () => {
+  const mockFetch = global.fetch as any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cache.clear();
+  });
+
+  it('serves the previously cached album list instead of throwing', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: async () => [
+        {
+          id: 'album-1',
+          albumName: 'Original',
+          description: '',
+          albumThumbnailAssetId: null,
+          assetCount: 1,
+          assets: [],
+          createdAt: '',
+          updatedAt: '',
+          order: 'desc',
+        },
+      ],
+    });
+
+    const fresh = await immich.getAlbums();
+    expect(fresh).toHaveLength(1);
+
+    vi.useFakeTimers();
+    // Strictly past cacheTtl (60_000ms) so cache.get()'s fresh-only check
+    // misses and the fallback path — not a lucky cache hit — is what's tested.
+    vi.advanceTimersByTime(60_001);
+    mockFetch.mockRejectedValue(new Error('ECONNREFUSED'));
+
+    const stale = await immich.getAlbums();
+    vi.useRealTimers();
+
+    expect(stale).toHaveLength(1);
+    expect(stale[0].id).toBe('album-1');
+  });
+
+  it('still throws when there is nothing cached to fall back to', async () => {
+    mockFetch.mockRejectedValue(new Error('ECONNREFUSED'));
+    await expect(immich.getAlbums()).rejects.toThrow(ImmichUnavailableError);
+  });
+
+  it('does not swallow a definitive 404 as an outage', async () => {
+    // A missing album must keep reporting missing, not fall back to stale data.
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 404,
+      statusText: 'Not Found',
+      headers: { get: () => 'application/json' },
+    });
+    await expect(immich.getAlbum('album-1')).resolves.toBeNull();
+  });
+
+  it('still refuses albums outside the allowlist', async () => {
+    mockFetch.mockRejectedValue(new Error('ECONNREFUSED'));
+    await expect(immich.getAlbum('not-allowed')).resolves.toBeNull();
   });
 });

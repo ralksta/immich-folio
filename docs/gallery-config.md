@@ -196,17 +196,17 @@ Your bio text here. Supports full Markdown.
 
 - **Album UUIDs**: In Immich, go to Albums → click an album → the UUID is in the URL bar
 - **Asset UUIDs**: Click any photo → the UUID is in the URL bar
- 
+
 ## System & Security
- 
+
 Advanced system settings are configured via environment variables in your `.env` or `.env.local` file.
- 
+
 ### Rate Limiting
- 
+
 To protect against brute-force attacks and resource exhaustion, Immich Folio includes an in-memory rate limiter.
- 
+
 - `RATE_LIMIT_RPM`: Maximum requests per minute per IP (default: `1500` for general API, `120` for map data).
- 
+
 ### Trusted Proxies
 
 If you run Immich Folio behind a reverse proxy (nginx, Traefik, Caddy, Cloudflare), tell it how many proxies sit in front. Without this, the rate limiter reads a client-supplied header and an attacker can pick their own bucket — defeating brute-force protection on the password endpoints.
@@ -237,8 +237,14 @@ location / {
 }
 ```
 
-`$proxy_add_x_forwarded_for` is the important one: it *appends* the real peer address rather than overwriting the header.
+`$proxy_add_x_forwarded_for` is the important one: it _appends_ the real peer address rather than overwriting the header.
 
 #### Migrating from `TRUSTED_PROXIES`
 
 `TRUSTED_PROXIES` has been removed. It matched proxy IPs against the socket peer address, which a self-hosted Next.js server never exposes — so the check never passed. Setting it silently put **every visitor into one shared rate-limit bucket**, letting a single client trip the limit for the entire site. If it is still set, the app assumes `TRUSTED_PROXY_HOPS=1` and logs a warning; replace it with an explicit value.
+
+### Image Token Revocation
+
+Asset tokens are deterministic — the same photo always yields the same token, which is what lets browsers cache images for a year. The image proxy validates the token but does not re-check album membership on every request.
+
+Removing an album from `gallery.yaml` hides it from the site, but any image URL already handed out (bookmarked, embedded, cached by a browser) keeps working. To invalidate previously issued links, rotate `AUTH_SECRET` — this also signs out every password-protected gallery and admin session.
