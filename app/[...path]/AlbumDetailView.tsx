@@ -3,6 +3,7 @@ import type { PhotoItem } from './PhotoGrid';
 import { PhotoGrid } from './PhotoGrid';
 import { BackLink } from '@/components/BackLink';
 import type { GridConfig } from '@/lib/config';
+import type { LightboxWatermark } from '@/components/Lightbox';
 import Image from 'next/image';
 import React from 'react';
 
@@ -16,6 +17,7 @@ interface AlbumDetailViewProps {
   subtitle?: string;
   heroImageUrl?: string;
   heroBlurDataURL?: string;
+  watermark?: LightboxWatermark;
 }
 
 export function AlbumDetailView({
@@ -28,6 +30,7 @@ export function AlbumDetailView({
   subtitle,
   heroImageUrl,
   heroBlurDataURL,
+  watermark,
 }: AlbumDetailViewProps) {
   return (
     <>
@@ -58,7 +61,7 @@ export function AlbumDetailView({
           {images.length} {images.length === 1 ? 'photo' : 'photos'}
         </p>
       </div>
-      <PhotoGrid assets={images} layout={layout} gridStyle={gridStyle} />
+      <PhotoGrid assets={images} layout={layout} gridStyle={gridStyle} watermark={watermark} />
     </>
   );
 }

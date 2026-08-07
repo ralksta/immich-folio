@@ -17,6 +17,14 @@ import type { PhotoItem } from '@/app/[...path]/PhotoGrid';
 import { useExif } from '@/hooks/useExif';
 import { useSwipe } from '@/hooks/useSwipe';
 import styles from './Lightbox.module.css';
+import { useProofing } from './ProofingContext';
+
+export interface LightboxWatermark {
+  enabled?: boolean;
+  text?: string;
+  opacity?: number;
+  position?: 'bottom-right' | 'bottom-left' | 'center' | string;
+}
 
 interface LightboxProps {
   assets: PhotoItem[];
@@ -24,9 +32,10 @@ interface LightboxProps {
   onClose: () => void;
   onNext: () => void;
   onPrev: () => void;
+  watermark?: LightboxWatermark;
 }
 
-export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: LightboxProps) {
+export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev, watermark }: LightboxProps) {
   const [showExif, setShowExif] = useState(false);
   const { exifData, exifLoading, fetchExif, clearExif } = useExif();
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -34,6 +43,8 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
   const current = assets[currentIndex];
+  const proofing = useProofing();
+  const isFav = proofing && current ? proofing.isFavorite(current.id) : false;
   const [mounted, setMounted] = useState(false);
 
   // Mount guard — createPortal needs document.body (client-only)
@@ -193,6 +204,21 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
             onError={() => console.error(`[Lightbox] Failed to load image: ${current.previewUrl}`)}
           />
         )}
+
+        {watermark?.enabled && watermark.text && (
+          <div
+            className={`${styles.watermark} ${
+              watermark.position === 'bottom-left'
+                ? styles.watermark_bottom_left
+                : watermark.position === 'center'
+                ? styles.watermark_center
+                : styles.watermark_bottom_right
+            }`}
+            style={{ opacity: (watermark.opacity ?? 50) / 100 }}
+          >
+            {watermark.text}
+          </div>
+        )}
       </div>
 
       {/* Next button */}
@@ -224,6 +250,23 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev }: Ligh
           {currentIndex + 1} / {assets.length}
         </span>
       </div>
+
+      {/* Proofing favorite button */}
+      {proofing && current && (
+        <button
+          className={styles.infoToggle}
+          style={{
+            right: '6.5rem',
+            color: isFav ? '#ff4d4f' : 'inherit',
+            fontWeight: isFav ? 600 : 400,
+          }}
+          onClick={() => proofing.toggleFavorite(current.id)}
+          aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
+          title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          {isFav ? '❤️ Saved' : '🤍 Favorite'}
+        </button>
+      )}
 
       {/* EXIF toggle */}
       <button

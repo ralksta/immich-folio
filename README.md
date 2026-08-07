@@ -52,10 +52,12 @@ Immich Folio acts as a **secure reverse proxy** between your visitors and your p
 | **Album scope**         | Only albums in `gallery.yaml` are accessible                          |
 | **Password protection** | Per-subpage password support                                          |
 | **Rate limiting**       | Per-IP sliding-window rate limiter (configurable RPM)                 |
+| **Vulnerability scanning** | Docker image scanned with Trivy on every release, results in the GitHub Security tab |
 
 - Health check endpoint at `GET /api/health`
 - In-memory caching with configurable TTL
 - Standalone Docker image — multi-stage, non-root, ~150 MB
+- Dependencies kept current via Dependabot (npm + GitHub Actions, weekly)
 
 </details>
 

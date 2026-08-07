@@ -3,19 +3,23 @@
 import { useState, useEffect } from 'react';
 import PageBuilder from './PageBuilder';
 import SettingsEditor from './SettingsEditor';
+import AnalyticsView from './AnalyticsView';
+import BackupManagerModal from './BackupManagerModal';
+import * as Icons from './Icons';
 
 interface Props {
   onLogout: () => void;
 }
 
-type Tab = 'pages' | 'settings';
+type Tab = 'pages' | 'settings' | 'analytics';
 
 export default function AdminDashboard({ onLogout }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('pages');
   const [saving, setSaving] = useState(false);
 
-  // Diagnostics state
+  // Diagnostics & Backup state
   const [showStatus, setShowStatus] = useState(false);
+  const [showBackupModal, setShowBackupModal] = useState(false);
   const [status, setStatus] = useState<any>(null);
   const [statusLoading, setStatusLoading] = useState(false);
 
@@ -73,6 +77,12 @@ export default function AdminDashboard({ onLogout }: Props) {
               onClick={() => setActiveTab('settings')}
             >
               Settings
+            </button>
+            <button
+              className={`admin-tab ${activeTab === 'analytics' ? 'active' : ''}`}
+              onClick={() => setActiveTab('analytics')}
+            >
+              Analytics
             </button>
           </nav>
         </div>
@@ -136,6 +146,17 @@ export default function AdminDashboard({ onLogout }: Props) {
                       <span className="status-val">{status?.cache?.size ?? 0} items</span>
                     </div>
                   </div>
+                  <div className="status-dropdown-footer">
+                    <button
+                      className="admin-btn admin-btn-sm"
+                      onClick={() => {
+                        setShowStatus(false);
+                        setShowBackupModal(true);
+                      }}
+                    >
+                      <Icons.IconArchive size={14} /> Manage Backups
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -148,15 +169,22 @@ export default function AdminDashboard({ onLogout }: Props) {
             className="admin-btn admin-btn-ghost"
             title="Open site in new tab"
           >
-            ↗ Site
+            <Icons.IconLink size={14} /> Site
           </a>
+          <button
+            className="admin-btn admin-btn-ghost"
+            onClick={() => setShowBackupModal(true)}
+            title="Manage config backups & restore"
+          >
+            <Icons.IconArchive size={14} /> Backups
+          </button>
           <button
             className="admin-btn admin-btn-ghost"
             onClick={handleReload}
             disabled={saving}
             title="Reload config & clear cache"
           >
-            ↻ Reload
+            <Icons.IconRefresh size={14} /> Reload
           </button>
           <button className="admin-btn admin-btn-ghost" onClick={handleLogout}>
             Logout
@@ -167,7 +195,16 @@ export default function AdminDashboard({ onLogout }: Props) {
       <main className="admin-main">
         {activeTab === 'pages' && <PageBuilder />}
         {activeTab === 'settings' && <SettingsEditor />}
+        {activeTab === 'analytics' && <AnalyticsView />}
       </main>
+
+      <BackupManagerModal
+        isOpen={showBackupModal}
+        onClose={() => setShowBackupModal(false)}
+        onRestoreSuccess={() => {
+          fetchStatus();
+        }}
+      />
     </div>
   );
 }

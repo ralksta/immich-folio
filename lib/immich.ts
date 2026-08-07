@@ -452,12 +452,13 @@ class ImmichClient {
    * Get enriched subpage summaries for the homepage.
    */
   async getSubpages(): Promise<SubpageSummary[]> {
-    if (this.config.subpages.length === 0) return [];
+    const activeSubpages = this.config.subpages.filter((sp) => sp.enabled !== false);
+    if (activeSubpages.length === 0) return [];
 
     const albums = await this.getAlbums();
     const albumMap = new Map(albums.map((a) => [a.id, a]));
 
-    return this.config.subpages.map((sp) => {
+    return activeSubpages.map((sp) => {
       const spAlbums = sp.albumIds
         .map((id) => albumMap.get(id))
         .filter((a): a is ImmichAlbum => a !== undefined);
@@ -478,7 +479,9 @@ class ImmichClient {
   async getSubpageAlbums(
     subpageSlug: string,
   ): Promise<{ subpage: SubpageConfig; albums: ImmichAlbum[] } | null> {
-    const subpage = this.config.subpages.find((sp) => sp.slug === subpageSlug);
+    const subpage = this.config.subpages.find(
+      (sp) => sp.slug === subpageSlug && sp.enabled !== false,
+    );
     if (!subpage) return null;
 
     const allAlbums = await this.getAlbums();
@@ -626,7 +629,7 @@ class ImmichClient {
    * Check if a slug corresponds to a subpage.
    */
   isSubpageSlug(slug: string): boolean {
-    return this.config.subpages.some((sp) => sp.slug === slug);
+    return this.config.subpages.some((sp) => sp.slug === slug && sp.enabled !== false);
   }
 
   /**

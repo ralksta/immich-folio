@@ -1,0 +1,157 @@
+/* Photo Essay & Storytelling Mode Styles */
+
+.essay-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 6rem 1.5rem;
+}
+
+/* Header & Cover */
+.essay-header {
+  max-width: 68ch;
+  margin: 0 auto 3.5rem auto;
+  text-align: center;
+}
+
+.essay-header__title {
+  font-family: var(--font-heading, serif);
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.essay-header__subtitle {
+  font-family: var(--font-body, sans-serif);
+  font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+  opacity: 0.8;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.essay-header__meta {
+  font-family: var(--font-caption, monospace);
+  font-size: 0.85rem;
+  opacity: 0.6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Reading column */
+.essay-prose {
+  max-width: 68ch;
+  margin: 0 auto 2.5rem auto;
+  font-family: var(--font-body, sans-serif);
+  font-size: clamp(1.05rem, 2vw, 1.2rem);
+  line-height: 1.75;
+  color: var(--text-primary, rgba(255, 255, 255, 0.92));
+}
+
+.essay-prose p {
+  margin-bottom: 1.75rem;
+}
+
+.essay-heading {
+  font-family: var(--font-heading, serif);
+  max-width: 68ch;
+  margin: 3.5rem auto 1.5rem auto;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.essay-heading--1 { font-size: clamp(1.8rem, 3.5vw, 2.5rem); }
+.essay-heading--2 { font-size: clamp(1.5rem, 3vw, 2rem); }
+.essay-heading--3 { font-size: clamp(1.25rem, 2.5vw, 1.6rem); }
+
+/* Pullquote */
+.essay-quote {
+  max-width: 68ch;
+  margin: 3.5rem auto;
+  padding: 1.5rem 2rem;
+  border-left: 3px solid var(--accent, #e60012);
+  background: var(--bg-surface, rgba(255, 255, 255, 0.03));
+  border-radius: 0 8px 8px 0;
+  font-family: var(--font-heading, serif);
+  font-style: italic;
+  font-size: clamp(1.15rem, 2.2vw, 1.35rem);
+  line-height: 1.6;
+}
+
+.essay-quote__author {
+  display: block;
+  margin-top: 0.75rem;
+  font-family: var(--font-caption, monospace);
+  font-style: normal;
+  font-size: 0.85rem;
+  opacity: 0.7;
+  text-transform: uppercase;
+}
+
+/* Essay Photos & Layout Modes */
+.essay-figure {
+  margin: 3.5rem auto;
+  width: 100%;
+}
+
+.essay-figure--contained {
+  max-width: 68ch;
+}
+
+.essay-figure--wide {
+  max-width: 1100px;
+}
+
+.essay-figure--fullbleed {
+  max-width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+}
+
+.essay-image-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius, 0px);
+  max-height: 80vh;
+}
+
+.essay-image-wrapper img {
+  object-fit: cover;
+  width: 100%;
+  height: auto;
+  max-height: 80vh;
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+.essay-image-wrapper:hover img {
+  transform: scale(1.015);
+}
+
+.essay-figcaption {
+  max-width: 68ch;
+  margin: 0.75rem auto 0 auto;
+  text-align: center;
+  font-family: var(--font-caption, monospace);
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+/* Side by side photo pair */
+.essay-pair-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1100px;
+  margin: 3.5rem auto;
+}
+
+@media (max-width: 640px) {
+  .essay-pair-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}

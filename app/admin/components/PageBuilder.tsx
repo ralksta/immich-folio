@@ -21,6 +21,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import AlbumPicker from './AlbumPicker';
 import AssetPicker from './AssetPicker';
+import { EssayBlockEditor } from './EssayBlockEditor';
 
 // ── Icons ──────────────────────────────────────────────────────
 const Icons = {
@@ -133,6 +134,9 @@ interface Subpage {
   title?: string;
   subtitle?: string;
   password?: string;
+  enabled?: boolean;
+  essayText?: string;
+  essayFile?: string;
   sections?: Section[];
   albums: AlbumEntry[];
   grid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
@@ -319,6 +323,7 @@ function SortableSubpageTile({
   const totalAlbums =
     sp.albums.length + (sp.sections?.reduce((sum, sec) => sum + sec.albums.length, 0) || 0);
   const firstThumb = getFirstThumb(sp);
+  const slug = sp.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
   return (
     <div
@@ -331,6 +336,19 @@ function SortableSubpageTile({
       <div className="subpage-tile-drag" {...listeners} title="Drag to reorder">
         <Icons.Drag />
       </div>
+
+      {sp.enabled === false && (
+        <span className="subpage-badge-protected" style={{ background: '#e60012', color: '#fff' }} title="Page is disabled">
+          Disabled
+        </span>
+      )}
+
+      {sp.password && (
+        <span className="subpage-badge-protected" title="Password protected">
+          <Icons.Lock /> Password
+        </span>
+      )}
+
       <div className="subpage-tile-cover">
         {firstThumb ? (
           <img src={`/api/admin/thumbnail/${firstThumb}`} alt="" loading="lazy" />
@@ -339,11 +357,17 @@ function SortableSubpageTile({
             <Icons.Folder />
           </div>
         )}
+        <div className="subpage-hover-overlay">
+          <span className="hover-action-btn"><Icons.Edit /> Edit Page</span>
+        </div>
       </div>
       <div className="subpage-tile-info">
-        <span className="subpage-tile-name">{sp.title || sp.name}</span>
+        <div className="subpage-tile-title-row">
+          <span className="subpage-tile-name">{sp.title || sp.name}</span>
+          <span className="subpage-tile-slug">/{slug}</span>
+        </div>
         <span className="subpage-tile-meta">
-          {totalAlbums} album{totalAlbums !== 1 ? 's' : ''}
+          <Icons.Folder /> {totalAlbums} album{totalAlbums !== 1 ? 's' : ''}
         </span>
       </div>
     </div>
@@ -360,6 +384,7 @@ export default function PageBuilder() {
   const [dirty, setDirty] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [expandedSubpage, setExpandedSubpage] = useState<number | null>(null);
+  const [drawerMode, setDrawerMode] = useState<'edit' | 'preview'>('edit');
   const [pickerTarget, setPickerTarget] = useState<{
     type: 'standalone' | 'subpage' | 'section';
     subpageIndex?: number;
@@ -450,6 +475,9 @@ export default function PageBuilder() {
         title: sp.title as string | undefined,
         subtitle: sp.subtitle as string | undefined,
         password: sp.password as string | undefined,
+        enabled: sp.enabled !== false,
+        essayText: sp.essayText as string | undefined,
+        essayFile: sp.essayFile as string | undefined,
         albums: parseAlbumEntries(sp.albums as Array<string | Record<string, string>> | undefined),
         sections: sp.sections
           ? (sp.sections as Array<Record<string, unknown>>).map((sec) => ({
@@ -463,7 +491,7 @@ export default function PageBuilder() {
     } else if (raw.subpages && typeof raw.subpages === 'object') {
       subpages = Object.entries(raw.subpages as Record<string, unknown>).map(([name, value]) => {
         if (Array.isArray(value)) {
-          return { name, albums: parseAlbumEntries(value), sections: undefined };
+          return { name, albums: parseAlbumEntries(value), sections: undefined, enabled: true };
         }
         const sp = value as Record<string, unknown>;
         return {
@@ -471,6 +499,9 @@ export default function PageBuilder() {
           title: sp.title as string | undefined,
           subtitle: sp.subtitle as string | undefined,
           password: sp.password as string | undefined,
+          enabled: sp.enabled !== false,
+          essayText: sp.essayText as string | undefined,
+          essayFile: sp.essayFile as string | undefined,
           albums: parseAlbumEntries(
             sp.albums as Array<string | Record<string, string>> | undefined,
           ),
@@ -507,6 +538,9 @@ export default function PageBuilder() {
         if (sp.title) entry.title = sp.title;
         if (sp.subtitle) entry.subtitle = sp.subtitle;
         if (sp.password) entry.password = sp.password;
+        if (sp.enabled === false) entry.enabled = false;
+        if (sp.essayText) entry.essayText = sp.essayText;
+        if (sp.essayFile) entry.essayFile = sp.essayFile;
         if (sp.grid) entry.grid = sp.grid;
 
         if (sp.sections && sp.sections.length > 0) {
@@ -895,7 +929,7 @@ export default function PageBuilder() {
       {/* Search Bar */}
       <div className="builder-search-container">
         <div className="builder-search-wrapper">
-          <span className="builder-search-icon">🔍</span>
+          <span className="builder-search-icon"><Icons.Search /></span>
           <input
             type="text"
             className="builder-search-input"
@@ -1051,217 +1085,392 @@ export default function PageBuilder() {
           </SortableContext>
         </DndContext>
 
-        {/* Expanded subpage detail */}
+        {/* Expanded subpage detail (Slide-Over Drawer) */}
         {expandedSubpage !== null && gallery.subpages[expandedSubpage] && (
-          <div className="subpage-detail">
-            {(() => {
-              const sp = gallery.subpages[expandedSubpage];
-              const spIndex = expandedSubpage;
-              return (
-                <>
-                  <div className="subpage-detail-header">
-                    <div className="subpage-detail-header-left">
-                      <input
-                        className="subpage-name-input"
-                        value={sp.name}
-                        onChange={(e) => updateSubpage(spIndex, { name: e.target.value })}
-                        placeholder="Page name (used for URL)"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <span className="subpage-slug-preview">/{slugify(sp.name)}</span>
+          <div className="subpage-drawer-backdrop" onClick={() => setExpandedSubpage(null)}>
+            <div className="subpage-drawer-container" onClick={(e) => e.stopPropagation()}>
+              {(() => {
+                const sp = gallery.subpages[expandedSubpage];
+                const spIndex = expandedSubpage;
+                return (
+                  <>
+                    <div className="subpage-drawer-header">
+                      <div className="subpage-drawer-title-group">
+                        <span className="subpage-drawer-breadcrumb">Pages / Subpages</span>
+                        <h3 className="subpage-drawer-title">{sp.title || sp.name || 'Untitled Page'}</h3>
+                      </div>
+                      <div className="subpage-drawer-header-actions">
+                        <div className="segmented-control" style={{ padding: '2px' }}>
+                          <button
+                            type="button"
+                            className={`segment-btn ${drawerMode === 'edit' ? 'active' : ''}`}
+                            onClick={() => setDrawerMode('edit')}
+                            style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
+                          >
+                            <Icons.Edit /> Edit
+                          </button>
+                          <button
+                            type="button"
+                            className={`segment-btn ${drawerMode === 'preview' ? 'active' : ''}`}
+                            onClick={() => setDrawerMode('preview')}
+                            style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
+                          >
+                            <Icons.Search /> Live Preview
+                          </button>
+                        </div>
+
+                        <a
+                          href={`/${slugify(sp.name)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="admin-btn admin-btn-xs admin-btn-ghost"
+                          title="Open live page in new tab"
+                        >
+                          /{slugify(sp.name)} ↗
+                        </a>
+                        <button
+                          className="admin-btn-icon"
+                          onClick={() => setExpandedSubpage(null)}
+                          title="Close drawer"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     </div>
-                    <div className="subpage-detail-header-right">
-                      <a
-                        href={`/${slugify(sp.name)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="admin-btn-icon"
-                        title="Preview this page"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        ↗
-                      </a>
+
+                    <div className="subpage-drawer-body">
+                      {drawerMode === 'preview' ? (
+                        <div className="drawer-live-preview-panel">
+                          <div className="preview-hero-banner">
+                            <h2 className="preview-hero-title">{sp.title || sp.name || 'Untitled Page'}</h2>
+                            {sp.subtitle && <p className="preview-hero-sub">{sp.subtitle}</p>}
+                          </div>
+
+                          {sp.sections && sp.sections.length > 0 ? (
+                            sp.sections.map((sec, sIdx) => (
+                              <div key={sIdx} className="preview-section-group">
+                                <h3 className="preview-section-title">{sec.title || 'Untitled Section'}</h3>
+                                {sec.description && <p className="preview-section-desc">{sec.description}</p>}
+                                <div className="preview-albums-grid">
+                                  {sec.albums.map((alb, aIdx) => {
+                                    const immichAlb = immichAlbums.find((a) => a.id === alb.id);
+                                    const thumb = alb.heroImage || immichAlb?.thumbnailAssetId;
+
+                                    return (
+                                      <div key={aIdx} className="preview-album-tile">
+                                        <div className="preview-album-cover">
+                                          {thumb ? (
+                                            <img src={`/api/admin/thumbnail/${thumb}`} alt="" />
+                                          ) : (
+                                            <div className="subpage-tile-placeholder"><Icons.Folder /></div>
+                                          )}
+                                        </div>
+                                        <span className="preview-album-title">
+                                          {alb.title || immichAlb?.albumName || alb.id}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="preview-albums-grid">
+                              {sp.albums.map((alb, aIdx) => {
+                                const immichAlb = immichAlbums.find((a) => a.id === alb.id);
+                                const thumb = alb.heroImage || immichAlb?.thumbnailAssetId;
+
+                                return (
+                                  <div key={aIdx} className="preview-album-tile">
+                                    <div className="preview-album-cover">
+                                      {thumb ? (
+                                        <img src={`/api/admin/thumbnail/${thumb}`} alt="" />
+                                      ) : (
+                                        <div className="subpage-tile-placeholder"><Icons.Folder /></div>
+                                      )}
+                                    </div>
+                                    <span className="preview-album-title">
+                                      {alb.title || immichAlb?.albumName || alb.id}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <>
+                      <div className="subpage-drawer-section">
+                        <div className="admin-field">
+                          <label>Page Name (URL Identifier)</label>
+                          <div className="input-slug-wrapper">
+                            <input
+                              className="subpage-name-input"
+                              value={sp.name}
+                              onChange={(e) => updateSubpage(spIndex, { name: e.target.value })}
+                              placeholder="e.g. dubai, travel, weddings"
+                            />
+                            <span className="input-slug-preview">/{slugify(sp.name)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Subpage metadata */}
+                      <div className="subpage-drawer-section">
+                        <div className="admin-field-row">
+                          <div className="admin-field">
+                            <label>Display Title (optional)</label>
+                            <input
+                              value={sp.title || ''}
+                              onChange={(e) =>
+                                updateSubpage(spIndex, { title: e.target.value || undefined })
+                              }
+                              placeholder="Display title (defaults to name)"
+                            />
+                          </div>
+                          <div className="admin-field">
+                            <label>Subtitle</label>
+                            <input
+                              value={sp.subtitle || ''}
+                              onChange={(e) =>
+                                updateSubpage(spIndex, { subtitle: e.target.value || undefined })
+                              }
+                              placeholder="Subtitle text"
+                            />
+                          </div>
+                        </div>
+                        <div className="admin-field">
+                          <label>Password Protection (optional)</label>
+                          <div className="password-input-wrapper">
+                            <span className="password-icon"><Icons.Lock /></span>
+                            <input
+                              type="password"
+                              value={sp.password || ''}
+                              onChange={(e) =>
+                                updateSubpage(spIndex, { password: e.target.value || undefined })
+                              }
+                              placeholder="Leave empty for public access"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="admin-field" style={{ marginTop: '1rem' }}>
+                          <label>Page Visibility Status</label>
+                          <button
+                            type="button"
+                            className={`admin-toggle-card ${sp.enabled !== false ? 'active' : ''}`}
+                            onClick={() => updateSubpage(spIndex, { enabled: sp.enabled === false })}
+                            style={{ padding: '10px 14px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '8px', cursor: 'pointer' }}
+                          >
+                            <div className="toggle-card-info" style={{ textAlign: 'left' }}>
+                              <span className="toggle-card-title" style={{ fontWeight: 600 }}>
+                                {sp.enabled !== false ? '🟢 Page Active (Published)' : '🔴 Page Disabled (Hidden)'}
+                              </span>
+                              <span className="toggle-card-desc" style={{ fontSize: '0.8rem', display: 'block', opacity: 0.75 }}>
+                                {sp.enabled !== false
+                                  ? 'Visible in header menu and reachable via URL'
+                                  : 'Hidden from navigation menu. Returns 404 if accessed directly.'}
+                              </span>
+                            </div>
+                            <div className={`switch-toggle ${sp.enabled !== false ? 'on' : ''}`}>
+                              <span className="switch-slider" />
+                            </div>
+                          </button>
+                        </div>
+                        <div className="admin-field" style={{ marginTop: '1rem' }}>
+                          <label>Page Layout Style</label>
+                          <select
+                            value={sp.grid?.layout || 'masonry'}
+                            onChange={(e) => {
+                              const newLayout = e.target.value;
+                              updateSubpage(spIndex, {
+                                grid: { ...(sp.grid || {}), layout: newLayout },
+                              });
+                            }}
+                            style={{ padding: '8px 12px', borderRadius: '6px', width: '100%', fontSize: '0.9rem' }}
+                          >
+                            <option value="masonry">📷 Masonry Grid (Dynamic Height)</option>
+                            <option value="uniform">🔲 Uniform Grid (Square Tiles)</option>
+                            <option value="showcase">⭐ Showcase (Featured First Asset)</option>
+                            <option value="filmstrip">🎞️ Filmstrip (Horizontal Scroll)</option>
+                            <option value="editorial-flow">📰 Editorial Flow</option>
+                            <option value="essay">📖 Photo Essay Mode (Storytelling Editor)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Visual Photo Essay Builder (if layout === 'essay') */}
+                      {(sp.grid?.layout === 'essay' || sp.essayText != null) && (
+                        <div className="subpage-drawer-section" style={{ background: 'var(--admin-surface, rgba(255,255,255,0.02))', padding: '1rem', borderRadius: '8px', border: '1px solid var(--admin-border, rgba(255,255,255,0.1))' }}>
+                          <div style={{ marginBottom: '1rem' }}>
+                            <h4 style={{ margin: 0, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span>📖 Storytelling &amp; Photo Essay Builder</span>
+                            </h4>
+                            <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', opacity: 0.75 }}>
+                              Compose text, quotes, and fullbleed/wide photos visually.
+                            </p>
+                          </div>
+
+                          <EssayBlockEditor
+                            markdown={sp.essayText || ''}
+                            onChange={(newMarkdown) => updateSubpage(spIndex, { essayText: newMarkdown })}
+                            onSelectPhoto={(callback) => {
+                              setPickerTarget({ type: 'subpage', subpageIndex: spIndex });
+                              // We can pass a photo picker handler if needed
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      <div className="settings-section-divider" />
+
+                      {/* Albums (if no sections) with DnD */}
+                      {(!sp.sections || sp.sections.length === 0) && (
+                        <div className="subpage-albums">
+                          <div className="subpage-albums-header">
+                            <span>Albums in this Page</span>
+                            <button
+                              className="admin-btn admin-btn-xs admin-btn-primary"
+                              onClick={() =>
+                                setPickerTarget({ type: 'subpage', subpageIndex: spIndex })
+                              }
+                            >
+                              + Add Album
+                            </button>
+                          </div>
+                          <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleSubpageAlbumDragEnd(spIndex)}
+                          >
+                            <SortableContext
+                              items={sp.albums.map((a, i) => `album-${a.id}-${i}`)}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              <div className="album-list">
+                                {sp.albums.length === 0 && (
+                                  <p className="empty-hint">No albums added yet. Click + Add Album to pick from Immich.</p>
+                                )}
+                                {sp.albums.map((album, aIndex) => (
+                                  <SortableAlbumCard
+                                    key={`${album.id}-${aIndex}`}
+                                    album={album}
+                                    index={aIndex}
+                                    name={getAlbumName(album.id)}
+                                    count={getAlbumCount(album.id)}
+                                    thumbnailId={getAlbumThumbnailId(album.id)}
+                                    onRemove={() => removeSubpageAlbum(spIndex, aIndex)}
+                                    onEdit={() => setEditingAlbumAddress({ type: 'subpage', subpageIndex: spIndex, albumIndex: aIndex })}
+                                  />
+                                ))}
+                              </div>
+                            </SortableContext>
+                          </DndContext>
+                        </div>
+                      )}
+
+                      {/* Sections */}
+                      {sp.sections && sp.sections.length > 0 && (
+                        <div className="subpage-sections">
+                          {sp.sections.map((sec, secIndex) => (
+                            <div key={secIndex} className="section-card">
+                              <div className="section-header">
+                                <input
+                                  className="section-title-input"
+                                  value={sec.title}
+                                  onChange={(e) =>
+                                    updateSection(spIndex, secIndex, { title: e.target.value })
+                                  }
+                                  placeholder="Section title"
+                                />
+                                <button
+                                  className="admin-btn-icon"
+                                  onClick={() => removeSection(spIndex, secIndex)}
+                                  title="Remove section"
+                                >
+                                  <Icons.Close />
+                                </button>
+                              </div>
+                              <div className="admin-field">
+                                <input
+                                  value={sec.description || ''}
+                                  onChange={(e) =>
+                                    updateSection(spIndex, secIndex, {
+                                      description: e.target.value || undefined,
+                                    })
+                                  }
+                                  placeholder="Section description (optional)"
+                                  className="section-desc-input"
+                                />
+                              </div>
+                              <div className="album-list">
+                                {sec.albums.map((album, aIndex) => (
+                                  <AlbumCard
+                                    key={`${album.id}-${aIndex}`}
+                                    album={album}
+                                    name={getAlbumName(album.id)}
+                                    count={getAlbumCount(album.id)}
+                                    thumbnailId={getAlbumThumbnailId(album.id)}
+                                    onRemove={() => removeSectionAlbum(spIndex, secIndex, aIndex)}
+                                    onEdit={() => setEditingAlbumAddress({ type: 'section', subpageIndex: spIndex, sectionIndex: secIndex, albumIndex: aIndex })}
+                                  />
+                                ))}
+                              </div>
+                              <button
+                                className="admin-btn admin-btn-xs"
+                                onClick={() =>
+                                  setPickerTarget({
+                                    type: 'section',
+                                    subpageIndex: spIndex,
+                                    sectionIndex: secIndex,
+                                  })
+                                }
+                              >
+                                + Add Album
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="subpage-actions" style={{ marginTop: '1rem' }}>
+                        <button className="admin-btn admin-btn-xs admin-btn-secondary" onClick={() => addSection(spIndex)}>
+                          + Add Section
+                        </button>
+                        {sp.sections && sp.sections.length > 0 && (
+                          <button
+                            className="admin-btn admin-btn-xs admin-btn-secondary"
+                            onClick={() => setPickerTarget({ type: 'subpage', subpageIndex: spIndex })}
+                          >
+                            + Add Loose Album
+                          </button>
+                        )}
+                      </div>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="subpage-drawer-footer">
                       <button
-                        className="admin-btn-icon"
-                        onClick={() => setExpandedSubpage(null)}
-                        title="Collapse"
-                      >
-                        ✕
-                      </button>
-                      <button
-                        className="admin-btn-icon admin-btn-icon-danger"
+                        className="admin-btn admin-btn-danger admin-btn-sm"
                         onClick={() => {
                           removeSubpage(spIndex);
                           setExpandedSubpage(null);
                         }}
-                        title="Delete subpage"
                       >
-                        🗑
+                        <Icons.Trash /> Delete Subpage
                       </button>
-                    </div>
-                  </div>
-
-                  {/* Subpage metadata */}
-                  <div className="subpage-meta">
-                    <div className="admin-field-row">
-                      <div className="admin-field">
-                        <label>Title (optional)</label>
-                        <input
-                          value={sp.title || ''}
-                          onChange={(e) =>
-                            updateSubpage(spIndex, { title: e.target.value || undefined })
-                          }
-                          placeholder="Display title (defaults to name)"
-                        />
-                      </div>
-                      <div className="admin-field">
-                        <label>Subtitle</label>
-                        <input
-                          value={sp.subtitle || ''}
-                          onChange={(e) =>
-                            updateSubpage(spIndex, { subtitle: e.target.value || undefined })
-                          }
-                          placeholder="Subtitle text"
-                        />
-                      </div>
-                    </div>
-                    <div className="admin-field-row">
-                      <div className="admin-field">
-                        <label>Password (optional)</label>
-                        <input
-                          type="password"
-                          value={sp.password || ''}
-                          onChange={(e) =>
-                            updateSubpage(spIndex, { password: e.target.value || undefined })
-                          }
-                          placeholder="Leave empty for public"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Albums (if no sections) with DnD */}
-                  {(!sp.sections || sp.sections.length === 0) && (
-                    <div className="subpage-albums">
-                      <div className="subpage-albums-header">
-                        <span>Albums</span>
-                        <button
-                          className="admin-btn admin-btn-xs"
-                          onClick={() =>
-                            setPickerTarget({ type: 'subpage', subpageIndex: spIndex })
-                          }
-                        >
-                          + Add
-                        </button>
-                      </div>
-                      <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleSubpageAlbumDragEnd(spIndex)}
-                      >
-                        <SortableContext
-                          items={sp.albums.map((a, i) => `album-${a.id}-${i}`)}
-                          strategy={verticalListSortingStrategy}
-                        >
-                          <div className="album-list">
-                            {sp.albums.map((album, aIndex) => (
-                              <SortableAlbumCard
-                                key={`${album.id}-${aIndex}`}
-                                album={album}
-                                index={aIndex}
-                                name={getAlbumName(album.id)}
-                                count={getAlbumCount(album.id)}
-                                thumbnailId={getAlbumThumbnailId(album.id)}
-                                onRemove={() => removeSubpageAlbum(spIndex, aIndex)}
-                                onEdit={() => setEditingAlbumAddress({ type: 'subpage', subpageIndex: spIndex, albumIndex: aIndex })}
-                              />
-                            ))}
-                          </div>
-                        </SortableContext>
-                      </DndContext>
-                    </div>
-                  )}
-
-                  {/* Sections */}
-                  {sp.sections && sp.sections.length > 0 && (
-                    <div className="subpage-sections">
-                      {sp.sections.map((sec, secIndex) => (
-                        <div key={secIndex} className="section-card">
-                          <div className="section-header">
-                            <input
-                              className="section-title-input"
-                              value={sec.title}
-                              onChange={(e) =>
-                                updateSection(spIndex, secIndex, { title: e.target.value })
-                              }
-                              placeholder="Section title"
-                            />
-                            <button
-                              className="admin-btn-icon"
-                              onClick={() => removeSection(spIndex, secIndex)}
-                              title="Remove section"
-                            >
-                              <Icons.Close />
-                            </button>
-                          </div>
-                          <div className="admin-field">
-                            <input
-                              value={sec.description || ''}
-                              onChange={(e) =>
-                                updateSection(spIndex, secIndex, {
-                                  description: e.target.value || undefined,
-                                })
-                              }
-                              placeholder="Section description (optional)"
-                              className="section-desc-input"
-                            />
-                          </div>
-                          <div className="album-list">
-                            {sec.albums.map((album, aIndex) => (
-                              <AlbumCard
-                                key={`${album.id}-${aIndex}`}
-                                album={album}
-                                name={getAlbumName(album.id)}
-                                count={getAlbumCount(album.id)}
-                                thumbnailId={getAlbumThumbnailId(album.id)}
-                                onRemove={() => removeSectionAlbum(spIndex, secIndex, aIndex)}
-                                onEdit={() => setEditingAlbumAddress({ type: 'section', subpageIndex: spIndex, sectionIndex: secIndex, albumIndex: aIndex })}
-                              />
-                            ))}
-                          </div>
-                          <button
-                            className="admin-btn admin-btn-xs"
-                            onClick={() =>
-                              setPickerTarget({
-                                type: 'section',
-                                subpageIndex: spIndex,
-                                sectionIndex: secIndex,
-                              })
-                            }
-                          >
-                            + Add Album
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="subpage-actions">
-                    <button className="admin-btn admin-btn-xs" onClick={() => addSection(spIndex)}>
-                      + Add Section
-                    </button>
-                    {sp.sections && sp.sections.length > 0 && (
                       <button
-                        className="admin-btn admin-btn-xs"
-                        onClick={() => setPickerTarget({ type: 'subpage', subpageIndex: spIndex })}
+                        className="admin-btn admin-btn-primary admin-btn-sm"
+                        onClick={() => setExpandedSubpage(null)}
                       >
-                        + Add Album (outside sections)
+                        Done
                       </button>
-                    )}
-                  </div>
-                </>
-              );
-            })()}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
           </div>
         )}
       </section>

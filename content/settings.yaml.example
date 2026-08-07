@@ -11,6 +11,7 @@ subtitle: "A visual journal"
 # seo:
 #   title: "My Portfolio | Photography"
 #   description: "A curated selection of my best photography work."
+#   titleTemplate: "%s | My Portfolio" # Template for subpages (%s is replaced with subpage/album title)
 #   noIndex: false # Set to true to hide from search engines
 #   noFollow: false # Set to true to prevent search engines from following links
 
@@ -22,6 +23,11 @@ map: true
 
 # Enable smooth page transitions between routes
 transitions: true
+
+# Client proofing & favorite photo selections
+# proofing:
+#   enabled: true
+#   allowMailto: true
 
 # ── Theme configuration ──────────────────────────────────────────
 # Presets: studio, minimal, editorial, classic, noir, monograph

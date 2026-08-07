@@ -17,6 +17,8 @@ import { getConfigOrNull, getGoogleFontsUrl, AppConfig } from '@/lib/config';
 import { isAdminPath } from '@/lib/admin/paths';
 // DevToolbarLoader is a Client Component (ssr: false is only allowed there)
 import { DevToolbarLoader } from '@/components/DevToolbarLoader';
+import AssetProtection from '@/components/AssetProtection';
+import AnalyticsTracker from '@/components/AnalyticsTracker';
 
 export async function generateMetadata(): Promise<Metadata> {
   const config = getConfigOrNull();
@@ -33,7 +35,10 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 
   return {
-    title: siteTitle,
+    title: {
+      default: siteTitle,
+      template: config.seo.titleTemplate,
+    },
     description: siteDescription,
     robots,
     icons: {
@@ -97,6 +102,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     );
   }
 
+  const isAdmin = isAdminPath(pathname);
+
   return (
     <html
       lang={config.lang || 'en'}
@@ -114,32 +121,43 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="stylesheet" href={fontsUrl} />
       </head>
       <body>
-        <a href="#main-content" className="skip-link">
-          Skip to content
-        </a>
-        <header className="header">
-          <nav className="header__nav">
-            <Link href="/" className="header__nav-link">
-              Home
-            </Link>
-            <SubpageNav />
-            <Link href="/about" className="header__nav-link">
-              About
-            </Link>
-            {config.map && (
-              <Link href="/map" className="header__nav-link">
-                Map
-              </Link>
-            )}
-            <ThemeToggle />
-          </nav>
-        </header>
-        <main id="main-content" tabIndex={-1} className="main">
-          {children}
-        </main>
-        <Footer />
-        <ScrollToTop />
-        {process.env.NODE_ENV === 'development' && <DevToolbarLoader />}
+        {isAdmin ? (
+          children
+        ) : (
+          <>
+            <a href="#main-content" className="skip-link">
+              Skip to content
+            </a>
+            <header className="header">
+              <nav className="header__nav">
+                <Link href="/" className="header__nav-link">
+                  Home
+                </Link>
+                <SubpageNav />
+                <Link href="/about" className="header__nav-link">
+                  About
+                </Link>
+                {config.map && (
+                  <Link href="/map" className="header__nav-link">
+                    Map
+                  </Link>
+                )}
+                <ThemeToggle />
+              </nav>
+            </header>
+            <main id="main-content" tabIndex={-1} className="main">
+              {children}
+            </main>
+            <Footer />
+            <ScrollToTop />
+            <AssetProtection
+              disableRightClick={config.protection?.disableRightClick}
+              disableImageDrag={config.protection?.disableImageDrag}
+            />
+            <AnalyticsTracker />
+            {process.env.NODE_ENV === 'development' && <DevToolbarLoader />}
+          </>
+        )}
       </body>
     </html>
   );

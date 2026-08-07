@@ -14,6 +14,10 @@ export interface SubpageConfig {
   sections?: SubpageSectionConfig[];
   password?: string;
   grid?: Partial<GridConfig>;
+  proofing?: boolean;
+  essayFile?: string;
+  essayText?: string;
+  enabled?: boolean;
 }
 
 export interface SubpageObjectValue {
@@ -21,6 +25,10 @@ export interface SubpageObjectValue {
   subtitle?: string;
   password?: string;
   grid?: Partial<GridConfig>;
+  proofing?: boolean;
+  essayFile?: string;
+  essayText?: string;
+  enabled?: boolean;
   albums?: Array<
     string | Record<string, string | { title: string; description?: string; password?: string }>
   >;
@@ -68,7 +76,7 @@ export interface GridConfig {
   columns: number;
   gap: number;
   aspectRatio: string;
-  layout: 'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow';
+  layout: 'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow' | 'essay';
 }
 
 export interface AppConfig {
@@ -83,6 +91,7 @@ export interface AppConfig {
   seo: {
     title: string;
     description: string;
+    titleTemplate: string;
     noIndex: boolean;
     noFollow: boolean;
   };
@@ -94,6 +103,11 @@ export interface AppConfig {
   legal: LegalConfig;
   map: boolean;
   transitions: boolean;
+  analytics: boolean;
+  proofing: {
+    enabled: boolean;
+    allowMailto: boolean;
+  };
   albumOverrides: Record<string, string>;
   albumDescriptions: Record<string, string>;
   albumPasswords: Record<string, string>;
@@ -106,6 +120,16 @@ export interface AppConfig {
   rateLimitRpm: number;
   trustedProxyHops: number;
   needsSetup?: boolean;
+  protection?: {
+    disableRightClick?: boolean;
+    disableImageDrag?: boolean;
+  };
+  watermark?: {
+    enabled?: boolean;
+    text?: string;
+    opacity?: number;
+    position?: 'bottom-right' | 'bottom-left' | 'center';
+  };
 }
 
 export interface AlbumEntryObject {
@@ -131,6 +155,10 @@ export interface GalleryYaml {
           albums: Array<string | Record<string, string | AlbumEntryObject>>;
         }>;
         password?: string;
+        proofing?: boolean;
+        essayFile?: string;
+        essayText?: string;
+        enabled?: boolean;
         grid?: {
           columns?: number;
           gap?: number;
@@ -147,12 +175,18 @@ export interface SettingsYaml {
   seo?: {
     title?: string;
     description?: string;
+    titleTemplate?: string;
     noIndex?: boolean;
     noFollow?: boolean;
   };
   exifOnHover?: boolean;
   map?: boolean;
   transitions?: boolean;
+  analytics?: boolean;
+  proofing?: {
+    enabled?: boolean;
+    allowMailto?: boolean;
+  };
   theme?:
     | string
     | {
@@ -173,6 +207,16 @@ export interface SettingsYaml {
   };
   footer?: FooterConfig;
   legal?: Partial<LegalConfig>;
+  protection?: {
+    disableRightClick?: boolean;
+    disableImageDrag?: boolean;
+  };
+  watermark?: {
+    enabled?: boolean;
+    text?: string;
+    opacity?: number;
+    position?: 'bottom-right' | 'bottom-left' | 'center';
+  };
 }
 
 export function slugify(name: string): string {

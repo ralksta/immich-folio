@@ -194,6 +194,10 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         albumIds,
         sections,
         password: sp.password,
+        proofing: sp.proofing,
+        essayFile: sp.essayFile,
+        essayText: sp.essayText,
+        enabled: sp.enabled !== false,
         ...buildSubpageGrid(sp.grid),
       };
     });
@@ -204,6 +208,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
           name,
           slug: slugify(name),
           albumIds: value.map((entry) => processAlbumEntry(entry, `subpage "${name}"`)),
+          enabled: true,
         };
       }
       const sp = value as SubpageObjectValue;
@@ -215,6 +220,10 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         subtitle: sp.subtitle,
         albumIds: albumEntries.map((entry) => processAlbumEntry(entry, `subpage "${name}"`)),
         password: sp.password,
+        proofing: sp.proofing,
+        essayFile: sp.essayFile,
+        essayText: sp.essayText,
+        enabled: sp.enabled !== false,
         ...buildSubpageGrid(sp.grid),
       };
     });
@@ -260,6 +269,7 @@ export function getConfig(): AppConfig {
       seo: {
         title: 'Setup Required',
         description: 'Please configure Immich Folio',
+        titleTemplate: '%s | Setup Required',
         noIndex: true,
         noFollow: true,
       },
@@ -271,6 +281,8 @@ export function getConfig(): AppConfig {
       legal: { enabled: false, name: '', address: '', zipCity: '', country: '' },
       map: false,
       transitions: false,
+      analytics: true,
+      proofing: { enabled: false, allowMailto: false },
       albumOverrides: {},
       albumDescriptions: {},
       albumPasswords: {},
@@ -296,6 +308,8 @@ export function getConfig(): AppConfig {
     albumHeroImages,
   } = deriveGallery(gallery);
 
+  const siteSeoTitle = settings.seo?.title || settings.title || env.SITE_TITLE || 'Gallery';
+
   return {
     immich: { apiUrl: `${apiUrl}/api`, apiKey },
     authSecret,
@@ -306,12 +320,13 @@ export function getConfig(): AppConfig {
     siteSubtitle: settings.subtitle ?? env.SITE_SUBTITLE,
     lang: settings.lang ?? 'en',
     seo: {
-      title: settings.seo?.title || settings.title || env.SITE_TITLE || 'Gallery',
+      title: siteSeoTitle,
       description:
         settings.seo?.description ||
         settings.subtitle ||
         env.SITE_SUBTITLE ||
         'A curated photography portfolio',
+      titleTemplate: settings.seo?.titleTemplate || `%s | ${siteSeoTitle}`,
       noIndex: settings.seo?.noIndex === true,
       noFollow: settings.seo?.noFollow === true,
     },
@@ -352,6 +367,13 @@ export function getConfig(): AppConfig {
     },
     map: settings.map === true,
     transitions: settings.transitions !== false,
+    analytics: settings.analytics !== false,
+    proofing: {
+      enabled: settings.proofing?.enabled !== false,
+      allowMailto: settings.proofing?.allowMailto !== false,
+    },
+    protection: settings.protection,
+    watermark: settings.watermark,
     albumOverrides,
     albumDescriptions,
     albumPasswords,

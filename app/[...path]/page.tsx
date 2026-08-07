@@ -31,6 +31,8 @@ import { isProtected, isAuthenticated } from '@/lib/auth';
 import PasswordGate from '@/components/PasswordGate';
 import { AlbumDetailView } from './AlbumDetailView';
 import { SubpageGridView } from './SubpageGridView';
+import { EssayView } from './EssayView';
+import { parseEssayMarkdown, loadEssayFromFile } from '@/lib/essay';
 
 // Render at request time — requires live Immich connection
 export const dynamic = 'force-dynamic';
@@ -46,18 +48,13 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
   const slug = path[0];
   let title = slug;
   let subtitle = '';
-
-  if (path.length === 2) {
-    const album = await immich.getAlbumBySlug(path[1], slug);
-    if (album) {
-      title = album.albumName;
-      const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
-      subtitle = `${count} photo${count === 1 ? '' : 's'}`;
-    }
-  } else if (immich.isSubpageSlug(slug)) {
+  let description: string | undefined = undefined;
+  if (path.length === 1 && immich.isSubpageSlug(slug)) {
     const result = await immich.getSubpageAlbums(slug);
     if (result) {
-      // Single album → use album name; multiple → use subpage name
+      if (result.subpage.subtitle) {
+        description = result.subpage.subtitle;
+      }
       if (result.albums.length === 1) {
         const album = await immich.getAlbumBySlug(result.albums[0].slug, slug);
         if (album) {
@@ -66,8 +63,15 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
           subtitle = `${count} photo${count === 1 ? '' : 's'}`;
         }
       } else {
-        title = result.subpage.name;
+        title = result.subpage.title || result.subpage.name;
       }
+    }
+  } else if (path.length === 2) {
+    const album = await immich.getAlbumBySlug(path[1], slug);
+    if (album) {
+      title = album.albumName;
+      const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
+      subtitle = `${count} photo${count === 1 ? '' : 's'}`;
     }
   } else {
     const album = await immich.getAlbumBySlug(slug);
@@ -82,8 +86,18 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
 
   return {
     title,
-    openGraph: { title, images: [ogUrl] },
-    twitter: { card: 'summary_large_image', title, images: [ogUrl] },
+    description: description || (subtitle ? `${title} — ${subtitle}` : undefined),
+    openGraph: {
+      title,
+      description: description || (subtitle ? `${title} — ${subtitle}` : undefined),
+      images: [ogUrl],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: description || (subtitle ? `${title} — ${subtitle}` : undefined),
+      images: [ogUrl],
+    },
   };
 }
 
@@ -204,6 +218,7 @@ export default async function PathPage({ params }: PathPageProps) {
         gridStyle={buildGridStyle(spGrid)}
         backLinkHref={`/${subpageSlug}`}
         backLinkLabel={`Back to ${subpageName}`}
+        watermark={config.watermark}
         {...heroData}
       />
     );
@@ -224,6 +239,57 @@ export default async function PathPage({ params }: PathPageProps) {
     }
 
     const { albums } = result;
+
+    // ── Photo Essay / Storytelling Mode ───────────────────────
+    const isEssay =
+      result.subpage.grid?.layout === 'essay' ||
+      !!result.subpage.essayFile ||
+      !!result.subpage.essayText;
+
+    if (isEssay) {
+      let essayParsed = result.subpage.essayText
+        ? parseEssayMarkdown(result.subpage.essayText)
+        : result.subpage.essayFile
+        ? loadEssayFromFile(result.subpage.essayFile)
+        : null;
+
+      // Fetch assets from all subpage albums
+      const allAlbums = await Promise.all(
+        albums.map((a) => immich.getAlbumBySlug(a.slug, slug))
+      );
+      const allAssets = allAlbums.flatMap((a) => (a ? a.assets : []));
+      const images = toPhotoItems(allAssets, config.exifOnHover);
+
+      // Fallback structured essay if layout: 'essay' is set without custom markdown file
+      if (!essayParsed) {
+        essayParsed = {
+          frontmatter: {
+            title: result.subpage.title || result.subpage.name,
+            subtitle: result.subpage.subtitle,
+          },
+          blocks: albums.flatMap((a) => [
+            { type: 'heading' as const, level: 2, text: a.albumName },
+            ...a.assets.map((asset) => ({
+              type: 'photo' as const,
+              assetId: encodeAssetId(asset.id),
+              caption: asset.exifInfo?.description || undefined,
+              layout: 'contained' as const,
+            })),
+          ]),
+          referencedAssetIds: [],
+        };
+      }
+
+      return (
+        <EssayView
+          essay={essayParsed}
+          assets={images}
+          title={result.subpage.title || result.subpage.name}
+          subtitle={result.subpage.subtitle}
+          watermark={config.watermark}
+        />
+      );
+    }
 
     // ── Single album → full-bleed (skip album grid) ──────────
     if (albums.length === 1) {
@@ -247,6 +313,7 @@ export default async function PathPage({ params }: PathPageProps) {
           subtitle={result.subpage.subtitle}
           backLinkHref="/"
           backLinkLabel="Back to Gallery"
+          watermark={config.watermark}
           {...heroData}
         />
       );
@@ -303,6 +370,7 @@ export default async function PathPage({ params }: PathPageProps) {
       gridStyle={buildGridStyle()}
       backLinkHref="/"
       backLinkLabel="Back to Gallery"
+      watermark={config.watermark}
       {...heroData}
     />
   );

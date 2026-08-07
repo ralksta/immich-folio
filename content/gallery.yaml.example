@@ -55,3 +55,14 @@ subpages:
         albums:                                # description is optional
           - "album-uuid-osaka-1"
           - "album-uuid-osaka-2"
+
+  # ── Photo Essay / Storytelling Subpage Example ───────────────────
+  # Render editorial Markdown essays with fullbleed & side-by-side images
+  - name: Highlands
+    title: "Icelandic Highlands"
+    subtitle: "A Photo Essay"
+    essayFile: "content/essays/sample-story.md"
+    grid:
+      layout: essay
+    albums:
+      - "album-uuid-iceland-1"
