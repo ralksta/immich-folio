@@ -908,11 +908,11 @@ export default function PageBuilder() {
         </div>
         <div className="save-bar-right">
           <a
-            href="/"
+            href="/?fresh=1"
             target="_blank"
             rel="noopener noreferrer"
             className="admin-btn admin-btn-ghost admin-btn-preview"
-            title="Open site in new tab"
+            title="Open site in new tab (bypassing cache)"
           >
             ↗ Preview Site
           </a>
@@ -1120,11 +1120,11 @@ export default function PageBuilder() {
                         </div>
 
                         <a
-                          href={`/${slugify(sp.name)}`}
+                          href={`/${slugify(sp.name)}?fresh=1`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="admin-btn admin-btn-xs admin-btn-ghost"
-                          title="Open live page in new tab"
+                          title="Open live page in new tab (bypassing cache)"
                         >
                           /{slugify(sp.name)} ↗
                         </a>

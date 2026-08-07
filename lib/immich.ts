@@ -340,10 +340,14 @@ class ImmichClient {
    * Get ALL configured albums (filtered by the full allowlist).
    * Uses ?shared=true to only fetch albums that have been shared in Immich.
    */
-  async getAlbums(): Promise<ImmichAlbum[]> {
+  async getAlbums(forceFresh = false): Promise<ImmichAlbum[]> {
     const cacheKey = 'albums-list';
-    const cached = cache.get<ImmichAlbum[]>(cacheKey);
-    if (cached) return cached;
+    if (forceFresh) {
+      cache.delete(cacheKey);
+    } else {
+      const cached = cache.get<ImmichAlbum[]>(cacheKey);
+      if (cached) return cached;
+    }
 
     if (this.pendingAlbumsPromise) {
       return this.pendingAlbumsPromise;
@@ -415,8 +419,8 @@ class ImmichClient {
   /**
    * Get only standalone albums (not in any subpage) — for the homepage.
    */
-  async getStandaloneAlbums(): Promise<ImmichAlbum[]> {
-    const albums = await this.getAlbums();
+  async getStandaloneAlbums(forceFresh = false): Promise<ImmichAlbum[]> {
+    const albums = await this.getAlbums(forceFresh);
     // The API returns albums in its own order; gallery.yaml order wins.
     const orderIdx = new Map(this.config.standaloneAlbums.map((id, i) => [id, i]));
     return albums
@@ -427,11 +431,11 @@ class ImmichClient {
   /**
    * Get enriched subpage summaries for the homepage.
    */
-  async getSubpages(): Promise<SubpageSummary[]> {
+  async getSubpages(forceFresh = false): Promise<SubpageSummary[]> {
     const activeSubpages = this.config.subpages.filter((sp) => sp.enabled !== false);
     if (activeSubpages.length === 0) return [];
 
-    const albums = await this.getAlbums();
+    const albums = await this.getAlbums(forceFresh);
     const albumMap = new Map(albums.map((a) => [a.id, a]));
 
     return activeSubpages.map((sp) => {
@@ -454,13 +458,14 @@ class ImmichClient {
    */
   async getSubpageAlbums(
     subpageSlug: string,
+    forceFresh = false,
   ): Promise<{ subpage: SubpageConfig; albums: ImmichAlbum[] } | null> {
     const subpage = this.config.subpages.find(
       (sp) => sp.slug === subpageSlug && sp.enabled !== false,
     );
     if (!subpage) return null;
 
-    const allAlbums = await this.getAlbums();
+    const allAlbums = await this.getAlbums(forceFresh);
     const subpageAlbumIds = new Set(subpage.albumIds);
     const albums = allAlbums.filter((a) => subpageAlbumIds.has(a.id));
 
@@ -513,7 +518,7 @@ class ImmichClient {
     return assets;
   }
 
-  async getAlbum(albumId: string): Promise<ImmichAlbum | null> {
+  async getAlbum(albumId: string, forceFresh = false): Promise<ImmichAlbum | null> {
     // Security: only serve configured albums
     if (!this.config.albums.includes(albumId)) {
       console.warn(`[Immich] Album ${albumId} is not in LIGHTBOX_ALBUMS`);
@@ -521,8 +526,12 @@ class ImmichClient {
     }
 
     const cacheKey = `album-${albumId}`;
-    const cached = cache.get<ImmichAlbum | Missing>(cacheKey);
-    if (cached) return cached === MISSING ? null : (cached as ImmichAlbum);
+    if (forceFresh) {
+      cache.delete(cacheKey);
+    } else {
+      const cached = cache.get<ImmichAlbum | Missing>(cacheKey);
+      if (cached) return cached === MISSING ? null : (cached as ImmichAlbum);
+    }
 
     if (this.pendingAlbumPromises.has(albumId)) {
       return this.pendingAlbumPromises.get(albumId)!;
@@ -583,8 +592,12 @@ class ImmichClient {
    * Find an album by its URL slug.
    * If subpageSlug is provided, only search within that subpage's albums.
    */
-  async getAlbumBySlug(slug: string, subpageSlug?: string): Promise<ImmichAlbum | null> {
-    const albums = await this.getAlbums();
+  async getAlbumBySlug(
+    slug: string,
+    subpageSlug?: string,
+    forceFresh = false,
+  ): Promise<ImmichAlbum | null> {
+    const albums = await this.getAlbums(forceFresh);
 
     let searchSet = albums;
     if (subpageSlug) {
@@ -596,7 +609,7 @@ class ImmichClient {
 
     const match = searchSet.find((a) => a.slug === slug);
     if (!match) return null;
-    return this.getAlbum(match.id);
+    return this.getAlbum(match.id, forceFresh);
   }
 
   /**

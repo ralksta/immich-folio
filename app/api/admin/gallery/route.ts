@@ -63,6 +63,7 @@ export async function PUT(request: Request) {
     immich.invalidateAll();
     // Revalidate all pages so the homepage picks up new hero images immediately
     revalidatePath('/', 'layout');
+    revalidatePath('/[...path]', 'page');
     return NextResponse.json({
       success: true,
       message: 'Saved successfully. Backup of previous version created.',
