@@ -7,7 +7,17 @@ import {
   type ParsedEssay,
   type EssayBlock,
 } from '@/lib/essay';
-import * as Icons from './Icons';
+import {
+  IconCamera,
+  IconChevronUp,
+  IconChevronDown,
+  IconTrash,
+  IconGripVertical,
+  IconQuote,
+  IconFileText,
+  IconSparkles,
+  IconArrowLeftRight,
+} from './Icons';
 
 interface EssayBlockEditorProps {
   markdown: string;
@@ -83,21 +93,21 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
         newBlock = { type: 'paragraph', html: 'Enter text paragraph here...' };
         break;
       case 'quote':
-        newBlock = { type: 'quote', text: 'Enter quote text here...', author: 'Author' };
+        newBlock = { type: 'quote', text: 'Enter quote text here...', author: '' };
         break;
       case 'photo':
         newBlock = {
           type: 'photo',
-          assetId: 'sample-asset',
-          caption: 'Photo caption',
+          assetId: '',
+          caption: '',
           layout: 'contained',
         };
         break;
       case 'photo-pair':
         newBlock = {
           type: 'photo-pair',
-          assetIds: ['asset-1', 'asset-2'],
-          caption: 'Side by side caption',
+          assetIds: ['', ''],
+          caption: '',
         };
         break;
     }
@@ -106,57 +116,45 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
   };
 
   return (
-    <div className="essay-block-editor" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      <div
-        className="essay-block-toolbar"
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '10px 14px',
-          background: 'var(--admin-card-bg, rgba(255,255,255,0.04))',
-          borderRadius: '8px',
-          border: '1px solid var(--admin-border, rgba(255,255,255,0.1))',
-        }}
-      >
-        <span style={{ fontSize: '0.85rem', fontWeight: 600, marginRight: 'auto' }}>
-          ✨ Add Story Block:
-        </span>
+    <div className="essay-block-editor">
+      {/* Sticky Dark Glass Toolbar */}
+      <div className="essay-toolbar-sticky">
+        <span className="essay-toolbar-label">✨ Add Story Block:</span>
         <button
           type="button"
           className="admin-btn admin-btn-xs"
           onClick={() => handleAddBlock('paragraph')}
         >
-          + Paragraph
+          <IconFileText size={13} /> + Paragraph
         </button>
         <button
           type="button"
           className="admin-btn admin-btn-xs"
           onClick={() => handleAddBlock('heading')}
         >
-          + Heading
+          <IconSparkles size={13} /> + Heading
         </button>
         <button
           type="button"
           className="admin-btn admin-btn-xs"
           onClick={() => handleAddBlock('quote')}
         >
-          + Pullquote
+          <IconQuote size={13} /> + Pullquote
         </button>
+        <div className="essay-toolbar-divider" />
         <button
           type="button"
           className="admin-btn admin-btn-xs admin-btn-primary"
           onClick={() => handleAddBlock('photo')}
         >
-          + Photo
+          <IconCamera size={13} /> + Photo
         </button>
         <button
           type="button"
           className="admin-btn admin-btn-xs admin-btn-primary"
           onClick={() => handleAddBlock('photo-pair')}
         >
-          + 2-Photo Pair
+          <IconCamera size={13} /> + 2-Photo Pair
         </button>
       </div>
 
@@ -166,51 +164,37 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
         </p>
       )}
 
+      {/* Render Blocks */}
       {essay.blocks.map((block, idx) => (
-        <div
-          key={idx}
-          className="essay-block-item"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            padding: '14px',
-            background: 'var(--admin-card-bg, rgba(255,255,255,0.03))',
-            borderRadius: '8px',
-            border: '1px solid var(--admin-border, rgba(255,255,255,0.08))',
-            position: 'relative',
-          }}
-        >
-          {/* Block Header / Action Controls */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '4px',
-            }}
-          >
-            <span
-              style={{
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                opacity: 0.7,
-              }}
-            >
-              Block {idx + 1}: {block.type}
-            </span>
-            <div style={{ display: 'flex', gap: '4px' }}>
+        <div key={idx} className="essay-block-card">
+          {/* Card Header */}
+          <div className="essay-block-card-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <IconGripVertical size={14} style={{ color: 'var(--admin-text-muted)', cursor: 'grab' }} />
+              <span
+                className={`essay-block-badge ${
+                  block.type === 'photo' || block.type === 'photo-pair'
+                    ? 'badge-photo'
+                    : block.type === 'heading'
+                    ? 'badge-heading'
+                    : block.type === 'quote'
+                    ? 'badge-quote'
+                    : ''
+                }`}
+              >
+                Block {idx + 1}: {block.type}
+              </span>
+            </div>
+
+            <div className="essay-block-actions">
               <button
                 type="button"
                 className="admin-btn-icon"
                 onClick={() => handleMoveBlock(idx, 'up')}
                 disabled={idx === 0}
                 title="Move Up"
-                style={{ padding: '2px 6px' }}
               >
-                ▲
+                <IconChevronUp size={15} />
               </button>
               <button
                 type="button"
@@ -218,31 +202,32 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                 onClick={() => handleMoveBlock(idx, 'down')}
                 disabled={idx === essay.blocks.length - 1}
                 title="Move Down"
-                style={{ padding: '2px 6px' }}
               >
-                ▼
+                <IconChevronDown size={15} />
               </button>
               <button
                 type="button"
-                className="admin-btn-icon text-danger"
+                className="admin-btn-icon"
                 onClick={() => handleDeleteBlock(idx)}
                 title="Delete Block"
-                style={{ padding: '2px 6px', color: '#ff4d4f' }}
+                style={{ color: 'var(--admin-error)' }}
               >
-                <Icons.IconTrash size={14} />
+                <IconTrash size={15} />
               </button>
             </div>
           </div>
 
-          {/* Render Block Form Controls */}
+          {/* Block Form Fields */}
+
+          {/* 1. HEADING BLOCK */}
           {block.type === 'heading' && (
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <select
                 value={block.level}
                 onChange={(e) =>
                   handleUpdateBlock(idx, { ...block, level: Number(e.target.value) })
                 }
-                style={{ width: '80px', padding: '6px', borderRadius: '4px' }}
+                style={{ width: '70px' }}
               >
                 <option value={1}>H1</option>
                 <option value={2}>H2</option>
@@ -252,12 +237,13 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                 type="text"
                 value={block.text}
                 onChange={(e) => handleUpdateBlock(idx, { ...block, text: e.target.value })}
-                placeholder="Section title..."
-                style={{ flex: 1, padding: '6px 10px', borderRadius: '4px' }}
+                placeholder="Section heading..."
+                style={{ flex: 1, fontWeight: block.level === 1 ? 700 : block.level === 2 ? 600 : 500 }}
               />
             </div>
           )}
 
+          {/* 2. PARAGRAPH BLOCK */}
           {block.type === 'paragraph' && (
             <textarea
               rows={3}
@@ -265,19 +251,19 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                 t.startsWith('<strong>') ? '**' : t.startsWith('</strong>') ? '**' : ''
               )}
               onChange={(e) => handleUpdateBlock(idx, { ...block, html: e.target.value })}
-              placeholder="Write text paragraph... (**bold**, *italic* allowed)"
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', resize: 'vertical' }}
+              placeholder="Write text paragraph... (**bold**, *italic* markdown supported)"
             />
           )}
 
+          {/* 3. PULLQUOTE BLOCK */}
           {block.type === 'quote' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <input
-                type="text"
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderLeft: '3px solid var(--admin-accent)', paddingLeft: '10px' }}>
+              <textarea
+                rows={2}
                 value={block.text}
                 onChange={(e) => handleUpdateBlock(idx, { ...block, text: e.target.value })}
                 placeholder="Quote text..."
-                style={{ padding: '6px 10px', borderRadius: '4px' }}
+                style={{ fontStyle: 'italic', fontFamily: 'serif', fontSize: '1rem' }}
               />
               <input
                 type="text"
@@ -285,77 +271,80 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                 onChange={(e) =>
                   handleUpdateBlock(idx, { ...block, author: e.target.value || undefined })
                 }
-                placeholder="Author / Attribution (optional)"
-                style={{ padding: '6px 10px', borderRadius: '4px', fontSize: '0.85rem' }}
+                placeholder="— Author / Attribution (optional)"
               />
             </div>
           )}
 
+          {/* 4. PHOTO BLOCK */}
           {block.type === 'photo' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div
-                  style={{
-                    width: '60px',
-                    height: '60px',
-                    background: '#222',
-                    borderRadius: '6px',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
+            <div className="essay-photo-card">
+              <div className="essay-photo-preview-container">
+                {block.assetId ? (
                   <img
                     src={`/api/admin/thumbnail/${block.assetId}`}
                     alt=""
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    className="essay-photo-thumbnail"
                     onError={(e) => {
                       (e.target as HTMLElement).style.display = 'none';
                     }}
                   />
-                </div>
+                ) : (
+                  <div className="essay-photo-empty">
+                    <IconCamera size={20} />
+                    <span>No Photo</span>
+                  </div>
+                )}
 
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <input
-                      type="text"
-                      value={block.assetId}
-                      onChange={(e) => handleUpdateBlock(idx, { ...block, assetId: e.target.value })}
-                      placeholder="Immich Asset ID or Index"
-                      style={{ flex: 1, padding: '6px 10px', borderRadius: '4px' }}
-                    />
+                <div className="essay-photo-meta">
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     {onSelectPhoto && (
                       <button
                         type="button"
-                        className="admin-btn admin-btn-xs"
+                        className="admin-btn admin-btn-sm admin-btn-primary"
                         onClick={() =>
                           onSelectPhoto((pickedId) =>
                             handleUpdateBlock(idx, { ...block, assetId: pickedId })
                           )
                         }
                       >
-                        Pick Photo
+                        <IconCamera size={14} />
+                        {block.assetId ? 'Change Photo' : 'Select Photo'}
                       </button>
                     )}
+
+                    <div className="essay-pill-selector">
+                      <button
+                        type="button"
+                        className={`essay-pill-btn ${block.layout === 'contained' ? 'active' : ''}`}
+                        onClick={() => handleUpdateBlock(idx, { ...block, layout: 'contained' })}
+                      >
+                        Contained (68ch)
+                      </button>
+                      <button
+                        type="button"
+                        className={`essay-pill-btn ${block.layout === 'wide' ? 'active' : ''}`}
+                        onClick={() => handleUpdateBlock(idx, { ...block, layout: 'wide' })}
+                      >
+                        Wide (1100px)
+                      </button>
+                      <button
+                        type="button"
+                        className={`essay-pill-btn ${block.layout === 'fullbleed' ? 'active' : ''}`}
+                        onClick={() => handleUpdateBlock(idx, { ...block, layout: 'fullbleed' })}
+                      >
+                        Fullbleed (100vw)
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>Display Width:</span>
-                    <select
-                      value={block.layout}
-                      onChange={(e) =>
-                        handleUpdateBlock(idx, {
-                          ...block,
-                          layout: e.target.value as 'contained' | 'wide' | 'fullbleed',
-                        })
-                      }
-                      style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem' }}
-                    >
-                      <option value="contained">Contained (68ch)</option>
-                      <option value="wide">Wide (1100px)</option>
-                      <option value="fullbleed">Fullbleed (100vw)</option>
-                    </select>
-                  </div>
+
+                  <input
+                    type="text"
+                    value={block.assetId}
+                    onChange={(e) => handleUpdateBlock(idx, { ...block, assetId: e.target.value })}
+                    placeholder="Immich Asset UUID..."
+                    style={{ fontSize: '0.75rem', color: 'var(--admin-text-secondary)' }}
+                  />
                 </div>
               </div>
 
@@ -366,74 +355,130 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
                 }
                 placeholder="Photo caption (optional)"
-                style={{ padding: '6px 10px', borderRadius: '4px', fontSize: '0.85rem' }}
               />
             </div>
           )}
 
+          {/* 5. PHOTO-PAIR BLOCK */}
           {block.type === 'photo-pair' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <input
-                    type="text"
-                    value={block.assetIds[0]}
-                    onChange={(e) =>
-                      handleUpdateBlock(idx, {
-                        ...block,
-                        assetIds: [e.target.value, block.assetIds[1]],
-                      })
-                    }
-                    placeholder="Photo 1 ID"
-                    style={{ flex: 1, padding: '6px' }}
-                  />
-                  {onSelectPhoto && (
-                    <button
-                      type="button"
-                      className="admin-btn admin-btn-xs"
-                      onClick={() =>
-                        onSelectPhoto((pickedId) =>
+            <div className="essay-photo-card">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                {/* Photo 1 */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--admin-text-secondary)' }}>
+                    Photo 1
+                  </span>
+                  <div className="essay-photo-preview-container">
+                    {block.assetIds[0] ? (
+                      <img
+                        src={`/api/admin/thumbnail/${block.assetIds[0]}`}
+                        alt=""
+                        className="essay-photo-thumbnail"
+                        style={{ width: '80px', height: '60px' }}
+                      />
+                    ) : (
+                      <div className="essay-photo-empty" style={{ width: '80px', height: '60px' }}>
+                        <IconCamera size={16} />
+                      </div>
+                    )}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {onSelectPhoto && (
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn-xs"
+                          onClick={() =>
+                            onSelectPhoto((pickedId) =>
+                              handleUpdateBlock(idx, {
+                                ...block,
+                                assetIds: [pickedId, block.assetIds[1]],
+                              })
+                            )
+                          }
+                        >
+                          <IconCamera size={12} /> Select Photo 1
+                        </button>
+                      )}
+                      <input
+                        type="text"
+                        value={block.assetIds[0]}
+                        onChange={(e) =>
                           handleUpdateBlock(idx, {
                             ...block,
-                            assetIds: [pickedId, block.assetIds[1]],
+                            assetIds: [e.target.value, block.assetIds[1]],
                           })
-                        )
-                      }
-                    >
-                      Pick
-                    </button>
-                  )}
+                        }
+                        placeholder="UUID 1..."
+                        style={{ fontSize: '0.75rem' }}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <input
-                    type="text"
-                    value={block.assetIds[1]}
-                    onChange={(e) =>
-                      handleUpdateBlock(idx, {
-                        ...block,
-                        assetIds: [block.assetIds[0], e.target.value],
-                      })
-                    }
-                    placeholder="Photo 2 ID"
-                    style={{ flex: 1, padding: '6px' }}
-                  />
-                  {onSelectPhoto && (
+                {/* Photo 2 */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--admin-text-secondary)' }}>
+                      Photo 2
+                    </span>
                     <button
                       type="button"
-                      className="admin-btn admin-btn-xs"
+                      className="admin-btn-icon"
+                      title="Swap Photo 1 & Photo 2"
                       onClick={() =>
-                        onSelectPhoto((pickedId) =>
-                          handleUpdateBlock(idx, {
-                            ...block,
-                            assetIds: [block.assetIds[0], pickedId],
-                          })
-                        )
+                        handleUpdateBlock(idx, {
+                          ...block,
+                          assetIds: [block.assetIds[1], block.assetIds[0]],
+                        })
                       }
                     >
-                      Pick
+                      <IconArrowLeftRight size={14} />
                     </button>
-                  )}
+                  </div>
+
+                  <div className="essay-photo-preview-container">
+                    {block.assetIds[1] ? (
+                      <img
+                        src={`/api/admin/thumbnail/${block.assetIds[1]}`}
+                        alt=""
+                        className="essay-photo-thumbnail"
+                        style={{ width: '80px', height: '60px' }}
+                      />
+                    ) : (
+                      <div className="essay-photo-empty" style={{ width: '80px', height: '60px' }}>
+                        <IconCamera size={16} />
+                      </div>
+                    )}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {onSelectPhoto && (
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn-xs"
+                          onClick={() =>
+                            onSelectPhoto((pickedId) =>
+                              handleUpdateBlock(idx, {
+                                ...block,
+                                assetIds: [block.assetIds[0], pickedId],
+                              })
+                            )
+                          }
+                        >
+                          <IconCamera size={12} /> Select Photo 2
+                        </button>
+                      )}
+                      <input
+                        type="text"
+                        value={block.assetIds[1]}
+                        onChange={(e) =>
+                          handleUpdateBlock(idx, {
+                            ...block,
+                            assetIds: [block.assetIds[0], e.target.value],
+                          })
+                        }
+                        placeholder="UUID 2..."
+                        style={{ fontSize: '0.75rem' }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -444,7 +489,6 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
                 }
                 placeholder="Side-by-side caption (optional)"
-                style={{ padding: '6px 10px', borderRadius: '4px', fontSize: '0.85rem' }}
               />
             </div>
           )}

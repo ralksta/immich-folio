@@ -250,18 +250,18 @@ export function serializeEssayMarkdown(essay: ParsedEssay): string {
       }
       case 'quote': {
         const authorSuffix = block.author ? ` -- ${block.author}` : '';
-        const text = block.text.replace(/<[^>]+>/g, '');
+        const text = block.text.replace(/[\r\n]+/g, ' ');
         lines.push(`> ${text}${authorSuffix}`);
         break;
       }
       case 'photo': {
         const layoutSuffix = block.layout !== 'contained' ? `:${block.layout}` : '';
-        const caption = block.caption ? block.caption.replace(/<[^>]+>/g, '') : '';
+        const caption = block.caption ? block.caption.replace(/[\r\n]+/g, ' ') : '';
         lines.push(`![${block.assetId}${layoutSuffix}](${caption})`);
         break;
       }
       case 'photo-pair': {
-        const caption = block.caption ? block.caption.replace(/<[^>]+>/g, '') : '';
+        const caption = block.caption ? block.caption.replace(/[\r\n]+/g, ' ') : '';
         lines.push(`![${block.assetIds[0]}, ${block.assetIds[1]}](${caption})`);
         break;
       }
