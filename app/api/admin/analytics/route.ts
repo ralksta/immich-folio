@@ -1,11 +1,19 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 import { getConfigOrNull } from '@/lib/config';
 
 const ANALYTICS_FILE = path.join(process.cwd(), 'content', 'analytics.json');
 
 export async function GET() {
+  if (!isAdminEnabled()) {
+    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
+  }
+  if (!(await isAdminAuthenticated())) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const config = getConfigOrNull();
     let data;
@@ -45,6 +53,9 @@ export async function GET() {
       },
     });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Failed to fetch analytics' }, { status: 500 });
+    return NextResponse.json(
+      { error: err.message || 'Failed to fetch analytics' },
+      { status: 500 },
+    );
   }
 }

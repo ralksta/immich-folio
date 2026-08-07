@@ -100,6 +100,27 @@ const ROUTES: {
       { params: Promise.resolve({ albumId: 'a1' }) },
     ],
   },
+  {
+    name: 'GET /api/admin/analytics',
+    path: 'analytics',
+    load: () => import('../analytics/route'),
+    method: 'GET',
+    args: () => [],
+  },
+  {
+    name: 'GET /api/admin/backups',
+    path: 'backups',
+    load: () => import('../backups/route'),
+    method: 'GET',
+    args: () => [],
+  },
+  {
+    name: 'POST /api/admin/backups',
+    path: 'backups',
+    load: () => import('../backups/route'),
+    method: 'POST',
+    args: () => [new Request('http://localhost/api/admin/backups', { method: 'POST', body: '{}' })],
+  },
 ];
 
 describe('admin route guards', () => {
