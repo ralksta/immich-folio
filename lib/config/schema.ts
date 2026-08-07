@@ -99,6 +99,8 @@ export interface AppConfig {
   albumPasswords: Record<string, string>;
   albumHeroImages: Record<string, string>;
   cacheTtl: number;
+  /** How long (ms) an expired cache entry may still be served while Immich is unreachable. */
+  staleMaxAge: number;
   /** Response-wait budget for Immich API calls. Does not cap image/video body transfer. */
   immichTimeoutMs: number;
   rateLimitRpm: number;
