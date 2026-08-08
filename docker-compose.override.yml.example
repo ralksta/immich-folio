@@ -9,7 +9,13 @@ services:
       - default
       - immich_network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:7211/"]
+      # -O /dev/null statt --spider: --spider liest den Body nicht und trennt
+      # mitten im RSC-Stream von '/'. Faellt der Abbruch mit einem langsamen
+      # Render nach CACHE_TTL-Ablauf zusammen, raeumt Node den
+      # TransformStream-Controller ab, waehrend Next noch hineinschreibt:
+      #   TypeError: controller[kState].transformAlgorithm is not a function
+      # Ein vollstaendiges GET prueft dasselbe ohne dieses Rennen.
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "-O", "/dev/null", "http://127.0.0.1:7211/"]
       interval: 30s
       timeout: 10s
       retries: 3
