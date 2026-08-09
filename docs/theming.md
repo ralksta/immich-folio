@@ -239,8 +239,37 @@ theme:
 
 ```yaml
 theme:
-  preset: botanica
+  preset: editorial
   heroStyle: mosaic
 grid:
   layout: editorial-flow
 ```
+
+## Upgrading & rolling back
+
+Adding a preset never requires a migration. Presets are additive, the
+`gallery.yaml` / `settings.yaml` schema is unchanged, and existing presets keep
+rendering exactly as before — pull the new version and restart.
+
+The one case that needs attention is a **rollback after switching presets**. The
+selected preset is stored in `content/settings.yaml`, so if you pick a preset
+that was added later and then downgrade to a version that predates it, config
+loading fails:
+
+```
+Unknown theme preset "studio-modern". Valid presets: studio, minimal, editorial, classic, noir, monograph
+```
+
+The message lists the presets the running version accepts. Set `theme.preset` to
+one of them:
+
+```yaml
+theme:
+  preset: studio # any preset the older version knows
+```
+
+`/admin` stays reachable when this happens, so you can also fix it from the
+settings editor after the downgrade rather than beforehand.
+
+The same error appears if you typo a preset name or copy an example for a preset
+that does not exist — it is not specific to downgrades.

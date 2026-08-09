@@ -9,6 +9,27 @@ Immich Folio acts as a **secure reverse proxy** between your visitors and your p
   <img src="docs/screenshots/theme-editorial-grid.png" width="49%" alt="Photo grid — Editorial theme" />
 </p>
 
+## What's New
+
+_Unreleased (on `dev`)_
+
+- **New theme preset: Studio Modern** — the Leica language of `studio` rebuilt around the Archivo grotesque, with IBM Plex Mono for all photographic metadata, an indexed hero navigation with album counts, caption bars under album covers, and a film-edge EXIF strip in the lightbox → [Theming guide](docs/theming.md)
+- **Photo Essay mode** — storytelling pages with fullbleed and paired layouts, plus a visual block builder in the admin panel
+- **Client proofing** — let clients favorite photos and export the selection
+- **Fixed:** the map page ignored the configured theme fonts and borders (all presets)
+
+Upgrading needs no migration — configuration is unchanged and existing presets render as before. See the [changelog](CHANGELOG.md) for the rollback caveat when switching presets.
+
+### Security releases
+
+Security fixes ship in normal releases, so **running the latest release is the recommended baseline**:
+
+- **v0.9.2** — closed a timing side channel that leaked the admin password length ([#395](https://github.com/ralksta/immich-folio/pull/395))
+- **v0.9.0** — fixed pre-auth bypasses and restored Immich 3.x compatibility ([#378](https://github.com/ralksta/immich-folio/pull/378))
+- **Unreleased** — `GET /api/admin/analytics` now requires an admin session; Docker images are scanned with Trivy on every publish
+
+Full history in the [GitHub releases](https://github.com/ralksta/immich-folio/releases) and [CHANGELOG.md](CHANGELOG.md).
+
 ## Features
 
 ### Gallery & Layout
