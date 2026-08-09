@@ -19,7 +19,7 @@ import { spawn, type ChildProcess } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
-const THEMES = ['studio', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
+const THEMES = ['studio', 'studio-modern', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
 const BASE_URL = 'http://localhost:3000';
 const GRID_PATH = '/deutschland/kloster-chorin'; // public subpage with photos
 const OUTPUT_DIR = path.join(process.cwd(), 'docs', 'screenshots');
@@ -174,7 +174,7 @@ function setThemeInSettingsYaml(yaml: string, theme: string): string {
     return yaml.replace(/^theme:\s*\w+\s*$/m, `theme: ${theme}`);
   }
   // Fallback: insert block after the theme comment
-  const marker = '# Presets: studio, minimal, editorial, classic, noir, monograph';
+  const marker = '# Presets: studio, studio-modern, minimal, editorial, classic, noir, monograph';
   if (yaml.includes(marker)) {
     return yaml.replace(marker, `${marker}\ntheme: ${theme}`);
   }

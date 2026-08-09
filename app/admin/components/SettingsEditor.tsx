@@ -67,7 +67,7 @@ interface Settings {
   };
 }
 
-const PRESETS = ['studio', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
+const PRESETS = ['studio', 'studio-modern', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
 const LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow'];
 const PHOTO_FRAMES = ['none', 'passepartout', 'shadow'];
 const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic'];
@@ -79,6 +79,13 @@ const THEME_INFO: Record<string, { desc: string; label: string; accent: string; 
     desc: 'Clean, high-contrast grid with sans-serif type.',
     bg: '#141414',
     tile: '#242424',
+    accent: '#e60012',
+  },
+  'studio-modern': {
+    label: 'Studio Modern',
+    desc: 'Leica precision: Archivo grotesque, mono EXIF, red signal accents.',
+    bg: '#121212',
+    tile: '#191919',
     accent: '#e60012',
   },
   minimal: {

@@ -368,6 +368,10 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       }),
     );
 
+    // 1-based position among the enabled subpages — drives the header kicker.
+    const enabledSubpages = config.subpages.filter((sp) => sp.enabled !== false);
+    const subpageIndex = enabledSubpages.findIndex((sp) => sp.slug === slug);
+
     return (
       <SubpageGridView
         slug={slug}
@@ -376,6 +380,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         albums={albumsWithHero}
         coverPlaceholders={coverPlaceholders}
         sections={result.subpage.sections}
+        {...(subpageIndex >= 0 ? { index: subpageIndex + 1 } : {})}
       />
     );
   }

@@ -6,7 +6,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { immich } from '@/lib/immich';
+import { immich, type ImmichAsset } from '@/lib/immich';
 import { getConfig } from '@/lib/config';
 import { imageUrl, assetPlaceholder } from '@/lib/urls';
 import { HeroCarousel } from '@/components/HeroCarousel';
@@ -15,24 +15,63 @@ import { FadeIn } from '@/components/FadeIn';
 // Render at request time — requires live Immich connection
 export const dynamic = 'force-dynamic';
 
+type HeroSubpage = { slug: string; name: string; albumCount: number };
+type HeroAlbum = { id: string; slug: string; albumName: string; assetCount: number };
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+/**
+ * Flatten subpages + standalone albums into one indexed nav list.
+ * Every entry carries an index and a count; presets decide what to show.
+ */
+function heroNavEntries(subpages: HeroSubpage[], albums: HeroAlbum[]) {
+  return [
+    ...subpages.map((sp) => ({
+      key: `sp-${sp.slug}`,
+      href: `/${sp.slug}`,
+      label: sp.name,
+      count: plural(sp.albumCount, 'album'),
+    })),
+    ...albums.map((a) => ({
+      key: `al-${a.id}`,
+      href: `/${a.slug}`,
+      label: a.albumName,
+      count: plural(a.assetCount, 'photo'),
+    })),
+  ];
+}
+
+/**
+ * Camera line for the hero chip: "Q3 · 28MM · ƒ/5.6 · 1/250 · ISO 200".
+ * Returns undefined when the asset carries no usable EXIF.
+ */
+function heroExifLine(asset: ImmichAsset): string | undefined {
+  const e = asset.exifInfo;
+  if (!e) return undefined;
+  const parts = [
+    e.city || e.model || undefined,
+    e.focalLength ? `${Math.round(e.focalLength)}mm` : undefined,
+    e.fNumber ? `ƒ/${e.fNumber}` : undefined,
+    e.exposureTime ? `${e.exposureTime}s` : undefined,
+    e.iso ? `ISO ${e.iso}` : undefined,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(' · ') : undefined;
+}
+
 /** Shared nav links for hero sections. */
-function HeroNavLinks({
-  subpages,
-  albums,
-}: {
-  subpages: { slug: string; name: string }[];
-  albums: { id: string; slug: string; albumName: string }[];
-}) {
+function HeroNavLinks({ subpages, albums }: { subpages: HeroSubpage[]; albums: HeroAlbum[] }) {
   return (
     <>
-      {subpages.map((sp) => (
-        <Link key={sp.slug} href={`/${sp.slug}`} className="hero__nav-link">
-          {sp.name}
-        </Link>
-      ))}
-      {albums.map((album) => (
-        <Link key={album.id} href={`/${album.slug}`} className="hero__nav-link">
-          {album.albumName}
+      {heroNavEntries(subpages, albums).map((entry, i) => (
+        <Link key={entry.key} href={entry.href} className="hero__nav-link">
+          <span className="hero__nav-index" aria-hidden="true">
+            {pad2(i + 1)}
+          </span>
+          <span className="hero__nav-label">{entry.label}</span>
+          <span className="hero__nav-count" aria-hidden="true">
+            {entry.count}
+          </span>
         </Link>
       ))}
     </>
@@ -48,8 +87,8 @@ function HeroTextContent({
 }: {
   title: string;
   subtitle?: string;
-  subpages: { slug: string; name: string }[];
-  albums: { id: string; slug: string; albumName: string }[];
+  subpages: HeroSubpage[];
+  albums: HeroAlbum[];
 }) {
   return (
     <>
@@ -82,14 +121,16 @@ export default async function HomePage() {
     immich.getStandaloneAlbums(),
   ]);
 
-  // Fetch ThumbHash for all hero images
+  // Fetch ThumbHash + camera line for all hero images
   const heroData = await Promise.all(
     config.heroImages.map(async (id) => {
       const asset = await immich.getAssetInfo(id);
       const ph = asset ? assetPlaceholder(asset) : null;
+      const exif = asset ? heroExifLine(asset) : undefined;
       return {
         src: imageUrl(id, 'preview'),
         ...(ph ? { blurDataURL: ph.blurDataURL } : {}),
+        ...(exif ? { exif } : {}),
       };
     }),
   );
@@ -114,20 +155,7 @@ export default async function HomePage() {
           </FadeIn>
           <FadeIn delay={300}>
             <nav className="hero__nav hero__nav--indexed">
-              {subpages.map((sp, i) => (
-                <Link key={sp.slug} href={`/${sp.slug}`} className="hero__nav-link">
-                  <span className="hero__nav-index">{String(i + 1).padStart(2, '0')}</span>
-                  {sp.name}
-                </Link>
-              ))}
-              {albums.map((album, i) => (
-                <Link key={album.id} href={`/${album.slug}`} className="hero__nav-link">
-                  <span className="hero__nav-index">
-                    {String(subpages.length + i + 1).padStart(2, '0')}
-                  </span>
-                  {album.albumName}
-                </Link>
-              ))}
+              <HeroNavLinks subpages={subpages} albums={albums} />
             </nav>
           </FadeIn>
         </div>
@@ -137,11 +165,7 @@ export default async function HomePage() {
 
   // ── Stacked: fullbleed image + text at bottom + thumbnail strip ─
   if (heroStyle === 'stacked') {
-    // Fetch album thumbnails for the strip
-    const allEntries = [
-      ...subpages.map((sp) => ({ slug: sp.slug, name: sp.name })),
-      ...albums.map((a) => ({ slug: a.slug, name: a.albumName })),
-    ];
+    const allEntries = heroNavEntries(subpages, albums);
 
     return (
       <div className="hero hero--stacked">
@@ -160,9 +184,12 @@ export default async function HomePage() {
         </div>
         <FadeIn delay={200}>
           <nav className="hero__thumbnail-strip">
-            {allEntries.map((entry) => (
-              <Link key={entry.slug} href={`/${entry.slug}`} className="hero__thumbnail-item">
-                <span className="hero__thumbnail-label">{entry.name}</span>
+            {allEntries.map((entry, i) => (
+              <Link key={entry.key} href={entry.href} className="hero__thumbnail-item">
+                <span className="hero__thumbnail-index" aria-hidden="true">
+                  {pad2(i + 1)}
+                </span>
+                <span className="hero__thumbnail-label">{entry.label}</span>
               </Link>
             ))}
           </nav>

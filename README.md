@@ -44,14 +44,14 @@ Immich Folio acts as a **secure reverse proxy** between your visitors and your p
 
 <br>
 
-| Concern                 | Protection                                                            |
-| ----------------------- | --------------------------------------------------------------------- |
-| **Server exposure**     | Immich URL never leaves your network — all requests proxy server-side |
-| **API key**             | Stored only in `.env.local`, never in client code                     |
-| **Asset IDs**           | Immich UUIDs encrypted (AES-256) into opaque tokens                   |
-| **Album scope**         | Only albums in `gallery.yaml` are accessible                          |
-| **Password protection** | Per-subpage password support                                          |
-| **Rate limiting**       | Per-IP sliding-window rate limiter (configurable RPM)                 |
+| Concern                    | Protection                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------ |
+| **Server exposure**        | Immich URL never leaves your network — all requests proxy server-side                |
+| **API key**                | Stored only in `.env.local`, never in client code                                    |
+| **Asset IDs**              | Immich UUIDs encrypted (AES-256) into opaque tokens                                  |
+| **Album scope**            | Only albums in `gallery.yaml` are accessible                                         |
+| **Password protection**    | Per-subpage password support                                                         |
+| **Rate limiting**          | Per-IP sliding-window rate limiter (configurable RPM)                                |
 | **Vulnerability scanning** | Docker image scanned with Trivy on every release, results in the GitHub Security tab |
 
 - Health check endpoint at `GET /api/health`
@@ -131,10 +131,10 @@ All gallery structure — hero images, albums, subpages, grid layout, footer —
 
 ### Theming
 
-Six built-in presets with distinct visual identities — or mix and match with fine-grained control over colors, fonts, corners, photo frames, hero layout, and grid style.
+Seven built-in presets with distinct visual identities — or mix and match with fine-grained control over colors, fonts, corners, photo frames, hero layout, and grid style.
 
 ```yaml
-theme: studio # or: minimal, editorial, classic, noir, monograph
+theme: studio # or: studio-modern, minimal, editorial, classic, noir, monograph
 ```
 
 → **[View all Themes & Configuration Guide](docs/theming.md)**

@@ -23,7 +23,12 @@ interface SubpageGridViewProps {
   albums: SubpageAlbum[];
   coverPlaceholders: (Placeholder | null)[];
   sections?: SubpageSectionConfig[];
+  /** 1-based position among all subpages — feeds the "03 — Collection" kicker. */
+  index?: number;
 }
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+const photoCount = (n: number) => `${n} ${n === 1 ? 'photo' : 'photos'}`;
 
 function AlbumGrid({
   albums,
@@ -36,7 +41,7 @@ function AlbumGrid({
 }) {
   return (
     <div className="subpage-grid">
-      {albums.map((album) => {
+      {albums.map((album, i) => {
         const ph = placeholderMap.get(album.id) ?? null;
         return (
           <Link
@@ -44,33 +49,42 @@ function AlbumGrid({
             href={`/${slug}/${album.slug}`}
             className="subpage-grid__item"
             style={ph?.dominantColor ? { backgroundColor: ph.dominantColor } : undefined}
-            aria-label={`${album.albumName}, ${album.assetCount} ${album.assetCount === 1 ? 'photo' : 'photos'}`}
+            aria-label={`${album.albumName}, ${photoCount(album.assetCount)}`}
           >
-            {album.albumThumbnailAssetId ? (
-              <Image
-                src={imageUrl(album.albumThumbnailAssetId, 'preview')}
-                alt=""
-                fill
-                sizes="(max-width: 600px) 100vw, (max-width: 1000px) 50vw, 33vw"
-                loading="lazy"
-                {...(ph ? { placeholder: 'blur' as const, blurDataURL: ph.blurDataURL } : {})}
-              />
-            ) : (
-              <div
-                className="skeleton"
-                style={{ width: '100%', height: '100%' }}
-                aria-hidden="true"
-              />
-            )}
-            <span className="subpage-grid__item-badge" aria-hidden="true">
-              {album.assetCount} {album.assetCount === 1 ? 'photo' : 'photos'}
-            </span>
-            <div className="subpage-grid__item-overlay" aria-hidden="true">
-              <span className="subpage-grid__item-title">{album.albumName}</span>
-              <span className="subpage-grid__item-count">
-                {album.assetCount} {album.assetCount === 1 ? 'photo' : 'photos'}
+            <span className="subpage-grid__item-media">
+              {album.albumThumbnailAssetId ? (
+                <Image
+                  src={imageUrl(album.albumThumbnailAssetId, 'preview')}
+                  alt=""
+                  fill
+                  sizes="(max-width: 600px) 100vw, (max-width: 1000px) 50vw, 33vw"
+                  loading="lazy"
+                  {...(ph ? { placeholder: 'blur' as const, blurDataURL: ph.blurDataURL } : {})}
+                />
+              ) : (
+                <span
+                  className="skeleton"
+                  style={{ display: 'block', width: '100%', height: '100%' }}
+                  aria-hidden="true"
+                />
+              )}
+              <span className="subpage-grid__item-badge" aria-hidden="true">
+                {photoCount(album.assetCount)}
               </span>
-            </div>
+              <span className="subpage-grid__item-overlay" aria-hidden="true">
+                <span className="subpage-grid__item-title">{album.albumName}</span>
+                <span className="subpage-grid__item-count">{photoCount(album.assetCount)}</span>
+              </span>
+            </span>
+
+            {/* Always-visible caption bar — shown by presets that use it. */}
+            <span className="subpage-grid__item-caption" aria-hidden="true">
+              <span className="subpage-grid__item-index">{pad2(i + 1)}</span>
+              <span className="subpage-grid__item-caption-title">{album.albumName}</span>
+              <span className="subpage-grid__item-caption-count">
+                {photoCount(album.assetCount)}
+              </span>
+            </span>
           </Link>
         );
       })}
@@ -85,19 +99,31 @@ export function SubpageGridView({
   albums,
   coverPlaceholders,
   sections,
+  index,
 }: SubpageGridViewProps) {
   // Build lookup maps once
   const albumMap = new Map(albums.map((a) => [a.id, a]));
   const placeholderMap = new Map(albums.map((a, i) => [a.id, coverPlaceholders[i] ?? null]));
 
   const hasSections = sections && sections.length > 0;
+  const totalPhotos = albums.reduce((sum, a) => sum + a.assetCount, 0);
 
   return (
     <div className="subpage-container">
       {(title || subtitle) && (
         <header className="subpage-header">
-          {title && <h1 className="subpage-title">{title}</h1>}
-          {subtitle && <p className="subpage-subtitle">{subtitle}</p>}
+          <div className="subpage-header__main">
+            {index !== undefined && (
+              <p className="subpage-header__kicker" aria-hidden="true">
+                {pad2(index)} — Collection
+              </p>
+            )}
+            {title && <h1 className="subpage-title">{title}</h1>}
+            {subtitle && <p className="subpage-subtitle">{subtitle}</p>}
+          </div>
+          <p className="subpage-header__meta" aria-hidden="true">
+            {albums.length} {albums.length === 1 ? 'album' : 'albums'} · {photoCount(totalPhotos)}
+          </p>
         </header>
       )}
 

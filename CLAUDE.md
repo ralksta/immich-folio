@@ -36,7 +36,7 @@ Configuration is loaded once at startup (cached in a module-level singleton, re-
 - `lib/env.ts` — parses and validates all environment variables into a typed `Env` object. All env access in the codebase must go through this module.
 - `lib/config/schema.ts` — TypeScript types for `AppConfig`, `GalleryYaml`, `SettingsYaml`, `SubpageConfig`, `GridConfig`, `ThemeConfig`, etc., plus the `slugify()` utility.
 - `lib/config/index.ts` — `getConfig()`: reads `content/gallery.yaml` and `content/settings.yaml`, merges them into a single `AppConfig`. Also exports `buildSubpageGrid()` and re-exports from schema/theme.
-- `lib/config/theme.ts` — six built-in theme presets (`studio`, `minimal`, `editorial`, `classic`, `noir`, `monograph`) and `resolveTheme()` which merges partial overrides over a preset.
+- `lib/config/theme.ts` — seven built-in theme presets (`studio`, `studio-modern`, `minimal`, `editorial`, `classic`, `noir`, `monograph`) and `resolveTheme()` which merges partial overrides over a preset.
 
 `getConfig()` returns a `needsSetup: true` dummy config (instead of throwing) when `gallery.yaml` or credentials are missing — this lets the app render a `SetupScreen` instead of crashing.
 

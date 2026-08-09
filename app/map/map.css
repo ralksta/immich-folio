@@ -10,6 +10,13 @@
   padding: 2rem var(--page-padding, 2rem) 1rem;
 }
 
+/* Kicker + meta block are rendered for every preset but stay hidden
+   unless a preset opts in (studio-modern uses both). */
+.map-page__kicker,
+.map-page__meta {
+  display: none;
+}
+
 .map-page__title {
   font-family: var(--font-serif);
   font-size: clamp(1.5rem, 4vw, 2.5rem);

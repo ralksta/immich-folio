@@ -14,20 +14,23 @@ That's it. Your entire gallery switches to the minimal theme.
 
 ## Built-in Presets
 
-| Preset        | Style                          | Accent       | Fonts                             | Hero        | Frame        | Grain |
-| ------------- | ------------------------------ | ------------ | --------------------------------- | ----------- | ------------ | ----- |
-| **studio**    | Leica-inspired, editorial      | 🔴 `#e60012` | Playfair Display + DM Sans        | Split       | Passepartout | ✓     |
-| **minimal**   | Swiss brutalist, high contrast | ⚫ `#000000` | Geist + IBM Plex Mono             | Fullbleed   | None         | ✗     |
-| **editorial** | Cinematic magazine, warm tones | 🟤 `#8B2500` | Bodoni Moda + Newsreader          | Split       | Shadow       | ✗     |
-| **classic**   | Gilded gallery, warm luxury    | 🟡 `#c49a3c` | Cinzel + Crimson Pro              | Minimal     | Passepartout | ✗     |
-| **noir**      | Darkroom analog, film noir     | 🟠 `#ff6b35` | Libre Baskerville + Source Sans 3 | Fullbleed   | Passepartout | ✓     |
-| **monograph** | Typographic, book-like         | ⬛ `#333333` | Instrument Serif + Inter          | Typographic | None         | ✗     |
+| Preset            | Style                          | Accent       | Fonts                             | Hero        | Frame        | Grain |
+| ----------------- | ------------------------------ | ------------ | --------------------------------- | ----------- | ------------ | ----- |
+| **studio**        | Leica-inspired, editorial      | 🔴 `#e60012` | Playfair Display + DM Sans        | Split       | Passepartout | ✓     |
+| **studio-modern** | Leica precision, grotesque     | 🔴 `#e60012` | Archivo + IBM Plex Mono           | Split       | None         | ✗     |
+| **minimal**       | Swiss brutalist, high contrast | ⚫ `#000000` | Geist + IBM Plex Mono             | Fullbleed   | None         | ✗     |
+| **editorial**     | Cinematic magazine, warm tones | 🟤 `#8B2500` | Bodoni Moda + Newsreader          | Split       | Shadow       | ✗     |
+| **classic**       | Gilded gallery, warm luxury    | 🟡 `#c49a3c` | Cinzel + Crimson Pro              | Minimal     | Passepartout | ✗     |
+| **noir**          | Darkroom analog, film noir     | 🟠 `#ff6b35` | Libre Baskerville + Source Sans 3 | Fullbleed   | Passepartout | ✓     |
+| **monograph**     | Typographic, book-like         | ⬛ `#333333` | Instrument Serif + Inter          | Typographic | None         | ✗     |
 
 Default is `studio` if no theme is specified.
 
 ### Theme Gallery
 
 _From top to bottom: Studio, Minimal, Editorial, Classic, Noir, Monograph_
+
+(No screenshots for `studio-modern` yet — run `npx tsx scripts/screenshots.ts` to regenerate.)
 
 <p align="center">
   <img src="screenshots/theme-studio-home.png" width="49%" alt="Studio theme" />
@@ -52,6 +55,8 @@ _From top to bottom: Studio, Minimal, Editorial, Classic, Noir, Monograph_
 ### What makes each theme unique
 
 **Studio** (default) — Leica-inspired with a red nav dot, passepartout photo frames, film grain, and a split hero layout. Clean editorial feel with Playfair Display headings.
+
+**Studio Modern** — The Leica language of `studio` rebuilt around the precision grotesque Archivo, with IBM Plex Mono for every piece of photographic metadata (EXIF chips, counters, indices). Hairline rules at 8% opacity, zero radius, an indexed hero nav with album counts, an always-visible caption bar under album covers, and a film-edge EXIF strip in the lightbox. Red is signal only — nav dot, active state, hover, indices, map markers.
 
 **Minimal** — Swiss Brutalist aesthetic inspired by Müller-Brockmann and Dieter Rams. Fullbleed hero image, true black/white palette, zero-gap photo grid with no hover effects, ultra-tiny navigation text. Every pixel earns its place.
 

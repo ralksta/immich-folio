@@ -4,6 +4,7 @@
 @import url('./themes/classic.css');
 @import url('./themes/noir.css');
 @import url('./themes/monograph.css');
+@import url('./themes/studio-modern.css');
 
 @import url('./tokens.css');
 
@@ -58,6 +59,11 @@
 }
 
 .header__nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* Brand wordmark — only presets that ask for it render it visibly. */
+.header__wordmark {
   display: none;
 }
 
@@ -208,6 +214,11 @@
 
 .hero__carousel-image--active {
   opacity: 1;
+}
+
+/* Camera chip over the hero image — opt-in per preset. */
+.hero__exif-chip {
+  display: none;
 }
 
 /* ── Hero: Fullbleed Layout ─────────────────────── */
@@ -466,13 +477,25 @@
   color: var(--text-primary);
 }
 
+/* Index + album count ship with every hero nav link; presets opt in to
+   showing them. Only the indexed nav shows the index by default. */
 .hero__nav-index {
+  display: none;
   font-family: var(--font-caption, monospace);
   font-size: 0.65rem;
   font-weight: 400;
   letter-spacing: 0.1em;
   color: var(--text-muted);
   min-width: 20px;
+}
+
+.hero__nav--indexed .hero__nav-index {
+  display: inline-block;
+}
+
+.hero__nav-count,
+.hero__thumbnail-index {
+  display: none;
 }
 
 /* ── Hero: Mosaic Layout ────────────────────────── */
@@ -605,6 +628,13 @@
   margin-bottom: 40px;
 }
 
+/* Kicker + meta block are rendered for every preset but stay hidden
+   unless a preset opts in (studio-modern uses both). */
+.subpage-header__kicker,
+.subpage-header__meta {
+  display: none;
+}
+
 .subpage-title {
   font-family: var(--font-serif);
   font-size: 2.5rem;
@@ -716,6 +746,20 @@
   aspect-ratio: 3 / 2;
   cursor: pointer;
   display: block;
+}
+
+/* Media wrapper keeps the cover square-on while presets that want a
+   caption bar below the image can grow the card. */
+.subpage-grid__item-media {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.subpage-grid__item-caption {
+  display: none;
 }
 
 .subpage-grid__item img {
@@ -903,6 +947,13 @@
   font-size: 0.9rem;
   color: var(--text-muted);
   font-weight: 300;
+}
+
+/* Date + gear ship with every album header but stay hidden unless a preset
+   opts in, so the meta line reads "86 photos" as it always has. */
+.album-header__meta-date,
+.album-header__meta-gear {
+  display: none;
 }
 
 .photo-grid {
