@@ -31,13 +31,19 @@ import {
 } from '@/lib/albumSort';
 import type { AlbumEntryObject } from '@/lib/config/schema';
 
-/** Labels for the per-album sort select. Order matches ALBUM_SORT_MODES. */
+/**
+ * Labels for the per-album sort select. Order matches ALBUM_SORT_MODES.
+ *
+ * Plain text, no emoji: an <option> cannot contain markup, so the SVG set in
+ * `Icons` below is not available here — and a decorative emoji is not a
+ * substitute for it. The badge on the album card uses a real icon instead.
+ */
 const SORT_LABELS: Record<AlbumSortMode, string> = {
-  immich: '🗓 Immich order (default)',
-  newest: '⬇ Newest first',
-  oldest: '⬆ Oldest first',
-  filename: '🔤 Filename',
-  manual: '✋ Manual',
+  immich: 'Immich order (default)',
+  newest: 'Newest first',
+  oldest: 'Oldest first',
+  filename: 'Filename',
+  manual: 'Manual',
 };
 
 // ── Icons ──────────────────────────────────────────────────────
