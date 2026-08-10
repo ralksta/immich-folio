@@ -9,12 +9,29 @@ Thanks for your interest in contributing! 🎉
 - **Pull requests** — see below
 - **Discussions** — [Ask questions or share ideas](https://github.com/ralksta/immich-folio/discussions)
 
+## Branches
+
+**Open pull requests against `dev`, not `main`.**
+
+`dev` is where everything is integrated. `main` only ever moves through a
+release: it is fast-forwarded from `dev`, tagged, and the tag triggers the
+Docker image publish. A PR against `main` would put unreleased code into the
+branch that is supposed to match the published image — so please branch off
+`dev` and target it.
+
+CI runs on pull requests to either branch, so a PR against `dev` is checked
+exactly the same way.
+
+If you opened a PR against `main` by accident, no need to redo the work — you
+can change the target branch on the PR page under **Edit** next to the title.
+
 ## Development setup
 
 ```bash
-# 1. Clone
+# 1. Clone and switch to the integration branch
 git clone https://github.com/ralksta/immich-folio.git
 cd immich-folio
+git checkout dev
 
 # 2. Install
 npm install
@@ -58,6 +75,7 @@ chore: bump next to 15.x
 
 ## Pull Request checklist
 
+- [ ] Targets `dev`
 - [ ] `npx tsc --noEmit` passes
 - [ ] `npx vitest run` passes
 - [ ] `npm run build` passes
