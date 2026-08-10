@@ -10,8 +10,15 @@
   padding: 2rem var(--page-padding, 2rem) 1rem;
 }
 
+/* Kicker + meta block are rendered for every preset but stay hidden
+   unless a preset opts in (studio-modern uses both). */
+.map-page__kicker,
+.map-page__meta {
+  display: none;
+}
+
 .map-page__title {
-  font-family: var(--font-heading);
+  font-family: var(--font-serif);
   font-size: clamp(1.5rem, 4vw, 2.5rem);
   font-weight: 600;
   margin: 0.5rem 0 0.25rem;
@@ -19,7 +26,7 @@
 }
 
 .map-page__subtitle {
-  font-family: var(--font-body);
+  font-family: var(--font-sans);
   font-size: 0.875rem;
   color: var(--text-secondary);
   margin: 0;
@@ -31,9 +38,9 @@
   flex: 1;
   min-height: 500px;
   margin: 0 var(--page-padding, 2rem) 2rem;
-  border-radius: var(--radius, 0);
+  border-radius: var(--radius-sm, 0);
   overflow: hidden;
-  border: 1px solid var(--border-color, rgba(128, 128, 128, 0.15));
+  border: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.15));
 }
 
 .map-container__loading {
@@ -42,7 +49,7 @@
   justify-content: center;
   height: 500px;
   color: var(--text-secondary);
-  font-family: var(--font-body);
+  font-family: var(--font-sans);
   font-size: 0.875rem;
 }
 
@@ -51,16 +58,16 @@
 .leaflet-popup-content-wrapper {
   background: var(--bg-primary, #1a1a1a) !important;
   color: var(--text-primary, #fff) !important;
-  border-radius: var(--radius, 4px) !important;
+  border-radius: var(--radius-md, 4px) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
-  border: 1px solid var(--border-color, rgba(128, 128, 128, 0.15)) !important;
+  border: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.15)) !important;
   padding: 0 !important;
   overflow: hidden;
 }
 
 .leaflet-popup-tip {
   background: var(--bg-primary, #1a1a1a) !important;
-  border: 1px solid var(--border-color, rgba(128, 128, 128, 0.15)) !important;
+  border: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.15)) !important;
   border-top: none !important;
   border-left: none !important;
 }
@@ -71,7 +78,7 @@
 }
 
 .map-popup {
-  font-family: var(--font-body);
+  font-family: var(--font-sans);
 }
 
 .map-popup__cover {
@@ -86,7 +93,7 @@
 }
 
 .map-popup__city {
-  font-family: var(--font-heading);
+  font-family: var(--font-serif);
   font-size: 0.9375rem;
   font-weight: 600;
   margin: 0 0 0.125rem;
@@ -166,7 +173,7 @@
 .leaflet-control-zoom a {
   background: var(--bg-primary, #1a1a1a) !important;
   color: var(--text-primary, #fff) !important;
-  border-color: var(--border-color, rgba(128, 128, 128, 0.15)) !important;
+  border-color: var(--border-subtle, rgba(128, 128, 128, 0.15)) !important;
 }
 
 .leaflet-control-zoom a:hover {

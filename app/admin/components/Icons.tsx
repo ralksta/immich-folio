@@ -265,3 +265,45 @@ export function IconBarChart({ size = 16, className = 'svg-icon', strokeWidth = 
     </svg>
   );
 }
+
+export function IconGripVertical({ size = 16, className = 'svg-icon', strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <circle cx="9" cy="12" r="1" fill="currentColor" />
+      <circle cx="9" cy="5" r="1" fill="currentColor" />
+      <circle cx="9" cy="19" r="1" fill="currentColor" />
+      <circle cx="15" cy="12" r="1" fill="currentColor" />
+      <circle cx="15" cy="5" r="1" fill="currentColor" />
+      <circle cx="15" cy="19" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function IconQuote({ size = 16, className = 'svg-icon', strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.75-2-2-2H4c-1.25 0-2 .75-2 2v6c0 1.25.75 2 2 2h3c0 4-2 6-4 6" />
+      <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.75-2-2-2h-4c-1.25 0-2 .75-2 2v6c0 1.25.75 2 2 2h3c0 4-2 6-4 6" />
+    </svg>
+  );
+}
+
+export function IconChevronUp({ size = 16, className = 'svg-icon', strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <path d="m18 15-6-6-6 6" />
+    </svg>
+  );
+}
+
+export function IconArrowLeftRight({ size = 16, className = 'svg-icon', strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <path d="m16 3 4 4-4 4" />
+      <path d="M20 7H4" />
+      <path d="m8 21-4-4 4-4" />
+      <path d="M4 17h16" />
+    </svg>
+  );
+}
+

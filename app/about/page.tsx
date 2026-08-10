@@ -96,6 +96,9 @@ export default async function AboutPage() {
 
       {/* ── Text ─────────────────────────────────────── */}
       <div className="about__text-col">
+        <p className="about__kicker" aria-hidden="true">
+          About
+        </p>
         {meta.name && <h1 className="about__name">{meta.name}</h1>}
         {meta.location && <p className="about__location">{meta.location}</p>}
 

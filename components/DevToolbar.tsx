@@ -16,7 +16,7 @@
 
 import React, { useState, useEffect, useCallback, useLayoutEffect } from 'react';
 
-const PRESETS = ['studio', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
+const PRESETS = ['studio', 'studio-modern', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
 const FRAMES = ['none', 'passepartout', 'shadow'];
 const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic'];
 const GRID_LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow'];
@@ -27,6 +27,7 @@ type Tab = 'theme' | 'grid' | 'server';
 // Font stacks for each preset (must match THEME_PRESETS in config.ts)
 const PRESET_FONTS: Record<string, { heading: string; body: string; caption: string }> = {
   studio: { heading: 'Playfair Display', body: 'DM Sans', caption: 'EB Garamond' },
+  'studio-modern': { heading: 'Archivo', body: 'Archivo', caption: 'IBM Plex Mono' },
   minimal: { heading: 'Geist', body: 'Geist', caption: 'IBM Plex Mono' },
   editorial: { heading: 'Bodoni Moda', body: 'Newsreader', caption: 'Spectral' },
   classic: { heading: 'Cinzel', body: 'Crimson Pro', caption: 'Crimson Pro' },
@@ -36,6 +37,7 @@ const PRESET_FONTS: Record<string, { heading: string; body: string; caption: str
 
 const PRESET_ACCENTS: Record<string, string> = {
   studio: 'var(--accent-studio, #e60012)',
+  'studio-modern': 'var(--accent-studio-modern, #e60012)',
   minimal: 'var(--accent-minimal, #000000)',
   editorial: 'var(--accent-editorial, #8B2500)',
   classic: 'var(--accent-classic, #c49a3c)',

@@ -14,23 +14,25 @@ That's it. Your entire gallery switches to the minimal theme.
 
 ## Built-in Presets
 
-| Preset        | Style                          | Accent       | Fonts                             | Hero        | Frame        | Grain |
-| ------------- | ------------------------------ | ------------ | --------------------------------- | ----------- | ------------ | ----- |
-| **studio**    | Leica-inspired, editorial      | 🔴 `#e60012` | Playfair Display + DM Sans        | Split       | Passepartout | ✓     |
-| **minimal**   | Swiss brutalist, high contrast | ⚫ `#000000` | Geist + IBM Plex Mono             | Fullbleed   | None         | ✗     |
-| **editorial** | Cinematic magazine, warm tones | 🟤 `#8B2500` | Bodoni Moda + Newsreader          | Split       | Shadow       | ✗     |
-| **classic**   | Gilded gallery, warm luxury    | 🟡 `#c49a3c` | Cinzel + Crimson Pro              | Minimal     | Passepartout | ✗     |
-| **noir**      | Darkroom analog, film noir     | 🟠 `#ff6b35` | Libre Baskerville + Source Sans 3 | Fullbleed   | Passepartout | ✓     |
-| **monograph** | Typographic, book-like         | ⬛ `#333333` | Instrument Serif + Inter          | Typographic | None         | ✗     |
+| Preset            | Style                          | Accent       | Fonts                             | Hero        | Frame        | Grain |
+| ----------------- | ------------------------------ | ------------ | --------------------------------- | ----------- | ------------ | ----- |
+| **studio**        | Leica-inspired, editorial      | 🔴 `#e60012` | Playfair Display + DM Sans        | Split       | Passepartout | ✓     |
+| **studio-modern** | Leica precision, grotesque     | 🔴 `#e60012` | Archivo + IBM Plex Mono           | Split       | None         | ✗     |
+| **minimal**       | Swiss brutalist, high contrast | ⚫ `#000000` | Geist + IBM Plex Mono             | Fullbleed   | None         | ✗     |
+| **editorial**     | Cinematic magazine, warm tones | 🟤 `#8B2500` | Bodoni Moda + Newsreader          | Split       | Shadow       | ✗     |
+| **classic**       | Gilded gallery, warm luxury    | 🟡 `#c49a3c` | Cinzel + Crimson Pro              | Minimal     | Passepartout | ✗     |
+| **noir**          | Darkroom analog, film noir     | 🟠 `#ff6b35` | Libre Baskerville + Source Sans 3 | Fullbleed   | Passepartout | ✓     |
+| **monograph**     | Typographic, book-like         | ⬛ `#333333` | Instrument Serif + Inter          | Typographic | None         | ✗     |
 
 Default is `studio` if no theme is specified.
 
 ### Theme Gallery
 
-_From top to bottom: Studio, Minimal, Editorial, Classic, Noir, Monograph_
+_From left to right, top to bottom: Studio, Studio Modern, Minimal, Editorial, Classic, Noir, Monograph_
 
 <p align="center">
   <img src="screenshots/theme-studio-home.png" width="49%" alt="Studio theme" />
+  <img src="screenshots/theme-studio-modern-home.png" width="49%" alt="Studio Modern theme" />
   <img src="screenshots/theme-minimal-home.png" width="49%" alt="Minimal theme" />
   <img src="screenshots/theme-editorial-home.png" width="49%" alt="Editorial theme" />
   <img src="screenshots/theme-classic-home.png" width="49%" alt="Classic theme" />
@@ -40,8 +42,11 @@ _From top to bottom: Studio, Minimal, Editorial, Classic, Noir, Monograph_
 
 ### Grid View Examples
 
+_Same order as above._
+
 <p align="center">
   <img src="screenshots/theme-studio-grid.png" width="49%" alt="Studio grid" />
+  <img src="screenshots/theme-studio-modern-grid.png" width="49%" alt="Studio Modern grid" />
   <img src="screenshots/theme-minimal-grid.png" width="49%" alt="Minimal grid" />
   <img src="screenshots/theme-editorial-grid.png" width="49%" alt="Editorial grid" />
   <img src="screenshots/theme-classic-grid.png" width="49%" alt="Classic grid" />
@@ -49,9 +54,22 @@ _From top to bottom: Studio, Minimal, Editorial, Classic, Noir, Monograph_
   <img src="screenshots/theme-monograph-grid.png" width="49%" alt="Monograph grid" />
 </p>
 
+### Light Mode
+
+Every preset ships with a light variant. Visitors switch with the toggle in the
+navigation bar; the choice is remembered in `localStorage`, and the presets keep
+their accent, fonts and framing in both modes.
+
+<p align="center">
+  <img src="screenshots/theme-studio-modern-home-light.png" width="49%" alt="Studio Modern in light mode" />
+  <img src="screenshots/theme-studio-modern-grid-light.png" width="49%" alt="Studio Modern grid in light mode" />
+</p>
+
 ### What makes each theme unique
 
 **Studio** (default) — Leica-inspired with a red nav dot, passepartout photo frames, film grain, and a split hero layout. Clean editorial feel with Playfair Display headings.
+
+**Studio Modern** — The Leica language of `studio` rebuilt around the precision grotesque Archivo, with IBM Plex Mono for every piece of photographic metadata (EXIF chips, counters, indices). Hairline rules at 8% opacity, zero radius, an indexed hero nav with album counts, an always-visible caption bar under album covers, and a film-edge EXIF strip in the lightbox. Red is signal only — nav dot, active state, hover, indices, map markers.
 
 **Minimal** — Swiss Brutalist aesthetic inspired by Müller-Brockmann and Dieter Rams. Fullbleed hero image, true black/white palette, zero-gap photo grid with no hover effects, ultra-tiny navigation text. Every pixel earns its place.
 
@@ -166,6 +184,42 @@ Controls the photo grid layout on album pages:
 - **`filmstrip`** — horizontal scroll of tall vertical image strips with scroll snapping
 - **`editorial-flow`** — alternating full-width (21:9) and side-by-side (4:3) image pairs
 
+Set it globally in `settings.yaml`, or per subpage in `gallery.yaml`:
+
+```yaml
+grid:
+  layout: showcase
+```
+
+The same album in all five layouts (theme `studio-modern`):
+
+<table>
+  <tr>
+    <td align="center"><strong>Masonry</strong> (default)</td>
+    <td align="center"><strong>Uniform</strong></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/grid-masonry.png" width="420" alt="Masonry grid layout" /></td>
+    <td><img src="screenshots/grid-uniform.png" width="420" alt="Uniform grid layout" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Showcase</strong></td>
+    <td align="center"><strong>Filmstrip</strong></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/grid-showcase.png" width="420" alt="Showcase grid layout" /></td>
+    <td><img src="screenshots/grid-filmstrip.png" width="420" alt="Filmstrip grid layout" /></td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2"><strong>Editorial Flow</strong></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <img src="screenshots/grid-editorial-flow.png" width="840" alt="Editorial flow grid layout" />
+    </td>
+  </tr>
+</table>
+
 ## Examples
 
 ### Minimal portfolio
@@ -234,8 +288,37 @@ theme:
 
 ```yaml
 theme:
-  preset: botanica
+  preset: editorial
   heroStyle: mosaic
 grid:
   layout: editorial-flow
 ```
+
+## Upgrading & rolling back
+
+Adding a preset never requires a migration. Presets are additive, the
+`gallery.yaml` / `settings.yaml` schema is unchanged, and existing presets keep
+rendering exactly as before — pull the new version and restart.
+
+The one case that needs attention is a **rollback after switching presets**. The
+selected preset is stored in `content/settings.yaml`, so if you pick a preset
+that was added later and then downgrade to a version that predates it, config
+loading fails:
+
+```
+Unknown theme preset "studio-modern". Valid presets: studio, minimal, editorial, classic, noir, monograph
+```
+
+The message lists the presets the running version accepts. Set `theme.preset` to
+one of them:
+
+```yaml
+theme:
+  preset: studio # any preset the older version knows
+```
+
+`/admin` stays reachable when this happens, so you can also fix it from the
+settings editor after the downgrade rather than beforehand.
+
+The same error appears if you typo a preset name or copy an example for a preset
+that does not exist — it is not specific to downgrades.

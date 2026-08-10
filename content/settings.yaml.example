@@ -30,7 +30,7 @@ transitions: true
 #   allowMailto: true
 
 # ── Theme configuration ──────────────────────────────────────────
-# Presets: studio, minimal, editorial, classic, noir, monograph
+# Presets: studio, studio-modern, minimal, editorial, classic, noir, monograph
 theme:
   preset: "studio"
   # accent: "#e60012"

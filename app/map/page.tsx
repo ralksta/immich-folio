@@ -23,6 +23,12 @@ export default function MapPage() {
     notFound();
   }
 
+  const enabledSubpages = config.subpages.filter((sp) => sp.enabled !== false);
+  const collectionCount = enabledSubpages.length;
+  const albumCount =
+    enabledSubpages.reduce((sum, sp) => sum + sp.albumIds.length, 0) +
+    config.standaloneAlbums.length;
+
   return (
     <>
       {/* Leaflet CSS from CDN */}
@@ -35,9 +41,18 @@ export default function MapPage() {
       />
       <div className="map-page">
         <div className="map-page__header">
-          <BackLink href="/" label="Back to Gallery" />
-          <h1 className="map-page__title">Map</h1>
-          <p className="map-page__subtitle">Where the photos were taken</p>
+          <div className="map-page__header-main">
+            <BackLink href="/" label="Back to Gallery" />
+            <p className="map-page__kicker" aria-hidden="true">
+              Where
+            </p>
+            <h1 className="map-page__title">Map</h1>
+            <p className="map-page__subtitle">Where the photos were taken</p>
+          </div>
+          <p className="map-page__meta" aria-hidden="true">
+            {collectionCount} {collectionCount === 1 ? 'collection' : 'collections'} · {albumCount}{' '}
+            {albumCount === 1 ? 'album' : 'albums'}
+          </p>
         </div>
         <MapView />
       </div>

@@ -11,6 +11,16 @@ export const THEME_PRESETS: Record<string, ThemeConfig> = {
     headerDot: true,
     heroStyle: 'split',
   },
+  'studio-modern': {
+    preset: 'studio-modern',
+    accent: '#e60012',
+    fonts: { heading: 'Archivo', body: 'Archivo', caption: 'IBM Plex Mono' },
+    radius: 0,
+    photoFrame: 'none',
+    grain: false,
+    headerDot: true,
+    heroStyle: 'split',
+  },
   minimal: {
     preset: 'minimal',
     accent: '#000000',

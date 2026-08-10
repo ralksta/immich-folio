@@ -22,6 +22,10 @@ export default function AdminDashboard({ onLogout }: Props) {
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [status, setStatus] = useState<any>(null);
   const [statusLoading, setStatusLoading] = useState(false);
+  // Distinct from `status === null`: the check itself did not run. Without this
+  // an expired session or a 500 rendered exactly like a real outage — every
+  // indicator flipped to its alarming value at once (#341).
+  const [statusError, setStatusError] = useState(false);
 
   async function handleLogout() {
     await fetch('/api/admin/auth', { method: 'DELETE' });
@@ -46,19 +50,40 @@ export default function AdminDashboard({ onLogout }: Props) {
       if (res.ok) {
         const data = await res.json();
         setStatus(data);
+        setStatusError(false);
       } else {
         setStatus(null);
+        setStatusError(true);
       }
     } catch {
       setStatus(null);
+      setStatusError(true);
     } finally {
       setStatusLoading(false);
     }
   };
 
+  /**
+   * Render one diagnostic as ok / bad / unknown. "Unknown" covers both the
+   * in-flight check and a check that failed to run — neither is evidence that
+   * the thing being checked is broken.
+   */
+  const indicator = (healthy: boolean, okLabel: string, badLabel: string) => {
+    if (statusLoading) return { className: 'unknown', label: 'Checking…' };
+    if (statusError || !status) return { className: 'unknown', label: 'Unknown' };
+    return healthy ? { className: 'ok', label: okLabel } : { className: 'error', label: badLabel };
+  };
+
   useEffect(() => {
     fetchStatus();
   }, []);
+
+  const immichIndicator = indicator(
+    status?.immich?.status === 'connected',
+    'Connected',
+    'Disconnected',
+  );
+  const configIndicator = indicator(status?.config?.status === 'valid', 'Valid', 'Degraded');
 
   return (
     <div className="admin-dashboard">
@@ -90,7 +115,7 @@ export default function AdminDashboard({ onLogout }: Props) {
           {/* Diagnostics Badge */}
           <div className="status-indicator-container">
             <button
-              className={`status-badge-btn ${status?.immich?.status === 'connected' ? 'connected' : 'disconnected'}`}
+              className={`status-badge-btn ${immichIndicator.className === 'ok' ? 'connected' : immichIndicator.className === 'error' ? 'disconnected' : 'unknown'}`}
               onClick={() => {
                 setShowStatus(!showStatus);
                 if (!showStatus) fetchStatus();
@@ -99,18 +124,24 @@ export default function AdminDashboard({ onLogout }: Props) {
             >
               <span className="status-dot"></span>
               <span className="status-text">
-                {statusLoading ? 'Checking...' : status?.immich?.status === 'connected' ? 'System OK' : 'System Degraded'}
+                {statusLoading
+                  ? 'Checking...'
+                  : immichIndicator.className === 'ok'
+                    ? 'System OK'
+                    : immichIndicator.className === 'error'
+                      ? 'System Degraded'
+                      : 'Status Unknown'}
               </span>
             </button>
-            
+
             {showStatus && (
               <>
                 <div className="status-dropdown-backdrop" onClick={() => setShowStatus(false)} />
                 <div className="status-dropdown">
                   <div className="status-dropdown-header">
                     <h4>System Diagnostics</h4>
-                    <button 
-                      className="status-refresh-btn" 
+                    <button
+                      className="status-refresh-btn"
                       onClick={fetchStatus}
                       disabled={statusLoading}
                       title="Refresh diagnostics"
@@ -121,14 +152,14 @@ export default function AdminDashboard({ onLogout }: Props) {
                   <div className="status-dropdown-body">
                     <div className="status-item">
                       <span className="status-label">Immich Connection</span>
-                      <span className={`status-val ${status?.immich?.status === 'connected' ? 'ok' : 'error'}`}>
-                        {status?.immich?.status === 'connected' ? 'Connected' : 'Disconnected'}
+                      <span className={`status-val ${immichIndicator.className}`}>
+                        {immichIndicator.label}
                       </span>
                     </div>
                     <div className="status-item">
                       <span className="status-label">Config Integrity</span>
-                      <span className={`status-val ${status?.config?.status === 'valid' ? 'ok' : 'error'}`}>
-                        {status?.config?.status === 'valid' ? 'Valid' : 'Degraded'}
+                      <span className={`status-val ${configIndicator.className}`}>
+                        {configIndicator.label}
                       </span>
                     </div>
                     <div className="status-item">
@@ -138,7 +169,9 @@ export default function AdminDashboard({ onLogout }: Props) {
                     <div className="status-item">
                       <span className="status-label">Latest Backup</span>
                       <span className="status-val" title={status?.backups?.lastBackup || 'None'}>
-                        {status?.backups?.lastBackup ? new Date(status.backups.lastBackup).toLocaleDateString() : 'None'}
+                        {status?.backups?.lastBackup
+                          ? new Date(status.backups.lastBackup).toLocaleDateString()
+                          : 'None'}
                       </span>
                     </div>
                     <div className="status-item">

@@ -22,7 +22,12 @@ export async function GET() {
 
   // 2. Config Health Check
   let galleryValid = false;
-  let settingsValid = false;
+  // settings.yaml is optional — getConfig() falls back to defaults when it is
+  // absent, so a missing file is a valid installation, not a fault. Only a file
+  // that exists and cannot be parsed counts as degraded: readSettingsYaml()
+  // returns null for ENOENT and rethrows everything else.
+  let settingsValid = true;
+
   try {
     const gallery = await readGalleryYaml();
     galleryValid = !!gallery;
@@ -31,17 +36,17 @@ export async function GET() {
   }
 
   try {
-    const settings = await readSettingsYaml();
-    settingsValid = !!settings;
+    await readSettingsYaml();
   } catch (err) {
     console.error('[Admin API] Settings YAML parse failed:', err);
+    settingsValid = false;
   }
 
   // 3. Backup Info
   const galleryBackups = await listBackups('gallery.yaml');
   const settingsBackups = await listBackups('settings.yaml');
   const backupCount = galleryBackups.length + settingsBackups.length;
-  
+
   // Find timestamp of the latest backup
   let lastBackup: string | null = null;
   const allBackups = [...galleryBackups, ...settingsBackups].sort().reverse();
@@ -60,7 +65,7 @@ export async function GET() {
       status: immichOk ? 'connected' : 'disconnected',
     },
     config: {
-      status: (galleryValid && settingsValid) ? 'valid' : 'invalid',
+      status: galleryValid && settingsValid ? 'valid' : 'invalid',
       gallery: galleryValid ? 'valid' : 'invalid',
       settings: settingsValid ? 'valid' : 'invalid',
     },

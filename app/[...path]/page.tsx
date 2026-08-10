@@ -14,8 +14,6 @@ import { cookies } from 'next/headers';
 import type { Metadata } from 'next';
 import { immich, type ImmichAsset } from '@/lib/immich';
 import { notFound } from 'next/navigation';
-// Only the type: rendering moved to AlbumDetailView/SubpageGridView, which
-// import the component themselves.
 import type { PhotoItem } from './PhotoGrid';
 import {
   imageUrl,
@@ -28,7 +26,9 @@ import {
 import { encodeAssetId } from '@/lib/tokens';
 import { getConfig, type GridConfig } from '@/lib/config';
 import { isProtected, isAuthenticated } from '@/lib/auth';
+import { isAdminAuthenticated } from '@/lib/admin/auth';
 import PasswordGate from '@/components/PasswordGate';
+import { AdminDiagnosticBanner } from '@/components/AdminDiagnosticBanner';
 import { AlbumDetailView } from './AlbumDetailView';
 import { SubpageGridView } from './SubpageGridView';
 import { EssayView } from './EssayView';
@@ -39,6 +39,7 @@ export const dynamic = 'force-dynamic';
 
 interface PathPageProps {
   params: Promise<{ path: string[] }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export async function generateMetadata({ params }: PathPageProps): Promise<Metadata> {
@@ -110,8 +111,6 @@ function toPhotoItems(assets: ImmichAsset[], showExif: boolean): PhotoItem[] {
       const exif = showExif && a.type === 'IMAGE' ? assetExifSummary(a) : undefined;
       const isVideo = a.type === 'VIDEO';
       return {
-        // Opaque token, never the raw Immich UUID — this object is serialized
-        // into the RSC payload and shipped to the browser. Used only as a React key.
         id: encodeAssetId(a.id),
         type: isVideo ? 'video' : 'image',
         thumbUrl: imageUrl(a.id, 'preview'),
@@ -163,8 +162,11 @@ async function getAlbumHeroData(
   };
 }
 
-export default async function PathPage({ params }: PathPageProps) {
+export default async function PathPage({ params, searchParams }: PathPageProps) {
   const { path } = await params;
+  const sParams = (await searchParams) || {};
+  const forceFresh = sParams.fresh === '1' || sParams.preview === 'true';
+
   const config = getConfig();
 
   // Build grid CSS custom properties, optionally merging subpage overrides
@@ -191,14 +193,22 @@ export default async function PathPage({ params }: PathPageProps) {
     const gate = await gateIfProtected(subpageSlug);
     if (gate) return gate;
 
-    const album = await immich.getAlbumBySlug(albumSlug, subpageSlug);
+    const album = await immich.getAlbumBySlug(albumSlug, subpageSlug, forceFresh);
 
     if (!album) {
+      if (await isAdminAuthenticated()) {
+        return (
+          <AdminDiagnosticBanner
+            slug={`${subpageSlug}/${albumSlug}`}
+            reason={`Album "${albumSlug}" could not be found or returned no assets from Immich.`}
+          />
+        );
+      }
       notFound();
     }
 
     // Look up subpage config for grid overrides and back link
-    const subpageData = await immich.getSubpageAlbums(subpageSlug);
+    const subpageData = await immich.getSubpageAlbums(subpageSlug, forceFresh);
     const spGrid = subpageData?.subpage.grid;
     const subpageName = subpageData?.subpage.name ?? subpageSlug;
 
@@ -233,8 +243,18 @@ export default async function PathPage({ params }: PathPageProps) {
     const gate = await gateIfProtected(slug);
     if (gate) return gate;
 
-    const result = await immich.getSubpageAlbums(slug);
+    const result = await immich.getSubpageAlbums(slug, forceFresh);
     if (!result || result.albums.length === 0) {
+      if (await isAdminAuthenticated()) {
+        const spConfig = config.subpages.find((sp) => sp.slug === slug);
+        return (
+          <AdminDiagnosticBanner
+            slug={slug}
+            subpageName={spConfig?.name}
+            configuredAlbumCount={spConfig?.albumIds.length}
+          />
+        );
+      }
       notFound();
     }
 
@@ -255,7 +275,7 @@ export default async function PathPage({ params }: PathPageProps) {
 
       // Fetch assets from all subpage albums
       const allAlbums = await Promise.all(
-        albums.map((a) => immich.getAlbumBySlug(a.slug, slug))
+        albums.map((a) => immich.getAlbumBySlug(a.slug, slug, forceFresh))
       );
       const allAssets = allAlbums.flatMap((a) => (a ? a.assets : []));
       const images = toPhotoItems(allAssets, config.exifOnHover);
@@ -293,8 +313,20 @@ export default async function PathPage({ params }: PathPageProps) {
 
     // ── Single album → full-bleed (skip album grid) ──────────
     if (albums.length === 1) {
-      const album = await immich.getAlbumBySlug(albums[0].slug, slug);
-      if (!album) notFound();
+      const album = await immich.getAlbumBySlug(albums[0].slug, slug, forceFresh);
+      if (!album) {
+        if (await isAdminAuthenticated()) {
+          return (
+            <AdminDiagnosticBanner
+              slug={slug}
+              subpageName={result.subpage.name}
+              configuredAlbumCount={result.subpage.albumIds.length}
+              reason={`Single album "${albums[0].albumName}" was not found or returned 0 assets.`}
+            />
+          );
+        }
+        notFound();
+      }
 
       const images = toPhotoItems(album.assets, config.exifOnHover);
 
@@ -336,6 +368,10 @@ export default async function PathPage({ params }: PathPageProps) {
       }),
     );
 
+    // 1-based position among the enabled subpages — drives the header kicker.
+    const enabledSubpages = config.subpages.filter((sp) => sp.enabled !== false);
+    const subpageIndex = enabledSubpages.findIndex((sp) => sp.slug === slug);
+
     return (
       <SubpageGridView
         slug={slug}
@@ -344,13 +380,22 @@ export default async function PathPage({ params }: PathPageProps) {
         albums={albumsWithHero}
         coverPlaceholders={coverPlaceholders}
         sections={result.subpage.sections}
+        {...(subpageIndex >= 0 ? { index: subpageIndex + 1 } : {})}
       />
     );
   }
 
   // Otherwise treat as a standalone album slug
-  const album = await immich.getAlbumBySlug(slug);
+  const album = await immich.getAlbumBySlug(slug, undefined, forceFresh);
   if (!album) {
+    if (await isAdminAuthenticated()) {
+      return (
+        <AdminDiagnosticBanner
+          slug={slug}
+          reason={`Standalone album slug "${slug}" could not be found in published Immich albums.`}
+        />
+      );
+    }
     notFound();
   }
 

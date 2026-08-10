@@ -1,0 +1,1187 @@
+/* ══ Studio Modern ═══════════════════════════════════════════════
+   Leica-Profisprache (Signalrot, scharfe Kanten, Hairlines,
+   Uppercase-Tracking) mit der Präzisions-Grotesk Archivo und
+   IBM Plex Mono für alle fotografischen Metadaten.
+
+   Aktivierung über content/settings.yaml:
+
+   theme:
+     preset: studio-modern
+     accent: '#e60012'
+     fonts: { heading: 'Archivo', body: 'Archivo', caption: 'IBM Plex Mono' }
+     radius: 0
+     photoFrame: none
+     grain: false
+     headerDot: true
+     heroStyle: split
+   ══════════════════════════════════════════════════════════════ */
+
+/* Palette + layout tokens live in app/tokens.css, next to the other
+   presets — they must win over the :root defaults declared there. */
+
+/* ── Roter Signalpunkt (wiederverwendet) ────────────────────── */
+[data-preset='studio-modern'] .sm-dot::before,
+[data-preset='studio-modern'] .hero__subtitle::before,
+[data-preset='studio-modern'] .about__kicker::before,
+[data-preset='studio-modern'] .subpage-header__kicker::before,
+[data-preset='studio-modern'] .photo-grid__item-exif::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sm-accent);
+  margin-right: 10px;
+  vertical-align: middle;
+  flex: 0 0 auto;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+[data-preset='studio-modern'] .header {
+  padding: 0 var(--sm-gutter);
+  background: color-mix(in srgb, var(--bg-primary) 92%, transparent);
+}
+
+[data-preset='studio-modern'] .header__nav {
+  height: var(--header-height);
+  gap: 28px;
+  align-items: stretch;
+}
+
+[data-preset='studio-modern'][data-header-dot='true'] .header__nav::before {
+  width: 9px;
+  height: 9px;
+  align-self: center;
+  margin-right: 10px;
+}
+
+[data-preset='studio-modern'] .header__wordmark {
+  display: flex;
+  align-items: center;
+  margin-right: 24px;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+[data-preset='studio-modern'] .header__nav-link {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  margin-bottom: 0;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  border-bottom: 2px solid transparent;
+}
+
+[data-preset='studio-modern'] .header__nav-link:hover {
+  color: var(--text-primary);
+  border-bottom-color: transparent;
+}
+
+[data-preset='studio-modern'] .header__nav-link.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--sm-accent);
+}
+
+[data-preset='studio-modern'] .theme-toggle {
+  align-self: center;
+}
+
+/* ── Seitenrhythmus ─────────────────────────────────────────── */
+[data-preset='studio-modern'] .main {
+  padding: 88px var(--sm-gutter) 120px;
+}
+
+[data-preset='studio-modern'] .main:has(.hero),
+[data-preset='studio-modern'] .main:has(.about) {
+  padding-top: var(--header-height);
+}
+
+/* ── Typografie ─────────────────────────────────────────────── */
+[data-preset='studio-modern'] .hero__title {
+  font-family: var(--font-sans);
+  font-size: clamp(2.75rem, 6.4vw, 5.75rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  text-transform: uppercase;
+  margin-bottom: 48px;
+}
+
+[data-preset='studio-modern'] .hero__subtitle,
+[data-preset='studio-modern'] .subpage-subtitle,
+[data-preset='studio-modern'] .subpage-header__kicker,
+[data-preset='studio-modern'] .about__kicker {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  font-style: normal;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+[data-preset='studio-modern'] .album-header__title,
+[data-preset='studio-modern'] .subpage-title {
+  font-family: var(--font-sans);
+  font-size: clamp(2.25rem, 4.6vw, 4rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+[data-preset='studio-modern'] .subpage-section__title {
+  font-family: var(--font-sans);
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+[data-preset='studio-modern'] .section-label {
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  color: var(--text-muted);
+}
+
+/* ── Hero: Split ────────────────────────────────────────────── */
+[data-preset='studio-modern'] .hero {
+  grid-template-columns: 5fr 6fr;
+  min-height: calc(100vh - var(--header-height));
+}
+
+[data-preset='studio-modern'] .hero__left {
+  align-items: center;
+  justify-content: flex-start;
+  padding: 64px 72px;
+}
+
+[data-preset='studio-modern'] .hero__content {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  max-width: none;
+  width: 100%;
+}
+
+/* The kicker sits above the title in every hero variant. Markup order is
+   title → subtitle → nav and each child is wrapped in a FadeIn, so make the
+   text containers flex columns and pull the subtitle's wrapper to the front. */
+[data-preset='studio-modern'] .hero__fullbleed-overlay,
+[data-preset='studio-modern'] .hero__mosaic-overlay,
+[data-preset='studio-modern'] .hero__stacked-overlay {
+  display: flex;
+  flex-direction: column;
+}
+
+[data-preset='studio-modern'] .hero__mosaic-overlay {
+  align-items: center;
+}
+
+[data-preset='studio-modern'] .hero__stacked-overlay {
+  align-items: flex-start;
+}
+
+[data-preset='studio-modern'] .hero .hero__subtitle,
+[data-preset='studio-modern'] .hero *:has(> .hero__subtitle) {
+  order: -1;
+}
+
+/* ── Hero: indizierte Navigationsliste ──────────────────────── */
+[data-preset='studio-modern'] .hero .hero__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-items: stretch;
+  border-top: var(--sm-hairline);
+  text-align: left;
+}
+
+[data-preset='studio-modern'] .hero .hero__nav-link {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  padding: 16px 0;
+  border-bottom: var(--sm-hairline);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+[data-preset='studio-modern'] .hero .hero__nav-link:hover {
+  color: var(--sm-accent);
+  border-bottom-color: var(--border-subtle);
+}
+
+[data-preset='studio-modern'] .hero .hero__nav-link:first-child {
+  color: var(--text-primary);
+}
+
+[data-preset='studio-modern'] .hero .hero__nav-index {
+  display: inline-block;
+  min-width: 20px;
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+[data-preset='studio-modern'] .hero .hero__nav-link:first-child .hero__nav-index {
+  color: var(--sm-accent);
+}
+
+[data-preset='studio-modern'] .hero .hero__nav-count {
+  display: inline-block;
+  margin-left: auto;
+  padding-left: 20px;
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── Hero: EXIF-Chip auf dem Bild ───────────────────────────── */
+[data-preset='studio-modern'] .hero--split .hero__exif-chip {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--sm-chip-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
+  pointer-events: none;
+}
+
+[data-preset='studio-modern'] .hero--split .hero__exif-chip::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--sm-accent);
+  margin-right: 8px;
+  flex: 0 0 auto;
+}
+
+/* ── Hero: Fullbleed ────────────────────────────────────────── */
+[data-preset='studio-modern'] .hero--fullbleed,
+[data-preset='studio-modern'] .hero--minimal,
+[data-preset='studio-modern'] .hero--stacked,
+[data-preset='studio-modern'] .hero--typographic,
+[data-preset='studio-modern'] .hero--mosaic,
+[data-preset='studio-modern'] .hero__mosaic-grid {
+  min-height: calc(100vh - var(--header-height));
+}
+
+[data-preset='studio-modern'] .hero__fullbleed-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.45) 0%,
+    rgba(0, 0, 0, 0.1) 40%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+
+[data-preset='studio-modern'] .hero--fullbleed .hero__title {
+  color: #fff;
+  font-size: clamp(2.75rem, 7.2vw, 6.5rem);
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.5);
+  margin-bottom: 40px;
+}
+
+[data-preset='studio-modern'] .hero--fullbleed .hero__subtitle {
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.75);
+  text-shadow: none;
+}
+
+[data-preset='studio-modern'] .hero--fullbleed .hero__nav {
+  flex-direction: row;
+  align-items: stretch;
+  border-top: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  flex-wrap: wrap;
+}
+
+[data-preset='studio-modern'] .hero--fullbleed .hero__nav-link {
+  gap: 10px;
+  padding: 16px 24px;
+  border-bottom: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+[data-preset='studio-modern'] .hero--fullbleed .hero__nav-link:last-child {
+  border-right: none;
+}
+
+[data-preset='studio-modern'] .hero--fullbleed .hero__nav-link:hover {
+  color: var(--sm-accent);
+}
+
+[data-preset='studio-modern'] .hero--fullbleed .hero__nav-index {
+  font-size: 0.625rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+[data-preset='studio-modern'] .hero--fullbleed .hero__nav-link:first-child .hero__nav-index {
+  color: var(--sm-accent);
+}
+
+[data-preset='studio-modern'] .hero--fullbleed .hero__nav-count {
+  display: none;
+}
+
+/* ── Hero: Minimal ──────────────────────────────────────────── */
+[data-preset='studio-modern'] .hero--minimal .hero__content {
+  text-align: center;
+  max-width: 720px;
+}
+
+[data-preset='studio-modern'] .hero--minimal .hero__title {
+  font-size: clamp(2.75rem, 6.8vw, 6rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 40px;
+}
+
+[data-preset='studio-modern'] .hero--minimal .hero__subtitle {
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+[data-preset='studio-modern'] .hero--minimal .hero__nav {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 32px;
+  border-top: none;
+}
+
+[data-preset='studio-modern'] .hero--minimal .hero__nav-link {
+  padding: 0 0 6px;
+  border-bottom: 1px solid transparent;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+}
+
+[data-preset='studio-modern'] .hero--minimal .hero__nav-link:hover {
+  color: var(--sm-accent);
+  border-bottom-color: var(--sm-accent);
+}
+
+[data-preset='studio-modern'] .hero--minimal .hero__nav-link:first-child {
+  border-bottom-color: var(--sm-accent);
+}
+
+[data-preset='studio-modern'] .hero--minimal .hero__nav-index,
+[data-preset='studio-modern'] .hero--minimal .hero__nav-count {
+  display: none;
+}
+
+/* ── Hero: Stacked ──────────────────────────────────────────── */
+[data-preset='studio-modern'] .hero__stacked-overlay {
+  padding: 56px var(--sm-gutter);
+}
+
+[data-preset='studio-modern'] .hero--stacked .hero__title {
+  font-family: var(--font-sans);
+  font-size: clamp(2.5rem, 5.6vw, 5rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  color: #fff;
+  margin-bottom: 0;
+}
+
+[data-preset='studio-modern'] .hero--stacked .hero__subtitle {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 16px;
+}
+
+[data-preset='studio-modern'] .hero__thumbnail-strip {
+  gap: 0;
+  border-top: var(--sm-hairline);
+  background: var(--bg-secondary);
+}
+
+[data-preset='studio-modern'] .hero__thumbnail-item {
+  flex: 1;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: center;
+  padding: 20px 28px;
+  border-right: var(--sm-hairline);
+  background: var(--bg-primary);
+}
+
+[data-preset='studio-modern'] .hero__thumbnail-item:last-child {
+  border-right: none;
+}
+
+[data-preset='studio-modern'] .hero__thumbnail-item:hover {
+  background: var(--bg-card);
+}
+
+[data-preset='studio-modern'] .hero__thumbnail-item:hover .hero__thumbnail-label {
+  color: var(--sm-accent);
+}
+
+[data-preset='studio-modern'] .hero__thumbnail-index {
+  display: inline-block;
+  font-family: var(--font-caption);
+  font-size: 0.625rem;
+  color: var(--text-muted);
+}
+
+[data-preset='studio-modern'] .hero__thumbnail-item:first-child .hero__thumbnail-index {
+  color: var(--sm-accent);
+}
+
+[data-preset='studio-modern'] .hero__thumbnail-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+}
+
+/* ── Hero: Typographic ──────────────────────────────────────── */
+[data-preset='studio-modern'] .hero--typographic .hero__content {
+  width: 760px;
+  max-width: 100%;
+  text-align: center;
+}
+
+[data-preset='studio-modern'] .hero--typographic .hero__title {
+  font-size: clamp(3.5rem, 10.4vw, 9.375rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 0.9;
+  margin-bottom: 20px;
+}
+
+[data-preset='studio-modern'] .hero--typographic .hero__subtitle {
+  justify-content: center;
+  letter-spacing: 0.25em;
+  color: var(--text-muted);
+  margin-bottom: 40px;
+}
+
+[data-preset='studio-modern'] .hero--typographic .hero__subtitle::before {
+  display: none;
+}
+
+/* Typographic is the one variant where the strapline reads under the title. */
+[data-preset='studio-modern'] .hero--typographic .hero__subtitle,
+[data-preset='studio-modern'] .hero--typographic *:has(> .hero__subtitle) {
+  order: 0;
+}
+
+[data-preset='studio-modern'] .hero__divider {
+  width: 56px;
+  background: var(--border-hover);
+  margin: 0 auto 40px;
+}
+
+[data-preset='studio-modern'] .hero--typographic .hero__nav-link {
+  font-size: 0.9375rem;
+}
+
+/* ── Hero: Mosaic ───────────────────────────────────────────── */
+[data-preset='studio-modern'] .hero__mosaic-overlay {
+  padding: 48px 64px;
+  background: rgba(10, 10, 10, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+}
+
+[data-preset='studio-modern'] .hero--mosaic .hero__title {
+  font-family: var(--font-sans);
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  color: #fff;
+  margin-bottom: 28px;
+}
+
+[data-preset='studio-modern'] .hero--mosaic .hero__subtitle {
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 16px;
+}
+
+[data-preset='studio-modern'] .hero--mosaic .hero__nav {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+  border-top: none;
+}
+
+[data-preset='studio-modern'] .hero--mosaic .hero__nav-link {
+  padding: 0 0 4px;
+  border-bottom: 1px solid transparent;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+[data-preset='studio-modern'] .hero--mosaic .hero__nav-link:hover {
+  color: #fff;
+  border-bottom-color: var(--sm-accent);
+}
+
+[data-preset='studio-modern'] .hero--mosaic .hero__nav-index,
+[data-preset='studio-modern'] .hero--mosaic .hero__nav-count {
+  display: none;
+}
+
+/* ── Subpage: Kopfbereich ───────────────────────────────────── */
+[data-preset='studio-modern'] .subpage-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  padding-bottom: 32px;
+  margin-bottom: 56px;
+  border-bottom: var(--sm-hairline);
+}
+
+[data-preset='studio-modern'] .subpage-header__kicker {
+  display: flex;
+  color: var(--sm-accent);
+  margin-bottom: 16px;
+}
+
+[data-preset='studio-modern'] .subpage-header__kicker::before {
+  display: none;
+}
+
+[data-preset='studio-modern'] .subpage-header__meta {
+  display: block;
+  flex: 0 0 auto;
+  text-align: right;
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  line-height: 1.8;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+[data-preset='studio-modern'] .subpage-header .subpage-subtitle {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+/* ── Subpage: Album-Cover mit Caption-Bar ───────────────────── */
+[data-preset='studio-modern'] .subpage-grid {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+[data-preset='studio-modern'] .subpage-grid__item {
+  aspect-ratio: auto;
+  border: var(--sm-hairline);
+  background: var(--bg-card);
+  transition: border-color var(--transition-fast);
+}
+
+[data-preset='studio-modern'] .subpage-grid__item:hover {
+  border-color: var(--sm-accent);
+}
+
+[data-preset='studio-modern'] .subpage-grid__item-media {
+  aspect-ratio: 3 / 2;
+  height: auto;
+}
+
+/* Cover-Bilder bleiben ruhig — die Bar trägt die Information */
+[data-preset='studio-modern'] .subpage-grid__item:hover img {
+  transform: none;
+  filter: none;
+}
+
+[data-preset='studio-modern'] .subpage-grid__item-overlay,
+[data-preset='studio-modern'] .subpage-grid__item-badge {
+  display: none;
+}
+
+[data-preset='studio-modern'] .subpage-grid__item-caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 20px;
+}
+
+[data-preset='studio-modern'] .subpage-grid__item-index {
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  color: var(--sm-accent);
+}
+
+[data-preset='studio-modern'] .subpage-grid__item-caption-title {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+[data-preset='studio-modern'] .subpage-grid__item-caption-count {
+  margin-left: auto;
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+[data-preset='studio-modern'] .subpage-section {
+  margin-bottom: 96px;
+}
+
+[data-preset='studio-modern'] .subpage-toc__num {
+  font-family: var(--font-caption);
+  color: var(--sm-accent);
+}
+
+[data-preset='studio-modern'] .subpage-toc__label {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* ── Standalone-Albumkarten (Homepage-Grid) ─────────────────── */
+[data-preset='studio-modern'] .album-card {
+  border-radius: 0;
+  border-color: var(--border-subtle);
+}
+
+[data-preset='studio-modern'] .album-card:hover {
+  border-color: var(--sm-accent);
+}
+
+[data-preset='studio-modern'] .album-card__title {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+[data-preset='studio-modern'] .album-card__count {
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── Album-Detail: Kopf ─────────────────────────────────────── */
+[data-preset='studio-modern'] .album-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  padding-bottom: 32px;
+  margin-bottom: 56px;
+  border-bottom: var(--sm-hairline);
+}
+
+[data-preset='studio-modern'] .album-header--has-hero {
+  margin-top: -60px;
+}
+
+[data-preset='studio-modern'] .album-header__back {
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+[data-preset='studio-modern'] .album-header__back:hover {
+  color: var(--sm-accent);
+}
+
+[data-preset='studio-modern'] .album-header__back svg {
+  width: 14px;
+  height: 14px;
+}
+
+[data-preset='studio-modern'] .album-header__description {
+  margin-top: 16px;
+  font-size: 1rem;
+  font-weight: 300;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+[data-preset='studio-modern'] .album-header__meta-date {
+  display: inline;
+}
+
+[data-preset='studio-modern'] .album-header__meta-gear {
+  display: block;
+}
+
+[data-preset='studio-modern'] .album-header__meta {
+  flex: 0 0 auto;
+  margin-top: 0;
+  text-align: right;
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  line-height: 1.8;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ── Fotoraster ─────────────────────────────────────────────── */
+[data-preset='studio-modern'] .photo-grid {
+  column-gap: var(--grid-gap, 20px);
+}
+
+[data-preset='studio-modern'] .photo-grid__item {
+  margin-bottom: var(--grid-gap, 20px);
+  border-radius: 0;
+}
+
+[data-preset='studio-modern'] .photo-grid--uniform .photo-grid__item,
+[data-preset='studio-modern'] .photo-grid--showcase .photo-grid__item,
+[data-preset='studio-modern'] .photo-grid--filmstrip .photo-grid__item,
+[data-preset='studio-modern'] .photo-grid--editorial-flow .photo-grid__item {
+  margin-bottom: 0;
+}
+
+[data-preset='studio-modern'] .photo-grid__item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: 1px solid transparent;
+  pointer-events: none;
+  transition: border-color var(--transition-fast);
+}
+
+[data-preset='studio-modern'] .photo-grid__item:hover::before {
+  border-color: var(--sm-accent);
+}
+
+[data-preset='studio-modern'] .photo-grid__item:hover img {
+  filter: none;
+  transform: none;
+}
+
+/* EXIF-Chip statt Verlaufsband */
+[data-preset='studio-modern'] .photo-grid__item-exif {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--sm-chip-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+[data-preset='studio-modern'] .photo-grid__item-exif::before {
+  width: 5px;
+  height: 5px;
+  margin-right: 8px;
+}
+
+/* ── Footer ─────────────────────────────────────────────────── */
+[data-preset='studio-modern'] .footer {
+  padding: 24px var(--sm-gutter);
+  max-width: none;
+}
+
+[data-preset='studio-modern'] .footer__name {
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+[data-preset='studio-modern'] .footer__legal-link {
+  font-size: 0.6875rem;
+  letter-spacing: 0.15em;
+  opacity: 1;
+  color: var(--text-muted);
+}
+
+[data-preset='studio-modern'] .footer__legal-link:hover {
+  color: var(--sm-accent);
+}
+
+[data-preset='studio-modern'] .footer__link {
+  color: var(--text-muted);
+}
+
+/* ── Buttons / Zustände ─────────────────────────────────────── */
+[data-preset='studio-modern'] .empty-state__button {
+  border-radius: 0;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+[data-preset='studio-modern'] .scroll-to-top {
+  border-radius: 0;
+}
+
+/* ── About ──────────────────────────────────────────────────── */
+[data-preset='studio-modern'] .about__text-col {
+  padding: 96px 80px;
+  max-width: 640px;
+}
+
+[data-preset='studio-modern'] .about__kicker {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+[data-preset='studio-modern'] .about__name {
+  font-family: var(--font-sans);
+  font-size: clamp(2.25rem, 4vw, 3.5rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  text-transform: uppercase;
+  margin-bottom: 0;
+}
+
+[data-preset='studio-modern'] .about__location {
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  letter-spacing: 0.2em;
+  color: var(--text-muted);
+  margin-top: 16px;
+}
+
+[data-preset='studio-modern'] .about__rule {
+  width: 56px;
+  border-top-color: var(--border-hover);
+  margin: 40px 0;
+}
+
+[data-preset='studio-modern'] .about__bio p {
+  font-size: 1rem;
+  font-weight: 300;
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+
+[data-preset='studio-modern'] .about__section-label {
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  color: var(--text-muted);
+}
+
+[data-preset='studio-modern'] .about__gear {
+  counter-reset: sm-gear;
+  gap: 0;
+  max-width: 400px;
+  border-top: var(--sm-hairline);
+}
+
+[data-preset='studio-modern'] .about__gear li {
+  counter-increment: sm-gear;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: var(--sm-hairline);
+  font-size: 0.875rem;
+  font-weight: 300;
+}
+
+[data-preset='studio-modern'] .about__gear li::before {
+  content: counter(sm-gear, decimal-leading-zero);
+  font-family: var(--font-caption);
+  font-size: 0.625rem;
+  color: var(--sm-accent);
+}
+
+/* ── Map ────────────────────────────────────────────────────── */
+[data-preset='studio-modern'] .map-page__header {
+  padding: 64px var(--sm-gutter) 32px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+[data-preset='studio-modern'] .map-page__title {
+  font-family: var(--font-sans);
+  font-size: clamp(2.25rem, 4.6vw, 3.5rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+[data-preset='studio-modern'] .map-page__kicker {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 16px 0;
+}
+
+[data-preset='studio-modern'] .map-page__kicker::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sm-accent);
+  margin-right: 10px;
+  flex: 0 0 auto;
+}
+
+[data-preset='studio-modern'] .map-page__meta {
+  display: block;
+  flex: 0 0 auto;
+  text-align: right;
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  line-height: 1.8;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+[data-preset='studio-modern'] .map-page__subtitle {
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+[data-preset='studio-modern'] .map-container {
+  margin: 0 var(--sm-gutter) var(--sm-gutter);
+  border: var(--sm-hairline);
+  border-radius: 0;
+}
+
+[data-preset='studio-modern'] .map-marker {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 0;
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  box-shadow: 0 2px 12px rgba(230, 0, 18, 0.4);
+}
+
+[data-preset='studio-modern'] .map-marker:hover {
+  transform: scale(1.08);
+}
+
+[data-preset='studio-modern'] .leaflet-popup-content-wrapper,
+[data-preset='studio-modern'] .leaflet-popup-tip {
+  border-radius: 0 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-preset='studio-modern'][data-theme='light'] .leaflet-popup-content-wrapper,
+[data-preset='studio-modern'][data-theme='light'] .leaflet-popup-tip {
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-preset='studio-modern'] .map-popup__cover {
+  height: 130px;
+}
+
+[data-preset='studio-modern'] .map-popup__city {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+[data-preset='studio-modern'] .map-popup__country,
+[data-preset='studio-modern'] .map-popup__count {
+  font-family: var(--font-caption);
+  font-size: 0.625rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+[data-preset='studio-modern'] .map-popup__album-link {
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sm-accent);
+}
+
+/* ── Admin ──────────────────────────────────────────────────── */
+[data-preset='studio-modern'] .admin-layout {
+  --admin-bg: #0d0d0d;
+  --admin-bg-raised: #161616;
+  --admin-bg-elevated: #1c1c1c;
+  --admin-bg-input: #101010;
+  --admin-border: rgba(255, 255, 255, 0.12);
+  --admin-border-hover: rgba(255, 255, 255, 0.24);
+  --admin-border-focus: #e60012;
+  --admin-text: #f4f4f2;
+  --admin-text-secondary: #9c9c96;
+  --admin-text-muted: #6b6b66;
+  --admin-accent: #e60012;
+  --admin-btn-primary-bg: #e60012;
+  --admin-btn-primary-text: #ffffff;
+  --admin-btn-primary-hover: #c8000f;
+
+  font-family: var(--font-sans);
+}
+
+[data-preset='studio-modern'][data-theme='light'] .admin-layout {
+  --admin-bg: #f4f4f1;
+  --admin-bg-raised: #ffffff;
+  --admin-bg-elevated: #f0f0ec;
+  --admin-bg-input: #ffffff;
+  --admin-border: rgba(0, 0, 0, 0.12);
+  --admin-border-hover: rgba(0, 0, 0, 0.24);
+  --admin-border-focus: #c8000f;
+  --admin-text: #161614;
+  --admin-text-secondary: #5a5a55;
+  --admin-text-muted: #8a8a84;
+  --admin-accent: #c8000f;
+  --admin-btn-primary-bg: #c8000f;
+  --admin-btn-primary-text: #ffffff;
+  --admin-btn-primary-hover: #a5000c;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  [data-preset='studio-modern'] {
+    --sm-gutter: 32px;
+  }
+
+  [data-preset='studio-modern'] .hero__left {
+    padding: 56px 40px;
+  }
+
+  [data-preset='studio-modern'] .about__text-col {
+    padding: 64px 48px;
+  }
+}
+
+@media (max-width: 640px) {
+  [data-preset='studio-modern'] {
+    --sm-gutter: 20px;
+  }
+
+  [data-preset='studio-modern'] .main {
+    padding: 56px var(--sm-gutter) 80px;
+  }
+
+  [data-preset='studio-modern'] .header {
+    padding: 0 var(--sm-gutter);
+  }
+
+  [data-preset='studio-modern'] .header__wordmark {
+    display: none;
+  }
+
+  [data-preset='studio-modern'] .hero {
+    grid-template-columns: 1fr;
+  }
+
+  [data-preset='studio-modern'] .hero__left {
+    padding: 40px 24px;
+  }
+
+  [data-preset='studio-modern'] .hero__title {
+    font-size: 2.5rem;
+  }
+
+  [data-preset='studio-modern'] .subpage-header,
+  [data-preset='studio-modern'] .album-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  [data-preset='studio-modern'] .subpage-header__meta,
+  [data-preset='studio-modern'] .album-header__meta {
+    text-align: left;
+  }
+
+  [data-preset='studio-modern'] .subpage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  [data-preset='studio-modern'] .about__text-col {
+    padding: 48px 24px 64px;
+  }
+
+  [data-preset='studio-modern'] .hero__thumbnail-item {
+    flex: 0 0 auto;
+  }
+}

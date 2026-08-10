@@ -62,6 +62,12 @@ docker-compose.override.yml
 content/settings.yaml
 content/gallery.yaml
 content/about.md
+# Von der App zur Laufzeit geschrieben: yaml-service legt bis zu 10 Backups je
+# Datei ab, und die Backups von gallery.yaml/settings.yaml wuerden genau den
+# Inhalt ins Repo tragen, den die drei Zeilen darueber heraushalten sollen.
+content/.backups/
+content/analytics.json
+content/*.screenshot-bak
 
 # ── Internal Dev Docs ────────────────────────────────
 docs/dev/

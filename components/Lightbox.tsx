@@ -254,9 +254,8 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev, waterm
       {/* Proofing favorite button */}
       {proofing && current && (
         <button
-          className={styles.infoToggle}
+          className={`${styles.infoToggle} ${styles.favToggle}`}
           style={{
-            right: '6.5rem',
             color: isFav ? '#ff4d4f' : 'inherit',
             fontWeight: isFav ? 600 : 400,
           }}
@@ -322,7 +321,7 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev, waterm
                 </div>
               )}
               {exifData.iso && (
-                <div className={styles.exifRow}>
+                <div className={`${styles.exifRow} ${styles.exifRowIso}`}>
                   <span className={styles.exifLabel}>ISO</span>
                   <span className={styles.exifValue}>{exifData.iso}</span>
                 </div>

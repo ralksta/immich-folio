@@ -13,6 +13,8 @@ import Image from 'next/image';
 interface HeroImage {
   src: string;
   blurDataURL?: string;
+  /** Pre-formatted camera line, shown as a chip by presets that use it. */
+  exif?: string;
 }
 
 interface HeroCarouselProps {
@@ -42,15 +44,20 @@ export function HeroCarousel({ images }: HeroCarouselProps) {
   if (images.length === 1) {
     const img = images[0];
     return (
-      <Image
-        src={img.src}
-        alt=""
-        className="hero__image"
-        fill
-        sizes="50vw"
-        priority
-        {...(img.blurDataURL ? { placeholder: 'blur' as const, blurDataURL: img.blurDataURL } : {})}
-      />
+      <>
+        <Image
+          src={img.src}
+          alt=""
+          className="hero__image"
+          fill
+          sizes="50vw"
+          priority
+          {...(img.blurDataURL
+            ? { placeholder: 'blur' as const, blurDataURL: img.blurDataURL }
+            : {})}
+        />
+        <HeroExifChip text={img.exif} />
+      </>
     );
   }
 
@@ -70,6 +77,17 @@ export function HeroCarousel({ images }: HeroCarouselProps) {
             : {})}
         />
       ))}
+      <HeroExifChip text={images[currentIndex]?.exif} />
     </>
+  );
+}
+
+/** Camera line over the hero image. Hidden unless the preset shows it. */
+function HeroExifChip({ text }: { text?: string }) {
+  if (!text) return null;
+  return (
+    <span className="hero__exif-chip" aria-hidden="true">
+      {text}
+    </span>
   );
 }

@@ -130,6 +130,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </a>
             <header className="header">
               <nav className="header__nav">
+                {/* Brand wordmark — presets that show it pair it with the dot. */}
+                <span className="header__wordmark" aria-hidden="true">
+                  {config.siteTitle}
+                </span>
                 <Link href="/" className="header__nav-link">
                   Home
                 </Link>

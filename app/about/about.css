@@ -34,6 +34,11 @@
   max-width: 560px;
 }
 
+/* Kicker above the name — opt-in per preset. */
+.about__kicker {
+  display: none;
+}
+
 .about__name {
   font-family: var(--font-sans);
   font-size: 2.4rem;

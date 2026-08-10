@@ -5,9 +5,55 @@ A self-hosted photography portfolio powered by [Immich](https://immich.app). Tur
 Immich Folio acts as a **secure reverse proxy** between your visitors and your private Immich instance. Your Immich server stays on your local network, completely invisible to the outside world.
 
 <p align="center">
-  <img src="docs/screenshots/theme-editorial-home.png" width="49%" alt="Homepage — Editorial theme" />
-  <img src="docs/screenshots/theme-editorial-grid.png" width="49%" alt="Photo grid — Editorial theme" />
+  <img src="docs/screenshots/theme-studio-modern-home.png" width="98%" alt="Homepage — Studio Modern theme" />
 </p>
+<p align="center">
+  <img src="docs/screenshots/theme-studio-modern-grid.png" width="49%" alt="Album photo grid" />
+  <img src="docs/screenshots/page-collection.png" width="49%" alt="Collection overview grouping several albums" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/lightbox-exif.png" width="98%" alt="Fullscreen lightbox with the EXIF panel open" />
+</p>
+
+## What's New in v0.10.0
+
+The largest release so far — two new ways to present work, a seventh theme preset, and an admin panel rebuilt around visual controls.
+
+- **New theme preset: Studio Modern** — the Leica language of `studio` rebuilt around the Archivo grotesque, with IBM Plex Mono for all photographic metadata, an indexed hero navigation with album counts, caption bars under album covers, and a film-edge EXIF strip in the lightbox → [Theming guide](docs/theming.md)
+
+<p align="center">
+  <img src="docs/screenshots/theme-studio-modern-home-light.png" width="49%" alt="Studio Modern in light mode" />
+  <img src="docs/screenshots/theme-studio-modern-grid-light.png" width="49%" alt="Studio Modern album grid in light mode" />
+</p>
+<p align="center"><em>Studio Modern in light mode — every preset ships a light and a dark variant.</em></p>
+
+- **Photo Essay mode** — storytelling pages that alternate text with fullbleed and paired image layouts, written in Markdown or assembled in the new visual block editor
+- **Client proofing** — let clients pick favorites and export the selection; the picks live in the URL as a compact bitmask, so nothing is stored server-side and a selection can be shared as a link
+- **Lightbox watermark** — configurable overlay on fullscreen images
+- **Privacy-friendly analytics** — page and album view counts without cookies or third parties, switchable off entirely
+- **Subpage on/off toggle** — take a page offline without deleting it
+- **Admin panel overhaul** — slide-over page-builder drawer with search, visual preview cards for grid, theme, photo frame and hero style, a Google SEO snippet preview, light/dark toggle, subpage live preview, and a backup manager with one-click restore
+
+<p align="center">
+  <img src="docs/screenshots/admin-page-builder.png" width="49%" alt="Visual page builder" />
+  <img src="docs/screenshots/admin-settings.png" width="49%" alt="Settings editor with visual preview cards" />
+</p>
+
+- **SEO** — configurable subpage title template and metadata descriptions, plus proper metadata on the about page
+- **Resilience** — the gallery keeps serving the last known albums during an Immich outage instead of erroring, with loading skeletons while the round-trip is in flight
+- **Fixed:** the map page ignored the configured theme fonts and borders (all presets), album order now mirrors the Immich timeline across time zones, the admin status panel no longer reports faults that are not faults, and the Docker health check no longer fails on IPv6-first `localhost` resolution
+
+**Upgrading:** no migration, no configuration change — pull the new image and restart. One exception: if you copied `docker-compose.override.yml.example` in the past, its health check needs a one-line edit. See the [upgrade notes](CHANGELOG.md#upgrade-notes) for that and for the rollback caveat when switching presets.
+
+### Security releases
+
+Security fixes ship in normal releases, so **running the latest release is the recommended baseline**:
+
+- **v0.10.0** — `GET /api/admin/analytics` now requires an admin session; Docker images are scanned with Trivy on every publish
+- **v0.9.2** — closed a timing side channel that leaked the admin password length ([#395](https://github.com/ralksta/immich-folio/pull/395))
+- **v0.9.0** — fixed pre-auth bypasses and restored Immich 3.x compatibility ([#378](https://github.com/ralksta/immich-folio/pull/378))
+
+Full history in the [GitHub releases](https://github.com/ralksta/immich-folio/releases) and [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 
@@ -29,13 +75,26 @@ Immich Folio acts as a **secure reverse proxy** between your visitors and your p
 - **Auto-generated slugs** — URL slugs derived from album names automatically
 - **YAML gallery config** — all gallery structure defined in a single `content/gallery.yaml` file
 - **Markdown about page** — `content/about.md` with frontmatter for portrait, name, location, and gear list
+- **Photo Essay mode** — long-form storytelling pages alternating text with fullbleed and paired image layouts
+- **Client proofing** — clients favorite photos and export the selection; picks are encoded in the URL, nothing is stored server-side
+- **Lightbox watermark** — configurable overlay on fullscreen images
+- **Privacy-friendly analytics** — cookieless view counts, no third parties, can be switched off
 - **Dynamic OG images** — auto-generated social preview images per album
+
+<p align="center">
+  <img src="docs/screenshots/page-about.png" width="49%" alt="About page rendered from content/about.md" />
+  <img src="docs/screenshots/page-map.png" width="49%" alt="Map page clustering photo locations worldwide" />
+</p>
+<p align="center"><em>The Markdown about page and the GPS map, both generated from your Immich data.</em></p>
 
 ### Admin Panel
 
 - **Visual page builder** — drag & drop interface to manage hero images, standalone albums, subpages, and sections
 - **Album picker** — browse all shared Immich albums with search, see photo counts, and add them with one click
 - **Settings editor** — configure theme, grid layout, footer, legal/impressum, and SEO from a visual UI
+- **Visual previews everywhere** — grid layout, theme, photo frame, hero style and the Google search snippet are picked from preview cards instead of text fields
+- **Essay block editor** — assemble photo essays block by block without touching Markdown
+- **Backup manager** — every save is backed up automatically; restore any of them with one click
 - **Live YAML sync** — changes are written directly to `gallery.yaml` and `settings.yaml` with automatic backups
 - **Password protected** — secured with its own admin password, separate from album passwords
 
@@ -44,14 +103,14 @@ Immich Folio acts as a **secure reverse proxy** between your visitors and your p
 
 <br>
 
-| Concern                 | Protection                                                            |
-| ----------------------- | --------------------------------------------------------------------- |
-| **Server exposure**     | Immich URL never leaves your network — all requests proxy server-side |
-| **API key**             | Stored only in `.env.local`, never in client code                     |
-| **Asset IDs**           | Immich UUIDs encrypted (AES-256) into opaque tokens                   |
-| **Album scope**         | Only albums in `gallery.yaml` are accessible                          |
-| **Password protection** | Per-subpage password support                                          |
-| **Rate limiting**       | Per-IP sliding-window rate limiter (configurable RPM)                 |
+| Concern                    | Protection                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------ |
+| **Server exposure**        | Immich URL never leaves your network — all requests proxy server-side                |
+| **API key**                | Stored only in `.env.local`, never in client code                                    |
+| **Asset IDs**              | Immich UUIDs encrypted (AES-256) into opaque tokens                                  |
+| **Album scope**            | Only albums in `gallery.yaml` are accessible                                         |
+| **Password protection**    | Per-subpage password support                                                         |
+| **Rate limiting**          | Per-IP sliding-window rate limiter (configurable RPM)                                |
 | **Vulnerability scanning** | Docker image scanned with Trivy on every release, results in the GitHub Security tab |
 
 - Health check endpoint at `GET /api/health`
@@ -131,10 +190,10 @@ All gallery structure — hero images, albums, subpages, grid layout, footer —
 
 ### Theming
 
-Six built-in presets with distinct visual identities — or mix and match with fine-grained control over colors, fonts, corners, photo frames, hero layout, and grid style.
+Seven built-in presets with distinct visual identities — or mix and match with fine-grained control over colors, fonts, corners, photo frames, hero layout, and grid style.
 
 ```yaml
-theme: studio # or: minimal, editorial, classic, noir, monograph
+theme: studio # or: studio-modern, minimal, editorial, classic, noir, monograph
 ```
 
 → **[View all Themes & Configuration Guide](docs/theming.md)**
@@ -226,7 +285,19 @@ A built-in visual editor at `/admin` lets you manage your gallery without editin
 ADMIN_PASSWORD=your-secure-admin-password
 ```
 
-Then navigate to `http://your-site/admin` and log in.
+Then navigate to `http://your-site/admin` and log in. The panel is protected by its
+own password, separate from any album passwords, and writes straight to
+`gallery.yaml` / `settings.yaml` with automatic backups.
+
+<p align="center">
+  <img src="docs/screenshots/admin-login.png" width="49%" alt="Admin panel login screen" />
+  <img src="docs/screenshots/admin-page-builder.png" width="49%" alt="Visual page builder with hero images, standalone albums and subpages" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/admin-album-picker.png" width="49%" alt="Album picker listing shared Immich albums with photo counts" />
+  <img src="docs/screenshots/admin-settings.png" width="49%" alt="Settings editor with site identity and feature toggles" />
+</p>
+<p align="center"><em>Login · page builder · album picker · settings editor</em></p>
 
 → **[Admin Panel Guide](docs/admin-panel.md)**
 
