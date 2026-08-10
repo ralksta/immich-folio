@@ -1037,7 +1037,10 @@ export default function PageBuilder() {
       {/* Standalone Albums */}
       <section className="builder-section">
         <div className="builder-section-header">
-          <h2>📷 Standalone Albums</h2>
+          <h2>
+            <Icons.Camera />
+            Standalone Albums
+          </h2>
           <button
             className="admin-btn admin-btn-sm"
             onClick={() => setPickerTarget({ type: 'standalone' })}
@@ -1086,7 +1089,10 @@ export default function PageBuilder() {
       {/* Subpages */}
       <section className="builder-section">
         <div className="builder-section-header">
-          <h2>📂 Subpages</h2>
+          <h2>
+            <Icons.Folder />
+            Subpages
+          </h2>
           <button className="admin-btn admin-btn-sm" onClick={addSubpage}>
             + New Subpage
           </button>
@@ -1333,12 +1339,17 @@ export default function PageBuilder() {
                             }}
                             style={{ padding: '8px 12px', borderRadius: '6px', width: '100%', fontSize: '0.9rem' }}
                           >
-                            <option value="masonry">📷 Masonry Grid (Dynamic Height)</option>
-                            <option value="uniform">🔲 Uniform Grid (Square Tiles)</option>
-                            <option value="showcase">⭐ Showcase (Featured First Asset)</option>
-                            <option value="filmstrip">🎞️ Filmstrip (Horizontal Scroll)</option>
-                            <option value="editorial-flow">📰 Editorial Flow</option>
-                            <option value="essay">📖 Photo Essay Mode (Storytelling Editor)</option>
+                            {/*
+                              Plain text, no emoji: an <option> cannot contain markup, so the
+                              SVG icon set is not available here — and a decorative emoji is
+                              not a substitute for it.
+                            */}
+                            <option value="masonry">Masonry Grid (Dynamic Height)</option>
+                            <option value="uniform">Uniform Grid (Square Tiles)</option>
+                            <option value="showcase">Showcase (Featured First Asset)</option>
+                            <option value="filmstrip">Filmstrip (Horizontal Scroll)</option>
+                            <option value="editorial-flow">Editorial Flow</option>
+                            <option value="essay">Photo Essay Mode (Storytelling Editor)</option>
                           </select>
                         </div>
                       </div>
