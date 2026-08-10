@@ -29,6 +29,22 @@
   outline: 2px solid var(--text-primary);
 }
 
+/* ── Screen-reader-only text ──────────────────────── */
+/* Used by the lightbox counter, which announces "Photo 3 of 53" while showing
+   the compact "3 / 53". Without this rule both strings render on top of each
+   other. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ── Header / Navigation ──────────────────────────── */
 .header {
   position: fixed;
