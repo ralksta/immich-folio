@@ -17,6 +17,10 @@
  *     foreign server on :3000 would be screenshot instead of this one)
  *   - Playwright browsers installed: npx playwright install chromium
  *
+ * Note: this rewrites content/settings.yaml for each theme and restores it
+ * afterwards — including on Ctrl+C. On a host serving live traffic from the same
+ * file, the public site changes theme for the duration of the run.
+ *
  * Output:
  *   docs/screenshots/theme-{preset}-{page}.png
  */
@@ -35,6 +39,7 @@ const BASE_URL = 'http://localhost:3000';
 const GRID_PATH_OVERRIDE = process.env.SCREENSHOT_GRID_PATH;
 const OUTPUT_DIR = path.join(process.cwd(), 'docs', 'screenshots');
 const SETTINGS_YAML = path.join(process.cwd(), 'content', 'settings.yaml');
+const SETTINGS_YAML_BACKUP = `${SETTINGS_YAML}.screenshot-bak`;
 /** Pages that never carry a photo grid — skipped while looking for an album. */
 const EXCLUDED_PATHS = new Set(['/', '/about', '/map', '/impressum', '/admin']);
 const VIEWPORT = { width: 1440, height: 900 };
@@ -44,8 +49,13 @@ async function main() {
   // Ensure output directory exists
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
-  // Read original settings.yaml to restore later
+  // Read original settings.yaml to restore later. The on-disk copy is what the
+  // signal handlers and the top-level catch restore from — an in-memory copy is
+  // gone the moment the process is killed, and this script rewrites the live
+  // settings.yaml on every iteration.
   const originalYaml = fs.readFileSync(SETTINGS_YAML, 'utf8');
+  fs.writeFileSync(SETTINGS_YAML_BACKUP, originalYaml);
+  installRestoreHandlers();
 
   // Resolved once against the running site, then reused for every theme.
   let gridPath: string | null = GRID_PATH_OVERRIDE ?? null;
@@ -165,7 +175,8 @@ async function main() {
   } finally {
     // Always restore original settings.yaml
     fs.writeFileSync(SETTINGS_YAML, originalYaml);
-    console.log('\n✅ Restored original gallery.yaml');
+    fs.rmSync(SETTINGS_YAML_BACKUP, { force: true });
+    console.log('\n✅ Restored original settings.yaml');
     await browser.close();
   }
 
@@ -230,6 +241,36 @@ async function discoverGridPath(page: import('@playwright/test').Page): Promise<
       'password-protected or empty. Point the script at a specific album with ' +
       'SCREENSHOT_GRID_PATH=/my-subpage/my-album npx tsx scripts/screenshots.ts',
   );
+}
+
+/**
+ * Restore settings.yaml when the process is killed. Without this, Ctrl+C in the
+ * middle of a run leaves the site on whatever theme was being captured — which
+ * matters because the file this script rewrites is the live configuration.
+ */
+function installRestoreHandlers(): void {
+  let restored = false;
+  const restore = () => {
+    if (restored) return;
+    restored = true;
+    try {
+      fs.writeFileSync(SETTINGS_YAML, fs.readFileSync(SETTINGS_YAML_BACKUP, 'utf8'));
+      fs.rmSync(SETTINGS_YAML_BACKUP, { force: true });
+      console.log('\n✅ Restored original settings.yaml');
+    } catch {
+      console.error(
+        `\n⚠️  Could not restore settings.yaml automatically. ` +
+          `Copy it back from ${SETTINGS_YAML_BACKUP}`,
+      );
+    }
+  };
+
+  for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP'] as const) {
+    process.on(signal, () => {
+      restore();
+      process.exit(130);
+    });
+  }
 }
 
 /**
@@ -337,12 +378,15 @@ function sleep(ms: number): Promise<void> {
 // ── Run ──────────────────────────────────────────────────────────
 main().catch((err) => {
   console.error('❌ Screenshot generation failed:', err);
-  // Try to restore gallery.yaml on error
+  // The finally block normally restores; this covers a throw before it is reached.
   try {
-    const original = fs.readFileSync(SETTINGS_YAML + '.bak', 'utf8');
-    fs.writeFileSync(SETTINGS_YAML, original);
+    if (fs.existsSync(SETTINGS_YAML_BACKUP)) {
+      fs.writeFileSync(SETTINGS_YAML, fs.readFileSync(SETTINGS_YAML_BACKUP, 'utf8'));
+      fs.rmSync(SETTINGS_YAML_BACKUP, { force: true });
+      console.log('✅ Restored original settings.yaml');
+    }
   } catch {
-    // Backup may not exist
+    console.error(`⚠️  Restore failed — copy settings.yaml back from ${SETTINGS_YAML_BACKUP}`);
   }
   process.exit(1);
 });

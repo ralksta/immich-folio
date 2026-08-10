@@ -67,6 +67,7 @@ content/about.md
 # Inhalt ins Repo tragen, den die drei Zeilen darueber heraushalten sollen.
 content/.backups/
 content/analytics.json
+content/*.screenshot-bak
 
 # ── Internal Dev Docs ────────────────────────────────
 docs/dev/
