@@ -76,6 +76,27 @@ describe('gallery.yaml per-album heroImage', () => {
     expect(getConfig().albumHeroImages[ALBUM_ID]).toBe(HERO_ID);
   });
 
+  // Same class of ID, same requirement: a pinned asset ID from `sort: manual`
+  // is written by the admin panel and can be hand-edited, so it goes through
+  // the same gate. A substituted zero UUID simply never matches an asset in the
+  // album, so the pin is ignored rather than corrupting the order.
+  it('routes manual assetOrder IDs through validateUuid, naming the album', () => {
+    vi.mocked(loadYaml).mockImplementation((filename: string) => {
+      if (filename === 'gallery.yaml') {
+        return { albums: [{ [ALBUM_ID]: { sort: 'manual', assetOrder: [HERO_ID] } }] };
+      }
+      if (filename === 'settings.yaml') return {};
+      return null;
+    });
+    invalidateConfigCache();
+
+    const config = getConfig();
+
+    expect(config.albumManualOrders[ALBUM_ID]).toEqual([HERO_ID]);
+    const call = validateUuidSpy.mock.calls.find((c) => c[0] === HERO_ID);
+    expect(call?.[1]).toContain(ALBUM_ID);
+  });
+
   // The substitution the wiring above depends on: validateUuid never throws, so
   // a bad ID degrades to a 404 image rather than taking the whole page down.
   it('real validateUuid warns and substitutes rather than throwing', async () => {

@@ -1924,6 +1924,17 @@ h3 .svg-icon {
   background: rgba(74, 222, 128, 0.05);
 }
 
+/* Carries a mode name ("filename", "oldest"), so it cannot use the fixed
+   icon-sized box the other badges share. */
+.album-tile-badges .badge-sort {
+  width: auto;
+  min-width: 18px;
+  padding: 0 5px;
+  font-size: 0.62rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
 /* ── Breitwand-Kiste Centered Modal styling ── */
 .album-drawer-overlay {
   position: fixed;
@@ -3820,4 +3831,141 @@ h3 .svg-icon {
 .essay-pill-btn.active {
   background: var(--admin-btn-primary-bg, #ffffff);
   color: var(--admin-btn-primary-text, #000000);
+}
+
+/* ── Per-album photo order (sort: manual) ────────────────────── */
+
+.admin-field-hint {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--admin-text-muted);
+}
+
+.order-editor-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.75rem;
+}
+
+.order-editor-notice {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--admin-accent);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.order-editor-section + .order-editor-section {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--admin-border);
+}
+
+.order-editor-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.order-editor-section-head h4 {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.order-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.order-tile {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--admin-bg-elevated);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    opacity 0.15s;
+}
+
+.order-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* The whole tile is a drag handle; without this the browser's native image
+     drag wins and dnd-kit never sees the gesture. */
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.order-tile-pinned {
+  border-color: var(--admin-accent);
+  cursor: grab;
+}
+
+.order-tile-pinned:active {
+  cursor: grabbing;
+}
+
+.order-tile-unpinned {
+  opacity: 0.55;
+}
+
+.order-tile-unpinned:hover {
+  opacity: 1;
+  border-color: var(--admin-border);
+}
+
+.order-tile-index {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  min-width: 18px;
+  padding: 0 4px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-align: center;
+  color: #000;
+  background: var(--admin-accent);
+}
+
+.order-tile-action {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--admin-text);
+  background: var(--admin-overlay, rgba(0, 0, 0, 0.6));
+}
+
+.order-editor-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--admin-border);
 }

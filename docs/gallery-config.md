@@ -94,7 +94,7 @@ Each section can have:
 | `description` | string | ➖       | Optional subline under the heading          |
 | `albums`      | list   | ✅       | Album UUIDs (same format as regular albums) |
 
-Within the `albums` list you can use a plain UUID, a simple title override, or an object with `title` and `password`:
+Within the `albums` list you can use a plain UUID, a simple title override, or an object with any of `title`, `description`, `password`, `heroImage`, `sort` and `assetOrder`:
 
 ```yaml
 albums:
@@ -103,6 +103,8 @@ albums:
   - 'album-uuid':
       title: My Private Title
       password: 'secure-password' # → adds a password gate to this specific album
+      heroImage: 'asset-uuid' # → overrides the album cover
+      sort: filename # → see "Photo Order Within an Album" below
 ```
 
 **Full example:**
@@ -132,6 +134,47 @@ subpages:
 
 > [!NOTE]
 > Each section title is automatically converted to a URL-safe anchor (`#tokyo`, `#kyoto`, …). The TOC appearance (separator character, numbering style, section rule) is fully controlled by the active theme.
+
+## Photo Order Within an Album
+
+By default a Folio album mirrors the Immich timeline. That is usually right, but a curated series has a narrative order that has nothing to do with capture time — and changing the sort on the Immich album would change it for the archive too. The optional `sort` key decouples the two.
+
+| Mode       | Order                                                                                   |
+| ---------- | --------------------------------------------------------------------------------------- |
+| `immich`   | Default. Inherits the album's own `asc`/`desc` setting in Immich.                       |
+| `newest`   | Capture time, newest first, regardless of the Immich setting.                           |
+| `oldest`   | Capture time, oldest first.                                                             |
+| `filename` | `originalFileName` in natural order — `IMG_2` before `IMG_10`.                          |
+| `manual`   | Pinned photos first, in the order you set; everything else follows in the Immich order. |
+
+```yaml
+albums:
+  - 'album-uuid' # no sort key → Immich order, exactly as before
+  - 'album-uuid':
+      sort: filename # an entry may carry only a sort, with no title override
+  - 'album-uuid':
+      title: Hokkaido, in sequence
+      sort: manual
+      assetOrder: # pinned, in this order
+        - 'asset-uuid-opening-frame'
+        - 'asset-uuid-second-frame'
+```
+
+`sort` works the same on standalone, subpage and section albums.
+
+### About `manual`
+
+`manual` is a pinned **prefix**, not a full permutation: `assetOrder` lists only the photos you placed by hand, and everything else follows in the album's Immich order. Curating an opening sequence therefore costs a handful of UUIDs rather than one per photo in the album.
+
+This also makes the album resilient to changes in Immich. Photos removed from the album are ignored, and photos added later appear at the end rather than being hidden — so `gallery.yaml` never has to be kept in sync by hand.
+
+The `/admin` page builder has a drag & drop editor for this (album → **Photo order** → **Manual** → **Reorder photos**), which is considerably easier than writing asset UUIDs by hand. It only writes a cleaned-up `assetOrder` when you explicitly apply it.
+
+> [!NOTE]
+> Two consequences worth knowing. On a subpage with several albums, `sort` orders photos _within_ each album — the albums themselves stay in the order they are listed in. And lightbox permalinks (`#photo-3`) are positional, so changing an album's sort moves where a previously shared link lands.
+
+> [!TIP]
+> `immich` means "inherit the album's sort setting from Immich", which is capture-time order in one direction or the other. It is not the manual drag order from the Immich web UI — Immich does not expose that order through its API, so Folio cannot reproduce it. Use `manual` for a hand-picked sequence.
 
 ## Grid Layout
 

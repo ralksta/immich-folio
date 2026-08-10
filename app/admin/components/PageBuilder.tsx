@@ -21,7 +21,24 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import AlbumPicker from './AlbumPicker';
 import AssetPicker from './AssetPicker';
+import AssetOrderEditor from './AssetOrderEditor';
 import { EssayBlockEditor } from './EssayBlockEditor';
+import {
+  ALBUM_SORT_MODES,
+  DEFAULT_ALBUM_SORT,
+  isAlbumSortMode,
+  type AlbumSortMode,
+} from '@/lib/albumSort';
+import type { AlbumEntryObject } from '@/lib/config/schema';
+
+/** Labels for the per-album sort select. Order matches ALBUM_SORT_MODES. */
+const SORT_LABELS: Record<AlbumSortMode, string> = {
+  immich: '🗓 Immich order (default)',
+  newest: '⬇ Newest first',
+  oldest: '⬆ Oldest first',
+  filename: '🔤 Filename',
+  manual: '✋ Manual',
+};
 
 // ── Icons ──────────────────────────────────────────────────────
 const Icons = {
@@ -121,6 +138,9 @@ interface AlbumEntry {
   description?: string;
   password?: string;
   heroImage?: string;
+  sort?: AlbumSortMode;
+  /** Pinned asset UUIDs for `sort: manual`; everything else follows automatically. */
+  assetOrder?: string[];
 }
 
 interface Section {
@@ -166,17 +186,27 @@ interface ImmichAlbumInfo {
 
 // ── Helpers ────────────────────────────────────────────────────
 
-function parseAlbumEntries(
-  raw:
-    | Array<
-        | string
-        | Record<
-            string,
-            string | { title: string; description?: string; password?: string; heroImage?: string }
-          >
-      >
-    | undefined,
-): AlbumEntry[] {
+type RawAlbumEntry = string | Record<string, string | AlbumEntryObject>;
+
+/**
+ * Whether an entry carries anything beyond its ID.
+ *
+ * Both collapse rules below depend on this, and they are the reason every new
+ * per-album option has to be listed here: an entry that looks "empty" is
+ * serialized back to a bare UUID string, so a field missing from this check is
+ * silently dropped on the next save.
+ */
+function hasAlbumOptions(entry: AlbumEntry): boolean {
+  return Boolean(
+    entry.description ||
+    entry.password ||
+    entry.heroImage ||
+    (entry.sort && entry.sort !== DEFAULT_ALBUM_SORT) ||
+    entry.assetOrder?.length,
+  );
+}
+
+function parseAlbumEntries(raw: RawAlbumEntry[] | undefined): AlbumEntry[] {
   if (!raw) return [];
   return raw.map((entry) => {
     if (typeof entry === 'string') return { id: entry };
@@ -188,27 +218,29 @@ function parseAlbumEntries(
       description: value.description,
       password: value.password,
       heroImage: value.heroImage,
+      sort: isAlbumSortMode(value.sort) ? value.sort : undefined,
+      assetOrder: value.assetOrder,
     };
   });
 }
 
-function serializeAlbumEntries(
-  entries: AlbumEntry[],
-): Array<
-  | string
-  | Record<string, string | { title: string; description?: string; password?: string; heroImage?: string }>
-> {
+function serializeAlbumEntries(entries: AlbumEntry[]): RawAlbumEntry[] {
   return entries.map((entry) => {
-    if (!entry.title && !entry.description && !entry.password && !entry.heroImage) return entry.id;
-    if (entry.title && !entry.description && !entry.password && !entry.heroImage) {
-      return { [entry.id]: entry.title };
-    }
-    const val: { title: string; description?: string; password?: string; heroImage?: string } = {
-      title: entry.title || '',
-    };
+    const extras = hasAlbumOptions(entry);
+    if (!entry.title && !extras) return entry.id;
+    if (entry.title && !extras) return { [entry.id]: entry.title };
+
+    const val: AlbumEntryObject = {};
+    // Only when set: a sort-only entry would otherwise be written with an empty
+    // title, which deriveGallery ignores but which still lands in the YAML.
+    if (entry.title) val.title = entry.title;
     if (entry.description) val.description = entry.description;
     if (entry.password) val.password = entry.password;
     if (entry.heroImage) val.heroImage = entry.heroImage;
+    if (entry.sort && entry.sort !== DEFAULT_ALBUM_SORT) val.sort = entry.sort;
+    // Persisted regardless of the mode, so manual → newest → manual does not
+    // throw away a hand-curated order.
+    if (entry.assetOrder?.length) val.assetOrder = entry.assetOrder;
     return { [entry.id]: val };
   });
 }
@@ -395,6 +427,12 @@ export default function PageBuilder() {
     onSelect: (assetId: string) => void;
     currentAssetIds?: string[];
     title?: string;
+  } | null>(null);
+  const [orderEditorTarget, setOrderEditorTarget] = useState<{
+    albumId: string;
+    albumName: string;
+    assetOrder: string[];
+    onSave: (assetOrder: string[]) => void;
   } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingAlbumAddress, setEditingAlbumAddress] = useState<ActiveEditAlbumAddress | null>(null);
@@ -1637,6 +1675,60 @@ export default function PageBuilder() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Photo order */}
+                  <div className="admin-field">
+                    <label>Photo order</label>
+                    <select
+                      value={album.sort || DEFAULT_ALBUM_SORT}
+                      onChange={(e) =>
+                        onUpdate({
+                          sort: isAlbumSortMode(e.target.value) ? e.target.value : undefined,
+                        })
+                      }
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        width: '100%',
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      {ALBUM_SORT_MODES.map((mode) => (
+                        <option key={mode} value={mode}>
+                          {SORT_LABELS[mode]}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="admin-field-hint">
+                      {album.sort === 'manual'
+                        ? 'Pinned photos come first, in the order you set. Everything else follows in the album’s Immich order.'
+                        : 'Immich order follows the album’s own sort setting in Immich.'}
+                    </span>
+
+                    {album.sort === 'manual' && (
+                      <div style={{ marginTop: '0.75rem' }}>
+                        <button
+                          className="admin-btn admin-btn-sm"
+                          onClick={() =>
+                            setOrderEditorTarget({
+                              albumId: album.id,
+                              albumName: album.title || name,
+                              assetOrder: album.assetOrder || [],
+                              onSave: (assetOrder) => {
+                                onUpdate({ assetOrder });
+                                setOrderEditorTarget(null);
+                              },
+                            })
+                          }
+                        >
+                          <Icons.Drag />{' '}
+                          {album.assetOrder?.length
+                            ? `Reorder photos (${album.assetOrder.length} pinned)`
+                            : 'Reorder photos'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="album-drawer-footer">
@@ -1668,6 +1760,17 @@ export default function PageBuilder() {
           onClose={() => setHeroPickerTarget(null)}
           currentAssetIds={heroPickerTarget.currentAssetIds}
           title={heroPickerTarget.title}
+        />
+      )}
+
+      {/* Manual Photo Order Editor */}
+      {orderEditorTarget && (
+        <AssetOrderEditor
+          albumId={orderEditorTarget.albumId}
+          albumName={orderEditorTarget.albumName}
+          assetOrder={orderEditorTarget.assetOrder}
+          onSave={orderEditorTarget.onSave}
+          onClose={() => setOrderEditorTarget(null)}
         />
       )}
     </div>
@@ -1838,6 +1941,11 @@ function AlbumCard({
             {album.heroImage && (
               <span className="badge badge-hero" title="Custom Hero Image set">
                 <Icons.Image />
+              </span>
+            )}
+            {album.sort && album.sort !== DEFAULT_ALBUM_SORT && (
+              <span className="badge badge-sort" title={`Photo order: ${SORT_LABELS[album.sort]}`}>
+                {album.sort === 'manual' ? <Icons.Drag /> : album.sort}
               </span>
             )}
           </div>
