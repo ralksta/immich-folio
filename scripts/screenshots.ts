@@ -266,9 +266,16 @@ async function main() {
  * dependency here, so a missing install just skips this step.
  */
 async function optimizePngs(): Promise<void> {
-  let sharp: typeof import('sharp');
+  // sharp 0.35 switched from `export =` to ESM: the module namespace stopped
+  // being callable and the factory moved to `.default`. Resolve whichever
+  // shape the installed version has, so this type-checks and runs on both.
+  type SharpFactory = typeof import('sharp') extends { default: infer Factory }
+    ? Factory
+    : typeof import('sharp');
+  let sharp: SharpFactory;
   try {
-    sharp = (await import('sharp')).default;
+    const mod = (await import('sharp')) as unknown as { default?: SharpFactory };
+    sharp = mod.default ?? (mod as unknown as SharpFactory);
   } catch {
     console.log('\n⏭  sharp not available — screenshots left as captured.');
     return;
