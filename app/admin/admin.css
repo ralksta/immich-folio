@@ -1782,8 +1782,10 @@
     color 0.15s ease;
 }
 
+/* Drag handles use IconGripVertical's square 24x24 viewBox, so keep the box
+   square too — a 12x18 box would letterbox the glyph down to 12x12. */
 .svg-drag {
-  width: 12px;
+  width: 18px;
   height: 18px;
 }
 
