@@ -15,9 +15,9 @@ Immich Folio acts as a **secure reverse proxy** between your visitors and your p
   <img src="docs/screenshots/lightbox-exif.png" width="98%" alt="Fullscreen lightbox with the EXIF panel open" />
 </p>
 
-## What's New
+## What's New in v0.10.0
 
-_Unreleased (on `dev`)_
+The largest release so far — two new ways to present work, a seventh theme preset, and an admin panel rebuilt around visual controls.
 
 - **New theme preset: Studio Modern** — the Leica language of `studio` rebuilt around the Archivo grotesque, with IBM Plex Mono for all photographic metadata, an indexed hero navigation with album counts, caption bars under album covers, and a film-edge EXIF strip in the lightbox → [Theming guide](docs/theming.md)
 
@@ -27,19 +27,31 @@ _Unreleased (on `dev`)_
 </p>
 <p align="center"><em>Studio Modern in light mode — every preset ships a light and a dark variant.</em></p>
 
-- **Photo Essay mode** — storytelling pages with fullbleed and paired layouts, plus a visual block builder in the admin panel
-- **Client proofing** — let clients favorite photos and export the selection
-- **Fixed:** the map page ignored the configured theme fonts and borders (all presets)
+- **Photo Essay mode** — storytelling pages that alternate text with fullbleed and paired image layouts, written in Markdown or assembled in the new visual block editor
+- **Client proofing** — let clients pick favorites and export the selection; the picks live in the URL as a compact bitmask, so nothing is stored server-side and a selection can be shared as a link
+- **Lightbox watermark** — configurable overlay on fullscreen images
+- **Privacy-friendly analytics** — page and album view counts without cookies or third parties, switchable off entirely
+- **Subpage on/off toggle** — take a page offline without deleting it
+- **Admin panel overhaul** — slide-over page-builder drawer with search, visual preview cards for grid, theme, photo frame and hero style, a Google SEO snippet preview, light/dark toggle, subpage live preview, and a backup manager with one-click restore
 
-Upgrading needs no migration — configuration is unchanged and existing presets render as before. See the [changelog](CHANGELOG.md) for the rollback caveat when switching presets.
+<p align="center">
+  <img src="docs/screenshots/admin-page-builder.png" width="49%" alt="Visual page builder" />
+  <img src="docs/screenshots/admin-settings.png" width="49%" alt="Settings editor with visual preview cards" />
+</p>
+
+- **SEO** — configurable subpage title template and metadata descriptions, plus proper metadata on the about page
+- **Resilience** — the gallery keeps serving the last known albums during an Immich outage instead of erroring, with loading skeletons while the round-trip is in flight
+- **Fixed:** the map page ignored the configured theme fonts and borders (all presets), album order now mirrors the Immich timeline across time zones, the admin status panel no longer reports faults that are not faults, and the Docker health check no longer fails on IPv6-first `localhost` resolution
+
+**Upgrading:** no migration, no configuration change — pull the new image and restart. One exception: if you copied `docker-compose.override.yml.example` in the past, its health check needs a one-line edit. See the [upgrade notes](CHANGELOG.md#upgrade-notes) for that and for the rollback caveat when switching presets.
 
 ### Security releases
 
 Security fixes ship in normal releases, so **running the latest release is the recommended baseline**:
 
+- **v0.10.0** — `GET /api/admin/analytics` now requires an admin session; Docker images are scanned with Trivy on every publish
 - **v0.9.2** — closed a timing side channel that leaked the admin password length ([#395](https://github.com/ralksta/immich-folio/pull/395))
 - **v0.9.0** — fixed pre-auth bypasses and restored Immich 3.x compatibility ([#378](https://github.com/ralksta/immich-folio/pull/378))
-- **Unreleased** — `GET /api/admin/analytics` now requires an admin session; Docker images are scanned with Trivy on every publish
 
 Full history in the [GitHub releases](https://github.com/ralksta/immich-folio/releases) and [CHANGELOG.md](CHANGELOG.md).
 
@@ -63,6 +75,10 @@ Full history in the [GitHub releases](https://github.com/ralksta/immich-folio/re
 - **Auto-generated slugs** — URL slugs derived from album names automatically
 - **YAML gallery config** — all gallery structure defined in a single `content/gallery.yaml` file
 - **Markdown about page** — `content/about.md` with frontmatter for portrait, name, location, and gear list
+- **Photo Essay mode** — long-form storytelling pages alternating text with fullbleed and paired image layouts
+- **Client proofing** — clients favorite photos and export the selection; picks are encoded in the URL, nothing is stored server-side
+- **Lightbox watermark** — configurable overlay on fullscreen images
+- **Privacy-friendly analytics** — cookieless view counts, no third parties, can be switched off
 - **Dynamic OG images** — auto-generated social preview images per album
 
 <p align="center">
@@ -76,6 +92,9 @@ Full history in the [GitHub releases](https://github.com/ralksta/immich-folio/re
 - **Visual page builder** — drag & drop interface to manage hero images, standalone albums, subpages, and sections
 - **Album picker** — browse all shared Immich albums with search, see photo counts, and add them with one click
 - **Settings editor** — configure theme, grid layout, footer, legal/impressum, and SEO from a visual UI
+- **Visual previews everywhere** — grid layout, theme, photo frame, hero style and the Google search snippet are picked from preview cards instead of text fields
+- **Essay block editor** — assemble photo essays block by block without touching Markdown
+- **Backup manager** — every save is backed up automatically; restore any of them with one click
 - **Live YAML sync** — changes are written directly to `gallery.yaml` and `settings.yaml` with automatic backups
 - **Password protected** — secured with its own admin password, separate from album passwords
 
