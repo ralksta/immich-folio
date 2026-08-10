@@ -24,7 +24,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const config = getConfigOrNull();
   if (!config) {
     // Nothing to describe, and nothing that should be indexed while broken.
-    return { title: 'Setup Required', robots: { index: false, follow: false } };
+    return {
+      title: 'Setup Required',
+      robots: { index: false, follow: false },
+      icons: { icon: '/api/favicon' },
+    };
   }
 
   const siteTitle = config.seo.title;
@@ -42,6 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: siteDescription,
     robots,
     icons: {
+      icon: '/api/favicon',
       apple: '/apple-touch-icon.png',
     },
     openGraph: {

@@ -121,6 +121,20 @@ const ROUTES: {
     method: 'POST',
     args: () => [new Request('http://localhost/api/admin/backups', { method: 'POST', body: '{}' })],
   },
+  {
+    name: 'PUT /api/admin/favicon',
+    path: 'favicon',
+    load: () => import('../favicon/route'),
+    method: 'PUT',
+    args: () => [new Request('http://localhost/api/admin/favicon', { method: 'PUT' })],
+  },
+  {
+    name: 'DELETE /api/admin/favicon',
+    path: 'favicon',
+    load: () => import('../favicon/route'),
+    method: 'DELETE',
+    args: () => [],
+  },
 ];
 
 describe('admin route guards', () => {
@@ -165,7 +179,7 @@ describe('admin route guards', () => {
           if (entry.name === '__tests__') continue;
           walk(full);
         } else if (entry.name === 'route.ts') {
-          found.push(path.relative(adminDir, path.dirname(full)));
+          found.push(path.relative(adminDir, path.dirname(full)).replace(/\\/g, '/'));
         }
       }
     };

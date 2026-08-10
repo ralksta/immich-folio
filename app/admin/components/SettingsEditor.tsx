@@ -134,6 +134,8 @@ export default function SettingsEditor() {
   const [saveMessage, setSaveMessage] = useState('');
   const [activeSection, setActiveSection] = useState('general');
   const [currentMode, setCurrentMode] = useState<'dark' | 'light'>('dark');
+  const [faviconUploading, setFaviconUploading] = useState(false);
+  const [faviconMessage, setFaviconMessage] = useState('');
 
   useEffect(() => {
     loadSettings();
@@ -442,6 +444,50 @@ export default function SettingsEditor() {
                     <span className="switch-slider" />
                   </div>
                 </button>
+              </div>
+
+              <div className="admin-field" style={{ marginTop: '1rem' }}>
+                <label>Favicon</label>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <input
+                    type="file"
+                    accept=".svg,.png,.ico,.jpg,.jpeg"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setFaviconMessage('');
+                      setFaviconUploading(true);
+                      const form = new FormData();
+                      form.append('file', file);
+                      try {
+                        const res = await fetch('/api/admin/favicon', { method: 'PUT', body: form });
+                        const data = await res.json();
+                        if (res.ok) {
+                          setFaviconMessage(data.message);
+                        } else {
+                          setFaviconMessage(`Error: ${data.error}`);
+                        }
+                      } catch {
+                        setFaviconMessage('Error: Upload failed');
+                      } finally {
+                        setFaviconUploading(false);
+                        e.target.value = '';
+                      }
+                    }}
+                    disabled={faviconUploading}
+                    style={{ fontSize: '0.8rem' }}
+                  />
+                  {faviconUploading && <div className="admin-spinner" />}
+                </div>
+                {faviconMessage && (
+                  <p className={`save-message ${faviconMessage.startsWith('Error') ? 'error' : 'success'}`}
+                    style={{ marginTop: '0.3rem', fontSize: '0.75rem' }}>
+                    {faviconMessage}
+                  </p>
+                )}
+                <span className="admin-field-hint" style={{ display: 'block', marginTop: '0.2rem' }}>
+                  SVG, PNG, ICO, or JPEG — max 512 kB. Stored in the content volume.
+                </span>
               </div>
             </div>
           )}
