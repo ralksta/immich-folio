@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { immich, ImmichUnavailableError } from '../immich';
 import * as config from '../config';
 import { cache } from '../cache';
+import type { AlbumSortMode } from '../albumSort';
+
+// Per-album sort is read on every getAlbum(), so the tests below need to be
+// able to change it between calls without rebuilding the whole mock.
+const albumSortModes: Record<string, AlbumSortMode> = {};
+const albumManualOrders: Record<string, string[]> = {};
 
 // Mock the config by wrapping it in a factory
 vi.mock('../config', async () => {
@@ -16,6 +22,8 @@ vi.mock('../config', async () => {
       subpages: [],
       albumOverrides: { 'album-1': 'Override Name' },
       albumDescriptions: {},
+      albumSortModes,
+      albumManualOrders,
       // Non-zero: a 0 TTL expires an entry in the same millisecond it is
       // written, which would make any caching assertion flaky. Isolation comes
       // from the cache.clear() in beforeEach, not from an unusable TTL.
@@ -37,6 +45,8 @@ describe('ImmichClient', () => {
     // getAlbum() memoises into the module-level LRU; without this, later tests
     // read a previous test's album and never reach the mocked fetch.
     cache.clear();
+    for (const key of Object.keys(albumSortModes)) delete albumSortModes[key];
+    for (const key of Object.keys(albumManualOrders)) delete albumManualOrders[key];
   });
 
   describe('request()', () => {
@@ -578,6 +588,69 @@ describe('ImmichClient', () => {
       mockAlbumApi({ order: 'asc', pages: [{ items, nextPage: null }] });
       const album = await immich.getAlbum('album-1');
       expect(album?.assets.map((a) => a.id)).toEqual(['frame-1', 'frame-2', 'frame-3']);
+    });
+
+    /**
+     * The configured sort is applied on the way out of getAlbum(), so the LRU
+     * keeps one canonical Immich-ordered copy per album. Sorting the cached
+     * array in place would reorder the shared entry, and the next reader with a
+     * different mode would then be sorting an already-sorted array.
+     */
+    describe('per-album sort', () => {
+      const items = [
+        { ...asset('b', '2024-02-01T00:00:00Z'), originalFileName: 'IMG_2.jpg' },
+        { ...asset('c', '2024-03-01T00:00:00Z'), originalFileName: 'IMG_10.jpg' },
+        { ...asset('a', '2024-01-01T00:00:00Z'), originalFileName: 'IMG_1.jpg' },
+      ];
+
+      it('overrides the Immich direction', async () => {
+        albumSortModes['album-1'] = 'oldest';
+        mockAlbumApi({ order: 'desc', pages: [{ items, nextPage: null }] });
+
+        const album = await immich.getAlbum('album-1');
+        expect(album?.assets.map((a) => a.id)).toEqual(['a', 'b', 'c']);
+      });
+
+      it('applies the manual pin order', async () => {
+        albumSortModes['album-1'] = 'manual';
+        albumManualOrders['album-1'] = ['c'];
+        mockAlbumApi({ order: 'asc', pages: [{ items, nextPage: null }] });
+
+        const album = await immich.getAlbum('album-1');
+        expect(album?.assets.map((a) => a.id)).toEqual(['c', 'a', 'b']);
+      });
+
+      it('leaves the cached album in canonical order', async () => {
+        albumSortModes['album-1'] = 'filename';
+        mockAlbumApi({ order: 'asc', pages: [{ items, nextPage: null }] });
+
+        const first = await immich.getAlbum('album-1');
+        expect(first?.assets.map((a) => a.id)).toEqual(['a', 'b', 'c']); // IMG_1, IMG_2, IMG_10
+
+        // Same cache entry, different mode: if the first call had sorted the
+        // stored array, the album would still be in filename order here.
+        albumSortModes['album-1'] = 'newest';
+        const second = await immich.getAlbum('album-1');
+        expect(second?.assets.map((a) => a.id)).toEqual(['c', 'b', 'a']);
+        expect(second?.assets).not.toBe(first?.assets);
+      });
+
+      it('gives concurrent callers independent arrays', async () => {
+        albumSortModes['album-1'] = 'manual';
+        albumManualOrders['album-1'] = ['b'];
+        mockAlbumApi({ order: 'asc', pages: [{ items, nextPage: null }] });
+
+        // Coalesced through the same pending promise, but each caller applies
+        // the sort itself — so neither can be handed the other's array.
+        const [one, two] = await Promise.all([
+          immich.getAlbum('album-1'),
+          immich.getAlbum('album-1'),
+        ]);
+
+        expect(one?.assets.map((a) => a.id)).toEqual(['b', 'a', 'c']);
+        expect(two?.assets.map((a) => a.id)).toEqual(['b', 'a', 'c']);
+        expect(one?.assets).not.toBe(two?.assets);
+      });
     });
   });
 });

@@ -1,25 +1,16 @@
 /**
- * Admin API: Get assets of a specific album for the hero image picker.
+ * Admin API: assets of a specific album, for the hero image picker and the
+ * manual sort editor.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 import { getConfig } from '@/lib/config';
+import { immich } from '@/lib/immich';
 import { isUuid } from '@/lib/uuid';
 
-interface ImmichAlbumDetail {
-  assets: Array<{
-    id: string;
-    type: string;
-    originalFileName: string;
-    thumbhash: string | null;
-    fileCreatedAt: string;
-    isFavorite: boolean;
-  }>;
-}
-
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ albumId: string }> },
 ) {
   if (!isAdminEnabled()) {
@@ -42,27 +33,27 @@ export async function GET(
     return NextResponse.json({ error: 'Invalid album ID' }, { status: 400 });
   }
 
+  // Videos are opt-in. The hero picker feeds imageUrl()/assetPlaceholder and
+  // wants images only; the sort editor must show everything the public grid
+  // renders, or a video could never be pinned and would always fall to the tail.
+  const includeVideos = request.nextUrl.searchParams.get('types') === 'all';
+
   try {
-    const res = await fetch(`${config.immich.apiUrl}/albums/${encodeURIComponent(albumId)}`, {
-      headers: {
-        'x-api-key': config.immich.apiKey,
-        Accept: 'application/json',
-      },
-    });
+    // Via the client, not a bare fetch of `GET /albums/:id`: Immich 3.x no
+    // longer embeds assets in that response, so reading `album.assets` returned
+    // nothing (and threw outright when the key was absent). getAlbumAssetsRaw()
+    // pages through the metadata search and applies the album's own order, so
+    // this list matches what the site renders under `sort: immich`.
+    const all = await immich.getAlbumAssetsRaw(albumId);
 
-    if (!res.ok) {
-      return NextResponse.json({ error: `Immich API returned ${res.status}` }, { status: 502 });
-    }
-
-    const album = (await res.json()) as ImmichAlbumDetail;
-
-    const assets = album.assets
-      .filter((a) => a.type === 'IMAGE')
+    const assets = all
+      .filter((a) => a.type === 'IMAGE' || (includeVideos && a.type === 'VIDEO'))
       .map((a) => ({
         id: a.id,
+        type: a.type,
         originalFileName: a.originalFileName,
         fileCreatedAt: a.fileCreatedAt,
-        isFavorite: a.isFavorite,
+        isFavorite: a.isFavorite ?? false,
       }));
 
     return NextResponse.json({ assets, nextPage: null });
