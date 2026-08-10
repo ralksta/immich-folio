@@ -6,9 +6,15 @@
  *
  * Usage:
  *   npx tsx scripts/screenshots.ts
+ *   SCREENSHOT_GRID_PATH=/japan/tokyo npx tsx scripts/screenshots.ts
+ *
+ * The album used for the grid shots is discovered by walking the running site,
+ * since album slugs come from Immich album names. SCREENSHOT_GRID_PATH picks a
+ * specific one instead.
  *
  * Prerequisites:
- *   - Dev server NOT running (script manages its own server lifecycle)
+ *   - Dev server NOT running (script manages its own server lifecycle, and a
+ *     foreign server on :3000 would be screenshot instead of this one)
  *   - Playwright browsers installed: npx playwright install chromium
  *
  * Output:
@@ -21,9 +27,16 @@ import path from 'path';
 
 const THEMES = ['studio', 'studio-modern', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
 const BASE_URL = 'http://localhost:3000';
-const GRID_PATH = '/deutschland/kloster-chorin'; // public subpage with photos
+/**
+ * Album detail page used for the grid screenshots. Discovered by walking the
+ * running site, because album slugs come from Immich album names and differ per
+ * installation. Set SCREENSHOT_GRID_PATH to pick a specific album instead.
+ */
+const GRID_PATH_OVERRIDE = process.env.SCREENSHOT_GRID_PATH;
 const OUTPUT_DIR = path.join(process.cwd(), 'docs', 'screenshots');
 const SETTINGS_YAML = path.join(process.cwd(), 'content', 'settings.yaml');
+/** Pages that never carry a photo grid — skipped while looking for an album. */
+const EXCLUDED_PATHS = new Set(['/', '/about', '/map', '/impressum', '/admin']);
 const VIEWPORT = { width: 1440, height: 900 };
 const IMAGE_LOAD_TIMEOUT = 8000; // ms to wait for images after networkidle
 
@@ -33,6 +46,9 @@ async function main() {
 
   // Read original settings.yaml to restore later
   const originalYaml = fs.readFileSync(SETTINGS_YAML, 'utf8');
+
+  // Resolved once against the running site, then reused for every theme.
+  let gridPath: string | null = GRID_PATH_OVERRIDE ?? null;
 
   // Dynamic import for Playwright (may not be installed globally)
   const { chromium } = await import('@playwright/test');
@@ -68,7 +84,11 @@ async function main() {
 
       // ── Grid view screenshot ──
       console.log('  📸 Capturing grid view...');
-      await page.goto(`${BASE_URL}${GRID_PATH}`, { waitUntil: 'networkidle' });
+      if (!gridPath) {
+        gridPath = await discoverGridPath(page);
+        console.log(`  🔎 Grid page: ${gridPath}`);
+      }
+      await page.goto(`${BASE_URL}${gridPath}`, { waitUntil: 'networkidle' });
       // Force all fade-in elements visible (don't scroll — keep album title in view)
       await page.evaluate(() => {
         document.querySelectorAll('.fade-in').forEach((el) => el.classList.add('fade-in--visible'));
@@ -159,6 +179,58 @@ async function main() {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
+
+/**
+ * Find an album detail page by walking the running site.
+ *
+ * Album slugs are derived from Immich album names, so no path can be hardcoded
+ * without tying the script to one installation. Start at the homepage, follow
+ * internal links, and take the first page that renders a photo grid — either a
+ * standalone album, or an album reached through a subpage's cover grid.
+ * Password-gated pages are skipped.
+ */
+async function discoverGridPath(page: import('@playwright/test').Page): Promise<string> {
+  const seen = new Set<string>();
+
+  const internalLinks = async (selector: string): Promise<string[]> =>
+    (
+      await page.$$eval(selector, (els) =>
+        els.map((el) => el.getAttribute('href')).filter((h): h is string => !!h),
+      )
+    ).filter((href) => href.startsWith('/') && !EXCLUDED_PATHS.has(href) && !seen.has(href));
+
+  /** A photo grid means we arrived at an album; a password field means we cannot. */
+  const pageKind = async (): Promise<'grid' | 'gated' | 'other'> => {
+    if ((await page.locator('input[type="password"]').count()) > 0) return 'gated';
+    if ((await page.locator('.photo-grid, .essay').count()) > 0) return 'grid';
+    return 'other';
+  };
+
+  await page.goto(BASE_URL, { waitUntil: 'networkidle' });
+  const entryPoints = await internalLinks('a[href^="/"]');
+
+  for (const entry of entryPoints) {
+    seen.add(entry);
+    await page.goto(`${BASE_URL}${entry}`, { waitUntil: 'networkidle' });
+
+    const kind = await pageKind();
+    if (kind === 'gated') continue;
+    if (kind === 'grid') return entry;
+
+    // A subpage listing — descend into its album covers.
+    for (const cover of await internalLinks('.subpage-grid__item, .album-card')) {
+      seen.add(cover);
+      await page.goto(`${BASE_URL}${cover}`, { waitUntil: 'networkidle' });
+      if ((await pageKind()) === 'grid') return cover;
+    }
+  }
+
+  throw new Error(
+    'Could not find a public album page to screenshot. Every reachable page was ' +
+      'password-protected or empty. Point the script at a specific album with ' +
+      'SCREENSHOT_GRID_PATH=/my-subpage/my-album npx tsx scripts/screenshots.ts',
+  );
+}
 
 /**
  * Replace the theme preset in settings.yaml.
