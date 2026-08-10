@@ -28,12 +28,11 @@ Default is `studio` if no theme is specified.
 
 ### Theme Gallery
 
-_From top to bottom: Studio, Minimal, Editorial, Classic, Noir, Monograph_
-
-(No screenshots for `studio-modern` yet — run `npx tsx scripts/screenshots.ts` to regenerate.)
+_From left to right, top to bottom: Studio, Studio Modern, Minimal, Editorial, Classic, Noir, Monograph_
 
 <p align="center">
   <img src="screenshots/theme-studio-home.png" width="49%" alt="Studio theme" />
+  <img src="screenshots/theme-studio-modern-home.png" width="49%" alt="Studio Modern theme" />
   <img src="screenshots/theme-minimal-home.png" width="49%" alt="Minimal theme" />
   <img src="screenshots/theme-editorial-home.png" width="49%" alt="Editorial theme" />
   <img src="screenshots/theme-classic-home.png" width="49%" alt="Classic theme" />
@@ -43,13 +42,27 @@ _From top to bottom: Studio, Minimal, Editorial, Classic, Noir, Monograph_
 
 ### Grid View Examples
 
+_Same order as above._
+
 <p align="center">
   <img src="screenshots/theme-studio-grid.png" width="49%" alt="Studio grid" />
+  <img src="screenshots/theme-studio-modern-grid.png" width="49%" alt="Studio Modern grid" />
   <img src="screenshots/theme-minimal-grid.png" width="49%" alt="Minimal grid" />
   <img src="screenshots/theme-editorial-grid.png" width="49%" alt="Editorial grid" />
   <img src="screenshots/theme-classic-grid.png" width="49%" alt="Classic grid" />
   <img src="screenshots/theme-noir-grid.png" width="49%" alt="Noir grid" />
   <img src="screenshots/theme-monograph-grid.png" width="49%" alt="Monograph grid" />
+</p>
+
+### Light Mode
+
+Every preset ships with a light variant. Visitors switch with the toggle in the
+navigation bar; the choice is remembered in `localStorage`, and the presets keep
+their accent, fonts and framing in both modes.
+
+<p align="center">
+  <img src="screenshots/theme-studio-modern-home-light.png" width="49%" alt="Studio Modern in light mode" />
+  <img src="screenshots/theme-studio-modern-grid-light.png" width="49%" alt="Studio Modern grid in light mode" />
 </p>
 
 ### What makes each theme unique
@@ -170,6 +183,42 @@ Controls the photo grid layout on album pages:
 - **`showcase`** — first image displayed at full width (16:9), rest in standard grid
 - **`filmstrip`** — horizontal scroll of tall vertical image strips with scroll snapping
 - **`editorial-flow`** — alternating full-width (21:9) and side-by-side (4:3) image pairs
+
+Set it globally in `settings.yaml`, or per subpage in `gallery.yaml`:
+
+```yaml
+grid:
+  layout: showcase
+```
+
+The same album in all five layouts (theme `studio-modern`):
+
+<table>
+  <tr>
+    <td align="center"><strong>Masonry</strong> (default)</td>
+    <td align="center"><strong>Uniform</strong></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/grid-masonry.png" width="420" alt="Masonry grid layout" /></td>
+    <td><img src="screenshots/grid-uniform.png" width="420" alt="Uniform grid layout" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Showcase</strong></td>
+    <td align="center"><strong>Filmstrip</strong></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/grid-showcase.png" width="420" alt="Showcase grid layout" /></td>
+    <td><img src="screenshots/grid-filmstrip.png" width="420" alt="Filmstrip grid layout" /></td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2"><strong>Editorial Flow</strong></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <img src="screenshots/grid-editorial-flow.png" width="840" alt="Editorial flow grid layout" />
+    </td>
+  </tr>
+</table>
 
 ## Examples
 

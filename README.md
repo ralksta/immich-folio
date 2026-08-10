@@ -5,8 +5,14 @@ A self-hosted photography portfolio powered by [Immich](https://immich.app). Tur
 Immich Folio acts as a **secure reverse proxy** between your visitors and your private Immich instance. Your Immich server stays on your local network, completely invisible to the outside world.
 
 <p align="center">
-  <img src="docs/screenshots/theme-editorial-home.png" width="49%" alt="Homepage — Editorial theme" />
-  <img src="docs/screenshots/theme-editorial-grid.png" width="49%" alt="Photo grid — Editorial theme" />
+  <img src="docs/screenshots/theme-studio-modern-home.png" width="98%" alt="Homepage — Studio Modern theme" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/theme-studio-modern-grid.png" width="49%" alt="Album photo grid" />
+  <img src="docs/screenshots/page-collection.png" width="49%" alt="Collection overview grouping several albums" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/lightbox-exif.png" width="98%" alt="Fullscreen lightbox with the EXIF panel open" />
 </p>
 
 ## What's New
@@ -14,6 +20,13 @@ Immich Folio acts as a **secure reverse proxy** between your visitors and your p
 _Unreleased (on `dev`)_
 
 - **New theme preset: Studio Modern** — the Leica language of `studio` rebuilt around the Archivo grotesque, with IBM Plex Mono for all photographic metadata, an indexed hero navigation with album counts, caption bars under album covers, and a film-edge EXIF strip in the lightbox → [Theming guide](docs/theming.md)
+
+<p align="center">
+  <img src="docs/screenshots/theme-studio-modern-home-light.png" width="49%" alt="Studio Modern in light mode" />
+  <img src="docs/screenshots/theme-studio-modern-grid-light.png" width="49%" alt="Studio Modern album grid in light mode" />
+</p>
+<p align="center"><em>Studio Modern in light mode — every preset ships a light and a dark variant.</em></p>
+
 - **Photo Essay mode** — storytelling pages with fullbleed and paired layouts, plus a visual block builder in the admin panel
 - **Client proofing** — let clients favorite photos and export the selection
 - **Fixed:** the map page ignored the configured theme fonts and borders (all presets)
@@ -51,6 +64,12 @@ Full history in the [GitHub releases](https://github.com/ralksta/immich-folio/re
 - **YAML gallery config** — all gallery structure defined in a single `content/gallery.yaml` file
 - **Markdown about page** — `content/about.md` with frontmatter for portrait, name, location, and gear list
 - **Dynamic OG images** — auto-generated social preview images per album
+
+<p align="center">
+  <img src="docs/screenshots/page-about.png" width="49%" alt="About page rendered from content/about.md" />
+  <img src="docs/screenshots/page-map.png" width="49%" alt="Map page clustering photo locations worldwide" />
+</p>
+<p align="center"><em>The Markdown about page and the GPS map, both generated from your Immich data.</em></p>
 
 ### Admin Panel
 
@@ -247,7 +266,19 @@ A built-in visual editor at `/admin` lets you manage your gallery without editin
 ADMIN_PASSWORD=your-secure-admin-password
 ```
 
-Then navigate to `http://your-site/admin` and log in.
+Then navigate to `http://your-site/admin` and log in. The panel is protected by its
+own password, separate from any album passwords, and writes straight to
+`gallery.yaml` / `settings.yaml` with automatic backups.
+
+<p align="center">
+  <img src="docs/screenshots/admin-login.png" width="49%" alt="Admin panel login screen" />
+  <img src="docs/screenshots/admin-page-builder.png" width="49%" alt="Visual page builder with hero images, standalone albums and subpages" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/admin-album-picker.png" width="49%" alt="Album picker listing shared Immich albums with photo counts" />
+  <img src="docs/screenshots/admin-settings.png" width="49%" alt="Settings editor with site identity and feature toggles" />
+</p>
+<p align="center"><em>Login · page builder · album picker · settings editor</em></p>
 
 → **[Admin Panel Guide](docs/admin-panel.md)**
 
