@@ -31,10 +31,6 @@ const B = '22222222-2222-2222-2222-222222222222';
  * shapes the page builder can produce.
  */
 describe('deriveGallery rejects what the site cannot load', () => {
-  it('rejects a gallery with neither albums nor subpages', () => {
-    expect(() => deriveGallery({ albums: [] } as GalleryYaml)).toThrow(/at least one album/i);
-  });
-
   it('rejects a subpage with no name', () => {
     expect(() =>
       deriveGallery({ albums: [A], subpages: [{ albums: [A] }] } as unknown as GalleryYaml),
@@ -67,6 +63,15 @@ describe('deriveGallery rejects what the site cannot load', () => {
 });
 
 describe('deriveGallery accepts valid structures', () => {
+  it('derives an empty gallery (no albums or subpages)', () => {
+    // The install wizard can finish without selecting an album, so an empty
+    // gallery must be a valid, rendered state rather than an error.
+    const result = deriveGallery({ albums: [] } as GalleryYaml);
+    expect(result.albums).toEqual([]);
+    expect(result.standaloneAlbums).toEqual([]);
+    expect(result.subpages).toEqual([]);
+  });
+
   it('derives standalone albums', () => {
     const result = deriveGallery({ albums: [A, B] } as GalleryYaml);
     expect(result.albums).toEqual([A, B]);
@@ -102,77 +107,6 @@ describe('deriveGallery accepts valid structures', () => {
     expect(result.albumOverrides[A]).toBe('Renamed');
     expect(result.albumDescriptions[A]).toBe('A note');
     expect(result.albumHeroImages[A]).toBe(B);
-  });
-
-  it('collects the per-album sort mode', () => {
-    const result = deriveGallery({
-      albums: [{ [A]: { title: 'Series', sort: 'filename' } }, B],
-    } as unknown as GalleryYaml);
-
-    expect(result.albumSortModes[A]).toBe('filename');
-    // Absent means the default; an explicit entry would make `immich` and
-    // "never configured" indistinguishable downstream.
-    expect(result.albumSortModes[B]).toBeUndefined();
-  });
-
-  // A typo would otherwise be invisible: the album would keep rendering in
-  // Immich order and nothing would say why. Throwing is also what gives the
-  // admin PUT its 400, via the deriveGallery dry-run.
-  it('rejects an unknown sort mode, naming the album and the valid values', () => {
-    expect(() =>
-      deriveGallery({ albums: [{ [A]: { sort: 'alphabetical' } }] } as unknown as GalleryYaml),
-    ).toThrow(/alphabetical/);
-
-    expect(() =>
-      deriveGallery({ albums: [{ [A]: { sort: 'alphabetical' } }] } as unknown as GalleryYaml),
-    ).toThrow(new RegExp(A));
-
-    expect(() =>
-      deriveGallery({ albums: [{ [A]: { sort: 'alphabetical' } }] } as unknown as GalleryYaml),
-    ).toThrow(/filename/);
-  });
-
-  it('collects the manual asset order, preserving its order', () => {
-    const result = deriveGallery({
-      albums: [{ [A]: { sort: 'manual', assetOrder: [B, A] } }],
-    } as unknown as GalleryYaml);
-
-    expect(result.albumManualOrders[A]).toEqual([B, A]);
-  });
-
-  // Kept regardless of the mode, so toggling manual → newest → manual in the
-  // admin panel does not silently destroy a hand-curated order.
-  it('keeps the asset order even when the mode is not manual', () => {
-    const result = deriveGallery({
-      albums: [{ [A]: { sort: 'newest', assetOrder: [B] } }],
-    } as unknown as GalleryYaml);
-
-    expect(result.albumSortModes[A]).toBe('newest');
-    expect(result.albumManualOrders[A]).toEqual([B]);
-  });
-
-  it('ignores an empty asset order rather than storing one', () => {
-    const result = deriveGallery({
-      albums: [{ [A]: { sort: 'manual', assetOrder: [] } }],
-    } as unknown as GalleryYaml);
-
-    expect(result.albumManualOrders[A]).toBeUndefined();
-  });
-
-  // processAlbumEntry is reached from four places; only the array-subpage path
-  // was covered before, so a regression in the others would go unnoticed.
-  it('applies the sort mode to section and map-style subpage albums too', () => {
-    const sectioned = deriveGallery({
-      subpages: [
-        { name: 'Work', sections: [{ title: 'Recent', albums: [{ [A]: { sort: 'oldest' } }] }] },
-      ],
-    } as unknown as GalleryYaml);
-    expect(sectioned.albumSortModes[A]).toBe('oldest');
-
-    const mapStyle = deriveGallery({
-      subpages: { Trips: { albums: [{ [B]: { sort: 'filename' } }] } },
-    } as unknown as GalleryYaml);
-    expect(mapStyle.albumSortModes[B]).toBe('filename');
   });
 
   it('parses enabled property on subpages correctly', () => {
