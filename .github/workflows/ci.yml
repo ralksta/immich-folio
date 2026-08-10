@@ -2,9 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+    # dev is included because dependency and feature PRs target it — without
+    # it those PRs would carry no checks at all, and main would only find out
+    # at release time.
+    branches: [main, dev]
 
 # Cancel in-progress runs for the same PR / branch
 concurrency:
