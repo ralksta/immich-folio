@@ -1510,6 +1510,10 @@
 
 .asset-picker-tab {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
   padding: 0.7rem 1rem;
   background: none;
   border: none;
@@ -1607,8 +1611,11 @@
   position: absolute;
   top: 4px;
   left: 4px;
-  font-size: 0.7rem;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  display: flex;
+  font-size: 0.85rem;
+  color: var(--admin-accent);
+  /* drop-shadow, not text-shadow: the badge is an inline SVG, not a glyph. */
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
 }
 
 .asset-picker-uuid-section {
