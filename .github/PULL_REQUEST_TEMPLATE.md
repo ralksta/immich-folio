@@ -16,6 +16,7 @@ Closes #
 
 ## Checklist
 
+- [ ] Targets the `dev` branch (see [CONTRIBUTING.md](../CONTRIBUTING.md#branches))
 - [ ] `npm run build` passes locally
 - [ ] `npx tsc --noEmit` passes (0 type errors)
 - [ ] `npx vitest run` passes (all tests green)
