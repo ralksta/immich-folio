@@ -32,6 +32,8 @@ export interface ImmichAsset {
   originalMimeType: string;
   thumbhash: string | null;
   fileCreatedAt: string;
+  /** Capture time in the photographer's local zone — Immich's timeline sort key. */
+  localDateTime?: string;
   exifInfo?: ImmichExifInfo;
   isTrashed: boolean;
 }
@@ -590,9 +592,25 @@ class ImmichClient {
         // The album endpoint used to return assets in the album's configured
         // order. Metadata search happens to default to fileCreatedAt desc, but
         // that is not contractual — sort explicitly so 'asc' albums are right.
+        //
+        // Mirrors Immich's own timeline query: primary key `localDateTime`
+        // (capture time in the photographer's local zone), tie-broken by
+        // `fileCreatedAt` (the same instant in UTC). The two only diverge for
+        // albums spanning time zones, and there local time is what the Immich
+        // UI shows. Sorting on `exifInfo.dateTimeOriginal` instead would be
+        // near-pointless: Immich already derives `fileCreatedAt` from that
+        // same EXIF chain, and it is null for assets without EXIF.
+        //
+        // Compare parsed instants, not strings — string order breaks on
+        // fractional seconds ('.' collates before '+'), which misorders bursts
+        // where only some frames carry sub-second precision. Unparseable dates
+        // fall back to 0 rather than NaN, which would make sort() incoherent.
         const dir = album.order === 'asc' ? 1 : -1;
+        const ts = (value: string | undefined) => Date.parse(value ?? '') || 0;
         album.assets.sort(
-          (a, b) => dir * (Date.parse(a.fileCreatedAt) - Date.parse(b.fileCreatedAt)),
+          (a, b) =>
+            dir * (ts(a.localDateTime) - ts(b.localDateTime)) ||
+            dir * (ts(a.fileCreatedAt) - ts(b.fileCreatedAt)),
         );
 
         const name = this.config.albumOverrides[album.id] ?? album.albumName;

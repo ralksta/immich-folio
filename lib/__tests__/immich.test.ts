@@ -495,6 +495,90 @@ describe('ImmichClient', () => {
       album = await immich.getAlbum('album-1');
       expect(album?.assets.map((a) => a.id)).toEqual(['new', 'mid', 'old']);
     });
+
+    /**
+     * Immich's timeline sorts on localDateTime, not on the UTC instant. A
+     * 09:00 shot in Tokyo and a 09:00 shot in Berlin sit next to each other in
+     * the Immich UI even though they are eight hours apart in UTC.
+     */
+    it('sorts by local capture time, matching the Immich timeline', async () => {
+      const items = [
+        {
+          id: 'berlin',
+          isTrashed: false,
+          localDateTime: '2024-05-01T09:00:00.000Z',
+          fileCreatedAt: '2024-05-01T07:00:00.000Z',
+        },
+        {
+          id: 'tokyo',
+          isTrashed: false,
+          localDateTime: '2024-05-01T08:00:00.000Z',
+          fileCreatedAt: '2024-04-30T23:00:00.000Z',
+        },
+      ];
+
+      mockAlbumApi({ order: 'asc', pages: [{ items, nextPage: null }] });
+      const album = await immich.getAlbum('album-1');
+
+      // UTC order would be tokyo → berlin; local capture order is the reverse.
+      expect(album?.assets.map((a) => a.id)).toEqual(['tokyo', 'berlin']);
+    });
+
+    it('falls back to fileCreatedAt when localDateTime is missing', async () => {
+      const items = [
+        asset('no-local-late', '2024-01-03T00:00:00Z'),
+        {
+          id: 'has-local',
+          isTrashed: false,
+          localDateTime: '2024-01-02T00:00:00Z',
+          fileCreatedAt: '2024-01-02T00:00:00Z',
+        },
+        asset('no-local-early', '2024-01-01T00:00:00Z'),
+      ];
+
+      mockAlbumApi({ order: 'asc', pages: [{ items, nextPage: null }] });
+      const album = await immich.getAlbum('album-1');
+
+      // Missing localDateTime sorts as 0, so those two lead — but they stay
+      // ordered among themselves by fileCreatedAt rather than at random.
+      expect(album?.assets.map((a) => a.id)).toEqual([
+        'no-local-early',
+        'no-local-late',
+        'has-local',
+      ]);
+    });
+
+    /**
+     * Date.parse on an unusable value yields NaN, and a comparator returning
+     * NaN leaves sort() free to produce any permutation — including dropping
+     * the valid assets out of order.
+     */
+    it('keeps a coherent order when a date is unparseable', async () => {
+      const items = [
+        asset('broken', 'not-a-date'),
+        asset('late', '2024-01-03T00:00:00Z'),
+        asset('early', '2024-01-01T00:00:00Z'),
+      ];
+
+      mockAlbumApi({ order: 'asc', pages: [{ items, nextPage: null }] });
+      const album = await immich.getAlbum('album-1');
+      const ids = album?.assets.map((a) => a.id) ?? [];
+
+      expect(ids).toHaveLength(3);
+      expect(ids.indexOf('early')).toBeLessThan(ids.indexOf('late'));
+    });
+
+    it('preserves sub-second precision within a burst', async () => {
+      const items = [
+        asset('frame-2', '2024-01-01T14:36:53.500Z'),
+        asset('frame-3', '2024-01-01T14:36:53.900Z'),
+        asset('frame-1', '2024-01-01T14:36:53.000Z'),
+      ];
+
+      mockAlbumApi({ order: 'asc', pages: [{ items, nextPage: null }] });
+      const album = await immich.getAlbum('album-1');
+      expect(album?.assets.map((a) => a.id)).toEqual(['frame-1', 'frame-2', 'frame-3']);
+    });
   });
 });
 
