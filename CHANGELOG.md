@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [Unreleased]
+
+### Security
+
+- **Next.js 16.3.0** — picks up the fix for CVE-2025-13465 in Next's vendored
+  lodash ([#402](https://github.com/ralksta/immich-folio/pull/402)).
+
+### Internal
+
+Nothing user-facing; recorded so the next release notes are complete.
+
+- **Dependency PRs now target `dev`**, and CI runs on pull requests to `dev` as
+  well ([#411](https://github.com/ralksta/immich-folio/pull/411)). The workflow
+  previously triggered on `main` only, so a PR against `dev` carried no checks
+  at all. `CONTRIBUTING.md` and the PR template now state the target branch
+  ([#412](https://github.com/ralksta/immich-folio/pull/412)) — it was nowhere
+  documented before.
+- **`scripts/screenshots.ts` type-checks against sharp 0.34 and 0.35**
+  ([#410](https://github.com/ralksta/immich-folio/pull/410)). sharp arrives
+  transitively through Next, and 0.35 moved from `export =` to ESM: the module
+  namespace stopped being callable and the factory moved to `.default`. The
+  Next bump above would otherwise have broken `npx tsc --noEmit`.
+- Dev-dependency bumps: prettier 3.9.6, eslint 9.39.5, `@types/leaflet` 1.9.22,
+  and `github/codeql-action` v4.
+
 ## [0.10.0] — 2026-08-10
 
 ### Added
@@ -60,6 +85,12 @@ Releases up to and including v0.9.2 are documented in the
   were visible on top of each other.
 - **Docker** — health check targets `127.0.0.1` instead of `localhost`, base
   image moved to `node:22-alpine`.
+- **The Trivy scan never ran.** The publish workflow referenced
+  `aquasecurity/trivy-action@0.29.0`, but that repository's tags carry a
+  leading `v`, so the job failed during action setup — before the image was
+  built. No image was published for the first v0.10.0 attempt, and no scan had
+  run since the step was introduced. The action is now pinned to a commit SHA
+  ([#409](https://github.com/ralksta/immich-folio/pull/409)).
 - **Docs** — the "nature / travel journal" example in `docs/theming.md` used a
   preset named `botanica` that does not exist; copying it produced an
   `Unknown theme preset` error. It now uses `editorial`.
