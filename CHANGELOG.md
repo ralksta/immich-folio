@@ -31,10 +31,33 @@ Releases up to and including v0.9.2 are documented in the
 - Docker images are scanned with Trivy on every publish; results land in the
   GitHub Security tab.
 
+### Changed
+
+- **Album sort order now mirrors the Immich timeline** ([#350](https://github.com/ralksta/immich-folio/issues/350)). Albums were
+  sorted by `fileCreatedAt`, the capture instant in UTC. Immich sorts its
+  timeline primarily by `localDateTime` — the capture time in the
+  photographer's local zone — and uses `fileCreatedAt` only as a tie-breaker.
+  The two keys are identical for the vast majority of albums; they diverge for
+  albums spanning time zones, where the order shown in Immich Folio no longer
+  matched the Immich UI. The sort keys were changed accordingly, and
+  unparseable dates now fall back to `0` instead of `NaN` (a `NaN` comparator
+  makes `sort()` free to return any permutation).
+
 ### Fixed
 
 - **Cache staleness** — `?fresh=1` bypass, an admin diagnostic banner for albums
   Immich returns empty, and revalidation after admin saves.
+- **Admin status panel reported two faults that were not faults** ([#341](https://github.com/ralksta/immich-folio/issues/341)).
+  `settings.yaml` was treated as mandatory although `getConfig()` falls back to
+  defaults without it, so anyone running with only a `gallery.yaml` saw a
+  permanent "Config Integrity: Degraded". Only a file that exists and cannot be
+  parsed counts as degraded now. A failed status request was also rendered as if
+  it were a result — an expired admin session looked identical to a real
+  outage — so there is now a third state for "the check did not run".
+- **Lightbox showed its photo counter twice.** The counter renders a
+  screen-reader label ("Photo 3 of 53") alongside the compact display
+  ("3 / 53"), but `.sr-only` was not defined in any stylesheet, so both strings
+  were visible on top of each other.
 - **Docker** — health check targets `127.0.0.1` instead of `localhost`, base
   image moved to `node:22-alpine`.
 - **Docs** — the "nature / travel journal" example in `docs/theming.md` used a
@@ -63,3 +86,26 @@ Unknown theme preset "studio-modern". Valid presets: studio, minimal, editorial,
 Set `theme.preset` back to one of the listed presets in `content/settings.yaml`
 before downgrading. `/admin` stays reachable if you hit this, so the change can
 also be made after the fact.
+
+**If you copied `docker-compose.override.yml.example`, update your health
+check by hand.** The example now uses `wget -O /dev/null` instead of
+`--spider`, but your own `docker-compose.override.yml` is not tracked by git,
+so pulling the new version does not touch it — and a health check defined
+there overrides the one baked into the image. `--spider` does not read the
+response body and disconnects mid-RSC-stream; when that abort coincides with a
+slow render after `CACHE_TTL` expiry, Node tears down the `TransformStream`
+controller while Next.js is still writing into it:
+
+```
+TypeError: controller[kState].transformAlgorithm is not a function
+```
+
+Replace `"--spider"` with `"-O", "/dev/null"` in your override file:
+
+```yaml
+healthcheck:
+  test: ['CMD', 'wget', '--no-verbose', '--tries=1', '-O', '/dev/null', 'http://127.0.0.1:7211/']
+```
+
+A full GET checks the same thing without the race. Installations without an
+own health check need no action — the image ships the fixed one.
