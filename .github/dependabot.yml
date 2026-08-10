@@ -4,6 +4,11 @@ updates:
   # npm dependencies
   - package-ecosystem: 'npm'
     directory: '/'
+    # Dependency PRs open against dev, not the default branch: main only ever
+    # advances through a release. Dependabot also resets a PR's base to this
+    # value whenever it rebases, so retargeting a single PR by hand does not
+    # survive — the target has to be configured here.
+    target-branch: 'dev'
     schedule:
       interval: 'weekly'
       day: 'monday'
@@ -32,6 +37,7 @@ updates:
   # GitHub Actions
   - package-ecosystem: 'github-actions'
     directory: '/'
+    target-branch: 'dev'
     schedule:
       interval: 'weekly'
       day: 'monday'
