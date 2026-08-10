@@ -135,6 +135,20 @@ const ROUTES: {
     method: 'DELETE',
     args: () => [],
   },
+  {
+    name: 'GET /api/admin/about',
+    path: 'about',
+    load: () => import('../about/route'),
+    method: 'GET',
+    args: () => [],
+  },
+  {
+    name: 'PUT /api/admin/about',
+    path: 'about',
+    load: () => import('../about/route'),
+    method: 'PUT',
+    args: () => [new Request('http://localhost/api/admin/about', { method: 'PUT', body: '{}' })],
+  },
 ];
 
 describe('admin route guards', () => {

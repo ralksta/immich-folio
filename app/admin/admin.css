@@ -303,6 +303,13 @@
   color: var(--admin-accent);
 }
 
+.admin-field-hint {
+  font-size: 0.8rem;
+  color: var(--admin-text-muted);
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
 .admin-field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
