@@ -22,6 +22,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The formatting step diffs against the PR's base, which needs the
+          # base branch's history — the default shallow clone has none of it.
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -45,3 +49,42 @@ jobs:
           IMMICH_API_URL: http://localhost:2283
           IMMICH_API_KEY: placeholder-key-for-ci
           AUTH_SECRET: placeholder-secret-for-ci-builds-must-be-32-chars-long
+
+      # Advisory only — this step never fails the job.
+      #
+      # Prettier is configured as an eslint error but has never been run in CI,
+      # so a chunk of the tree predates it. Blocking on that would make a PR red
+      # for merely touching an old file, and reformatting the tree wholesale
+      # would bury every future diff in unrelated churn. Annotating the files a
+      # PR already changes puts the information in front of the author without
+      # putting a gate in the way. Runs last so real failures surface first.
+      - name: Formatting – changed files (advisory)
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          files=$(git diff --name-only --diff-filter=d \
+            "${{ github.event.pull_request.base.sha }}...HEAD" \
+            -- '*.ts' '*.tsx' '*.js' '*.mjs' '*.css' '*.json' '*.md' '*.yml' '*.yaml')
+          if [ -z "$files" ]; then
+            echo "No formattable files changed."
+            exit 0
+          fi
+
+          # --list-different prints only the offenders and exits non-zero when
+          # there are any; `|| true` keeps that from ending the step.
+          unformatted=$(echo "$files" | xargs -d '\n' npx prettier --list-different || true)
+
+          if [ -z "$unformatted" ]; then
+            echo "All changed files match Prettier's style."
+            exit 0
+          fi
+
+          count=$(echo "$unformatted" | wc -l)
+          echo "### Prettier: $count changed file(s) not formatted" >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          while IFS= read -r f; do
+            echo "::warning file=$f::Not formatted. Run: npx prettier --write $f"
+            echo "- \`$f\`" >> "$GITHUB_STEP_SUMMARY"
+          done <<< "$unformatted"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Advisory only — this does not block the merge.' >> "$GITHUB_STEP_SUMMARY"
