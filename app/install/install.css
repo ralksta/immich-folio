@@ -1,0 +1,280 @@
+/* ── Install Wizard Styles ───────────────────────────────────── */
+/* Sits on top of the admin theme variables (.admin-layout scope). */
+
+.install-page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.install-card {
+  width: 100%;
+  max-width: 560px;
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.install-card__header {
+  padding: 1.75rem 2rem 1.25rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.install-card__kicker {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--admin-accent);
+  margin-bottom: 0.4rem;
+}
+
+.install-card__header h1 {
+  margin: 0 0 0.4rem;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+}
+
+.install-card__header p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--admin-text-secondary);
+  line-height: 1.5;
+}
+
+/* ── Step indicator ──────────────────────────────────────────── */
+
+.install-steps {
+  list-style: none;
+  margin: 0;
+  padding: 1rem 2rem;
+  display: flex;
+  gap: 1.5rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.install-steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--admin-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.install-steps__dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-bg-input);
+}
+
+.install-steps li.is-active {
+  color: var(--admin-text);
+}
+
+.install-steps li.is-active .install-steps__dot {
+  border-color: var(--admin-accent);
+  color: var(--admin-accent);
+}
+
+.install-steps li.is-done .install-steps__dot {
+  background: var(--admin-accent);
+  border-color: var(--admin-accent);
+  color: #ffffff;
+}
+
+/* ── Body ────────────────────────────────────────────────────── */
+
+.install-body {
+  padding: 1.5rem 2rem 2rem;
+}
+
+.install-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.install-form .admin-field {
+  margin-bottom: 1rem;
+}
+
+.admin-hint {
+  font-size: 0.78rem;
+  color: var(--admin-text-muted);
+  margin: 0.35rem 0 0;
+  line-height: 1.5;
+}
+
+.admin-hint code {
+  background: var(--admin-bg-elevated);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  color: var(--admin-text-secondary);
+}
+
+.install-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+
+.install-actions .admin-btn {
+  text-decoration: none;
+}
+
+/* ── Albums ──────────────────────────────────────────────────── */
+
+.install-albums__list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+}
+
+.install-albums__list li + li {
+  border-top: 1px solid var(--admin-border);
+}
+
+.install-albums__item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.install-albums__item:hover {
+  background: var(--admin-bg-elevated);
+}
+
+.install-albums__item input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--admin-btn-primary-bg);
+  flex-shrink: 0;
+}
+
+.install-albums__name {
+  flex: 1;
+  color: var(--admin-text);
+}
+
+.install-albums__meta {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+}
+
+.install-empty {
+  padding: 0.75rem 0.5rem;
+  color: var(--admin-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.install-empty p {
+  margin: 0 0 0.35rem;
+}
+
+.install-empty .admin-hint {
+  margin: 0;
+}
+
+/* ── Divider ─────────────────────────────────────────────────── */
+
+.install-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.75rem 0 1rem;
+  color: var(--admin-text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.install-divider::before,
+.install-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--admin-border);
+}
+
+/* ── Review ──────────────────────────────────────────────────── */
+
+.install-review__list {
+  margin: 0;
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.install-review__list > div {
+  display: flex;
+  gap: 1rem;
+  padding: 0.65rem 0.9rem;
+}
+
+.install-review__list > div + div {
+  border-top: 1px solid var(--admin-border);
+}
+
+.install-review__list dt {
+  flex: 0 0 120px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--admin-text-secondary);
+  padding-top: 0.1rem;
+}
+
+.install-review__list dd {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--admin-text);
+  word-break: break-word;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .install-steps {
+    padding: 0.85rem 1rem;
+    gap: 1rem;
+  }
+
+  .install-steps__label {
+    display: none;
+  }
+
+  .install-body {
+    padding: 1.25rem 1rem 1.5rem;
+  }
+
+  .install-review__list > div {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .install-review__list dt {
+    flex: none;
+  }
+}
