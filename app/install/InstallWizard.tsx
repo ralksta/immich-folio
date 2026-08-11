@@ -142,15 +142,20 @@ export function InstallWizard({ initialApiUrl, setupToken }: Props) {
               <h1>Install complete</h1>
               <p>Your portfolio is ready. Add or rearrange albums any time from the admin panel.</p>
             </div>
-            <div className="install-actions">
-              <Link className="admin-btn admin-btn-primary" href="/">
-                Visit your gallery
-              </Link>
-              {adminPassword && (
-                <Link className="admin-btn" href="/admin">
-                  Open admin panel
+            {/* install-body carries the card's padding — every other step
+                renders inside it, and skipping it here left the buttons
+                flush against the bottom edge. */}
+            <div className="install-body">
+              <div className="install-actions">
+                <Link className="admin-btn admin-btn-primary" href="/">
+                  Visit your gallery
                 </Link>
-              )}
+                {adminPassword && (
+                  <Link className="admin-btn" href="/admin">
+                    Open admin panel
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         </div>
