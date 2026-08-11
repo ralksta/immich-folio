@@ -15,6 +15,7 @@ import { Footer } from '@/components/Footer';
 import { SetupScreen } from '@/components/SetupScreen';
 import { getConfigOrNull, getGoogleFontsUrl, AppConfig } from '@/lib/config';
 import { isAdminPath } from '@/lib/admin/paths';
+import { isInstallPath } from '@/lib/install';
 // DevToolbarLoader is a Client Component (ssr: false is only allowed there)
 import { DevToolbarLoader } from '@/components/DevToolbarLoader';
 import AssetProtection from '@/components/AssetProtection';
@@ -76,7 +77,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   if (!config) {
     return (
       <html lang="en" suppressHydrationWarning>
-        <body>{isAdminPath(pathname) ? children : <SetupScreen />}</body>
+        <body>{isAdminPath(pathname) || isInstallPath(pathname) ? children : <SetupScreen />}</body>
       </html>
     );
   }
@@ -95,9 +96,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     '--radius-lg': `${theme.radius * 2}px`,
   };
 
-  // /admin stays reachable during setup — it is the tool that completes the
-  // setup, so the setup screen must not lock it out (#326).
-  if ((config as AppConfig & { needsSetup?: boolean }).needsSetup && !isAdminPath(pathname)) {
+  // /admin and /install stay reachable during setup — /admin is the tool that
+  // completes an existing setup, /install is the wizard that performs the first
+  // one, so the setup screen must not lock either of them out (#326).
+  if (
+    (config as AppConfig & { needsSetup?: boolean }).needsSetup &&
+    !isAdminPath(pathname) &&
+    !isInstallPath(pathname)
+  ) {
     return (
       <html lang="en" suppressHydrationWarning>
         <body>

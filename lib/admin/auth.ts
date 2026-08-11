@@ -4,8 +4,9 @@
  */
 
 import crypto from 'crypto';
-import { env } from '../env';
+import { getInstallCredentials } from '../install';
 import { resolveAuthSecret } from '../secret';
+import { isScryptHash, verifyScrypt } from '../password';
 import { cookies } from 'next/headers';
 
 const COOKIE_NAME = 'folio_admin_session';
@@ -20,14 +21,16 @@ const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
  */
 export const MAX_PASSWORD_LENGTH = 1024;
 
+/** Admin password as configured — env wins, wizard-installed value as fallback. */
+function getAdminPassword(): string {
+  return getInstallCredentials().adminPassword;
+}
+
 function getSigningKey(): Buffer {
   // Bind the key to ADMIN_PASSWORD as well, so rotating the password
   // immediately invalidates every outstanding session token.
   const secret = resolveAuthSecret();
-  return crypto
-    .createHash('sha256')
-    .update(`admin:${secret}:${env.ADMIN_PASSWORD ?? ''}`)
-    .digest();
+  return crypto.createHash('sha256').update(`admin:${secret}:${getAdminPassword()}`).digest();
 }
 
 /** Create a signed session token. */
@@ -83,10 +86,17 @@ export function verifyAdminToken(token: string): boolean {
  * compares subpage passwords: the intermediate values are then useless to
  * anyone who cannot also read the secret.
  */
-export function verifyAdminPassword(password: string): boolean {
-  const adminPw = env.ADMIN_PASSWORD;
+export async function verifyAdminPassword(password: string): Promise<boolean> {
+  const adminPw = getAdminPassword();
   if (!adminPw) return false;
   if (password.length > MAX_PASSWORD_LENGTH) return false;
+
+  // The wizard stores a hash; ADMIN_PASSWORD as an env var stays plaintext,
+  // because that is what every existing deployment has set. Both must work,
+  // or an upgrade locks the owner out of their own admin panel.
+  if (isScryptHash(adminPw)) {
+    return verifyScrypt(password, adminPw);
+  }
 
   const secret = resolveAuthSecret();
   const attemptHash = crypto.createHmac('sha256', secret).update(password).digest();
@@ -105,7 +115,7 @@ export async function isAdminAuthenticated(): Promise<boolean> {
 
 /** Check if admin panel is enabled (password is set). */
 export function isAdminEnabled(): boolean {
-  return !!env.ADMIN_PASSWORD;
+  return !!getAdminPassword();
 }
 
 export { COOKIE_NAME, SESSION_DURATION_MS };

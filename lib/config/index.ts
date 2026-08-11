@@ -1,5 +1,6 @@
 import { env } from '../env';
 import { resolveAuthSecret } from '../secret';
+import { getInstallCredentials } from '../install';
 import { loadYaml, clearYamlCache, validateUuid } from './parser';
 import { resolveTheme, VALID_LAYOUTS } from './theme';
 import { ALBUM_SORT_MODES, isAlbumSortMode, type AlbumSortMode } from '../albumSort';
@@ -269,8 +270,7 @@ export function getConfig(): AppConfig {
   // worker/process than page rendering, so a per-worker cache goes stale
   // until restart. Freshness comes from the mtime-checked YAML cache in
   // loadYaml() — a statSync per file, negligible next to Immich API calls.
-  const apiUrl = env.IMMICH_API_URL;
-  const apiKey = env.IMMICH_API_KEY;
+  const { apiUrl, apiKey } = getInstallCredentials();
   const authSecret = resolveAuthSecret();
 
   // The API URL may already end with /api (a user-supplied env var or a
@@ -341,7 +341,7 @@ export function getConfig(): AppConfig {
   const siteSeoTitle = settings.seo?.title || settings.title || env.SITE_TITLE || 'Gallery';
 
   return {
-    immich: { apiUrl: `${apiUrl}/api`, apiKey },
+    immich: { apiUrl: immichApiUrl, apiKey },
     authSecret,
     albums: allAlbumIds,
     standaloneAlbums,

@@ -68,6 +68,10 @@ content/about.md
 content/.backups/
 content/analytics.json
 content/*.screenshot-bak
+# Credentials written by the /install wizard (never committed)
+content/install.json
+# One-time setup token, written on first access and removed once install completes
+content/.setup-token
 
 # ── Internal Dev Docs ────────────────────────────────
 docs/dev/
