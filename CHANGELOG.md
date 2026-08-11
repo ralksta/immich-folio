@@ -9,6 +9,44 @@ Releases up to and including v0.9.2 are documented in the
 
 ## [Unreleased]
 
+### Added
+
+- **First-run setup wizard at `/install`**
+  ([#419](https://github.com/ralksta/immich-folio/pull/419)). A fresh deployment
+  can now be configured from the browser: connect to Immich, optionally pick
+  albums, name the site. Credentials are verified against the Immich server
+  before anything is written, so a typo cannot produce an "installed" site that
+  loads no photos. The wizard is gated by a one-time token printed to the server
+  log — a deployment is reachable before it has any configuration, and without
+  the gate whoever found the URL first could configure it. Credentials land in
+  `content/install.json` (mode `0600`, admin password stored as an scrypt hash);
+  environment variables continue to take precedence, so rotation still works by
+  setting a variable. Configuring everything by hand remains fully supported.
+- **Custom favicon upload** in admin Settings › General
+  ([#422](https://github.com/ralksta/immich-folio/pull/422)). SVG, PNG, ICO or
+  JPEG, stored in the writable `content/` volume and served through
+  `/api/favicon` with a policy that stops an uploaded SVG executing script. A
+  Reset button restores the bundled default.
+
+### Changed
+
+- **A gallery with no albums is now a valid, rendered state**
+  ([#421](https://github.com/ralksta/immich-folio/pull/421)) instead of an error
+  — the setup wizard can finish without picking one, and albums can be added
+  later in `/admin`.
+- **The Immich URL may end in `/api`** without breaking every request
+  ([#421](https://github.com/ralksta/immich-folio/pull/421)). The suffix was
+  appended unconditionally, producing `.../api/api`.
+
+### Documentation
+
+- **README documents the setup wizard**, what it writes, and that
+  `content/install.json` holds credentials — so a backup of `content/` is
+  understood to include your Immich API key. The Docker examples no longer mount
+  `content/` read-only: the wizard, the admin panel and the backup rotation all
+  write into it, and `:ro` silently breaks all three.
+- **Contributors are credited in the README.**
+
 ### Security
 
 - **Next.js 16.3.0** — picks up the fix for CVE-2025-13465 in Next's vendored
@@ -17,6 +55,13 @@ Releases up to and including v0.9.2 are documented in the
 ### Internal
 
 Nothing user-facing; recorded so the next release notes are complete.
+
+- **CI annotates unformatted files in a PR without blocking it**
+  ([#424](https://github.com/ralksta/immich-folio/pull/424)). Prettier is
+  configured as an eslint error but had never run in CI, so part of the tree
+  predates it. Failing on that would make a PR red for merely touching an old
+  file; reformatting the tree in one commit would bury every future diff in
+  churn. The check runs over the files a PR changes and warns.
 
 - **Dependency PRs now target `dev`**, and CI runs on pull requests to `dev` as
   well ([#411](https://github.com/ralksta/immich-folio/pull/411)). The workflow
