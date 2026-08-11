@@ -21,97 +21,43 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import AlbumPicker from './AlbumPicker';
 import AssetPicker from './AssetPicker';
+import AssetOrderEditor from './AssetOrderEditor';
 import { EssayBlockEditor } from './EssayBlockEditor';
+import {
+  ALBUM_SORT_MODES,
+  DEFAULT_ALBUM_SORT,
+  isAlbumSortMode,
+  type AlbumSortMode,
+} from '@/lib/albumSort';
+import type { AlbumEntryObject } from '@/lib/config/schema';
+import {
+  IconCamera,
+  IconCopy,
+  IconFolder,
+  IconGripVertical,
+  IconHome,
+  IconImage,
+  IconLock,
+  IconPencil,
+  IconPlus,
+  IconSearch,
+  IconTrash,
+  IconX,
+} from './Icons';
 
-// ── Icons ──────────────────────────────────────────────────────
-const Icons = {
-  Drag: () => (
-    <svg width="12" height="18" viewBox="0 0 12 18" fill="currentColor" className="svg-icon svg-drag">
-      <circle cx="2" cy="2" r="1.5" />
-      <circle cx="2" cy="9" r="1.5" />
-      <circle cx="2" cy="16" r="1.5" />
-      <circle cx="10" cy="2" r="1.5" />
-      <circle cx="10" cy="9" r="1.5" />
-      <circle cx="10" cy="16" r="1.5" />
-    </svg>
-  ),
-  Edit: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-    </svg>
-  ),
-  Trash: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
-      <path d="M3 6h18" />
-      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-    </svg>
-  ),
-  Close: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
-      <path d="M18 6 6 18M6 6l12 12" />
-    </svg>
-  ),
-  Folder: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
-      <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
-    </svg>
-  ),
-  Camera: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
-      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3Z" />
-      <circle cx="12" cy="13" r="3" />
-    </svg>
-  ),
-  ExternalLink: () => (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
-      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-      <polyline points="15 3 21 3 21 9" />
-      <line x1="10" y1="14" x2="21" y2="3" />
-    </svg>
-  ),
-  Search: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
-      <circle cx="11" cy="11" r="8" />
-      <path d="m21 21-4.3-4.3" />
-    </svg>
-  ),
-  Lock: () => (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
-      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-    </svg>
-  ),
-  Plus: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
-      <path d="M5 12h14M12 5v14" />
-    </svg>
-  ),
-  Home: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
-      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-      <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-  ),
-  Copy: () => (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
-      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-    </svg>
-  ),
-  Check: () => (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  ),
-  Image: () => (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="svg-icon">
-      <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-      <circle cx="9" cy="9" r="2" />
-      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-    </svg>
-  ),
+/**
+ * Labels for the per-album sort select. Order matches ALBUM_SORT_MODES.
+ *
+ * Plain text, no emoji: an <option> cannot contain markup, so the SVG set from
+ * `./Icons` is not available here — and a decorative emoji is not a substitute
+ * for it. The badge on the album card uses a real icon instead.
+ */
+const SORT_LABELS: Record<AlbumSortMode, string> = {
+  immich: 'Immich order (default)',
+  newest: 'Newest first',
+  oldest: 'Oldest first',
+  filename: 'Filename',
+  manual: 'Manual',
 };
 
 // ── Types ──────────────────────────────────────────────────────
@@ -121,6 +67,9 @@ interface AlbumEntry {
   description?: string;
   password?: string;
   heroImage?: string;
+  sort?: AlbumSortMode;
+  /** Pinned asset UUIDs for `sort: manual`; everything else follows automatically. */
+  assetOrder?: string[];
 }
 
 interface Section {
@@ -166,17 +115,27 @@ interface ImmichAlbumInfo {
 
 // ── Helpers ────────────────────────────────────────────────────
 
-function parseAlbumEntries(
-  raw:
-    | Array<
-        | string
-        | Record<
-            string,
-            string | { title: string; description?: string; password?: string; heroImage?: string }
-          >
-      >
-    | undefined,
-): AlbumEntry[] {
+type RawAlbumEntry = string | Record<string, string | AlbumEntryObject>;
+
+/**
+ * Whether an entry carries anything beyond its ID.
+ *
+ * Both collapse rules below depend on this, and they are the reason every new
+ * per-album option has to be listed here: an entry that looks "empty" is
+ * serialized back to a bare UUID string, so a field missing from this check is
+ * silently dropped on the next save.
+ */
+function hasAlbumOptions(entry: AlbumEntry): boolean {
+  return Boolean(
+    entry.description ||
+    entry.password ||
+    entry.heroImage ||
+    (entry.sort && entry.sort !== DEFAULT_ALBUM_SORT) ||
+    entry.assetOrder?.length,
+  );
+}
+
+function parseAlbumEntries(raw: RawAlbumEntry[] | undefined): AlbumEntry[] {
   if (!raw) return [];
   return raw.map((entry) => {
     if (typeof entry === 'string') return { id: entry };
@@ -188,27 +147,29 @@ function parseAlbumEntries(
       description: value.description,
       password: value.password,
       heroImage: value.heroImage,
+      sort: isAlbumSortMode(value.sort) ? value.sort : undefined,
+      assetOrder: value.assetOrder,
     };
   });
 }
 
-function serializeAlbumEntries(
-  entries: AlbumEntry[],
-): Array<
-  | string
-  | Record<string, string | { title: string; description?: string; password?: string; heroImage?: string }>
-> {
+function serializeAlbumEntries(entries: AlbumEntry[]): RawAlbumEntry[] {
   return entries.map((entry) => {
-    if (!entry.title && !entry.description && !entry.password && !entry.heroImage) return entry.id;
-    if (entry.title && !entry.description && !entry.password && !entry.heroImage) {
-      return { [entry.id]: entry.title };
-    }
-    const val: { title: string; description?: string; password?: string; heroImage?: string } = {
-      title: entry.title || '',
-    };
+    const extras = hasAlbumOptions(entry);
+    if (!entry.title && !extras) return entry.id;
+    if (entry.title && !extras) return { [entry.id]: entry.title };
+
+    const val: AlbumEntryObject = {};
+    // Only when set: a sort-only entry would otherwise be written with an empty
+    // title, which deriveGallery ignores but which still lands in the YAML.
+    if (entry.title) val.title = entry.title;
     if (entry.description) val.description = entry.description;
     if (entry.password) val.password = entry.password;
     if (entry.heroImage) val.heroImage = entry.heroImage;
+    if (entry.sort && entry.sort !== DEFAULT_ALBUM_SORT) val.sort = entry.sort;
+    // Persisted regardless of the mode, so manual → newest → manual does not
+    // throw away a hand-curated order.
+    if (entry.assetOrder?.length) val.assetOrder = entry.assetOrder;
     return { [entry.id]: val };
   });
 }
@@ -238,11 +199,11 @@ function SortableHeroTile({
   return (
     <div ref={setNodeRef} style={style} className="hero-tile" {...attributes}>
       <div className="hero-tile-drag" {...listeners} title="Drag to reorder">
-        <Icons.Drag />
+        <IconGripVertical size={18} className="svg-icon svg-drag" />
       </div>
       <img src={`/api/admin/thumbnail/${id}`} alt="" loading="lazy" />
       <button className="hero-tile-remove" onClick={onRemove} title="Remove">
-        <Icons.Close />
+        <IconX size={14} />
       </button>
       <span className="hero-tile-index">{index + 1}</span>
     </div>
@@ -334,7 +295,7 @@ function SortableSubpageTile({
       {...attributes}
     >
       <div className="subpage-tile-drag" {...listeners} title="Drag to reorder">
-        <Icons.Drag />
+        <IconGripVertical size={18} className="svg-icon svg-drag" />
       </div>
 
       {sp.enabled === false && (
@@ -345,7 +306,7 @@ function SortableSubpageTile({
 
       {sp.password && (
         <span className="subpage-badge-protected" title="Password protected">
-          <Icons.Lock /> Password
+          <IconLock size={12} /> Password
         </span>
       )}
 
@@ -354,11 +315,11 @@ function SortableSubpageTile({
           <img src={`/api/admin/thumbnail/${firstThumb}`} alt="" loading="lazy" />
         ) : (
           <div className="subpage-tile-placeholder">
-            <Icons.Folder />
+            <IconFolder />
           </div>
         )}
         <div className="subpage-hover-overlay">
-          <span className="hover-action-btn"><Icons.Edit /> Edit Page</span>
+          <span className="hover-action-btn"><IconPencil size={14} /> Edit Page</span>
         </div>
       </div>
       <div className="subpage-tile-info">
@@ -367,7 +328,7 @@ function SortableSubpageTile({
           <span className="subpage-tile-slug">/{slug}</span>
         </div>
         <span className="subpage-tile-meta">
-          <Icons.Folder /> {totalAlbums} album{totalAlbums !== 1 ? 's' : ''}
+          <IconFolder /> {totalAlbums} album{totalAlbums !== 1 ? 's' : ''}
         </span>
       </div>
     </div>
@@ -395,6 +356,12 @@ export default function PageBuilder() {
     onSelect: (assetId: string) => void;
     currentAssetIds?: string[];
     title?: string;
+  } | null>(null);
+  const [orderEditorTarget, setOrderEditorTarget] = useState<{
+    albumId: string;
+    albumName: string;
+    assetOrder: string[];
+    onSave: (assetOrder: string[]) => void;
   } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingAlbumAddress, setEditingAlbumAddress] = useState<ActiveEditAlbumAddress | null>(null);
@@ -929,7 +896,7 @@ export default function PageBuilder() {
       {/* Search Bar */}
       <div className="builder-search-container">
         <div className="builder-search-wrapper">
-          <span className="builder-search-icon"><Icons.Search /></span>
+          <span className="builder-search-icon"><IconSearch size={14} /></span>
           <input
             type="text"
             className="builder-search-input"
@@ -948,7 +915,7 @@ export default function PageBuilder() {
       {/* Hero Section */}
       <section className="builder-section">
         <div className="builder-section-header">
-          <h2><Icons.Home /> Homepage Hero</h2>
+          <h2><IconHome /> Homepage Hero</h2>
           <button
             className="admin-btn admin-btn-sm"
             onClick={() =>
@@ -959,7 +926,7 @@ export default function PageBuilder() {
               })
             }
           >
-            <Icons.Plus /> Add Hero
+            <IconPlus size={14} /> Add Hero
           </button>
         </div>
         <DndContext
@@ -993,7 +960,10 @@ export default function PageBuilder() {
       {/* Standalone Albums */}
       <section className="builder-section">
         <div className="builder-section-header">
-          <h2>📷 Standalone Albums</h2>
+          <h2>
+            <IconCamera />
+            Standalone Albums
+          </h2>
           <button
             className="admin-btn admin-btn-sm"
             onClick={() => setPickerTarget({ type: 'standalone' })}
@@ -1042,7 +1012,10 @@ export default function PageBuilder() {
       {/* Subpages */}
       <section className="builder-section">
         <div className="builder-section-header">
-          <h2>📂 Subpages</h2>
+          <h2>
+            <IconFolder />
+            Subpages
+          </h2>
           <button className="admin-btn admin-btn-sm" onClick={addSubpage}>
             + New Subpage
           </button>
@@ -1107,7 +1080,7 @@ export default function PageBuilder() {
                             onClick={() => setDrawerMode('edit')}
                             style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
                           >
-                            <Icons.Edit /> Edit
+                            <IconPencil size={14} /> Edit
                           </button>
                           <button
                             type="button"
@@ -1115,7 +1088,7 @@ export default function PageBuilder() {
                             onClick={() => setDrawerMode('preview')}
                             style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
                           >
-                            <Icons.Search /> Live Preview
+                            <IconSearch size={14} /> Live Preview
                           </button>
                         </div>
 
@@ -1162,7 +1135,7 @@ export default function PageBuilder() {
                                           {thumb ? (
                                             <img src={`/api/admin/thumbnail/${thumb}`} alt="" />
                                           ) : (
-                                            <div className="subpage-tile-placeholder"><Icons.Folder /></div>
+                                            <div className="subpage-tile-placeholder"><IconFolder /></div>
                                           )}
                                         </div>
                                         <span className="preview-album-title">
@@ -1186,7 +1159,7 @@ export default function PageBuilder() {
                                       {thumb ? (
                                         <img src={`/api/admin/thumbnail/${thumb}`} alt="" />
                                       ) : (
-                                        <div className="subpage-tile-placeholder"><Icons.Folder /></div>
+                                        <div className="subpage-tile-placeholder"><IconFolder /></div>
                                       )}
                                     </div>
                                     <span className="preview-album-title">
@@ -1242,7 +1215,7 @@ export default function PageBuilder() {
                         <div className="admin-field">
                           <label>Password Protection (optional)</label>
                           <div className="password-input-wrapper">
-                            <span className="password-icon"><Icons.Lock /></span>
+                            <span className="password-icon"><IconLock size={12} /></span>
                             <input
                               type="password"
                               value={sp.password || ''}
@@ -1289,12 +1262,17 @@ export default function PageBuilder() {
                             }}
                             style={{ padding: '8px 12px', borderRadius: '6px', width: '100%', fontSize: '0.9rem' }}
                           >
-                            <option value="masonry">📷 Masonry Grid (Dynamic Height)</option>
-                            <option value="uniform">🔲 Uniform Grid (Square Tiles)</option>
-                            <option value="showcase">⭐ Showcase (Featured First Asset)</option>
-                            <option value="filmstrip">🎞️ Filmstrip (Horizontal Scroll)</option>
-                            <option value="editorial-flow">📰 Editorial Flow</option>
-                            <option value="essay">📖 Photo Essay Mode (Storytelling Editor)</option>
+                            {/*
+                              Plain text, no emoji: an <option> cannot contain markup, so the
+                              SVG icon set is not available here — and a decorative emoji is
+                              not a substitute for it.
+                            */}
+                            <option value="masonry">Masonry Grid (Dynamic Height)</option>
+                            <option value="uniform">Uniform Grid (Square Tiles)</option>
+                            <option value="showcase">Showcase (Featured First Asset)</option>
+                            <option value="filmstrip">Filmstrip (Horizontal Scroll)</option>
+                            <option value="editorial-flow">Editorial Flow</option>
+                            <option value="essay">Photo Essay Mode (Storytelling Editor)</option>
                           </select>
                         </div>
                       </div>
@@ -1395,7 +1373,7 @@ export default function PageBuilder() {
                                   onClick={() => removeSection(spIndex, secIndex)}
                                   title="Remove section"
                                 >
-                                  <Icons.Close />
+                                  <IconX size={14} />
                                 </button>
                               </div>
                               <div className="admin-field">
@@ -1465,7 +1443,7 @@ export default function PageBuilder() {
                           setExpandedSubpage(null);
                         }}
                       >
-                        <Icons.Trash /> Delete Subpage
+                        <IconTrash size={14} /> Delete Subpage
                       </button>
                       <button
                         className="admin-btn admin-btn-primary admin-btn-sm"
@@ -1505,14 +1483,14 @@ export default function PageBuilder() {
             <div className="album-drawer" onClick={(e) => e.stopPropagation()}>
               <div className="album-drawer-header">
                 <h3>
-                  <Icons.Camera /> Edit Album Details
+                  <IconCamera /> Edit Album Details
                 </h3>
                 <button
                   className="admin-btn-icon"
                   onClick={() => setEditingAlbumAddress(null)}
                   title="Close details"
                 >
-                  <Icons.Close />
+                  <IconX size={14} />
                 </button>
               </div>
               <div className="album-drawer-body">
@@ -1523,7 +1501,7 @@ export default function PageBuilder() {
                       <img src={`/api/admin/thumbnail/${heroThumb}`} alt="" loading="lazy" />
                     ) : (
                       <div className="modal-cover-placeholder">
-                        <Icons.Camera />
+                        <IconCamera />
                       </div>
                     )}
                   </div>
@@ -1562,7 +1540,7 @@ export default function PageBuilder() {
                         }}
                         title="Copy UUID"
                       >
-                        <Icons.Copy />
+                        <IconCopy size={12} />
                       </button>
                     </div>
                   </div>
@@ -1613,7 +1591,7 @@ export default function PageBuilder() {
                             onClick={() => onUpdate({ heroImage: undefined })}
                             title="Remove custom hero image"
                           >
-                            <Icons.Close />
+                            <IconX size={14} />
                           </button>
                         </div>
                       ) : (
@@ -1633,9 +1611,63 @@ export default function PageBuilder() {
                           })
                         }
                       >
-                        <Icons.Image /> {album.heroImage ? 'Change Image' : 'Pick Hero Image'}
+                        <IconImage size={12} /> {album.heroImage ? 'Change Image' : 'Pick Hero Image'}
                       </button>
                     </div>
+                  </div>
+
+                  {/* Photo order */}
+                  <div className="admin-field">
+                    <label>Photo order</label>
+                    <select
+                      value={album.sort || DEFAULT_ALBUM_SORT}
+                      onChange={(e) =>
+                        onUpdate({
+                          sort: isAlbumSortMode(e.target.value) ? e.target.value : undefined,
+                        })
+                      }
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        width: '100%',
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      {ALBUM_SORT_MODES.map((mode) => (
+                        <option key={mode} value={mode}>
+                          {SORT_LABELS[mode]}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="admin-field-hint">
+                      {album.sort === 'manual'
+                        ? 'Pinned photos come first, in the order you set. Everything else follows in the album’s Immich order.'
+                        : 'Immich order follows the album’s own sort setting in Immich.'}
+                    </span>
+
+                    {album.sort === 'manual' && (
+                      <div style={{ marginTop: '0.75rem' }}>
+                        <button
+                          className="admin-btn admin-btn-sm"
+                          onClick={() =>
+                            setOrderEditorTarget({
+                              albumId: album.id,
+                              albumName: album.title || name,
+                              assetOrder: album.assetOrder || [],
+                              onSave: (assetOrder) => {
+                                onUpdate({ assetOrder });
+                                setOrderEditorTarget(null);
+                              },
+                            })
+                          }
+                        >
+                          <IconGripVertical size={18} className="svg-icon svg-drag" />{' '}
+                          {album.assetOrder?.length
+                            ? `Reorder photos (${album.assetOrder.length} pinned)`
+                            : 'Reorder photos'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1645,7 +1677,7 @@ export default function PageBuilder() {
                   onClick={onRemove}
                   style={{ maxWidth: '160px' }}
                 >
-                  <Icons.Trash /> Remove Album
+                  <IconTrash size={14} /> Remove Album
                 </button>
                 <button
                   className="admin-btn admin-btn-primary"
@@ -1668,6 +1700,17 @@ export default function PageBuilder() {
           onClose={() => setHeroPickerTarget(null)}
           currentAssetIds={heroPickerTarget.currentAssetIds}
           title={heroPickerTarget.title}
+        />
+      )}
+
+      {/* Manual Photo Order Editor */}
+      {orderEditorTarget && (
+        <AssetOrderEditor
+          albumId={orderEditorTarget.albumId}
+          albumName={orderEditorTarget.albumName}
+          assetOrder={orderEditorTarget.assetOrder}
+          onSave={orderEditorTarget.onSave}
+          onClose={() => setOrderEditorTarget(null)}
         />
       )}
     </div>
@@ -1797,14 +1840,14 @@ function AlbumCard({
       <div className="album-tile-cover">
         {dragListeners && (
           <div className="album-tile-drag" {...dragListeners} title="Drag to reorder">
-            <Icons.Drag />
+            <IconGripVertical size={18} className="svg-icon svg-drag" />
           </div>
         )}
         {heroThumb ? (
           <img src={`/api/admin/thumbnail/${heroThumb}`} alt="" loading="lazy" />
         ) : (
           <div className="album-tile-placeholder">
-            <Icons.Camera />
+            <IconCamera />
           </div>
         )}
         <div className="album-tile-overlay">
@@ -1813,14 +1856,14 @@ function AlbumCard({
             onClick={onEdit}
             title="Edit details"
           >
-            <Icons.Edit />
+            <IconPencil size={14} />
           </button>
           <button
             className="album-tile-btn album-tile-btn-danger"
             onClick={onRemove}
             title="Remove album"
           >
-            <Icons.Trash />
+            <IconTrash size={14} />
           </button>
         </div>
       </div>
@@ -1832,12 +1875,17 @@ function AlbumCard({
           <div className="album-tile-badges">
             {hasPassword && (
               <span className="badge badge-password" title="Password protected">
-                <Icons.Lock />
+                <IconLock size={12} />
               </span>
             )}
             {album.heroImage && (
               <span className="badge badge-hero" title="Custom Hero Image set">
-                <Icons.Image />
+                <IconImage size={12} />
+              </span>
+            )}
+            {album.sort && album.sort !== DEFAULT_ALBUM_SORT && (
+              <span className="badge badge-sort" title={`Photo order: ${SORT_LABELS[album.sort]}`}>
+                {album.sort === 'manual' ? <IconGripVertical size={18} className="svg-icon svg-drag" /> : album.sort}
               </span>
             )}
           </div>

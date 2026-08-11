@@ -8,9 +8,39 @@ hero:
   - "your-asset-uuid-2"
 
 # Standalone albums (shown on the home page)
+#
+# Photo order inside an album: by default a Folio album mirrors the Immich
+# timeline. The optional `sort` key lets the portfolio order differ from the
+# archive order, without changing anything in Immich.
+#
+#   immich    Default. Inherits the album's own asc/desc setting in Immich.
+#             This is capture-time order — Immich does not expose the drag
+#             order from its web UI, so Folio cannot reproduce that.
+#   newest    Capture time, newest first, whatever Immich is set to.
+#   oldest    Capture time, oldest first.
+#   filename  originalFileName, natural order (IMG_2 before IMG_10).
+#             Matches scanned-film and camera-export workflows.
+#   manual    Pinned photos first, in the order given by `assetOrder`;
+#             everything else follows in the album's Immich order. Far easier
+#             to set in /admin, which has a drag & drop editor for it.
+#
+# Two things worth knowing:
+#   • On a subpage with several albums, `sort` orders photos *within* each
+#     album — the albums themselves stay in the order they are listed in.
+#   • Lightbox permalinks (#photo-3) are positional, so changing an album's
+#     sort moves where a previously shared link lands.
+#
+# `sort` works the same on subpage and section albums, shown further down.
 albums:
-  - "your-album-uuid-1"
-  - "your-album-uuid-2"
+  - "your-album-uuid-1" # no sort key → Immich order, exactly as before
+  - "your-album-uuid-2":
+      sort: filename # an entry may carry only a sort, with no title override
+  - "your-album-uuid-3":
+      title: "Hokkaido, in sequence"
+      sort: manual
+      assetOrder: # pinned, in this order. Everything else follows automatically.
+        - "asset-uuid-opening-frame"
+        - "asset-uuid-second-frame"
 
 # Subpages: group albums under custom URL paths
 subpages:

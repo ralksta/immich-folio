@@ -54,11 +54,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to read request body' }, { status: 400 });
   }
 
-  // 🛡️ SECURITY: Enforce maximum payload length to prevent memory exhaustion/CPU DoS
-  if (rawBody.length > 65536) {
-    return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
-  }
-
   // ── Signature verification ─────────────────────────
   const signature = request.headers.get('x-immich-signature');
   if (!signature) {
@@ -66,23 +61,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
   }
 
-  // 🛡️ SECURITY: Enforce maximum signature length to prevent massive Buffer allocation
-  if (signature.length > 256) {
-    return NextResponse.json({ error: 'Signature too long' }, { status: 400 });
-  }
-
   const expected = createHmac('sha256', env.WEBHOOK_SECRET).update(rawBody).digest('hex');
 
   let signatureValid = false;
   try {
-    const sigBuf = Buffer.from(signature, 'hex');
-    const expBuf = Buffer.from(expected, 'hex');
-    // 🛡️ SECURITY: timingSafeEqual throws on length mismatch, causing an unhandled exception (DoS)
-    if (sigBuf.length === expBuf.length) {
-      signatureValid = timingSafeEqual(sigBuf, expBuf);
-    }
+    signatureValid = timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expected, 'hex'));
   } catch {
-    // Invalid hex string
+    // Buffer lengths differ → invalid hex or wrong length
     signatureValid = false;
   }
 

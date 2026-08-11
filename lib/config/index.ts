@@ -2,9 +2,11 @@ import { env } from '../env';
 import { resolveAuthSecret } from '../secret';
 import { loadYaml, clearYamlCache, validateUuid } from './parser';
 import { resolveTheme, VALID_LAYOUTS } from './theme';
+import { ALBUM_SORT_MODES, isAlbumSortMode, type AlbumSortMode } from '../albumSort';
 import {
   slugify,
   AppConfig,
+  AlbumEntryObject,
   SubpageConfig,
   SubpageSectionConfig,
   SubpageObjectValue,
@@ -82,6 +84,8 @@ export interface GalleryDerivation {
   albumDescriptions: Record<string, string>;
   albumPasswords: Record<string, string>;
   albumHeroImages: Record<string, string>;
+  albumSortModes: Record<string, AlbumSortMode>;
+  albumManualOrders: Record<string, string[]>;
 }
 
 /**
@@ -99,14 +103,11 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   const albumDescriptions: Record<string, string> = {};
   const albumPasswords: Record<string, string> = {};
   const albumHeroImages: Record<string, string> = {};
+  const albumSortModes: Record<string, AlbumSortMode> = {};
+  const albumManualOrders: Record<string, string[]> = {};
 
   function processAlbumEntry(
-    entry:
-      | string
-      | Record<
-          string,
-          string | { title: string; description?: string; password?: string; heroImage?: string }
-        >,
+    entry: string | Record<string, string | AlbumEntryObject>,
     context: string,
   ): string {
     if (typeof entry === 'string') {
@@ -131,6 +132,31 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         albumHeroImages[validatedUuid] = validateUuid(
           value.heroImage,
           `${context} heroImage for album ${validatedUuid}`,
+        );
+      }
+
+      // Throw rather than fall back to the default: a typo would otherwise be
+      // invisible — the album would just keep rendering in Immich order and the
+      // owner would be left wondering why the setting does nothing. Throwing
+      // also gives the admin PUT its 400 for free via the deriveGallery
+      // dry-run, and getConfigOrNull() degrades a hand-edited file to the setup
+      // screen rather than taking the site down. Name the album and the legal
+      // values so the log line is enough to fix it.
+      if (value.sort != null) {
+        if (!isAlbumSortMode(value.sort)) {
+          throw new Error(
+            `${context}: album ${validatedUuid} has an unknown sort "${value.sort}". ` +
+              `Valid values are: ${ALBUM_SORT_MODES.join(', ')}.`,
+          );
+        }
+        albumSortModes[validatedUuid] = value.sort;
+      }
+
+      // Kept regardless of the mode, so switching manual → newest → manual does
+      // not silently destroy a hand-curated order.
+      if (value.assetOrder?.length) {
+        albumManualOrders[validatedUuid] = value.assetOrder.map((assetId, i) =>
+          validateUuid(assetId, `${context} assetOrder[${i}] for album ${validatedUuid}`),
         );
       }
     }
@@ -240,6 +266,8 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
     albumDescriptions,
     albumPasswords,
     albumHeroImages,
+    albumSortModes,
+    albumManualOrders,
   };
 }
 
@@ -287,6 +315,8 @@ export function getConfig(): AppConfig {
       albumDescriptions: {},
       albumPasswords: {},
       albumHeroImages: {},
+      albumSortModes: {},
+      albumManualOrders: {},
       cacheTtl: env.CACHE_TTL * 1000,
       staleMaxAge: env.STALE_MAX_AGE * 1000,
       immichTimeoutMs: env.IMMICH_TIMEOUT_MS,
@@ -306,6 +336,8 @@ export function getConfig(): AppConfig {
     albumDescriptions,
     albumPasswords,
     albumHeroImages,
+    albumSortModes,
+    albumManualOrders,
   } = deriveGallery(gallery);
 
   const siteSeoTitle = settings.seo?.title || settings.title || env.SITE_TITLE || 'Gallery';
@@ -378,6 +410,8 @@ export function getConfig(): AppConfig {
     albumDescriptions,
     albumPasswords,
     albumHeroImages,
+    albumSortModes,
+    albumManualOrders,
     cacheTtl: env.CACHE_TTL * 1000,
     staleMaxAge: env.STALE_MAX_AGE * 1000,
     immichTimeoutMs: env.IMMICH_TIMEOUT_MS,

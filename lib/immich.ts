@@ -9,6 +9,7 @@
 
 import { getConfig, slugify, type SubpageConfig } from './config';
 import { cache } from './cache';
+import { compareByCaptureTime, sortAlbumAssets, DEFAULT_ALBUM_SORT } from './albumSort';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -36,6 +37,8 @@ export interface ImmichAsset {
   localDateTime?: string;
   exifInfo?: ImmichExifInfo;
   isTrashed: boolean;
+  /** Only surfaced in the admin pickers. Optional: older Immich responses omit it. */
+  isFavorite?: boolean;
 }
 
 export interface ImmichExifInfo {
@@ -544,7 +547,61 @@ class ImmichClient {
     return assets;
   }
 
+  /**
+   * Every asset of an album, in the album's canonical Immich order, bypassing
+   * the allowlist.
+   *
+   * For the admin panel only. `getAlbum()` refuses albums that are not in the
+   * saved config, which is right for the public site but wrong for the page
+   * builder: an album just dragged in has not been saved yet, so the picker
+   * and the reorder editor would come up empty. Admin auth is the gate here.
+   */
+  async getAlbumAssetsRaw(albumId: string): Promise<ImmichAsset[]> {
+    const [album, assets] = await Promise.all([
+      this.request<ImmichAlbum>(`/albums/${encodeURIComponent(albumId)}`),
+      this.fetchAlbumAssets(albumId),
+    ]);
+    if (!album) return [];
+
+    // Same order the site would render under `sort: immich`. The reorder
+    // editor's baseline has to match it exactly, or the assets it shows as
+    // "follows automatically" would not be the ones that actually follow.
+    return assets
+      .filter((a) => !a.isTrashed)
+      .sort(compareByCaptureTime(album.order === 'asc' ? 1 : -1));
+  }
+
+  /**
+   * Apply the album's configured sort on the way out.
+   *
+   * Deliberately not folded into the cached load: the LRU holds one canonical
+   * Immich-ordered copy per album, so the mode never has to enter the cache key
+   * and a config change takes effect without depending on invalidation.
+   *
+   * The clone is load-bearing. `cache.get()` hands back the stored object by
+   * reference, so sorting `album.assets` here would permanently reorder the
+   * cached entry — and under request coalescing every concurrent caller would
+   * be sorting the same array.
+   */
+  private withSort(album: ImmichAlbum): ImmichAlbum {
+    const mode = this.config.albumSortModes[album.id] ?? DEFAULT_ALBUM_SORT;
+    return {
+      ...album,
+      assets: sortAlbumAssets(album.assets, {
+        mode,
+        immichOrder: album.order,
+        manualOrder: this.config.albumManualOrders[album.id],
+      }),
+    };
+  }
+
   async getAlbum(albumId: string, forceFresh = false): Promise<ImmichAlbum | null> {
+    const album = await this.loadAlbum(albumId, forceFresh);
+    return album ? this.withSort(album) : null;
+  }
+
+  /** The cached load. Always yields the canonical Immich order; see withSort(). */
+  private async loadAlbum(albumId: string, forceFresh: boolean): Promise<ImmichAlbum | null> {
     // Security: only serve configured albums
     if (!this.config.albums.includes(albumId)) {
       console.warn(`[Immich] Album ${albumId} is not in LIGHTBOX_ALBUMS`);
@@ -593,25 +650,10 @@ class ImmichClient {
         // order. Metadata search happens to default to fileCreatedAt desc, but
         // that is not contractual — sort explicitly so 'asc' albums are right.
         //
-        // Mirrors Immich's own timeline query: primary key `localDateTime`
-        // (capture time in the photographer's local zone), tie-broken by
-        // `fileCreatedAt` (the same instant in UTC). The two only diverge for
-        // albums spanning time zones, and there local time is what the Immich
-        // UI shows. Sorting on `exifInfo.dateTimeOriginal` instead would be
-        // near-pointless: Immich already derives `fileCreatedAt` from that
-        // same EXIF chain, and it is null for assets without EXIF.
-        //
-        // Compare parsed instants, not strings — string order breaks on
-        // fractional seconds ('.' collates before '+'), which misorders bursts
-        // where only some frames carry sub-second precision. Unparseable dates
-        // fall back to 0 rather than NaN, which would make sort() incoherent.
-        const dir = album.order === 'asc' ? 1 : -1;
-        const ts = (value: string | undefined) => Date.parse(value ?? '') || 0;
-        album.assets.sort(
-          (a, b) =>
-            dir * (ts(a.localDateTime) - ts(b.localDateTime)) ||
-            dir * (ts(a.fileCreatedAt) - ts(b.fileCreatedAt)),
-        );
+        // This is the *canonical* order, and it is what goes into the cache.
+        // A configured per-album sort is applied later, on the way out of
+        // getAlbum(); see withSort().
+        album.assets.sort(compareByCaptureTime(album.order === 'asc' ? 1 : -1));
 
         const name = this.config.albumOverrides[album.id] ?? album.albumName;
         const description = this.config.albumDescriptions[album.id] ?? album.description ?? '';

@@ -45,6 +45,10 @@ export function encodeAssetId(assetId: string): string {
  * Returns null if the token is invalid.
  */
 export function decodeAssetId(token: string): string | null {
+  // 🛡️ SECURITY: Enforce maximum token length to prevent memory exhaustion DoS
+  // A v2 token for a 36-char UUID is ~110 chars. 256 is generous but safe.
+  if (token.length > 256) return null;
+
   try {
     const key = getKey();
 

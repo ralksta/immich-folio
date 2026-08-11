@@ -1,4 +1,4 @@
-## 2024-08-11 - Missing Input Length Constraints and timingSafeEqual Length Check
-**Vulnerability:** The webhook endpoint (/api/webhook) processed rawBody and x-immich-signature without maximum length limits, allowing potential memory exhaustion DoS via massive Buffer allocations. Furthermore, crypto.timingSafeEqual was called without a prior length check.
-**Learning:** Even if timingSafeEqual is wrapped in a try/catch, unconstrained inputs can cause massive memory allocation (Buffer.from) and CPU exhaustion during HMAC generation. Node.js timingSafeEqual requires matching byte lengths, so explicit length checks prevent exception-driven control flow and potential DoS.
-**Prevention:** Always enforce a strict maximum length on unbounded string inputs (like request bodies or headers) before using them in cryptographic operations, and always verify buffer lengths explicitly before invoking crypto.timingSafeEqual.
+## 2024-08-11 - Unconstrained Base64URL Decoding DoS
+**Vulnerability:** The decodeAssetId function in lib/tokens.ts accepted arbitrary length tokens and passed them directly to Buffer.from(..., 'base64url'), creating a risk of massive memory allocation (memory exhaustion/CPU DoS).
+**Learning:** Functions that decode tokens from URLs (like GET /api/image/:token) must limit the input string length before passing it to Buffer.from. Otherwise, a maliciously crafted huge token can cause the Node.js process to throw RangeError (Invalid string length) or exhaust memory, despite being wrapped in a try/catch.
+**Prevention:** Always enforce a strict maximum length check on opaque URL tokens before decoding them.
