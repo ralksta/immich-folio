@@ -8,7 +8,15 @@ import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit
 /** Install submissions per minute per IP — only live before install. */
 const INSTALL_RPM = 10;
 
-const THEME_PRESETS = ['studio', 'studio-modern', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
+const THEME_PRESETS = [
+  'studio',
+  'studio-modern',
+  'minimal',
+  'editorial',
+  'classic',
+  'noir',
+  'monograph',
+];
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** POST: run the install wizard's final step — verify, then write config. */

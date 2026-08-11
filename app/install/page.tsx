@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { isInstalled, getInstallCredentials, getSetupToken, validateSetupToken } from '@/lib/install';
+import {
+  isInstalled,
+  getInstallCredentials,
+  getSetupToken,
+  validateSetupToken,
+} from '@/lib/install';
 import { InstallWizard } from './InstallWizard';
 
 export const metadata: Metadata = {
@@ -51,8 +56,8 @@ export default async function InstallPage({
             Setup Token Required
           </h1>
           <p style={{ fontSize: '1.125rem', opacity: 0.7, lineHeight: 1.5 }}>
-            Check your server logs for the one-time setup token and append{' '}
-            <code>?token=</code> to this URL.
+            Check your server logs for the one-time setup token and append <code>?token=</code> to
+            this URL.
           </p>
         </div>
       </div>
