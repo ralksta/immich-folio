@@ -134,6 +134,8 @@ export default function SettingsEditor() {
   const [saveMessage, setSaveMessage] = useState('');
   const [activeSection, setActiveSection] = useState('general');
   const [currentMode, setCurrentMode] = useState<'dark' | 'light'>('dark');
+  const [faviconUploading, setFaviconUploading] = useState(false);
+  const [faviconMessage, setFaviconMessage] = useState('');
 
   useEffect(() => {
     loadSettings();
@@ -442,6 +444,65 @@ export default function SettingsEditor() {
                     <span className="switch-slider" />
                   </div>
                 </button>
+              </div>
+
+              <div className="admin-field favicon-field">
+                <label>Favicon</label>
+                <div className="favicon-row">
+                  <input
+                    type="file"
+                    accept=".svg,.png,.ico,.jpg,.jpeg"
+                    disabled={faviconUploading}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setFaviconMessage('');
+                      setFaviconUploading(true);
+                      const form = new FormData();
+                      form.append('file', file);
+                      try {
+                        const res = await fetch('/api/admin/favicon', { method: 'PUT', body: form });
+                        const data = await res.json();
+                        setFaviconMessage(res.ok ? data.message : `Error: ${data.error}`);
+                      } catch {
+                        setFaviconMessage('Error: Upload failed');
+                      } finally {
+                        setFaviconUploading(false);
+                        e.target.value = '';
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="admin-btn"
+                    disabled={faviconUploading}
+                    onClick={async () => {
+                      setFaviconMessage('');
+                      setFaviconUploading(true);
+                      try {
+                        const res = await fetch('/api/admin/favicon', { method: 'DELETE' });
+                        const data = await res.json();
+                        setFaviconMessage(res.ok ? data.message : `Error: ${data.error}`);
+                      } catch {
+                        setFaviconMessage('Error: Reset failed');
+                      } finally {
+                        setFaviconUploading(false);
+                      }
+                    }}
+                  >
+                    Reset
+                  </button>
+                  {faviconUploading && <div className="admin-spinner" />}
+                </div>
+                {faviconMessage && (
+                  <p className={`save-message ${faviconMessage.startsWith('Error') ? 'error' : 'success'}`}>
+                    {faviconMessage}
+                  </p>
+                )}
+                <span className="admin-field-hint">
+                  SVG, PNG, ICO, or JPEG — max 512 kB. Stored in the content volume. Reset restores
+                  the bundled default.
+                </span>
               </div>
             </div>
           )}
