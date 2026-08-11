@@ -39,10 +39,11 @@ function withGallery(gallery: unknown) {
 /**
  * The admin page builder can write each of these, and the root layout renders
  * /admin inside itself — so a throw here would take down the site together with
- * the only tool that can undo the save.
+ * the only tool that can undo the save. An empty gallery is deliberately NOT in
+ * this list: the install wizard can finish without selecting an album, so an
+ * empty gallery is now a valid, rendered state (see derive-gallery.test.ts).
  */
 const UNDERIVABLE = {
-  'a gallery with neither albums nor subpages': { albums: [] },
   'a subpage with no name': { albums: [ALBUM_ID], subpages: [{ albums: [ALBUM_ID] }] },
   'a subpage with neither albums nor sections': {
     albums: [ALBUM_ID],
@@ -61,6 +62,17 @@ describe('getConfig() rejects an underivable gallery.yaml', () => {
       expect(() => getConfig()).toThrow();
     });
   }
+
+  it('accepts an empty gallery — a valid post-install state', () => {
+    // The install wizard may finish without selecting an album, so an empty
+    // gallery must render (title-only homepage) rather than take down the site.
+    withGallery({ albums: [] });
+    const config = getConfig();
+    expect(config.albums).toEqual([]);
+    expect(config.standaloneAlbums).toEqual([]);
+    expect(config.subpages).toEqual([]);
+    expect(config.needsSetup).toBe(false);
+  });
 });
 
 describe('getConfigOrNull()', () => {
@@ -81,7 +93,9 @@ describe('getConfigOrNull()', () => {
   }
 
   it('logs the underlying error so the cause is diagnosable from the server log', () => {
-    withGallery({ albums: [] });
+    // A nameless subpage is still underivable — an empty gallery is not (the
+    // install wizard can finish without an album, so that shape is now valid).
+    withGallery({ albums: [ALBUM_ID], subpages: [{ albums: [ALBUM_ID] }] });
     getConfigOrNull();
 
     expect(error).toHaveBeenCalled();
@@ -89,7 +103,7 @@ describe('getConfigOrNull()', () => {
   });
 
   it('points at the backup directory, since that is the recovery path', () => {
-    withGallery({ albums: [] });
+    withGallery({ albums: [ALBUM_ID], subpages: [{ albums: [ALBUM_ID] }] });
     getConfigOrNull();
     expect(String(error.mock.calls[0][0])).toContain('content/.backups/');
   });

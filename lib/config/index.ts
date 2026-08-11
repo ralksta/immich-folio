@@ -90,8 +90,10 @@ export interface GalleryDerivation {
 
 /**
  * Derive the gallery half of AppConfig, throwing on a structure that cannot be
- * represented: no albums and no subpages, a subpage with no name, a subpage
- * with neither albums nor sections.
+ * represented: a subpage with no name, a subpage with neither albums nor
+ * sections. A gallery with no albums and no subpages is NOT an error — an
+ * empty gallery still renders (title, hero-less homepage) so the owner can
+ * add albums later via /admin.
  *
  * Extracted from getConfig() so the admin PUT can run the *real* derivation
  * against a proposed gallery before writing it. Re-implementing the three
@@ -166,15 +168,6 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   const standaloneAlbumIds = (gallery.albums ?? []).map((entry) =>
     processAlbumEntry(entry, 'gallery.yaml albums'),
   );
-  if (
-    standaloneAlbumIds.length === 0 &&
-    (!gallery.subpages ||
-      (Array.isArray(gallery.subpages)
-        ? gallery.subpages.length === 0
-        : Object.keys(gallery.subpages).length === 0))
-  ) {
-    throw new Error('gallery.yaml must define at least one album or subpage');
-  }
 
   let subpages: SubpageConfig[] = [];
 
@@ -280,13 +273,18 @@ export function getConfig(): AppConfig {
   const apiKey = env.IMMICH_API_KEY;
   const authSecret = resolveAuthSecret();
 
+  // The API URL may already end with /api (a user-supplied env var or a
+  // wizard-installed value). Appending unconditionally produces a double
+  // suffix and breaks every Immich request.
+  const immichApiUrl = apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
+
   const gallery = loadYaml<GalleryYaml>('gallery.yaml');
   const settings = loadYaml<SettingsYaml>('settings.yaml') || {};
 
   if (!gallery || !apiKey || !apiUrl) {
     // Return dummy config if gallery.yaml is missing
     return {
-      immich: { apiUrl: `${apiUrl}/api`, apiKey },
+      immich: { apiUrl: immichApiUrl, apiKey },
       authSecret,
       albums: [],
       standaloneAlbums: [],
