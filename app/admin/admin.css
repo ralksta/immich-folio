@@ -3978,3 +3978,19 @@ h3 .svg-icon {
   padding: 0.75rem;
   border-top: 1px solid var(--admin-border);
 }
+
+/* ── Favicon upload (Settings › General) ─────────────────────── */
+
+.favicon-field {
+  margin-top: 1rem;
+}
+
+.favicon-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.favicon-row input[type='file'] {
+  font-size: 0.8rem;
+}

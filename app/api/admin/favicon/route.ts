@@ -8,6 +8,24 @@ const DEST = 'favicon.svg';
 
 const MAX_SIZE = 512 * 1024; // 512 kB
 
+/**
+ * Write via temp file + rename, the same pattern yaml-service uses: GET
+ * /api/favicon reads this path on every request, so a plain writeFile would
+ * let a concurrent read see a half-written icon.
+ */
+async function writeFavicon(content: Buffer | string): Promise<void> {
+  await fs.mkdir(CONTENT_DIR, { recursive: true });
+  const dest = path.join(CONTENT_DIR, DEST);
+  const tmpPath = `${dest}.${process.pid}.${Date.now()}.tmp`;
+  try {
+    await fs.writeFile(tmpPath, content);
+    await fs.rename(tmpPath, dest);
+  } catch (err) {
+    await fs.unlink(tmpPath).catch(() => {});
+    throw err;
+  }
+}
+
 export async function PUT(request: Request) {
   if (!isAdminEnabled()) {
     return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
@@ -23,8 +41,11 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'Invalid form data' }, { status: 400 });
   }
 
-  const file = body.get('file') as File | null;
-  if (!file) {
+  // A plain text field named "file" also satisfies `body.get('file')`, and the
+  // .size/.arrayBuffer() calls below would then throw a 500 on what is really
+  // a malformed request.
+  const file = body.get('file');
+  if (!(file instanceof File)) {
     return NextResponse.json({ error: 'Missing file' }, { status: 400 });
   }
 
@@ -40,8 +61,7 @@ export async function PUT(request: Request) {
     if (!text.includes('<svg')) {
       return NextResponse.json({ error: 'Invalid SVG file' }, { status: 400 });
     }
-    await fs.mkdir(CONTENT_DIR, { recursive: true });
-    await fs.writeFile(path.join(CONTENT_DIR, DEST), buf);
+    await writeFavicon(buf);
     return NextResponse.json({ success: true, message: 'Favicon updated.' });
   }
 
@@ -66,8 +86,7 @@ export async function PUT(request: Request) {
 </svg>
 `;
 
-  await fs.mkdir(CONTENT_DIR, { recursive: true });
-  await fs.writeFile(path.join(CONTENT_DIR, DEST), svg);
+  await writeFavicon(svg);
   return NextResponse.json({ success: true, message: 'Favicon updated.' });
 }
 
@@ -82,7 +101,10 @@ export async function DELETE() {
 
   try {
     await fs.unlink(path.join(CONTENT_DIR, DEST));
-    return NextResponse.json({ success: true, message: 'Custom favicon removed. Default restored.' });
+    return NextResponse.json({
+      success: true,
+      message: 'Custom favicon removed. Default restored.',
+    });
   } catch {
     return NextResponse.json({ error: 'No custom favicon to remove' }, { status: 404 });
   }
