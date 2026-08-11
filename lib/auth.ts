@@ -8,6 +8,7 @@
 
 import crypto from 'crypto';
 import { getConfig, SubpageConfig } from './config';
+import { verifyScrypt, generateScryptHash, isScryptHash } from './password';
 
 const TOKEN_EXPIRY_HOURS = 24;
 
@@ -16,52 +17,6 @@ const TOKEN_EXPIRY_HOURS = 24;
  */
 function isBcryptHash(str: string): boolean {
   return str.startsWith('$2a$') || str.startsWith('$2b$') || str.startsWith('$2y$');
-}
-
-/**
- * scrypt on the libuv threadpool rather than the main thread.
- *
- * scryptSync costs ~23ms per call, and that is 23ms during which the process
- * serves nothing else. The /api/auth rate limit (10/min) is keyed on the client
- * IP, but with the default TRUSTED_PROXY_HOPS=0 that IP comes from a spoofable
- * header (see lib/rate-limit.ts), so an attacker rotating the header gets
- * effectively unlimited buckets — each request buying 23ms of dead process.
- * Running async does not stop the spoofing, but it removes the amplification
- * that made it worth doing.
- */
-function scryptAsync(password: string, salt: string, keylen: number): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    crypto.scrypt(password, salt, keylen, (err, derivedKey) => {
-      if (err) reject(err);
-      else resolve(derivedKey);
-    });
-  });
-}
-
-/**
- * Native SCrypt verify (format: 'scrypt:salt:hash_hex')
- */
-async function verifyScrypt(password: string, stored: string): Promise<boolean> {
-  if (!stored.startsWith('scrypt:')) return false;
-
-  try {
-    const [, salt, hashHex] = stored.split(':');
-    const key = await scryptAsync(password, salt, 64);
-    const expectedKey = Buffer.from(hashHex, 'hex');
-    if (key.length !== expectedKey.length) return false;
-    return crypto.timingSafeEqual(key, expectedKey);
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Helper to generate an scrypt string to print in logs.
- */
-async function generateScryptHash(password: string): Promise<string> {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const hash = (await scryptAsync(password, salt, 64)).toString('hex');
-  return `scrypt:${salt}:${hash}`;
 }
 
 function hmac(data: string): string {
@@ -134,7 +89,7 @@ export async function authenticate(
     return null;
   }
 
-  if (storedPassword.startsWith('scrypt:')) {
+  if (isScryptHash(storedPassword)) {
     isValid = await verifyScrypt(password, storedPassword);
   } else {
     // Plaintext fallback (deprecated)

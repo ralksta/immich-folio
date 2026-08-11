@@ -153,7 +153,13 @@ describe('completeInstall', () => {
     const creds = JSON.parse(fs.readFileSync(path.join(dir, 'install.json'), 'utf8'));
     expect(creds.apiUrl).toBe('https://immich.example');
     expect(creds.apiKey).toBe('api-key-123');
-    expect(creds.adminPassword).toBe('hunter2');
+    // Stored as a hash, never as typed — an admin password is the one
+    // credential here a person picked and may have reused elsewhere.
+    expect(creds.adminPassword).not.toBe('hunter2');
+    expect(creds.adminPassword).toMatch(/^scrypt:[0-9a-f]+:[0-9a-f]+$/);
+    const { verifyScrypt } = await import('@/lib/password');
+    expect(await verifyScrypt('hunter2', creds.adminPassword)).toBe(true);
+    expect(await verifyScrypt('wrong', creds.adminPassword)).toBe(false);
     // A fresh, unguessable site secret is generated.
     expect(creds.authSecret).toBeTruthy();
     expect(creds.authSecret.length).toBeGreaterThanOrEqual(32);

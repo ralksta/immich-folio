@@ -22,6 +22,7 @@ import path from 'path';
 import crypto from 'crypto';
 import yaml from 'js-yaml';
 import { env } from './env';
+import { generateScryptHash } from './password';
 import type { GalleryYaml, SettingsYaml } from './config/schema';
 
 /** The directory user content is written into. Overridable for tests. */
@@ -257,7 +258,12 @@ export async function completeInstall(input: InstallInput): Promise<void> {
     apiUrl: input.apiUrl.trim(),
     apiKey: input.apiKey.trim(),
     authSecret: crypto.randomBytes(32).toString('hex'),
-    ...(input.adminPassword ? { adminPassword: input.adminPassword } : {}),
+    // Hashed, not stored as typed: the API key and the site secret have to be
+    // recoverable to be useful, but an admin password does not — and it is the
+    // one credential here a person picked and may well have reused elsewhere.
+    ...(input.adminPassword
+      ? { adminPassword: await generateScryptHash(input.adminPassword) }
+      : {}),
   };
 
   const header = (name: string) =>
@@ -267,19 +273,13 @@ export async function completeInstall(input: InstallInput): Promise<void> {
   const galleryPath = path.join(dir, 'gallery.yaml');
   const settingsPath = path.join(dir, 'settings.yaml');
 
-  await atomicWrite(
-    galleryPath,
-    header('Gallery Structure') + yaml.dump(gallery, dumpOptions),
-  );
+  await atomicWrite(galleryPath, header('Gallery Structure') + yaml.dump(gallery, dumpOptions));
 
   // Only create settings.yaml if it does not already exist — a deployment that
   // brings its own customised settings.yaml (but is missing gallery.yaml) must
   // not have it silently replaced with the three-key skeleton the wizard writes.
   if (!fs.existsSync(settingsPath)) {
-    await atomicWrite(
-      settingsPath,
-      header('Site Settings') + yaml.dump(settings, dumpOptions),
-    );
+    await atomicWrite(settingsPath, header('Site Settings') + yaml.dump(settings, dumpOptions));
   }
   await atomicWrite(path.join(dir, INSTALL_FILENAME), `${JSON.stringify(data, null, 2)}\n`);
   try {

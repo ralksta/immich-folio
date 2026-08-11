@@ -6,6 +6,7 @@
 import crypto from 'crypto';
 import { getInstallCredentials } from '../install';
 import { resolveAuthSecret } from '../secret';
+import { isScryptHash, verifyScrypt } from '../password';
 import { cookies } from 'next/headers';
 
 const COOKIE_NAME = 'folio_admin_session';
@@ -85,10 +86,17 @@ export function verifyAdminToken(token: string): boolean {
  * compares subpage passwords: the intermediate values are then useless to
  * anyone who cannot also read the secret.
  */
-export function verifyAdminPassword(password: string): boolean {
+export async function verifyAdminPassword(password: string): Promise<boolean> {
   const adminPw = getAdminPassword();
   if (!adminPw) return false;
   if (password.length > MAX_PASSWORD_LENGTH) return false;
+
+  // The wizard stores a hash; ADMIN_PASSWORD as an env var stays plaintext,
+  // because that is what every existing deployment has set. Both must work,
+  // or an upgrade locks the owner out of their own admin panel.
+  if (isScryptHash(adminPw)) {
+    return verifyScrypt(password, adminPw);
+  }
 
   const secret = resolveAuthSecret();
   const attemptHash = crypto.createHmac('sha256', secret).update(password).digest();

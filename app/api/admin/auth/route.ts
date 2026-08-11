@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Password is too long' }, { status: 400 });
   }
 
-  if (!verifyAdminPassword(body.password)) {
+  if (!(await verifyAdminPassword(body.password))) {
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
   }
 

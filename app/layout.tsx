@@ -99,7 +99,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // /admin and /install stay reachable during setup — /admin is the tool that
   // completes an existing setup, /install is the wizard that performs the first
   // one, so the setup screen must not lock either of them out (#326).
-  if ((config as AppConfig & { needsSetup?: boolean }).needsSetup && !isAdminPath(pathname) && !isInstallPath(pathname)) {
+  if (
+    (config as AppConfig & { needsSetup?: boolean }).needsSetup &&
+    !isAdminPath(pathname) &&
+    !isInstallPath(pathname)
+  ) {
     return (
       <html lang="en" suppressHydrationWarning>
         <body>
