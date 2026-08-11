@@ -33,25 +33,44 @@ const INSTALL_FILENAME = 'install.json';
 
 // ── One-time setup token —─────────────────────────────────────
 
+const SETUP_TOKEN_FILENAME = '.setup-token';
+
 /**
- * A random token generated once per process lifetime that gates the install
- * API routes. It is printed to the server log on first access; the operator
- * must read it from the container / process logs and supply it as a query
- * parameter or header when calling `/install` or any `/api/install/*` route.
+ * A random token that gates the install page and the install API routes. It is
+ * printed to the server log on first access; the operator reads it from the
+ * container / process logs and supplies it as a query parameter or an
+ * `x-setup-token` header.
  *
  * Without this token the install endpoints are reachable by anyone who knows
  * the URL — which is the whole internet if the app is deployed before
  * `gallery.yaml` exists.
+ *
+ * It lives in a file rather than a module variable because Next.js bundles the
+ * page and each route handler separately: a module-level token gives
+ * /install one value and /api/install another, inside the same process. The
+ * page would render the wizard and the API would then reject the very token it
+ * had just printed, leaving the wizard stuck on step 1 with no way forward.
+ * The file is the only state both bundles agree on — and it survives a restart,
+ * so the operator does not have to hunt through the logs again.
  */
-let _setupToken: string | null = null;
-let _tokenLogged = false;
-
 function generateSetupToken(): string {
-  if (!_setupToken) {
-    _setupToken = crypto.randomBytes(24).toString('base64url');
+  const dir = installContentDir();
+  const tokenPath = path.join(dir, SETUP_TOKEN_FILENAME);
+
+  try {
+    const existing = fs.readFileSync(tokenPath, 'utf8').trim();
+    if (existing) return existing;
+  } catch {
+    // Not created yet — fall through and mint one.
   }
-  return _setupToken;
+
+  const token = crypto.randomBytes(24).toString('base64url');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(tokenPath, `${token}\n`, { mode: 0o600 });
+  return token;
 }
+
+let _tokenLogged = false;
 
 export function getSetupToken(): string {
   const token = generateSetupToken();
@@ -267,6 +286,15 @@ export async function completeInstall(input: InstallInput): Promise<void> {
     await fs.promises.chmod(path.join(dir, INSTALL_FILENAME), 0o600);
   } catch {
     // chmod is a no-op on Windows; on Linux it prevents world-readable secrets.
+  }
+
+  // The token exists to gate a setup that has not happened yet. Leaving it on
+  // disk would keep a valid credential lying around for a door that is now
+  // closed anyway (isInstalled() makes every install route answer 403).
+  try {
+    fs.unlinkSync(path.join(dir, SETUP_TOKEN_FILENAME));
+  } catch {
+    // Never created, or already removed.
   }
 
   // Drop the in-process cache so the next isInstalled()/getInstallCredentials()

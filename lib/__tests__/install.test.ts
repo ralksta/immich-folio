@@ -235,3 +235,57 @@ describe('isInstallPath', () => {
     expect(isInstallPath(null)).toBe(false);
   });
 });
+
+describe('setup token', () => {
+  /**
+   * The reason this is a file and not a module variable: Next.js bundles the
+   * install page and the install route handlers separately, so each gets its
+   * own instance of lib/install.ts. A module-level token made /install render
+   * the wizard and /api/install reject that same token, inside one process —
+   * the wizard could not get past step 1. Two freshly imported module
+   * instances reproduce exactly that split.
+   */
+  it('agrees across separate module instances', async () => {
+    const pageSide = await loadInstall();
+    const token = pageSide.getSetupToken();
+
+    const apiSide = await loadInstall(); // fresh instance, as a second bundle would be
+    expect(apiSide.validateSetupToken(token)).toBe(true);
+  });
+
+  it('persists across a restart, so the operator keeps the logged token', async () => {
+    const first = await loadInstall();
+    const token = first.getSetupToken();
+
+    const afterRestart = await loadInstall();
+    expect(afterRestart.getSetupToken()).toBe(token);
+  });
+
+  it('writes the token 0600 — it is a credential, not a config value', async () => {
+    const { getSetupToken } = await loadInstall();
+    getSetupToken();
+
+    const mode = fs.statSync(path.join(dir, '.setup-token')).mode & 0o777;
+    expect(mode).toBe(0o600);
+  });
+
+  it('rejects a wrong or missing token', async () => {
+    const { getSetupToken, validateSetupToken } = await loadInstall();
+    getSetupToken();
+
+    expect(validateSetupToken('nope')).toBe(false);
+    expect(validateSetupToken('')).toBe(false);
+    expect(validateSetupToken(null)).toBe(false);
+  });
+
+  // Once install is done every install route answers 403, so the token guards
+  // nothing — leaving it on disk would just be a stray credential.
+  it('is removed once the install completes', async () => {
+    const { getSetupToken, completeInstall } = await loadInstall();
+    getSetupToken();
+    expect(fs.existsSync(path.join(dir, '.setup-token'))).toBe(true);
+
+    await completeInstall({ apiUrl: 'http://immich.local', apiKey: 'k', albums: [] });
+    expect(fs.existsSync(path.join(dir, '.setup-token'))).toBe(false);
+  });
+});
