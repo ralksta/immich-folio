@@ -360,3 +360,47 @@ export function IconArrowLeftRight({ size = 16, className = 'svg-icon', strokeWi
   );
 }
 
+export function IconCalendar({ size = 16, className = 'svg-icon', strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <rect width="18" height="18" x="3" y="4" rx="2" />
+      <path d="M8 2v4M16 2v4M3 10h18" />
+    </svg>
+  );
+}
+
+export function IconArrowDown({ size = 16, className = 'svg-icon', strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <path d="M12 5v14M19 12l-7 7-7-7" />
+    </svg>
+  );
+}
+
+export function IconArrowUp({ size = 16, className = 'svg-icon', strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <path d="M12 19V5M5 12l7-7 7 7" />
+    </svg>
+  );
+}
+
+/** An "A→Z" marker for alphabetical / filename ordering. */
+export function IconSortAlpha({ size = 16, className = 'svg-icon', strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <path d="M4 10 7 3l3 7M4.9 8.2h4.2" />
+      <path d="M14 3h6l-6 7h6" />
+      <path d="M17 14v7M14 18l3 3 3-3" />
+    </svg>
+  );
+}
+
+export function IconCheck({ size = 16, className = 'svg-icon', strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
