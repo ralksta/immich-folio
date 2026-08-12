@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import * as Icons from './Icons';
+import SaveBar from './SaveBar';
 
 interface Settings {
   title?: string;
@@ -289,30 +290,15 @@ export default function SettingsEditor() {
 
   return (
     <div className="settings-editor">
-      {/* Save Bar */}
-      <div className={`save-bar ${dirty ? 'dirty' : ''}`}>
-        <div className="save-bar-left">
-          {dirty && <span className="unsaved-badge">Unsaved changes</span>}
-          {saveMessage ? (
-            <span
-              className={`save-message ${saveMessage.startsWith('Error') ? 'error' : 'success'}`}
-            >
-              {saveMessage}
-            </span>
-          ) : (
-            <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-              ⚡ Live Sync (No Docker restart required)
-            </span>
-          )}
-        </div>
-        <button
-          className="admin-btn admin-btn-primary"
-          onClick={handleSave}
-          disabled={!dirty || saving}
-        >
-          {saving ? 'Saving...' : 'Save Settings'}
-        </button>
-      </div>
+      <SaveBar
+        dirty={dirty}
+        saving={saving}
+        saveMessage={saveMessage}
+        onSave={handleSave}
+        label="Save Settings"
+      />
+
+      <p className="settings-live-sync-note">⚡ Live Sync (No Docker restart required)</p>
 
       <div className="settings-layout">
         {/* Sidebar */}
