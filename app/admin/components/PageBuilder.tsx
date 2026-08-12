@@ -23,6 +23,7 @@ import AlbumPicker from './AlbumPicker';
 import AssetPicker from './AssetPicker';
 import AssetOrderEditor from './AssetOrderEditor';
 import { EssayBlockEditor } from './EssayBlockEditor';
+import SaveBar from './SaveBar';
 import {
   ALBUM_SORT_MODES,
   DEFAULT_ALBUM_SORT,
@@ -860,38 +861,14 @@ export default function PageBuilder() {
 
   return (
     <div className="page-builder">
-      {/* Save Bar */}
-      <div className={`save-bar ${dirty ? 'dirty' : ''}`}>
-        <div className="save-bar-left">
-          {dirty && <span className="unsaved-badge">Unsaved changes</span>}
-          {saveMessage && (
-            <span
-              className={`save-message ${saveMessage.startsWith('Error') ? 'error' : 'success'}`}
-            >
-              {saveMessage}
-            </span>
-          )}
-          {!dirty && !saveMessage && <span className="save-hint">⌘S to save</span>}
-        </div>
-        <div className="save-bar-right">
-          <a
-            href="/?fresh=1"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="admin-btn admin-btn-ghost admin-btn-preview"
-            title="Open site in new tab (bypassing cache)"
-          >
-            ↗ Preview Site
-          </a>
-          <button
-            className="admin-btn admin-btn-primary"
-            onClick={handleSave}
-            disabled={!dirty || saving}
-          >
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
-      </div>
+      <SaveBar
+        dirty={dirty}
+        saving={saving}
+        saveMessage={saveMessage}
+        onSave={handleSave}
+        label="Save Changes"
+        showPreview
+      />
 
       {/* Search Bar */}
       <div className="builder-search-container">

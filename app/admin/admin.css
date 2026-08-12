@@ -379,29 +379,14 @@
 
 .admin-main {
   flex: 1;
-  padding: 1.5rem;
+  /* Extra bottom padding so the floating save bar never covers page content. */
+  padding: 1.5rem 1.5rem 6rem;
   max-width: 1120px;
   margin: 0 auto;
   width: 100%;
 }
 
 /* ── Save Bar ──────────────────────────────────────────────── */
-
-.save-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1.5rem;
-  border-radius: 8px;
-  background: var(--admin-bg-raised);
-  border: 1px solid var(--admin-border);
-  transition: border-color 0.2s;
-}
-
-.save-bar.dirty {
-  border-color: var(--admin-accent);
-}
 
 .save-bar-left {
   display: flex;
@@ -410,6 +395,8 @@
 }
 
 .unsaved-badge {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.75rem;
   color: var(--admin-accent);
   font-weight: 500;
@@ -1066,6 +1053,12 @@
 }
 
 /* ── Settings Editor ──────────────────────────────────────── */
+
+.settings-live-sync-note {
+  margin: 0 0 1.25rem;
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+}
 
 .settings-layout {
   display: grid;
@@ -1728,11 +1721,6 @@
   text-decoration: none;
 }
 
-.save-hint {
-  font-size: 0.7rem;
-  color: var(--admin-text-muted);
-}
-
 /* ── Danger icon button ───────────────────────────────────────── */
 
 .admin-btn-icon-danger:hover {
@@ -1743,7 +1731,14 @@
 
 @media (max-width: 768px) {
   .admin-main {
-    padding: 1rem;
+    padding: 1rem 1rem 6rem;
+  }
+
+  .floating-save-bar {
+    bottom: 1rem;
+    width: calc(100% - 2rem);
+    padding: 0.625rem 0.875rem;
+    gap: 0.5rem;
   }
 
   .admin-header {
@@ -3351,9 +3346,28 @@ h3 .svg-icon {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
   width: calc(100% - 3rem);
   max-width: 800px;
-  transition: all 0.25s ease;
+  transition: border-color 0.2s ease;
+  animation: save-bar-in 0.2s ease-out;
+}
+
+.floating-save-bar.dirty {
+  border-color: var(--admin-accent);
+}
+
+/* Keyframes must carry the translateX(-50%) or the bar jumps horizontally. */
+@keyframes save-bar-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 .badge-pulse-dot {
@@ -3378,6 +3392,15 @@ h3 .svg-icon {
   100% {
     transform: scale(0.95);
     box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-save-bar {
+    animation: none;
+  }
+  .badge-pulse-dot {
+    animation: none;
   }
 }
 

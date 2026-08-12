@@ -196,11 +196,11 @@ export default function AdminDashboard({ onLogout }: Props) {
           </div>
 
           <a
-            href="/"
+            href="/?fresh=1"
             target="_blank"
             rel="noopener noreferrer"
             className="admin-btn admin-btn-ghost"
-            title="Open site in new tab"
+            title="Open site in new tab (bypassing cache)"
           >
             <Icons.IconLink size={14} /> Site
           </a>
