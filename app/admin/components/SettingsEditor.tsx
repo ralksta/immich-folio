@@ -33,6 +33,8 @@ interface Settings {
     email?: string;
     website?: string;
   };
+  /** EXPERIMENTAL: external links appended to the header navigation */
+  navLinks?: Array<{ label?: string; url?: string }>;
   legal?: {
     enabled?: boolean;
     name?: string;
@@ -954,6 +956,59 @@ export default function SettingsEditor() {
                   />
                 </div>
               </div>
+
+              <div className="settings-section-header" style={{ marginTop: '2rem' }}>
+                <h3><Icons.IconLink size={18} /> Header Navigation Links (Experimental)</h3>
+                <p className="settings-section-sub">External links shown after your pages in the header menu. Only http(s) URLs are allowed; they open in a new tab.</p>
+              </div>
+
+              {(settings.navLinks || []).map((link, i) => (
+                <div className="admin-field-row" key={i}>
+                  <div className="admin-field">
+                    <label>Label</label>
+                    <input
+                      value={link.label || ''}
+                      onChange={(e) => {
+                        const next = [...(settings.navLinks || [])];
+                        next[i] = { ...next[i], label: e.target.value };
+                        update('navLinks', next);
+                      }}
+                      placeholder="Shop"
+                    />
+                  </div>
+                  <div className="admin-field">
+                    <label>URL</label>
+                    <input
+                      value={link.url || ''}
+                      onChange={(e) => {
+                        const next = [...(settings.navLinks || [])];
+                        next[i] = { ...next[i], url: e.target.value };
+                        update('navLinks', next);
+                      }}
+                      placeholder="https://shop.example.com"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-sm"
+                    style={{ alignSelf: 'flex-end' }}
+                    onClick={() => {
+                      const next = (settings.navLinks || []).filter((_, j) => j !== i);
+                      update('navLinks', next.length > 0 ? next : undefined);
+                    }}
+                    title="Remove link"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="admin-btn admin-btn-sm"
+                onClick={() => update('navLinks', [...(settings.navLinks || []), { label: '', url: '' }])}
+              >
+                + Add external link
+              </button>
             </div>
           )}
 

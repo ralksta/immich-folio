@@ -46,6 +46,15 @@ grid:
   aspectRatio: "1" # "1" (square), "3/2", "2/3", "16/9", "auto"
   layout: "masonry" # masonry, uniform, showcase, filmstrip, editorial-flow, justified (EXPERIMENTAL)
 
+# ── Navigation ────────────────────────────────────────────────────
+# EXPERIMENTAL: external links appended to the header navigation.
+# Only http(s) URLs are allowed; they open in a new tab.
+# navLinks:
+#   - label: "Shop"
+#     url: "https://shop.example.com"
+#   - label: "Instagram"
+#     url: "https://instagram.com/your-handle"
+
 # ── Footer & Social ──────────────────────────────────────────────
 footer:
   name: "My Photography"
