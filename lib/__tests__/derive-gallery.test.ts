@@ -156,6 +156,28 @@ describe('deriveGallery accepts valid structures', () => {
     expect(result.albumManualOrders[A]).toEqual([B]);
   });
 
+  // EXPERIMENTAL: hidden keeps a subpage reachable by direct link while
+  // removing it from navigation — distinct from enabled:false, which 404s.
+  it('derives the hidden flag on array-style subpages', () => {
+    const result = deriveGallery({
+      subpages: [{ name: 'Preview', hidden: true, albums: [A] }],
+    } as unknown as GalleryYaml);
+
+    expect(result.subpages[0].hidden).toBe(true);
+    expect(result.subpages[0].enabled).toBe(true);
+  });
+
+  it('derives the hidden flag on map-style subpages, defaulting to falsy', () => {
+    const result = deriveGallery({
+      subpages: { Preview: { hidden: true, albums: [A] }, Open: [B] },
+    } as unknown as GalleryYaml);
+
+    const preview = result.subpages.find((sp) => sp.name === 'Preview');
+    const open = result.subpages.find((sp) => sp.name === 'Open');
+    expect(preview?.hidden).toBe(true);
+    expect(open?.hidden).toBeFalsy();
+  });
+
   it('ignores an empty asset order rather than storing one', () => {
     const result = deriveGallery({
       albums: [{ [A]: { sort: 'manual', assetOrder: [] } }],

@@ -105,6 +105,8 @@ interface Subpage {
   subtitle?: string;
   password?: string;
   enabled?: boolean;
+  /** EXPERIMENTAL: reachable by direct link, but not shown in navigation */
+  hidden?: boolean;
   essayText?: string;
   essayFile?: string;
   sections?: Section[];
@@ -325,6 +327,12 @@ function SortableSubpageTile({
         </span>
       )}
 
+      {sp.hidden === true && sp.enabled !== false && (
+        <span className="subpage-badge-protected" title="Hidden from navigation, reachable by direct link">
+          Unlisted
+        </span>
+      )}
+
       {sp.password && (
         <span className="subpage-badge-protected" title="Password protected">
           <IconLock size={12} /> Password
@@ -469,6 +477,7 @@ export default function PageBuilder() {
         subtitle: sp.subtitle as string | undefined,
         password: sp.password as string | undefined,
         enabled: sp.enabled !== false,
+        hidden: sp.hidden === true,
         essayText: sp.essayText as string | undefined,
         essayFile: sp.essayFile as string | undefined,
         albums: parseAlbumEntries(sp.albums as Array<string | Record<string, string>> | undefined),
@@ -493,6 +502,7 @@ export default function PageBuilder() {
           subtitle: sp.subtitle as string | undefined,
           password: sp.password as string | undefined,
           enabled: sp.enabled !== false,
+          hidden: sp.hidden === true,
           essayText: sp.essayText as string | undefined,
           essayFile: sp.essayFile as string | undefined,
           albums: parseAlbumEntries(
@@ -532,6 +542,7 @@ export default function PageBuilder() {
         if (sp.subtitle) entry.subtitle = sp.subtitle;
         if (sp.password) entry.password = sp.password;
         if (sp.enabled === false) entry.enabled = false;
+        if (sp.hidden === true) entry.hidden = true;
         if (sp.essayText) entry.essayText = sp.essayText;
         if (sp.essayFile) entry.essayFile = sp.essayFile;
         if (sp.grid) entry.grid = sp.grid;
@@ -1248,6 +1259,30 @@ export default function PageBuilder() {
                               </span>
                             </div>
                             <div className={`switch-toggle ${sp.enabled !== false ? 'on' : ''}`}>
+                              <span className="switch-slider" />
+                            </div>
+                          </button>
+                        </div>
+
+                        <div className="admin-field" style={{ marginTop: '1rem' }}>
+                          <label>Navigation Listing (Experimental)</label>
+                          <button
+                            type="button"
+                            className={`admin-toggle-card ${sp.hidden === true ? 'active' : ''}`}
+                            onClick={() => updateSubpage(spIndex, { hidden: sp.hidden !== true })}
+                            style={{ padding: '10px 14px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '8px', cursor: 'pointer' }}
+                          >
+                            <div className="toggle-card-info" style={{ textAlign: 'left' }}>
+                              <span className="toggle-card-title" style={{ fontWeight: 600 }}>
+                                {sp.hidden === true ? '🙈 Unlisted' : '📋 Listed in navigation'}
+                              </span>
+                              <span className="toggle-card-desc" style={{ fontSize: '0.8rem', display: 'block', opacity: 0.75 }}>
+                                {sp.hidden === true
+                                  ? 'Not shown in menus or on the homepage, but reachable via direct link'
+                                  : 'Shown in the header menu and homepage lists'}
+                              </span>
+                            </div>
+                            <div className={`switch-toggle ${sp.hidden === true ? 'on' : ''}`}>
                               <span className="switch-slider" />
                             </div>
                           </button>
