@@ -81,7 +81,14 @@ export interface GridConfig {
   columns: number;
   gap: number;
   aspectRatio: string;
-  layout: 'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow' | 'essay' | 'justified';
+  layout:
+    | 'masonry'
+    | 'uniform'
+    | 'showcase'
+    | 'filmstrip'
+    | 'editorial-flow'
+    | 'essay'
+    | 'justified';
 }
 
 export interface AppConfig {
@@ -121,6 +128,8 @@ export interface AppConfig {
   albumSortModes: Record<string, AlbumSortMode>;
   /** Pinned asset UUIDs per album for `sort: manual`, in display order. */
   albumManualOrders: Record<string, string[]>;
+  /** EXPERIMENTAL: per-album grid overrides, merged over the subpage/global grid. */
+  albumGrids: Record<string, Partial<GridConfig>>;
   cacheTtl: number;
   /** How long (ms) an expired cache entry may still be served while Immich is unreachable. */
   staleMaxAge: number;
@@ -154,6 +163,8 @@ export interface AlbumEntryObject {
   sort?: string;
   /** Pinned asset UUIDs for `sort: manual`. Everything else follows automatically. */
   assetOrder?: string[];
+  /** EXPERIMENTAL: per-album grid override, merged over the subpage/global grid */
+  grid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
 }
 
 export interface GalleryYaml {
