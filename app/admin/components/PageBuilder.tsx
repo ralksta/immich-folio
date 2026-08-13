@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -32,6 +32,9 @@ import {
 } from '@/lib/albumSort';
 import type { AlbumEntryObject } from '@/lib/config/schema';
 import {
+  IconArrowDown,
+  IconArrowUp,
+  IconCalendar,
   IconCamera,
   IconCopy,
   IconFolder,
@@ -42,16 +45,17 @@ import {
   IconPencil,
   IconPlus,
   IconSearch,
+  IconSortAlpha,
   IconTrash,
   IconX,
 } from './Icons';
+import { Listbox, type ListboxOption } from './Listbox';
 
 /**
- * Labels for the per-album sort select. Order matches ALBUM_SORT_MODES.
+ * Labels for the per-album sort control.
  *
- * Plain text, no emoji: an <option> cannot contain markup, so the SVG set from
- * `./Icons` is not available here — and a decorative emoji is not a substitute
- * for it. The badge on the album card uses a real icon instead.
+ * Kept as plain text on their own because they also feed the `title` attribute
+ * on the album card's sort badge, where markup is not an option.
  */
 const SORT_LABELS: Record<AlbumSortMode, string> = {
   immich: 'Immich order (default)',
@@ -60,6 +64,21 @@ const SORT_LABELS: Record<AlbumSortMode, string> = {
   filename: 'Filename',
   manual: 'Manual',
 };
+
+/** Manual reuses the drag glyph so the control matches the card's badge. */
+const SORT_ICONS: Record<AlbumSortMode, ReactNode> = {
+  immich: <IconCalendar />,
+  newest: <IconArrowDown />,
+  oldest: <IconArrowUp />,
+  filename: <IconSortAlpha />,
+  manual: <IconGripVertical />,
+};
+
+const SORT_OPTIONS: readonly ListboxOption<AlbumSortMode>[] = ALBUM_SORT_MODES.map((mode) => ({
+  value: mode,
+  label: SORT_LABELS[mode],
+  icon: SORT_ICONS[mode],
+}));
 
 // ── Types ──────────────────────────────────────────────────────
 interface AlbumEntry {
@@ -1595,27 +1614,13 @@ export default function PageBuilder() {
 
                   {/* Photo order */}
                   <div className="admin-field">
-                    <label>Photo order</label>
-                    <select
+                    <label id="album-sort-label">Photo order</label>
+                    <Listbox
+                      labelledBy="album-sort-label"
                       value={album.sort || DEFAULT_ALBUM_SORT}
-                      onChange={(e) =>
-                        onUpdate({
-                          sort: isAlbumSortMode(e.target.value) ? e.target.value : undefined,
-                        })
-                      }
-                      style={{
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        width: '100%',
-                        fontSize: '0.9rem',
-                      }}
-                    >
-                      {ALBUM_SORT_MODES.map((mode) => (
-                        <option key={mode} value={mode}>
-                          {SORT_LABELS[mode]}
-                        </option>
-                      ))}
-                    </select>
+                      options={SORT_OPTIONS}
+                      onChange={(mode) => onUpdate({ sort: mode })}
+                    />
                     <span className="admin-field-hint">
                       {album.sort === 'manual'
                         ? 'Pinned photos come first, in the order you set. Everything else follows in the album’s Immich order.'
