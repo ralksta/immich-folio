@@ -196,6 +196,26 @@ describe('deriveGallery accepts valid structures', () => {
     expect(result.albumGrids).toEqual({});
   });
 
+  // EXPERIMENTAL: coverPosition feeds object-position on cover images, so it
+  // must be a strict CSS position value — anything else is a typo or an
+  // injection attempt and both should fail loudly.
+  it('collects a valid coverPosition', () => {
+    const result = deriveGallery({
+      albums: [{ [A]: { coverPosition: '50% 25%' } }, { [B]: { coverPosition: 'top' } }],
+    } as unknown as GalleryYaml);
+
+    expect(result.albumCoverPositions[A]).toBe('50% 25%');
+    expect(result.albumCoverPositions[B]).toBe('top');
+  });
+
+  it('rejects a malformed coverPosition, naming the album', () => {
+    expect(() =>
+      deriveGallery({
+        albums: [{ [A]: { coverPosition: 'javascript:alert(1)' } }],
+      } as unknown as GalleryYaml),
+    ).toThrow(new RegExp(A));
+  });
+
   it('ignores an empty asset order rather than storing one', () => {
     const result = deriveGallery({
       albums: [{ [A]: { sort: 'manual', assetOrder: [] } }],

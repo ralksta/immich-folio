@@ -367,7 +367,14 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
     // Override albumThumbnailAssetId with the configured hero image (if any)
     const albumsWithHero = albums.map((album) => {
       const heroId = config.albumHeroImages[album.id];
-      return heroId ? { ...album, albumThumbnailAssetId: heroId } : album;
+      // EXPERIMENTAL: coverPosition rides along so the card crop can honour
+      // the configured focal point.
+      const coverPosition = config.albumCoverPositions[album.id];
+      return {
+        ...album,
+        ...(heroId ? { albumThumbnailAssetId: heroId } : {}),
+        ...(coverPosition ? { coverPosition } : {}),
+      };
     });
 
     // Batch-fetch ThumbHash for album cover placeholders

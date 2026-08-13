@@ -88,6 +88,7 @@ export interface GalleryDerivation {
   albumSortModes: Record<string, AlbumSortMode>;
   albumManualOrders: Record<string, string[]>;
   albumGrids: Record<string, Partial<GridConfig>>;
+  albumCoverPositions: Record<string, string>;
 }
 
 /**
@@ -110,6 +111,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   const albumSortModes: Record<string, AlbumSortMode> = {};
   const albumManualOrders: Record<string, string[]> = {};
   const albumGrids: Record<string, Partial<GridConfig>> = {};
+  const albumCoverPositions: Record<string, string> = {};
 
   function processAlbumEntry(
     entry: string | Record<string, string | AlbumEntryObject>,
@@ -170,6 +172,22 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
       if (value.grid) {
         const built = buildSubpageGrid(value.grid);
         if ('grid' in built) albumGrids[validatedUuid] = built.grid;
+      }
+
+      // EXPERIMENTAL: coverPosition lands in a style attribute, so only a
+      // strict CSS position grammar is allowed. Throw like `sort` does — a
+      // silent fallback would leave the owner wondering why nothing moves.
+      if (value.coverPosition != null) {
+        const pos = value.coverPosition.trim();
+        const keyword = /^(center|top|bottom|left|right)( (center|top|bottom|left|right))?$/;
+        const percent = /^\d{1,3}% \d{1,3}%$/;
+        if (!keyword.test(pos) && !percent.test(pos)) {
+          throw new Error(
+            `${context}: album ${validatedUuid} has an invalid coverPosition "${value.coverPosition}". ` +
+              `Use two percentages ("50% 25%") or CSS keywords ("top", "center bottom").`,
+          );
+        }
+        albumCoverPositions[validatedUuid] = pos;
       }
     }
     return validatedUuid;
@@ -274,6 +292,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
     albumSortModes,
     albumManualOrders,
     albumGrids,
+    albumCoverPositions,
   };
 }
 
@@ -328,6 +347,7 @@ export function getConfig(): AppConfig {
       albumSortModes: {},
       albumManualOrders: {},
       albumGrids: {},
+      albumCoverPositions: {},
       cacheTtl: env.CACHE_TTL * 1000,
       staleMaxAge: env.STALE_MAX_AGE * 1000,
       immichTimeoutMs: env.IMMICH_TIMEOUT_MS,
@@ -350,6 +370,7 @@ export function getConfig(): AppConfig {
     albumSortModes,
     albumManualOrders,
     albumGrids,
+    albumCoverPositions,
   } = deriveGallery(gallery);
 
   const siteSeoTitle = settings.seo?.title || settings.title || env.SITE_TITLE || 'Gallery';
@@ -425,6 +446,7 @@ export function getConfig(): AppConfig {
     albumSortModes,
     albumManualOrders,
     albumGrids,
+    albumCoverPositions,
     cacheTtl: env.CACHE_TTL * 1000,
     staleMaxAge: env.STALE_MAX_AGE * 1000,
     immichTimeoutMs: env.IMMICH_TIMEOUT_MS,
