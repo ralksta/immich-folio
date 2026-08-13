@@ -218,6 +218,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         essayFile: sp.essayFile,
         essayText: sp.essayText,
         enabled: sp.enabled !== false,
+        hidden: sp.hidden === true,
         ...buildSubpageGrid(sp.grid),
       };
     });
@@ -244,6 +245,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         essayFile: sp.essayFile,
         essayText: sp.essayText,
         enabled: sp.enabled !== false,
+        hidden: sp.hidden === true,
         ...buildSubpageGrid(sp.grid),
       };
     });

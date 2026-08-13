@@ -20,6 +20,8 @@ export interface SubpageConfig {
   essayFile?: string;
   essayText?: string;
   enabled?: boolean;
+  /** EXPERIMENTAL: reachable by direct link, but not shown in navigation */
+  hidden?: boolean;
 }
 
 export interface SubpageObjectValue {
@@ -31,6 +33,8 @@ export interface SubpageObjectValue {
   essayFile?: string;
   essayText?: string;
   enabled?: boolean;
+  /** EXPERIMENTAL: reachable by direct link, but not shown in navigation */
+  hidden?: boolean;
   // Both album lists reuse AlbumEntryObject rather than inlining the shape:
   // the inline copies had already drifted (they never gained `heroImage`), and
   // this path is live for map-style subpages.
@@ -172,6 +176,7 @@ export interface GalleryYaml {
         essayFile?: string;
         essayText?: string;
         enabled?: boolean;
+        hidden?: boolean;
         grid?: {
           columns?: number;
           gap?: number;
