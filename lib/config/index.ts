@@ -76,6 +76,32 @@ export function buildSubpageGrid(raw?: {
   };
 }
 
+/**
+ * EXPERIMENTAL: keep only nav links that are safe to render as header <a>
+ * tags. Non-http(s) schemes (javascript:, data:) and incomplete entries are
+ * dropped with a warning rather than throwing — a bad external link should
+ * not take the site down.
+ */
+export function sanitizeNavLinks(
+  raw?: Array<{ label?: string; url?: string }>,
+): Array<{ label: string; url: string }> {
+  if (!raw) return [];
+  const links: Array<{ label: string; url: string }> = [];
+  for (const entry of raw) {
+    const label = entry.label?.trim();
+    const url = entry.url?.trim();
+    if (!label || !url || !/^https?:\/\//i.test(url)) {
+      console.warn(
+        `[Folio] settings.yaml navLinks: dropping entry ${JSON.stringify(entry)} — ` +
+          'label and an http(s) url are required.',
+      );
+      continue;
+    }
+    links.push({ label, url });
+  }
+  return links;
+}
+
 /** The parts of AppConfig that come from gallery.yaml. */
 export interface GalleryDerivation {
   albums: string[];
@@ -348,6 +374,7 @@ export function getConfig(): AppConfig {
       albumManualOrders: {},
       albumGrids: {},
       albumCoverPositions: {},
+      navLinks: [],
       cacheTtl: env.CACHE_TTL * 1000,
       staleMaxAge: env.STALE_MAX_AGE * 1000,
       immichTimeoutMs: env.IMMICH_TIMEOUT_MS,
@@ -447,6 +474,7 @@ export function getConfig(): AppConfig {
     albumManualOrders,
     albumGrids,
     albumCoverPositions,
+    navLinks: sanitizeNavLinks(settings.navLinks),
     cacheTtl: env.CACHE_TTL * 1000,
     staleMaxAge: env.STALE_MAX_AGE * 1000,
     immichTimeoutMs: env.IMMICH_TIMEOUT_MS,

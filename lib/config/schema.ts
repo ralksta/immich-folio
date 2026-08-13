@@ -46,6 +46,12 @@ export interface SubpageObjectValue {
   }>;
 }
 
+/** EXPERIMENTAL: external link shown in the header navigation. */
+export interface NavLinkConfig {
+  label: string;
+  url: string;
+}
+
 export interface FooterConfig {
   name?: string;
   instagram?: string;
@@ -132,6 +138,8 @@ export interface AppConfig {
   albumGrids: Record<string, Partial<GridConfig>>;
   /** EXPERIMENTAL: per-album focal point for cover crops (CSS object-position). */
   albumCoverPositions: Record<string, string>;
+  /** EXPERIMENTAL: external links appended to the header navigation. */
+  navLinks: NavLinkConfig[];
   cacheTtl: number;
   /** How long (ms) an expired cache entry may still be served while Immich is unreachable. */
   staleMaxAge: number;
@@ -240,6 +248,8 @@ export interface SettingsYaml {
   };
   footer?: FooterConfig;
   legal?: Partial<LegalConfig>;
+  /** EXPERIMENTAL: external links appended to the header navigation. */
+  navLinks?: Array<{ label?: string; url?: string }>;
   protection?: {
     disableRightClick?: boolean;
     disableImageDrag?: boolean;

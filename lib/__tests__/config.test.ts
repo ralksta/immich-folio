@@ -12,7 +12,38 @@ vi.mock('@/lib/env', () => ({
   },
 }));
 
-import { slugify, buildSubpageGrid } from '@/lib/config';
+import { slugify, buildSubpageGrid, sanitizeNavLinks } from '@/lib/config';
+
+// EXPERIMENTAL: external navigation links — rendered as <a href> in the
+// header, so only http(s) URLs may survive sanitisation.
+describe('sanitizeNavLinks', () => {
+  it('keeps well-formed http(s) links', () => {
+    expect(
+      sanitizeNavLinks([
+        { label: 'Shop', url: 'https://shop.example.com' },
+        { label: 'Blog', url: 'http://blog.example.com/a?b=c' },
+      ]),
+    ).toEqual([
+      { label: 'Shop', url: 'https://shop.example.com' },
+      { label: 'Blog', url: 'http://blog.example.com/a?b=c' },
+    ]);
+  });
+
+  it('drops non-http schemes and entries without label or url', () => {
+    expect(
+      sanitizeNavLinks([
+        { label: 'Bad', url: 'javascript:alert(1)' },
+        { label: 'AlsoBad', url: 'data:text/html,x' },
+        { label: '', url: 'https://x.example' },
+        { label: 'NoUrl', url: '' },
+      ]),
+    ).toEqual([]);
+  });
+
+  it('returns empty for undefined input', () => {
+    expect(sanitizeNavLinks(undefined)).toEqual([]);
+  });
+});
 
 describe('slugify', () => {
   it('converts a simple name to lowercase with hyphens', () => {
