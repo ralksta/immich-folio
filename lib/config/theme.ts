@@ -81,6 +81,7 @@ export const VALID_HERO_STYLES = [
   'stacked',
   'typographic',
   'mosaic',
+  'cover', // EXPERIMENTAL: fullscreen splash with a single "Enter" link
 ];
 export const VALID_LAYOUTS = [
   'masonry',

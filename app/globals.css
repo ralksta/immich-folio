@@ -244,6 +244,76 @@
   overflow: hidden;
 }
 
+/* ── Cover / Splash hero (EXPERIMENTAL) ───────────── */
+/* Fullscreen welcome page: one image, the title, a single Enter link. */
+.hero--cover {
+  position: relative;
+  min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
+  overflow: hidden;
+}
+
+.hero--cover > span,
+.hero--cover > img {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+.hero__cover-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 64px 40px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.1) 75%);
+  color: #fff;
+}
+
+.hero--cover .hero__title,
+.hero--cover .hero__subtitle {
+  color: #fff;
+}
+
+.hero__cover-enter {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 36px;
+  padding: 12px 32px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: var(--radius-lg, 4px);
+  color: #fff;
+  font-family: var(--font-caption);
+  font-size: 0.85rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition:
+    background var(--transition-normal),
+    color var(--transition-normal);
+}
+
+.hero__cover-enter:hover,
+.hero__cover-enter:focus-visible {
+  background: #fff;
+  color: #000;
+}
+
+.hero__cover-enter-arrow {
+  transition: transform var(--transition-normal);
+}
+
+.hero__cover-enter:hover .hero__cover-enter-arrow {
+  transform: translateX(4px);
+}
+
 /* HeroCarousel images fill the entire container */
 .hero--fullbleed > span,
 .hero--fullbleed > img {
