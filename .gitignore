@@ -76,3 +76,4 @@ content/.setup-token
 # ── Internal Dev Docs ────────────────────────────────
 docs/dev/
 docs/ideas.md
+/design_handoff_*/
