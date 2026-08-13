@@ -1489,168 +1489,133 @@ export default function PageBuilder() {
                   <IconX size={14} />
                 </button>
               </div>
+              {/* One scrolling column: cover banner, then the form. Anything the
+                  form already shows (password state, custom hero) is not
+                  repeated as a read-only stat. */}
               <div className="album-drawer-body">
-                {/* Left Column - Visual Info & Stats */}
-                <div className="modal-left-column">
-                  <div className="modal-cover-container">
-                    {heroThumb ? (
-                      <img src={`/api/admin/thumbnail/${heroThumb}`} alt="" loading="lazy" />
-                    ) : (
-                      <div className="modal-cover-placeholder">
-                        <IconCamera />
-                      </div>
-                    )}
-                  </div>
-                  <div className="modal-meta-box">
-                    <span className="modal-album-title">{album.title || name}</span>
-                    <span className="modal-album-subtitle">Original: {name}</span>
-                  </div>
-                  <div className="modal-info-list">
-                    <div className="modal-info-item">
-                      <span className="modal-info-label">Photo Count:</span>
-                      <span className="modal-info-value">{count} photos</span>
+                <div className="modal-cover-container">
+                  {heroThumb ? (
+                    <img src={`/api/admin/thumbnail/${heroThumb}`} alt="" loading="lazy" />
+                  ) : (
+                    <div className="modal-cover-placeholder">
+                      <IconCamera />
                     </div>
-                    <div className="modal-info-item">
-                      <span className="modal-info-label">Status:</span>
-                      <span className="modal-info-value">
-                        {album.password ? 'Password Protected' : 'Public Access'}
-                      </span>
-                    </div>
-                    <div className="modal-info-item">
-                      <span className="modal-info-label">Custom Hero:</span>
-                      <span className="modal-info-value">
-                        {album.heroImage ? 'Yes' : 'No'}
-                      </span>
-                    </div>
-                  </div>
+                  )}
+                </div>
+                <div className="modal-meta-box">
+                  <span className="modal-album-title">{album.title || name}</span>
+                  <span className="modal-album-subtitle">
+                    {count} {count === 1 ? 'photo' : 'photos'}
+                    {album.title ? ` · Original: ${name}` : ''}
+                  </span>
+                </div>
 
-                  {/* Technical UUID */}
-                  <div className="drawer-uuid-section">
-                    <label className="admin-field-label">IMMICH ALBUM UUID</label>
-                    <div className="uuid-copy-box">
-                      <code>{album.id}</code>
-                      <button
-                        className="uuid-copy-btn"
-                        onClick={() => {
-                          navigator.clipboard.writeText(album.id);
-                        }}
-                        title="Copy UUID"
-                      >
-                        <IconCopy size={12} />
-                      </button>
-                    </div>
+                <div className="admin-field">
+                  <label>Title override</label>
+                  <input
+                    value={album.title || ''}
+                    onChange={(e) => onUpdate({ title: e.target.value || undefined })}
+                    placeholder={name}
+                  />
+                </div>
+
+                <div className="admin-field">
+                  <label>Description</label>
+                  <textarea
+                    value={album.description || ''}
+                    onChange={(e) => onUpdate({ description: e.target.value || undefined })}
+                    placeholder="Optional description for visitors"
+                    rows={4}
+                  />
+                </div>
+
+                <div className="admin-field">
+                  <label>Password protection</label>
+                  <div className="input-with-icon">
+                    <input
+                      type="password"
+                      value={album.password || ''}
+                      onChange={(e) => onUpdate({ password: e.target.value || undefined })}
+                      placeholder="Leave empty for public access"
+                    />
                   </div>
                 </div>
 
-                {/* Right Column - Form Fields */}
-                <div className="modal-right-column">
-                  <div className="admin-field">
-                    <label>Title override</label>
-                    <input
-                      value={album.title || ''}
-                      onChange={(e) => onUpdate({ title: e.target.value || undefined })}
-                      placeholder={name}
-                    />
+                {/* Hero Image Selection */}
+                <div className="admin-field">
+                  <label>Custom Hero Image</label>
+                  <div className="album-hero-field">
+                    {album.heroImage ? (
+                      <div className="album-hero-preview">
+                        <img src={`/api/admin/thumbnail/${album.heroImage}`} alt="Hero" />
+                        <button
+                          className="album-hero-remove"
+                          onClick={() => onUpdate({ heroImage: undefined })}
+                          title="Remove custom hero image"
+                        >
+                          <IconX size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="album-hero-empty">Using default album cover</span>
+                    )}
+                    <button
+                      className="admin-btn admin-btn-sm"
+                      onClick={() =>
+                        setHeroPickerTarget({
+                          albumId: album.id,
+                          onSelect: (assetId) => {
+                            onUpdate({ heroImage: assetId });
+                            setHeroPickerTarget(null);
+                          },
+                          currentAssetIds: album.heroImage ? [album.heroImage] : [],
+                          title: `Pick Hero Image for ${name}`,
+                        })
+                      }
+                    >
+                      <IconImage size={12} /> {album.heroImage ? 'Change Image' : 'Pick Hero Image'}
+                    </button>
                   </div>
+                </div>
 
-                  <div className="admin-field">
-                    <label>Description</label>
-                    <textarea
-                      value={album.description || ''}
-                      onChange={(e) => onUpdate({ description: e.target.value || undefined })}
-                      placeholder="Optional description for visitors"
-                      rows={4}
-                    />
-                  </div>
+                {/* Photo order */}
+                <div className="admin-field">
+                  <label id="album-sort-label">Photo order</label>
+                  <Listbox
+                    labelledBy="album-sort-label"
+                    value={album.sort || DEFAULT_ALBUM_SORT}
+                    options={SORT_OPTIONS}
+                    onChange={(mode) => onUpdate({ sort: mode })}
+                  />
+                  <span className="admin-field-hint">
+                    {album.sort === 'manual'
+                      ? 'Pinned photos come first, in the order you set. Everything else follows in the album’s Immich order.'
+                      : 'Immich order follows the album’s own sort setting in Immich.'}
+                  </span>
 
-                  <div className="admin-field">
-                    <label>Password protection</label>
-                    <div className="input-with-icon">
-                      <input
-                        type="password"
-                        value={album.password || ''}
-                        onChange={(e) => onUpdate({ password: e.target.value || undefined })}
-                        placeholder="Leave empty for public access"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Hero Image Selection */}
-                  <div className="admin-field">
-                    <label>Custom Hero Image</label>
-                    <div className="album-hero-field">
-                      {album.heroImage ? (
-                        <div className="album-hero-preview">
-                          <img src={`/api/admin/thumbnail/${album.heroImage}`} alt="Hero" />
-                          <button
-                            className="album-hero-remove"
-                            onClick={() => onUpdate({ heroImage: undefined })}
-                            title="Remove custom hero image"
-                          >
-                            <IconX size={14} />
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="album-hero-empty">Using default album cover</span>
-                      )}
+                  {album.sort === 'manual' && (
+                    <div style={{ marginTop: '0.75rem' }}>
                       <button
                         className="admin-btn admin-btn-sm"
                         onClick={() =>
-                          setHeroPickerTarget({
+                          setOrderEditorTarget({
                             albumId: album.id,
-                            onSelect: (assetId) => {
-                              onUpdate({ heroImage: assetId });
-                              setHeroPickerTarget(null);
+                            albumName: album.title || name,
+                            assetOrder: album.assetOrder || [],
+                            onSave: (assetOrder) => {
+                              onUpdate({ assetOrder });
+                              setOrderEditorTarget(null);
                             },
-                            currentAssetIds: album.heroImage ? [album.heroImage] : [],
-                            title: `Pick Hero Image for ${name}`,
                           })
                         }
                       >
-                        <IconImage size={12} /> {album.heroImage ? 'Change Image' : 'Pick Hero Image'}
+                        <IconGripVertical size={18} className="svg-icon svg-drag" />{' '}
+                        {album.assetOrder?.length
+                          ? `Reorder photos (${album.assetOrder.length} pinned)`
+                          : 'Reorder photos'}
                       </button>
                     </div>
-                  </div>
-
-                  {/* Photo order */}
-                  <div className="admin-field">
-                    <label id="album-sort-label">Photo order</label>
-                    <Listbox
-                      labelledBy="album-sort-label"
-                      value={album.sort || DEFAULT_ALBUM_SORT}
-                      options={SORT_OPTIONS}
-                      onChange={(mode) => onUpdate({ sort: mode })}
-                    />
-                    <span className="admin-field-hint">
-                      {album.sort === 'manual'
-                        ? 'Pinned photos come first, in the order you set. Everything else follows in the album’s Immich order.'
-                        : 'Immich order follows the album’s own sort setting in Immich.'}
-                    </span>
-
-                    {album.sort === 'manual' && (
-                      <div style={{ marginTop: '0.75rem' }}>
-                        <button
-                          className="admin-btn admin-btn-sm"
-                          onClick={() =>
-                            setOrderEditorTarget({
-                              albumId: album.id,
-                              albumName: album.title || name,
-                              assetOrder: album.assetOrder || [],
-                              onSave: (assetOrder) => {
-                                onUpdate({ assetOrder });
-                                setOrderEditorTarget(null);
-                              },
-                            })
-                          }
-                        >
-                          <IconGripVertical size={18} className="svg-icon svg-drag" />{' '}
-                          {album.assetOrder?.length
-                            ? `Reorder photos (${album.assetOrder.length} pinned)`
-                            : 'Reorder photos'}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
               <div className="album-drawer-footer">
@@ -1661,6 +1626,19 @@ export default function PageBuilder() {
                 >
                   <IconTrash size={14} /> Remove Album
                 </button>
+                <div className="uuid-copy-box" title="Immich album UUID">
+                  <code>{album.id}</code>
+                  <button
+                    className="uuid-copy-btn"
+                    onClick={() => {
+                      navigator.clipboard.writeText(album.id);
+                    }}
+                    title="Copy UUID"
+                    aria-label="Copy Immich album UUID"
+                  >
+                    <IconCopy size={12} />
+                  </button>
+                </div>
                 <button
                   className="admin-btn admin-btn-primary"
                   onClick={() => setEditingAlbumAddress(null)}
