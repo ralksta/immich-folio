@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { IconFolder, IconImage, IconStar } from './Icons';
+import { useScrollLock } from './useScrollLock';
 
 interface AssetInfo {
   id: string;
@@ -27,6 +28,7 @@ export default function AssetPicker({
   albumId,
   title,
 }: Props) {
+  useScrollLock(true);
   const [tab, setTab] = useState<Tab>(albumId ? 'album' : 'favorites');
   const [assets, setAssets] = useState<AssetInfo[]>([]);
   const [loading, setLoading] = useState(true);

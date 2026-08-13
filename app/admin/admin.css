@@ -3,7 +3,11 @@
 /* Supports light/dark mode via data-theme attribute on <html>. */
 
 /* ── Theme Variables ───────────────────────────────────────── */
-.admin-layout {
+/* .admin-listbox-popup is listed alongside .admin-layout because it is
+   portalled to <body>, outside the layout subtree. Without its own copy every
+   var below resolves to nothing there, and the popup paints transparent. */
+.admin-layout,
+.admin-listbox-popup {
   /* Dark mode (default) */
   --admin-bg: #111111;
   --admin-bg-raised: #1a1a1a;
@@ -26,7 +30,8 @@
   --admin-overlay: rgba(0, 0, 0, 0.7);
 }
 
-[data-theme='light'] .admin-layout {
+[data-theme='light'] .admin-layout,
+[data-theme='light'] .admin-listbox-popup {
   --admin-bg: #f8f8f8;
   --admin-bg-raised: #ffffff;
   --admin-bg-elevated: #f0f0f0;
@@ -255,9 +260,14 @@
   position: fixed;
   z-index: 1100;
   overflow-y: auto;
+  /* A long list scrolls internally; without this, reaching its end hands the
+     wheel to whatever is behind the modal. */
+  overscroll-behavior: contain;
   margin: 0;
   padding: 0.25rem;
   list-style: none;
+  /* Also outside .admin-layout, so the font does not inherit either. */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   background: var(--admin-bg-elevated);
   border: 1px solid var(--admin-border);
   border-radius: 8px;
@@ -1081,6 +1091,7 @@
 .picker-list {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0.5rem;
 }
 
@@ -1652,6 +1663,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0.75rem;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -2124,6 +2136,8 @@ h3 .svg-icon {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* Stop the scroll handing off to the page once the form hits its end. */
+  overscroll-behavior: contain;
   padding: 1.75rem;
   display: flex;
   flex-direction: column;
@@ -2509,6 +2523,7 @@ h3 .svg-icon {
 .backup-modal-body {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 1rem 1.5rem;
 }
 
@@ -3366,6 +3381,7 @@ h3 .svg-icon {
 .subpage-drawer-body {
   padding: 1.5rem;
   overflow-y: auto;
+  overscroll-behavior: contain;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -3966,6 +3982,7 @@ h3 .svg-icon {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0.75rem;
 }
 

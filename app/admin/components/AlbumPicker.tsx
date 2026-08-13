@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useScrollLock } from './useScrollLock';
 
 interface ImmichAlbumInfo {
   id: string;
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }: Props) {
+  useScrollLock(true);
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {

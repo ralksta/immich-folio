@@ -24,6 +24,7 @@ import AssetPicker from './AssetPicker';
 import AssetOrderEditor from './AssetOrderEditor';
 import { EssayBlockEditor } from './EssayBlockEditor';
 import SaveBar from './SaveBar';
+import { useScrollLock } from './useScrollLock';
 import {
   ALBUM_SORT_MODES,
   DEFAULT_ALBUM_SORT,
@@ -385,6 +386,11 @@ export default function PageBuilder() {
   } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingAlbumAddress, setEditingAlbumAddress] = useState<ActiveEditAlbumAddress | null>(null);
+
+  // Keep the builder still behind either drawer. One combined lock rather than
+  // one per drawer: the album drawer opens from inside the subpage drawer, and
+  // a single condition avoids two locks racing over the same inline style.
+  useScrollLock(editingAlbumAddress !== null || expandedSubpage !== null);
 
   // DnD sensors
   const sensors = useSensors(
