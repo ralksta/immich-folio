@@ -61,6 +61,7 @@ subpages:
           # grid: # EXPERIMENTAL: per-album grid override (wins over page/global grid)
           #   layout: "justified"
           #   columns: 2
+          # coverPosition: "50% 25%" # EXPERIMENTAL: focal point for the cover crop ("top", "center bottom", "50% 25%")
 
 # ── Subpage with Sections ──────────────────────────────────────────
 # Use sections to group albums by location, theme, or any other logic.

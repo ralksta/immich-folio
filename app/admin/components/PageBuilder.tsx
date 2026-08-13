@@ -93,6 +93,8 @@ interface AlbumEntry {
   assetOrder?: string[];
   /** EXPERIMENTAL: per-album grid override (layout only in the UI for now) */
   grid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
+  /** EXPERIMENTAL: focal point for the cover crop, e.g. "50% 25%" or "top" */
+  coverPosition?: string;
 }
 
 interface Section {
@@ -157,7 +159,8 @@ function hasAlbumOptions(entry: AlbumEntry): boolean {
     entry.heroImage ||
     (entry.sort && entry.sort !== DEFAULT_ALBUM_SORT) ||
     entry.assetOrder?.length ||
-    entry.grid,
+    entry.grid ||
+    entry.coverPosition,
   );
 }
 
@@ -176,6 +179,7 @@ function parseAlbumEntries(raw: RawAlbumEntry[] | undefined): AlbumEntry[] {
       sort: isAlbumSortMode(value.sort) ? value.sort : undefined,
       assetOrder: value.assetOrder,
       grid: value.grid,
+      coverPosition: value.coverPosition,
     };
   });
 }
@@ -198,6 +202,7 @@ function serializeAlbumEntries(entries: AlbumEntry[]): RawAlbumEntry[] {
     // throw away a hand-curated order.
     if (entry.assetOrder?.length) val.assetOrder = entry.assetOrder;
     if (entry.grid) val.grid = entry.grid;
+    if (entry.coverPosition) val.coverPosition = entry.coverPosition;
     return { [entry.id]: val };
   });
 }
@@ -1607,6 +1612,15 @@ export default function PageBuilder() {
                     <option value="editorial-flow">Editorial Flow</option>
                     <option value="justified">Justified (Experimental)</option>
                   </select>
+                </div>
+
+                <div className="admin-field">
+                  <label>Cover focal point (Experimental)</label>
+                  <input
+                    value={album.coverPosition || ''}
+                    onChange={(e) => onUpdate({ coverPosition: e.target.value || undefined })}
+                    placeholder={'e.g. "50% 25%" or "top" — where the cover crop should anchor'}
+                  />
                 </div>
 
                 {/* Hero Image Selection */}

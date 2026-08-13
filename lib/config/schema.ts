@@ -130,6 +130,8 @@ export interface AppConfig {
   albumManualOrders: Record<string, string[]>;
   /** EXPERIMENTAL: per-album grid overrides, merged over the subpage/global grid. */
   albumGrids: Record<string, Partial<GridConfig>>;
+  /** EXPERIMENTAL: per-album focal point for cover crops (CSS object-position). */
+  albumCoverPositions: Record<string, string>;
   cacheTtl: number;
   /** How long (ms) an expired cache entry may still be served while Immich is unreachable. */
   staleMaxAge: number;
@@ -165,6 +167,8 @@ export interface AlbumEntryObject {
   assetOrder?: string[];
   /** EXPERIMENTAL: per-album grid override, merged over the subpage/global grid */
   grid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
+  /** EXPERIMENTAL: focal point for the cover crop, e.g. "50% 25%" or "top" */
+  coverPosition?: string;
 }
 
 export interface GalleryYaml {
