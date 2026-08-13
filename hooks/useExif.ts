@@ -10,6 +10,8 @@ export interface ExifData {
   iso?: number | null;
   city?: string | null;
   country?: string | null;
+  /** EXPERIMENTAL: editorial caption from the Immich asset description */
+  description?: string | null;
 }
 
 export function useExif() {
