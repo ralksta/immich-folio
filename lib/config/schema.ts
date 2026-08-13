@@ -77,7 +77,7 @@ export interface GridConfig {
   columns: number;
   gap: number;
   aspectRatio: string;
-  layout: 'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow' | 'essay';
+  layout: 'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow' | 'essay' | 'justified';
 }
 
 export interface AppConfig {

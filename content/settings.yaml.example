@@ -44,7 +44,7 @@ grid:
   columns: 3
   gap: 12
   aspectRatio: "1" # "1" (square), "3/2", "2/3", "16/9", "auto"
-  layout: "masonry" # masonry, uniform, showcase, filmstrip, editorial-flow
+  layout: "masonry" # masonry, uniform, showcase, filmstrip, editorial-flow, justified (EXPERIMENTAL)
 
 # ── Footer & Social ──────────────────────────────────────────────
 footer:
