@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { IconCheck, IconChevronDown } from './Icons';
 
 /**
@@ -32,6 +33,26 @@ export interface ListboxProps<T extends string> {
 /** How long a type-ahead buffer keeps collecting characters. */
 const TYPEAHEAD_RESET_MS = 600;
 
+/** Gap between the trigger and the popup. */
+const POPUP_GAP = 4;
+/** Space kept clear of the viewport edge. */
+const VIEWPORT_MARGIN = 8;
+/** Tallest the popup ever gets; beyond this it scrolls internally. */
+const POPUP_MAX_HEIGHT = 260;
+/** Below this the flipped side is not worth using. */
+const POPUP_MIN_HEIGHT = 96;
+
+/** Viewport coordinates for the popup, measured from the trigger. */
+interface Placement {
+  left: number;
+  width: number;
+  /** Set when the popup hangs below the trigger. */
+  top?: number;
+  /** Set when the popup is flipped above it. */
+  bottom?: number;
+  maxHeight: number;
+}
+
 /**
  * A select replacement that can show markup in its options.
  *
@@ -41,6 +62,13 @@ const TYPEAHEAD_RESET_MS = 600;
  * the trigger button, and the active option is announced through
  * `aria-activedescendant`. Options are plain `<li>`s — not focusable — which
  * keeps focus management to a single element.
+ *
+ * The popup is portalled to `document.body` and positioned from the trigger's
+ * viewport rect. An absolutely positioned popup is clipped by any ancestor with
+ * a non-visible overflow — and z-index cannot rescue it, because clipping
+ * happens before stacking — so inside a scrolling modal the list would be cut
+ * off. Escaping to the body also lets it flip above the trigger when there is
+ * more room there.
  */
 export function Listbox<T extends string>({
   value,
@@ -58,6 +86,7 @@ export function Listbox<T extends string>({
     options.findIndex((o) => o.value === value),
   );
   const [activeIndex, setActiveIndex] = React.useState(selectedIndex);
+  const [placement, setPlacement] = React.useState<Placement | null>(null);
 
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const buttonRef = React.useRef<HTMLButtonElement>(null);
@@ -81,6 +110,7 @@ export function Listbox<T extends string>({
 
   const close = React.useCallback(() => {
     setOpen(false);
+    setPlacement(null);
     typeahead.current = { buffer: '', at: 0 };
   }, []);
 
@@ -96,14 +126,56 @@ export function Listbox<T extends string>({
   );
 
   // Dismiss on outside pointer press. pointerdown (not click) so a press that
-  // starts outside closes the popup before it can retarget the click.
+  // starts outside closes the popup before it can retarget the click. The popup
+  // is portalled, so it is not inside the wrapper — without the second test a
+  // press on an option would count as "outside" and close before it commits.
   React.useEffect(() => {
     if (!open) return;
     const onPointerDown = (event: PointerEvent) => {
-      if (!wrapperRef.current?.contains(event.target as Node)) close();
+      const target = event.target as Node;
+      if (!wrapperRef.current?.contains(target) && !listRef.current?.contains(target)) close();
     };
     document.addEventListener('pointerdown', onPointerDown);
     return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [open, close]);
+
+  // Measure once the popup is in the DOM but before paint, so it never shows at
+  // a stale position. Until then it renders hidden purely to be measurable.
+  React.useLayoutEffect(() => {
+    if (!open) return;
+    const trigger = buttonRef.current;
+    const list = listRef.current;
+    if (!trigger || !list) return;
+
+    const rect = trigger.getBoundingClientRect();
+    // scrollHeight ignores our own max-height, so this is the natural height.
+    const wanted = Math.min(POPUP_MAX_HEIGHT, list.scrollHeight + 2);
+    const below = window.innerHeight - rect.bottom - POPUP_GAP - VIEWPORT_MARGIN;
+    const above = rect.top - POPUP_GAP - VIEWPORT_MARGIN;
+    const flip = wanted > below && above > below;
+    const room = flip ? above : below;
+
+    setPlacement({
+      left: rect.left,
+      width: rect.width,
+      top: flip ? undefined : rect.bottom + POPUP_GAP,
+      bottom: flip ? window.innerHeight - rect.top + POPUP_GAP : undefined,
+      maxHeight: Math.max(POPUP_MIN_HEIGHT, Math.min(POPUP_MAX_HEIGHT, room)),
+    });
+  }, [open]);
+
+  // The popup is anchored in viewport coordinates, so anything that moves the
+  // trigger invalidates it. Dismiss rather than re-measure — that is what a
+  // native select does, and the measurement above only runs on open. Capture
+  // phase, because the scroll usually happens on an ancestor container.
+  React.useEffect(() => {
+    if (!open) return;
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    return () => {
+      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', close);
+    };
   }, [open, close]);
 
   // Keep the active option visible while arrowing or typing through a long list.
@@ -219,31 +291,55 @@ export function Listbox<T extends string>({
         <IconChevronDown size={14} className="svg-icon admin-listbox-caret" aria-hidden="true" />
       </button>
 
-      {open && (
-        <ul ref={listRef} id={listId} role="listbox" className="admin-listbox-popup" tabIndex={-1}>
-          {options.map((option, index) => (
-            <li
-              key={option.value}
-              id={optionId(index)}
-              role="option"
-              aria-selected={option.value === value}
-              className={`admin-listbox-option${index === activeIndex ? ' is-active' : ''}${
-                option.value === value ? ' is-selected' : ''
-              }`}
-              // pointerdown would fire before the outside-press handler can run;
-              // click is enough because the press starts inside the wrapper.
-              onClick={() => commit(index)}
-              onMouseEnter={() => setActiveIndex(index)}
-            >
-              {option.icon}
-              <span className="admin-listbox-option-label">{option.label}</span>
-              {option.value === value && (
-                <IconCheck size={14} className="svg-icon admin-listbox-check" aria-hidden="true" />
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+      {open &&
+        createPortal(
+          <ul
+            ref={listRef}
+            id={listId}
+            role="listbox"
+            className="admin-listbox-popup"
+            tabIndex={-1}
+            style={
+              placement
+                ? {
+                    left: placement.left,
+                    width: placement.width,
+                    top: placement.top,
+                    bottom: placement.bottom,
+                    maxHeight: placement.maxHeight,
+                  }
+                : // First pass: laid out but invisible, only so it can be measured.
+                  { left: 0, top: 0, visibility: 'hidden' }
+            }
+          >
+            {options.map((option, index) => (
+              <li
+                key={option.value}
+                id={optionId(index)}
+                role="option"
+                aria-selected={option.value === value}
+                className={`admin-listbox-option${index === activeIndex ? ' is-active' : ''}${
+                  option.value === value ? ' is-selected' : ''
+                }`}
+                // pointerdown would fire before the outside-press handler can run;
+                // click is enough because that handler treats the popup as inside.
+                onClick={() => commit(index)}
+                onMouseEnter={() => setActiveIndex(index)}
+              >
+                {option.icon}
+                <span className="admin-listbox-option-label">{option.label}</span>
+                {option.value === value && (
+                  <IconCheck
+                    size={14}
+                    className="svg-icon admin-listbox-check"
+                    aria-hidden="true"
+                  />
+                )}
+              </li>
+            ))}
+          </ul>,
+          document.body,
+        )}
     </div>
   );
 }
