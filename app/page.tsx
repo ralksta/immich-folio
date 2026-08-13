@@ -137,6 +137,38 @@ export default async function HomePage() {
 
   const heroStyle = config.theme.heroStyle;
 
+  // ── Cover (EXPERIMENTAL): fullscreen splash + single "Enter" link ─
+  // Welcome-page splash: one fullbleed image, the site
+  // title, and one link into the portfolio (the first nav entry).
+  if (heroStyle === 'cover') {
+    const entries = heroNavEntries(subpages, albums);
+    const enterHref = entries[0]?.href ?? '/about';
+
+    return (
+      <div className="hero hero--cover">
+        <HeroCarousel images={heroData} />
+        <div className="hero__cover-overlay">
+          <FadeIn delay={0}>
+            <h1 className="hero__title">{config.siteTitle}</h1>
+          </FadeIn>
+          {config.siteSubtitle && (
+            <FadeIn delay={100}>
+              <p className="hero__subtitle">{config.siteSubtitle}</p>
+            </FadeIn>
+          )}
+          <FadeIn delay={250}>
+            <Link href={enterHref} className="hero__cover-enter">
+              Enter
+              <span className="hero__cover-enter-arrow" aria-hidden="true">
+                →
+              </span>
+            </Link>
+          </FadeIn>
+        </div>
+      </div>
+    );
+  }
+
   // ── Typographic: no image, pure text ───────────────────────────
   if (heroStyle === 'typographic') {
     return (

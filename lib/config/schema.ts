@@ -80,7 +80,7 @@ export interface ThemeConfig {
   photoFrame: 'none' | 'passepartout' | 'shadow';
   grain: boolean;
   headerDot: boolean;
-  heroStyle: 'split' | 'fullbleed' | 'minimal' | 'stacked' | 'typographic' | 'mosaic';
+  heroStyle: 'split' | 'fullbleed' | 'minimal' | 'stacked' | 'typographic' | 'mosaic' | 'cover';
 }
 
 export interface GridConfig {

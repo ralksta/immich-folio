@@ -73,7 +73,7 @@ interface Settings {
 const PRESETS = ['studio', 'studio-modern', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
 const LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow', 'justified'];
 const PHOTO_FRAMES = ['none', 'passepartout', 'shadow'];
-const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic'];
+const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic', 'cover'];
 const ASPECT_RATIOS = ['1', '3/2', '2/3', '16/9', 'auto'];
 
 const THEME_INFO: Record<string, { desc: string; label: string; accent: string; bg: string; tile: string }> = {
@@ -659,6 +659,7 @@ export default function SettingsEditor() {
                       stacked: { label: 'Stacked', desc: 'Title stacked directly over photo' },
                       typographic: { label: 'Typographic', desc: 'Oversized magazine masthead' },
                       mosaic: { label: 'Mosaic', desc: 'Dynamic photo collage layout' },
+                      cover: { label: 'Cover (Experimental)', desc: 'Fullscreen splash with a single Enter link' },
                     }[s] || { label: s, desc: '' };
                     const isActive = (settings.theme?.heroStyle || 'split') === s;
 
