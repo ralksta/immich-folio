@@ -248,13 +248,12 @@
   transform: rotate(180deg);
 }
 
+/* Portalled to <body>, so it escapes the overflow of any scrolling ancestor.
+   left/top/bottom/width/max-height are measured from the trigger and set inline
+   by the component; the z-index clears the modal overlay (1000). */
 .admin-listbox-popup {
-  position: absolute;
-  z-index: 40;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  max-height: 260px;
+  position: fixed;
+  z-index: 1100;
   overflow-y: auto;
   margin: 0;
   padding: 0.25rem;
