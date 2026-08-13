@@ -58,6 +58,9 @@ subpages:
           title: "Private Project #7"
           description: "Shot on 35mm film in Vienna, spring 2025." # Optional: shown below album title
           password: "scrypt:..." # Recommended: secure hash (generated via logs)
+          # grid: # EXPERIMENTAL: per-album grid override (wins over page/global grid)
+          #   layout: "justified"
+          #   columns: 2
 
 # ── Subpage with Sections ──────────────────────────────────────────
 # Use sections to group albums by location, theme, or any other logic.

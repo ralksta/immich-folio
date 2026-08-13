@@ -91,6 +91,8 @@ interface AlbumEntry {
   sort?: AlbumSortMode;
   /** Pinned asset UUIDs for `sort: manual`; everything else follows automatically. */
   assetOrder?: string[];
+  /** EXPERIMENTAL: per-album grid override (layout only in the UI for now) */
+  grid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
 }
 
 interface Section {
@@ -154,7 +156,8 @@ function hasAlbumOptions(entry: AlbumEntry): boolean {
     entry.password ||
     entry.heroImage ||
     (entry.sort && entry.sort !== DEFAULT_ALBUM_SORT) ||
-    entry.assetOrder?.length,
+    entry.assetOrder?.length ||
+    entry.grid,
   );
 }
 
@@ -172,6 +175,7 @@ function parseAlbumEntries(raw: RawAlbumEntry[] | undefined): AlbumEntry[] {
       heroImage: value.heroImage,
       sort: isAlbumSortMode(value.sort) ? value.sort : undefined,
       assetOrder: value.assetOrder,
+      grid: value.grid,
     };
   });
 }
@@ -193,6 +197,7 @@ function serializeAlbumEntries(entries: AlbumEntry[]): RawAlbumEntry[] {
     // Persisted regardless of the mode, so manual → newest → manual does not
     // throw away a hand-curated order.
     if (entry.assetOrder?.length) val.assetOrder = entry.assetOrder;
+    if (entry.grid) val.grid = entry.grid;
     return { [entry.id]: val };
   });
 }
@@ -1580,6 +1585,28 @@ export default function PageBuilder() {
                       placeholder="Leave empty for public access"
                     />
                   </div>
+                </div>
+
+                <div className="admin-field">
+                  <label>Layout override (Experimental)</label>
+                  <select
+                    value={album.grid?.layout || ''}
+                    onChange={(e) => {
+                      const layout = e.target.value || undefined;
+                      // Only the layout is exposed here; drop the grid object
+                      // entirely when it goes back to "inherit" so the YAML
+                      // stays clean.
+                      onUpdate({ grid: layout ? { ...(album.grid || {}), layout } : undefined });
+                    }}
+                  >
+                    <option value="">Inherit from page / global settings</option>
+                    <option value="masonry">Masonry</option>
+                    <option value="uniform">Uniform Grid</option>
+                    <option value="showcase">Showcase</option>
+                    <option value="filmstrip">Filmstrip</option>
+                    <option value="editorial-flow">Editorial Flow</option>
+                    <option value="justified">Justified (Experimental)</option>
+                  </select>
                 </div>
 
                 {/* Hero Image Selection */}

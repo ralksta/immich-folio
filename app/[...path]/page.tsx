@@ -181,6 +181,17 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
   const resolveLayout = (overrides?: Partial<GridConfig>) =>
     overrides?.layout ?? config.grid.layout;
 
+  // EXPERIMENTAL: per-album grid override — merged over the subpage grid so
+  // the precedence is global < subpage < album.
+  const mergeAlbumGrid = (
+    albumId: string,
+    spGrid?: Partial<GridConfig>,
+  ): Partial<GridConfig> | undefined => {
+    const albumGrid = config.albumGrids[albumId];
+    if (!albumGrid) return spGrid;
+    return { ...spGrid, ...albumGrid };
+  };
+
   if (!path || path.length === 0) {
     notFound();
   }
@@ -224,8 +235,8 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       <AlbumDetailView
         album={album}
         images={images}
-        layout={resolveLayout(spGrid)}
-        gridStyle={buildGridStyle(spGrid)}
+        layout={resolveLayout(mergeAlbumGrid(album.id, spGrid))}
+        gridStyle={buildGridStyle(mergeAlbumGrid(album.id, spGrid))}
         backLinkHref={`/${subpageSlug}`}
         backLinkLabel={`Back to ${subpageName}`}
         watermark={config.watermark}
@@ -340,8 +351,8 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         <AlbumDetailView
           album={album}
           images={images}
-          layout={resolveLayout(result.subpage.grid)}
-          gridStyle={buildGridStyle(result.subpage.grid)}
+          layout={resolveLayout(mergeAlbumGrid(album.id, result.subpage.grid))}
+          gridStyle={buildGridStyle(mergeAlbumGrid(album.id, result.subpage.grid))}
           subtitle={result.subpage.subtitle}
           backLinkHref="/"
           backLinkLabel="Back to Gallery"
@@ -411,8 +422,8 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
     <AlbumDetailView
       album={album}
       images={images}
-      layout={resolveLayout()}
-      gridStyle={buildGridStyle()}
+      layout={resolveLayout(mergeAlbumGrid(album.id))}
+      gridStyle={buildGridStyle(mergeAlbumGrid(album.id))}
       backLinkHref="/"
       backLinkLabel="Back to Gallery"
       watermark={config.watermark}

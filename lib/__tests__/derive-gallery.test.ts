@@ -178,6 +178,24 @@ describe('deriveGallery accepts valid structures', () => {
     expect(open?.hidden).toBeFalsy();
   });
 
+  // EXPERIMENTAL: per-album grid overrides — merged over subpage/global grid.
+  it('collects per-album grid overrides, dropping unknown layouts to masonry', () => {
+    const result = deriveGallery({
+      albums: [
+        { [A]: { title: 'Panoramas', grid: { layout: 'filmstrip', columns: 2 } } },
+        { [B]: { grid: { layout: 'not-a-layout' } } },
+      ],
+    } as unknown as GalleryYaml);
+
+    expect(result.albumGrids[A]).toEqual({ layout: 'filmstrip', columns: 2 });
+    expect(result.albumGrids[B]).toEqual({ layout: 'masonry' });
+  });
+
+  it('leaves albumGrids empty for entries without a grid', () => {
+    const result = deriveGallery({ albums: [A] } as unknown as GalleryYaml);
+    expect(result.albumGrids).toEqual({});
+  });
+
   it('ignores an empty asset order rather than storing one', () => {
     const result = deriveGallery({
       albums: [{ [A]: { sort: 'manual', assetOrder: [] } }],

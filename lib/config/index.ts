@@ -87,6 +87,7 @@ export interface GalleryDerivation {
   albumHeroImages: Record<string, string>;
   albumSortModes: Record<string, AlbumSortMode>;
   albumManualOrders: Record<string, string[]>;
+  albumGrids: Record<string, Partial<GridConfig>>;
 }
 
 /**
@@ -108,6 +109,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   const albumHeroImages: Record<string, string> = {};
   const albumSortModes: Record<string, AlbumSortMode> = {};
   const albumManualOrders: Record<string, string[]> = {};
+  const albumGrids: Record<string, Partial<GridConfig>> = {};
 
   function processAlbumEntry(
     entry: string | Record<string, string | AlbumEntryObject>,
@@ -161,6 +163,13 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         albumManualOrders[validatedUuid] = value.assetOrder.map((assetId, i) =>
           validateUuid(assetId, `${context} assetOrder[${i}] for album ${validatedUuid}`),
         );
+      }
+
+      // EXPERIMENTAL: per-album grid override — reuses the subpage-grid
+      // normalisation so unknown layouts degrade identically.
+      if (value.grid) {
+        const built = buildSubpageGrid(value.grid);
+        if ('grid' in built) albumGrids[validatedUuid] = built.grid;
       }
     }
     return validatedUuid;
@@ -264,6 +273,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
     albumHeroImages,
     albumSortModes,
     albumManualOrders,
+    albumGrids,
   };
 }
 
@@ -317,6 +327,7 @@ export function getConfig(): AppConfig {
       albumHeroImages: {},
       albumSortModes: {},
       albumManualOrders: {},
+      albumGrids: {},
       cacheTtl: env.CACHE_TTL * 1000,
       staleMaxAge: env.STALE_MAX_AGE * 1000,
       immichTimeoutMs: env.IMMICH_TIMEOUT_MS,
@@ -338,6 +349,7 @@ export function getConfig(): AppConfig {
     albumHeroImages,
     albumSortModes,
     albumManualOrders,
+    albumGrids,
   } = deriveGallery(gallery);
 
   const siteSeoTitle = settings.seo?.title || settings.title || env.SITE_TITLE || 'Gallery';
@@ -412,6 +424,7 @@ export function getConfig(): AppConfig {
     albumHeroImages,
     albumSortModes,
     albumManualOrders,
+    albumGrids,
     cacheTtl: env.CACHE_TTL * 1000,
     staleMaxAge: env.STALE_MAX_AGE * 1000,
     immichTimeoutMs: env.IMMICH_TIMEOUT_MS,
