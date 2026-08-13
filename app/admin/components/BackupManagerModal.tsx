@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { BackupItem } from '@/app/api/admin/backups/route';
 import * as Icons from './Icons';
+import { useScrollLock } from './useScrollLock';
 
 interface Props {
   isOpen: boolean;
@@ -48,6 +49,8 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
       setShowAllBackups(false);
     }
   }, [isOpen, fetchBackups]);
+
+  useScrollLock(isOpen);
 
   if (!isOpen) return null;
 

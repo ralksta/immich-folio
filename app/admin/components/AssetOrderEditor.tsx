@@ -18,6 +18,7 @@ import {
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useScrollLock } from './useScrollLock';
 
 interface AssetInfo {
   id: string;
@@ -92,6 +93,7 @@ export default function AssetOrderEditor({
   onSave,
   onClose,
 }: Props) {
+  useScrollLock(true);
   const [assets, setAssets] = useState<AssetInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
