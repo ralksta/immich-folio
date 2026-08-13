@@ -82,7 +82,15 @@ export const VALID_HERO_STYLES = [
   'typographic',
   'mosaic',
 ];
-export const VALID_LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow', 'essay'];
+export const VALID_LAYOUTS = [
+  'masonry',
+  'uniform',
+  'showcase',
+  'filmstrip',
+  'editorial-flow',
+  'essay',
+  'justified', // EXPERIMENTAL: row-based layout with equal heights
+];
 
 export function resolveTheme(raw?: SettingsYaml['theme']): ThemeConfig {
   if (!raw) return { ...THEME_PRESETS.studio };

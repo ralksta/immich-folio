@@ -79,6 +79,12 @@ describe('buildSubpageGrid', () => {
     });
   });
 
+  it('preserves the experimental justified layout', () => {
+    expect(buildSubpageGrid({ layout: 'justified' })).toEqual({
+      grid: { layout: 'justified' },
+    });
+  });
+
   it('falls back to masonry for an unknown layout', () => {
     expect(buildSubpageGrid({ layout: 'unknown-layout' })).toEqual({
       grid: { layout: 'masonry' },

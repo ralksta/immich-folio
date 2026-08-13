@@ -1084,6 +1084,51 @@
   }
 }
 
+/* ── Justified Rows Layout (EXPERIMENTAL) ───────── */
+/* Row-based justified layout: every row fills the container width, all
+   images in a row share the same height, aspect ratios stay intact.
+   Flex sizing (grow = aspect ratio) lives inline on the .fade-in wrapper. */
+.photo-grid--justified {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--grid-gap, 12px);
+  column-count: unset;
+  /* More columns → shorter rows, mirroring the density of the other layouts */
+  --grid-row-height: calc(900px / var(--grid-columns, 3));
+}
+
+/* Filler that soaks up leftover space so the last row keeps natural sizes
+   instead of stretching a lone image to full width */
+.photo-grid--justified::after {
+  content: '';
+  flex-grow: 999999;
+  min-width: 0;
+}
+
+.photo-grid--justified > .fade-in {
+  height: var(--grid-row-height);
+  min-width: 0;
+}
+
+.photo-grid--justified .photo-grid__item {
+  height: 100%;
+  margin-bottom: 0;
+  /* Inline aspect-ratio is not set for justified items; the row height and
+     flex-basis already encode the ratio */
+}
+
+@media (max-width: 1024px) {
+  .photo-grid--justified {
+    --grid-row-height: 240px;
+  }
+}
+
+@media (max-width: 640px) {
+  .photo-grid--justified {
+    --grid-row-height: 160px;
+  }
+}
+
 .photo-grid__item img {
   width: 100%;
   height: 100%;

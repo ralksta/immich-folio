@@ -69,7 +69,7 @@ interface Settings {
 }
 
 const PRESETS = ['studio', 'studio-modern', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
-const LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow'];
+const LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow', 'justified'];
 const PHOTO_FRAMES = ['none', 'passepartout', 'shadow'];
 const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic'];
 const ASPECT_RATIOS = ['1', '3/2', '2/3', '16/9', 'auto'];
@@ -785,6 +785,7 @@ export default function SettingsEditor() {
                       showcase: { label: 'Showcase', desc: 'Featured hero photos mixed with smaller tiles' },
                       filmstrip: { label: 'Filmstrip', desc: 'Horizontal scrollable film strip timeline' },
                       'editorial-flow': { label: 'Editorial Flow', desc: 'Magazine story layout with varying photo sizes' },
+                      justified: { label: 'Justified (Experimental)', desc: 'Equal-height rows that fill the full width' },
                     }[l] || { label: l, desc: '' };
                     const isActive = (settings.grid?.layout || 'masonry') === l;
 
@@ -825,6 +826,12 @@ export default function SettingsEditor() {
                               <div className="demo-editorial-flow">
                                 <div className="demo-tile wide" />
                                 <div className="demo-row"><div className="demo-tile" /><div className="demo-tile" /></div>
+                              </div>
+                            )}
+                            {l === 'justified' && (
+                              <div className="demo-editorial-flow">
+                                <div className="demo-row"><div className="demo-tile wide" /><div className="demo-tile" /></div>
+                                <div className="demo-row"><div className="demo-tile" /><div className="demo-tile wide" /></div>
                               </div>
                             )}
                           </div>

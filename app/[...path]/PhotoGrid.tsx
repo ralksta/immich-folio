@@ -34,7 +34,7 @@ export interface PhotoItem {
 
 interface PhotoGridProps {
   assets: PhotoItem[];
-  layout?: 'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow' | 'essay';
+  layout?: 'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow' | 'essay' | 'justified';
   gridStyle?: React.CSSProperties;
   watermark?: LightboxWatermark;
 }
@@ -147,8 +147,21 @@ function PhotoGridInner({ assets, layout = 'masonry', gridStyle, watermark }: Ph
     return displayedAssets.map((asset, index) => {
       const isFav = proofing ? proofing.isFavorite(asset.id) : false;
 
+      // Justified rows: the flex sizing must sit on the outermost grid child,
+      // which is the FadeIn wrapper — not the .photo-grid__item inside it.
+      // Aspect ratio drives both grow factor and basis; ~3:2 fallback for
+      // assets without dimensions (e.g. videos) keeps the row math sane.
+      const justifiedAr = asset.aspectRatio || 1.5;
+      const justifiedStyle: React.CSSProperties | undefined =
+        layout === 'justified'
+          ? {
+              flexGrow: justifiedAr,
+              flexBasis: `calc(var(--grid-row-height, 300px) * ${justifiedAr})`,
+            }
+          : undefined;
+
       return (
-        <FadeIn key={asset.id} delay={index < 12 ? index * 50 : 0}>
+        <FadeIn key={asset.id} delay={index < 12 ? index * 50 : 0} style={justifiedStyle}>
           <div
             className={`photo-grid__item${
               layout === 'showcase' && index === 0 ? ' photo-grid__featured' : ''
