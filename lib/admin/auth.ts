@@ -26,11 +26,38 @@ function getAdminPassword(): string {
   return getInstallCredentials().adminPassword;
 }
 
+/**
+ * Derived session signing key, kept for the process lifetime.
+ *
+ * scrypt is deliberately slow, and getSigningKey() runs on every admin request
+ * — deriving per call would put ~100ms in front of each one. The cache is keyed
+ * by a digest of the inputs, so a rotated password or secret misses the cache
+ * and derives again, and no second plaintext copy of the password is retained.
+ */
+let cachedSigningKey: { fingerprint: string; key: Buffer } | null = null;
+
 function getSigningKey(): Buffer {
   // Bind the key to ADMIN_PASSWORD as well, so rotating the password
   // immediately invalidates every outstanding session token.
   const secret = resolveAuthSecret();
-  return crypto.createHash('sha256').update(`admin:${secret}:${getAdminPassword()}`).digest();
+  const password = getAdminPassword();
+
+  const fingerprint = crypto
+    .createHash('sha256')
+    .update(`${secret}\u0000${password}`)
+    .digest('base64');
+  if (cachedSigningKey?.fingerprint === fingerprint) return cachedSigningKey.key;
+
+  /*
+   * scrypt rather than a plain SHA-256 digest: the admin password is an input
+   * here, and a single fast hash would make it cheap to recover by brute force
+   * if the derived key ever leaked. The salt has to be stable — a random one
+   * would change the key on every call and invalidate every session — so it is
+   * derived from AUTH_SECRET, which is deployment-specific.
+   */
+  const key = crypto.scryptSync(password, `folio-admin-session:${secret}`, 32);
+  cachedSigningKey = { fingerprint, key };
+  return key;
 }
 
 /** Create a signed session token. */
