@@ -3,7 +3,11 @@
 /* Supports light/dark mode via data-theme attribute on <html>. */
 
 /* ── Theme Variables ───────────────────────────────────────── */
-.admin-layout {
+/* .admin-listbox-popup is listed alongside .admin-layout because it is
+   portalled to <body>, outside the layout subtree. Without its own copy every
+   var below resolves to nothing there, and the popup paints transparent. */
+.admin-layout,
+.admin-listbox-popup {
   /* Dark mode (default) */
   --admin-bg: #111111;
   --admin-bg-raised: #1a1a1a;
@@ -16,6 +20,8 @@
   --admin-text-secondary: #a0a0a0;
   --admin-text-muted: #707070;
   --admin-accent: #f59e0b;
+  /* One height for every control in the header row. */
+  --admin-control-height: 36px;
   --admin-success: #4ade80;
   --admin-error: #f87171;
   --admin-error-bg: #2d1111;
@@ -26,7 +32,8 @@
   --admin-overlay: rgba(0, 0, 0, 0.7);
 }
 
-[data-theme='light'] .admin-layout {
+[data-theme='light'] .admin-layout,
+[data-theme='light'] .admin-listbox-popup {
   --admin-bg: #f8f8f8;
   --admin-bg-raised: #ffffff;
   --admin-bg-elevated: #f0f0f0;
@@ -182,6 +189,132 @@
   min-height: 60px;
 }
 
+/* ── Listbox (select replacement that can render SVG icons) ────── */
+
+.admin-listbox {
+  position: relative;
+  width: 100%;
+}
+
+.admin-listbox-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  background: var(--admin-bg-input);
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  color: var(--admin-text);
+  font-size: 0.875rem;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.admin-listbox-trigger:hover:not(:disabled) {
+  border-color: var(--admin-border-hover);
+}
+
+.admin-listbox-trigger:focus-visible {
+  outline: none;
+  border-color: var(--admin-border-focus);
+}
+
+.admin-listbox-trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-listbox-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.admin-listbox-value > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-listbox-value .svg-icon,
+.admin-listbox-option > .svg-icon {
+  color: var(--admin-text-secondary);
+}
+
+.admin-listbox-caret {
+  color: var(--admin-text-secondary);
+  transition: transform 0.15s ease;
+}
+
+.admin-listbox-trigger[aria-expanded='true'] .admin-listbox-caret {
+  transform: rotate(180deg);
+}
+
+/* Portalled to <body>, so it escapes the overflow of any scrolling ancestor.
+   left/top/bottom/width/max-height are measured from the trigger and set inline
+   by the component; the z-index clears the modal overlay (1000). */
+.admin-listbox-popup {
+  position: fixed;
+  z-index: 1100;
+  overflow-y: auto;
+  /* A long list scrolls internally; without this, reaching its end hands the
+     wheel to whatever is behind the modal. */
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  /* Also outside .admin-layout, so the font does not inherit either. */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--admin-bg-elevated);
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme='light'] .admin-listbox-popup {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.admin-listbox-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 5px;
+  color: var(--admin-text);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.admin-listbox-option.is-active {
+  background: var(--admin-bg-raised);
+}
+
+.admin-listbox-option.is-selected {
+  color: var(--admin-accent);
+}
+
+.admin-listbox-option.is-selected > .svg-icon {
+  color: var(--admin-accent);
+}
+
+.admin-listbox-option-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-listbox-check {
+  color: var(--admin-accent);
+}
+
 .admin-field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -231,11 +364,22 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  padding: 0.6rem 1.2rem;
+  padding: 0 1.2rem;
+  min-height: var(--admin-control-height);
+  /* <button> gets this from the UA stylesheet, <a> does not — without it the
+   * ghost border pushed the "Site" link 2px past its neighbours. */
+  box-sizing: border-box;
   border: none;
   border-radius: 6px;
+  font-family: inherit;
   font-size: 0.875rem;
   font-weight: 500;
+  /*
+   * Explicit, because <a class="admin-btn"> and <button class="admin-btn">
+   * otherwise resolve `normal` against different inline boxes — the "Site" link
+   * ended up half a pixel taller than the buttons next to it.
+   */
+  line-height: 1;
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -265,8 +409,40 @@
   border-color: var(--admin-border-hover);
 }
 
+/*
+ * Written as `.admin-btn.admin-btn-*` on purpose: these variants are combined
+ * with the size classes (`admin-btn-sm`, `admin-btn-xs`), which set their own
+ * background further down. The doubled class outranks them whatever the order.
+ */
+
+/* Neutral action next to a primary one. */
+.admin-btn.admin-btn-secondary {
+  background: var(--admin-bg-elevated);
+  color: var(--admin-text);
+  border: 1px solid var(--admin-border);
+}
+
+.admin-btn.admin-btn-secondary:hover:not(:disabled) {
+  background: var(--admin-bg-raised);
+  border-color: var(--admin-border-hover);
+}
+
+/* Destructive action — must read as destructive before it is clicked. */
+.admin-btn.admin-btn-danger {
+  background: transparent;
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.admin-btn.admin-btn-danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #fca5a5;
+}
+
 .admin-btn-sm {
-  padding: 0.4rem 0.8rem;
+  padding: 0 0.8rem;
+  min-height: 30px;
   font-size: 0.8rem;
   background: var(--admin-bg-elevated);
   color: var(--admin-text-secondary);
@@ -280,7 +456,8 @@
 }
 
 .admin-btn-xs {
-  padding: 0.3rem 0.6rem;
+  padding: 0 0.6rem;
+  min-height: 26px;
   font-size: 0.75rem;
   background: var(--admin-bg-raised);
   color: var(--admin-text-secondary);
@@ -352,11 +529,19 @@
   gap: 0.5rem;
 }
 
+.admin-header-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--admin-border);
+  margin: 0 0.25rem;
+}
+
 .admin-tabs {
   display: flex;
   gap: 0;
 }
 
+/* Rendered as an <a> — each tab is its own route. */
 .admin-tab {
   background: none;
   border: none;
@@ -366,6 +551,8 @@
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: all 0.15s;
+  display: inline-block;
+  text-decoration: none;
 }
 
 .admin-tab:hover {
@@ -379,29 +566,14 @@
 
 .admin-main {
   flex: 1;
-  padding: 1.5rem;
+  /* Extra bottom padding so the floating save bar never covers page content. */
+  padding: 1.5rem 1.5rem 6rem;
   max-width: 1120px;
   margin: 0 auto;
   width: 100%;
 }
 
 /* ── Save Bar ──────────────────────────────────────────────── */
-
-.save-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1.5rem;
-  border-radius: 8px;
-  background: var(--admin-bg-raised);
-  border: 1px solid var(--admin-border);
-  transition: border-color 0.2s;
-}
-
-.save-bar.dirty {
-  border-color: var(--admin-accent);
-}
 
 .save-bar-left {
   display: flex;
@@ -410,6 +582,8 @@
 }
 
 .unsaved-badge {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.75rem;
   color: var(--admin-accent);
   font-weight: 500;
@@ -973,6 +1147,7 @@
 .picker-list {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0.5rem;
 }
 
@@ -1067,6 +1242,15 @@
 
 /* ── Settings Editor ──────────────────────────────────────── */
 
+.settings-live-sync-note {
+  margin: 0 0 1.25rem;
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .settings-layout {
   display: grid;
   grid-template-columns: 160px 1fr;
@@ -1079,6 +1263,7 @@
   gap: 0.25rem;
 }
 
+/* Rendered as an <a> — each settings section is its own route. */
 .settings-nav-item {
   background: none;
   border: none;
@@ -1089,6 +1274,8 @@
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.1s;
+  display: block;
+  text-decoration: none;
 }
 
 .settings-nav-item:hover {
@@ -1147,51 +1334,101 @@
   box-shadow: 0 0 0 2px var(--admin-accent);
 }
 
-/* Preset Mini Preview Mockup */
+/* ── Preset Mini Preview Mockup ──────────────────────────────────
+ * Driven entirely by the --preset-* custom properties the card sets inline,
+ * so each mockup reflects that preset's real background, tile colour, corner
+ * radius, grid density and photo frame instead of looking identical.
+ */
 .preset-card-preview {
   width: 100%;
   aspect-ratio: 16 / 10;
-  padding: 0.5rem;
+  padding: 0.55rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.45rem;
   border-bottom: 1px solid var(--admin-border);
   position: relative;
   overflow: hidden;
+  background: var(--preset-bg);
 }
 
 .preset-card-preview .mini-header {
   display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  height: 8px;
+  align-items: baseline;
+  gap: 0.4rem;
+  flex-shrink: 0;
 }
 
-.preset-card-preview .mini-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
+/* Type specimen: generic families stand in for the preset's real webfont,
+ * which is not loaded inside the admin panel. */
+.preset-card-preview .mini-specimen {
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--preset-accent);
+}
+
+.preset-card-preview .mini-specimen.type-serif {
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.preset-card-preview .mini-specimen.type-sans {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.preset-card-preview .mini-specimen.type-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
 }
 
 .preset-card-preview .mini-line {
   height: 2px;
-  width: 24px;
+  flex: 1;
+  max-width: 46px;
   border-radius: 1px;
+  background: var(--preset-accent);
+  opacity: 0.4;
+}
+
+.preset-card.active .preset-card-preview .mini-line {
+  opacity: 1;
 }
 
 .preset-card-preview .mini-grid {
   flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.25rem;
-  align-items: center;
+  gap: var(--preset-gap, 4px);
 }
 
 .preset-card-preview .mini-tile {
-  aspect-ratio: 1;
-  border-radius: 3px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  background: var(--preset-tile);
+  border-radius: var(--preset-radius, 0);
+  /* Keeps near-white tiles on a white page (Minimal, Classic) readable. */
+  box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.16);
+}
+
+/* Passepartout: a mat board in the page colour framing the photo. */
+.preset-card-preview[data-frame='passepartout'] .mini-tile {
+  padding: 4px;
+  background-clip: content-box;
+  border: 1px solid rgba(128, 128, 128, 0.3);
+}
+
+.preset-card-preview[data-frame='shadow'] .mini-tile {
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 1px rgba(128, 128, 128, 0.16);
+}
+
+.preset-card-specs {
+  font-size: 0.62rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--admin-text-muted);
+  opacity: 0.75;
+  margin-top: 0.15rem;
 }
 
 .preset-card-info {
@@ -1221,14 +1458,26 @@
   margin-right: 0.5rem;
 }
 
+/*
+ * A status readout, not an action: same height and typography as the buttons
+ * beside it, but pill-shaped so the row still reads as "state | actions".
+ * It inherited the browser's default button font before, which is why it looked
+ * like it came from a different app.
+ */
 .status-badge-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.75rem;
+  gap: 0.45rem;
+  padding: 0 0.85rem;
+  min-height: var(--admin-control-height);
   background: var(--admin-bg-raised);
   border: 1px solid var(--admin-border);
-  border-radius: 20px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--admin-text-secondary);
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -1245,10 +1494,11 @@
   position: relative;
 }
 
+/* Healthy is the resting state — no animation. A permanently pulsing dot pulls
+ * the eye toward the one thing that needs no attention. */
 .status-badge-btn.connected .status-dot {
   background-color: var(--admin-success, #10b981);
-  box-shadow: 0 0 8px var(--admin-success, #10b981);
-  animation: pulse-green 2s infinite;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
 }
 
 .status-badge-btn.disconnected .status-dot {
@@ -1264,9 +1514,9 @@
 }
 
 .status-text {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--admin-text-secondary);
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
 }
 
 /* Status Dropdown */
@@ -1538,6 +1788,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0.75rem;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -1728,11 +1979,6 @@
   text-decoration: none;
 }
 
-.save-hint {
-  font-size: 0.7rem;
-  color: var(--admin-text-muted);
-}
-
 /* ── Danger icon button ───────────────────────────────────────── */
 
 .admin-btn-icon-danger:hover {
@@ -1743,7 +1989,14 @@
 
 @media (max-width: 768px) {
   .admin-main {
-    padding: 1rem;
+    padding: 1rem 1rem 6rem;
+  }
+
+  .floating-save-bar {
+    bottom: 1rem;
+    width: calc(100% - 2rem);
+    padding: 0.625rem 0.875rem;
+    gap: 0.5rem;
   }
 
   .admin-header {
@@ -1967,7 +2220,7 @@ h3 .svg-icon {
 
 .album-drawer {
   width: 100%;
-  max-width: 840px;
+  max-width: 620px;
   max-height: 90vh;
   background: var(--admin-bg-raised);
   border: 1px solid var(--admin-border);
@@ -2002,52 +2255,25 @@ h3 .svg-icon {
   gap: 0.5rem;
 }
 
-/* 2-Column Body Layout */
+/* Single-column body — and the drawer's only scroll container. Nesting a second
+   scroller here is what used to clip the sort listbox popup. */
 .album-drawer-body {
   flex: 1;
-  overflow-y: auto;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1.2fr 1.8fr;
   min-height: 0;
-}
-
-@media (max-width: 768px) {
-  .album-drawer-body {
-    grid-template-columns: 1fr;
-  }
-  .album-drawer {
-    max-height: 95vh;
-  }
-}
-
-.modal-left-column {
-  padding: 1.75rem;
-  background: var(--admin-bg-elevated);
-  border-right: 1px solid var(--admin-border);
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-@media (max-width: 768px) {
-  .modal-left-column {
-    border-right: none;
-    border-bottom: 1px solid var(--admin-border);
-    padding: 1.25rem;
-  }
-}
-
-.modal-right-column {
+  overflow-y: auto;
+  /* Stop the scroll handing off to the page once the form hits its end. */
+  overscroll-behavior: contain;
   padding: 1.75rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  overflow-y: auto;
 }
 
 @media (max-width: 768px) {
-  .modal-right-column {
+  .album-drawer {
+    max-height: 95vh;
+  }
+  .album-drawer-body {
     padding: 1.25rem;
   }
 }
@@ -2071,14 +2297,29 @@ h3 .svg-icon {
   border-top: 1px solid var(--admin-border);
   background: var(--admin-bg-elevated);
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 0.75rem;
 }
 
-/* Left Column Cover Preview */
+/* Narrow screens cannot fit both buttons plus the UUID on one line; drop the
+   UUID onto its own row rather than squeezing the actions. */
+@media (max-width: 560px) {
+  .album-drawer-footer .uuid-copy-box {
+    order: 1;
+    flex-basis: 100%;
+  }
+}
+
+/* Cover banner across the top of the drawer. flex-shrink must be off: the img
+   inside is height:100%, so the box has no min-content height and the scrolling
+   flex column would otherwise crush it to a couple of pixels. */
 .modal-cover-container {
   width: 100%;
-  aspect-ratio: 16 / 10;
+  flex: none;
+  aspect-ratio: 21 / 9;
+  max-height: 180px;
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid var(--admin-border);
@@ -2103,11 +2344,13 @@ h3 .svg-icon {
   font-size: 2.5rem;
 }
 
-/* Album metadata card in left column */
+/* Album name + photo count, directly under the cover banner */
 .modal-meta-box {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--admin-border);
 }
 
 .modal-album-title {
@@ -2124,44 +2367,7 @@ h3 .svg-icon {
   color: var(--admin-text-secondary);
 }
 
-.modal-info-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  font-size: 0.8rem;
-  color: var(--admin-text-secondary);
-}
-
-.modal-info-item {
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 1px dashed var(--admin-border);
-  padding-bottom: 0.25rem;
-}
-
-.modal-info-label {
-  color: var(--admin-text-muted);
-}
-
-.modal-info-value {
-  font-weight: 600;
-}
-
 /* Drawer Copy UUID element */
-.drawer-uuid-section {
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--admin-border);
-}
-
-.drawer-uuid-section label {
-  font-size: 0.7rem;
-  color: var(--admin-text-muted);
-  font-weight: 600;
-  display: block;
-  margin-bottom: 0.35rem;
-  letter-spacing: 0.05em;
-}
-
 .uuid-copy-box {
   display: flex;
   align-items: center;
@@ -2179,6 +2385,21 @@ h3 .svg-icon {
   flex: 1;
   word-break: break-all;
   user-select: all;
+}
+
+/* In the footer the UUID is secondary to the two action buttons: it takes the
+   leftover width and truncates rather than wrapping the row onto two lines. */
+.album-drawer-footer .uuid-copy-box {
+  flex: 1;
+  min-width: 0;
+  padding: 0.3rem 0.35rem 0.3rem 0.6rem;
+}
+
+.album-drawer-footer .uuid-copy-box code {
+  word-break: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .uuid-copy-btn {
@@ -2427,6 +2648,7 @@ h3 .svg-icon {
 .backup-modal-body {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 1rem 1.5rem;
 }
 
@@ -2924,6 +3146,9 @@ h3 .svg-icon {
   font-size: 0.88rem;
   font-weight: 600;
   color: var(--admin-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .toggle-card-desc {
@@ -3073,6 +3298,19 @@ h3 .svg-icon {
 }
 
 /* Grid Layout Mini Demos */
+
+/*
+ * Same framing as .ratio-card-preview. Without an explicit box here the demos
+ * (which size themselves with height: 100%) collapse to zero height.
+ */
+.grid-card-preview {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: var(--admin-bg-elevated);
+  border-bottom: 1px solid var(--admin-border);
+  overflow: hidden;
+}
+
 .mini-layout-demo {
   width: 100%;
   height: 100%;
@@ -3097,9 +3335,19 @@ h3 .svg-icon {
 }
 
 .demo-tile {
-  background: linear-gradient(135deg, #444, #222);
+  background: var(--admin-text-secondary);
+  opacity: 0.35;
   border-radius: 2px;
   flex: 1;
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
+}
+
+/* The selected layout tints its diagram with the accent colour. */
+.preset-card.active .demo-tile {
+  background: var(--admin-accent);
+  opacity: 0.55;
 }
 
 .demo-tile.h-high {
@@ -3125,7 +3373,9 @@ h3 .svg-icon {
   height: 100%;
 }
 
-.demo-tile.hero-tile {
+/* Deliberately NOT named .hero-tile — that class belongs to the page builder
+ * and its `aspect-ratio` would leak into this demo. */
+.demo-tile.demo-hero {
   flex: 2;
 }
 
@@ -3136,9 +3386,11 @@ h3 .svg-icon {
   align-items: center;
 }
 
+/* A band of wide tiles running off the right edge — the horizontal scroll hint
+ * that separates this demo from the uniform grid. */
 .demo-tile.strip {
-  width: 40%;
-  height: 90%;
+  width: 46%;
+  height: 62%;
   flex-shrink: 0;
 }
 
@@ -3284,6 +3536,7 @@ h3 .svg-icon {
 .subpage-drawer-body {
   padding: 1.5rem;
   overflow-y: auto;
+  overscroll-behavior: contain;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -3297,6 +3550,75 @@ h3 .svg-icon {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+/* Breadcrumb + title stack on the left of the drawer header. */
+.subpage-drawer-title-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* One thematic group of fields inside the drawer body. */
+.subpage-drawer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+}
+
+.subpage-drawer-section > .admin-field:only-child {
+  margin-bottom: 0;
+}
+
+/* Heading + hint at the top of a drawer section. */
+.drawer-section-heading h4 {
+  margin: 0;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drawer-section-heading p {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: var(--admin-text-muted);
+}
+
+/* Published / hidden marker, replacing the traffic-light emoji. */
+/* Named apart from the header badge's .status-dot, which is a different dot. */
+.page-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+  margin-right: 2px;
+}
+
+.page-status-dot.is-on {
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+}
+
+.page-status-dot.is-off {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-with-icon > input {
+  width: 100%;
 }
 
 .input-slug-wrapper {
@@ -3351,9 +3673,28 @@ h3 .svg-icon {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
   width: calc(100% - 3rem);
   max-width: 800px;
-  transition: all 0.25s ease;
+  transition: border-color 0.2s ease;
+  animation: save-bar-in 0.2s ease-out;
+}
+
+.floating-save-bar.dirty {
+  border-color: var(--admin-accent);
+}
+
+/* Keyframes must carry the translateX(-50%) or the bar jumps horizontally. */
+@keyframes save-bar-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 .badge-pulse-dot {
@@ -3378,6 +3719,15 @@ h3 .svg-icon {
   100% {
     transform: scale(0.95);
     box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-save-bar {
+    animation: none;
+  }
+  .badge-pulse-dot {
+    animation: none;
   }
 }
 
@@ -3564,6 +3914,31 @@ h3 .svg-icon {
   overflow: hidden;
 }
 
+/* The bar itself. Without this the track stayed empty and the view count had
+ * no visual weight at all. */
+.page-progress-fill {
+  height: 100%;
+  min-width: 2px;
+  border-radius: 3px;
+  background: var(--admin-accent);
+  transition: width 0.3s ease;
+}
+
+.analytics-empty {
+  margin: 0;
+  padding: 2rem 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--admin-text-muted);
+}
+
+.admin-loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+}
+
 /* ── Drawer Live Preview ────────────────────────────────────── */
 .drawer-live-preview-panel {
   display: flex;
@@ -3724,22 +4099,20 @@ h3 .svg-icon {
   border: 1px solid var(--admin-border, #2e2e2e);
 }
 
-.essay-block-badge.badge-photo {
-  background: rgba(10, 132, 255, 0.15);
-  color: #64d2ff;
-  border-color: rgba(10, 132, 255, 0.3);
+/* Position prefix inside the chip, e.g. "3 · Quote". */
+.essay-block-badge-index {
+  color: var(--admin-text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
-.essay-block-badge.badge-heading {
-  background: rgba(191, 90, 242, 0.15);
-  color: #da8fff;
-  border-color: rgba(191, 90, 242, 0.3);
+.essay-block-badge-index::after {
+  content: ' ·';
 }
 
-.essay-block-badge.badge-quote {
-  background: rgba(255, 159, 10, 0.15);
-  color: #ffd60a;
-  border-color: rgba(255, 159, 10, 0.3);
+/* The card's own hover state is enough of a highlight; the chip stays quiet. */
+.essay-block-card:hover .essay-block-badge {
+  border-color: var(--admin-border-hover);
+  color: var(--admin-text);
 }
 
 .essay-block-actions {
@@ -3856,6 +4229,7 @@ h3 .svg-icon {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0.75rem;
 }
 
@@ -3977,4 +4351,20 @@ h3 .svg-icon {
   gap: 0.5rem;
   padding: 0.75rem;
   border-top: 1px solid var(--admin-border);
+}
+
+/* ── Favicon upload (Settings › General) ─────────────────────── */
+
+.favicon-field {
+  margin-top: 1rem;
+}
+
+.favicon-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.favicon-row input[type='file'] {
+  font-size: 0.8rem;
 }

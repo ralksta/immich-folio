@@ -9,6 +9,15 @@ const AUTH_SECRET = 'test-auth-secret-32-chars-long-min';
 
 vi.mock('../env', () => ({
   env: {
+    IMMICH_API_URL: '',
+    IMMICH_API_KEY: '',
+    SITE_TITLE: 'Test',
+    SITE_SUBTITLE: '',
+    CACHE_TTL: 300,
+    IMAGE_CACHE_VERSION: '',
+    IMMICH_TIMEOUT_MS: 15000,
+    RATE_LIMIT_RPM: 1500,
+    TRUSTED_PROXY_HOPS: 0,
     get AUTH_SECRET() {
       return process.env.__TEST_AUTH_SECRET;
     },
@@ -16,6 +25,21 @@ vi.mock('../env', () => ({
       return process.env.__TEST_ADMIN_PASSWORD;
     },
   },
+}));
+
+vi.mock('../install', () => ({
+  getInstallCredentials() {
+    return {
+      apiUrl: '',
+      apiKey: '',
+      authSecret: process.env.__TEST_AUTH_SECRET || '',
+      adminPassword: process.env.__TEST_ADMIN_PASSWORD || '',
+    };
+  },
+  isInstalled: () => false,
+  isInstallPath: () => false,
+  normalizeApiBase: (): string => '',
+  completeInstall: () => {},
 }));
 
 /** Import fresh so module-level state cannot leak between cases. */
@@ -73,9 +97,14 @@ describe('admin session tokens', () => {
 
   it('throws rather than signing with a guessable secret when AUTH_SECRET is unset in production', async () => {
     delete process.env.__TEST_AUTH_SECRET;
-    vi.stubEnv('NODE_ENV', 'production');
-    const { createAdminToken } = await loadAuth();
-    expect(() => createAdminToken()).toThrow(/AUTH_SECRET/);
+    const prevNodeEnv = process.env.NODE_ENV;
+    (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
+    try {
+      const { createAdminToken } = await loadAuth();
+      expect(() => createAdminToken()).toThrow(/AUTH_SECRET/);
+    } finally {
+      (process.env as Record<string, string | undefined>).NODE_ENV = prevNodeEnv;
+    }
   });
 
   it('returns false (not throw) for a malformed cookie with a short signature', async () => {
@@ -121,18 +150,18 @@ describe('admin session tokens', () => {
 describe('verifyAdminPassword', () => {
   it('accepts the configured password and rejects others', async () => {
     const { verifyAdminPassword } = await loadAuth();
-    expect(verifyAdminPassword(ADMIN_PASSWORD)).toBe(true);
-    expect(verifyAdminPassword('wrong')).toBe(false);
-    expect(verifyAdminPassword(`${ADMIN_PASSWORD}x`)).toBe(false);
-    expect(verifyAdminPassword('')).toBe(false);
+    expect(await verifyAdminPassword(ADMIN_PASSWORD)).toBe(true);
+    expect(await verifyAdminPassword('wrong')).toBe(false);
+    expect(await verifyAdminPassword(`${ADMIN_PASSWORD}x`)).toBe(false);
+    expect(await verifyAdminPassword('')).toBe(false);
   });
 
   it('rejects everything when no ADMIN_PASSWORD is configured', async () => {
     delete process.env.__TEST_ADMIN_PASSWORD;
     const { verifyAdminPassword, isAdminEnabled } = await loadAuth();
     expect(isAdminEnabled()).toBe(false);
-    expect(verifyAdminPassword('')).toBe(false);
-    expect(verifyAdminPassword('anything')).toBe(false);
+    expect(await verifyAdminPassword('')).toBe(false);
+    expect(await verifyAdminPassword('anything')).toBe(false);
   });
 
   // The comparison used to run on the raw strings, so a length mismatch
@@ -144,18 +173,53 @@ describe('verifyAdminPassword', () => {
     const sameLength = 'x'.repeat(ADMIN_PASSWORD.length);
     expect(sameLength).toHaveLength(ADMIN_PASSWORD.length);
     expect(sameLength).not.toBe(ADMIN_PASSWORD);
-    expect(verifyAdminPassword(sameLength)).toBe(false);
+    expect(await verifyAdminPassword(sameLength)).toBe(false);
   });
 
   it('rejects an oversized attempt without hashing it', async () => {
     const { verifyAdminPassword, MAX_PASSWORD_LENGTH } = await loadAuth();
-    expect(verifyAdminPassword('x'.repeat(MAX_PASSWORD_LENGTH + 1))).toBe(false);
+    expect(await verifyAdminPassword('x'.repeat(MAX_PASSWORD_LENGTH + 1))).toBe(false);
   });
 
   // A cap that a real passphrase could hit would be a lockout, not a fix.
   it('still accepts the configured password when it is long', async () => {
     const { verifyAdminPassword, MAX_PASSWORD_LENGTH } = await loadAuth();
     expect(ADMIN_PASSWORD.length).toBeLessThanOrEqual(MAX_PASSWORD_LENGTH);
-    expect(verifyAdminPassword(ADMIN_PASSWORD)).toBe(true);
+    expect(await verifyAdminPassword(ADMIN_PASSWORD)).toBe(true);
+  });
+
+  // The wizard writes an scrypt hash; ADMIN_PASSWORD as an env var stays
+  // plaintext, because that is what every existing deployment has set. Getting
+  // either wrong locks the owner out of the panel that fixes it.
+  describe('accepts both stored formats', () => {
+    it('verifies against a wizard-written scrypt hash', async () => {
+      const { generateScryptHash } = await import('@/lib/password');
+      process.env.__TEST_ADMIN_PASSWORD = await generateScryptHash(ADMIN_PASSWORD);
+
+      const { verifyAdminPassword, isAdminEnabled } = await loadAuth();
+      expect(isAdminEnabled()).toBe(true);
+      expect(await verifyAdminPassword(ADMIN_PASSWORD)).toBe(true);
+      expect(await verifyAdminPassword('wrong')).toBe(false);
+      expect(await verifyAdminPassword('')).toBe(false);
+    });
+
+    // Someone who set ADMIN_PASSWORD in docker-compose must keep working after
+    // an upgrade — the hash support is additive, not a migration.
+    it('still verifies against a plaintext env password', async () => {
+      process.env.__TEST_ADMIN_PASSWORD = ADMIN_PASSWORD;
+      const { verifyAdminPassword } = await loadAuth();
+      expect(await verifyAdminPassword(ADMIN_PASSWORD)).toBe(true);
+      expect(await verifyAdminPassword('wrong')).toBe(false);
+    });
+
+    // The stored hash is never the password, so it must not be accepted as one.
+    it('does not accept the hash itself as the password', async () => {
+      const { generateScryptHash } = await import('@/lib/password');
+      const hash = await generateScryptHash(ADMIN_PASSWORD);
+      process.env.__TEST_ADMIN_PASSWORD = hash;
+
+      const { verifyAdminPassword } = await loadAuth();
+      expect(await verifyAdminPassword(hash)).toBe(false);
+    });
   });
 });

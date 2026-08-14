@@ -17,6 +17,7 @@ export interface Env {
   TRUSTED_PROXY_HOPS: number;
   WEBHOOK_SECRET?: string;
   ADMIN_PASSWORD?: string;
+  INSTALL_CONTENT_DIR?: string;
 }
 
 function parseEnv(): Env {
@@ -109,6 +110,7 @@ function parseEnv(): Env {
     TRUSTED_PROXY_HOPS: trustedProxyHops,
     WEBHOOK_SECRET: process.env.WEBHOOK_SECRET || undefined,
     ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || undefined,
+    INSTALL_CONTENT_DIR: process.env.INSTALL_CONTENT_DIR || undefined,
   };
 }
 

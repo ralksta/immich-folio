@@ -121,6 +121,64 @@ const ROUTES: {
     method: 'POST',
     args: () => [new Request('http://localhost/api/admin/backups', { method: 'POST', body: '{}' })],
   },
+  {
+    name: 'PUT /api/admin/favicon',
+    path: 'favicon',
+    load: () => import('../favicon/route'),
+    method: 'PUT',
+    args: () => [new Request('http://localhost/api/admin/favicon', { method: 'PUT' })],
+  },
+  {
+    name: 'DELETE /api/admin/favicon',
+    path: 'favicon',
+    load: () => import('../favicon/route'),
+    method: 'DELETE',
+    args: () => [],
+  },
+  {
+    name: 'GET /api/admin/journal',
+    path: 'journal',
+    load: () => import('../journal/route'),
+    method: 'GET',
+    args: () => [],
+  },
+  {
+    name: 'POST /api/admin/journal',
+    path: 'journal',
+    load: () => import('../journal/route'),
+    method: 'POST',
+    args: () => [new Request('http://localhost/api/admin/journal', { method: 'POST', body: '{}' })],
+  },
+  {
+    name: 'GET /api/admin/journal/[slug]',
+    path: 'journal/[slug]',
+    load: () => import('../journal/[slug]/route'),
+    method: 'GET',
+    args: () => [
+      new Request('http://localhost/api/admin/journal/test-slug'),
+      { params: Promise.resolve({ slug: 'test-slug' }) },
+    ],
+  },
+  {
+    name: 'PUT /api/admin/journal/[slug]',
+    path: 'journal/[slug]',
+    load: () => import('../journal/[slug]/route'),
+    method: 'PUT',
+    args: () => [
+      new Request('http://localhost/api/admin/journal/test-slug', { method: 'PUT', body: '{}' }),
+      { params: Promise.resolve({ slug: 'test-slug' }) },
+    ],
+  },
+  {
+    name: 'DELETE /api/admin/journal/[slug]',
+    path: 'journal/[slug]',
+    load: () => import('../journal/[slug]/route'),
+    method: 'DELETE',
+    args: () => [
+      new Request('http://localhost/api/admin/journal/test-slug', { method: 'DELETE' }),
+      { params: Promise.resolve({ slug: 'test-slug' }) },
+    ],
+  },
 ];
 
 describe('admin route guards', () => {
@@ -165,7 +223,7 @@ describe('admin route guards', () => {
           if (entry.name === '__tests__') continue;
           walk(full);
         } else if (entry.name === 'route.ts') {
-          found.push(path.relative(adminDir, path.dirname(full)));
+          found.push(path.relative(adminDir, path.dirname(full)).replace(/\\/g, '/'));
         }
       }
     };

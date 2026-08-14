@@ -4,8 +4,9 @@
  */
 
 import crypto from 'crypto';
-import { env } from '../env';
+import { getInstallCredentials } from '../install';
 import { resolveAuthSecret } from '../secret';
+import { isScryptHash, verifyScrypt } from '../password';
 import { cookies } from 'next/headers';
 
 const COOKIE_NAME = 'folio_admin_session';
@@ -20,14 +21,48 @@ const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
  */
 export const MAX_PASSWORD_LENGTH = 1024;
 
+/** Admin password as configured — env wins, wizard-installed value as fallback. */
+function getAdminPassword(): string {
+  return getInstallCredentials().adminPassword;
+}
+
+/**
+ * Derived session signing key, kept for the process lifetime.
+ *
+ * scrypt is deliberately slow, and getSigningKey() runs on every admin request
+ * — deriving per call would put ~24ms in front of each one. The cache holds the
+ * inputs it was derived from, so a rotated password or secret misses the cache
+ * and derives again.
+ *
+ * Those inputs are compared directly rather than through a digest of them: a
+ * digest here would be a fast hash of the admin password sitting in memory for
+ * the life of the process, which is the very thing scrypt was introduced below
+ * to avoid. Holding the strings costs nothing extra — they are the same objects
+ * the env and install caches already hold, whereas building a digest input
+ * allocates a fresh copy of the password.
+ */
+let cachedSigningKey: { secret: string; password: string; key: Buffer } | null = null;
+
 function getSigningKey(): Buffer {
   // Bind the key to ADMIN_PASSWORD as well, so rotating the password
   // immediately invalidates every outstanding session token.
   const secret = resolveAuthSecret();
-  return crypto
-    .createHash('sha256')
-    .update(`admin:${secret}:${env.ADMIN_PASSWORD ?? ''}`)
-    .digest();
+  const password = getAdminPassword();
+
+  if (cachedSigningKey?.secret === secret && cachedSigningKey.password === password) {
+    return cachedSigningKey.key;
+  }
+
+  /*
+   * scrypt rather than a plain SHA-256 digest: the admin password is an input
+   * here, and a single fast hash would make it cheap to recover by brute force
+   * if the derived key ever leaked. The salt has to be stable — a random one
+   * would change the key on every call and invalidate every session — so it is
+   * derived from AUTH_SECRET, which is deployment-specific.
+   */
+  const key = crypto.scryptSync(password, `folio-admin-session:${secret}`, 32);
+  cachedSigningKey = { secret, password, key };
+  return key;
 }
 
 /** Create a signed session token. */
@@ -83,10 +118,17 @@ export function verifyAdminToken(token: string): boolean {
  * compares subpage passwords: the intermediate values are then useless to
  * anyone who cannot also read the secret.
  */
-export function verifyAdminPassword(password: string): boolean {
-  const adminPw = env.ADMIN_PASSWORD;
+export async function verifyAdminPassword(password: string): Promise<boolean> {
+  const adminPw = getAdminPassword();
   if (!adminPw) return false;
   if (password.length > MAX_PASSWORD_LENGTH) return false;
+
+  // The wizard stores a hash; ADMIN_PASSWORD as an env var stays plaintext,
+  // because that is what every existing deployment has set. Both must work,
+  // or an upgrade locks the owner out of their own admin panel.
+  if (isScryptHash(adminPw)) {
+    return verifyScrypt(password, adminPw);
+  }
 
   const secret = resolveAuthSecret();
   const attemptHash = crypto.createHmac('sha256', secret).update(password).digest();
@@ -105,7 +147,7 @@ export async function isAdminAuthenticated(): Promise<boolean> {
 
 /** Check if admin panel is enabled (password is set). */
 export function isAdminEnabled(): boolean {
-  return !!env.ADMIN_PASSWORD;
+  return !!getAdminPassword();
 }
 
 export { COOKIE_NAME, SESSION_DURATION_MS };

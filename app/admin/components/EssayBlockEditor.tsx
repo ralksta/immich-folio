@@ -18,6 +18,7 @@ import {
   IconSparkles,
   IconArrowLeftRight,
 } from './Icons';
+import { BlockBadge } from './BlockBadge';
 
 interface EssayBlockEditorProps {
   markdown: string;
@@ -119,7 +120,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
     <div className="essay-block-editor">
       {/* Sticky Dark Glass Toolbar */}
       <div className="essay-toolbar-sticky">
-        <span className="essay-toolbar-label">✨ Add Story Block:</span>
+        <span className="essay-toolbar-label">Add Story Block:</span>
         <button
           type="button"
           className="admin-btn admin-btn-xs"
@@ -171,19 +172,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
           <div className="essay-block-card-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <IconGripVertical size={14} style={{ color: 'var(--admin-text-muted)', cursor: 'grab' }} />
-              <span
-                className={`essay-block-badge ${
-                  block.type === 'photo' || block.type === 'photo-pair'
-                    ? 'badge-photo'
-                    : block.type === 'heading'
-                    ? 'badge-heading'
-                    : block.type === 'quote'
-                    ? 'badge-quote'
-                    : ''
-                }`}
-              >
-                Block {idx + 1}: {block.type}
-              </span>
+              <BlockBadge type={block.type} index={idx + 1} />
             </div>
 
             <div className="essay-block-actions">

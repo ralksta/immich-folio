@@ -1,20 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import PageBuilder from './PageBuilder';
-import SettingsEditor from './SettingsEditor';
-import AnalyticsView from './AnalyticsView';
+import { useState, useEffect, type ReactNode } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import BackupManagerModal from './BackupManagerModal';
 import * as Icons from './Icons';
 
 interface Props {
   onLogout: () => void;
+  /** The active route's panel — Pages, Journal Studio, Settings or Analytics. */
+  children: ReactNode;
 }
 
-type Tab = 'pages' | 'settings' | 'analytics';
+const TABS = [
+  { label: 'Pages', href: '/admin/pages', match: /^\/admin(\/pages)?$/ },
+  { label: 'Journal', href: '/admin/journal', match: /^\/admin\/journal/ },
+  { label: 'Settings', href: '/admin/settings', match: /^\/admin\/settings/ },
+  { label: 'Analytics', href: '/admin/analytics', match: /^\/admin\/analytics/ },
+];
 
-export default function AdminDashboard({ onLogout }: Props) {
-  const [activeTab, setActiveTab] = useState<Tab>('pages');
+export default function AdminDashboard({ onLogout, children }: Props) {
+  const pathname = usePathname();
   const [saving, setSaving] = useState(false);
 
   // Diagnostics & Backup state
@@ -91,24 +97,15 @@ export default function AdminDashboard({ onLogout }: Props) {
         <div className="admin-header-left">
           <h1>Immich Folio</h1>
           <nav className="admin-tabs">
-            <button
-              className={`admin-tab ${activeTab === 'pages' ? 'active' : ''}`}
-              onClick={() => setActiveTab('pages')}
-            >
-              Pages
-            </button>
-            <button
-              className={`admin-tab ${activeTab === 'settings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('settings')}
-            >
-              Settings
-            </button>
-            <button
-              className={`admin-tab ${activeTab === 'analytics' ? 'active' : ''}`}
-              onClick={() => setActiveTab('analytics')}
-            >
-              Analytics
-            </button>
+            {TABS.map((t) => (
+              <Link
+                key={t.href}
+                href={t.href}
+                className={`admin-tab ${t.match.test(pathname) ? 'active' : ''}`}
+              >
+                {t.label}
+              </Link>
+            ))}
           </nav>
         </div>
         <div className="admin-header-right">
@@ -195,12 +192,14 @@ export default function AdminDashboard({ onLogout }: Props) {
             )}
           </div>
 
+          <span className="admin-header-divider" aria-hidden="true" />
+
           <a
-            href="/"
+            href="/?fresh=1"
             target="_blank"
             rel="noopener noreferrer"
             className="admin-btn admin-btn-ghost"
-            title="Open site in new tab"
+            title="Open site in new tab (bypassing cache)"
           >
             <Icons.IconLink size={14} /> Site
           </a>
@@ -225,11 +224,7 @@ export default function AdminDashboard({ onLogout }: Props) {
         </div>
       </header>
 
-      <main className="admin-main">
-        {activeTab === 'pages' && <PageBuilder />}
-        {activeTab === 'settings' && <SettingsEditor />}
-        {activeTab === 'analytics' && <AnalyticsView />}
-      </main>
+      <main className="admin-main">{children}</main>
 
       <BackupManagerModal
         isOpen={showBackupModal}

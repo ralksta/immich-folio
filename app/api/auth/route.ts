@@ -46,14 +46,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid password format or length' }, { status: 400 });
     }
 
-    if (type !== 'subpage' && type !== 'album') {
+    if (type !== 'subpage' && type !== 'album' && type !== 'journal') {
       return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
     }
 
     if (!isProtected(slug, type)) {
+      const typeLabel = type === 'journal' ? 'Journal entry' : type === 'subpage' ? 'Subpage' : 'Album';
       return NextResponse.json(
         {
-          error: `${type === 'subpage' ? 'Subpage' : 'Album'} is not password-protected`,
+          error: `${typeLabel} is not password-protected`,
         },
         { status: 400 },
       );

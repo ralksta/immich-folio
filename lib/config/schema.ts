@@ -104,6 +104,8 @@ export interface AppConfig {
   legal: LegalConfig;
   map: boolean;
   transitions: boolean;
+  /** Floating back-to-top arrow in the frontend. */
+  scrollToTop: boolean;
   analytics: boolean;
   proofing: {
     enabled: boolean;
@@ -195,6 +197,7 @@ export interface SettingsYaml {
   exifOnHover?: boolean;
   map?: boolean;
   transitions?: boolean;
+  scrollToTop?: boolean;
   analytics?: boolean;
   proofing?: {
     enabled?: boolean;

@@ -8,6 +8,7 @@
 
 import crypto from 'crypto';
 import { getConfig, SubpageConfig } from './config';
+import { verifyScrypt, generateScryptHash, isScryptHash } from './password';
 
 const TOKEN_EXPIRY_HOURS = 24;
 
@@ -16,52 +17,6 @@ const TOKEN_EXPIRY_HOURS = 24;
  */
 function isBcryptHash(str: string): boolean {
   return str.startsWith('$2a$') || str.startsWith('$2b$') || str.startsWith('$2y$');
-}
-
-/**
- * scrypt on the libuv threadpool rather than the main thread.
- *
- * scryptSync costs ~23ms per call, and that is 23ms during which the process
- * serves nothing else. The /api/auth rate limit (10/min) is keyed on the client
- * IP, but with the default TRUSTED_PROXY_HOPS=0 that IP comes from a spoofable
- * header (see lib/rate-limit.ts), so an attacker rotating the header gets
- * effectively unlimited buckets — each request buying 23ms of dead process.
- * Running async does not stop the spoofing, but it removes the amplification
- * that made it worth doing.
- */
-function scryptAsync(password: string, salt: string, keylen: number): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    crypto.scrypt(password, salt, keylen, (err, derivedKey) => {
-      if (err) reject(err);
-      else resolve(derivedKey);
-    });
-  });
-}
-
-/**
- * Native SCrypt verify (format: 'scrypt:salt:hash_hex')
- */
-async function verifyScrypt(password: string, stored: string): Promise<boolean> {
-  if (!stored.startsWith('scrypt:')) return false;
-
-  try {
-    const [, salt, hashHex] = stored.split(':');
-    const key = await scryptAsync(password, salt, 64);
-    const expectedKey = Buffer.from(hashHex, 'hex');
-    if (key.length !== expectedKey.length) return false;
-    return crypto.timingSafeEqual(key, expectedKey);
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Helper to generate an scrypt string to print in logs.
- */
-async function generateScryptHash(password: string): Promise<string> {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const hash = (await scryptAsync(password, salt, 64)).toString('hex');
-  return `scrypt:${salt}:${hash}`;
 }
 
 function hmac(data: string): string {
@@ -81,8 +36,14 @@ function authToken(key: string, passwordSecret: string, expiresAt: number): stri
   return `${expiresAt}.${hmac(`${key}:${passwordSecret}:${expiresAt}`)}`;
 }
 
-function cookieName(key: string, type: 'subpage' | 'album'): string {
-  return type === 'subpage' ? `lb_auth_${key}` : `lb_auth_album_${key}`;
+import nodeFs from 'fs';
+import { parseFrontmatter } from './journal';
+import { resolveJournalFilePath } from './admin/journal-service';
+
+function cookieName(key: string, type: 'subpage' | 'album' | 'journal'): string {
+  if (type === 'subpage') return `lb_auth_${key}`;
+  if (type === 'journal') return `lb_auth_journal_${key}`;
+  return `lb_auth_album_${key}`;
 }
 
 /**
@@ -93,20 +54,33 @@ export function findSubpageBySlug(slug: string): SubpageConfig | undefined {
 }
 
 /**
- * Find the password secret for a given subpage slug or album ID.
+ * Find the password secret for a given subpage slug, album ID, or journal entry.
  */
-function findPassword(key: string, type: 'subpage' | 'album'): string | undefined {
+function findPassword(key: string, type: 'subpage' | 'album' | 'journal'): string | undefined {
   const config = getConfig();
   if (type === 'subpage') {
     return config.subpages.find((sp) => sp.slug === key)?.password;
   }
-  return config.albumPasswords[key];
+  if (type === 'album') {
+    return config.albumPasswords[key];
+  }
+  if (type === 'journal') {
+    try {
+      const filePath = resolveJournalFilePath(key);
+      if (filePath && nodeFs.existsSync(filePath)) {
+        const raw = nodeFs.readFileSync(filePath, 'utf8');
+        return parseFrontmatter(raw).frontmatter.password;
+      }
+    } catch {}
+    return undefined;
+  }
+  return undefined;
 }
 
 /**
- * Check if a subpage slug or album ID is password-protected.
+ * Check if a subpage slug, album ID, or journal entry is password-protected.
  */
-export function isProtected(key: string, type: 'subpage' | 'album' = 'subpage'): boolean {
+export function isProtected(key: string, type: 'subpage' | 'album' | 'journal' = 'subpage'): boolean {
   return !!findPassword(key, type);
 }
 
@@ -117,7 +91,7 @@ export function isProtected(key: string, type: 'subpage' | 'album' = 'subpage'):
 export async function authenticate(
   key: string,
   password: string,
-  type: 'subpage' | 'album' = 'subpage',
+  type: 'subpage' | 'album' | 'journal' = 'subpage',
 ): Promise<string | null> {
   const storedPassword = findPassword(key, type);
   if (!storedPassword) return null;
@@ -134,7 +108,7 @@ export async function authenticate(
     return null;
   }
 
-  if (storedPassword.startsWith('scrypt:')) {
+  if (isScryptHash(storedPassword)) {
     isValid = await verifyScrypt(password, storedPassword);
   } else {
     // Plaintext fallback (deprecated)
@@ -174,7 +148,7 @@ export async function authenticate(
 export function isAuthenticated(
   key: string,
   getCookie: (name: string) => string | undefined,
-  type: 'subpage' | 'album' = 'subpage',
+  type: 'subpage' | 'album' | 'journal' = 'subpage',
 ): boolean {
   const storedPassword = findPassword(key, type);
   if (!storedPassword) return true; // not protected

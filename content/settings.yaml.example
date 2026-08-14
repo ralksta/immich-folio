@@ -24,6 +24,9 @@ map: true
 # Enable smooth page transitions between routes
 transitions: true
 
+# Show the floating back-to-top arrow on long pages
+scrollToTop: true
+
 # Client proofing & favorite photo selections
 # proofing:
 #   enabled: true

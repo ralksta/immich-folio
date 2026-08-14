@@ -15,6 +15,7 @@ import { Footer } from '@/components/Footer';
 import { SetupScreen } from '@/components/SetupScreen';
 import { getConfigOrNull, getGoogleFontsUrl, AppConfig } from '@/lib/config';
 import { isAdminPath } from '@/lib/admin/paths';
+import { isInstallPath } from '@/lib/install';
 // DevToolbarLoader is a Client Component (ssr: false is only allowed there)
 import { DevToolbarLoader } from '@/components/DevToolbarLoader';
 import AssetProtection from '@/components/AssetProtection';
@@ -24,7 +25,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const config = getConfigOrNull();
   if (!config) {
     // Nothing to describe, and nothing that should be indexed while broken.
-    return { title: 'Setup Required', robots: { index: false, follow: false } };
+    return {
+      title: 'Setup Required',
+      robots: { index: false, follow: false },
+      icons: { icon: '/api/favicon' },
+    };
   }
 
   const siteTitle = config.seo.title;
@@ -42,6 +47,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: siteDescription,
     robots,
     icons: {
+      icon: '/api/favicon',
       apple: '/apple-touch-icon.png',
     },
     openGraph: {
@@ -71,7 +77,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   if (!config) {
     return (
       <html lang="en" suppressHydrationWarning>
-        <body>{isAdminPath(pathname) ? children : <SetupScreen />}</body>
+        <body>{isAdminPath(pathname) || isInstallPath(pathname) ? children : <SetupScreen />}</body>
       </html>
     );
   }
@@ -90,9 +96,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     '--radius-lg': `${theme.radius * 2}px`,
   };
 
-  // /admin stays reachable during setup — it is the tool that completes the
-  // setup, so the setup screen must not lock it out (#326).
-  if ((config as AppConfig & { needsSetup?: boolean }).needsSetup && !isAdminPath(pathname)) {
+  // /admin and /install stay reachable during setup — /admin is the tool that
+  // completes an existing setup, /install is the wizard that performs the first
+  // one, so the setup screen must not lock either of them out (#326).
+  if (
+    (config as AppConfig & { needsSetup?: boolean }).needsSetup &&
+    !isAdminPath(pathname) &&
+    !isInstallPath(pathname)
+  ) {
     return (
       <html lang="en" suppressHydrationWarning>
         <body>
@@ -153,7 +164,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {children}
             </main>
             <Footer />
-            <ScrollToTop />
+            {config.scrollToTop && <ScrollToTop />}
             <AssetProtection
               disableRightClick={config.protection?.disableRightClick}
               disableImageDrag={config.protection?.disableImageDrag}

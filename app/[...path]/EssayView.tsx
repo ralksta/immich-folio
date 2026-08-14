@@ -16,9 +16,22 @@ interface EssayViewProps {
   title?: string;
   subtitle?: string;
   watermark?: LightboxWatermark;
+  /**
+   * Client proofing — favorite hearts, the selection bar and the send-off modal.
+   * Off by default: proofing is a delivery workflow for album handovers, and a
+   * published story is not one. Album views opt in.
+   */
+  proofing?: boolean;
 }
 
-function EssayViewContent({ essay, assets, title, subtitle, watermark }: EssayViewProps) {
+function EssayViewContent({
+  essay,
+  assets,
+  title,
+  subtitle,
+  watermark,
+  proofing: proofingEnabled = false,
+}: EssayViewProps) {
   const proofing = useProofing();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
@@ -54,11 +67,7 @@ function EssayViewContent({ essay, assets, title, subtitle, watermark }: EssayVi
 
       case 'paragraph':
         return (
-          <div
-            key={idx}
-            className="essay-prose"
-            dangerouslySetInnerHTML={{ __html: block.html }}
-          />
+          <div key={idx} className="essay-prose" dangerouslySetInnerHTML={{ __html: block.html }} />
         );
 
       case 'quote':
@@ -94,8 +103,8 @@ function EssayViewContent({ essay, assets, title, subtitle, watermark }: EssayVi
                     block.layout === 'fullbleed'
                       ? '100vw'
                       : block.layout === 'wide'
-                      ? '(max-width: 1100px) 100vw, 1100px'
-                      : '(max-width: 768px) 100vw, 680px'
+                        ? '(max-width: 1100px) 100vw, 1100px'
+                        : '(max-width: 768px) 100vw, 680px'
                   }
                   loading={idx < 4 ? 'eager' : 'lazy'}
                   {...(item.blurDataURL
@@ -129,7 +138,14 @@ function EssayViewContent({ essay, assets, title, subtitle, watermark }: EssayVi
                       filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))',
                     }}
                   >
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="24"
+                      height="24"
+                      fill={isFav ? 'currentColor' : 'none'}
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                     </svg>
                   </button>
@@ -164,7 +180,9 @@ function EssayViewContent({ essay, assets, title, subtitle, watermark }: EssayVi
                       onClick={() => setLightboxIndex(index)}
                       style={{
                         ...(item.dominantColor ? { backgroundColor: item.dominantColor } : {}),
-                        ...(item.aspectRatio ? { aspectRatio: `${item.aspectRatio}` } : {}),
+                        // Width proportional to the ratio — see .essay-pair-grid.
+                        flexGrow: item.aspectRatio ?? 1.5,
+                        aspectRatio: `${item.aspectRatio ?? 1.5}`,
                       }}
                     >
                       <Image
@@ -203,7 +221,14 @@ function EssayViewContent({ essay, assets, title, subtitle, watermark }: EssayVi
                             filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))',
                           }}
                         >
-                          <svg viewBox="0 0 24 24" width="24" height="24" fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="24"
+                            height="24"
+                            fill={isFav ? 'currentColor' : 'none'}
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
                             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                           </svg>
                         </button>
@@ -294,7 +319,9 @@ function EssayViewContent({ essay, assets, title, subtitle, watermark }: EssayVi
             type="button"
             onClick={() => proofing.setIsFilterActive((prev) => !prev)}
             style={{
-              background: proofing.isFilterActive ? 'var(--accent, #e60012)' : 'rgba(255,255,255,0.15)',
+              background: proofing.isFilterActive
+                ? 'var(--accent, #e60012)'
+                : 'rgba(255,255,255,0.15)',
               color: '#fff',
               border: 'none',
               padding: '6px 14px',
@@ -324,16 +351,23 @@ function EssayViewContent({ essay, assets, title, subtitle, watermark }: EssayVi
         </div>
       )}
 
-      <ProofingModal />
+      {proofingEnabled && <ProofingModal />}
 
       {lightboxIndex !== null && (
         <Lightbox
           assets={assets}
           currentIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
-          onNext={() => setLightboxIndex((prev) => (prev !== null ? (prev + 1) % assets.length : null))}
-          onPrev={() => setLightboxIndex((prev) => (prev !== null ? (prev - 1 + assets.length) % assets.length : null))}
+          onNext={() =>
+            setLightboxIndex((prev) => (prev !== null ? (prev + 1) % assets.length : null))
+          }
+          onPrev={() =>
+            setLightboxIndex((prev) =>
+              prev !== null ? (prev - 1 + assets.length) % assets.length : null,
+            )
+          }
           watermark={watermark}
+          showExifToggle={false}
         />
       )}
     </div>
@@ -342,6 +376,12 @@ function EssayViewContent({ essay, assets, title, subtitle, watermark }: EssayVi
 
 export function EssayView(props: EssayViewProps) {
   const albumTokens = useMemo(() => props.assets.map((a) => a.id), [props.assets]);
+
+  // Without the provider useProofing() returns null, and every proofing control
+  // (hearts in the grid and in the lightbox, selection bar) drops out on its own.
+  if (!props.proofing) {
+    return <EssayViewContent {...props} />;
+  }
 
   return (
     <ProofingProvider albumTokens={albumTokens}>

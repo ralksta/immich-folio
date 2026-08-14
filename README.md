@@ -128,21 +128,84 @@ Full history in the [GitHub releases](https://github.com/ralksta/immich-folio/re
 ## Quick Start
 
 ```bash
-# Clone and install
 git clone https://github.com/ralksta/immich-folio.git
 cd immich-folio
 npm install
+npm run dev
+```
 
-# Configure
+Then open `http://localhost:3000/install` and let the setup wizard connect you to
+Immich — see [First-Run Setup](#first-run-setup) below. It needs a token from the
+server log, which is printed on first access.
+
+<details>
+<summary><strong>Prefer to configure by hand?</strong></summary>
+
+The wizard writes the same files you would write yourself, so the manual route
+remains fully supported:
+
+```bash
 cp .env.local.example .env.local
 # Edit .env.local with your Immich server URL and API key
 
 cp content/gallery.yaml.example content/gallery.yaml
 # Edit gallery.yaml with your album UUIDs
 
-# Run
 npm run dev
 ```
+
+</details>
+
+## First-Run Setup
+
+A deployment with no `gallery.yaml` and no Immich credentials serves a setup
+screen. The wizard at **`/install`** fills both in from the browser: it connects
+to Immich, lets you pick albums (optional — you can add them later in `/admin`),
+and names the site. Nothing is written until your credentials have been verified
+against your Immich server, so a typo cannot leave you with an "installed" site
+that loads no photos.
+
+**The wizard is gated by a one-time token** printed to the server log on first
+access, because a fresh deployment is reachable before it has any configuration —
+and without the gate, whoever finds the URL first could configure it:
+
+```
+══════════════════════════════════════════════════════
+  Immich Folio — First-run setup token
+══════════════════════════════════════════════════════
+  Token:  PTmUKFIdce2DwuqBG71RAExH7tVxceXX
+```
+
+Read it from your container logs (`docker compose logs immich-folio`) and append
+it to the URL:
+
+```
+http://your-site/install?token=PTmUKFIdce2DwuqBG71RAExH7tVxceXX
+```
+
+The token is stored in `content/.setup-token` (mode `0600`) so it survives a
+restart, and is deleted once setup completes. From then on `/install` redirects
+to the gallery and its API routes refuse to run again.
+
+### What the wizard writes
+
+| File                    | Contents                                                             |
+| ----------------------- | -------------------------------------------------------------------- |
+| `content/gallery.yaml`  | The albums you picked                                                |
+| `content/settings.yaml` | Site title, subtitle, theme — only if it does not exist yet          |
+| `content/install.json`  | Immich URL and API key, a generated site secret, admin password hash |
+
+> **`content/install.json` holds credentials.** It is written with mode `0600`,
+> and it is the reason a backup of your `content/` directory is now a backup of
+> your Immich API key as well — treat it accordingly. The admin password is
+> stored as an scrypt hash, not as you typed it; the API key and site secret have
+> to stay readable to be usable.
+
+**Environment variables always win.** `IMMICH_API_URL`, `IMMICH_API_KEY`,
+`AUTH_SECRET` and `ADMIN_PASSWORD` override anything in `install.json`, so you
+can rotate any of them by setting the variable — no need to touch the file. Set
+all of them up front and the wizard never appears, which is the usual choice for
+an infrastructure-as-code deployment.
 
 ## Configuration
 
@@ -213,7 +276,7 @@ services:
     env_file:
       - .env.local
     volumes:
-      - ./content:/app/content:ro
+      - ./content:/app/content
 ```
 
 Run with:
@@ -239,11 +302,14 @@ docker run -d \
   --restart unless-stopped \
   -p 7211:7211 \
   --env-file .env.local \
-  -v ./content:/app/content:ro \
+  -v ./content:/app/content \
   immich-folio
 ```
 
-> **Note:** The `content/` volume mount lets you update `gallery.yaml` and `about.md` without rebuilding the image.
+> **Note:** The `content/` volume mount lets you update `gallery.yaml` and
+> `about.md` without rebuilding the image. It must be **read-write**: the setup
+> wizard, the admin panel and the backup rotation all write into it. A `:ro`
+> mount leaves the wizard unable to complete and the admin panel unable to save.
 
 ### Health Check
 
@@ -285,6 +351,10 @@ A built-in visual editor at `/admin` lets you manage your gallery without editin
 ADMIN_PASSWORD=your-secure-admin-password
 ```
 
+Or set the password in the [setup wizard](#first-run-setup), which stores it as
+an scrypt hash rather than in your environment. An `ADMIN_PASSWORD` variable
+takes precedence over the stored one if both are present.
+
 Then navigate to `http://your-site/admin` and log in. The panel is protected by its
 own password, separate from any album passwords, and writes straight to
 `gallery.yaml` / `settings.yaml` with automatic backups.
@@ -307,6 +377,27 @@ own password, separate from any album passwords, and writes straight to
 - **React 19**
 - **TypeScript**
 - **Vanilla CSS** (no framework)
+
+## Contributors
+
+Immich Folio is maintained by [@ralksta](https://github.com/ralksta) and made
+better by the people below. Thank you — every one of these made the project
+easier to live with.
+
+- **[@lancetm714](https://github.com/lancetm714)** — built the setup wizard that
+  turns a fresh install into a few clicks in the browser instead of hand-written
+  config files. Also added custom favicons, so your portfolio gets its own icon
+  in the browser tab, and made a gallery with no albums yet a perfectly valid
+  starting point rather than an error.
+- **[Jules](https://jules.google.com)** — an automated reviewer that has been
+  quietly hardening the project in the background: better screen-reader support
+  in the photo grid, and a series of fixes keeping the public endpoints from
+  being overwhelmed by traffic.
+- **[Dependabot](https://github.com/dependabot)** — keeps every dependency
+  current, which is most of the reason security fixes land here quickly.
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) to get
+started. Pull requests target the `dev` branch.
 
 ## License
 

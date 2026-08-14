@@ -47,6 +47,21 @@ describe('proxy', () => {
     );
   });
 
+  it('adds unsafe-eval to script-src in development mode for React dev tools and Fast Refresh', () => {
+    const envObj = process.env as Record<string, string | undefined>;
+    const origEnv = envObj.NODE_ENV;
+    try {
+      envObj.NODE_ENV = 'development';
+      expect(run().headers.get('Content-Security-Policy')).toContain("'unsafe-eval'");
+    } finally {
+      envObj.NODE_ENV = origEnv;
+    }
+  });
+
+  it('omits unsafe-eval in production/test environments', () => {
+    expect(run().headers.get('Content-Security-Policy')).not.toContain("'unsafe-eval'");
+  });
+
   it('keeps a matcher that excludes api and static assets but covers /admin', () => {
     const source = config.matcher[0].source;
     expect(source).toContain('api');
