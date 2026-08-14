@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useProofing } from './ProofingContext';
+import { IconCheck, IconCopy, IconLink } from './Icons';
 
 export function ProofingModal() {
   const proofing = useProofing();
@@ -125,7 +126,15 @@ export function ProofingModal() {
               cursor: 'pointer',
             }}
           >
-            {copiedState === 'link' ? '✓ Link Copied!' : '🔗 Copy Shareable Link'}
+            {copiedState === 'link' ? (
+              <>
+                <IconCheck size={15} aria-hidden="true" /> Link Copied!
+              </>
+            ) : (
+              <>
+                <IconLink size={15} aria-hidden="true" /> Copy Shareable Link
+              </>
+            )}
           </button>
 
           <button
@@ -145,7 +154,15 @@ export function ProofingModal() {
               cursor: 'pointer',
             }}
           >
-            {copiedState === 'list' ? '✓ List Copied!' : '📋 Copy Text List (#1, #2...)'}
+            {copiedState === 'list' ? (
+              <>
+                <IconCheck size={15} aria-hidden="true" /> List Copied!
+              </>
+            ) : (
+              <>
+                <IconCopy size={15} aria-hidden="true" /> Copy Text List (#1, #2...)
+              </>
+            )}
           </button>
 
           {allowMailto && (

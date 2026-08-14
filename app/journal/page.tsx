@@ -7,6 +7,7 @@ import { isAdminAuthenticated } from '@/lib/admin/auth';
 import { immich } from '@/lib/immich';
 import { imageUrl, assetPlaceholder } from '@/lib/urls';
 import { BackLink } from '@/components/BackLink';
+import { IconBook } from '@/components/Icons';
 import './journal.css';
 
 export const dynamic = 'force-dynamic';
@@ -102,7 +103,9 @@ export default async function JournalIndexPage() {
                       blurDataURL={entry.blurDataURL}
                     />
                   ) : (
-                    <div className="journal-card__cover-empty">📖</div>
+                    <div className="journal-card__cover-empty">
+                      <IconBook size={32} aria-hidden="true" />
+                    </div>
                   )}
                 </div>
 

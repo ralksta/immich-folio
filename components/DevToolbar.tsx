@@ -15,6 +15,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useLayoutEffect } from 'react';
+import { IconPalette, IconX } from './Icons';
 
 const PRESETS = ['studio', 'studio-modern', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
 const FRAMES = ['none', 'passepartout', 'shadow'];
@@ -226,7 +227,11 @@ exifOnHover: ${exifOnHover}`;
           boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
         }}
       >
-        {open ? '✕' : '🎨'}
+        {open ? (
+          <IconX size={18} aria-hidden="true" />
+        ) : (
+          <IconPalette size={18} aria-hidden="true" />
+        )}
       </button>
 
       {/* ── Panel — anchored bottom-left ────────── */}
@@ -260,7 +265,7 @@ exifOnHover: ${exifOnHover}`;
             }}
           >
             <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: '0.02em' }}>
-              🎨 Theme Builder
+              <IconPalette size={13} aria-hidden="true" /> Theme Builder
             </span>
             <span
               style={{
