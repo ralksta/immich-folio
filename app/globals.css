@@ -1182,9 +1182,13 @@
 
 .photo-grid--justified .photo-grid__item {
   height: 100%;
+  width: 100%;
   margin-bottom: 0;
-  /* Inline aspect-ratio is not set for justified items; the row height and
-     flex-basis already encode the ratio */
+  /* The base .photo-grid__item rule forces aspect-ratio from the grid
+     setting. Combined with height: 100% that pins the item width to
+     height × ratio, so it never fills the flex-grown wrapper and rows end
+     ragged. The wrapper's flex sizing is the only geometry source here. */
+  aspect-ratio: unset;
 }
 
 @media (max-width: 1024px) {
