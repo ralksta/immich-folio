@@ -5,19 +5,26 @@ author: "Portfolio Photographer"
 date: "2026-08-05"
 ---
 
+Copy this file to `content/journal/<your-slug>.md` to start an entry by hand, or
+create one under Journal in the admin panel — the studio writes this same
+format. Delete this paragraph and the next one when you are done.
+
+Photos are referenced by their Immich asset id, and those ids are specific to
+your server, so this template ships without any. Add them in the studio via
+Add Block → Photo, where the picker fills the id in for you. Written by hand it
+is `![<asset-id>:fullbleed](Caption)` for a single photo — `:wide` or no suffix
+give the narrower widths — and `![<asset-id>, <asset-id>](Caption)` for a
+side-by-side pair.
+
 # Into the Wilderness
 
 The journey began at dawn along the F-roads winding deep into the interior. As civil infrastructure faded behind us, the landscape shifted dramatically into vast fields of black volcanic ash framed by vivid neon-green moss.
 
 > Silence in the highlands isn't just the absence of sound — it is a physical weight that fills every horizon.
 
-![1:fullbleed](Crossing the icy glacial melt rivers of Landmannalaugar at early morning)
-
 ## Landmannalaugar & Beyond
 
 Walking through the rhyolite mountains, the earth fumes with geothermal vents. The color spectrum ranges from deep ochre and sulfur yellow to dark basalt gray.
-
-![2, 3](Side-by-side: Thermal vent details and volcanic obsidian formations)
 
 ### Reflection & Light
 
