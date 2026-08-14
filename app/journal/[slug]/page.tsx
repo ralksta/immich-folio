@@ -2,10 +2,17 @@ import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import type { Metadata } from 'next';
 import { readJournalEntry } from '@/lib/admin/journal-service';
+import type { ParsedJournal } from '@/lib/journal';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import { getConfig } from '@/lib/config';
 import { immich } from '@/lib/immich';
-import { imageUrl, exifUrl, assetPlaceholder, assetAspectRatio, assetExifSummary } from '@/lib/urls';
+import {
+  imageUrl,
+  exifUrl,
+  assetPlaceholder,
+  assetAspectRatio,
+  assetExifSummary,
+} from '@/lib/urls';
 import { encodeAssetId } from '@/lib/tokens';
 import { EssayView } from '@/app/[...path]/EssayView';
 import type { PhotoItem } from '@/app/[...path]/PhotoGrid';
@@ -46,7 +53,11 @@ export async function generateMetadata({ params }: JournalDetailPageProps): Prom
 }
 
 /** Check if journal entry password cookie is valid */
-function isJournalAuthenticated(slug: string, storedPassword?: string, cookieVal?: string): boolean {
+function isJournalAuthenticated(
+  slug: string,
+  storedPassword?: string,
+  cookieVal?: string,
+): boolean {
   if (!storedPassword) return true;
   if (!cookieVal) return false;
 
@@ -94,13 +105,7 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
     const cookieVal = cookieStore.get(`lb_auth_journal_${slug}`)?.value;
 
     if (!isJournalAuthenticated(slug, frontmatter.password, cookieVal)) {
-      return (
-        <PasswordGate
-          slug={slug}
-          title={frontmatter.title || slug}
-          type="journal"
-        />
-      );
+      return <PasswordGate slug={slug} title={frontmatter.title || slug} type="journal" />;
     }
   }
 
@@ -118,6 +123,51 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
 
   const rawAssets = (await Promise.all(assetPromises)).filter((a): a is ImmichAsset => a !== null);
 
+  // EssayView drops photo blocks it cannot resolve, which is right for visitors
+  // but leaves no trace of *why* a photo vanished. Legacy positional references
+  // ("1", "2") are the usual cause: they only resolved against a subpage album,
+  // and a standalone journal entry has none.
+  if (rawAssets.length < referencedAssetIds.length) {
+    const resolved = new Set(rawAssets.map((a) => a.id));
+    const missing = referencedAssetIds.filter((id) => !resolved.has(id));
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[journal] ${slug}: ${missing.length} photo reference(s) could not be resolved and will not render: ${missing.join(', ')}`,
+    );
+  }
+
+  /*
+   * EssayView resolves a block's photo through PhotoItem.id, and those ids are
+   * encrypted tokens — while the blocks coming out of the Markdown carry raw
+   * asset UUIDs. Without this translation every photo block fails its lookup and
+   * is dropped, so a correctly authored entry renders text only. Doing it here
+   * also keeps raw UUIDs out of the client payload, per the project rule that
+   * they must never reach the browser. Unresolvable references collapse to an
+   * empty string, which EssayView skips.
+   */
+  const tokenByAssetId = new Map(rawAssets.map((a) => [a.id, encodeAssetId(a.id)]));
+  const toToken = (assetId: string) => tokenByAssetId.get(assetId) ?? '';
+
+  const essayForClient: ParsedJournal = {
+    frontmatter: {
+      ...frontmatter,
+      coverAssetId: frontmatter.coverAssetId ? toToken(frontmatter.coverAssetId) : undefined,
+    },
+    blocks: blocks.map((block) => {
+      if (block.type === 'photo') {
+        return { ...block, assetId: toToken(block.assetId) };
+      }
+      if (block.type === 'photo-pair') {
+        return {
+          ...block,
+          assetIds: [toToken(block.assetIds[0]), toToken(block.assetIds[1])] as [string, string],
+        };
+      }
+      return block;
+    }),
+    referencedAssetIds: rawAssets.map((a) => encodeAssetId(a.id)),
+  };
+
   const images: PhotoItem[] = rawAssets
     .filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO')
     .map((a) => {
@@ -126,7 +176,6 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
       const isVideo = a.type === 'VIDEO';
       return {
         id: encodeAssetId(a.id),
-        rawId: a.id,
         type: isVideo ? 'video' : 'image',
         thumbUrl: imageUrl(a.id, 'preview'),
         previewUrl: imageUrl(a.id, 'preview'),
@@ -143,7 +192,7 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
         <BackLink href="/journal" label="Back to Journal" />
       </div>
       <EssayView
-        essay={entry.parsed}
+        essay={essayForClient}
         assets={images}
         title={frontmatter.title}
         subtitle={frontmatter.subtitle}
