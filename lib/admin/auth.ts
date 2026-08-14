@@ -30,11 +30,18 @@ function getAdminPassword(): string {
  * Derived session signing key, kept for the process lifetime.
  *
  * scrypt is deliberately slow, and getSigningKey() runs on every admin request
- * — deriving per call would put ~100ms in front of each one. The cache is keyed
- * by a digest of the inputs, so a rotated password or secret misses the cache
- * and derives again, and no second plaintext copy of the password is retained.
+ * — deriving per call would put ~24ms in front of each one. The cache holds the
+ * inputs it was derived from, so a rotated password or secret misses the cache
+ * and derives again.
+ *
+ * Those inputs are compared directly rather than through a digest of them: a
+ * digest here would be a fast hash of the admin password sitting in memory for
+ * the life of the process, which is the very thing scrypt was introduced below
+ * to avoid. Holding the strings costs nothing extra — they are the same objects
+ * the env and install caches already hold, whereas building a digest input
+ * allocates a fresh copy of the password.
  */
-let cachedSigningKey: { fingerprint: string; key: Buffer } | null = null;
+let cachedSigningKey: { secret: string; password: string; key: Buffer } | null = null;
 
 function getSigningKey(): Buffer {
   // Bind the key to ADMIN_PASSWORD as well, so rotating the password
@@ -42,11 +49,9 @@ function getSigningKey(): Buffer {
   const secret = resolveAuthSecret();
   const password = getAdminPassword();
 
-  const fingerprint = crypto
-    .createHash('sha256')
-    .update(`${secret}\u0000${password}`)
-    .digest('base64');
-  if (cachedSigningKey?.fingerprint === fingerprint) return cachedSigningKey.key;
+  if (cachedSigningKey?.secret === secret && cachedSigningKey.password === password) {
+    return cachedSigningKey.key;
+  }
 
   /*
    * scrypt rather than a plain SHA-256 digest: the admin password is an input
@@ -56,7 +61,7 @@ function getSigningKey(): Buffer {
    * derived from AUTH_SECRET, which is deployment-specific.
    */
   const key = crypto.scryptSync(password, `folio-admin-session:${secret}`, 32);
-  cachedSigningKey = { fingerprint, key };
+  cachedSigningKey = { secret, password, key };
   return key;
 }
 
