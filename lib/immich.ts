@@ -461,7 +461,12 @@ class ImmichClient {
    * Get enriched subpage summaries for the homepage.
    */
   async getSubpages(forceFresh = false): Promise<SubpageSummary[]> {
-    const activeSubpages = this.config.subpages.filter((sp) => sp.enabled !== false);
+    // hidden (EXPERIMENTAL) drops a subpage from every list this feeds (nav,
+    // homepage, hero) while getSubpageAlbums()/isValidSubpage() still resolve
+    // it — unlike enabled:false, which 404s the page entirely.
+    const activeSubpages = this.config.subpages.filter(
+      (sp) => sp.enabled !== false && sp.hidden !== true,
+    );
     if (activeSubpages.length === 0) return [];
 
     const albums = await this.getAlbums(forceFresh);

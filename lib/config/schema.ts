@@ -20,6 +20,8 @@ export interface SubpageConfig {
   essayFile?: string;
   essayText?: string;
   enabled?: boolean;
+  /** EXPERIMENTAL: reachable by direct link, but not shown in navigation */
+  hidden?: boolean;
 }
 
 export interface SubpageObjectValue {
@@ -31,6 +33,8 @@ export interface SubpageObjectValue {
   essayFile?: string;
   essayText?: string;
   enabled?: boolean;
+  /** EXPERIMENTAL: reachable by direct link, but not shown in navigation */
+  hidden?: boolean;
   // Both album lists reuse AlbumEntryObject rather than inlining the shape:
   // the inline copies had already drifted (they never gained `heroImage`), and
   // this path is live for map-style subpages.
@@ -40,6 +44,12 @@ export interface SubpageObjectValue {
     description?: string;
     albums: Array<string | Record<string, string | AlbumEntryObject>>;
   }>;
+}
+
+/** EXPERIMENTAL: external link shown in the header navigation. */
+export interface NavLinkConfig {
+  label: string;
+  url: string;
 }
 
 export interface FooterConfig {
@@ -70,14 +80,21 @@ export interface ThemeConfig {
   photoFrame: 'none' | 'passepartout' | 'shadow';
   grain: boolean;
   headerDot: boolean;
-  heroStyle: 'split' | 'fullbleed' | 'minimal' | 'stacked' | 'typographic' | 'mosaic';
+  heroStyle: 'split' | 'fullbleed' | 'minimal' | 'stacked' | 'typographic' | 'mosaic' | 'cover';
 }
 
 export interface GridConfig {
   columns: number;
   gap: number;
   aspectRatio: string;
-  layout: 'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow' | 'essay';
+  layout:
+    | 'masonry'
+    | 'uniform'
+    | 'showcase'
+    | 'filmstrip'
+    | 'editorial-flow'
+    | 'essay'
+    | 'justified';
 }
 
 export interface AppConfig {
@@ -120,6 +137,12 @@ export interface AppConfig {
   albumSortModes: Record<string, AlbumSortMode>;
   /** Pinned asset UUIDs per album for `sort: manual`, in display order. */
   albumManualOrders: Record<string, string[]>;
+  /** EXPERIMENTAL: per-album grid overrides, merged over the subpage/global grid. */
+  albumGrids: Record<string, Partial<GridConfig>>;
+  /** EXPERIMENTAL: per-album focal point for cover crops (CSS object-position). */
+  albumCoverPositions: Record<string, string>;
+  /** EXPERIMENTAL: external links appended to the header navigation. */
+  navLinks: NavLinkConfig[];
   cacheTtl: number;
   /** How long (ms) an expired cache entry may still be served while Immich is unreachable. */
   staleMaxAge: number;
@@ -153,6 +176,10 @@ export interface AlbumEntryObject {
   sort?: string;
   /** Pinned asset UUIDs for `sort: manual`. Everything else follows automatically. */
   assetOrder?: string[];
+  /** EXPERIMENTAL: per-album grid override, merged over the subpage/global grid */
+  grid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
+  /** EXPERIMENTAL: focal point for the cover crop, e.g. "50% 25%" or "top" */
+  coverPosition?: string;
 }
 
 export interface GalleryYaml {
@@ -175,6 +202,7 @@ export interface GalleryYaml {
         essayFile?: string;
         essayText?: string;
         enabled?: boolean;
+        hidden?: boolean;
         grid?: {
           columns?: number;
           gap?: number;
@@ -224,6 +252,8 @@ export interface SettingsYaml {
   };
   footer?: FooterConfig;
   legal?: Partial<LegalConfig>;
+  /** EXPERIMENTAL: external links appended to the header navigation. */
+  navLinks?: Array<{ label?: string; url?: string }>;
   protection?: {
     disableRightClick?: boolean;
     disableImageDrag?: boolean;

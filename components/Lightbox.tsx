@@ -328,6 +328,9 @@ export function Lightbox({
             </div>
           ) : exifData ? (
             <>
+              {exifData.description && (
+                <p className={styles.exifCaption}>{exifData.description}</p>
+              )}
               {exifData.model && (
                 <div className={styles.exifRow}>
                   <span className={styles.exifLabel}>Camera</span>

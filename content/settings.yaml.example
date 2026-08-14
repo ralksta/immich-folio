@@ -39,7 +39,7 @@ theme:
   # accent: "#e60012"
   # photoFrame: "passepartout" # none, passepartout, shadow
   # grain: true
-  # heroStyle: "split" # split, fullbleed, minimal, stacked, typographic, mosaic
+  # heroStyle: "split" # split, fullbleed, minimal, stacked, typographic, mosaic, cover (EXPERIMENTAL)
   #   Note: "mosaic" needs at least 3 hero images in gallery.yaml (optimal: 6)
 
 # ── Grid configuration ───────────────────────────────────────────
@@ -47,7 +47,16 @@ grid:
   columns: 3
   gap: 12
   aspectRatio: "1" # "1" (square), "3/2", "2/3", "16/9", "auto"
-  layout: "masonry" # masonry, uniform, showcase, filmstrip, editorial-flow
+  layout: "masonry" # masonry, uniform, showcase, filmstrip, editorial-flow, justified (EXPERIMENTAL)
+
+# ── Navigation ────────────────────────────────────────────────────
+# EXPERIMENTAL: external links appended to the header navigation.
+# Only http(s) URLs are allowed; they open in a new tab.
+# navLinks:
+#   - label: "Shop"
+#     url: "https://shop.example.com"
+#   - label: "Instagram"
+#     url: "https://instagram.com/your-handle"
 
 # ── Footer & Social ──────────────────────────────────────────────
 footer:
