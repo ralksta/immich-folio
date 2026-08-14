@@ -3,56 +3,24 @@
  * Reads content from content/about.md (frontmatter + markdown body).
  */
 
-import { promises as fsPromises } from 'fs';
-import { join } from 'path';
-import yaml from 'js-yaml';
 import Image from 'next/image';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { imageUrl, assetPlaceholder } from '@/lib/urls';
 import { immich } from '@/lib/immich';
-import { getConfig } from '@/lib/config';
-import { notFound } from 'next/navigation';
+import { readAboutFile, type AboutContent } from '@/lib/admin/about-service';
 import './about.css';
 
 export const dynamic = 'force-dynamic';
 
-interface AboutFrontmatter {
-  portrait?: string;
-  name?: string;
-  location?: string;
-  gear?: string[];
-}
-
-async function getAboutContent() {
-  const filePath = join(process.cwd(), 'content', 'about.md');
-  let raw: string;
-
-  try {
-    raw = await fsPromises.readFile(filePath, 'utf-8');
-  } catch {
-    return { meta: {} as AboutFrontmatter, body: '' };
-  }
-
-  let meta = {} as AboutFrontmatter;
-  let body = raw;
-
-  const match = raw.match(/^(?:---\r?\n)([\s\S]*?)(?:\r?\n---\r?\n)([\s\S]*)$/);
-  if (match) {
-    try {
-      meta = (yaml.load(match[1]) || {}) as AboutFrontmatter;
-    } catch (e) {
-      console.error('Failed to parse about.md frontmatter', e);
-    }
-    body = match[2];
-  }
-
-  return { meta, body: body.trim() };
+async function getAboutContent(): Promise<AboutContent> {
+  return readAboutFile();
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { meta, body } = await getAboutContent();
-  const title = meta.name ? `About — ${meta.name}` : 'About';
-  const description = body ? body.slice(0, 160).replace(/\s+/g, ' ').trim() : undefined;
+  const about = await getAboutContent();
+  const title = about.name ? `About — ${about.name}` : 'About';
+  const description = about.body ? about.body.slice(0, 160).replace(/\s+/g, ' ').trim() : undefined;
 
   return {
     title,
@@ -70,23 +38,24 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
-  const config = getConfig();
-  if (!config.aboutEnabled) notFound();
+  const { portrait, name, location, gear, body, enabled } = await getAboutContent();
 
-  const { meta, body } = await getAboutContent();
+  if (enabled === false) {
+    notFound();
+  }
 
   // Fetch ThumbHash for portrait placeholder
-  const portraitAsset = meta.portrait ? await immich.getAssetInfo(meta.portrait) : null;
+  const portraitAsset = portrait ? await immich.getAssetInfo(portrait) : null;
   const portraitPlaceholder = portraitAsset ? assetPlaceholder(portraitAsset) : null;
 
   return (
     <div className="about">
       {/* ── Portrait ─────────────────────────────────── */}
       <div className="about__portrait-col">
-        {meta.portrait ? (
+        {portrait ? (
           <Image
-            src={imageUrl(meta.portrait, 'preview')}
-            alt={meta.name || 'Portrait'}
+            src={imageUrl(portrait, 'preview')}
+            alt={name || 'Portrait'}
             className="about__portrait"
             fill
             sizes="(max-width: 768px) 100vw, 40vw"
@@ -104,8 +73,8 @@ export default async function AboutPage() {
         <p className="about__kicker" aria-hidden="true">
           About
         </p>
-        {meta.name && <h1 className="about__name">{meta.name}</h1>}
-        {meta.location && <p className="about__location">{meta.location}</p>}
+        {name && <h1 className="about__name">{name}</h1>}
+        {location && <p className="about__location">{location}</p>}
 
         <hr className="about__rule" />
 
@@ -120,12 +89,12 @@ export default async function AboutPage() {
           </div>
         )}
 
-        {meta.gear && meta.gear.length > 0 && (
+        {gear && gear.length > 0 && (
           <>
             <hr className="about__rule" />
             <h2 className="about__section-label">Gear</h2>
             <ul className="about__gear">
-              {meta.gear.map((item) => (
+              {gear.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 import { invalidateConfigCache } from '@/lib/config';
+import { invalidateAboutCache } from '@/lib/admin/about-service';
 import { immich } from '@/lib/immich';
 
 /** POST: Force reload config and clear caches. */
@@ -14,6 +15,7 @@ export async function POST() {
   }
 
   invalidateConfigCache();
+  invalidateAboutCache();
   immich.invalidateAll();
   revalidatePath('/', 'layout');
 

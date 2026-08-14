@@ -16,6 +16,7 @@ import { SetupScreen } from '@/components/SetupScreen';
 import { getConfigOrNull, getGoogleFontsUrl, AppConfig } from '@/lib/config';
 import { isAdminPath } from '@/lib/admin/paths';
 import { isInstallPath } from '@/lib/install';
+import { readAboutFile } from '@/lib/admin/about-service';
 // DevToolbarLoader is a Client Component (ssr: false is only allowed there)
 import { DevToolbarLoader } from '@/components/DevToolbarLoader';
 import AssetProtection from '@/components/AssetProtection';
@@ -115,6 +116,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   const isAdmin = isAdminPath(pathname);
 
+  const about = await readAboutFile();
+
   return (
     <html
       lang={config.lang || 'en'}
@@ -149,7 +152,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   Home
                 </Link>
                 <SubpageNav />
-                {config.aboutEnabled && (
+                {about.enabled !== false && (
                   <Link href="/about" className="header__nav-link">
                     About
                   </Link>

@@ -14,6 +14,7 @@ interface Props {
 
 const TABS = [
   { label: 'Pages', href: '/admin/pages', match: /^\/admin(\/pages)?$/ },
+  { label: 'About', href: '/admin/about', match: /^\/admin\/about/ },
   { label: 'Journal', href: '/admin/journal', match: /^\/admin\/journal/ },
   { label: 'Settings', href: '/admin/settings', match: /^\/admin\/settings/ },
   { label: 'Analytics', href: '/admin/analytics', match: /^\/admin\/analytics/ },
