@@ -53,20 +53,6 @@ const ROUTES: {
     args: () => [new Request('http://localhost/api/admin/settings', { method: 'PUT', body: '{}' })],
   },
   {
-    name: 'GET /api/admin/about',
-    path: 'about',
-    load: () => import('../about/route'),
-    method: 'GET',
-    args: () => [],
-  },
-  {
-    name: 'PUT /api/admin/about',
-    path: 'about',
-    load: () => import('../about/route'),
-    method: 'PUT',
-    args: () => [new Request('http://localhost/api/admin/about', { method: 'PUT', body: '{}' })],
-  },
-  {
     name: 'GET /api/admin/albums',
     path: 'albums',
     load: () => import('../albums/route'),

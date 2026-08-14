@@ -68,7 +68,6 @@ interface Settings {
     opacity?: number;
     position?: 'bottom-right' | 'bottom-left' | 'center';
   };
-  about?: { enabled?: boolean };
 }
 
 const PRESETS = ['studio', 'studio-modern', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
@@ -191,7 +190,6 @@ const SETTINGS_SECTIONS = [
   { id: 'legal', label: 'Legal' },
   { id: 'seo', label: 'SEO' },
   { id: 'security', label: 'Security & Protection' },
-  { id: 'about', label: 'About' },
 ];
 
 interface SettingsEditorProps {
@@ -215,20 +213,6 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
   const [faviconUploading, setFaviconUploading] = useState(false);
   const [faviconMessage, setFaviconMessage] = useState('');
 
-  // About content state (independent of main settings save)
-  const [aboutMeta, setAboutMeta] = useState<{
-    portrait?: string;
-    name?: string;
-    location?: string;
-    gear?: string[];
-  }>({});
-  const [aboutBody, setAboutBody] = useState('');
-  const [aboutLoading, setAboutLoading] = useState(false);
-  const [aboutSaving, setAboutSaving] = useState(false);
-  const [aboutDirty, setAboutDirty] = useState(false);
-  const [aboutMessage, setAboutMessage] = useState('');
-  const [aboutGearText, setAboutGearText] = useState('');
-
   useEffect(() => {
     loadSettings();
     if (typeof window !== 'undefined') {
@@ -250,12 +234,6 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
     }
   }, [settings.theme?.preset, settings.theme?.accent]);
 
-  // The About panel has its own route, so load its content when that section opens
-  useEffect(() => {
-    if (activeSection === 'about') loadAboutContent();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSection]);
-
   const toggleMode = (mode: 'dark' | 'light') => {
     setCurrentMode(mode);
     if (typeof document !== 'undefined') {
@@ -266,25 +244,11 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
 
   // ── Keyboard shortcut: ⌘+S / Ctrl+S ─────────────────────────
   const handleSaveRef = useCallback(() => {
-    if (activeSection === 'about') {
-      if (aboutDirty && !aboutSaving) saveAboutContent();
-      return;
-    }
     if (dirty && !saving) {
       handleSave();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    dirty,
-    saving,
-    settings,
-    activeSection,
-    aboutDirty,
-    aboutSaving,
-    aboutMeta,
-    aboutBody,
-    aboutGearText,
-  ]);
+  }, [dirty, saving, settings]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -381,68 +345,6 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
     }
   }
 
-  async function loadAboutContent() {
-    setAboutLoading(true);
-    try {
-      const res = await fetch('/api/admin/about');
-      if (res.ok) {
-        const data = await res.json();
-        setAboutMeta(data.meta || {});
-        setAboutBody(data.body || '');
-        setAboutGearText(data.meta?.gear?.join('\n') || '');
-      }
-    } catch (err) {
-      console.error('Failed to load about content:', err);
-    } finally {
-      setAboutLoading(false);
-    }
-  }
-
-  async function saveAboutContent() {
-    setAboutSaving(true);
-    setAboutMessage('');
-    const cleanedMeta = { ...aboutMeta };
-    for (const [k, v] of Object.entries(cleanedMeta)) {
-      if (v === '' || v === undefined) delete cleanedMeta[k as keyof typeof cleanedMeta];
-    }
-    const gearLines = aboutGearText
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (gearLines.length > 0) {
-      cleanedMeta.gear = gearLines;
-    } else {
-      delete cleanedMeta.gear;
-    }
-
-    try {
-      const res = await fetch('/api/admin/about', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ meta: cleanedMeta, body: aboutBody }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAboutDirty(false);
-        setAboutMessage(data.message || 'Saved!');
-        setTimeout(() => setAboutMessage(''), 4000);
-      } else {
-        const err = await res.json();
-        setAboutMessage(`Error: ${err.error}`);
-      }
-    } catch {
-      setAboutMessage('Error: Failed to save');
-    } finally {
-      setAboutSaving(false);
-    }
-  }
-
-  function updateAboutMeta(key: string, value: unknown) {
-    setAboutMeta((m) => ({ ...m, [key]: value }));
-    setAboutDirty(true);
-    setAboutMessage('');
-  }
-
   if (loading) {
     return (
       <div className="admin-loading">
@@ -453,24 +355,13 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
 
   return (
     <div className="settings-editor">
-      {/* The About panel edits about.md, not settings.yaml, so it drives the bar itself. */}
-      {activeSection === 'about' ? (
-        <SaveBar
-          dirty={aboutDirty}
-          saving={aboutSaving}
-          saveMessage={aboutMessage}
-          onSave={saveAboutContent}
-          label="Save About"
-        />
-      ) : (
-        <SaveBar
-          dirty={dirty}
-          saving={saving}
-          saveMessage={saveMessage}
-          onSave={handleSave}
-          label="Save Settings"
-        />
-      )}
+      <SaveBar
+        dirty={dirty}
+        saving={saving}
+        saveMessage={saveMessage}
+        onSave={handleSave}
+        label="Save Settings"
+      />
 
       <p className="settings-live-sync-note">
         <Icons.IconRefresh size={13} /> Live Sync (No Docker restart required)
@@ -617,22 +508,6 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                     <span className="toggle-card-desc">Allow visitors &amp; clients to heart, filter, and export favorite photo selections</span>
                   </div>
                   <div className={`switch-toggle ${settings.proofing?.enabled !== false ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.about?.enabled !== false ? 'active' : ''}`}
-                  onClick={() => update('about.enabled', settings.about?.enabled === false)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconCamera size={16} /> About Page
-                    </span>
-                    <span className="toggle-card-desc">Show a portrait, bio, and gear section on your portfolio</span>
-                  </div>
-                  <div className={`switch-toggle ${settings.about?.enabled !== false ? 'on' : ''}`}>
                     <span className="switch-slider" />
                   </div>
                 </button>
@@ -1466,77 +1341,6 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                         onChange={(e) => update('watermark.opacity', parseFloat(e.target.value))}
                       />
                     </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {activeSection === 'about' && (
-            <div className="settings-panel">
-              <div className="settings-section-header">
-                <h3>
-                  <Icons.IconCamera size={18} /> About Page
-                </h3>
-                <p className="settings-section-sub">
-                  Edit the portrait, biography and gear shown on the About page. Use General to show
-                  or hide the page itself.
-                </p>
-              </div>
-
-              {aboutLoading ? (
-                <div className="admin-spinner" style={{ margin: '2rem auto' }} />
-              ) : (
-                <>
-                  <div className="admin-field">
-                    <label>Portrait Asset ID</label>
-                    <input
-                      value={aboutMeta.portrait || ''}
-                      onChange={(e) => updateAboutMeta('portrait', e.target.value)}
-                      placeholder="Immich asset UUID for the portrait photo"
-                    />
-                  </div>
-                  <div className="admin-field">
-                    <label>Name</label>
-                    <input
-                      value={aboutMeta.name || ''}
-                      onChange={(e) => updateAboutMeta('name', e.target.value)}
-                      placeholder="Your name"
-                    />
-                  </div>
-                  <div className="admin-field">
-                    <label>Location</label>
-                    <input
-                      value={aboutMeta.location || ''}
-                      onChange={(e) => updateAboutMeta('location', e.target.value)}
-                      placeholder="City, Country"
-                    />
-                  </div>
-                  <div className="admin-field">
-                    <label>Gear (one per line)</label>
-                    <textarea
-                      value={aboutGearText}
-                      onChange={(e) => {
-                        setAboutGearText(e.target.value);
-                        setAboutDirty(true);
-                        setAboutMessage('');
-                      }}
-                      placeholder={`Leica Q3\nSummilux 35mm f/1.4`}
-                      rows={4}
-                    />
-                  </div>
-                  <div className="admin-field">
-                    <label>Biography (Markdown)</label>
-                    <textarea
-                      value={aboutBody}
-                      onChange={(e) => {
-                        setAboutBody(e.target.value);
-                        setAboutDirty(true);
-                        setAboutMessage('');
-                      }}
-                      placeholder="Photographer based in..."
-                      rows={6}
-                    />
                   </div>
                 </>
               )}

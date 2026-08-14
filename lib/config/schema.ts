@@ -111,7 +111,6 @@ export interface AppConfig {
     enabled: boolean;
     allowMailto: boolean;
   };
-  aboutEnabled: boolean;
   albumOverrides: Record<string, string>;
   albumDescriptions: Record<string, string>;
   albumPasswords: Record<string, string>;
@@ -234,7 +233,6 @@ export interface SettingsYaml {
     opacity?: number;
     position?: 'bottom-right' | 'bottom-left' | 'center';
   };
-  about?: { enabled?: boolean };
 }
 
 export function slugify(name: string): string {
