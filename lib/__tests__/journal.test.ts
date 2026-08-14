@@ -46,11 +46,15 @@ describe('Journal Service & Parser', () => {
   });
 
   describe('sanitizeHtml & inline markdown', () => {
-    it('strips script tags and inline events', () => {
+    it('makes script tags and inline events inert', () => {
       const malicious = 'Hello <script>alert(1)</script><img src="x" onerror="alert(2)">';
       const clean = sanitizeHtml(malicious);
-      expect(clean).not.toContain('<script>');
-      expect(clean).not.toContain('onerror');
+      // The word "onerror" may well survive as text — what matters is that no
+      // tag can form around it, so it is never an attribute. Testing for the
+      // absence of the substring tested the old denylist, not the property.
+      expect(clean).not.toContain('<');
+      expect(clean).not.toContain('>');
+      expect(clean).not.toContain('"');
     });
 
     it('formats bold, italic, and safe links', () => {
