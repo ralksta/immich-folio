@@ -42,6 +42,9 @@ import {
   IconGripVertical,
   IconHome,
   IconImage,
+  IconBan,
+  IconEyeOff,
+  IconGlobe,
   IconLock,
   IconPencil,
   IconPlus,
@@ -1248,21 +1251,27 @@ export default function PageBuilder() {
                               {
                                 key: 'published',
                                 active: sp.enabled !== false && sp.hidden !== true,
-                                title: '🟢 Published',
+                                icon: <IconGlobe size={15} />,
+                                iconColor: '#4ade80',
+                                title: 'Published',
                                 desc: 'Shown in the header menu and homepage lists, reachable via URL',
                                 patch: { enabled: true, hidden: false },
                               },
                               {
                                 key: 'unlisted',
                                 active: sp.enabled !== false && sp.hidden === true,
-                                title: '🙈 Unlisted (Experimental)',
+                                icon: <IconEyeOff size={15} />,
+                                iconColor: '#fbbf24',
+                                title: 'Unlisted (Experimental)',
                                 desc: 'Not shown in menus or on the homepage, but reachable via direct link',
                                 patch: { enabled: true, hidden: true },
                               },
                               {
                                 key: 'disabled',
                                 active: sp.enabled === false,
-                                title: '🔴 Disabled',
+                                icon: <IconBan size={15} />,
+                                iconColor: '#f87171',
+                                title: 'Disabled',
                                 desc: 'Completely offline — returns 404 even when accessed directly',
                                 patch: { enabled: false, hidden: false },
                               },
@@ -1277,7 +1286,10 @@ export default function PageBuilder() {
                               style={{ padding: '10px 14px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '8px', cursor: 'pointer', marginBottom: '6px' }}
                             >
                               <div className="toggle-card-info" style={{ textAlign: 'left' }}>
-                                <span className="toggle-card-title" style={{ fontWeight: 600 }}>
+                                <span className="toggle-card-title" style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{ color: opt.iconColor, display: 'inline-flex' }} aria-hidden="true">
+                                    {opt.icon}
+                                  </span>
                                   {opt.title}
                                 </span>
                                 <span className="toggle-card-desc" style={{ fontSize: '0.8rem', display: 'block', opacity: 0.75 }}>
