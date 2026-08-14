@@ -282,12 +282,12 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       let essayParsed = result.subpage.essayText
         ? parseEssayMarkdown(result.subpage.essayText)
         : result.subpage.essayFile
-        ? loadEssayFromFile(result.subpage.essayFile)
-        : null;
+          ? loadEssayFromFile(result.subpage.essayFile)
+          : null;
 
       // Fetch assets from all subpage albums
       const allAlbums = await Promise.all(
-        albums.map((a) => immich.getAlbumBySlug(a.slug, slug, forceFresh))
+        albums.map((a) => immich.getAlbumBySlug(a.slug, slug, forceFresh)),
       );
       const allAssets = allAlbums.flatMap((a) => (a ? a.assets : []));
       const images = toPhotoItems(allAssets, config.exifOnHover);

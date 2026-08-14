@@ -27,10 +27,7 @@ export function encodeProofBitmask(indices: number[]): string {
     binary += String.fromCharCode(bytes[i]);
   }
 
-  return btoa(binary)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /**

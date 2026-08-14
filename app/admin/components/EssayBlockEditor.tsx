@@ -28,7 +28,7 @@ interface EssayBlockEditorProps {
 
 export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlockEditorProps) {
   const [essay, setEssay] = useState<ParsedEssay>(() =>
-    parseEssayMarkdown(markdown || '# Title\n\nWrite your story here...')
+    parseEssayMarkdown(markdown || '# Title\n\nWrite your story here...'),
   );
 
   // Sync internal state when prop changes from outside (e.g. initial load)
@@ -50,15 +50,15 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
               if (b.type === 'photo') return [b.assetId];
               if (b.type === 'photo-pair') return b.assetIds;
               return [];
-            })
-          )
+            }),
+          ),
         ),
       };
 
       setEssay(updatedEssay);
       onChange(serializeEssayMarkdown(updatedEssay));
     },
-    [essay, onChange]
+    [essay, onChange],
   );
 
   // Block manipulation helpers
@@ -171,7 +171,10 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
           {/* Card Header */}
           <div className="essay-block-card-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <IconGripVertical size={14} style={{ color: 'var(--admin-text-muted)', cursor: 'grab' }} />
+              <IconGripVertical
+                size={14}
+                style={{ color: 'var(--admin-text-muted)', cursor: 'grab' }}
+              />
               <BlockBadge type={block.type} index={idx + 1} />
             </div>
 
@@ -227,7 +230,10 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                 value={block.text}
                 onChange={(e) => handleUpdateBlock(idx, { ...block, text: e.target.value })}
                 placeholder="Section heading..."
-                style={{ flex: 1, fontWeight: block.level === 1 ? 700 : block.level === 2 ? 600 : 500 }}
+                style={{
+                  flex: 1,
+                  fontWeight: block.level === 1 ? 700 : block.level === 2 ? 600 : 500,
+                }}
               />
             </div>
           )}
@@ -237,7 +243,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
             <textarea
               rows={3}
               value={block.html.replace(/<[^>]+>/g, (t) =>
-                t.startsWith('<strong>') ? '**' : t.startsWith('</strong>') ? '**' : ''
+                t.startsWith('<strong>') ? '**' : t.startsWith('</strong>') ? '**' : '',
               )}
               onChange={(e) => handleUpdateBlock(idx, { ...block, html: e.target.value })}
               placeholder="Write text paragraph... (**bold**, *italic* markdown supported)"
@@ -246,7 +252,15 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
 
           {/* 3. PULLQUOTE BLOCK */}
           {block.type === 'quote' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderLeft: '3px solid var(--admin-accent)', paddingLeft: '10px' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                borderLeft: '3px solid var(--admin-accent)',
+                paddingLeft: '10px',
+              }}
+            >
               <textarea
                 rows={2}
                 value={block.text}
@@ -293,7 +307,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                         className="admin-btn admin-btn-sm admin-btn-primary"
                         onClick={() =>
                           onSelectPhoto((pickedId) =>
-                            handleUpdateBlock(idx, { ...block, assetId: pickedId })
+                            handleUpdateBlock(idx, { ...block, assetId: pickedId }),
                           )
                         }
                       >
@@ -354,7 +368,13 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 {/* Photo 1 */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--admin-text-secondary)' }}>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      color: 'var(--admin-text-secondary)',
+                    }}
+                  >
                     Photo 1
                   </span>
                   <div className="essay-photo-preview-container">
@@ -380,7 +400,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                               handleUpdateBlock(idx, {
                                 ...block,
                                 assetIds: [pickedId, block.assetIds[1]],
-                              })
+                              }),
                             )
                           }
                         >
@@ -405,8 +425,20 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
 
                 {/* Photo 2 */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--admin-text-secondary)' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        color: 'var(--admin-text-secondary)',
+                      }}
+                    >
                       Photo 2
                     </span>
                     <button
@@ -447,7 +479,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                               handleUpdateBlock(idx, {
                                 ...block,
                                 assetIds: [block.assetIds[0], pickedId],
-                              })
+                              }),
                             )
                           }
                         >

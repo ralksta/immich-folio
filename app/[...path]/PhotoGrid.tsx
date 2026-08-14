@@ -35,13 +35,7 @@ export interface PhotoItem {
 interface PhotoGridProps {
   assets: PhotoItem[];
   layout?:
-    | 'masonry'
-    | 'uniform'
-    | 'showcase'
-    | 'filmstrip'
-    | 'editorial-flow'
-    | 'essay'
-    | 'justified';
+    'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow' | 'essay' | 'justified';
   gridStyle?: React.CSSProperties;
   watermark?: LightboxWatermark;
 }
@@ -120,7 +114,9 @@ function PhotoGridInner({ assets, layout = 'masonry', gridStyle, watermark }: Ph
   }, [displayedAssets.length]);
 
   const goPrev = useCallback(() => {
-    setLightboxIndex((prev) => (prev !== null ? (prev - 1 + displayedAssets.length) % displayedAssets.length : null));
+    setLightboxIndex((prev) =>
+      prev !== null ? (prev - 1 + displayedAssets.length) % displayedAssets.length : null,
+    );
   }, [displayedAssets.length]);
 
   // Keyboard navigation and the scroll lock live in <Lightbox/>.
@@ -268,7 +264,9 @@ function PhotoGridInner({ assets, layout = 'masonry', gridStyle, watermark }: Ph
             type="button"
             onClick={() => proofing.setIsFilterActive((prev) => !prev)}
             style={{
-              background: proofing.isFilterActive ? 'var(--accent, #e60012)' : 'rgba(255,255,255,0.15)',
+              background: proofing.isFilterActive
+                ? 'var(--accent, #e60012)'
+                : 'rgba(255,255,255,0.15)',
               color: '#fff',
               border: 'none',
               padding: '6px 14px',

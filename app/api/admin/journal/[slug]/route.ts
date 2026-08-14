@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
 import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
-import {
-  isValidSlug,
-  sanitizeSlug,
-  parseJournalMarkdown,
-} from '@/lib/journal';
+import { isValidSlug, sanitizeSlug, parseJournalMarkdown } from '@/lib/journal';
 import {
   readJournalEntry,
   writeJournalEntry,
@@ -65,9 +61,7 @@ export async function PUT(request: Request, context: RouteContext) {
     parseJournalMarkdown(rawMarkdown);
 
     const targetSlug =
-      typeof body.newSlug === 'string' && body.newSlug
-        ? sanitizeSlug(body.newSlug)
-        : slug;
+      typeof body.newSlug === 'string' && body.newSlug ? sanitizeSlug(body.newSlug) : slug;
 
     if (!isValidSlug(targetSlug)) {
       return NextResponse.json({ error: 'Invalid target slug' }, { status: 400 });

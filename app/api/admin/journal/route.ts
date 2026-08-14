@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
 import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
-import {
-  sanitizeSlug,
-  isValidSlug,
-  type JournalFrontmatter,
-} from '@/lib/journal';
+import { sanitizeSlug, isValidSlug, type JournalFrontmatter } from '@/lib/journal';
 import {
   listJournalEntries,
   writeJournalEntry,
@@ -47,7 +43,10 @@ export async function POST(request: Request) {
 
     const existing = await readJournalEntry(slug);
     if (existing) {
-      return NextResponse.json({ error: 'A journal entry with this slug already exists' }, { status: 409 });
+      return NextResponse.json(
+        { error: 'A journal entry with this slug already exists' },
+        { status: 409 },
+      );
     }
 
     const frontmatter: JournalFrontmatter = {
@@ -56,7 +55,9 @@ export async function POST(request: Request) {
       draft: true,
       ...(typeof body.subtitle === 'string' && body.subtitle ? { subtitle: body.subtitle } : {}),
       ...(typeof body.author === 'string' && body.author ? { author: body.author } : {}),
-      ...(typeof body.coverAssetId === 'string' && body.coverAssetId ? { coverAssetId: body.coverAssetId } : {}),
+      ...(typeof body.coverAssetId === 'string' && body.coverAssetId
+        ? { coverAssetId: body.coverAssetId }
+        : {}),
     };
 
     let initialMarkdown = body.content;

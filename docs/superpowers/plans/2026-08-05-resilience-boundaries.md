@@ -14,17 +14,17 @@
 
 Der ursprüngliche Plan (v1) entstand gegen v0.9.1. PR #394 hat davon einen großen Teil umgesetzt — teils anders und besser als geplant. Ersatzlos gestrichen:
 
-| Ehemalige Task | Status in v0.9.2 |
-|---|---|
-| Upstream-Statusmodul (`lib/upstream.ts`) | **Überholt.** Statt eines Seiten-Pings unterscheidet `request()` jetzt an der Quelle: `ImmichUnavailableError` für Ausfälle, `null` nur für 404/410. Das ist die bessere Lösung — kein Nebenkanal, keine Race zwischen Ping und Abruf. |
-| 404-vs-503-Politik in `app/[...path]/page.tsx` | **Erledigt.** Der Fehler propagiert, Seiten liefern 5xx statt 404. Zusätzlich geben `/api/exif` und `/api/map` 503 mit `Retry-After`. |
-| `app/error.tsx`, `app/not-found.tsx` | **Erledigt**, mit `.empty-state` aus `globals.css` und 8 Tests in `lib/__tests__/error-pages.test.ts`. |
-| `app/global-error.tsx` | **Nicht mehr nötig.** Das Layout wirft nicht mehr: `getConfigOrNull()` (`lib/config/index.ts:39`) fängt ab und rendert den SetupScreen, wobei `/admin` erreichbar bleibt. Das war der einzige konkrete Anlass für die Boundary. |
-| Bild-Größen-Tiers | **Erledigt**, nach `lib/imageSize.ts` ausgelagert und getestet. |
+| Ehemalige Task                                 | Status in v0.9.2                                                                                                                                                                                                                       |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Upstream-Statusmodul (`lib/upstream.ts`)       | **Überholt.** Statt eines Seiten-Pings unterscheidet `request()` jetzt an der Quelle: `ImmichUnavailableError` für Ausfälle, `null` nur für 404/410. Das ist die bessere Lösung — kein Nebenkanal, keine Race zwischen Ping und Abruf. |
+| 404-vs-503-Politik in `app/[...path]/page.tsx` | **Erledigt.** Der Fehler propagiert, Seiten liefern 5xx statt 404. Zusätzlich geben `/api/exif` und `/api/map` 503 mit `Retry-After`.                                                                                                  |
+| `app/error.tsx`, `app/not-found.tsx`           | **Erledigt**, mit `.empty-state` aus `globals.css` und 8 Tests in `lib/__tests__/error-pages.test.ts`.                                                                                                                                 |
+| `app/global-error.tsx`                         | **Nicht mehr nötig.** Das Layout wirft nicht mehr: `getConfigOrNull()` (`lib/config/index.ts:39`) fängt ab und rendert den SetupScreen, wobei `/admin` erreichbar bleibt. Das war der einzige konkrete Anlass für die Boundary.        |
+| Bild-Größen-Tiers                              | **Erledigt**, nach `lib/imageSize.ts` ausgelagert und getestet.                                                                                                                                                                        |
 
 Obendrein neu und relevant: `IMMICH_TIMEOUT_MS`, ein `MISSING`-Sentinel, der definitive 404-Antworten cacht, `middleware.ts` → `proxy.ts`, sowie 210 statt 98 Unit-Tests.
 
-**Was das für Task 1 bedeutet:** Die vitest-Grenze wurde in #394 zweimal *umgangen* statt gehoben — `lib/imageSize.ts` wurde eigens ausgelagert, damit die Größenlogik aus `lib/__tests__/` erreichbar ist, und `error-pages.test.ts` benutzt `createElement` statt JSX, weil eine `.tsx`-Datei dort nie ausgeführt würde (so im Commit-Text vermerkt). Die Sicherheitslogik, die sich nicht auslagern lässt — Admin-Guards und Content-Type-Sanitisierung — ist deshalb weiterhin ungetestet.
+**Was das für Task 1 bedeutet:** Die vitest-Grenze wurde in #394 zweimal _umgangen_ statt gehoben — `lib/imageSize.ts` wurde eigens ausgelagert, damit die Größenlogik aus `lib/__tests__/` erreichbar ist, und `error-pages.test.ts` benutzt `createElement` statt JSX, weil eine `.tsx`-Datei dort nie ausgeführt würde (so im Commit-Text vermerkt). Die Sicherheitslogik, die sich nicht auslagern lässt — Admin-Guards und Content-Type-Sanitisierung — ist deshalb weiterhin ungetestet.
 
 ## Global Constraints
 
@@ -44,25 +44,25 @@ Obendrein neu und relevant: `IMMICH_TIMEOUT_MS`, ein `MISSING`-Sentinel, der def
 
 **Neu:**
 
-| Datei | Verantwortung |
-|---|---|
+| Datei                                          | Verantwortung                                              |
+| ---------------------------------------------- | ---------------------------------------------------------- |
 | `app/api/admin/__tests__/admin-guards.test.ts` | Tabellengetrieben: jede Admin-Route lehnt ohne Session ab. |
-| `app/api/image/__tests__/image-route.test.ts` | Token-Grenze, Content-Type-Sanitisierung, ETag/304. |
-| `lib/__tests__/cache-stale.test.ts` | Stale-Fenster und harte Obergrenze des Caches. |
-| `app/loading.tsx` | Skeleton für die Startseite. |
-| `app/[...path]/loading.tsx` | Skeleton für Album-/Subpage-Routen. |
-| `app/loading.module.css` | Skeleton-Styles. |
+| `app/api/image/__tests__/image-route.test.ts`  | Token-Grenze, Content-Type-Sanitisierung, ETag/304.        |
+| `lib/__tests__/cache-stale.test.ts`            | Stale-Fenster und harte Obergrenze des Caches.             |
+| `app/loading.tsx`                              | Skeleton für die Startseite.                               |
+| `app/[...path]/loading.tsx`                    | Skeleton für Album-/Subpage-Routen.                        |
+| `app/loading.module.css`                       | Skeleton-Styles.                                           |
 
 **Geändert:**
 
-| Datei | Änderung |
-|---|---|
-| `vitest.config.ts` | `include` um `app/**/__tests__/**/*.test.ts` erweitern. |
-| `lib/cache.ts` | Zwei Deadlines pro Eintrag, `getStale()`. |
-| `lib/immich.ts` | `ImmichUnavailableError` abfangen, Stale-Fallback, sonst weiterwerfen. |
-| `lib/env.ts`, `.env.local.example` | `STALE_MAX_AGE`. |
-| `lib/config/schema.ts`, `lib/config/index.ts` | `staleMaxAge` in `AppConfig` und beide Rückgabepfade. |
-| `README.md`, `CLAUDE.md` | Stale-Verhalten und Token-Widerruf dokumentieren. |
+| Datei                                         | Änderung                                                               |
+| --------------------------------------------- | ---------------------------------------------------------------------- |
+| `vitest.config.ts`                            | `include` um `app/**/__tests__/**/*.test.ts` erweitern.                |
+| `lib/cache.ts`                                | Zwei Deadlines pro Eintrag, `getStale()`.                              |
+| `lib/immich.ts`                               | `ImmichUnavailableError` abfangen, Stale-Fallback, sonst weiterwerfen. |
+| `lib/env.ts`, `.env.local.example`            | `STALE_MAX_AGE`.                                                       |
+| `lib/config/schema.ts`, `lib/config/index.ts` | `staleMaxAge` in `AppConfig` und beide Rückgabepfade.                  |
+| `README.md`, `CLAUDE.md`                      | Stale-Verhalten und Token-Widerruf dokumentieren.                      |
 
 **Abhängigkeiten:**
 
@@ -79,14 +79,16 @@ Task 4 (Doku)                          ── nach Task 2
 
 **Warum:** `vitest.config.ts` schließt alles außerhalb von `lib/__tests__/` aus. Zwei Stellen sind deshalb ungetestet und lassen sich auch nicht auslagern: die Guards der acht Admin-Routen und die Content-Type-Normalisierung in `app/api/image/[id]/route.ts:99-107`, die aus einem Stored-XSS-Fix stammt (`c2fa8e7`).
 
-**Erwartungshaltung:** Beide Mechanismen funktionieren heute korrekt. Diese Tests finden keinen Bug — sie sind Regressionsbremsen. Der Wert der Admin-Tabelle liegt darin, dass eine *künftig* ergänzte Route ohne Guard die Suite rot macht.
+**Erwartungshaltung:** Beide Mechanismen funktionieren heute korrekt. Diese Tests finden keinen Bug — sie sind Regressionsbremsen. Der Wert der Admin-Tabelle liegt darin, dass eine _künftig_ ergänzte Route ohne Guard die Suite rot macht.
 
 **Files:**
+
 - Modify: `vitest.config.ts`
 - Create: `app/api/admin/__tests__/admin-guards.test.ts`
 - Create: `app/api/image/__tests__/image-route.test.ts`
 
 **Interfaces:**
+
 - Consumes: `isAdminAuthenticated()`, `isAdminEnabled()` (`lib/admin/auth.ts`, gemockt); `encodeAssetId()` (`lib/tokens.ts`); `immich.streamAsset()` (gemockt).
 - Produces: nichts für spätere Tasks.
 
@@ -414,6 +416,7 @@ Run: `npm run test:unit -- app/api/image/__tests__/image-route.test.ts`
 Erwartung: 12 Tests PASS.
 
 Zwei mögliche Stolperstellen — beide zuerst gegen den Code prüfen, bevor der Test angepasst wird:
+
 - Falls der Rate-Limiter über die Aufrufe hinweg greift, in `vitest.setup.ts` `process.env.RATE_LIMIT_RPM = '100000'` ergänzen.
 - Falls die 503-Header anders heißen als erwartet, den tatsächlichen Wert aus `app/api/image/[id]/route.ts` übernehmen — der Test soll das reale Verhalten festschreiben.
 
@@ -451,9 +454,10 @@ git commit -m "test: enable route-handler tests and cover admin guards and image
 
 **Warum:** v0.9.2 unterscheidet Ausfall und Nichtexistenz sauber und liefert bei Ausfall 5xx statt 404 — das war die dringendere Hälfte. Die andere Hälfte fehlt: Ein Besucher sieht während eines Immich-Neustarts eine Fehlerseite, obwohl die Alben Sekunden zuvor noch im Speicher lagen. `lib/cache.ts` löscht abgelaufene Einträge beim Zugriff (Zeile 23).
 
-**Wichtig zur Abgrenzung:** v0.9.2 cacht Ausfälle bewusst *nicht* — ein `ImmichUnavailableError` wird nie gespeichert, damit die Galerie nach der Erholung nicht kaputt bleibt. Diese Task ändert daran nichts. Sie sorgt nur dafür, dass ein früherer **Erfolg** länger verfügbar bleibt, als seine TTL erlaubt. Beides zusammen ergibt: Ausfälle werden nicht eingebrannt, Erfolge überdauern sie.
+**Wichtig zur Abgrenzung:** v0.9.2 cacht Ausfälle bewusst _nicht_ — ein `ImmichUnavailableError` wird nie gespeichert, damit die Galerie nach der Erholung nicht kaputt bleibt. Diese Task ändert daran nichts. Sie sorgt nur dafür, dass ein früherer **Erfolg** länger verfügbar bleibt, als seine TTL erlaubt. Beides zusammen ergibt: Ausfälle werden nicht eingebrannt, Erfolge überdauern sie.
 
 **Files:**
+
 - Modify: `lib/cache.ts`
 - Create: `lib/__tests__/cache-stale.test.ts`
 - Modify: `lib/env.ts`, `.env.local.example`
@@ -461,6 +465,7 @@ git commit -m "test: enable route-handler tests and cover admin guards and image
 - Modify: `lib/immich.ts`, `lib/__tests__/immich.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ImmichUnavailableError` aus `lib/immich.ts` (in v0.9.2 eingeführt, Zeile 97).
 - Produces:
   - `cache.get<T>(key): T | null` — unverändert, nur frische Daten.
@@ -664,19 +669,17 @@ Erwartung: alle 218 Tests grün. Schlägt `config-cache.test.ts` oder `immich.te
 In `lib/env.ts` im `Env`-Interface direkt nach `CACHE_TTL: number;` ergänzen:
 
 ```ts
-  STALE_MAX_AGE: number;
+STALE_MAX_AGE: number;
 ```
 
 In `parseEnv()` nach dem `cacheTtl`-Block einfügen:
 
 ```ts
-  // How long an expired cache entry may still be served while Immich is
-  // unreachable. 0 disables the fallback.
-  const staleMaxAgeStr = process.env.STALE_MAX_AGE;
-  const staleMaxAge =
-    staleMaxAgeStr && !isNaN(parseInt(staleMaxAgeStr, 10))
-      ? parseInt(staleMaxAgeStr, 10)
-      : 86400; // 24 hours
+// How long an expired cache entry may still be served while Immich is
+// unreachable. 0 disables the fallback.
+const staleMaxAgeStr = process.env.STALE_MAX_AGE;
+const staleMaxAge =
+  staleMaxAgeStr && !isNaN(parseInt(staleMaxAgeStr, 10)) ? parseInt(staleMaxAgeStr, 10) : 86400; // 24 hours
 ```
 
 Im Rückgabeobjekt nach `CACHE_TTL: Math.max(0, cacheTtl),` einfügen:
@@ -688,7 +691,7 @@ Im Rückgabeobjekt nach `CACHE_TTL: Math.max(0, cacheTtl),` einfügen:
 In `lib/config/schema.ts` im `AppConfig`-Interface neben `cacheTtl` ergänzen:
 
 ```ts
-  staleMaxAge: number;
+staleMaxAge: number;
 ```
 
 In `lib/config/index.ts` **beide** Rückgabepfade ergänzen — jeweils direkt nach `cacheTtl: env.CACHE_TTL * 1000,` (Zeilen 278 und 358):
@@ -924,11 +927,13 @@ git commit -m "feat: serve stale cache entries while Immich is unavailable"
 **Warum:** Alle Galerieseiten sind `force-dynamic` und warten vollständig auf Immich. Mit `IMMICH_TIMEOUT_MS` (Default 15 s) kann diese Wartezeit im Störungsfall lang werden — ohne `loading.tsx` sieht der Besucher währenddessen nichts.
 
 **Files:**
+
 - Create: `app/loading.module.css`
 - Create: `app/loading.tsx`
 - Create: `app/[...path]/loading.tsx`
 
 **Interfaces:**
+
 - Consumes: Tokens aus `app/tokens.css`; die Grid-Variablen, die `app/[...path]/page.tsx` setzt.
 - Produces: nichts.
 
@@ -1060,6 +1065,7 @@ git commit -m "feat: add loading skeletons for dynamic gallery routes"
 ## Task 4: Dokumentation
 
 **Files:**
+
 - Modify: `README.md`
 - Modify: `CLAUDE.md`
 

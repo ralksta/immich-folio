@@ -7,11 +7,11 @@ _Status: Entwurf genehmigt (Brainstorming abgeschlossen) · Datum: 2026-08-14_
 ## 1. Understanding Summary
 
 - **Ziel & Vision:** Bereitstellung eines intuitiven, erstklassigen **Journal Studios** für Fotografen, um Bild-Text-Reportagen, Reisetagebücher und Ausstellungsberichte (im Stil von Leica Journal / National Geographic) zu verfassen und zu veröffentlichen.
-- **Zielgruppe:** 
+- **Zielgruppe:**
   - **Besucher:** Immersives, typografisch elegantes Leseerlebnis mit progressiv ladenden Bildern (ThumbHash), responsiven Layouts und Lightbox-Interaktion.
   - **Fotograf:** Mühelose Redaktion im Admin-Panel mit Live-Split-Screen-Vorschau und universeller Immich-Bildauswahl.
 - **Konzept:** Reines Markdown mit Frontmatter im Content-Volume (`content/journal/*.md`), verwaltet über eine dedizierte Admin-UI und ausgeliefert über saubere Next.js Server Components.
-- **Kern-Vorteile:** 
+- **Kern-Vorteile:**
   - Trennung von Galerie-Konfiguration (`gallery.yaml`) und redaktionellen Inhalten.
   - Volle Git- & Backup-Kompatibilität durch Standard-Markdown.
   - Schnelle Erstellung ohne manuelle UUID-Eingabe.
@@ -29,30 +29,31 @@ _Status: Entwurf genehmigt (Brainstorming abgeschlossen) · Datum: 2026-08-14_
 
 ## 3. Decision Log
 
-| # | Entscheidung | Alternativen | Begründung |
-|---|---|---|---|
-| 1 | **Nomenklatur "Journal"** | Stories, Photo Essays, Magazin | "Stories" wirkt wie flüchtige Social-Media-Inhalte. "Journal" spiegelt zeitlose, fotografische Wertigkeit (wie Leica Journal) wider. |
-| 2 | **Architektur-Ansatz 1 (Eigenständiges Studio)** | Subpage-Drawer, Quick-Fix | Maximale Schreib- und Layout-Ergonomie durch echten Split-Screen und Entkopplung von `gallery.yaml`. |
-| 3 | **Persistenz als `.md`-Dateien** | Strings in `gallery.yaml`, SQLite/DB | Behält das dateibasierte, zustandsarme Self-Hosting-Paradigma bei; einfache Versionierung via Git. |
-| 4 | **Bidirektionaler Editor (Blöcke ↔ Markdown)** | Nur WYSIWYG, Nur Markdown | Fotografen können visuell Blöcke anordnen oder direkt mit Markdown-Code arbeiten, ohne Datenverlust. |
-| 5 | **Sicherheit via Slug-Sanitisierung** | Ungeprüfte Dateinamen | Verhindert Path Traversal (`../`) im Docker-Container/Dateisystem. |
+| #   | Entscheidung                                     | Alternativen                         | Begründung                                                                                                                           |
+| --- | ------------------------------------------------ | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | **Nomenklatur "Journal"**                        | Stories, Photo Essays, Magazin       | "Stories" wirkt wie flüchtige Social-Media-Inhalte. "Journal" spiegelt zeitlose, fotografische Wertigkeit (wie Leica Journal) wider. |
+| 2   | **Architektur-Ansatz 1 (Eigenständiges Studio)** | Subpage-Drawer, Quick-Fix            | Maximale Schreib- und Layout-Ergonomie durch echten Split-Screen und Entkopplung von `gallery.yaml`.                                 |
+| 3   | **Persistenz als `.md`-Dateien**                 | Strings in `gallery.yaml`, SQLite/DB | Behält das dateibasierte, zustandsarme Self-Hosting-Paradigma bei; einfache Versionierung via Git.                                   |
+| 4   | **Bidirektionaler Editor (Blöcke ↔ Markdown)**   | Nur WYSIWYG, Nur Markdown            | Fotografen können visuell Blöcke anordnen oder direkt mit Markdown-Code arbeiten, ohne Datenverlust.                                 |
+| 5   | **Sicherheit via Slug-Sanitisierung**            | Ungeprüfte Dateinamen                | Verhindert Path Traversal (`../`) im Docker-Container/Dateisystem.                                                                   |
 
 ---
 
 ## 4. Technische Architektur & Komponenten
 
 ### A. Dateisystem & Datenmodell
+
 Jeder Eintrag ist eine `.md`-Datei mit folgendem Schema:
 
 ```markdown
 ---
-title: "Expedition Nordkap"
-subtitle: "Mit dem Bulli durch die Fjorde"
-date: "2026-08-14"
-author: "Ralf"
-coverAssetId: "b8c2d111-0000-4000-8000-000000000000"
-password: ""       # Optionaler Passwortschutz (scrypt)
-draft: false       # Entwurf oder öffentlich
+title: 'Expedition Nordkap'
+subtitle: 'Mit dem Bulli durch die Fjorde'
+date: '2026-08-14'
+author: 'Ralf'
+coverAssetId: 'b8c2d111-0000-4000-8000-000000000000'
+password: '' # Optionaler Passwortschutz (scrypt)
+draft: false # Entwurf oder öffentlich
 ---
 
 Hier beginnt der Text der Reportage...
@@ -61,6 +62,7 @@ Hier beginnt der Text der Reportage...
 ```
 
 Unterstützte Block-Typen:
+
 - **Heading:** `# H1`, `## H2`, `### H3`
 - **Paragraph:** Fliesstext mit Inline-Markdown (`**fett**`, `*kursiv*`, `[Link](url)`)
 - **Pullquote:** `> Zitattext` mit optionalem `— Autor`
@@ -81,7 +83,7 @@ Unterstützte Block-Typen:
 ### C. UI: Das Journal Studio (`/admin` ➔ Tab "Journal")
 
 1. **Journal Dashboard:**
-   - Übersicht aller Einträge als Karten mit Thumbnail, Status (*Draft*, *Live*, *Protected*), Erstellungsdatum.
+   - Übersicht aller Einträge als Karten mit Thumbnail, Status (_Draft_, _Live_, _Protected_), Erstellungsdatum.
    - Button `+ New Journal Entry`.
 2. **Studio Split-Screen Editor:**
    - **Top Navigation:** Titel-Eingabe, Slug, Status-Schalter, Metadaten-Modal (Autor, Datum, Passwort, Cover-Foto) und Save-Button (`Cmd+S`).

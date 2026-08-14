@@ -61,7 +61,9 @@ function AlbumGrid({
                   fill
                   sizes="(max-width: 600px) 100vw, (max-width: 1000px) 50vw, 33vw"
                   loading="lazy"
-                  {...(album.coverPosition ? { style: { objectPosition: album.coverPosition } } : {})}
+                  {...(album.coverPosition
+                    ? { style: { objectPosition: album.coverPosition } }
+                    : {})}
                   {...(ph ? { placeholder: 'blur' as const, blurDataURL: ph.blurDataURL } : {})}
                 />
               ) : (

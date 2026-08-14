@@ -80,7 +80,10 @@ function findPassword(key: string, type: 'subpage' | 'album' | 'journal'): strin
 /**
  * Check if a subpage slug, album ID, or journal entry is password-protected.
  */
-export function isProtected(key: string, type: 'subpage' | 'album' | 'journal' = 'subpage'): boolean {
+export function isProtected(
+  key: string,
+  type: 'subpage' | 'album' | 'journal' = 'subpage',
+): boolean {
   return !!findPassword(key, type);
 }
 
