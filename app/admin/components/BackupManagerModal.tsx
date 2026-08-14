@@ -99,7 +99,7 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
             </p>
           </div>
           <button className="backup-modal-close-btn" onClick={onClose} aria-label="Close">
-            ✕
+            <Icons.IconX size={16} />
           </button>
         </div>
 

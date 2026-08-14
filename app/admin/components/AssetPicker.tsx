@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { IconFolder, IconImage, IconStar } from './Icons';
+import { IconCheck, IconFolder, IconImage, IconStar } from './Icons';
 import { useScrollLock } from './useScrollLock';
 
 interface AssetInfo {
@@ -177,7 +177,11 @@ export default function AssetPicker({
                       alt={asset.originalFileName}
                       loading="lazy"
                     />
-                    {isUsed && <div className="asset-picker-used-badge">✓</div>}
+                    {isUsed && (
+                      <div className="asset-picker-used-badge">
+                        <IconCheck size={11} />
+                      </div>
+                    )}
                     {asset.isFavorite && !isUsed && (
                       <div className="asset-picker-fav-badge" title="Favorite in Immich">
                         <IconStar size={14} />
