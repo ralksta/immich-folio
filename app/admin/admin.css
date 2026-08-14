@@ -2095,7 +2095,9 @@ h3 .svg-icon {
 
 .album-drawer {
   width: 100%;
-  max-width: 620px;
+  /* Narrower than the subpage sheet (1100px) so the nested editor still reads
+     as a layer on top of it, but wide enough for the same two-column body. */
+  max-width: 960px;
   max-height: 90vh;
   background: var(--admin-bg-raised);
   border: 1px solid var(--admin-border);
@@ -2130,8 +2132,9 @@ h3 .svg-icon {
   gap: 0.5rem;
 }
 
-/* Single-column body — and the drawer's only scroll container. Nesting a second
-   scroller here is what used to clip the sort listbox popup. */
+/* The drawer's only scroll container. Nesting a second scroller here is what
+   used to clip the sort listbox popup — the two columns inside must stay
+   overflow-free and scroll together. */
 .album-drawer-body {
   flex: 1;
   min-height: 0;
@@ -2150,6 +2153,20 @@ h3 .svg-icon {
   }
   .album-drawer-body {
     padding: 1.25rem;
+  }
+}
+
+/* Full-screen on phones, mirroring the subpage sheet. */
+@media (max-width: 560px) {
+  .album-drawer-overlay {
+    padding: 0;
+  }
+  .album-drawer {
+    max-width: none;
+    max-height: none;
+    height: 100dvh;
+    border-radius: 0;
+    border: none;
   }
 }
 
@@ -3410,35 +3427,45 @@ h3 .svg-icon {
   justify-content: space-between;
 }
 
-/* Two-column layout inside the sheet body. Both columns live in the body's
-   single scroller — never give a column its own overflow, a nested scroller
-   clips the portalled Listbox popup (see .album-drawer-body note). */
-.subpage-drawer-columns {
+/* ── Shared two-column layout for admin editor sheets ─────────── */
+/* Used by the subpage editor and the album detail editor so both read as the
+   same surface. Columns always live inside their sheet's single body scroller
+   — never give a column its own overflow, a nested scroller clips the
+   portalled Listbox popup (see the .album-drawer-body note). */
+.admin-sheet-columns {
   display: grid;
-  grid-template-columns: minmax(380px, 460px) 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 2rem;
   align-items: start;
 }
 
-.subpage-drawer-col {
+/* The subpage editor is asymmetric on purpose: the left column is a settings
+   form with a natural maximum, the right one holds the album list and wants
+   every pixel it can get. */
+.admin-sheet-columns--settings-aside {
+  grid-template-columns: minmax(380px, 460px) 1fr;
+}
+
+.admin-sheet-col {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
   min-width: 0;
 }
 
-.subpage-drawer-col--content {
+.admin-sheet-col--divided {
   border-left: 1px solid var(--admin-border);
   padding-left: 2rem;
 }
 
 @media (max-width: 1024px) {
-  .subpage-drawer-columns {
+  .admin-sheet-columns,
+  .admin-sheet-columns--settings-aside {
     grid-template-columns: 1fr;
     gap: 1.25rem;
   }
 
-  .subpage-drawer-col--content {
+  .admin-sheet-col--divided {
     border-left: none;
     padding-left: 0;
   }

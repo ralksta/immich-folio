@@ -1214,8 +1214,8 @@ export default function PageBuilder() {
                           )}
                         </div>
                       ) : (
-                        <div className="subpage-drawer-columns">
-                        <div className="subpage-drawer-col subpage-drawer-col--settings">
+                        <div className="admin-sheet-columns admin-sheet-columns--settings-aside">
+                        <div className="admin-sheet-col">
                       <div className="subpage-drawer-section">
                         <div className="admin-field">
                           <label>Page Name (URL Identifier)</label>
@@ -1394,7 +1394,7 @@ export default function PageBuilder() {
 
                         </div>
 
-                        <div className="subpage-drawer-col subpage-drawer-col--content">
+                        <div className="admin-sheet-col admin-sheet-col--divided">
                       {/* Albums (if no sections) with DnD */}
                       {(!sp.sections || sp.sections.length === 0) && (
                         <div className="subpage-albums">
@@ -1584,6 +1584,8 @@ export default function PageBuilder() {
                   form already shows (password state, custom hero) is not
                   repeated as a read-only stat. */}
               <div className="album-drawer-body">
+                <div className="admin-sheet-columns">
+                <div className="admin-sheet-col">
                 <div className="modal-cover-container">
                   {heroThumb ? (
                     <img src={`/api/admin/thumbnail/${heroThumb}`} alt="" loading="lazy" />
@@ -1632,6 +1634,9 @@ export default function PageBuilder() {
                   </div>
                 </div>
 
+                </div>
+
+                <div className="admin-sheet-col admin-sheet-col--divided">
                 <div className="admin-field">
                   <label>Layout override (Experimental)</label>
                   <select
@@ -1738,6 +1743,8 @@ export default function PageBuilder() {
                       </button>
                     </div>
                   )}
+                </div>
+                </div>
                 </div>
               </div>
               <div className="album-drawer-footer">
