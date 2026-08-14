@@ -13,7 +13,13 @@ export default function AssetProtection({ disableRightClick, disableImageDrag }:
 
     function handleContextMenu(e: MouseEvent) {
       const target = e.target as HTMLElement;
-      if (disableRightClick && (target.tagName === 'IMG' || target.closest('img') || target.classList.contains('photo-tile') || target.classList.contains('lightbox-img'))) {
+      if (
+        disableRightClick &&
+        (target.tagName === 'IMG' ||
+          target.closest('img') ||
+          target.classList.contains('photo-tile') ||
+          target.classList.contains('lightbox-img'))
+      ) {
         e.preventDefault();
       }
     }

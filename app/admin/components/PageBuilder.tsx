@@ -321,7 +321,10 @@ function SortableSubpageTile({
   const totalAlbums =
     sp.albums.length + (sp.sections?.reduce((sum, sec) => sum + sec.albums.length, 0) || 0);
   const firstThumb = getFirstThumb(sp);
-  const slug = sp.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const slug = sp.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 
   return (
     <div
@@ -336,13 +339,20 @@ function SortableSubpageTile({
       </div>
 
       {sp.enabled === false && (
-        <span className="subpage-badge-protected" style={{ background: '#e60012', color: '#fff' }} title="Page is disabled">
+        <span
+          className="subpage-badge-protected"
+          style={{ background: '#e60012', color: '#fff' }}
+          title="Page is disabled"
+        >
           Disabled
         </span>
       )}
 
       {sp.hidden === true && sp.enabled !== false && (
-        <span className="subpage-badge-protected" title="Hidden from navigation, reachable by direct link">
+        <span
+          className="subpage-badge-protected"
+          title="Hidden from navigation, reachable by direct link"
+        >
           Unlisted
         </span>
       )}
@@ -362,7 +372,9 @@ function SortableSubpageTile({
           </div>
         )}
         <div className="subpage-hover-overlay">
-          <span className="hover-action-btn"><IconPencil size={14} /> Edit Page</span>
+          <span className="hover-action-btn">
+            <IconPencil size={14} /> Edit Page
+          </span>
         </div>
       </div>
       <div className="subpage-tile-info">
@@ -407,7 +419,9 @@ export default function PageBuilder() {
     onSave: (assetOrder: string[]) => void;
   } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [editingAlbumAddress, setEditingAlbumAddress] = useState<ActiveEditAlbumAddress | null>(null);
+  const [editingAlbumAddress, setEditingAlbumAddress] = useState<ActiveEditAlbumAddress | null>(
+    null,
+  );
 
   // Keep the builder still behind either drawer. One combined lock rather than
   // one per drawer: the album drawer opens from inside the subpage drawer, and
@@ -899,7 +913,12 @@ export default function PageBuilder() {
     const description = (album.description || '').toLowerCase();
     const overrideTitle = (album.title || '').toLowerCase();
     const query = searchQuery.toLowerCase();
-    return name.includes(query) || description.includes(query) || overrideTitle.includes(query) || album.id.toLowerCase().includes(query);
+    return (
+      name.includes(query) ||
+      description.includes(query) ||
+      overrideTitle.includes(query) ||
+      album.id.toLowerCase().includes(query)
+    );
   });
 
   // Filter subpages
@@ -911,17 +930,22 @@ export default function PageBuilder() {
       const name = sp.name.toLowerCase();
       const title = (sp.title || '').toLowerCase();
       const subtitle = (sp.subtitle || '').toLowerCase();
-      
+
       if (name.includes(query) || title.includes(query) || subtitle.includes(query)) return true;
-      
+
       const albums = sp.albums || [];
       const hasMatchingAlbum = albums.some((a) => {
         const aName = getAlbumName(a.id).toLowerCase();
         const aTitle = (a.title || '').toLowerCase();
         const aDesc = (a.description || '').toLowerCase();
-        return aName.includes(query) || aTitle.includes(query) || aDesc.includes(query) || a.id.toLowerCase().includes(query);
+        return (
+          aName.includes(query) ||
+          aTitle.includes(query) ||
+          aDesc.includes(query) ||
+          a.id.toLowerCase().includes(query)
+        );
       });
-      
+
       return hasMatchingAlbum;
     });
 
@@ -939,7 +963,9 @@ export default function PageBuilder() {
       {/* Search Bar */}
       <div className="builder-search-container">
         <div className="builder-search-wrapper">
-          <span className="builder-search-icon"><IconSearch size={14} /></span>
+          <span className="builder-search-icon">
+            <IconSearch size={14} />
+          </span>
           <input
             type="text"
             className="builder-search-input"
@@ -948,7 +974,11 @@ export default function PageBuilder() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
-            <button className="builder-search-clear" onClick={() => setSearchQuery('')} title="Clear search">
+            <button
+              className="builder-search-clear"
+              onClick={() => setSearchQuery('')}
+              title="Clear search"
+            >
               ×
             </button>
           )}
@@ -958,7 +988,9 @@ export default function PageBuilder() {
       {/* Hero Section */}
       <section className="builder-section">
         <div className="builder-section-header">
-          <h2><IconHome /> Homepage Hero</h2>
+          <h2>
+            <IconHome /> Homepage Hero
+          </h2>
           <button
             className="admin-btn admin-btn-sm"
             onClick={() =>
@@ -1029,7 +1061,9 @@ export default function PageBuilder() {
             <div className="album-list">
               {filteredAlbums.length === 0 && (
                 <p className="empty-hint">
-                  {searchQuery ? 'No matching standalone albums found.' : 'No standalone albums. These show directly on the homepage.'}
+                  {searchQuery
+                    ? 'No matching standalone albums found.'
+                    : 'No standalone albums. These show directly on the homepage.'}
                 </p>
               )}
               {filteredAlbums.map((album) => {
@@ -1043,7 +1077,9 @@ export default function PageBuilder() {
                     count={getAlbumCount(album.id)}
                     thumbnailId={getAlbumThumbnailId(album.id)}
                     onRemove={() => removeStandaloneAlbum(originalIndex)}
-                    onEdit={() => setEditingAlbumAddress({ type: 'standalone', albumIndex: originalIndex })}
+                    onEdit={() =>
+                      setEditingAlbumAddress({ type: 'standalone', albumIndex: originalIndex })
+                    }
                   />
                 );
               })}
@@ -1071,9 +1107,7 @@ export default function PageBuilder() {
         )}
 
         {gallery.subpages.length > 0 && filteredSubpages.length === 0 && (
-          <p className="empty-hint">
-            No matching subpages found.
-          </p>
+          <p className="empty-hint">No matching subpages found.</p>
         )}
 
         {/* Collapsed overview grid with DnD */}
@@ -1113,7 +1147,9 @@ export default function PageBuilder() {
                     <div className="subpage-drawer-header">
                       <div className="subpage-drawer-title-group">
                         <span className="subpage-drawer-breadcrumb">Pages / Subpages</span>
-                        <h3 className="subpage-drawer-title">{sp.title || sp.name || 'Untitled Page'}</h3>
+                        <h3 className="subpage-drawer-title">
+                          {sp.title || sp.name || 'Untitled Page'}
+                        </h3>
                       </div>
                       <div className="subpage-drawer-header-actions">
                         <div className="segmented-control" style={{ padding: '2px' }}>
@@ -1158,15 +1194,21 @@ export default function PageBuilder() {
                       {drawerMode === 'preview' ? (
                         <div className="drawer-live-preview-panel">
                           <div className="preview-hero-banner">
-                            <h2 className="preview-hero-title">{sp.title || sp.name || 'Untitled Page'}</h2>
+                            <h2 className="preview-hero-title">
+                              {sp.title || sp.name || 'Untitled Page'}
+                            </h2>
                             {sp.subtitle && <p className="preview-hero-sub">{sp.subtitle}</p>}
                           </div>
 
                           {sp.sections && sp.sections.length > 0 ? (
                             sp.sections.map((sec, sIdx) => (
                               <div key={sIdx} className="preview-section-group">
-                                <h3 className="preview-section-title">{sec.title || 'Untitled Section'}</h3>
-                                {sec.description && <p className="preview-section-desc">{sec.description}</p>}
+                                <h3 className="preview-section-title">
+                                  {sec.title || 'Untitled Section'}
+                                </h3>
+                                {sec.description && (
+                                  <p className="preview-section-desc">{sec.description}</p>
+                                )}
                                 <div className="preview-albums-grid">
                                   {sec.albums.map((alb, aIdx) => {
                                     const immichAlb = immichAlbums.find((a) => a.id === alb.id);
@@ -1178,7 +1220,9 @@ export default function PageBuilder() {
                                           {thumb ? (
                                             <img src={`/api/admin/thumbnail/${thumb}`} alt="" />
                                           ) : (
-                                            <div className="subpage-tile-placeholder"><IconFolder /></div>
+                                            <div className="subpage-tile-placeholder">
+                                              <IconFolder />
+                                            </div>
                                           )}
                                         </div>
                                         <span className="preview-album-title">
@@ -1202,7 +1246,9 @@ export default function PageBuilder() {
                                       {thumb ? (
                                         <img src={`/api/admin/thumbnail/${thumb}`} alt="" />
                                       ) : (
-                                        <div className="subpage-tile-placeholder"><IconFolder /></div>
+                                        <div className="subpage-tile-placeholder">
+                                          <IconFolder />
+                                        </div>
                                       )}
                                     </div>
                                     <span className="preview-album-title">
@@ -1216,306 +1262,377 @@ export default function PageBuilder() {
                         </div>
                       ) : (
                         <div className="admin-sheet-columns admin-sheet-columns--settings-aside">
-                        <div className="admin-sheet-col">
-                      <div className="subpage-drawer-section">
-                        <div className="admin-field">
-                          <label>Page Name (URL Identifier)</label>
-                          <div className="input-slug-wrapper">
-                            <input
-                              className="subpage-name-input"
-                              value={sp.name}
-                              onChange={(e) => updateSubpage(spIndex, { name: e.target.value })}
-                              placeholder="e.g. dubai, travel, weddings"
-                            />
-                            <span className="input-slug-preview">/{slugify(sp.name)}</span>
-                          </div>
-                        </div>
-                      </div>
+                          <div className="admin-sheet-col">
+                            <div className="subpage-drawer-section">
+                              <div className="admin-field">
+                                <label>Page Name (URL Identifier)</label>
+                                <div className="input-slug-wrapper">
+                                  <input
+                                    className="subpage-name-input"
+                                    value={sp.name}
+                                    onChange={(e) =>
+                                      updateSubpage(spIndex, { name: e.target.value })
+                                    }
+                                    placeholder="e.g. dubai, travel, weddings"
+                                  />
+                                  <span className="input-slug-preview">/{slugify(sp.name)}</span>
+                                </div>
+                              </div>
+                            </div>
 
-                      {/* Subpage metadata */}
-                      <div className="subpage-drawer-section">
-                        <div className="admin-field-row">
-                          <div className="admin-field">
-                            <label>Display Title (optional)</label>
-                            <input
-                              value={sp.title || ''}
-                              onChange={(e) =>
-                                updateSubpage(spIndex, { title: e.target.value || undefined })
-                              }
-                              placeholder="Display title (defaults to name)"
-                            />
-                          </div>
-                          <div className="admin-field">
-                            <label>Subtitle</label>
-                            <input
-                              value={sp.subtitle || ''}
-                              onChange={(e) =>
-                                updateSubpage(spIndex, { subtitle: e.target.value || undefined })
-                              }
-                              placeholder="Subtitle text"
-                            />
-                          </div>
-                        </div>
-                        <div className="admin-field" style={{ marginTop: '1rem' }}>
-                          <label>Visibility &amp; Access</label>
-                          {/*
+                            {/* Subpage metadata */}
+                            <div className="subpage-drawer-section">
+                              <div className="admin-field-row">
+                                <div className="admin-field">
+                                  <label>Display Title (optional)</label>
+                                  <input
+                                    value={sp.title || ''}
+                                    onChange={(e) =>
+                                      updateSubpage(spIndex, { title: e.target.value || undefined })
+                                    }
+                                    placeholder="Display title (defaults to name)"
+                                  />
+                                </div>
+                                <div className="admin-field">
+                                  <label>Subtitle</label>
+                                  <input
+                                    value={sp.subtitle || ''}
+                                    onChange={(e) =>
+                                      updateSubpage(spIndex, {
+                                        subtitle: e.target.value || undefined,
+                                      })
+                                    }
+                                    placeholder="Subtitle text"
+                                  />
+                                </div>
+                              </div>
+                              <div className="admin-field" style={{ marginTop: '1rem' }}>
+                                <label>Visibility &amp; Access</label>
+                                {/*
                             One field, three states — enabled/hidden are two YAML flags,
                             but for the owner it is a single question: how visible is
                             this page? Splitting it across two toggles produced
                             contradictory copy ("Disabled (Hidden)" vs "Unlisted").
                           */}
-                          {(
-                            [
-                              {
-                                key: 'published',
-                                active: sp.enabled !== false && sp.hidden !== true,
-                                icon: <IconGlobe size={15} />,
-                                iconColor: '#4ade80',
-                                title: 'Published',
-                                desc: 'Shown in the header menu and homepage lists, reachable via URL',
-                                patch: { enabled: true, hidden: false },
-                              },
-                              {
-                                key: 'unlisted',
-                                active: sp.enabled !== false && sp.hidden === true,
-                                icon: <IconEyeOff size={15} />,
-                                iconColor: '#fbbf24',
-                                title: 'Unlisted (Experimental)',
-                                desc: 'Not shown in menus or on the homepage, but reachable via direct link',
-                                patch: { enabled: true, hidden: true },
-                              },
-                              {
-                                key: 'disabled',
-                                active: sp.enabled === false,
-                                icon: <IconBan size={15} />,
-                                iconColor: '#f87171',
-                                title: 'Disabled',
-                                desc: 'Completely offline — returns 404 even when accessed directly',
-                                patch: { enabled: false, hidden: false },
-                              },
-                            ] as const
-                          ).map((opt) => (
-                            <button
-                              key={opt.key}
-                              type="button"
-                              className={`admin-toggle-card ${opt.active ? 'active' : ''}`}
-                              onClick={() => updateSubpage(spIndex, opt.patch)}
-                              aria-pressed={opt.active}
-                              style={{ padding: '10px 14px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '8px', cursor: 'pointer', marginBottom: '6px' }}
-                            >
-                              <div className="toggle-card-info" style={{ textAlign: 'left' }}>
-                                <span className="toggle-card-title" style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                                  <span style={{ color: opt.iconColor, display: 'inline-flex' }} aria-hidden="true">
-                                    {opt.icon}
-                                  </span>
-                                  {opt.title}
-                                </span>
-                                <span className="toggle-card-desc" style={{ fontSize: '0.8rem', display: 'block', opacity: 0.75 }}>
-                                  {opt.desc}
-                                </span>
-                              </div>
-                              <div className={`switch-toggle ${opt.active ? 'on' : ''}`}>
-                                <span className="switch-slider" />
-                              </div>
-                            </button>
-                          ))}
+                                {(
+                                  [
+                                    {
+                                      key: 'published',
+                                      active: sp.enabled !== false && sp.hidden !== true,
+                                      icon: <IconGlobe size={15} />,
+                                      iconColor: '#4ade80',
+                                      title: 'Published',
+                                      desc: 'Shown in the header menu and homepage lists, reachable via URL',
+                                      patch: { enabled: true, hidden: false },
+                                    },
+                                    {
+                                      key: 'unlisted',
+                                      active: sp.enabled !== false && sp.hidden === true,
+                                      icon: <IconEyeOff size={15} />,
+                                      iconColor: '#fbbf24',
+                                      title: 'Unlisted (Experimental)',
+                                      desc: 'Not shown in menus or on the homepage, but reachable via direct link',
+                                      patch: { enabled: true, hidden: true },
+                                    },
+                                    {
+                                      key: 'disabled',
+                                      active: sp.enabled === false,
+                                      icon: <IconBan size={15} />,
+                                      iconColor: '#f87171',
+                                      title: 'Disabled',
+                                      desc: 'Completely offline — returns 404 even when accessed directly',
+                                      patch: { enabled: false, hidden: false },
+                                    },
+                                  ] as const
+                                ).map((opt) => (
+                                  <button
+                                    key={opt.key}
+                                    type="button"
+                                    className={`admin-toggle-card ${opt.active ? 'active' : ''}`}
+                                    onClick={() => updateSubpage(spIndex, opt.patch)}
+                                    aria-pressed={opt.active}
+                                    style={{
+                                      padding: '10px 14px',
+                                      width: '100%',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'space-between',
+                                      borderRadius: '8px',
+                                      cursor: 'pointer',
+                                      marginBottom: '6px',
+                                    }}
+                                  >
+                                    <div className="toggle-card-info" style={{ textAlign: 'left' }}>
+                                      <span
+                                        className="toggle-card-title"
+                                        style={{
+                                          fontWeight: 600,
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '8px',
+                                        }}
+                                      >
+                                        <span
+                                          style={{ color: opt.iconColor, display: 'inline-flex' }}
+                                          aria-hidden="true"
+                                        >
+                                          {opt.icon}
+                                        </span>
+                                        {opt.title}
+                                      </span>
+                                      <span
+                                        className="toggle-card-desc"
+                                        style={{
+                                          fontSize: '0.8rem',
+                                          display: 'block',
+                                          opacity: 0.75,
+                                        }}
+                                      >
+                                        {opt.desc}
+                                      </span>
+                                    </div>
+                                    <div className={`switch-toggle ${opt.active ? 'on' : ''}`}>
+                                      <span className="switch-slider" />
+                                    </div>
+                                  </button>
+                                ))}
 
-                          {/* Password lives in the same group: it is the access half
+                                {/* Password lives in the same group: it is the access half
                               of "who gets to see this page". Applies to Published and
                               Unlisted; a Disabled page 404s before the gate. */}
-                          <div className="password-input-wrapper" style={{ marginTop: '6px' }}>
-                            <span className="password-icon"><IconLock size={12} /></span>
-                            <input
-                              type="password"
-                              value={sp.password || ''}
-                              onChange={(e) =>
-                                updateSubpage(spIndex, { password: e.target.value || undefined })
-                              }
-                              placeholder="Password protection (optional) — leave empty for public access"
-                              disabled={sp.enabled === false}
-                            />
-                          </div>
-                        </div>
-                        <div className="admin-field" style={{ marginTop: '1rem' }}>
-                          <label>Page Layout Style</label>
-                          <select
-                            value={sp.grid?.layout || 'masonry'}
-                            onChange={(e) => {
-                              const newLayout = e.target.value;
-                              updateSubpage(spIndex, {
-                                grid: { ...(sp.grid || {}), layout: newLayout },
-                              });
-                            }}
-                            style={{ padding: '8px 12px', borderRadius: '6px', width: '100%', fontSize: '0.9rem' }}
-                          >
-                            {/*
+                                <div
+                                  className="password-input-wrapper"
+                                  style={{ marginTop: '6px' }}
+                                >
+                                  <span className="password-icon">
+                                    <IconLock size={12} />
+                                  </span>
+                                  <input
+                                    type="password"
+                                    value={sp.password || ''}
+                                    onChange={(e) =>
+                                      updateSubpage(spIndex, {
+                                        password: e.target.value || undefined,
+                                      })
+                                    }
+                                    placeholder="Password protection (optional) — leave empty for public access"
+                                    disabled={sp.enabled === false}
+                                  />
+                                </div>
+                              </div>
+                              <div className="admin-field" style={{ marginTop: '1rem' }}>
+                                <label>Page Layout Style</label>
+                                <select
+                                  value={sp.grid?.layout || 'masonry'}
+                                  onChange={(e) => {
+                                    const newLayout = e.target.value;
+                                    updateSubpage(spIndex, {
+                                      grid: { ...(sp.grid || {}), layout: newLayout },
+                                    });
+                                  }}
+                                  style={{
+                                    padding: '8px 12px',
+                                    borderRadius: '6px',
+                                    width: '100%',
+                                    fontSize: '0.9rem',
+                                  }}
+                                >
+                                  {/*
                               Plain text, no emoji: an <option> cannot contain markup, so the
                               SVG icon set is not available here — and a decorative emoji is
                               not a substitute for it.
                             */}
-                            <option value="masonry">Masonry Grid (Dynamic Height)</option>
-                            <option value="uniform">Uniform Grid (Square Tiles)</option>
-                            <option value="showcase">Showcase (Featured First Asset)</option>
-                            <option value="filmstrip">Filmstrip (Horizontal Scroll)</option>
-                            <option value="editorial-flow">Editorial Flow</option>
-                            <option value="essay">Photo Essay Mode (Storytelling Editor)</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Visual Photo Essay Builder (if layout === 'essay') */}
-                      {(sp.grid?.layout === 'essay' || sp.essayText != null) && (
-                        <div className="subpage-drawer-section">
-                          <div className="drawer-section-heading">
-                            <h4>
-                              <IconBook size={16} /> Storytelling &amp; Photo Essay Builder
-                            </h4>
-                            <p>Compose text, quotes, and fullbleed/wide photos visually.</p>
-                          </div>
-
-                          <EssayBlockEditor
-                            markdown={sp.essayText || ''}
-                            onChange={(newMarkdown) => updateSubpage(spIndex, { essayText: newMarkdown })}
-                            onSelectPhoto={(callback) => {
-                              setHeroPickerTarget({
-                                albumId: undefined,
-                                title: 'Select Photo for Photo Essay',
-                                onSelect: (assetId) => {
-                                  callback(assetId);
-                                  setHeroPickerTarget(null);
-                                },
-                              });
-                            }}
-                          />
-                        </div>
-                      )}
-
-                        </div>
-
-                        <div className="admin-sheet-col admin-sheet-col--divided">
-                      {/* Albums (if no sections) with DnD */}
-                      {(!sp.sections || sp.sections.length === 0) && (
-                        <div className="subpage-albums">
-                          <div className="subpage-albums-header">
-                            <span>Albums in this Page</span>
-                            <button
-                              className="admin-btn admin-btn-xs admin-btn-primary"
-                              onClick={() =>
-                                setPickerTarget({ type: 'subpage', subpageIndex: spIndex })
-                              }
-                            >
-                              + Add Album
-                            </button>
-                          </div>
-                          <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleSubpageAlbumDragEnd(spIndex)}
-                          >
-                            <SortableContext
-                              items={sp.albums.map((a, i) => `album-${a.id}-${i}`)}
-                              strategy={verticalListSortingStrategy}
-                            >
-                              <div className="album-list">
-                                {sp.albums.length === 0 && (
-                                  <p className="empty-hint">No albums added yet. Click + Add Album to pick from Immich.</p>
-                                )}
-                                {sp.albums.map((album, aIndex) => (
-                                  <SortableAlbumCard
-                                    key={`${album.id}-${aIndex}`}
-                                    album={album}
-                                    index={aIndex}
-                                    name={getAlbumName(album.id)}
-                                    count={getAlbumCount(album.id)}
-                                    thumbnailId={getAlbumThumbnailId(album.id)}
-                                    onRemove={() => removeSubpageAlbum(spIndex, aIndex)}
-                                    onEdit={() => setEditingAlbumAddress({ type: 'subpage', subpageIndex: spIndex, albumIndex: aIndex })}
-                                  />
-                                ))}
+                                  <option value="masonry">Masonry Grid (Dynamic Height)</option>
+                                  <option value="uniform">Uniform Grid (Square Tiles)</option>
+                                  <option value="showcase">Showcase (Featured First Asset)</option>
+                                  <option value="filmstrip">Filmstrip (Horizontal Scroll)</option>
+                                  <option value="editorial-flow">Editorial Flow</option>
+                                  <option value="essay">
+                                    Photo Essay Mode (Storytelling Editor)
+                                  </option>
+                                </select>
                               </div>
-                            </SortableContext>
-                          </DndContext>
-                        </div>
-                      )}
-
-                      {/* Sections */}
-                      {sp.sections && sp.sections.length > 0 && (
-                        <div className="subpage-sections">
-                          {sp.sections.map((sec, secIndex) => (
-                            <div key={secIndex} className="section-card">
-                              <div className="section-header">
-                                <input
-                                  className="section-title-input"
-                                  value={sec.title}
-                                  onChange={(e) =>
-                                    updateSection(spIndex, secIndex, { title: e.target.value })
-                                  }
-                                  placeholder="Section title"
-                                />
-                                <button
-                                  className="admin-btn-icon"
-                                  onClick={() => removeSection(spIndex, secIndex)}
-                                  title="Remove section"
-                                >
-                                  <IconX size={14} />
-                                </button>
-                              </div>
-                              <div className="admin-field">
-                                <input
-                                  value={sec.description || ''}
-                                  onChange={(e) =>
-                                    updateSection(spIndex, secIndex, {
-                                      description: e.target.value || undefined,
-                                    })
-                                  }
-                                  placeholder="Section description (optional)"
-                                  className="section-desc-input"
-                                />
-                              </div>
-                              <div className="album-list">
-                                {sec.albums.map((album, aIndex) => (
-                                  <AlbumCard
-                                    key={`${album.id}-${aIndex}`}
-                                    album={album}
-                                    name={getAlbumName(album.id)}
-                                    count={getAlbumCount(album.id)}
-                                    thumbnailId={getAlbumThumbnailId(album.id)}
-                                    onRemove={() => removeSectionAlbum(spIndex, secIndex, aIndex)}
-                                    onEdit={() => setEditingAlbumAddress({ type: 'section', subpageIndex: spIndex, sectionIndex: secIndex, albumIndex: aIndex })}
-                                  />
-                                ))}
-                              </div>
-                              <button
-                                className="admin-btn admin-btn-xs"
-                                onClick={() =>
-                                  setPickerTarget({
-                                    type: 'section',
-                                    subpageIndex: spIndex,
-                                    sectionIndex: secIndex,
-                                  })
-                                }
-                              >
-                                + Add Album
-                              </button>
                             </div>
-                          ))}
-                        </div>
-                      )}
 
-                      <div className="subpage-actions" style={{ marginTop: '1rem' }}>
-                        <button className="admin-btn admin-btn-xs admin-btn-secondary" onClick={() => addSection(spIndex)}>
-                          + Add Section
-                        </button>
-                        {sp.sections && sp.sections.length > 0 && (
-                          <button
-                            className="admin-btn admin-btn-xs admin-btn-secondary"
-                            onClick={() => setPickerTarget({ type: 'subpage', subpageIndex: spIndex })}
-                          >
-                            + Add Loose Album
-                          </button>
-                        )}
-                      </div>
-                        </div>
+                            {/* Visual Photo Essay Builder (if layout === 'essay') */}
+                            {(sp.grid?.layout === 'essay' || sp.essayText != null) && (
+                              <div className="subpage-drawer-section">
+                                <div className="drawer-section-heading">
+                                  <h4>
+                                    <IconBook size={16} /> Storytelling &amp; Photo Essay Builder
+                                  </h4>
+                                  <p>Compose text, quotes, and fullbleed/wide photos visually.</p>
+                                </div>
+
+                                <EssayBlockEditor
+                                  markdown={sp.essayText || ''}
+                                  onChange={(newMarkdown) =>
+                                    updateSubpage(spIndex, { essayText: newMarkdown })
+                                  }
+                                  onSelectPhoto={(callback) => {
+                                    setHeroPickerTarget({
+                                      albumId: undefined,
+                                      title: 'Select Photo for Photo Essay',
+                                      onSelect: (assetId) => {
+                                        callback(assetId);
+                                        setHeroPickerTarget(null);
+                                      },
+                                    });
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="admin-sheet-col admin-sheet-col--divided">
+                            {/* Albums (if no sections) with DnD */}
+                            {(!sp.sections || sp.sections.length === 0) && (
+                              <div className="subpage-albums">
+                                <div className="subpage-albums-header">
+                                  <span>Albums in this Page</span>
+                                  <button
+                                    className="admin-btn admin-btn-xs admin-btn-primary"
+                                    onClick={() =>
+                                      setPickerTarget({ type: 'subpage', subpageIndex: spIndex })
+                                    }
+                                  >
+                                    + Add Album
+                                  </button>
+                                </div>
+                                <DndContext
+                                  sensors={sensors}
+                                  collisionDetection={closestCenter}
+                                  onDragEnd={handleSubpageAlbumDragEnd(spIndex)}
+                                >
+                                  <SortableContext
+                                    items={sp.albums.map((a, i) => `album-${a.id}-${i}`)}
+                                    strategy={verticalListSortingStrategy}
+                                  >
+                                    <div className="album-list">
+                                      {sp.albums.length === 0 && (
+                                        <p className="empty-hint">
+                                          No albums added yet. Click + Add Album to pick from
+                                          Immich.
+                                        </p>
+                                      )}
+                                      {sp.albums.map((album, aIndex) => (
+                                        <SortableAlbumCard
+                                          key={`${album.id}-${aIndex}`}
+                                          album={album}
+                                          index={aIndex}
+                                          name={getAlbumName(album.id)}
+                                          count={getAlbumCount(album.id)}
+                                          thumbnailId={getAlbumThumbnailId(album.id)}
+                                          onRemove={() => removeSubpageAlbum(spIndex, aIndex)}
+                                          onEdit={() =>
+                                            setEditingAlbumAddress({
+                                              type: 'subpage',
+                                              subpageIndex: spIndex,
+                                              albumIndex: aIndex,
+                                            })
+                                          }
+                                        />
+                                      ))}
+                                    </div>
+                                  </SortableContext>
+                                </DndContext>
+                              </div>
+                            )}
+
+                            {/* Sections */}
+                            {sp.sections && sp.sections.length > 0 && (
+                              <div className="subpage-sections">
+                                {sp.sections.map((sec, secIndex) => (
+                                  <div key={secIndex} className="section-card">
+                                    <div className="section-header">
+                                      <input
+                                        className="section-title-input"
+                                        value={sec.title}
+                                        onChange={(e) =>
+                                          updateSection(spIndex, secIndex, {
+                                            title: e.target.value,
+                                          })
+                                        }
+                                        placeholder="Section title"
+                                      />
+                                      <button
+                                        className="admin-btn-icon"
+                                        onClick={() => removeSection(spIndex, secIndex)}
+                                        title="Remove section"
+                                      >
+                                        <IconX size={14} />
+                                      </button>
+                                    </div>
+                                    <div className="admin-field">
+                                      <input
+                                        value={sec.description || ''}
+                                        onChange={(e) =>
+                                          updateSection(spIndex, secIndex, {
+                                            description: e.target.value || undefined,
+                                          })
+                                        }
+                                        placeholder="Section description (optional)"
+                                        className="section-desc-input"
+                                      />
+                                    </div>
+                                    <div className="album-list">
+                                      {sec.albums.map((album, aIndex) => (
+                                        <AlbumCard
+                                          key={`${album.id}-${aIndex}`}
+                                          album={album}
+                                          name={getAlbumName(album.id)}
+                                          count={getAlbumCount(album.id)}
+                                          thumbnailId={getAlbumThumbnailId(album.id)}
+                                          onRemove={() =>
+                                            removeSectionAlbum(spIndex, secIndex, aIndex)
+                                          }
+                                          onEdit={() =>
+                                            setEditingAlbumAddress({
+                                              type: 'section',
+                                              subpageIndex: spIndex,
+                                              sectionIndex: secIndex,
+                                              albumIndex: aIndex,
+                                            })
+                                          }
+                                        />
+                                      ))}
+                                    </div>
+                                    <button
+                                      className="admin-btn admin-btn-xs"
+                                      onClick={() =>
+                                        setPickerTarget({
+                                          type: 'section',
+                                          subpageIndex: spIndex,
+                                          sectionIndex: secIndex,
+                                        })
+                                      }
+                                    >
+                                      + Add Album
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            <div className="subpage-actions" style={{ marginTop: '1rem' }}>
+                              <button
+                                className="admin-btn admin-btn-xs admin-btn-secondary"
+                                onClick={() => addSection(spIndex)}
+                              >
+                                + Add Section
+                              </button>
+                              {sp.sections && sp.sections.length > 0 && (
+                                <button
+                                  className="admin-btn admin-btn-xs admin-btn-secondary"
+                                  onClick={() =>
+                                    setPickerTarget({ type: 'subpage', subpageIndex: spIndex })
+                                  }
+                                >
+                                  + Add Loose Album
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1583,166 +1700,168 @@ export default function PageBuilder() {
                   repeated as a read-only stat. */}
               <div className="album-drawer-body">
                 <div className="admin-sheet-columns">
-                <div className="admin-sheet-col">
-                <div className="modal-cover-container">
-                  {heroThumb ? (
-                    <img src={`/api/admin/thumbnail/${heroThumb}`} alt="" loading="lazy" />
-                  ) : (
-                    <div className="modal-cover-placeholder">
-                      <IconCamera />
+                  <div className="admin-sheet-col">
+                    <div className="modal-cover-container">
+                      {heroThumb ? (
+                        <img src={`/api/admin/thumbnail/${heroThumb}`} alt="" loading="lazy" />
+                      ) : (
+                        <div className="modal-cover-placeholder">
+                          <IconCamera />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="modal-meta-box">
-                  <span className="modal-album-title">{album.title || name}</span>
-                  <span className="modal-album-subtitle">
-                    {count} {count === 1 ? 'photo' : 'photos'}
-                    {album.title ? ` · Original: ${name}` : ''}
-                  </span>
-                </div>
+                    <div className="modal-meta-box">
+                      <span className="modal-album-title">{album.title || name}</span>
+                      <span className="modal-album-subtitle">
+                        {count} {count === 1 ? 'photo' : 'photos'}
+                        {album.title ? ` · Original: ${name}` : ''}
+                      </span>
+                    </div>
 
-                <div className="admin-field">
-                  <label>Title override</label>
-                  <input
-                    value={album.title || ''}
-                    onChange={(e) => onUpdate({ title: e.target.value || undefined })}
-                    placeholder={name}
-                  />
-                </div>
+                    <div className="admin-field">
+                      <label>Title override</label>
+                      <input
+                        value={album.title || ''}
+                        onChange={(e) => onUpdate({ title: e.target.value || undefined })}
+                        placeholder={name}
+                      />
+                    </div>
 
-                <div className="admin-field">
-                  <label>Description</label>
-                  <textarea
-                    value={album.description || ''}
-                    onChange={(e) => onUpdate({ description: e.target.value || undefined })}
-                    placeholder="Optional description for visitors"
-                    rows={4}
-                  />
-                </div>
+                    <div className="admin-field">
+                      <label>Description</label>
+                      <textarea
+                        value={album.description || ''}
+                        onChange={(e) => onUpdate({ description: e.target.value || undefined })}
+                        placeholder="Optional description for visitors"
+                        rows={4}
+                      />
+                    </div>
 
-                <div className="admin-field">
-                  <label>Password protection</label>
-                  <div className="input-with-icon">
-                    <input
-                      type="password"
-                      value={album.password || ''}
-                      onChange={(e) => onUpdate({ password: e.target.value || undefined })}
-                      placeholder="Leave empty for public access"
-                    />
+                    <div className="admin-field">
+                      <label>Password protection</label>
+                      <div className="input-with-icon">
+                        <input
+                          type="password"
+                          value={album.password || ''}
+                          onChange={(e) => onUpdate({ password: e.target.value || undefined })}
+                          placeholder="Leave empty for public access"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                </div>
+                  <div className="admin-sheet-col admin-sheet-col--divided">
+                    <div className="admin-field">
+                      <label>Layout override (Experimental)</label>
+                      <select
+                        value={album.grid?.layout || ''}
+                        onChange={(e) => {
+                          const layout = e.target.value || undefined;
+                          // Only the layout is exposed here; drop the grid object
+                          // entirely when it goes back to "inherit" so the YAML
+                          // stays clean.
+                          onUpdate({
+                            grid: layout ? { ...(album.grid || {}), layout } : undefined,
+                          });
+                        }}
+                      >
+                        <option value="">Inherit from page / global settings</option>
+                        <option value="masonry">Masonry</option>
+                        <option value="uniform">Uniform Grid</option>
+                        <option value="showcase">Showcase</option>
+                        <option value="filmstrip">Filmstrip</option>
+                        <option value="editorial-flow">Editorial Flow</option>
+                        <option value="justified">Justified (Experimental)</option>
+                      </select>
+                    </div>
 
-                <div className="admin-sheet-col admin-sheet-col--divided">
-                <div className="admin-field">
-                  <label>Layout override (Experimental)</label>
-                  <select
-                    value={album.grid?.layout || ''}
-                    onChange={(e) => {
-                      const layout = e.target.value || undefined;
-                      // Only the layout is exposed here; drop the grid object
-                      // entirely when it goes back to "inherit" so the YAML
-                      // stays clean.
-                      onUpdate({ grid: layout ? { ...(album.grid || {}), layout } : undefined });
-                    }}
-                  >
-                    <option value="">Inherit from page / global settings</option>
-                    <option value="masonry">Masonry</option>
-                    <option value="uniform">Uniform Grid</option>
-                    <option value="showcase">Showcase</option>
-                    <option value="filmstrip">Filmstrip</option>
-                    <option value="editorial-flow">Editorial Flow</option>
-                    <option value="justified">Justified (Experimental)</option>
-                  </select>
-                </div>
+                    <div className="admin-field">
+                      <label>Cover focal point (Experimental)</label>
+                      <input
+                        value={album.coverPosition || ''}
+                        onChange={(e) => onUpdate({ coverPosition: e.target.value || undefined })}
+                        placeholder={'e.g. "50% 25%" or "top" — where the cover crop should anchor'}
+                      />
+                    </div>
 
-                <div className="admin-field">
-                  <label>Cover focal point (Experimental)</label>
-                  <input
-                    value={album.coverPosition || ''}
-                    onChange={(e) => onUpdate({ coverPosition: e.target.value || undefined })}
-                    placeholder={'e.g. "50% 25%" or "top" — where the cover crop should anchor'}
-                  />
-                </div>
-
-                {/* Hero Image Selection */}
-                <div className="admin-field">
-                  <label>Custom Hero Image</label>
-                  <div className="album-hero-field">
-                    {album.heroImage ? (
-                      <div className="album-hero-preview">
-                        <img src={`/api/admin/thumbnail/${album.heroImage}`} alt="Hero" />
+                    {/* Hero Image Selection */}
+                    <div className="admin-field">
+                      <label>Custom Hero Image</label>
+                      <div className="album-hero-field">
+                        {album.heroImage ? (
+                          <div className="album-hero-preview">
+                            <img src={`/api/admin/thumbnail/${album.heroImage}`} alt="Hero" />
+                            <button
+                              className="album-hero-remove"
+                              onClick={() => onUpdate({ heroImage: undefined })}
+                              title="Remove custom hero image"
+                            >
+                              <IconX size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="album-hero-empty">Using default album cover</span>
+                        )}
                         <button
-                          className="album-hero-remove"
-                          onClick={() => onUpdate({ heroImage: undefined })}
-                          title="Remove custom hero image"
+                          className="admin-btn admin-btn-sm"
+                          onClick={() =>
+                            setHeroPickerTarget({
+                              albumId: album.id,
+                              onSelect: (assetId) => {
+                                onUpdate({ heroImage: assetId });
+                                setHeroPickerTarget(null);
+                              },
+                              currentAssetIds: album.heroImage ? [album.heroImage] : [],
+                              title: `Pick Hero Image for ${name}`,
+                            })
+                          }
                         >
-                          <IconX size={14} />
+                          <IconImage size={12} />{' '}
+                          {album.heroImage ? 'Change Image' : 'Pick Hero Image'}
                         </button>
                       </div>
-                    ) : (
-                      <span className="album-hero-empty">Using default album cover</span>
-                    )}
-                    <button
-                      className="admin-btn admin-btn-sm"
-                      onClick={() =>
-                        setHeroPickerTarget({
-                          albumId: album.id,
-                          onSelect: (assetId) => {
-                            onUpdate({ heroImage: assetId });
-                            setHeroPickerTarget(null);
-                          },
-                          currentAssetIds: album.heroImage ? [album.heroImage] : [],
-                          title: `Pick Hero Image for ${name}`,
-                        })
-                      }
-                    >
-                      <IconImage size={12} /> {album.heroImage ? 'Change Image' : 'Pick Hero Image'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Photo order */}
-                <div className="admin-field">
-                  <label id="album-sort-label">Photo order</label>
-                  <Listbox
-                    labelledBy="album-sort-label"
-                    value={album.sort || DEFAULT_ALBUM_SORT}
-                    options={SORT_OPTIONS}
-                    onChange={(mode) => onUpdate({ sort: mode })}
-                  />
-                  <span className="admin-field-hint">
-                    {album.sort === 'manual'
-                      ? 'Pinned photos come first, in the order you set. Everything else follows in the album’s Immich order.'
-                      : 'Immich order follows the album’s own sort setting in Immich.'}
-                  </span>
-
-                  {album.sort === 'manual' && (
-                    <div style={{ marginTop: '0.75rem' }}>
-                      <button
-                        className="admin-btn admin-btn-sm"
-                        onClick={() =>
-                          setOrderEditorTarget({
-                            albumId: album.id,
-                            albumName: album.title || name,
-                            assetOrder: album.assetOrder || [],
-                            onSave: (assetOrder) => {
-                              onUpdate({ assetOrder });
-                              setOrderEditorTarget(null);
-                            },
-                          })
-                        }
-                      >
-                        <IconGripVertical size={18} className="svg-icon svg-drag" />{' '}
-                        {album.assetOrder?.length
-                          ? `Reorder photos (${album.assetOrder.length} pinned)`
-                          : 'Reorder photos'}
-                      </button>
                     </div>
-                  )}
-                </div>
-                </div>
+
+                    {/* Photo order */}
+                    <div className="admin-field">
+                      <label id="album-sort-label">Photo order</label>
+                      <Listbox
+                        labelledBy="album-sort-label"
+                        value={album.sort || DEFAULT_ALBUM_SORT}
+                        options={SORT_OPTIONS}
+                        onChange={(mode) => onUpdate({ sort: mode })}
+                      />
+                      <span className="admin-field-hint">
+                        {album.sort === 'manual'
+                          ? 'Pinned photos come first, in the order you set. Everything else follows in the album’s Immich order.'
+                          : 'Immich order follows the album’s own sort setting in Immich.'}
+                      </span>
+
+                      {album.sort === 'manual' && (
+                        <div style={{ marginTop: '0.75rem' }}>
+                          <button
+                            className="admin-btn admin-btn-sm"
+                            onClick={() =>
+                              setOrderEditorTarget({
+                                albumId: album.id,
+                                albumName: album.title || name,
+                                assetOrder: album.assetOrder || [],
+                                onSave: (assetOrder) => {
+                                  onUpdate({ assetOrder });
+                                  setOrderEditorTarget(null);
+                                },
+                              })
+                            }
+                          >
+                            <IconGripVertical size={18} className="svg-icon svg-drag" />{' '}
+                            {album.assetOrder?.length
+                              ? `Reorder photos (${album.assetOrder.length} pinned)`
+                              : 'Reorder photos'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="album-drawer-footer">
@@ -1938,11 +2057,7 @@ function AlbumCard({
           </div>
         )}
         <div className="album-tile-overlay">
-          <button
-            className="album-tile-btn"
-            onClick={onEdit}
-            title="Edit details"
-          >
+          <button className="album-tile-btn" onClick={onEdit} title="Edit details">
             <IconPencil size={14} />
           </button>
           <button
@@ -1956,7 +2071,10 @@ function AlbumCard({
       </div>
       <div className="album-tile-info">
         <div className="album-tile-title-row">
-          <span className={`album-tile-name ${hasTitleOverride ? 'custom-title' : ''}`} title={album.title || name}>
+          <span
+            className={`album-tile-name ${hasTitleOverride ? 'custom-title' : ''}`}
+            title={album.title || name}
+          >
             {album.title || name}
           </span>
           <div className="album-tile-badges">
@@ -1972,7 +2090,11 @@ function AlbumCard({
             )}
             {album.sort && album.sort !== DEFAULT_ALBUM_SORT && (
               <span className="badge badge-sort" title={`Photo order: ${SORT_LABELS[album.sort]}`}>
-                {album.sort === 'manual' ? <IconGripVertical size={18} className="svg-icon svg-drag" /> : album.sort}
+                {album.sort === 'manual' ? (
+                  <IconGripVertical size={18} className="svg-icon svg-drag" />
+                ) : (
+                  album.sort
+                )}
               </span>
             )}
           </div>
