@@ -53,7 +53,7 @@ export default async function JournalIndexPage() {
           coverUrl: imageUrl(entry.frontmatter.coverAssetId, 'preview'),
         };
       }
-    })
+    }),
   );
 
   return (
@@ -85,11 +85,7 @@ export default async function JournalIndexPage() {
               : null;
 
             return (
-              <Link
-                key={entry.slug}
-                href={`/journal/${entry.slug}`}
-                className="journal-card"
-              >
+              <Link key={entry.slug} href={`/journal/${entry.slug}`} className="journal-card">
                 <div
                   className="journal-card__cover"
                   style={{
@@ -114,36 +110,30 @@ export default async function JournalIndexPage() {
                   <div className="journal-card__meta">
                     {dateStr && <span>{dateStr}</span>}
                     {dateStr && entry.readingTimeMinutes && <span>•</span>}
-                    {entry.readingTimeMinutes && (
-                      <span>{entry.readingTimeMinutes} min read</span>
-                    )}
+                    {entry.readingTimeMinutes && <span>{entry.readingTimeMinutes} min read</span>}
                     {entry.frontmatter.draft && (
                       <span className="journal-card__draft-badge">Draft</span>
                     )}
                   </div>
 
-                  <h2 className="journal-card__title">
-                    {entry.frontmatter.title || entry.slug}
-                  </h2>
+                  <h2 className="journal-card__title">{entry.frontmatter.title || entry.slug}</h2>
 
                   {entry.frontmatter.subtitle && (
-                    <p className="journal-card__subtitle">
-                      {entry.frontmatter.subtitle}
-                    </p>
+                    <p className="journal-card__subtitle">{entry.frontmatter.subtitle}</p>
                   )}
 
-                  {entry.excerpt && (
+                  {/*
+                    extractExcerpt() falls back to the subtitle when there is
+                    one, so rendering both printed the same sentence twice.
+                  */}
+                  {entry.excerpt && entry.excerpt !== entry.frontmatter.subtitle && (
                     <p className="journal-card__excerpt">{entry.excerpt}</p>
                   )}
 
                   <div className="journal-card__footer">
-                    <span className="journal-card__read-more">
-                      Read Story →
-                    </span>
+                    <span className="journal-card__read-more">Read Story →</span>
                     {entry.frontmatter.author && (
-                      <span style={{ opacity: 0.65 }}>
-                        by {entry.frontmatter.author}
-                      </span>
+                      <span style={{ opacity: 0.65 }}>by {entry.frontmatter.author}</span>
                     )}
                   </div>
                 </div>

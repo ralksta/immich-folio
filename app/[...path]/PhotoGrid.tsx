@@ -116,32 +116,7 @@ function PhotoGridInner({ assets, layout = 'masonry', gridStyle, watermark }: Ph
     setLightboxIndex((prev) => (prev !== null ? (prev - 1 + displayedAssets.length) % displayedAssets.length : null));
   }, [displayedAssets.length]);
 
-  // Keyboard navigation
-  useEffect(() => {
-    if (lightboxIndex === null) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      switch (e.key) {
-        case 'Escape':
-          closeLightbox();
-          break;
-        case 'ArrowRight':
-          goNext();
-          break;
-        case 'ArrowLeft':
-          goPrev();
-          break;
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
-    };
-  }, [lightboxIndex, closeLightbox, goNext, goPrev]);
+  // Keyboard navigation and the scroll lock live in <Lightbox/>.
 
   const gridItems = useMemo(() => {
     return displayedAssets.map((asset, index) => {
