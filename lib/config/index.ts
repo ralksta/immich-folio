@@ -76,6 +76,32 @@ export function buildSubpageGrid(raw?: {
   };
 }
 
+/**
+ * EXPERIMENTAL: keep only nav links that are safe to render as header <a>
+ * tags. Non-http(s) schemes (javascript:, data:) and incomplete entries are
+ * dropped with a warning rather than throwing — a bad external link should
+ * not take the site down.
+ */
+export function sanitizeNavLinks(
+  raw?: Array<{ label?: string; url?: string }>,
+): Array<{ label: string; url: string }> {
+  if (!raw) return [];
+  const links: Array<{ label: string; url: string }> = [];
+  for (const entry of raw) {
+    const label = entry.label?.trim();
+    const url = entry.url?.trim();
+    if (!label || !url || !/^https?:\/\//i.test(url)) {
+      console.warn(
+        `[Folio] settings.yaml navLinks: dropping entry ${JSON.stringify(entry)} — ` +
+          'label and an http(s) url are required.',
+      );
+      continue;
+    }
+    links.push({ label, url });
+  }
+  return links;
+}
+
 /** The parts of AppConfig that come from gallery.yaml. */
 export interface GalleryDerivation {
   albums: string[];
@@ -87,6 +113,8 @@ export interface GalleryDerivation {
   albumHeroImages: Record<string, string>;
   albumSortModes: Record<string, AlbumSortMode>;
   albumManualOrders: Record<string, string[]>;
+  albumGrids: Record<string, Partial<GridConfig>>;
+  albumCoverPositions: Record<string, string>;
 }
 
 /**
@@ -108,6 +136,8 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   const albumHeroImages: Record<string, string> = {};
   const albumSortModes: Record<string, AlbumSortMode> = {};
   const albumManualOrders: Record<string, string[]> = {};
+  const albumGrids: Record<string, Partial<GridConfig>> = {};
+  const albumCoverPositions: Record<string, string> = {};
 
   function processAlbumEntry(
     entry: string | Record<string, string | AlbumEntryObject>,
@@ -161,6 +191,29 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         albumManualOrders[validatedUuid] = value.assetOrder.map((assetId, i) =>
           validateUuid(assetId, `${context} assetOrder[${i}] for album ${validatedUuid}`),
         );
+      }
+
+      // EXPERIMENTAL: per-album grid override — reuses the subpage-grid
+      // normalisation so unknown layouts degrade identically.
+      if (value.grid) {
+        const built = buildSubpageGrid(value.grid);
+        if ('grid' in built) albumGrids[validatedUuid] = built.grid;
+      }
+
+      // EXPERIMENTAL: coverPosition lands in a style attribute, so only a
+      // strict CSS position grammar is allowed. Throw like `sort` does — a
+      // silent fallback would leave the owner wondering why nothing moves.
+      if (value.coverPosition != null) {
+        const pos = value.coverPosition.trim();
+        const keyword = /^(center|top|bottom|left|right)( (center|top|bottom|left|right))?$/;
+        const percent = /^\d{1,3}% \d{1,3}%$/;
+        if (!keyword.test(pos) && !percent.test(pos)) {
+          throw new Error(
+            `${context}: album ${validatedUuid} has an invalid coverPosition "${value.coverPosition}". ` +
+              `Use two percentages ("50% 25%") or CSS keywords ("top", "center bottom").`,
+          );
+        }
+        albumCoverPositions[validatedUuid] = pos;
       }
     }
     return validatedUuid;
@@ -218,6 +271,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         essayFile: sp.essayFile,
         essayText: sp.essayText,
         enabled: sp.enabled !== false,
+        hidden: sp.hidden === true,
         ...buildSubpageGrid(sp.grid),
       };
     });
@@ -244,6 +298,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         essayFile: sp.essayFile,
         essayText: sp.essayText,
         enabled: sp.enabled !== false,
+        hidden: sp.hidden === true,
         ...buildSubpageGrid(sp.grid),
       };
     });
@@ -262,6 +317,8 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
     albumHeroImages,
     albumSortModes,
     albumManualOrders,
+    albumGrids,
+    albumCoverPositions,
   };
 }
 
@@ -317,6 +374,9 @@ export function getConfig(): AppConfig {
       albumHeroImages: {},
       albumSortModes: {},
       albumManualOrders: {},
+      albumGrids: {},
+      albumCoverPositions: {},
+      navLinks: [],
       cacheTtl: env.CACHE_TTL * 1000,
       staleMaxAge: env.STALE_MAX_AGE * 1000,
       immichTimeoutMs: env.IMMICH_TIMEOUT_MS,
@@ -338,6 +398,8 @@ export function getConfig(): AppConfig {
     albumHeroImages,
     albumSortModes,
     albumManualOrders,
+    albumGrids,
+    albumCoverPositions,
   } = deriveGallery(gallery);
 
   const siteSeoTitle = settings.seo?.title || settings.title || env.SITE_TITLE || 'Gallery';
@@ -414,6 +476,9 @@ export function getConfig(): AppConfig {
     albumHeroImages,
     albumSortModes,
     albumManualOrders,
+    albumGrids,
+    albumCoverPositions,
+    navLinks: sanitizeNavLinks(settings.navLinks),
     cacheTtl: env.CACHE_TTL * 1000,
     staleMaxAge: env.STALE_MAX_AGE * 1000,
     immichTimeoutMs: env.IMMICH_TIMEOUT_MS,

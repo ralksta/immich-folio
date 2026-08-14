@@ -14,10 +14,10 @@ import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const config = getConfig();
 
-  // Security: If EXIF is globally disabled, do not serve it via API either
-  if (!config.exifOnHover) {
-    return NextResponse.json({ error: 'EXIF metadata is disabled' }, { status: 403 });
-  }
+  // exifOnHover only gates the *technical* fields below. The asset description
+  // (EXPERIMENTAL caption) is editorial content, so the route stays reachable
+  // and serves captions even when EXIF display is disabled.
+  const exifEnabled = config.exifOnHover;
 
   // ── Rate limiting ──────────────────────────────────
   const ip = getClientIp(request);
@@ -64,17 +64,23 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 
   const exif = asset.exifInfo;
+  const caption = exif.description?.trim() || undefined;
   return NextResponse.json(
     {
-      make: exif.make,
-      model: exif.model,
-      lensModel: exif.lensModel,
-      focalLength: exif.focalLength,
-      fNumber: exif.fNumber,
-      exposureTime: exif.exposureTime,
-      iso: exif.iso,
-      city: exif.city,
-      country: exif.country,
+      ...(exifEnabled
+        ? {
+            make: exif.make,
+            model: exif.model,
+            lensModel: exif.lensModel,
+            focalLength: exif.focalLength,
+            fNumber: exif.fNumber,
+            exposureTime: exif.exposureTime,
+            iso: exif.iso,
+            city: exif.city,
+            country: exif.country,
+          }
+        : {}),
+      ...(caption ? { description: caption } : {}),
     },
     {
       headers: {
