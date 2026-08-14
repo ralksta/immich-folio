@@ -37,7 +37,8 @@ function authToken(key: string, passwordSecret: string, expiresAt: number): stri
 }
 
 import nodeFs from 'fs';
-import { resolveJournalFilePath, parseFrontmatter } from './journal';
+import { parseFrontmatter } from './journal';
+import { resolveJournalFilePath } from './admin/journal-service';
 
 function cookieName(key: string, type: 'subpage' | 'album' | 'journal'): string {
   if (type === 'subpage') return `lb_auth_${key}`;

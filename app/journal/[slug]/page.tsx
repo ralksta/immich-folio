@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import type { Metadata } from 'next';
-import { readJournalEntry } from '@/lib/journal';
+import { readJournalEntry } from '@/lib/admin/journal-service';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import { getConfig } from '@/lib/config';
 import { immich } from '@/lib/immich';

@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
-import { listJournalEntries, type JournalEntrySummary } from '@/lib/journal';
+import { type JournalEntrySummary } from '@/lib/journal';
+import { listJournalEntries } from '@/lib/admin/journal-service';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import { immich } from '@/lib/immich';
 import { imageUrl, assetPlaceholder } from '@/lib/urls';

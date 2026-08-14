@@ -48,12 +48,13 @@ describe('proxy', () => {
   });
 
   it('adds unsafe-eval to script-src in development mode for React dev tools and Fast Refresh', () => {
-    const origEnv = process.env.NODE_ENV;
+    const envObj = process.env as Record<string, string | undefined>;
+    const origEnv = envObj.NODE_ENV;
     try {
-      process.env.NODE_ENV = 'development';
+      envObj.NODE_ENV = 'development';
       expect(run().headers.get('Content-Security-Policy')).toContain("'unsafe-eval'");
     } finally {
-      process.env.NODE_ENV = origEnv;
+      envObj.NODE_ENV = origEnv;
     }
   });
 

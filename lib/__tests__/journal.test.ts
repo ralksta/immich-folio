@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import {
   parseJournalMarkdown,
   serializeJournalMarkdown,
@@ -8,17 +8,16 @@ import {
   extractExcerpt,
   isValidSlug,
   sanitizeSlug,
+} from '../journal';
+import {
   writeJournalEntry,
   readJournalEntry,
   deleteJournalEntry,
   listJournalEntries,
-} from '../journal';
-import fs from 'fs/promises';
-import path from 'path';
+} from '../admin/journal-service';
 
 describe('Journal Service & Parser', () => {
   const testSlug = 'test-journey-nordkap';
-  const testDir = path.join(process.cwd(), 'content', 'journal');
 
   afterEach(async () => {
     try {

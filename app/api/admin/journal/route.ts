@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 import {
-  listJournalEntries,
-  writeJournalEntry,
   sanitizeSlug,
   isValidSlug,
-  readJournalEntry,
   type JournalFrontmatter,
 } from '@/lib/journal';
+import {
+  listJournalEntries,
+  writeJournalEntry,
+  readJournalEntry,
+} from '@/lib/admin/journal-service';
 
 export async function GET() {
   if (!isAdminEnabled()) {

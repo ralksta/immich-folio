@@ -16,8 +16,8 @@ import {
   IconTrash,
   IconChevronUp,
   IconChevronDown,
-  IconSettings,
-  IconExternalLink,
+  IconGear,
+  IconLink,
   IconPlus,
 } from './Icons';
 import AssetPicker from './AssetPicker';
@@ -215,7 +215,7 @@ export function JournalStudio() {
                     className="admin-btn admin-btn-sm admin-btn-secondary"
                     title="View live page"
                   >
-                    <IconExternalLink size={14} />
+                    <IconLink size={14} />
                   </a>
                   <button
                     type="button"
@@ -539,7 +539,7 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
             className="admin-btn admin-btn-sm admin-btn-secondary"
             onClick={() => setShowMetaModal(true)}
           >
-            <IconSettings size={14} /> Story Settings
+            <IconGear size={14} /> Story Settings
           </button>
 
           <a
@@ -548,7 +548,7 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
             rel="noopener noreferrer"
             className="admin-btn admin-btn-sm admin-btn-secondary"
           >
-            <IconExternalLink size={14} /> Live
+            <IconLink size={14} /> Live
           </a>
 
           <button

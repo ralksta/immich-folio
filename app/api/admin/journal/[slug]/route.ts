@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 import {
-  readJournalEntry,
-  writeJournalEntry,
-  deleteJournalEntry,
   isValidSlug,
   sanitizeSlug,
   parseJournalMarkdown,
 } from '@/lib/journal';
+import {
+  readJournalEntry,
+  writeJournalEntry,
+  deleteJournalEntry,
+} from '@/lib/admin/journal-service';
 
 interface RouteContext {
   params: Promise<{ slug: string }>;

@@ -5,7 +5,7 @@
 
 import Link from 'next/link';
 import { immich } from '@/lib/immich';
-import { listJournalEntries } from '@/lib/journal';
+import { listJournalEntries } from '@/lib/admin/journal-service';
 
 export async function SubpageNav() {
   const [subpages, standaloneAlbums, journalEntries] = await Promise.all([
