@@ -1,0 +1,249 @@
+/* ── Journal Studio & Editor CSS ──────────────────────────────────── */
+
+.journal-studio {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: calc(100vh - 70px);
+}
+
+.journal-studio-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--admin-border, rgba(255, 255, 255, 0.08));
+}
+
+.journal-studio-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.journal-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+.journal-admin-card {
+  background: var(--admin-surface, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.08));
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.journal-admin-card:hover {
+  border-color: var(--admin-accent, #6366f1);
+  transform: translateY(-2px);
+}
+
+.journal-admin-card-cover {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.journal-admin-card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.journal-admin-card-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.journal-admin-card-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+}
+
+.journal-admin-card-slug {
+  font-size: 0.75rem;
+  font-family: monospace;
+  opacity: 0.6;
+  margin-bottom: 0.75rem;
+}
+
+.journal-admin-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.journal-admin-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--admin-border, rgba(255, 255, 255, 0.06));
+}
+
+/* ── Split-Screen Studio Editor ────────────────────────────────────── */
+
+.journal-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 65px);
+  overflow: hidden;
+}
+
+.journal-editor-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  background: var(--admin-surface, #18181b);
+  border-bottom: 1px solid var(--admin-border, rgba(255, 255, 255, 0.08));
+  gap: 1rem;
+  z-index: 10;
+}
+
+.journal-editor-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-grow: 1;
+}
+
+.journal-editor-title-input {
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: inherit;
+  padding: 4px 8px;
+  max-width: 400px;
+  width: 100%;
+}
+
+.journal-editor-title-input:focus {
+  border-color: var(--admin-accent, #6366f1);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.journal-editor-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.journal-editor-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  flex-grow: 1;
+  overflow: hidden;
+  height: 100%;
+}
+
+.journal-editor-pane-left {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--admin-border, rgba(255, 255, 255, 0.08));
+  overflow-y: auto;
+  padding: 1.5rem;
+  background: var(--admin-bg, #09090b);
+}
+
+.journal-editor-pane-right {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--surface, #111);
+  position: relative;
+}
+
+.journal-preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.75rem;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  backdrop-filter: blur(8px);
+}
+
+.journal-preview-frame {
+  padding: 2rem 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+  transition: max-width 0.3s ease;
+}
+
+.journal-preview-frame.mobile {
+  max-width: 380px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 100%;
+  background: var(--background, #000);
+}
+
+.journal-raw-markdown-editor {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  background: rgba(0, 0, 0, 0.3);
+  color: #f4f4f5;
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  padding: 1.25rem;
+  resize: none;
+}
+
+.journal-raw-markdown-editor:focus {
+  outline: none;
+  border-color: var(--admin-accent, #6366f1);
+}
+
+/* Modal styling for Entry creation / Metadata */
+.journal-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+}
+
+.journal-modal-card {
+  background: var(--admin-surface, #18181b);
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  width: 90%;
+  max-width: 520px;
+  padding: 1.75rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}

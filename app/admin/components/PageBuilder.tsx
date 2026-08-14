@@ -1295,9 +1295,8 @@ export default function PageBuilder() {
                             markdown={sp.essayText || ''}
                             onChange={(newMarkdown) => updateSubpage(spIndex, { essayText: newMarkdown })}
                             onSelectPhoto={(callback) => {
-                              const firstAlbumId = sp.albums[0]?.id;
                               setHeroPickerTarget({
-                                albumId: firstAlbumId,
+                                albumId: undefined,
                                 title: 'Select Photo for Photo Essay',
                                 onSelect: (assetId) => {
                                   callback(assetId);

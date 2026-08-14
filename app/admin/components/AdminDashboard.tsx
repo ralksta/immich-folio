@@ -5,13 +5,14 @@ import PageBuilder from './PageBuilder';
 import SettingsEditor from './SettingsEditor';
 import AnalyticsView from './AnalyticsView';
 import BackupManagerModal from './BackupManagerModal';
+import { JournalStudio } from './JournalStudio';
 import * as Icons from './Icons';
 
 interface Props {
   onLogout: () => void;
 }
 
-type Tab = 'pages' | 'settings' | 'analytics';
+type Tab = 'pages' | 'journal' | 'settings' | 'analytics';
 
 export default function AdminDashboard({ onLogout }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('pages');
@@ -96,6 +97,12 @@ export default function AdminDashboard({ onLogout }: Props) {
               onClick={() => setActiveTab('pages')}
             >
               Pages
+            </button>
+            <button
+              className={`admin-tab ${activeTab === 'journal' ? 'active' : ''}`}
+              onClick={() => setActiveTab('journal')}
+            >
+              Journal
             </button>
             <button
               className={`admin-tab ${activeTab === 'settings' ? 'active' : ''}`}
@@ -227,6 +234,7 @@ export default function AdminDashboard({ onLogout }: Props) {
 
       <main className="admin-main">
         {activeTab === 'pages' && <PageBuilder />}
+        {activeTab === 'journal' && <JournalStudio />}
         {activeTab === 'settings' && <SettingsEditor />}
         {activeTab === 'analytics' && <AnalyticsView />}
       </main>

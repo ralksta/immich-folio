@@ -36,8 +36,13 @@ function authToken(key: string, passwordSecret: string, expiresAt: number): stri
   return `${expiresAt}.${hmac(`${key}:${passwordSecret}:${expiresAt}`)}`;
 }
 
-function cookieName(key: string, type: 'subpage' | 'album'): string {
-  return type === 'subpage' ? `lb_auth_${key}` : `lb_auth_album_${key}`;
+import nodeFs from 'fs';
+import { resolveJournalFilePath, parseFrontmatter } from './journal';
+
+function cookieName(key: string, type: 'subpage' | 'album' | 'journal'): string {
+  if (type === 'subpage') return `lb_auth_${key}`;
+  if (type === 'journal') return `lb_auth_journal_${key}`;
+  return `lb_auth_album_${key}`;
 }
 
 /**
@@ -48,20 +53,33 @@ export function findSubpageBySlug(slug: string): SubpageConfig | undefined {
 }
 
 /**
- * Find the password secret for a given subpage slug or album ID.
+ * Find the password secret for a given subpage slug, album ID, or journal entry.
  */
-function findPassword(key: string, type: 'subpage' | 'album'): string | undefined {
+function findPassword(key: string, type: 'subpage' | 'album' | 'journal'): string | undefined {
   const config = getConfig();
   if (type === 'subpage') {
     return config.subpages.find((sp) => sp.slug === key)?.password;
   }
-  return config.albumPasswords[key];
+  if (type === 'album') {
+    return config.albumPasswords[key];
+  }
+  if (type === 'journal') {
+    try {
+      const filePath = resolveJournalFilePath(key);
+      if (filePath && nodeFs.existsSync(filePath)) {
+        const raw = nodeFs.readFileSync(filePath, 'utf8');
+        return parseFrontmatter(raw).frontmatter.password;
+      }
+    } catch {}
+    return undefined;
+  }
+  return undefined;
 }
 
 /**
- * Check if a subpage slug or album ID is password-protected.
+ * Check if a subpage slug, album ID, or journal entry is password-protected.
  */
-export function isProtected(key: string, type: 'subpage' | 'album' = 'subpage'): boolean {
+export function isProtected(key: string, type: 'subpage' | 'album' | 'journal' = 'subpage'): boolean {
   return !!findPassword(key, type);
 }
 
@@ -72,7 +90,7 @@ export function isProtected(key: string, type: 'subpage' | 'album' = 'subpage'):
 export async function authenticate(
   key: string,
   password: string,
-  type: 'subpage' | 'album' = 'subpage',
+  type: 'subpage' | 'album' | 'journal' = 'subpage',
 ): Promise<string | null> {
   const storedPassword = findPassword(key, type);
   if (!storedPassword) return null;
@@ -129,7 +147,7 @@ export async function authenticate(
 export function isAuthenticated(
   key: string,
   getCookie: (name: string) => string | undefined,
-  type: 'subpage' | 'album' = 'subpage',
+  type: 'subpage' | 'album' | 'journal' = 'subpage',
 ): boolean {
   const storedPassword = findPassword(key, type);
   if (!storedPassword) return true; // not protected

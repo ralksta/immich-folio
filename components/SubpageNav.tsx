@@ -5,12 +5,16 @@
 
 import Link from 'next/link';
 import { immich } from '@/lib/immich';
+import { listJournalEntries } from '@/lib/journal';
 
 export async function SubpageNav() {
-  const [subpages, standaloneAlbums] = await Promise.all([
+  const [subpages, standaloneAlbums, journalEntries] = await Promise.all([
     immich.getSubpages(),
     immich.getStandaloneAlbums(),
+    listJournalEntries().catch(() => []),
   ]);
+
+  const hasPublicJournal = journalEntries.some((e) => !e.frontmatter.draft);
 
   return (
     <>
@@ -19,6 +23,11 @@ export async function SubpageNav() {
           {sp.name}
         </Link>
       ))}
+      {hasPublicJournal && (
+        <Link href="/journal" className="header__nav-link">
+          Journal
+        </Link>
+      )}
       {standaloneAlbums.map((album) => (
         <Link key={album.id} href={`/${album.slug}`} className="header__nav-link">
           {album.albumName}
