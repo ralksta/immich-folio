@@ -129,6 +129,37 @@ export function renderInlineMarkdown(text: string): string {
   return html;
 }
 
+const isWhitespace = (char: string) => char.trim() === '';
+
+/**
+ * Split `Quote -- Author` at the first separator surrounded by whitespace.
+ *
+ * A plain scan rather than a pattern. The original `/^(.*?)(?:\s+--\s+(.+))?$/`
+ * wrapped a lazy group around an optional one — the quadratic case — and its
+ * first replacement, `/\s+--\s+/`, was reported as polynomial backtracking in
+ * turn. This is linear and needs no reasoning about the engine at all.
+ */
+export function splitQuoteAuthor(text: string): { body: string; author?: string } {
+  for (
+    let hyphens = text.indexOf('--');
+    hyphens !== -1;
+    hyphens = text.indexOf('--', hyphens + 2)
+  ) {
+    let start = hyphens;
+    while (start > 0 && isWhitespace(text[start - 1])) start--;
+
+    let end = hyphens + 2;
+    while (end < text.length && isWhitespace(text[end])) end++;
+
+    // Whitespace is required on both sides, so `a--b` is not a separator.
+    if (start === hyphens || end === hyphens + 2) continue;
+
+    return { body: text.slice(0, start), author: text.slice(end).trim() || undefined };
+  }
+
+  return { body: text };
+}
+
 /** Parse frontmatter (YAML block delimited by ---) */
 export function parseFrontmatter(content: string): {
   frontmatter: JournalFrontmatter;
@@ -211,21 +242,12 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
         .join(' ')
         .trim();
 
-      // Split on the first ` -- ` by index instead of matching the whole line.
-      // `/^(.*?)(?:\s+--\s+(.+))?$/` made the engine re-try every prefix
-      // against an optional tail — quadratic on a line that has no separator.
-      const separator = quoteText.match(/\s+--\s+/);
-      const quoteBody =
-        separator?.index === undefined ? quoteText : quoteText.slice(0, separator.index);
-      const quoteAuthor =
-        separator?.index === undefined
-          ? undefined
-          : quoteText.slice(separator.index + separator[0].length).trim();
+      const { body: quoteBody, author: quoteAuthor } = splitQuoteAuthor(quoteText);
 
       blocks.push({
         type: 'quote',
         text: renderInlineMarkdown(quoteBody),
-        author: quoteAuthor || undefined,
+        author: quoteAuthor,
       });
       continue;
     }

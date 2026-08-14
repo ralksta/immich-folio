@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import path from 'path';
 import { resolveJournalFilePath } from '../admin/journal-service';
-import { parseJournalMarkdown, serializeJournalMarkdown } from '../journal';
+import { parseJournalMarkdown, serializeJournalMarkdown, splitQuoteAuthor } from '../journal';
 
 describe('resolveJournalFilePath', () => {
   it.each(['../../etc/passwd', 'foo/../../bar', '..', 'a/b', 'foo.md', '', '.'])(
@@ -77,5 +77,32 @@ describe('parser behaviour is unchanged by the regex rework', () => {
       type: 'paragraph',
       html: 'Text with <strong>bold <em>and italic</em> inside</strong>.',
     });
+  });
+});
+
+describe('splitQuoteAuthor', () => {
+  it.each([
+    ['separator', 'Quote -- Author', { body: 'Quote', author: 'Author' }],
+    ['no separator', 'Just a quote', { body: 'Just a quote', author: undefined }],
+    [
+      'first of several',
+      'Quote -- Author -- Second',
+      { body: 'Quote', author: 'Author -- Second' },
+    ],
+    ['tabs', 'Quote\t--\tAuthor', { body: 'Quote', author: 'Author' }],
+    ['wide gap', 'Quote   --   Author', { body: 'Quote', author: 'Author' }],
+    // Whitespace on both sides is required, so these are not separators.
+    ['no surrounding space', 'no--separator', { body: 'no--separator', author: undefined }],
+    ['leading', '-- author only', { body: '-- author only', author: undefined }],
+    ['trailing', 'Quote --', { body: 'Quote --', author: undefined }],
+    ['empty', '', { body: '', author: undefined }],
+  ])('handles %s', (_name, input, expected) => {
+    expect(splitQuoteAuthor(input as string)).toEqual(expected);
+  });
+
+  it('stays linear on a long run of whitespace with no separator', () => {
+    const started = performance.now();
+    splitQuoteAuthor(' '.repeat(50_000) + 'x');
+    expect(performance.now() - started).toBeLessThan(100);
   });
 });
