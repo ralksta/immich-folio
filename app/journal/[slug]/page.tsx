@@ -19,7 +19,6 @@ import type { PhotoItem } from '@/app/[...path]/PhotoGrid';
 import type { ImmichAsset } from '@/lib/immich';
 import PasswordGate from '@/components/PasswordGate';
 import { BackLink } from '@/components/BackLink';
-import { verifyScrypt, isScryptHash } from '@/lib/password';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';

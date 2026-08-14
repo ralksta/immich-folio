@@ -21,8 +21,6 @@ export interface Env {
 }
 
 function parseEnv(): Env {
-  const errors: string[] = [];
-
   const urlRaw = process.env.IMMICH_API_URL;
   let apiUrl = '';
   if (urlRaw) {
