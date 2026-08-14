@@ -1,12 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import type { JournalEntrySummary, ParsedJournal, JournalBlock } from '@/lib/journal';
-import {
-  parseJournalMarkdown,
-  serializeJournalMarkdown,
-  sanitizeSlug,
-} from '@/lib/journal';
+import { parseJournalMarkdown, serializeJournalMarkdown, sanitizeSlug } from '@/lib/journal';
 import {
   IconFileText,
   IconSparkles,
@@ -19,18 +16,29 @@ import {
   IconGear,
   IconLink,
   IconPlus,
+  IconBook,
+  IconEye,
+  IconClock,
+  IconCalendar,
+  IconLock,
+  IconCheck,
 } from './Icons';
 import AssetPicker from './AssetPicker';
+import { BlockBadge } from './BlockBadge';
 import { EssayView } from '@/app/[...path]/EssayView';
 import type { PhotoItem } from '@/app/[...path]/PhotoGrid';
-import { useScrollLock } from './useScrollLock';
 import './journal-studio.css';
 
-export function JournalStudio() {
+interface JournalStudioProps {
+  /** Entry to open, taken from the /admin/journal/[slug] route. */
+  slug?: string;
+}
+
+export function JournalStudio({ slug: activeSlug }: JournalStudioProps) {
+  const router = useRouter();
   const [entries, setEntries] = useState<JournalEntrySummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeSlug, setActiveSlug] = useState<string | null>(null);
 
   // New Entry Modal
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -83,7 +91,7 @@ export function JournalStudio() {
         setNewSlug('');
         await fetchEntries();
         if (data.entry?.slug) {
-          setActiveSlug(data.entry.slug);
+          router.push(`/admin/journal/${data.entry.slug}`);
         }
       } else {
         const data = await res.json();
@@ -105,7 +113,7 @@ export function JournalStudio() {
       });
       if (res.ok) {
         await fetchEntries();
-        if (activeSlug === slug) setActiveSlug(null);
+        if (activeSlug === slug) router.push('/admin/journal');
       } else {
         alert('Failed to delete journal entry');
       }
@@ -115,15 +123,7 @@ export function JournalStudio() {
   };
 
   if (activeSlug) {
-    return (
-      <JournalEditor
-        slug={activeSlug}
-        onBack={() => {
-          setActiveSlug(null);
-          fetchEntries();
-        }}
-      />
-    );
+    return <JournalEditor slug={activeSlug} onBack={() => router.push('/admin/journal')} />;
   }
 
   return (
@@ -131,7 +131,7 @@ export function JournalStudio() {
       <div className="journal-studio-header">
         <div>
           <h2>
-            <span>📖</span> Journal &amp; Photo Essays
+            <IconBook size={20} /> Journal &amp; Photo Essays
           </h2>
           <p style={{ margin: '4px 0 0', opacity: 0.7, fontSize: '0.9rem' }}>
             Author visual stories, field notes, and longform photo essays with live preview.
@@ -151,9 +151,7 @@ export function JournalStudio() {
           Loading journal entries...
         </div>
       ) : error ? (
-        <div style={{ padding: '3rem', textAlign: 'center', color: '#ef4444' }}>
-          {error}
-        </div>
+        <div style={{ padding: '3rem', textAlign: 'center', color: '#ef4444' }}>{error}</div>
       ) : entries.length === 0 ? (
         <div style={{ padding: '5rem 2rem', textAlign: 'center', opacity: 0.6 }}>
           <h3>No journal entries yet</h3>
@@ -180,7 +178,7 @@ export function JournalStudio() {
                     alt={entry.frontmatter.title || entry.slug}
                   />
                 ) : (
-                  <span style={{ fontSize: '2.5rem', opacity: 0.3 }}>📖</span>
+                  <IconBook size={36} className="svg-icon journal-card-cover-placeholder" />
                 )}
               </div>
               <div className="journal-admin-card-body">
@@ -190,21 +188,31 @@ export function JournalStudio() {
                 <div className="journal-admin-card-slug">/journal/{entry.slug}</div>
 
                 <div className="journal-admin-card-meta">
-                  {entry.frontmatter.date && <span>📅 {entry.frontmatter.date}</span>}
-                  <span>⏱️ {entry.readingTimeMinutes} min</span>
-                  {entry.frontmatter.draft ? (
-                    <span style={{ color: '#eab308', fontWeight: 600 }}>[Draft]</span>
-                  ) : (
-                    <span style={{ color: '#22c55e', fontWeight: 600 }}>[Published]</span>
+                  {entry.frontmatter.date && (
+                    <span>
+                      <IconCalendar size={12} /> {entry.frontmatter.date}
+                    </span>
                   )}
-                  {entry.frontmatter.password && <span>🔒 Password</span>}
+                  <span>
+                    <IconClock size={12} /> {entry.readingTimeMinutes} min
+                  </span>
+                  {entry.frontmatter.draft ? (
+                    <span className="journal-status-pill is-draft">Draft</span>
+                  ) : (
+                    <span className="journal-status-pill is-published">Published</span>
+                  )}
+                  {entry.frontmatter.password && (
+                    <span>
+                      <IconLock size={12} /> Password
+                    </span>
+                  )}
                 </div>
 
                 <div className="journal-admin-card-actions">
                   <button
                     type="button"
                     className="admin-btn admin-btn-sm admin-btn-primary"
-                    onClick={() => setActiveSlug(entry.slug)}
+                    onClick={() => router.push(`/admin/journal/${entry.slug}`)}
                   >
                     Edit in Studio
                   </button>
@@ -240,7 +248,14 @@ export function JournalStudio() {
             <h3 style={{ margin: '0 0 1rem' }}>Create New Journal Entry</h3>
             <form onSubmit={handleCreate}>
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', opacity: 0.8 }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.85rem',
+                    marginBottom: '4px',
+                    opacity: 0.8,
+                  }}
+                >
                   Title
                 </label>
                 <input
@@ -260,7 +275,14 @@ export function JournalStudio() {
               </div>
 
               <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px', opacity: 0.8 }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.85rem',
+                    marginBottom: '4px',
+                    opacity: 0.8,
+                  }}
+                >
                   URL Slug
                 </label>
                 <input
@@ -271,7 +293,9 @@ export function JournalStudio() {
                   onChange={(e) => setNewSlug(sanitizeSlug(e.target.value))}
                   required
                 />
-                <span style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '2px', display: 'block' }}>
+                <span
+                  style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '2px', display: 'block' }}
+                >
                   Will be accessible at /journal/{newSlug || 'slug'}
                 </span>
               </div>
@@ -307,12 +331,84 @@ interface JournalEditorProps {
   onBack: () => void;
 }
 
+/**
+ * Photo blocks may carry a legacy positional reference ("1", "2") instead of an
+ * asset UUID. Those only ever resolved against a subpage's album; on a
+ * standalone journal page there is no album, so the photo silently disappears.
+ * Flag them in the editor so the author can re-pick before publishing.
+ */
+const ASSET_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isLegacyAssetRef(assetId: string): boolean {
+  return assetId.length > 0 && !ASSET_UUID.test(assetId);
+}
+
+/** Width of the authoring pane, in percent of the split view. */
+const SPLIT_STORAGE_KEY = 'folio-journal-split';
+const SPLIT_MIN = 25;
+const SPLIT_MAX = 70;
+const SPLIT_DEFAULT = 46;
+
 function JournalEditor({ slug, onBack }: JournalEditorProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [editorMode, setEditorMode] = useState<'blocks' | 'markdown'>('blocks');
   const [viewport, setViewport] = useState<'desktop' | 'mobile'>('desktop');
+
+  // Draggable divider between authoring pane and preview.
+  const splitRef = useRef<HTMLDivElement>(null);
+  const [splitPct, setSplitPct] = useState(SPLIT_DEFAULT);
+  const [dragging, setDragging] = useState(false);
+
+  // Restore the last width after mount (localStorage is unavailable on the server).
+  useEffect(() => {
+    const stored = Number(window.localStorage.getItem(SPLIT_STORAGE_KEY));
+    if (stored >= SPLIT_MIN && stored <= SPLIT_MAX) setSplitPct(stored);
+  }, []);
+
+  const applySplit = useCallback((clientX: number) => {
+    const rect = splitRef.current?.getBoundingClientRect();
+    if (!rect || rect.width === 0) return;
+    const pct = ((clientX - rect.left) / rect.width) * 100;
+    setSplitPct(Math.min(SPLIT_MAX, Math.max(SPLIT_MIN, pct)));
+  }, []);
+
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = (e: MouseEvent) => {
+      e.preventDefault();
+      applySplit(e.clientX);
+    };
+    const onUp = () => setDragging(false);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, [dragging, applySplit]);
+
+  // Persist once the drag ends, not on every pixel.
+  useEffect(() => {
+    if (dragging) return;
+    window.localStorage.setItem(SPLIT_STORAGE_KEY, String(Math.round(splitPct)));
+  }, [dragging, splitPct]);
+
+  // Keyboard access for the divider: arrows nudge, Home resets.
+  const handleSplitKeyDown = (e: React.KeyboardEvent) => {
+    const step = e.shiftKey ? 10 : 2;
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setSplitPct((p) => Math.max(SPLIT_MIN, p - step));
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setSplitPct((p) => Math.min(SPLIT_MAX, p + step));
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setSplitPct(SPLIT_DEFAULT);
+    }
+  };
 
   const [rawMarkdown, setRawMarkdown] = useState('');
   const [parsed, setParsed] = useState<ParsedJournal>(() => ({
@@ -323,6 +419,9 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
 
   // Settings / Metadata Modal
   const [showMetaModal, setShowMetaModal] = useState(false);
+
+  /** Real width/height ratios of the referenced photos, measured from thumbnails. */
+  const [assetRatios, setAssetRatios] = useState<Record<string, number>>({});
 
   // Asset Picker State
   const [assetPickerTarget, setAssetPickerTarget] = useState<{
@@ -372,8 +471,8 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
             if (b.type === 'photo') return [b.assetId];
             if (b.type === 'photo-pair') return b.assetIds;
             return [];
-          })
-        )
+          }),
+        ),
       ),
     };
     const serialized = serializeJournalMarkdown(updated);
@@ -434,6 +533,40 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [handleSave]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /*
+   * The preview used to hard-code 3:2 for every photo, so the studio showed a
+   * cropped, uniform grid while the published page laid the photos out by their
+   * real proportions. There is no admin endpoint that reports asset dimensions,
+   * so the thumbnails are measured once as they load.
+   */
+  const measuredRef = useRef(new Set<string>());
+
+  useEffect(() => {
+    let cancelled = false;
+    for (const id of parsed.referencedAssetIds) {
+      if (!id || measuredRef.current.has(id)) continue;
+      measuredRef.current.add(id);
+
+      const probe = new window.Image();
+      probe.onload = () => {
+        if (cancelled || !probe.naturalHeight) return;
+        setAssetRatios((prev) => ({
+          ...prev,
+          [id]: probe.naturalWidth / probe.naturalHeight,
+        }));
+      };
+      probe.onerror = () => {
+        // Unresolvable reference — keep the fallback ratio, the block editor
+        // already flags it.
+        measuredRef.current.delete(id);
+      };
+      probe.src = `/api/admin/thumbnail/${id}`;
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [parsed.referencedAssetIds]);
+
   // Block manipulation
   const handleAddBlock = (type: JournalBlock['type']) => {
     let newBlock: JournalBlock;
@@ -483,7 +616,8 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
     thumbUrl: `/api/admin/thumbnail/${id}`,
     previewUrl: `/api/admin/thumbnail/${id}`,
     exifUrl: `/api/exif/${id}`,
-    aspectRatio: 1.5,
+    // Falls back to 3:2 only until the real ratio has been measured.
+    aspectRatio: assetRatios[id] ?? 1.5,
   }));
 
   if (loading) {
@@ -515,7 +649,15 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
             onChange={(e) => handleFrontmatterChange({ title: e.target.value })}
           />
 
-          <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '6px', padding: '2px' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '4px',
+              background: 'rgba(255,255,255,0.06)',
+              borderRadius: '6px',
+              padding: '2px',
+            }}
+          >
             <button
               type="button"
               className={`admin-btn admin-btn-xs ${editorMode === 'blocks' ? 'admin-btn-primary' : ''}`}
@@ -557,13 +699,25 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
             onClick={handleSave}
             disabled={saving}
           >
-            {saving ? 'Saving...' : dirty ? '💾 Save Changes' : '✅ Saved'}
+            {saving ? (
+              'Saving...'
+            ) : dirty ? (
+              'Save Changes'
+            ) : (
+              <>
+                <IconCheck size={14} /> Saved
+              </>
+            )}
           </button>
         </div>
       </div>
 
       {/* Split Screen */}
-      <div className="journal-editor-split">
+      <div
+        className={`journal-editor-split${dragging ? ' is-dragging' : ''}`}
+        ref={splitRef}
+        style={{ ['--journal-split-left' as string]: `${splitPct}%` }}
+      >
         {/* Left: Authoring Pane */}
         <div className="journal-editor-pane-left">
           {editorMode === 'markdown' ? (
@@ -577,7 +731,7 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
             <div>
               {/* Add Block Toolbar */}
               <div className="essay-toolbar-sticky">
-                <span className="essay-toolbar-label">✨ Add Block:</span>
+                <span className="essay-toolbar-label">Add Block:</span>
                 <button
                   type="button"
                   className="admin-btn admin-btn-xs"
@@ -617,13 +771,13 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
               </div>
 
               {/* Blocks List */}
-              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div
+                style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}
+              >
                 {parsed.blocks.map((block, idx) => (
                   <div key={idx} className="essay-block-card">
                     <div className="essay-block-card-header">
-                      <span className={`essay-block-badge badge-${block.type.startsWith('photo') ? 'photo' : block.type}`}>
-                        {block.type}
-                      </span>
+                      <BlockBadge type={block.type} />
                       <div className="essay-block-actions">
                         <button
                           type="button"
@@ -653,13 +807,13 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
 
                     <div style={{ marginTop: '0.75rem' }}>
                       {block.type === 'heading' && (
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        <div className="journal-heading-row">
                           <select
+                            className="admin-input journal-level-select"
                             value={block.level}
                             onChange={(e) =>
                               handleUpdateBlock(idx, { ...block, level: Number(e.target.value) })
                             }
-                            style={{ width: '70px' }}
                           >
                             <option value={1}>H1</option>
                             <option value={2}>H2</option>
@@ -710,12 +864,20 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
                         </div>
                       )}
 
+                      {block.type === 'photo' && isLegacyAssetRef(block.assetId) && (
+                        <p className="journal-block-warning">
+                          Reference &quot;{block.assetId}&quot; is a legacy album position, not a
+                          photo. It will not appear on the published page — pick a photo below.
+                        </p>
+                      )}
+
                       {block.type === 'photo' && (
                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                           <div
                             style={{
-                              width: '100px',
-                              height: '70px',
+                              width: '140px',
+                              height: '96px',
+                              flexShrink: 0,
                               background: 'rgba(0,0,0,0.3)',
                               borderRadius: '6px',
                               overflow: 'hidden',
@@ -727,8 +889,7 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
                             onClick={() =>
                               setAssetPickerTarget({
                                 title: 'Select Photo for Story',
-                                onSelect: (id) =>
-                                  handleUpdateBlock(idx, { ...block, assetId: id }),
+                                onSelect: (id) => handleUpdateBlock(idx, { ...block, assetId: id }),
                               })
                             }
                           >
@@ -744,9 +905,17 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
                             )}
                           </div>
 
-                          <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            <div style={{ display: 'flex', gap: '8px' }}>
+                          <div
+                            style={{
+                              flexGrow: 1,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '6px',
+                            }}
+                          >
+                            <div className="journal-photo-layout-row">
                               <select
+                                className="admin-input"
                                 value={block.layout}
                                 onChange={(e) =>
                                   handleUpdateBlock(idx, {
@@ -786,9 +955,19 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
                         </div>
                       )}
 
+                      {block.type === 'photo-pair' && block.assetIds.some(isLegacyAssetRef) && (
+                        <p className="journal-block-warning">
+                          References &quot;{block.assetIds.filter(isLegacyAssetRef).join('", "')}
+                          &quot; are legacy album positions, not photos. They will not appear on the
+                          published page — pick photos below.
+                        </p>
+                      )}
+
                       {block.type === 'photo-pair' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                          <div
+                            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}
+                          >
                             {[0, 1].map((pIdx) => (
                               <div
                                 key={pIdx}
@@ -848,10 +1027,32 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
           )}
         </div>
 
+        {/* Draggable divider */}
+        <div
+          className="journal-editor-resizer"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize editor and preview"
+          aria-valuenow={Math.round(splitPct)}
+          aria-valuemin={SPLIT_MIN}
+          aria-valuemax={SPLIT_MAX}
+          tabIndex={0}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDoubleClick={() => setSplitPct(SPLIT_DEFAULT)}
+          onKeyDown={handleSplitKeyDown}
+        >
+          <span className="journal-editor-resizer-grip" aria-hidden="true" />
+        </div>
+
         {/* Right: Live Preview Pane */}
         <div className="journal-editor-pane-right">
           <div className="journal-preview-bar">
-            <span>👁️ Realtime Theme Preview</span>
+            <span className="journal-preview-bar-label">
+              <IconEye size={13} /> Realtime Theme Preview
+            </span>
             <div style={{ display: 'flex', gap: '4px' }}>
               <button
                 type="button"
@@ -889,7 +1090,14 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', opacity: 0.8, marginBottom: '4px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.8rem',
+                    opacity: 0.8,
+                    marginBottom: '4px',
+                  }}
+                >
                   Subtitle
                 </label>
                 <input
@@ -903,7 +1111,14 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', opacity: 0.8, marginBottom: '4px' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.8rem',
+                      opacity: 0.8,
+                      marginBottom: '4px',
+                    }}
+                  >
                     Author
                   </label>
                   <input
@@ -915,7 +1130,14 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', opacity: 0.8, marginBottom: '4px' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.8rem',
+                      opacity: 0.8,
+                      marginBottom: '4px',
+                    }}
+                  >
                     Publish Date
                   </label>
                   <input
@@ -928,7 +1150,14 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', opacity: 0.8, marginBottom: '4px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.8rem',
+                    opacity: 0.8,
+                    marginBottom: '4px',
+                  }}
+                >
                   Cover Photo
                 </label>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -980,7 +1209,14 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', opacity: 0.8, marginBottom: '4px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.8rem',
+                    opacity: 0.8,
+                    marginBottom: '4px',
+                  }}
+                >
                   Password Protection (Optional)
                 </label>
                 <input
