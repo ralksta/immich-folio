@@ -36,12 +36,55 @@ export interface JournalEntrySummary {
   readingTimeMinutes: number;
 }
 
-/** Sanitize inline HTML strings to prevent XSS in journal blocks */
+const HTML_ESCAPES: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+
+/**
+ * Make an author's text inert as HTML.
+ *
+ * This escapes rather than filters. The previous implementation stripped
+ * `<script>` tags, `on*="..."` handlers and the literal string `javascript:`,
+ * which is a denylist and was trivially bypassable: `<img src=x onerror=alert(1)>`
+ * (unquoted handler), `onerror='...'` (single quotes), `<svg onload=...>` (not a
+ * script tag) and `javasjavascript:cript:` (the replacement recombines) all
+ * passed through into `dangerouslySetInnerHTML`.
+ *
+ * With escaping there is nothing to enumerate: the only tags in the output are
+ * the ones renderInlineMarkdown emits itself.
+ */
 export function sanitizeHtml(input: string): string {
+  return input.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
+}
+
+/**
+ * Reverse of sanitizeHtml, for turning rendered block HTML back into Markdown.
+ * Without this a save would write `&lt;` into the file and the next parse would
+ * escape the `&` again, corrupting the text a little more on every round trip.
+ */
+export function decodeHtmlEntities(input: string): string {
   return input
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/on\w+="[^"]*"/gi, '')
-    .replace(/javascript:/gi, '');
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
+/**
+ * Schemes an author may link to. Everything else — `javascript:`, `data:`,
+ * `vbscript:` — renders as plain text instead of an anchor.
+ */
+const SAFE_URL = /^(?:https?:\/\/|mailto:|tel:|[./#])/i;
+
+function isSafeUrl(url: string): boolean {
+  // Browsers ignore control characters and whitespace inside a scheme, so
+  // `java\tscript:` would run. Strip them before deciding.
+  return SAFE_URL.test(url.replace(/[\u0000-\u0020]/g, ''));
 }
 
 /** Sanitize a slug to only allow safe URL and filesystem characters */
@@ -62,6 +105,9 @@ export function sanitizeSlug(input: string): string {
 
 /** Simple Markdown inline formatting (bold, italic, links) */
 export function renderInlineMarkdown(text: string): string {
+  // Escape first: from here on every `<` and `"` in the string is the author's
+  // literal text, so the markdown rules below can only ever add the tags they
+  // build themselves, and a URL cannot break out of its href attribute.
   let html = sanitizeHtml(text);
   // Bold: **text** or __text__
   html = html.replace(/(\*\*|__)(.*?)\1/g, '<strong>$2</strong>');
@@ -69,14 +115,18 @@ export function renderInlineMarkdown(text: string): string {
   html = html.replace(/(\*|_)(.*?)\1/g, '<em>$2</em>');
   // Links: [label](url)
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, url) => {
-    const safeUrl = url.trim().replace(/^javascript:/i, '');
-    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+    const trimmed = url.trim();
+    if (!isSafeUrl(trimmed)) return label;
+    return `<a href="${trimmed}" target="_blank" rel="noopener noreferrer">${label}</a>`;
   });
   return html;
 }
 
 /** Parse frontmatter (YAML block delimited by ---) */
-export function parseFrontmatter(content: string): { frontmatter: JournalFrontmatter; body: string } {
+export function parseFrontmatter(content: string): {
+  frontmatter: JournalFrontmatter;
+  body: string;
+} {
   const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
   if (!frontmatterMatch) {
     return { frontmatter: {}, body: content };
@@ -258,18 +308,20 @@ export function serializeJournalMarkdown(journal: ParsedJournal): string {
           if (tag.startsWith('</em>') || tag.startsWith('</i>')) return '*';
           return '';
         });
-        lines.push(text);
+        lines.push(decodeHtmlEntities(text));
         break;
       }
       case 'quote': {
         const authorSuffix = block.author ? ` -- ${block.author}` : '';
-        const text = block.text.replace(/[\r\n]+/g, ' ');
+        const text = decodeHtmlEntities(block.text.replace(/[\r\n]+/g, ' '));
         lines.push(`> ${text}${authorSuffix}`);
         break;
       }
       case 'photo': {
         const layoutSuffix = block.layout !== 'contained' ? `:${block.layout}` : '';
-        const caption = block.caption ? block.caption.replace(/[\r\n]+/g, ' ') : '';
+        const caption = block.caption
+          ? decodeHtmlEntities(block.caption.replace(/[\r\n]+/g, ' '))
+          : '';
         lines.push(`![${block.assetId}${layoutSuffix}](${caption})`);
         break;
       }
