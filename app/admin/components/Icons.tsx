@@ -256,6 +256,25 @@ export function IconHeart({ size = 16, className = 'svg-icon', strokeWidth = 2, 
   );
 }
 
+/** Filled by default — it marks a state (favourite), not an action. */
+export function IconStar({ size = 16, className = 'svg-icon', strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14l-5-4.87 6.91-1.01Z" />
+    </svg>
+  );
+}
+
+export function IconImage({ size = 16, className = 'svg-icon', strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+      <circle cx="9" cy="9" r="2" />
+      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+    </svg>
+  );
+}
+
 export function IconBarChart({ size = 16, className = 'svg-icon', strokeWidth = 2, ...props }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
@@ -275,6 +294,40 @@ export function IconGripVertical({ size = 16, className = 'svg-icon', strokeWidt
       <circle cx="15" cy="12" r="1" fill="currentColor" />
       <circle cx="15" cy="5" r="1" fill="currentColor" />
       <circle cx="15" cy="19" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function IconX({ size = 16, className = 'svg-icon', strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
+export function IconPlus({ size = 16, className = 'svg-icon', strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <path d="M5 12h14M12 5v14" />
+    </svg>
+  );
+}
+
+export function IconHome({ size = 16, className = 'svg-icon', strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  );
+}
+
+export function IconCopy({ size = 16, className = 'svg-icon', strokeWidth = 2, ...props }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
     </svg>
   );
 }

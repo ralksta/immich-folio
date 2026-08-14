@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { IconFolder, IconImage, IconStar } from './Icons';
 
 interface AssetInfo {
   id: string;
@@ -126,20 +127,23 @@ export default function AssetPicker({
               className={`asset-picker-tab ${tab === 'album' ? 'active' : ''}`}
               onClick={() => setTab('album')}
             >
-              📂 This Album
+              <IconFolder size={14} />
+              This Album
             </button>
           )}
           <button
             className={`asset-picker-tab ${tab === 'favorites' ? 'active' : ''}`}
             onClick={() => setTab('favorites')}
           >
-            ⭐ Favorites
+            <IconStar size={14} />
+            Favorites
           </button>
           <button
             className={`asset-picker-tab ${tab === 'all' ? 'active' : ''}`}
             onClick={() => setTab('all')}
           >
-            🖼️ All Photos
+            <IconImage size={14} />
+            All Photos
           </button>
         </div>
 
@@ -173,7 +177,9 @@ export default function AssetPicker({
                     />
                     {isUsed && <div className="asset-picker-used-badge">✓</div>}
                     {asset.isFavorite && !isUsed && (
-                      <div className="asset-picker-fav-badge">⭐</div>
+                      <div className="asset-picker-fav-badge" title="Favorite in Immich">
+                        <IconStar size={14} />
+                      </div>
                     )}
                   </div>
                 );

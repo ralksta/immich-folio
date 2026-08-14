@@ -1,3 +1,5 @@
+import type { AlbumSortMode } from '../albumSort';
+
 export interface SubpageSectionConfig {
   title: string;
   slug: string; // auto-derived from title, used as anchor
@@ -29,15 +31,14 @@ export interface SubpageObjectValue {
   essayFile?: string;
   essayText?: string;
   enabled?: boolean;
-  albums?: Array<
-    string | Record<string, string | { title: string; description?: string; password?: string }>
-  >;
+  // Both album lists reuse AlbumEntryObject rather than inlining the shape:
+  // the inline copies had already drifted (they never gained `heroImage`), and
+  // this path is live for map-style subpages.
+  albums?: Array<string | Record<string, string | AlbumEntryObject>>;
   sections?: Array<{
     title: string;
     description?: string;
-    albums: Array<
-      string | Record<string, string | { title: string; description?: string; password?: string }>
-    >;
+    albums: Array<string | Record<string, string | AlbumEntryObject>>;
   }>;
 }
 
@@ -112,6 +113,10 @@ export interface AppConfig {
   albumDescriptions: Record<string, string>;
   albumPasswords: Record<string, string>;
   albumHeroImages: Record<string, string>;
+  /** Per-album sort mode. Absent means `immich` — the album's own order. */
+  albumSortModes: Record<string, AlbumSortMode>;
+  /** Pinned asset UUIDs per album for `sort: manual`, in display order. */
+  albumManualOrders: Record<string, string[]>;
   cacheTtl: number;
   /** How long (ms) an expired cache entry may still be served while Immich is unreachable. */
   staleMaxAge: number;
@@ -133,10 +138,18 @@ export interface AppConfig {
 }
 
 export interface AlbumEntryObject {
-  title: string;
+  /** Optional: an entry may carry only a sort mode and no title override. */
+  title?: string;
   description?: string;
   password?: string;
   heroImage?: string;
+  /**
+   * Raw YAML shape — narrowed to `AlbumSortMode` in deriveGallery(), which is
+   * where an unknown value has to be rejected with a message a human can act on.
+   */
+  sort?: string;
+  /** Pinned asset UUIDs for `sort: manual`. Everything else follows automatically. */
+  assetOrder?: string[];
 }
 
 export interface GalleryYaml {
