@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useScrollLock } from './useScrollLock';
+import { IconFolder } from './Icons';
 
 interface ImmichAlbumInfo {
   id: string;
@@ -77,7 +78,9 @@ export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }:
                       loading="lazy"
                     />
                   ) : (
-                    <div className="picker-thumb-placeholder">📁</div>
+                    <div className="picker-thumb-placeholder">
+                      <IconFolder size={20} />
+                    </div>
                   )}
                 </div>
                 <div className="picker-item-info">
