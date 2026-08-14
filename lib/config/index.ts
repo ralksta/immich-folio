@@ -307,6 +307,7 @@ export function getConfig(): AppConfig {
       legal: { enabled: false, name: '', address: '', zipCity: '', country: '' },
       map: false,
       transitions: false,
+      scrollToTop: false,
       analytics: true,
       proofing: { enabled: false, allowMailto: false },
       albumOverrides: {},
@@ -397,6 +398,7 @@ export function getConfig(): AppConfig {
     },
     map: settings.map === true,
     transitions: settings.transitions !== false,
+    scrollToTop: settings.scrollToTop !== false,
     analytics: settings.analytics !== false,
     proofing: {
       enabled: settings.proofing?.enabled !== false,

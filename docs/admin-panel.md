@@ -66,7 +66,7 @@ The **Settings** tab lets you configure global site behavior:
 
 | Section   | Controls                                                         |
 | --------- | ---------------------------------------------------------------- |
-| General   | Site title, subtitle, language, EXIF on hover, map, transitions  |
+| General   | Site title, subtitle, language, EXIF on hover, map, transitions, scroll-to-top |
 | Theme     | Preset, accent color, photo frame, hero style, grain, header dot |
 | Grid      | Layout mode, columns, gap, aspect ratio                          |
 | Footer    | Name, Instagram, email, website                                  |
