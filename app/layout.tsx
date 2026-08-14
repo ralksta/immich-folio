@@ -149,9 +149,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   Home
                 </Link>
                 <SubpageNav />
-                <Link href="/about" className="header__nav-link">
-                  About
-                </Link>
+                {config.aboutEnabled && (
+                  <Link href="/about" className="header__nav-link">
+                    About
+                  </Link>
+                )}
                 {config.map && (
                   <Link href="/map" className="header__nav-link">
                     Map
