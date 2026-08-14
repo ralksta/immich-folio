@@ -1235,9 +1235,65 @@ export default function PageBuilder() {
                             />
                           </div>
                         </div>
-                        <div className="admin-field">
-                          <label>Password Protection (optional)</label>
-                          <div className="password-input-wrapper">
+                        <div className="admin-field" style={{ marginTop: '1rem' }}>
+                          <label>Visibility &amp; Access</label>
+                          {/*
+                            One field, three states — enabled/hidden are two YAML flags,
+                            but for the owner it is a single question: how visible is
+                            this page? Splitting it across two toggles produced
+                            contradictory copy ("Disabled (Hidden)" vs "Unlisted").
+                          */}
+                          {(
+                            [
+                              {
+                                key: 'published',
+                                active: sp.enabled !== false && sp.hidden !== true,
+                                title: '🟢 Published',
+                                desc: 'Shown in the header menu and homepage lists, reachable via URL',
+                                patch: { enabled: true, hidden: false },
+                              },
+                              {
+                                key: 'unlisted',
+                                active: sp.enabled !== false && sp.hidden === true,
+                                title: '🙈 Unlisted (Experimental)',
+                                desc: 'Not shown in menus or on the homepage, but reachable via direct link',
+                                patch: { enabled: true, hidden: true },
+                              },
+                              {
+                                key: 'disabled',
+                                active: sp.enabled === false,
+                                title: '🔴 Disabled',
+                                desc: 'Completely offline — returns 404 even when accessed directly',
+                                patch: { enabled: false, hidden: false },
+                              },
+                            ] as const
+                          ).map((opt) => (
+                            <button
+                              key={opt.key}
+                              type="button"
+                              className={`admin-toggle-card ${opt.active ? 'active' : ''}`}
+                              onClick={() => updateSubpage(spIndex, opt.patch)}
+                              aria-pressed={opt.active}
+                              style={{ padding: '10px 14px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '8px', cursor: 'pointer', marginBottom: '6px' }}
+                            >
+                              <div className="toggle-card-info" style={{ textAlign: 'left' }}>
+                                <span className="toggle-card-title" style={{ fontWeight: 600 }}>
+                                  {opt.title}
+                                </span>
+                                <span className="toggle-card-desc" style={{ fontSize: '0.8rem', display: 'block', opacity: 0.75 }}>
+                                  {opt.desc}
+                                </span>
+                              </div>
+                              <div className={`switch-toggle ${opt.active ? 'on' : ''}`}>
+                                <span className="switch-slider" />
+                              </div>
+                            </button>
+                          ))}
+
+                          {/* Password lives in the same group: it is the access half
+                              of "who gets to see this page". Applies to Published and
+                              Unlisted; a Disabled page 404s before the gate. */}
+                          <div className="password-input-wrapper" style={{ marginTop: '6px' }}>
                             <span className="password-icon"><IconLock size={12} /></span>
                             <input
                               type="password"
@@ -1245,57 +1301,10 @@ export default function PageBuilder() {
                               onChange={(e) =>
                                 updateSubpage(spIndex, { password: e.target.value || undefined })
                               }
-                              placeholder="Leave empty for public access"
+                              placeholder="Password protection (optional) — leave empty for public access"
+                              disabled={sp.enabled === false}
                             />
                           </div>
-                        </div>
-
-                        <div className="admin-field" style={{ marginTop: '1rem' }}>
-                          <label>Page Visibility Status</label>
-                          <button
-                            type="button"
-                            className={`admin-toggle-card ${sp.enabled !== false ? 'active' : ''}`}
-                            onClick={() => updateSubpage(spIndex, { enabled: sp.enabled === false })}
-                            style={{ padding: '10px 14px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '8px', cursor: 'pointer' }}
-                          >
-                            <div className="toggle-card-info" style={{ textAlign: 'left' }}>
-                              <span className="toggle-card-title" style={{ fontWeight: 600 }}>
-                                {sp.enabled !== false ? '🟢 Page Active (Published)' : '🔴 Page Disabled (Hidden)'}
-                              </span>
-                              <span className="toggle-card-desc" style={{ fontSize: '0.8rem', display: 'block', opacity: 0.75 }}>
-                                {sp.enabled !== false
-                                  ? 'Visible in header menu and reachable via URL'
-                                  : 'Hidden from navigation menu. Returns 404 if accessed directly.'}
-                              </span>
-                            </div>
-                            <div className={`switch-toggle ${sp.enabled !== false ? 'on' : ''}`}>
-                              <span className="switch-slider" />
-                            </div>
-                          </button>
-                        </div>
-
-                        <div className="admin-field" style={{ marginTop: '1rem' }}>
-                          <label>Navigation Listing (Experimental)</label>
-                          <button
-                            type="button"
-                            className={`admin-toggle-card ${sp.hidden === true ? 'active' : ''}`}
-                            onClick={() => updateSubpage(spIndex, { hidden: sp.hidden !== true })}
-                            style={{ padding: '10px 14px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '8px', cursor: 'pointer' }}
-                          >
-                            <div className="toggle-card-info" style={{ textAlign: 'left' }}>
-                              <span className="toggle-card-title" style={{ fontWeight: 600 }}>
-                                {sp.hidden === true ? '🙈 Unlisted' : '📋 Listed in navigation'}
-                              </span>
-                              <span className="toggle-card-desc" style={{ fontSize: '0.8rem', display: 'block', opacity: 0.75 }}>
-                                {sp.hidden === true
-                                  ? 'Not shown in menus or on the homepage, but reachable via direct link'
-                                  : 'Shown in the header menu and homepage lists'}
-                              </span>
-                            </div>
-                            <div className={`switch-toggle ${sp.hidden === true ? 'on' : ''}`}>
-                              <span className="switch-slider" />
-                            </div>
-                          </button>
                         </div>
                         <div className="admin-field" style={{ marginTop: '1rem' }}>
                           <label>Page Layout Style</label>
