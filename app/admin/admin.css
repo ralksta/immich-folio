@@ -3315,7 +3315,9 @@ h3 .svg-icon {
   border-radius: 4px;
 }
 
-/* ── Subpage Slide-Over Drawer Modal ──────────────────────────── */
+/* ── Subpage Editor Sheet (centered two-column modal) ─────────── */
+/* z-index 999 is load-bearing: the album detail modal (1000) and the
+   portalled Listbox popup (1100) must stack above this sheet. */
 .subpage-drawer-backdrop {
   position: fixed;
   inset: 0;
@@ -3323,28 +3325,37 @@ h3 .svg-icon {
   backdrop-filter: blur(6px);
   z-index: 999;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
   animation: fadeIn 0.2s ease-out;
 }
 
 .subpage-drawer-container {
   width: 100%;
-  max-width: 620px;
-  height: 100vh;
+  max-width: 1100px;
+  max-height: 90vh;
   background: var(--admin-bg-card, #181818);
-  border-left: 1px solid var(--admin-border, #333);
+  border: 1px solid var(--admin-border, #333);
+  border-radius: 16px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  /* No fill-mode: after the entry animation the computed transform must
+     return to none, so the container never becomes a containing block for
+     fixed-position descendants (Listbox popup measurement). */
+  animation: sheetIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes slideInRight {
+@keyframes sheetIn {
   from {
-    transform: translateX(100%);
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
   }
   to {
-    transform: translateX(0);
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
 
@@ -3383,6 +3394,8 @@ h3 .svg-icon {
   overflow-y: auto;
   overscroll-behavior: contain;
   flex: 1;
+  /* Required so the flex child scrolls under max-height instead of growing */
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -3395,6 +3408,61 @@ h3 .svg-icon {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+/* Two-column layout inside the sheet body. Both columns live in the body's
+   single scroller — never give a column its own overflow, a nested scroller
+   clips the portalled Listbox popup (see .album-drawer-body note). */
+.subpage-drawer-columns {
+  display: grid;
+  grid-template-columns: minmax(380px, 460px) 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.subpage-drawer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.subpage-drawer-col--content {
+  border-left: 1px solid var(--admin-border);
+  padding-left: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .subpage-drawer-columns {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .subpage-drawer-col--content {
+    border-left: none;
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .subpage-drawer-backdrop {
+    padding: 0;
+  }
+
+  .subpage-drawer-container {
+    max-width: none;
+    max-height: none;
+    height: 100dvh;
+    border-radius: 0;
+    border: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .subpage-drawer-container,
+  .subpage-drawer-backdrop {
+    animation: none;
+  }
 }
 
 .input-slug-wrapper {

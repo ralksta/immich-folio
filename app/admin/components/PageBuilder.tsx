@@ -440,6 +440,22 @@ export default function PageBuilder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dirty, saving, gallery]);
 
+  // ── Escape closes the subpage sheet — only when it is topmost ─
+  useEffect(() => {
+    if (expandedSubpage === null) return;
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      // Listbox preventDefaults its own Escape but does not stopPropagation —
+      // respect that so closing a popup never also closes the sheet.
+      if (e.defaultPrevented) return;
+      // A higher layer (album editor, pickers, order editor) owns the key.
+      if (editingAlbumAddress || pickerTarget || heroPickerTarget || orderEditorTarget) return;
+      setExpandedSubpage(null);
+    }
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [expandedSubpage, editingAlbumAddress, pickerTarget, heroPickerTarget, orderEditorTarget]);
+
   // ── Unsaved changes guard ────────────────────────────────────
   useEffect(() => {
     function handleBeforeUnload(e: BeforeUnloadEvent) {
@@ -1198,7 +1214,8 @@ export default function PageBuilder() {
                           )}
                         </div>
                       ) : (
-                        <>
+                        <div className="subpage-drawer-columns">
+                        <div className="subpage-drawer-col subpage-drawer-col--settings">
                       <div className="subpage-drawer-section">
                         <div className="admin-field">
                           <label>Page Name (URL Identifier)</label>
@@ -1375,8 +1392,9 @@ export default function PageBuilder() {
                         </div>
                       )}
 
-                      <div className="settings-section-divider" />
+                        </div>
 
+                        <div className="subpage-drawer-col subpage-drawer-col--content">
                       {/* Albums (if no sections) with DnD */}
                       {(!sp.sections || sp.sections.length === 0) && (
                         <div className="subpage-albums">
@@ -1499,7 +1517,8 @@ export default function PageBuilder() {
                           </button>
                         )}
                       </div>
-                        </>
+                        </div>
+                        </div>
                       )}
                     </div>
 
