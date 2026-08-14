@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import * as Icons from './Icons';
 import SaveBar from './SaveBar';
 
@@ -12,6 +13,7 @@ interface Settings {
   exifOnHover?: boolean;
   map?: boolean;
   transitions?: boolean;
+  scrollToTop?: boolean;
   analytics?: boolean;
   theme?: {
     preset?: string;
@@ -76,13 +78,37 @@ const PHOTO_FRAMES = ['none', 'passepartout', 'shadow'];
 const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic', 'cover'];
 const ASPECT_RATIOS = ['1', '3/2', '2/3', '16/9', 'auto'];
 
-const THEME_INFO: Record<string, { desc: string; label: string; accent: string; bg: string; tile: string }> = {
+/**
+ * Card metadata for the theme picker. `font`, `radius` and `frame` mirror the
+ * real preset definitions in lib/config/theme.ts so the mini mockups show what
+ * the preset actually does; `gap` is the visual density of its gallery grid.
+ */
+const THEME_INFO: Record<
+  string,
+  {
+    desc: string;
+    label: string;
+    accent: string;
+    bg: string;
+    tile: string;
+    font: string;
+    type: 'serif' | 'sans' | 'mono';
+    radius: number;
+    frame: 'none' | 'passepartout' | 'shadow';
+    gap: number;
+  }
+> = {
   studio: {
     label: 'Studio',
     desc: 'Clean, high-contrast grid with sans-serif type.',
     bg: '#141414',
     tile: '#242424',
     accent: '#e60012',
+    font: 'Playfair Display',
+    type: 'serif',
+    radius: 0,
+    frame: 'passepartout',
+    gap: 4,
   },
   'studio-modern': {
     label: 'Studio Modern',
@@ -90,6 +116,11 @@ const THEME_INFO: Record<string, { desc: string; label: string; accent: string; 
     bg: '#121212',
     tile: '#191919',
     accent: '#e60012',
+    font: 'Archivo',
+    type: 'sans',
+    radius: 0,
+    frame: 'none',
+    gap: 3,
   },
   minimal: {
     label: 'Minimal',
@@ -97,6 +128,11 @@ const THEME_INFO: Record<string, { desc: string; label: string; accent: string; 
     bg: '#ffffff',
     tile: '#f3f3f3',
     accent: '#111111',
+    font: 'Geist',
+    type: 'sans',
+    radius: 0,
+    frame: 'none',
+    gap: 2,
   },
   editorial: {
     label: 'Editorial',
@@ -104,6 +140,11 @@ const THEME_INFO: Record<string, { desc: string; label: string; accent: string; 
     bg: '#fbf9f4',
     tile: '#e5dfd4',
     accent: '#b89053',
+    font: 'Bodoni Moda',
+    type: 'serif',
+    radius: 0,
+    frame: 'shadow',
+    gap: 8,
   },
   classic: {
     label: 'Classic',
@@ -111,6 +152,11 @@ const THEME_INFO: Record<string, { desc: string; label: string; accent: string; 
     bg: '#f7f7f7',
     tile: '#ffffff',
     accent: '#444444',
+    font: 'Cinzel',
+    type: 'serif',
+    radius: 12,
+    frame: 'passepartout',
+    gap: 7,
   },
   noir: {
     label: 'Noir',
@@ -118,6 +164,11 @@ const THEME_INFO: Record<string, { desc: string; label: string; accent: string; 
     bg: '#000000',
     tile: '#151515',
     accent: '#ffffff',
+    font: 'Libre Baskerville',
+    type: 'serif',
+    radius: 0,
+    frame: 'passepartout',
+    gap: 6,
   },
   monograph: {
     label: 'Monograph',
@@ -125,17 +176,41 @@ const THEME_INFO: Record<string, { desc: string; label: string; accent: string; 
     bg: '#f4f4f6',
     tile: '#ffffff',
     accent: '#555555',
+    font: 'Instrument Serif',
+    type: 'mono',
+    radius: 0,
+    frame: 'none',
+    gap: 5,
   },
 };
 
-export default function SettingsEditor() {
+const SETTINGS_SECTIONS = [
+  { id: 'general', label: 'General' },
+  { id: 'theme', label: 'Theme' },
+  { id: 'grid', label: 'Grid' },
+  { id: 'footer', label: 'Footer' },
+  { id: 'legal', label: 'Legal' },
+  { id: 'seo', label: 'SEO' },
+  { id: 'security', label: 'Security & Protection' },
+];
+
+interface SettingsEditorProps {
+  /** Sub-section to show, taken from the /admin/settings/[section] route. */
+  section?: string;
+}
+
+export default function SettingsEditor({ section }: SettingsEditorProps) {
   const router = useRouter();
+  // An unknown section in the URL falls back to General instead of an empty panel.
+  const activeSection = SETTINGS_SECTIONS.some((sec) => sec.id === section)
+    ? (section as string)
+    : 'general';
   const [settings, setSettings] = useState<Settings>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
-  const [activeSection, setActiveSection] = useState('general');
+
   const [currentMode, setCurrentMode] = useState<'dark' | 'light'>('dark');
   const [faviconUploading, setFaviconUploading] = useState(false);
   const [faviconMessage, setFaviconMessage] = useState('');
@@ -280,16 +355,6 @@ export default function SettingsEditor() {
     );
   }
 
-  const sections = [
-    { id: 'general', label: 'General' },
-    { id: 'theme', label: 'Theme' },
-    { id: 'grid', label: 'Grid' },
-    { id: 'footer', label: 'Footer' },
-    { id: 'legal', label: 'Legal' },
-    { id: 'seo', label: 'SEO' },
-    { id: 'security', label: 'Security & Protection' },
-  ];
-
   return (
     <div className="settings-editor">
       <SaveBar
@@ -300,19 +365,21 @@ export default function SettingsEditor() {
         label="Save Settings"
       />
 
-      <p className="settings-live-sync-note">⚡ Live Sync (No Docker restart required)</p>
+      <p className="settings-live-sync-note">
+        <Icons.IconRefresh size={13} /> Live Sync (No Docker restart required)
+      </p>
 
       <div className="settings-layout">
         {/* Sidebar */}
         <nav className="settings-nav">
-          {sections.map((sec) => (
-            <button
+          {SETTINGS_SECTIONS.map((sec) => (
+            <Link
               key={sec.id}
+              href={`/admin/settings/${sec.id}`}
               className={`settings-nav-item ${activeSection === sec.id ? 'active' : ''}`}
-              onClick={() => setActiveSection(sec.id)}
             >
               {sec.label}
-            </button>
+            </Link>
           ))}
         </nav>
 
@@ -401,6 +468,20 @@ export default function SettingsEditor() {
                     <span className="toggle-card-desc">Enable subtle fade-in animations between page navigation</span>
                   </div>
                   <div className={`switch-toggle ${settings.transitions !== false ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${settings.scrollToTop !== false ? 'active' : ''}`}
+                  onClick={() => update('scrollToTop', settings.scrollToTop === false)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title"><Icons.IconArrowUp size={16} /> Scroll-to-Top Button</span>
+                    <span className="toggle-card-desc">Show a floating arrow that returns visitors to the top of long pages</span>
+                  </div>
+                  <div className={`switch-toggle ${settings.scrollToTop !== false ? 'on' : ''}`}>
                     <span className="switch-slider" />
                   </div>
                 </button>
@@ -506,30 +587,52 @@ export default function SettingsEditor() {
                 <label>Preset</label>
                 <div className="preset-card-grid">
                   {PRESETS.map((p) => {
-                    const info = THEME_INFO[p] || { label: p, desc: '', bg: '#fff', tile: '#eee', accent: '#333' };
+                    const info = THEME_INFO[p] || {
+                      label: p,
+                      desc: '',
+                      bg: '#fff',
+                      tile: '#eee',
+                      accent: '#333',
+                      font: 'System',
+                      type: 'sans' as const,
+                      radius: 0,
+                      frame: 'none' as const,
+                      gap: 4,
+                    };
                     const isActive = (settings.theme?.preset || 'studio') === p;
                     return (
                       <button
                         key={p}
                         type="button"
-                        className={`preset-card ${isActive ? 'active' : ''}`}
+                        className={`preset-card theme-preset-card ${isActive ? 'active' : ''}`}
                         onClick={() => update('theme.preset', p)}
-                        style={{ '--preset-accent': info.accent } as React.CSSProperties}
+                        style={
+                          {
+                            '--preset-accent': info.accent,
+                            '--preset-bg': info.bg,
+                            '--preset-tile': info.tile,
+                            '--preset-radius': `${info.radius}px`,
+                            '--preset-gap': `${info.gap}px`,
+                          } as React.CSSProperties
+                        }
                       >
-                        <div className="preset-card-preview" style={{ backgroundColor: info.bg }}>
+                        <div className="preset-card-preview" data-frame={info.frame}>
                           <div className="mini-header">
-                            <span className="mini-dot" style={{ backgroundColor: info.accent }}></span>
-                            <span className="mini-line" style={{ backgroundColor: isActive ? info.accent : 'var(--admin-border)' }}></span>
+                            <span className={`mini-specimen type-${info.type}`}>Aa</span>
+                            <span className="mini-line" />
                           </div>
                           <div className="mini-grid">
-                            <div className="mini-tile" style={{ backgroundColor: info.tile }}></div>
-                            <div className="mini-tile" style={{ backgroundColor: info.tile }}></div>
-                            <div className="mini-tile" style={{ backgroundColor: info.tile }}></div>
+                            <div className="mini-tile" />
+                            <div className="mini-tile" />
+                            <div className="mini-tile" />
                           </div>
                         </div>
                         <div className="preset-card-info">
                           <span className="preset-card-name">{info.label}</span>
                           <span className="preset-card-desc">{info.desc}</span>
+                          <span className="preset-card-specs">
+                            {info.font} &middot; radius {info.radius} &middot; {info.frame}
+                          </span>
                         </div>
                       </button>
                     );
@@ -816,7 +919,7 @@ export default function SettingsEditor() {
                             )}
                             {l === 'showcase' && (
                               <div className="demo-showcase-grid">
-                                <div className="demo-tile hero-tile" />
+                                <div className="demo-tile demo-hero" />
                                 <div className="demo-col"><div className="demo-tile" /><div className="demo-tile" /></div>
                               </div>
                             )}

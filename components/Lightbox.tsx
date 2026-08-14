@@ -33,9 +33,22 @@ interface LightboxProps {
   onNext: () => void;
   onPrev: () => void;
   watermark?: LightboxWatermark;
+  /**
+   * Show the EXIF ("Info") toggle. Off for editorial contexts such as journal
+   * entries, where a technical data panel interrupts the story.
+   */
+  showExifToggle?: boolean;
 }
 
-export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev, watermark }: LightboxProps) {
+export function Lightbox({
+  assets,
+  currentIndex,
+  onClose,
+  onNext,
+  onPrev,
+  watermark,
+  showExifToggle = true,
+}: LightboxProps) {
   const [showExif, setShowExif] = useState(false);
   const { exifData, exifLoading, fetchExif, clearExif } = useExif();
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -95,16 +108,39 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev, waterm
     onSwipeRight: onPrev,
   });
 
-  // Listen for 'i' key to toggle EXIF
+  /*
+   * Keyboard control and the scroll lock belong to the lightbox, not to whoever
+   * opens it: PhotoGrid used to install the arrow keys itself, so every other
+   * caller (EssayView, i.e. journal entries and photo essays) silently had no
+   * keyboard navigation at all.
+   */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'i' || e.key === 'I') {
-        handleExifToggle();
+      switch (e.key) {
+        case 'Escape':
+          onClose();
+          break;
+        case 'ArrowRight':
+          onNext();
+          break;
+        case 'ArrowLeft':
+          onPrev();
+          break;
+        case 'i':
+        case 'I':
+          if (showExifToggle) handleExifToggle();
+          break;
       }
     };
+
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [handleExifToggle]);
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [handleExifToggle, onClose, onNext, onPrev, showExifToggle]);
 
   // Click on overlay background → close
   const handleOverlayClick = useCallback(
@@ -211,8 +247,8 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev, waterm
               watermark.position === 'bottom-left'
                 ? styles.watermark_bottom_left
                 : watermark.position === 'center'
-                ? styles.watermark_center
-                : styles.watermark_bottom_right
+                  ? styles.watermark_center
+                  : styles.watermark_bottom_right
             }`}
             style={{ opacity: (watermark.opacity ?? 50) / 100 }}
           >
@@ -268,16 +304,18 @@ export function Lightbox({ assets, currentIndex, onClose, onNext, onPrev, waterm
       )}
 
       {/* EXIF toggle */}
-      <button
-        className={styles.infoToggle}
-        onClick={handleExifToggle}
-        aria-expanded={showExif}
-        aria-controls="exif-panel"
-        aria-label="Toggle photo info"
-        title="Toggle photo info (i)"
-      >
-        {showExif ? 'Hide Info' : 'Info'}
-      </button>
+      {showExifToggle && (
+        <button
+          className={styles.infoToggle}
+          onClick={handleExifToggle}
+          aria-expanded={showExif}
+          aria-controls="exif-panel"
+          aria-label="Toggle photo info"
+          title="Toggle photo info (i)"
+        >
+          {showExif ? 'Hide Info' : 'Info'}
+        </button>
+      )}
 
       {/* EXIF panel */}
       {showExif && (

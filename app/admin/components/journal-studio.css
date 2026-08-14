@@ -1,0 +1,485 @@
+/* ── Journal Studio & Editor CSS ──────────────────────────────────── */
+
+/*
+ * The studio is a full-width workspace: it breaks out of the 1120px
+ * `.admin-main` column so the split view has room for editor *and* preview.
+ */
+.admin-main:has(> .journal-studio),
+.admin-main:has(> .journal-editor-container) {
+  max-width: none;
+  padding: 0;
+}
+
+/* ── Form controls ─────────────────────────────────────────────────
+ * Local field styling for the studio. Scoped so the generic class name
+ * cannot leak into the rest of the admin panel.
+ */
+.journal-studio .admin-input,
+.journal-editor-container .admin-input,
+.journal-modal-card .admin-input {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  background: var(--admin-bg-input, #161616);
+  border: 1px solid var(--admin-border, #2e2e2e);
+  border-radius: 8px;
+  color: var(--admin-text, #f0f0f0);
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.journal-studio .admin-input:hover,
+.journal-editor-container .admin-input:hover,
+.journal-modal-card .admin-input:hover {
+  border-color: var(--admin-border-hover, #444);
+}
+
+.journal-studio .admin-input:focus,
+.journal-editor-container .admin-input:focus,
+.journal-modal-card .admin-input:focus {
+  outline: none;
+  border-color: var(--admin-border-focus, #6366f1);
+}
+
+.journal-studio .admin-input::placeholder,
+.journal-editor-container .admin-input::placeholder,
+.journal-modal-card .admin-input::placeholder {
+  color: var(--admin-text-secondary, #a0a0a0);
+  opacity: 0.7;
+}
+
+.journal-editor-container textarea.admin-input,
+.journal-modal-card textarea.admin-input {
+  resize: vertical;
+  min-height: 88px;
+}
+
+.journal-editor-container select.admin-input {
+  cursor: pointer;
+  appearance: none;
+  padding-right: 2rem;
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) calc(50% + 1px),
+    calc(100% - 11px) calc(50% + 1px);
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.journal-level-select {
+  width: 5.5rem;
+  flex-shrink: 0;
+}
+
+.journal-studio {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: calc(100vh - 70px);
+}
+
+.journal-studio-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--admin-border, rgba(255, 255, 255, 0.08));
+}
+
+.journal-studio-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.journal-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+.journal-admin-card {
+  background: var(--admin-surface, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.08));
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.journal-admin-card:hover {
+  border-color: var(--admin-accent, #6366f1);
+  transform: translateY(-2px);
+}
+
+.journal-admin-card-cover {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.journal-admin-card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.journal-admin-card-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.journal-admin-card-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+}
+
+.journal-admin-card-slug {
+  font-size: 0.75rem;
+  font-family: monospace;
+  opacity: 0.6;
+  margin-bottom: 0.75rem;
+}
+
+.journal-admin-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.journal-admin-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--admin-border, rgba(255, 255, 255, 0.06));
+}
+
+/* ── Split-Screen Studio Editor ────────────────────────────────────── */
+
+.journal-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 65px);
+  overflow: hidden;
+}
+
+.journal-editor-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  background: var(--admin-surface, #18181b);
+  border-bottom: 1px solid var(--admin-border, rgba(255, 255, 255, 0.08));
+  gap: 1rem;
+  z-index: 10;
+}
+
+.journal-editor-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-grow: 1;
+}
+
+.journal-editor-title-input {
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: inherit;
+  padding: 4px 8px;
+  max-width: 400px;
+  width: 100%;
+}
+
+.journal-editor-title-input:focus {
+  border-color: var(--admin-accent, #6366f1);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.journal-editor-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.journal-editor-split {
+  display: grid;
+  /* Left width is driven by the draggable divider; the preview takes the rest. */
+  grid-template-columns: var(--journal-split-left, 46%) 7px minmax(0, 1fr);
+  flex-grow: 1;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* Kill text selection and pointer flicker while the divider is being dragged. */
+.journal-editor-split.is-dragging {
+  user-select: none;
+  cursor: col-resize;
+}
+
+.journal-editor-split.is-dragging .journal-editor-pane-right {
+  pointer-events: none;
+}
+
+.journal-editor-resizer {
+  position: relative;
+  cursor: col-resize;
+  background: var(--admin-border, rgba(255, 255, 255, 0.08));
+  transition: background 0.15s ease;
+  touch-action: none;
+}
+
+.journal-editor-resizer:hover,
+.journal-editor-resizer:focus-visible,
+.journal-editor-split.is-dragging .journal-editor-resizer {
+  background: var(--admin-accent, #6366f1);
+  outline: none;
+}
+
+/* Grip dots, and a widened invisible hit area so the divider is easy to grab. */
+.journal-editor-resizer-grip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 15px;
+  height: 44px;
+  border-radius: 4px;
+  background: repeating-linear-gradient(to bottom, currentColor 0 2px, transparent 2px 5px);
+  color: rgba(255, 255, 255, 0.35);
+  background-clip: content-box;
+  padding: 0 6px;
+}
+
+.journal-editor-resizer:hover .journal-editor-resizer-grip {
+  color: #fff;
+}
+
+.journal-editor-pane-left {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 1.5rem 2rem 4rem;
+  background: var(--admin-bg, #09090b);
+}
+
+.journal-editor-pane-right {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--surface, #111);
+  position: relative;
+}
+
+.journal-preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.75rem;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  backdrop-filter: blur(8px);
+}
+
+.journal-preview-frame {
+  padding: 2.5rem 2rem;
+  max-width: 1080px;
+  margin: 0 auto;
+  width: 100%;
+  transition: max-width 0.3s ease;
+}
+
+/*
+ * The essay's full-bleed and wide figures are sized against the viewport on the
+ * live site. Inside the preview pane that overshoots — the photo would bleed out
+ * of the pane and drift as the split is dragged — so they are re-anchored to the
+ * frame. 100% is the container's content box, so reaching the pane edges means
+ * adding back both horizontal paddings: 4rem for this frame plus 3rem for
+ * .essay-container. Keep in sync if either padding changes.
+ */
+.journal-preview-frame .essay-container {
+  --essay-bleed: calc(100% + 7rem);
+  --essay-wide: 100%;
+}
+
+.journal-preview-frame.mobile {
+  max-width: 380px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 100%;
+  background: var(--background, #000);
+}
+
+.journal-raw-markdown-editor {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  background: rgba(0, 0, 0, 0.3);
+  color: #f4f4f5;
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  padding: 1.25rem;
+  resize: none;
+}
+
+.journal-raw-markdown-editor:focus {
+  outline: none;
+  border-color: var(--admin-accent, #6366f1);
+}
+
+/* Modal styling for Entry creation / Metadata */
+.journal-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+}
+
+.journal-modal-card {
+  background: var(--admin-surface, #18181b);
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  width: 90%;
+  max-width: 620px;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 1.75rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Card meta & status ───────────────────────────────────────────── */
+
+.journal-admin-card-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.journal-card-cover-placeholder {
+  opacity: 0.25;
+}
+
+.journal-status-pill {
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 1;
+}
+
+.journal-status-pill.is-draft {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.journal-status-pill.is-published {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.journal-preview-bar-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Block field rows ─────────────────────────────────────────────
+ * The generic `.admin-input { width: 100% }` would blow these rows apart,
+ * so the fixed-width controls are pinned here (higher specificity wins).
+ */
+.journal-heading-row,
+.journal-photo-layout-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.journal-editor-container .journal-heading-row .journal-level-select {
+  flex: 0 0 5.5rem;
+  width: 5.5rem;
+}
+
+.journal-editor-container .journal-heading-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.journal-editor-container .journal-photo-layout-row select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.journal-photo-layout-row .admin-btn {
+  flex-shrink: 0;
+}
+
+/* Stack the split view on narrow screens instead of squeezing both panes. */
+@media (max-width: 1100px) {
+  .journal-editor-split {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .journal-editor-resizer {
+    display: none;
+  }
+
+  .journal-editor-pane-left {
+    border-bottom: 1px solid var(--admin-border, rgba(255, 255, 255, 0.08));
+  }
+}
+
+/* An unresolvable photo reference — shown in the block editor, not to visitors. */
+.journal-block-warning {
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}

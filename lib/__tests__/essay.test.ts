@@ -4,7 +4,15 @@ import { parseEssayMarkdown, parseFrontmatter, sanitizeHtml, renderInlineMarkdow
 describe('Essay Parser', () => {
   it('sanitizes script tags to prevent XSS', () => {
     const input = 'Hello <script>alert("XSS")</script> World';
-    expect(sanitizeHtml(input)).toBe('Hello  World');
+    // sanitizeHtml escapes rather than strips: the tag stays visible as the
+    // author's literal text but can no longer be parsed as markup. Asserting
+    // the old removed-substring output would assert the denylist that this
+    // replaced.
+    const out = sanitizeHtml(input);
+    expect(out).not.toContain('<');
+    expect(out).not.toContain('>');
+    expect(out).toContain('Hello');
+    expect(out).toContain('World');
   });
 
   it('renders inline markdown formatting correctly', () => {

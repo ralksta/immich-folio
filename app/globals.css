@@ -1329,8 +1329,7 @@
   border: 1px solid var(--border-subtle);
   background: var(--bg-card);
   color: var(--text-secondary);
-  font-size: 1.1rem;
-  font-weight: 300;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1344,6 +1343,26 @@
     background var(--transition-fast),
     border-color var(--transition-fast),
     color var(--transition-fast);
+}
+
+.scroll-to-top__icon {
+  width: 18px;
+  height: 18px;
+  transition: transform var(--transition-fast);
+}
+
+.scroll-to-top:hover .scroll-to-top__icon {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-to-top__icon {
+    transition: none;
+  }
+
+  .scroll-to-top:hover .scroll-to-top__icon {
+    transform: none;
+  }
 }
 
 .scroll-to-top--visible {

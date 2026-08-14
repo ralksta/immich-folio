@@ -11,7 +11,7 @@ import styles from './PasswordGate.module.css';
 interface PasswordGateProps {
   slug: string;
   title: string;
-  type?: 'subpage' | 'album';
+  type?: 'subpage' | 'album' | 'journal';
 }
 
 export default function PasswordGate({ slug, title, type = 'subpage' }: PasswordGateProps) {

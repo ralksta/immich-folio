@@ -35,6 +35,7 @@ import type { AlbumEntryObject } from '@/lib/config/schema';
 import {
   IconArrowDown,
   IconArrowUp,
+  IconBook,
   IconCalendar,
   IconCamera,
   IconCopy,
@@ -1148,7 +1149,7 @@ export default function PageBuilder() {
                           onClick={() => setExpandedSubpage(null)}
                           title="Close drawer"
                         >
-                          ✕
+                          <IconX size={14} />
                         </button>
                       </div>
                     </div>
@@ -1364,23 +1365,20 @@ export default function PageBuilder() {
 
                       {/* Visual Photo Essay Builder (if layout === 'essay') */}
                       {(sp.grid?.layout === 'essay' || sp.essayText != null) && (
-                        <div className="subpage-drawer-section" style={{ background: 'var(--admin-surface, rgba(255,255,255,0.02))', padding: '1rem', borderRadius: '8px', border: '1px solid var(--admin-border, rgba(255,255,255,0.1))' }}>
-                          <div style={{ marginBottom: '1rem' }}>
-                            <h4 style={{ margin: 0, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span>📖 Storytelling &amp; Photo Essay Builder</span>
+                        <div className="subpage-drawer-section">
+                          <div className="drawer-section-heading">
+                            <h4>
+                              <IconBook size={16} /> Storytelling &amp; Photo Essay Builder
                             </h4>
-                            <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', opacity: 0.75 }}>
-                              Compose text, quotes, and fullbleed/wide photos visually.
-                            </p>
+                            <p>Compose text, quotes, and fullbleed/wide photos visually.</p>
                           </div>
 
                           <EssayBlockEditor
                             markdown={sp.essayText || ''}
                             onChange={(newMarkdown) => updateSubpage(spIndex, { essayText: newMarkdown })}
                             onSelectPhoto={(callback) => {
-                              const firstAlbumId = sp.albums[0]?.id;
                               setHeroPickerTarget({
-                                albumId: firstAlbumId,
+                                albumId: undefined,
                                 title: 'Select Photo for Photo Essay',
                                 onSelect: (assetId) => {
                                   callback(assetId);

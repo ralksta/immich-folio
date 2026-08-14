@@ -32,7 +32,8 @@ import { AdminDiagnosticBanner } from '@/components/AdminDiagnosticBanner';
 import { AlbumDetailView } from './AlbumDetailView';
 import { SubpageGridView } from './SubpageGridView';
 import { EssayView } from './EssayView';
-import { parseEssayMarkdown, loadEssayFromFile } from '@/lib/essay';
+import { parseEssayMarkdown } from '@/lib/essay';
+import { loadEssayFromFile } from '@/lib/admin/journal-service';
 
 // Render at request time — requires live Immich connection
 export const dynamic = 'force-dynamic';

@@ -26,11 +26,43 @@ function getAdminPassword(): string {
   return getInstallCredentials().adminPassword;
 }
 
+/**
+ * Derived session signing key, kept for the process lifetime.
+ *
+ * scrypt is deliberately slow, and getSigningKey() runs on every admin request
+ * — deriving per call would put ~24ms in front of each one. The cache holds the
+ * inputs it was derived from, so a rotated password or secret misses the cache
+ * and derives again.
+ *
+ * Those inputs are compared directly rather than through a digest of them: a
+ * digest here would be a fast hash of the admin password sitting in memory for
+ * the life of the process, which is the very thing scrypt was introduced below
+ * to avoid. Holding the strings costs nothing extra — they are the same objects
+ * the env and install caches already hold, whereas building a digest input
+ * allocates a fresh copy of the password.
+ */
+let cachedSigningKey: { secret: string; password: string; key: Buffer } | null = null;
+
 function getSigningKey(): Buffer {
   // Bind the key to ADMIN_PASSWORD as well, so rotating the password
   // immediately invalidates every outstanding session token.
   const secret = resolveAuthSecret();
-  return crypto.createHash('sha256').update(`admin:${secret}:${getAdminPassword()}`).digest();
+  const password = getAdminPassword();
+
+  if (cachedSigningKey?.secret === secret && cachedSigningKey.password === password) {
+    return cachedSigningKey.key;
+  }
+
+  /*
+   * scrypt rather than a plain SHA-256 digest: the admin password is an input
+   * here, and a single fast hash would make it cheap to recover by brute force
+   * if the derived key ever leaked. The salt has to be stable — a random one
+   * would change the key on every call and invalidate every session — so it is
+   * derived from AUTH_SECRET, which is deployment-specific.
+   */
+  const key = crypto.scryptSync(password, `folio-admin-session:${secret}`, 32);
+  cachedSigningKey = { secret, password, key };
+  return key;
 }
 
 /** Create a signed session token. */

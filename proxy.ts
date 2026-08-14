@@ -4,6 +4,8 @@ import type { NextRequest } from 'next/server';
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
 
+  const isDev = process.env.NODE_ENV === 'development';
+
   // Define CSP directives
   const cspDirectives = [
     "default-src 'self'",
@@ -11,7 +13,9 @@ export function proxy(request: NextRequest) {
     // CSP2-only browsers ignore 'strict-dynamic' and would honour it — making
     // the fallback strictly worse than having none. There are no inline
     // <script> tags in the app; Next.js nonces the ones it injects itself.
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    // In development mode, Next.js / React dev tools require 'unsafe-eval' for Fast Refresh
+    // and stack trace reconstruction. Omitted in production.
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org https://unpkg.com",

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import AdminShell from './AdminShell';
 
 export const metadata: Metadata = {
   title: 'Immich Folio Admin',
@@ -16,5 +17,9 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return <div className="admin-layout">{children}</div>;
+  return (
+    <div className="admin-layout">
+      <AdminShell>{children}</AdminShell>
+    </div>
+  );
 }

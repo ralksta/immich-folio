@@ -6,15 +6,19 @@
 import Link from 'next/link';
 import { immich } from '@/lib/immich';
 import { getConfig } from '@/lib/config';
+import { listJournalEntries } from '@/lib/admin/journal-service';
 
 export async function SubpageNav() {
-  const [subpages, standaloneAlbums] = await Promise.all([
+  const [subpages, standaloneAlbums, journalEntries] = await Promise.all([
     immich.getSubpages(),
     immich.getStandaloneAlbums(),
+    listJournalEntries().catch(() => []),
   ]);
   // EXPERIMENTAL: external nav links from settings.yaml, appended after the
   // internal entries. Sanitised to http(s) in getConfig().
   const navLinks = getConfig().navLinks;
+
+  const hasPublicJournal = journalEntries.some((e) => !e.frontmatter.draft);
 
   return (
     <>
@@ -23,6 +27,11 @@ export async function SubpageNav() {
           {sp.name}
         </Link>
       ))}
+      {hasPublicJournal && (
+        <Link href="/journal" className="header__nav-link">
+          Journal
+        </Link>
+      )}
       {standaloneAlbums.map((album) => (
         <Link key={album.id} href={`/${album.slug}`} className="header__nav-link">
           {album.albumName}
