@@ -20,15 +20,36 @@ const LEGACY_ESSAYS_DIR = path.join(process.cwd(), 'content', 'essays');
 const MAX_BACKUPS = 10;
 let tmpCounter = 0;
 
+/**
+ * Join a filename onto a content directory, or return null if the result would
+ * escape it.
+ *
+ * isValidSlug() already rejects dots and separators, so nothing should ever get
+ * this far — this is the second lock on the door. It also gives the taint
+ * analysis in CI a barrier it can see: the slug check lives in another module,
+ * which CodeQL does not follow, so every path built from a slug was reported as
+ * path injection.
+ */
+function containedPath(dir: string, filename: string): string | null {
+  const base = path.resolve(dir);
+  const resolved = path.resolve(base, filename);
+  if (resolved !== base && !resolved.startsWith(base + path.sep)) return null;
+  return resolved;
+}
+
 /** Resolve file path for a journal slug (checks content/journal/ then content/essays/) */
 export function resolveJournalFilePath(slug: string): string | null {
   if (!isValidSlug(slug)) return null;
-  const filename = slug.endsWith('.md') ? slug : `${slug}.md`;
-  const primaryPath = path.join(JOURNAL_DIR, filename);
+  // Not `slug.endsWith('.md') ? slug : ...`: isValidSlug rejects dots, so that
+  // branch could never be taken.
+  const filename = `${slug}.md`;
+
+  const primaryPath = containedPath(JOURNAL_DIR, filename);
+  if (!primaryPath) return null;
   if (nodeFs.existsSync(primaryPath)) return primaryPath;
 
-  const legacyPath = path.join(LEGACY_ESSAYS_DIR, filename);
-  if (nodeFs.existsSync(legacyPath)) return legacyPath;
+  const legacyPath = containedPath(LEGACY_ESSAYS_DIR, filename);
+  if (legacyPath && nodeFs.existsSync(legacyPath)) return legacyPath;
 
   return primaryPath; // Target path for new writes
 }
@@ -133,8 +154,11 @@ export async function writeJournalEntry(slug: string, rawMarkdown: string): Prom
   }
 
   await fs.mkdir(JOURNAL_DIR, { recursive: true });
-  const filename = slug.endsWith('.md') ? slug : `${slug}.md`;
-  const filePath = path.join(JOURNAL_DIR, filename);
+  const filename = `${slug}.md`;
+  const filePath = containedPath(JOURNAL_DIR, filename);
+  if (!filePath) {
+    throw new Error(`Invalid journal slug: "${slug}"`);
+  }
 
   // Create rolling backup if file already exists
   try {
