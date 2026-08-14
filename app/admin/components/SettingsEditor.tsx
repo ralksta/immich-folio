@@ -13,6 +13,7 @@ interface Settings {
   exifOnHover?: boolean;
   map?: boolean;
   transitions?: boolean;
+  scrollToTop?: boolean;
   analytics?: boolean;
   theme?: {
     preset?: string;
@@ -465,6 +466,20 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                     <span className="toggle-card-desc">Enable subtle fade-in animations between page navigation</span>
                   </div>
                   <div className={`switch-toggle ${settings.transitions !== false ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${settings.scrollToTop !== false ? 'active' : ''}`}
+                  onClick={() => update('scrollToTop', settings.scrollToTop === false)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title"><Icons.IconArrowUp size={16} /> Scroll-to-Top Button</span>
+                    <span className="toggle-card-desc">Show a floating arrow that returns visitors to the top of long pages</span>
+                  </div>
+                  <div className={`switch-toggle ${settings.scrollToTop !== false ? 'on' : ''}`}>
                     <span className="switch-slider" />
                   </div>
                 </button>
