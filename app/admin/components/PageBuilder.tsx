@@ -43,6 +43,9 @@ import {
   IconGripVertical,
   IconHome,
   IconImage,
+  IconBan,
+  IconEyeOff,
+  IconGlobe,
   IconLock,
   IconPencil,
   IconPlus,
@@ -92,6 +95,10 @@ interface AlbumEntry {
   sort?: AlbumSortMode;
   /** Pinned asset UUIDs for `sort: manual`; everything else follows automatically. */
   assetOrder?: string[];
+  /** EXPERIMENTAL: per-album grid override (layout only in the UI for now) */
+  grid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
+  /** EXPERIMENTAL: focal point for the cover crop, e.g. "50% 25%" or "top" */
+  coverPosition?: string;
 }
 
 interface Section {
@@ -106,6 +113,8 @@ interface Subpage {
   subtitle?: string;
   password?: string;
   enabled?: boolean;
+  /** EXPERIMENTAL: reachable by direct link, but not shown in navigation */
+  hidden?: boolean;
   essayText?: string;
   essayFile?: string;
   sections?: Section[];
@@ -153,7 +162,9 @@ function hasAlbumOptions(entry: AlbumEntry): boolean {
     entry.password ||
     entry.heroImage ||
     (entry.sort && entry.sort !== DEFAULT_ALBUM_SORT) ||
-    entry.assetOrder?.length,
+    entry.assetOrder?.length ||
+    entry.grid ||
+    entry.coverPosition,
   );
 }
 
@@ -171,6 +182,8 @@ function parseAlbumEntries(raw: RawAlbumEntry[] | undefined): AlbumEntry[] {
       heroImage: value.heroImage,
       sort: isAlbumSortMode(value.sort) ? value.sort : undefined,
       assetOrder: value.assetOrder,
+      grid: value.grid,
+      coverPosition: value.coverPosition,
     };
   });
 }
@@ -192,6 +205,8 @@ function serializeAlbumEntries(entries: AlbumEntry[]): RawAlbumEntry[] {
     // Persisted regardless of the mode, so manual → newest → manual does not
     // throw away a hand-curated order.
     if (entry.assetOrder?.length) val.assetOrder = entry.assetOrder;
+    if (entry.grid) val.grid = entry.grid;
+    if (entry.coverPosition) val.coverPosition = entry.coverPosition;
     return { [entry.id]: val };
   });
 }
@@ -326,6 +341,12 @@ function SortableSubpageTile({
         </span>
       )}
 
+      {sp.hidden === true && sp.enabled !== false && (
+        <span className="subpage-badge-protected" title="Hidden from navigation, reachable by direct link">
+          Unlisted
+        </span>
+      )}
+
       {sp.password && (
         <span className="subpage-badge-protected" title="Password protected">
           <IconLock size={12} /> Password
@@ -420,6 +441,22 @@ export default function PageBuilder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dirty, saving, gallery]);
 
+  // ── Escape closes the subpage sheet — only when it is topmost ─
+  useEffect(() => {
+    if (expandedSubpage === null) return;
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      // Listbox preventDefaults its own Escape but does not stopPropagation —
+      // respect that so closing a popup never also closes the sheet.
+      if (e.defaultPrevented) return;
+      // A higher layer (album editor, pickers, order editor) owns the key.
+      if (editingAlbumAddress || pickerTarget || heroPickerTarget || orderEditorTarget) return;
+      setExpandedSubpage(null);
+    }
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [expandedSubpage, editingAlbumAddress, pickerTarget, heroPickerTarget, orderEditorTarget]);
+
   // ── Unsaved changes guard ────────────────────────────────────
   useEffect(() => {
     function handleBeforeUnload(e: BeforeUnloadEvent) {
@@ -470,6 +507,7 @@ export default function PageBuilder() {
         subtitle: sp.subtitle as string | undefined,
         password: sp.password as string | undefined,
         enabled: sp.enabled !== false,
+        hidden: sp.hidden === true,
         essayText: sp.essayText as string | undefined,
         essayFile: sp.essayFile as string | undefined,
         albums: parseAlbumEntries(sp.albums as Array<string | Record<string, string>> | undefined),
@@ -494,6 +532,7 @@ export default function PageBuilder() {
           subtitle: sp.subtitle as string | undefined,
           password: sp.password as string | undefined,
           enabled: sp.enabled !== false,
+          hidden: sp.hidden === true,
           essayText: sp.essayText as string | undefined,
           essayFile: sp.essayFile as string | undefined,
           albums: parseAlbumEntries(
@@ -533,6 +572,7 @@ export default function PageBuilder() {
         if (sp.subtitle) entry.subtitle = sp.subtitle;
         if (sp.password) entry.password = sp.password;
         if (sp.enabled === false) entry.enabled = false;
+        if (sp.hidden === true) entry.hidden = true;
         if (sp.essayText) entry.essayText = sp.essayText;
         if (sp.essayFile) entry.essayFile = sp.essayFile;
         if (sp.grid) entry.grid = sp.grid;
@@ -1175,7 +1215,8 @@ export default function PageBuilder() {
                           )}
                         </div>
                       ) : (
-                        <>
+                        <div className="admin-sheet-columns admin-sheet-columns--settings-aside">
+                        <div className="admin-sheet-col">
                       <div className="subpage-drawer-section">
                         <div className="admin-field">
                           <label>Page Name (URL Identifier)</label>
@@ -1215,9 +1256,74 @@ export default function PageBuilder() {
                             />
                           </div>
                         </div>
-                        <div className="admin-field">
-                          <label>Password Protection (optional)</label>
-                          <div className="password-input-wrapper">
+                        <div className="admin-field" style={{ marginTop: '1rem' }}>
+                          <label>Visibility &amp; Access</label>
+                          {/*
+                            One field, three states — enabled/hidden are two YAML flags,
+                            but for the owner it is a single question: how visible is
+                            this page? Splitting it across two toggles produced
+                            contradictory copy ("Disabled (Hidden)" vs "Unlisted").
+                          */}
+                          {(
+                            [
+                              {
+                                key: 'published',
+                                active: sp.enabled !== false && sp.hidden !== true,
+                                icon: <IconGlobe size={15} />,
+                                iconColor: '#4ade80',
+                                title: 'Published',
+                                desc: 'Shown in the header menu and homepage lists, reachable via URL',
+                                patch: { enabled: true, hidden: false },
+                              },
+                              {
+                                key: 'unlisted',
+                                active: sp.enabled !== false && sp.hidden === true,
+                                icon: <IconEyeOff size={15} />,
+                                iconColor: '#fbbf24',
+                                title: 'Unlisted (Experimental)',
+                                desc: 'Not shown in menus or on the homepage, but reachable via direct link',
+                                patch: { enabled: true, hidden: true },
+                              },
+                              {
+                                key: 'disabled',
+                                active: sp.enabled === false,
+                                icon: <IconBan size={15} />,
+                                iconColor: '#f87171',
+                                title: 'Disabled',
+                                desc: 'Completely offline — returns 404 even when accessed directly',
+                                patch: { enabled: false, hidden: false },
+                              },
+                            ] as const
+                          ).map((opt) => (
+                            <button
+                              key={opt.key}
+                              type="button"
+                              className={`admin-toggle-card ${opt.active ? 'active' : ''}`}
+                              onClick={() => updateSubpage(spIndex, opt.patch)}
+                              aria-pressed={opt.active}
+                              style={{ padding: '10px 14px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '8px', cursor: 'pointer', marginBottom: '6px' }}
+                            >
+                              <div className="toggle-card-info" style={{ textAlign: 'left' }}>
+                                <span className="toggle-card-title" style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{ color: opt.iconColor, display: 'inline-flex' }} aria-hidden="true">
+                                    {opt.icon}
+                                  </span>
+                                  {opt.title}
+                                </span>
+                                <span className="toggle-card-desc" style={{ fontSize: '0.8rem', display: 'block', opacity: 0.75 }}>
+                                  {opt.desc}
+                                </span>
+                              </div>
+                              <div className={`switch-toggle ${opt.active ? 'on' : ''}`}>
+                                <span className="switch-slider" />
+                              </div>
+                            </button>
+                          ))}
+
+                          {/* Password lives in the same group: it is the access half
+                              of "who gets to see this page". Applies to Published and
+                              Unlisted; a Disabled page 404s before the gate. */}
+                          <div className="password-input-wrapper" style={{ marginTop: '6px' }}>
                             <span className="password-icon"><IconLock size={12} /></span>
                             <input
                               type="password"
@@ -1225,39 +1331,10 @@ export default function PageBuilder() {
                               onChange={(e) =>
                                 updateSubpage(spIndex, { password: e.target.value || undefined })
                               }
-                              placeholder="Leave empty for public access"
+                              placeholder="Password protection (optional) — leave empty for public access"
+                              disabled={sp.enabled === false}
                             />
                           </div>
-                        </div>
-
-                        <div className="admin-field" style={{ marginTop: '1rem' }}>
-                          <label>Page Visibility Status</label>
-                          <button
-                            type="button"
-                            className={`admin-toggle-card ${sp.enabled !== false ? 'active' : ''}`}
-                            onClick={() => updateSubpage(spIndex, { enabled: sp.enabled === false })}
-                            style={{ padding: '10px 14px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '8px', cursor: 'pointer' }}
-                          >
-                            <div className="toggle-card-info" style={{ textAlign: 'left' }}>
-                              <span className="toggle-card-title" style={{ fontWeight: 600 }}>
-                                <span
-                                  className={`page-status-dot ${sp.enabled !== false ? 'is-on' : 'is-off'}`}
-                                  aria-hidden="true"
-                                />
-                                {sp.enabled !== false
-                                  ? 'Page Active (Published)'
-                                  : 'Page Disabled (Hidden)'}
-                              </span>
-                              <span className="toggle-card-desc" style={{ fontSize: '0.8rem', display: 'block', opacity: 0.75 }}>
-                                {sp.enabled !== false
-                                  ? 'Visible in header menu and reachable via URL'
-                                  : 'Hidden from navigation menu. Returns 404 if accessed directly.'}
-                              </span>
-                            </div>
-                            <div className={`switch-toggle ${sp.enabled !== false ? 'on' : ''}`}>
-                              <span className="switch-slider" />
-                            </div>
-                          </button>
                         </div>
                         <div className="admin-field" style={{ marginTop: '1rem' }}>
                           <label>Page Layout Style</label>
@@ -1313,8 +1390,9 @@ export default function PageBuilder() {
                         </div>
                       )}
 
-                      <div className="settings-section-divider" />
+                        </div>
 
+                        <div className="admin-sheet-col admin-sheet-col--divided">
                       {/* Albums (if no sections) with DnD */}
                       {(!sp.sections || sp.sections.length === 0) && (
                         <div className="subpage-albums">
@@ -1437,7 +1515,8 @@ export default function PageBuilder() {
                           </button>
                         )}
                       </div>
-                        </>
+                        </div>
+                        </div>
                       )}
                     </div>
 
@@ -1503,6 +1582,8 @@ export default function PageBuilder() {
                   form already shows (password state, custom hero) is not
                   repeated as a read-only stat. */}
               <div className="album-drawer-body">
+                <div className="admin-sheet-columns">
+                <div className="admin-sheet-col">
                 <div className="modal-cover-container">
                   {heroThumb ? (
                     <img src={`/api/admin/thumbnail/${heroThumb}`} alt="" loading="lazy" />
@@ -1549,6 +1630,40 @@ export default function PageBuilder() {
                       placeholder="Leave empty for public access"
                     />
                   </div>
+                </div>
+
+                </div>
+
+                <div className="admin-sheet-col admin-sheet-col--divided">
+                <div className="admin-field">
+                  <label>Layout override (Experimental)</label>
+                  <select
+                    value={album.grid?.layout || ''}
+                    onChange={(e) => {
+                      const layout = e.target.value || undefined;
+                      // Only the layout is exposed here; drop the grid object
+                      // entirely when it goes back to "inherit" so the YAML
+                      // stays clean.
+                      onUpdate({ grid: layout ? { ...(album.grid || {}), layout } : undefined });
+                    }}
+                  >
+                    <option value="">Inherit from page / global settings</option>
+                    <option value="masonry">Masonry</option>
+                    <option value="uniform">Uniform Grid</option>
+                    <option value="showcase">Showcase</option>
+                    <option value="filmstrip">Filmstrip</option>
+                    <option value="editorial-flow">Editorial Flow</option>
+                    <option value="justified">Justified (Experimental)</option>
+                  </select>
+                </div>
+
+                <div className="admin-field">
+                  <label>Cover focal point (Experimental)</label>
+                  <input
+                    value={album.coverPosition || ''}
+                    onChange={(e) => onUpdate({ coverPosition: e.target.value || undefined })}
+                    placeholder={'e.g. "50% 25%" or "top" — where the cover crop should anchor'}
+                  />
                 </div>
 
                 {/* Hero Image Selection */}
@@ -1626,6 +1741,8 @@ export default function PageBuilder() {
                       </button>
                     </div>
                   )}
+                </div>
+                </div>
                 </div>
               </div>
               <div className="album-drawer-footer">

@@ -184,6 +184,17 @@
   animation: exif-slide-up var(--transition-normal) ease forwards;
 }
 
+/* EXPERIMENTAL: editorial caption (Immich asset description) above the tech rows */
+.exifCaption {
+  margin: 0 0 12px;
+  max-width: 280px;
+  font-family: var(--font-caption);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.85);
+}
+
 @keyframes exif-slide-up {
   from {
     opacity: 0;

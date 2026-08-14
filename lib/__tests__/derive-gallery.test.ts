@@ -156,6 +156,66 @@ describe('deriveGallery accepts valid structures', () => {
     expect(result.albumManualOrders[A]).toEqual([B]);
   });
 
+  // EXPERIMENTAL: hidden keeps a subpage reachable by direct link while
+  // removing it from navigation — distinct from enabled:false, which 404s.
+  it('derives the hidden flag on array-style subpages', () => {
+    const result = deriveGallery({
+      subpages: [{ name: 'Preview', hidden: true, albums: [A] }],
+    } as unknown as GalleryYaml);
+
+    expect(result.subpages[0].hidden).toBe(true);
+    expect(result.subpages[0].enabled).toBe(true);
+  });
+
+  it('derives the hidden flag on map-style subpages, defaulting to falsy', () => {
+    const result = deriveGallery({
+      subpages: { Preview: { hidden: true, albums: [A] }, Open: [B] },
+    } as unknown as GalleryYaml);
+
+    const preview = result.subpages.find((sp) => sp.name === 'Preview');
+    const open = result.subpages.find((sp) => sp.name === 'Open');
+    expect(preview?.hidden).toBe(true);
+    expect(open?.hidden).toBeFalsy();
+  });
+
+  // EXPERIMENTAL: per-album grid overrides — merged over subpage/global grid.
+  it('collects per-album grid overrides, dropping unknown layouts to masonry', () => {
+    const result = deriveGallery({
+      albums: [
+        { [A]: { title: 'Panoramas', grid: { layout: 'filmstrip', columns: 2 } } },
+        { [B]: { grid: { layout: 'not-a-layout' } } },
+      ],
+    } as unknown as GalleryYaml);
+
+    expect(result.albumGrids[A]).toEqual({ layout: 'filmstrip', columns: 2 });
+    expect(result.albumGrids[B]).toEqual({ layout: 'masonry' });
+  });
+
+  it('leaves albumGrids empty for entries without a grid', () => {
+    const result = deriveGallery({ albums: [A] } as unknown as GalleryYaml);
+    expect(result.albumGrids).toEqual({});
+  });
+
+  // EXPERIMENTAL: coverPosition feeds object-position on cover images, so it
+  // must be a strict CSS position value — anything else is a typo or an
+  // injection attempt and both should fail loudly.
+  it('collects a valid coverPosition', () => {
+    const result = deriveGallery({
+      albums: [{ [A]: { coverPosition: '50% 25%' } }, { [B]: { coverPosition: 'top' } }],
+    } as unknown as GalleryYaml);
+
+    expect(result.albumCoverPositions[A]).toBe('50% 25%');
+    expect(result.albumCoverPositions[B]).toBe('top');
+  });
+
+  it('rejects a malformed coverPosition, naming the album', () => {
+    expect(() =>
+      deriveGallery({
+        albums: [{ [A]: { coverPosition: 'javascript:alert(1)' } }],
+      } as unknown as GalleryYaml),
+    ).toThrow(new RegExp(A));
+  });
+
   it('ignores an empty asset order rather than storing one', () => {
     const result = deriveGallery({
       albums: [{ [A]: { sort: 'manual', assetOrder: [] } }],

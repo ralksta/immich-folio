@@ -18,9 +18,11 @@ interface FadeInProps {
   direction?: 'up' | 'none';
   /** CSS class name for the wrapper */
   className?: string;
+  /** Extra inline styles for the wrapper (e.g. flex sizing in justified grids) */
+  style?: React.CSSProperties;
 }
 
-export function FadeIn({ children, delay = 0, direction = 'up', className }: FadeInProps) {
+export function FadeIn({ children, delay = 0, direction = 'up', className, style }: FadeInProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const reveal = useCallback(() => {
@@ -55,7 +57,7 @@ export function FadeIn({ children, delay = 0, direction = 'up', className }: Fad
     <div
       ref={ref}
       className={`fade-in ${direction === 'up' ? 'fade-in--up' : ''} ${className ?? ''}`}
-      style={{ transitionDelay: `${delay}ms` }}
+      style={{ ...style, transitionDelay: `${delay}ms` }}
     >
       {children}
     </div>
