@@ -110,6 +110,13 @@ export function renderInlineMarkdown(text: string): string {
   // build themselves, and a URL cannot break out of its href attribute.
   let html = sanitizeHtml(text);
   // Bold: **text** or __text__
+  //
+  // CodeQL flags the lazy group here as polynomial backtracking. It is left as
+  // is on purpose: rewriting it with a negated class (`\*\*([^*]+)\*\*`) removes
+  // the backtracking but also breaks nesting — `**bold *and italic* here**`
+  // then renders as `*<em>bold </em>and italic<em> here</em>*`. The input is
+  // Markdown written by an authenticated admin, never visitor input, so the
+  // worst case is an author slowing down their own page.
   html = html.replace(/(\*\*|__)(.*?)\1/g, '<strong>$2</strong>');
   // Italic: *text* or _text_
   html = html.replace(/(\*|_)(.*?)\1/g, '<em>$2</em>');
@@ -144,7 +151,12 @@ export function parseFrontmatter(content: string): {
 
     const key = trimmed.slice(0, colonIdx).trim();
     let val = trimmed.slice(colonIdx + 1).trim();
-    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+    if (val.length >= 2 && val.startsWith('"') && val.endsWith('"')) {
+      // Undo the escaping serializeJournalMarkdown applies. Without this a title
+      // containing a quote or a backslash gained one more backslash on every
+      // save/load cycle.
+      val = val.slice(1, -1).replace(/\\([\\"])/g, '$1');
+    } else if (val.length >= 2 && val.startsWith("'") && val.endsWith("'")) {
       val = val.slice(1, -1);
     }
 
@@ -179,7 +191,9 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
 
   for (const chunk of chunks) {
     // 1. Headings (# H1, ## H2, ### H3)
-    const headingMatch = chunk.match(/^(#{1,6})\s+(.+)$/);
+    // `[ \t]+` rather than `\s+`: next to `(.+)` the two overlap, and the
+    // engine has to try every split of the whitespace run before failing.
+    const headingMatch = chunk.match(/^(#{1,6})[ \t]+(\S.*)$/);
     if (headingMatch) {
       blocks.push({
         type: 'heading',
@@ -197,14 +211,22 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
         .join(' ')
         .trim();
 
-      const authorMatch = quoteText.match(/^(.*?)(?:\s+--\s+(.+))?$/);
-      if (authorMatch) {
-        blocks.push({
-          type: 'quote',
-          text: renderInlineMarkdown(authorMatch[1]),
-          author: authorMatch[2] ? authorMatch[2].trim() : undefined,
-        });
-      }
+      // Split on the first ` -- ` by index instead of matching the whole line.
+      // `/^(.*?)(?:\s+--\s+(.+))?$/` made the engine re-try every prefix
+      // against an optional tail — quadratic on a line that has no separator.
+      const separator = quoteText.match(/\s+--\s+/);
+      const quoteBody =
+        separator?.index === undefined ? quoteText : quoteText.slice(0, separator.index);
+      const quoteAuthor =
+        separator?.index === undefined
+          ? undefined
+          : quoteText.slice(separator.index + separator[0].length).trim();
+
+      blocks.push({
+        type: 'quote',
+        text: renderInlineMarkdown(quoteBody),
+        author: quoteAuthor || undefined,
+      });
       continue;
     }
 
@@ -284,7 +306,8 @@ export function serializeJournalMarkdown(journal: ParsedJournal): string {
         if (typeof val === 'boolean') {
           lines.push(`${key}: ${val}`);
         } else {
-          lines.push(`${key}: "${String(val).replace(/"/g, '\\"')}"`);
+          const escaped = String(val).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+          lines.push(`${key}: "${escaped}"`);
         }
       }
     }
