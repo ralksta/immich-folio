@@ -62,10 +62,18 @@ docker-compose.override.yml
 content/settings.yaml
 content/gallery.yaml
 content/about.md
+# Journal entries reference Immich asset UUIDs, which are specific to one
+# server — committing an entry would publish ids from the author's instance.
+# The .example alongside them stays tracked as a starting point.
+content/journal/*.md
+content/essays/*.md
 # Von der App zur Laufzeit geschrieben: yaml-service legt bis zu 10 Backups je
 # Datei ab, und die Backups von gallery.yaml/settings.yaml wuerden genau den
 # Inhalt ins Repo tragen, den die drei Zeilen darueber heraushalten sollen.
 content/.backups/
+# yaml-service writes next to the file it backs up, so the journal directory
+# gets its own .backups/ — the top-level pattern above does not reach it.
+content/**/.backups/
 content/analytics.json
 content/*.screenshot-bak
 # Credentials written by the /install wizard (never committed)

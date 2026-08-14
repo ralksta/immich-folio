@@ -51,7 +51,10 @@
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
   border-radius: 12px;
   overflow: hidden;
-  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .journal-card:hover {
@@ -84,7 +87,6 @@
   align-items: center;
   justify-content: center;
   opacity: 0.3;
-  font-size: 2rem;
 }
 
 .journal-card__content {

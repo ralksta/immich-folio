@@ -18,6 +18,7 @@ import { useExif } from '@/hooks/useExif';
 import { useSwipe } from '@/hooks/useSwipe';
 import styles from './Lightbox.module.css';
 import { useProofing } from './ProofingContext';
+import { IconHeart } from './Icons';
 
 export interface LightboxWatermark {
   enabled?: boolean;
@@ -299,7 +300,8 @@ export function Lightbox({
           aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
           title={isFav ? 'Remove from favorites' : 'Add to favorites'}
         >
-          {isFav ? '❤️ Saved' : '🤍 Favorite'}
+          <IconHeart size={14} fill={isFav ? 'currentColor' : 'none'} aria-hidden="true" />
+          {isFav ? 'Saved' : 'Favorite'}
         </button>
       )}
 

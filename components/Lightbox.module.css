@@ -143,6 +143,11 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
+  /* Icon and label sit on one line — the buttons carried an emoji before, which
+     needed no alignment of its own. */
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   z-index: 1001;
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(8px);
@@ -285,7 +290,9 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #ffffff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.7);
+  text-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.9),
+    0 0 10px rgba(0, 0, 0, 0.7);
   padding: 12px 16px;
   user-select: none;
 }
@@ -305,7 +312,6 @@
   left: 50%;
   transform: translate(-50%, -50%);
 }
-
 
 @media (hover: none) {
   .close,

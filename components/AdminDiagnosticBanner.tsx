@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { IconRefresh } from './Icons';
 
 interface AdminDiagnosticBannerProps {
   slug: string;
@@ -39,10 +40,8 @@ export function AdminDiagnosticBanner({
         <code style={{ background: '#2c2c2e', padding: '2px 6px', borderRadius: '4px' }}>
           gallery.yaml
         </code>
-        {configuredAlbumCount > 0
-          ? `, and configured with ${configuredAlbumCount} album(s)`
-          : ''}
-        , but Immich returned no accessible albums or assets.
+        {configuredAlbumCount > 0 ? `, and configured with ${configuredAlbumCount} album(s)` : ''},
+        but Immich returned no accessible albums or assets.
       </p>
 
       {reason && (
@@ -64,17 +63,27 @@ export function AdminDiagnosticBanner({
         <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#f2f2f7' }}>
           Possible Causes & Checklist:
         </h4>
-        <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: '#d1d1d6', lineHeight: 1.8 }}>
+        <ul
+          style={{
+            margin: 0,
+            paddingLeft: '20px',
+            fontSize: '13px',
+            color: '#d1d1d6',
+            lineHeight: 1.8,
+          }}
+        >
           <li>
             <strong>Album Shared Status in Immich:</strong> Ensure the album in Immich is marked as{' '}
-            <strong>Shared (Geteilt)</strong>. Unshared albums are excluded by Immich Folio for security.
+            <strong>Shared (Geteilt)</strong>. Unshared albums are excluded by Immich Folio for
+            security.
           </li>
           <li>
             <strong>Cache Lag:</strong> If you just added the album or changed permissions, click{' '}
             <em>Force Reload Fresh</em> below.
           </li>
           <li>
-            <strong>Album UUID:</strong> Check if the album UUID in your Page Builder matches the exact Immich Album ID.
+            <strong>Album UUID:</strong> Check if the album UUID in your Page Builder matches the
+            exact Immich Album ID.
           </li>
         </ul>
       </div>
@@ -95,7 +104,7 @@ export function AdminDiagnosticBanner({
             gap: '6px',
           }}
         >
-          🔄 Force Reload Fresh (?fresh=1)
+          <IconRefresh size={14} aria-hidden="true" /> Force Reload Fresh (?fresh=1)
         </a>
         <Link
           href="/admin"
