@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   parseEssayMarkdown,
   serializeEssayMarkdown,
@@ -31,13 +31,16 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
     parseEssayMarkdown(markdown || '# Title\n\nWrite your story here...'),
   );
 
-  // Sync internal state when prop changes from outside (e.g. initial load)
-  useEffect(() => {
-    const currentSerialized = serializeEssayMarkdown(essay);
-    if (markdown !== currentSerialized && markdown) {
+  // Sync internal state when the prop changes from outside (e.g. initial load).
+  // Adjusting during render rather than in an effect: an effect would commit the
+  // stale essay first and re-render, which flashes the previous story's blocks.
+  const [lastMarkdown, setLastMarkdown] = useState(markdown);
+  if (markdown !== lastMarkdown) {
+    setLastMarkdown(markdown);
+    if (markdown && markdown !== serializeEssayMarkdown(essay)) {
       setEssay(parseEssayMarkdown(markdown));
     }
-  }, [markdown]); // eslint-disable-line react-hooks/exhaustive-deps
+  }
 
   const updateBlocks = useCallback(
     (newBlocks: EssayBlock[]) => {

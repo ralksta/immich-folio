@@ -69,7 +69,7 @@ export async function POST(req: Request) {
 
     await saveAnalytics(data);
     return NextResponse.json({ ok: true });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Failed to record tracking' }, { status: 500 });
   }
 }

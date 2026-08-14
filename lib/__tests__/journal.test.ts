@@ -4,8 +4,6 @@ import {
   serializeJournalMarkdown,
   sanitizeHtml,
   renderInlineMarkdown,
-  calculateReadingTime,
-  extractExcerpt,
   isValidSlug,
   sanitizeSlug,
 } from '../journal';

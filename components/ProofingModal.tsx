@@ -12,7 +12,6 @@ export function ProofingModal() {
 
   const {
     favorites,
-    isModalOpen,
     setIsModalOpen,
     getProofingUrl,
     getFormattedList,

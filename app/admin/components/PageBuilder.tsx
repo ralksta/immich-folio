@@ -2039,7 +2039,6 @@ function AlbumCard({
   const heroThumb = album.heroImage || thumbnailId;
   const hasPassword = !!album.password;
   const hasTitleOverride = !!album.title;
-  const hasDescription = !!album.description;
 
   return (
     <div className={`album-tile ${hasPassword ? 'has-password' : ''}`}>
