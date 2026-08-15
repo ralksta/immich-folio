@@ -1,10 +1,11 @@
 /**
  * Documentation Screenshot Generator
  *
- * Captures every screenshot referenced by README.md and docs/theming.md:
- * theme presets, hero styles, grid layouts, light mode, the standard pages
- * (subpage overview, about, map), the lightbox with its EXIF panel, a mobile
- * viewport and — if ADMIN_PASSWORD is set — the admin panel.
+ * Captures every screenshot referenced by README.md, docs/theming.md and
+ * docs/journal.md: theme presets, hero styles, grid layouts, light mode, the
+ * standard pages (subpage overview, about, map), the lightbox with its EXIF
+ * panel, a mobile viewport and — if ADMIN_PASSWORD is set — the admin panel
+ * and the journal.
  *
  * Uses Playwright to wait for images to fully load (not just blurhash placeholders).
  *
@@ -13,6 +14,21 @@
  *   SCREENSHOT_GRID_PATH=/japan/koyasan-2023 npx tsx scripts/screenshots.ts
  *   SCREENSHOT_PORT=3100 npx tsx scripts/screenshots.ts
  *   SCREENSHOT_ONLY=admin,lightbox npx tsx scripts/screenshots.ts
+ *   SCREENSHOT_ONLY=journal SCREENSHOT_JOURNAL_ALBUM="Yufuin" npx tsx scripts/screenshots.ts
+ *
+ * The journal section writes a throwaway entry built from a real album's
+ * photos, shoots the public index, the entry and the studio, then deletes it.
+ * SCREENSHOT_JOURNAL_ALBUM picks the album by name; without it the largest one
+ * is used — which is usually an import dump rather than a presentable set, so
+ * set it whenever the output is going to be committed. Whatever it names ends
+ * up in a published screenshot at full size: pick an album you would show a
+ * stranger, not one that happens to be large.
+ *
+ * Three further entries are written from albums matched by name, so the index
+ * shot shows a list rather than one lonely card. One of them is a draft and
+ * one carries a password, so the admin list shows the states the guide
+ * describes. They are skipped on an installation without those albums — see
+ * EXTRA_JOURNAL_ENTRIES.
  *
  * The album used for the grid shots is discovered by walking the running site,
  * since album slugs come from Immich album names. SCREENSHOT_GRID_PATH picks a
@@ -82,6 +98,44 @@ const ABOUT_MD = path.join(CONTENT_DIR, 'about.md');
 /** Every file the run rewrites, and therefore has to restore. */
 const MANAGED_FILES = [SETTINGS_YAML, GALLERY_YAML, ABOUT_MD];
 const backupPath = (file: string) => `${file}.screenshot-bak`;
+
+const JOURNAL_DIR = path.join(CONTENT_DIR, 'journal');
+/**
+ * Slug of the throwaway entry written for the journal screenshots. It is
+ * created before the shots and deleted afterwards, so a run never leaves a
+ * demo story published on a real site. Namespaced to make an orphan from a
+ * killed run obvious.
+ */
+const DEMO_JOURNAL_SLUG = 'screenshot-demo-entry';
+/**
+ * Album to pull demo photos from, matched against the Immich album name.
+ * Unset picks the album with the most photos, which reliably gives the entry
+ * enough frames to fill a fullbleed, a pair and a contained block — but the
+ * largest album on a real library is typically an unsorted import, so a run
+ * whose output gets committed should always name one. The photos are published
+ * at full size in the screenshots; nothing about them is anonymised, unlike the
+ * site identity in DEMO_SETTINGS.
+ */
+const JOURNAL_ALBUM = process.env.SCREENSHOT_JOURNAL_ALBUM;
+/**
+ * Companion entries, so the index shot shows a list of stories rather than a
+ * single card on an otherwise empty page. Unlike the main entry — whose album
+ * is chosen at run time and whose prose is therefore deliberately about
+ * photographing rather than about a place — each of these is bound to one
+ * album and its text describes that place, which only works while the two are
+ * kept together. An installation without a matching album simply skips them
+ * and the index shows the main entry alone.
+ */
+const EXTRA_JOURNAL_ENTRIES: {
+  slug: string;
+  /** Matched against the Immich album name, case-insensitive substring. */
+  album: string;
+  markdown: (ids: string[]) => string;
+}[] = [
+  { slug: 'screenshot-demo-kurokawa', album: 'kurokawa', markdown: kurokawaJournalMarkdown },
+  { slug: 'screenshot-demo-kada', album: 'kada', markdown: kadaJournalMarkdown },
+  { slug: 'screenshot-demo-koyasan', album: 'koyasan', markdown: koyasanJournalMarkdown },
+];
 
 /** Pages that never carry a photo grid — skipped while looking for an album. */
 const EXCLUDED_PATHS = new Set(['/', '/about', '/map', '/impressum', '/admin']);
@@ -236,6 +290,12 @@ async function main() {
     if (wanted('admin')) {
       await applySettings({ 'theme.preset': SHOWCASE_THEME });
       await captureAdmin(browser);
+    }
+
+    // ── Journal (public views + studio) ──
+    if (wanted('journal')) {
+      await applySettings({ 'theme.preset': SHOWCASE_THEME });
+      await captureJournal(browser);
     }
   } finally {
     await browser?.close();
@@ -417,9 +477,7 @@ async function captureAdmin(browser: Browser): Promise<void> {
     await page.locator('.admin-login-card').waitFor({ timeout: 15000 });
     await capture(page, 'admin-login');
 
-    await page.locator('.admin-login-card input[type="password"]').fill(ADMIN_PASSWORD);
-    await page.locator('.admin-login-card button[type="submit"]').click();
-    await page.locator('.admin-tabs').waitFor({ timeout: 20000 });
+    await adminLogin(page);
     await page.waitForTimeout(2500);
     await waitForImages(page);
     await capture(page, 'admin-page-builder');
@@ -434,6 +492,363 @@ async function captureAdmin(browser: Browser): Promise<void> {
     await page.waitForTimeout(1500);
     await capture(page, 'admin-settings');
   });
+}
+
+/**
+ * Journal: the public index and entry, plus the studio behind them.
+ *
+ * Needs an admin session for two separate reasons — the studio shots are
+ * behind the login, and the demo entry can only be written with *raw* Immich
+ * asset UUIDs, which the public site never exposes (it hands out encrypted
+ * tokens). The admin API is the only place those UUIDs are reachable, so the
+ * entry is generated from a real album after logging in.
+ *
+ * The entry is deleted again in the `finally`, including when a capture throws.
+ */
+async function captureJournal(browser: Browser): Promise<void> {
+  section('Journal: index, entry, studio');
+  if (!ADMIN_PASSWORD) {
+    console.log('  ⏭  ADMIN_PASSWORD not set — skipping the journal screenshots.');
+    return;
+  }
+
+  const entryPath = path.join(JOURNAL_DIR, `${DEMO_JOURNAL_SLUG}.md`);
+  if (fs.existsSync(entryPath)) {
+    console.log(`  ⏭  ${DEMO_JOURNAL_SLUG}.md already exists — leaving it alone.`);
+    return;
+  }
+
+  const written: string[] = [];
+  try {
+    await withPage(browser, VIEWPORT, async (page) => {
+      await adminLogin(page);
+
+      const assetIds = await demoAssetIds(page);
+      if (assetIds.length < 4) {
+        console.log('  ⏭  Not enough photos found for a demo entry — skipping.');
+        return;
+      }
+
+      fs.mkdirSync(JOURNAL_DIR, { recursive: true });
+      fs.writeFileSync(entryPath, demoJournalMarkdown(assetIds));
+      written.push(entryPath);
+      await writeExtraEntries(page, written);
+      await sleep(CONFIG_RELOAD_DELAY);
+
+      // Studio first: the session is already open on this page.
+      await capturePage(page, '/admin/journal', 'admin-journal-list', 1500);
+      await capturePage(page, `/admin/journal/${DEMO_JOURNAL_SLUG}`, 'admin-journal-studio', 3000);
+      await captureStudioModals(page);
+    });
+
+    // Public views in a fresh context, so the admin cookie cannot leak in and
+    // reveal draft-only chrome in a shot meant to show what a visitor sees.
+    await withPage(browser, VIEWPORT, async (page) => {
+      await capturePage(page, '/journal', 'journal-index', 2500);
+      await captureJournalEntry(page);
+    });
+  } finally {
+    for (const file of written) {
+      if (fs.existsSync(file)) {
+        fs.rmSync(file, { force: true });
+        console.log(`  🧹 Removed the demo entry (${path.basename(file)})`);
+      }
+    }
+  }
+}
+
+/**
+ * The frontmatter form, which the studio hides behind its Story Settings
+ * button and which no other shot reaches. Best effort: a renamed button costs
+ * this one shot, not the run.
+ *
+ * The studio's other dialog, the photo picker, is deliberately not captured.
+ * Its tabs are Favorites and All Photos — both show the operator's own library
+ * rather than a chosen album, and these screenshots are published.
+ */
+async function captureStudioModals(page: Page): Promise<void> {
+  try {
+    await page
+      .getByRole('button', { name: /story settings/i })
+      .first()
+      .click();
+    await page.locator('.journal-modal-card').waitFor({ timeout: 5000 });
+    await waitForImages(page);
+    await page.waitForTimeout(800);
+    await capture(page, 'admin-journal-settings');
+    await page
+      .getByRole('button', { name: /^done$/i })
+      .first()
+      .click();
+    await page.locator('.journal-modal-card').waitFor({ state: 'hidden', timeout: 5000 });
+  } catch {
+    console.log('  ⏭  Story Settings dialog did not open — skipping that shot.');
+  }
+}
+
+/**
+ * The album-bound companion entries. Each is skipped without failing the run
+ * when its album is missing (another installation) or when a file with that
+ * slug already exists (an author's own entry is never overwritten).
+ */
+async function writeExtraEntries(page: Page, written: string[]): Promise<void> {
+  for (const extra of EXTRA_JOURNAL_ENTRIES) {
+    const file = path.join(JOURNAL_DIR, `${extra.slug}.md`);
+    if (fs.existsSync(file)) {
+      console.log(`  ⏭  ${extra.slug}.md already exists — leaving it alone.`);
+      continue;
+    }
+    const photos = await demoAlbumPhotos(page, extra.album);
+    if (!photos || photos.ids.length < 4) continue;
+    const picked = spreadSample(photos.ids, 4);
+    if (photos.coverId) picked[0] = photos.coverId;
+    fs.writeFileSync(file, extra.markdown(picked));
+    written.push(file);
+  }
+}
+
+/**
+ * The rendered entry, scrolled to the quote so the shot shows the block types
+ * the guide describes. The top of the page is only a title and a cover image,
+ * which says nothing about the journal that the index shot does not already
+ * show; the quote sits between the prose and a photo block, so framing it puts
+ * three of the block types in one viewport.
+ */
+async function captureJournalEntry(page: Page): Promise<void> {
+  await page.goto(`${BASE_URL}/journal/${DEMO_JOURNAL_SLUG}`, { waitUntil: 'networkidle' });
+  await revealDeferredContent(page);
+  await waitForImages(page);
+  const quote = page.locator('.essay-quote').first();
+  if ((await quote.count()) > 0) {
+    await quote.scrollIntoViewIfNeeded();
+    // Lift the quote to the upper third, so the photo block below it is in frame.
+    await page.evaluate(() => window.scrollBy(0, -180));
+    await waitForImages(page);
+  }
+  await page.waitForTimeout(3000);
+  await capture(page, 'journal-entry');
+}
+
+/** Log in and wait for the panel chrome. Shared by the admin and journal runs. */
+async function adminLogin(page: Page): Promise<void> {
+  await page.goto(`${BASE_URL}/admin`, { waitUntil: 'networkidle' });
+  await page.locator('.admin-login-card input[type="password"]').fill(ADMIN_PASSWORD!);
+  await page.locator('.admin-login-card button[type="submit"]').click();
+  await page.locator('.admin-tabs').waitFor({ timeout: 20000 });
+}
+
+/**
+ * Raw asset UUIDs for the demo entry, via the admin API. `page.request` shares
+ * the context's cookies, so the session from adminLogin() carries over.
+ */
+async function demoAssetIds(page: Page, albumName = JOURNAL_ALBUM): Promise<string[]> {
+  return (await demoAlbumPhotos(page, albumName))?.ids ?? [];
+}
+
+/**
+ * The matched album's photos plus the cover its owner picked in Immich, which
+ * is a better opening image for an entry than whatever happens to be first in
+ * capture order.
+ */
+async function demoAlbumPhotos(
+  page: Page,
+  albumName = JOURNAL_ALBUM,
+): Promise<{ ids: string[]; coverId?: string } | null> {
+  type AdminAlbum = {
+    id: string;
+    albumName: string;
+    assetCount: number;
+    thumbnailAssetId?: string | null;
+  };
+  const albumsRes = await page.request.get(`${BASE_URL}/api/admin/albums`);
+  if (!albumsRes.ok()) return null;
+  const albums = (await albumsRes.json()) as { albums?: AdminAlbum[] } | AdminAlbum[];
+  const list = Array.isArray(albums) ? albums : (albums.albums ?? []);
+  if (list.length === 0) return null;
+
+  const wantedName = albumName?.toLowerCase();
+  const album = wantedName
+    ? list.find((a) => a.albumName.toLowerCase().includes(wantedName))
+    : [...list].sort((a, b) => (b.assetCount ?? 0) - (a.assetCount ?? 0))[0];
+  if (!album) {
+    console.log(`  ⏭  No album matching "${albumName}" — skipping that entry.`);
+    return null;
+  }
+  console.log(`  🔎 Demo entry photos from: ${album.albumName}`);
+
+  const assetsRes = await page.request.get(`${BASE_URL}/api/admin/albums/${album.id}/assets`);
+  if (!assetsRes.ok()) return null;
+  const payload = (await assetsRes.json()) as
+    { assets?: { id: string; type?: string }[] } | { id: string; type?: string }[];
+  const assets = Array.isArray(payload) ? payload : (payload.assets ?? []);
+  // Videos render a player, not a photo block.
+  const ids = assets.filter((a) => (a.type ?? 'IMAGE').toUpperCase() === 'IMAGE').map((a) => a.id);
+  return { ids, coverId: album.thumbnailAssetId ?? undefined };
+}
+
+/**
+ * A demo entry exercising every block type the parser knows — heading,
+ * paragraph, quote with attribution, fullbleed photo, photo pair, contained
+ * photo — so the studio and the rendered page both show something
+ * representative rather than a single paragraph.
+ *
+ * The prose is deliberately about *photographing* rather than about any
+ * particular place. The source album is chosen with SCREENSHOT_JOURNAL_ALBUM
+ * and could be a coastline, a city or a mountain range; text naming a
+ * landscape would contradict the photos beside it in whatever album the
+ * operator picks. Captions are written the same way.
+ */
+function demoJournalMarkdown(ids: string[]): string {
+  const [cover, fullbleed, pairA, pairB, ...rest] = ids;
+  const contained = rest[0];
+  return `---
+title: "Notes from a Week of Photographing"
+subtitle: "Seven days, one camera, and what came back from it"
+author: "Jane Doe"
+date: "2026-03-14"
+coverAssetId: "${cover}"
+---
+
+# Setting Out
+
+Packing for a week means deciding in advance what kind of pictures you intend
+to make. One body, two lenses, and the quiet certainty that both choices will
+turn out to have been slightly wrong by the second afternoon.
+
+![${fullbleed}:fullbleed](The first frame of the trip, an hour after sunrise)
+
+## Finding the Light
+
+The early hours were the only reliable ones. By midday the contrast had
+collapsed and every exposure came back flatter than it had looked through the
+viewfinder — so the middle of each day became the part spent walking, looking,
+and not raising the camera at all.
+
+> A photograph does not record what you saw. It records what was there, which
+> is a slower and more honest thing. -- A note from the second evening
+
+![${pairA}, ${pairB}](Two mornings, photographed from nearly the same spot)
+
+### What Stayed
+
+Not the wide views, in the end, but the repetitions — the same twenty minutes
+of light, the same short walk back, the same handful of frames worth keeping
+out of a few hundred.
+${contained ? `\n![${contained}](The last morning, before packing up)\n` : ''}`;
+}
+
+/**
+ * `count` photos spread over the album rather than its first few. Albums are
+ * in capture order, so the opening frames are the journey there — a station,
+ * a train window — which makes a poor cover for an entry about the place. The
+ * first fifth is skipped for the same reason.
+ */
+function spreadSample(ids: string[], count: number): string[] {
+  const start = Math.floor(ids.length / 5);
+  const usable = ids.slice(start);
+  const step = Math.max(1, Math.floor(usable.length / count));
+  return Array.from({ length: count }, (_, i) => usable[Math.min(i * step, usable.length - 1)]);
+}
+
+/**
+ * Companion entry for the Kurokawa Onsen album. Shorter than the main one: it
+ * exists to fill the index, and only its card is ever screenshot. The prose
+ * stays at the level of the place and the season, since which frames it gets
+ * depends on the album's order.
+ */
+function kurokawaJournalMarkdown(ids: string[]): string {
+  const [cover, fullbleed, pairA, pairB] = ids;
+  return `---
+title: "Three Days in Kurokawa Onsen"
+subtitle: "A village built into a river gorge, photographed between baths"
+author: "Jane Doe"
+date: "2025-11-22"
+coverAssetId: "${cover}"
+---
+
+# Down to the River
+
+The village sits in the cut of a small river, dark wood and tiled roofs
+stacked up both banks, and every path eventually leads back down to the water.
+Late November had the maples going over at different speeds — one tree still
+green, the next one already halfway to bare.
+
+![${fullbleed}:fullbleed](Kurokawa Onsen, late November)
+
+## Between Baths
+
+You buy a wooden pass and it lets you into three of the baths, so the days
+arrange themselves around walking from one to the next. Most of the frames here
+were made on those walks, in the hour before it got dark and the lanterns came
+on along the river.
+
+![${pairA}, ${pairB}](Two frames from the same short walk)
+`;
+}
+
+/**
+ * Companion entry for the Kada album — see kurokawaJournalMarkdown(). Carries
+ * a password so the admin list shows the lock marker its documentation
+ * describes. `demo` is plaintext on purpose: the entry lives for the length of
+ * one run, and a scrypt hash here would only hide what the shot is meant to
+ * show. Real entries should store a hash.
+ */
+function kadaJournalMarkdown(ids: string[]): string {
+  const [cover, fullbleed, pairA, pairB] = ids;
+  return `---
+title: "Kada, Out of Season"
+subtitle: "A fishing harbour on the Wakayama coast, mostly at 200mm"
+author: "Jane Doe"
+date: "2023-10-19"
+password: "demo"
+coverAssetId: "${cover}"
+---
+
+# The Harbour Road
+
+Kada is a working harbour before it is anything else: crates stacked against
+the sea wall, rope coiled where it was dropped, boats tied up in the middle of
+a weekday. Nothing is arranged for a visitor, which is most of why it is worth
+photographing.
+
+![${fullbleed}:fullbleed](Kada, October light)
+
+## At 200mm
+
+A long lens turned out to be the right choice here. It kept the distance
+honest — the roof tiles, the bare tree behind them, the cats asleep on warm
+concrete all stayed where they were instead of being walked up to.
+
+![${pairA}, ${pairB}](Two frames from the harbour road)
+`;
+}
+
+/**
+ * Companion entry for the Koyasan album, kept as a draft. The admin list
+ * documents a Draft pill and the public index documents that drafts are hidden
+ * from it — neither is visible while every demo entry is published. Being a
+ * draft it never reaches the public index shot, so it also does not crowd it.
+ */
+function koyasanJournalMarkdown(ids: string[]): string {
+  const [cover, fullbleed] = ids;
+  return `---
+title: "Koyasan, First Notes"
+subtitle: "Rough cut — still choosing which frames survive"
+author: "Jane Doe"
+date: "2023-10-08"
+draft: true
+coverAssetId: "${cover}"
+---
+
+# Under the Cedars
+
+The old graveyard runs for two kilometres under cedars big enough to make the
+path feel indoors, and the stone figures along it are dressed and looked after
+by someone. Notes for now — the light changed every few minutes and I want to
+see the frames on a proper screen before deciding what this is about.
+
+![${fullbleed}:fullbleed](Along the path, mid-morning)
+`;
 }
 
 /** Best effort: the picker is a modal behind a button whose label may change. */

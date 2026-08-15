@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { completeInstall, isInstalled, normalizeApiBase, validateSetupToken } from '@/lib/install';
 import { invalidateConfigCache } from '@/lib/config';
+import { DEFAULT_PRESET } from '@/lib/config/theme';
 import { immich } from '@/lib/immich';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 
@@ -9,8 +10,8 @@ import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit
 const INSTALL_RPM = 10;
 
 const THEME_PRESETS = [
-  'studio',
   'studio-modern',
+  'studio',
   'minimal',
   'editorial',
   'classic',
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid Immich URL' }, { status: 400 });
   }
 
-  const theme = THEME_PRESETS.includes(body.theme) ? body.theme : 'studio';
+  const theme = THEME_PRESETS.includes(body.theme) ? body.theme : DEFAULT_PRESET;
 
   // Album selection is optional: an empty gallery is a valid install.
   const rawAlbums: unknown[] = Array.isArray(body.albums) ? (body.albums as unknown[]) : [];

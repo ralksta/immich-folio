@@ -88,13 +88,7 @@ export interface GridConfig {
   gap: number;
   aspectRatio: string;
   layout:
-    | 'masonry'
-    | 'uniform'
-    | 'showcase'
-    | 'filmstrip'
-    | 'editorial-flow'
-    | 'essay'
-    | 'justified';
+    'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow' | 'essay' | 'justified';
 }
 
 export interface AppConfig {

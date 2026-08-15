@@ -36,7 +36,9 @@ export function ProofingProvider({
 
   const storageKey = `folio_fav_${albumName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 
-  // Hydrate from localStorage and URL query params on mount
+  // Hydrate from localStorage and URL query params on mount. This has to stay in
+  // an effect: both sources are browser-only, so reading them during render would
+  // break SSR and produce a hydration mismatch.
   useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey);
@@ -60,6 +62,9 @@ export function ProofingProvider({
         });
       }
 
+      // Mount-time hydration from an external store, not a render cascade:
+      // the state lands in the same commit and never re-triggers this effect.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFavorites(initialSet);
     } catch (e) {
       console.error('Failed to load favorites', e);

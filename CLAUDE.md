@@ -36,7 +36,7 @@ Configuration is loaded once at startup (cached in a module-level singleton, re-
 - `lib/env.ts` — parses and validates all environment variables into a typed `Env` object. All env access in the codebase must go through this module.
 - `lib/config/schema.ts` — TypeScript types for `AppConfig`, `GalleryYaml`, `SettingsYaml`, `SubpageConfig`, `GridConfig`, `ThemeConfig`, etc., plus the `slugify()` utility.
 - `lib/config/index.ts` — `getConfig()`: reads `content/gallery.yaml` and `content/settings.yaml`, merges them into a single `AppConfig`. Also exports `buildSubpageGrid()` and re-exports from schema/theme.
-- `lib/config/theme.ts` — seven built-in theme presets (`studio`, `studio-modern`, `minimal`, `editorial`, `classic`, `noir`, `monograph`) and `resolveTheme()` which merges partial overrides over a preset.
+- `lib/config/theme.ts` — seven built-in theme presets (`studio-modern`, `studio`, `minimal`, `editorial`, `classic`, `noir`, `monograph`) and `resolveTheme()` which merges partial overrides over a preset. `DEFAULT_PRESET` (`studio-modern`) is the single source for every "no preset configured" fallback — import it rather than writing the literal, and note the client components (`InstallWizard`, `SettingsEditor`) import it from `lib/config/theme` directly, since `lib/config/index.ts` pulls in `fs`.
 
 `getConfig()` returns a `needsSetup: true` dummy config (instead of throwing) when `gallery.yaml` or credentials are missing — this lets the app render a `SetupScreen` instead of crashing.
 
@@ -45,6 +45,14 @@ Configuration is loaded once at startup (cached in a module-level singleton, re-
 - `content/gallery.yaml` — gallery structure: hero asset IDs, standalone albums, subpages (with optional sections, passwords, per-subpage grid overrides). Use `gallery.yaml.example` as reference.
 - `content/settings.yaml` — site-wide settings: title, subtitle, theme, grid defaults, footer, legal, map, transitions, SEO. Use `settings.yaml.example` as reference.
 - `content/about.md` — Markdown with frontmatter for the about page (portrait, name, location, gear).
+- `content/journal/*.md` — journal entries, one file per entry (`<slug>.md` → `/journal/<slug>`). `content/essays/` is the legacy location, still resolved.
+- `content/install.json` — written by the setup wizard: Immich URL, API key, generated site secret, scrypt-hashed admin password. Mode `0600`; env vars override every field.
+- `content/analytics.json` — cookieless view counters.
+- `content/favicon.svg` — uploaded favicon (whatever the source format), served via `/api/favicon`.
+- `content/.setup-token` — one-time `/install` gate token (mode `0600`), deleted once setup completes.
+- `content/.backups/`, `content/journal/.backups/` — rotating backups (10 per file) written before every admin save.
+
+The whole `content/` directory must be writable: the wizard, admin panel, journal, favicon upload, analytics and backup rotation all write into it.
 
 ### Immich client (`lib/immich.ts`)
 
@@ -61,19 +69,41 @@ Singleton `ImmichClient` class exported as `immich`. All Immich API calls are se
 
 ### API routes (`app/api/`)
 
-| Route                             | Purpose                                                       |
-| --------------------------------- | ------------------------------------------------------------- |
-| `GET /api/image/[id]`             | Image proxy — decodes token, rate-limits, streams from Immich |
-| `GET /api/exif/[id]`              | EXIF data for lightbox panel                                  |
-| `POST /api/auth`                  | Password submission → sets `HttpOnly` cookie                  |
-| `GET /api/og`                     | Dynamic OG image generation (rate-limited)                    |
-| `GET /api/map`                    | Aggregated GPS coordinates for map view                       |
-| `GET /api/health`                 | Health check                                                  |
-| `GET/POST/DELETE /api/admin/auth` | Admin login, session check, logout                            |
-| `GET/PUT /api/admin/gallery`      | Read/write `gallery.yaml`                                     |
-| `GET/PUT /api/admin/settings`     | Read/write `settings.yaml`                                    |
-| `GET /api/admin/albums`           | Browse all shared Immich albums (admin-only)                  |
-| `POST /api/admin/reload`          | Invalidate config + Immich cache                              |
+Public:
+
+| Route                                          | Purpose                                                                          |
+| ---------------------------------------------- | -------------------------------------------------------------------------------- |
+| `GET /api/image/[id]`                          | Image proxy — decodes token, rate-limits, streams from Immich                    |
+| `GET /api/video/[id]`                          | Video proxy, range requests included                                             |
+| `GET /api/exif/[id]`                           | EXIF data for lightbox panel                                                     |
+| `POST /api/auth`                               | Password submission (`subpage` \| `album` \| `journal`) → sets `HttpOnly` cookie |
+| `GET /api/og`                                  | Dynamic OG image generation (rate-limited)                                       |
+| `GET /api/map`                                 | Aggregated GPS coordinates for map view                                          |
+| `GET /api/favicon`                             | Uploaded favicon from `content/`, with an SVG-safe content policy                |
+| `POST /api/analytics/track`                    | Cookieless view counter; refuses when `analytics: false`                         |
+| `POST /api/webhook`                            | Immich cache invalidation, HMAC-verified; `501` unless `WEBHOOK_SECRET` is set   |
+| `GET /api/health`                              | Health check                                                                     |
+| `POST /api/install`, `GET /api/install/albums` | First-run wizard; refuse to run once setup completed                             |
+
+Admin (every route re-checks `isAdminEnabled()` + `isAdminAuthenticated()`):
+
+| Route                                      | Purpose                                              |
+| ------------------------------------------ | ---------------------------------------------------- |
+| `GET/POST/DELETE /api/admin/auth`          | Admin login, session check, logout                   |
+| `GET/PUT /api/admin/gallery`               | Read/write `gallery.yaml`                            |
+| `GET/PUT /api/admin/settings`              | Read/write `settings.yaml`                           |
+| `GET/PUT /api/admin/about`                 | Read/write `content/about.md`                        |
+| `GET/POST /api/admin/journal`              | List / create journal entries                        |
+| `GET/PUT/DELETE /api/admin/journal/[slug]` | Read, write, delete one entry                        |
+| `GET /api/admin/albums`                    | Browse all shared Immich albums (bypasses allowlist) |
+| `GET /api/admin/albums/[albumId]/assets`   | Assets of one album, for the manual-order editor     |
+| `GET /api/admin/assets`                    | Library search (`POST /search/metadata`) for pickers |
+| `GET /api/admin/thumbnail/[id]`            | Raw-UUID thumbnails for the admin UI                 |
+| `GET/POST /api/admin/backups`              | List and restore backups                             |
+| `POST/DELETE /api/admin/favicon`           | Favicon upload and reset                             |
+| `GET /api/admin/analytics`                 | Aggregated view counts                               |
+| `GET /api/admin/status`                    | Immich reachability, config validity, cache, backups |
+| `POST /api/admin/reload`                   | Invalidate config + Immich cache                     |
 
 The image proxy maps requested pixel widths (`?w=`) to Immich size tiers: `≤250px→thumbnail`, `≤1440px→preview`, `>1440px→original` (`lib/imageSize.ts`).
 
@@ -87,15 +117,41 @@ Single catch-all route handles three cases:
 2. `/[subpage-slug]` — if subpage has >1 album, renders `SubpageGridView`; if exactly 1 album, renders `AlbumDetailView` directly
 3. `/[album-slug]` — standalone album detail
 
+A subpage renders as an essay instead when any of `grid.layout === 'essay'`, `essayFile`, or `essayText` is set. With `layout: essay` and no markdown, the essay is generated from the albums (heading per album + its photos).
+
+Fixed routes outside the catch-all: `/about`, `/map`, `/impressum`, `/journal`, `/journal/[slug]`, `/install`, `/admin/*`.
+
+### Journal & essays (`lib/journal.ts`, `lib/essay.ts`, `lib/admin/journal-service.ts`)
+
+- `lib/journal.ts` — **client-safe**, no `fs`. Parses and serializes the block markdown (`parseJournalMarkdown` / `serializeJournalMarkdown`), and owns `sanitizeHtml`, `isValidSlug`, reading time and excerpts. Photo blocks are `![<assetId>:fullbleed|wide](caption)` and `![<id>, <id>](caption)`.
+- `lib/admin/journal-service.ts` — **server only**: reads/writes `content/journal/`, falls back to the legacy `content/essays/`, rotates backups. The client/server split is load-bearing — importing the service from a client component breaks the build.
+- `essayFile` is a **slug**, not a path: `isValidSlug` rejects dots and slashes, so `content/essays/x.md` cannot resolve.
+- Author markdown is escaped, never filtered — `sanitizeHtml` runs first and the renderer only emits tags it builds itself.
+- Drafts (`draft: true`) are hidden from the index and the nav check, but remain visible to an authenticated admin. Entry passwords use the `lb_auth_journal_<slug>` cookie.
+
+### Proofing (`lib/proofing.ts`, `components/ProofingContext.tsx`)
+
+Client-side favourite selection encoded as a bitmask in the URL and mirrored to `localStorage`; nothing is stored server-side. Note that `PhotoGrid` mounts `ProofingProvider` unconditionally — the `proofing.enabled` / per-subpage `proofing` config keys are parsed but not consulted, so the feature is currently always on for grids.
+
+### Analytics
+
+`POST /api/analytics/track` appends to `content/analytics.json` and short-circuits when `config.analytics === false`. `GET /api/admin/analytics` is admin-only. No cookies, no third party.
+
+### First-run setup (`lib/install.ts`, `app/install/`)
+
+A deployment with no `gallery.yaml` and no credentials serves `SetupScreen`, and `/install` runs the wizard. It is gated by a one-time token printed to the server log and stored in `content/.setup-token` — a fresh deployment is reachable before it is configured. Credentials are verified against Immich before anything is written, then land in `content/install.json`. Environment variables always take precedence over that file, so rotation works without touching it. Once `isInstalled()` is true the wizard routes return `403`.
+
 All pages are `dynamic = 'force-dynamic'` (no SSG; requires live Immich).
 
 ### Password protection (`lib/auth.ts`)
 
-Per-subpage and per-album password gating using HMAC tokens in `HttpOnly` cookies (no database). Cookie names: `lb_auth_<slug>` (subpage) and `lb_auth_album_<slug>` (album). Password storage supports plaintext (deprecated, logs a warning with recommended scrypt hash), `scrypt:salt:hash` format, and rejects legacy bcrypt. Token expiry: 24 hours.
+Per-subpage, per-album and per-journal-entry password gating using HMAC tokens in `HttpOnly` cookies (no database). Cookie names: `lb_auth_<slug>` (subpage), `lb_auth_album_<slug>` (album) and `lb_auth_journal_<slug>` (journal entry). Password storage supports plaintext (deprecated, logs a warning with recommended scrypt hash), `scrypt:salt:hash` format (`lib/password.ts`), and rejects legacy bcrypt. Token expiry: 24 hours.
 
 ### Rate limiting (`lib/rate-limit.ts`)
 
-In-memory sliding-window rate limiter. Important: **in-memory only** — does not work across multiple Node.js instances. Uses FIFO eviction (not reject-on-full) to prevent DoS via store flooding. Configurable via `RATE_LIMIT_RPM`. `TRUSTED_PROXY_HOPS` must be set to the number of reverse proxies in front of the app (nginx = 1); the client IP is then read that many entries from the right of `X-Forwarded-For`, which proxies append to. Without it the IP comes from a spoofable header. Bucket keys are namespaced per endpoint (`image:`, `map:`, `auth:`, …) so limits don't collide.
+In-memory sliding-window rate limiter. Important: **in-memory only** — does not work across multiple Node.js instances. Uses FIFO eviction (not reject-on-full) to prevent DoS via store flooding. `TRUSTED_PROXY_HOPS` must be set to the number of reverse proxies in front of the app (nginx = 1); the client IP is then read that many entries from the right of `X-Forwarded-For`, which proxies append to. Without it the IP comes from a spoofable header. Bucket keys are namespaced per endpoint (`image:`, `map:`, `auth:`, …) so limits don't collide.
+
+`RATE_LIMIT_RPM` (default 1500) covers image, video, EXIF and health. Endpoints where a high ceiling would be wrong carry a fixed constant in the route: `admin-auth` 5, `auth` 10, `install` 10, `og` 30, `install-albums` 30, `webhook` 60, `map` 120.
 
 ### Theming system
 
@@ -107,18 +163,21 @@ A custom loader (`lib/immichLoader.ts`) maps `next/image` requests to `/api/imag
 
 ### Admin Panel (`app/admin/`, `lib/admin/`, `app/api/admin/`)
 
-Visual page builder and settings editor at `/admin`. Enabled by setting `ADMIN_PASSWORD` env var.
+Visual page builder, journal studio, settings editor and analytics at `/admin`. Enabled by setting `ADMIN_PASSWORD` env var, or via the setup wizard (scrypt hash in `install.json`).
 
-- `lib/admin/auth.ts` — HMAC-signed session tokens (HttpOnly cookie `folio_admin_session`), constant-time password verification, 24h expiry.
+Each area is a real route — `/admin/pages`, `/admin/journal`, `/admin/journal/[slug]`, `/admin/settings/[section]`, `/admin/analytics`. `app/admin/AdminShell.tsx` lives in the layout and holds the auth gate and chrome, so switching tabs does not re-run the session check.
+
+- `lib/admin/auth.ts` — HMAC-signed session tokens (HttpOnly cookie `folio_admin_session`), 24h expiry. The signing key is derived from `ADMIN_PASSWORD` + `AUTH_SECRET` with scrypt and cached keyed on its inputs.
 - `lib/admin/yaml-service.ts` — Atomic YAML read/write with automatic backups to `content/.backups/` (max 10 per file). Writes use temp-file + rename pattern.
-- `app/api/admin/auth` — POST login, GET session check, DELETE logout.
-- `app/api/admin/gallery` — GET/PUT for `gallery.yaml`.
-- `app/api/admin/settings` — GET/PUT for `settings.yaml`.
-- `app/api/admin/albums` — GET lists ALL shared Immich albums (bypasses allowlist, admin-only).
-- `app/api/admin/reload` — POST invalidates config cache + Immich cache.
-- `app/admin/components/PageBuilder.tsx` — Tree editor for hero, standalone albums, subpages, and sections.
-- `app/admin/components/AlbumPicker.tsx` — Modal to browse/search all Immich albums.
-- `app/admin/components/SettingsEditor.tsx` — Sidebar-nav settings form (theme, grid, footer, legal, SEO).
+- `lib/admin/journal-service.ts` — the same pattern for `content/journal/*.md`.
+- `lib/admin/paths.ts` — `containedPath()`; every admin file path goes through it so a slug cannot escape its directory.
+- `app/admin/components/PageBuilder.tsx` — Tree editor for hero, standalone albums, subpages, and sections, with a slide-over drawer per item.
+- `app/admin/components/JournalStudio.tsx` — Split-screen block editor with live preview.
+- `app/admin/components/SettingsEditor.tsx` — Sidebar-nav settings form (general, theme, grid, footer, legal, SEO, security & protection, about).
+- `app/admin/components/AlbumPicker.tsx` / `AssetPicker.tsx` / `AssetOrderEditor.tsx` — album browser, library search, manual photo ordering.
+- `app/admin/components/BackupManagerModal.tsx` — list and restore backups.
+
+Every `/api/admin/*` route must check `isAdminEnabled()` **and** `isAdminAuthenticated()` itself — there is no shared middleware guard. `app/api/admin/__tests__/admin-guards.test.ts` enforces this across all of them.
 
 After saving, `invalidateConfigCache()` is called so the next request picks up the new YAML without restart.
 

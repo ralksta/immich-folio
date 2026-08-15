@@ -137,8 +137,8 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
             <div className="backup-confirm-content">
               <strong>Confirm Restoration</strong>
               <p>
-                Are you sure you want to restore <code>{confirmFilename}</code>?
-                A safety snapshot of your current state will be created automatically before reverting.
+                Are you sure you want to restore <code>{confirmFilename}</code>? A safety snapshot
+                of your current state will be created automatically before reverting.
               </p>
               <div className="backup-confirm-actions">
                 <button
@@ -170,12 +170,13 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
             <div className="backup-list">
               {visibleList.map((item) => {
                 const dateObj = item.timestamp ? new Date(item.timestamp) : null;
-                const formattedDate = dateObj && !isNaN(dateObj.getTime())
-                  ? dateObj.toLocaleString('de-DE', {
-                      dateStyle: 'medium',
-                      timeStyle: 'medium',
-                    })
-                  : item.filename;
+                const formattedDate =
+                  dateObj && !isNaN(dateObj.getTime())
+                    ? dateObj.toLocaleString('de-DE', {
+                        dateStyle: 'medium',
+                        timeStyle: 'medium',
+                      })
+                    : item.filename;
 
                 return (
                   <div key={item.filename} className="backup-item">
@@ -183,7 +184,10 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
                       <div className="backup-item-title">
                         <span className="backup-filename">{formattedDate}</span>
                         {item.isPreRestore && (
-                          <span className="backup-badge pre-restore" title="Safety snapshot taken before a restore">
+                          <span
+                            className="backup-badge pre-restore"
+                            title="Safety snapshot taken before a restore"
+                          >
                             Pre-Restore Snapshot
                           </span>
                         )}
@@ -208,7 +212,13 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
                   className="backup-toggle-btn"
                   onClick={() => setShowAllBackups(!showAllBackups)}
                 >
-                  <Icons.IconChevronDown size={14} style={{ transform: showAllBackups ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+                  <Icons.IconChevronDown
+                    size={14}
+                    style={{
+                      transform: showAllBackups ? 'rotate(180deg)' : 'none',
+                      transition: 'transform 0.2s ease',
+                    }}
+                  />
                   {showAllBackups
                     ? 'Ältere Einträge einklappen'
                     : `Ältere Einträge anzeigen (${hiddenCount} weitere)`}

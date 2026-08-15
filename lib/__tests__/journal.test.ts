@@ -4,8 +4,6 @@ import {
   serializeJournalMarkdown,
   sanitizeHtml,
   renderInlineMarkdown,
-  calculateReadingTime,
-  extractExcerpt,
   isValidSlug,
   sanitizeSlug,
 } from '../journal';
@@ -95,8 +93,15 @@ Es war ein stürmischer Tag am Fjord.
       expect(parsed.frontmatter.coverAssetId).toBe('cover-uuid-1');
 
       expect(parsed.blocks).toHaveLength(5);
-      expect(parsed.blocks[0]).toEqual({ type: 'heading', level: 1, text: 'Kapitel 1: Die Reise beginnt' });
-      expect(parsed.blocks[1]).toEqual({ type: 'paragraph', html: 'Es war ein stürmischer Tag am Fjord.' });
+      expect(parsed.blocks[0]).toEqual({
+        type: 'heading',
+        level: 1,
+        text: 'Kapitel 1: Die Reise beginnt',
+      });
+      expect(parsed.blocks[1]).toEqual({
+        type: 'paragraph',
+        html: 'Es war ein stürmischer Tag am Fjord.',
+      });
       expect(parsed.blocks[2]).toEqual({
         type: 'quote',
         text: 'Das Licht im Norden ist unvergleichlich.',

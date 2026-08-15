@@ -6,23 +6,23 @@ _Stand: 2026-05-29 — generiert aus Projekt-Review + ideas.md_
 
 ## ✅ Bereits implementiert
 
-| Feature | Datum | Notizen |
-|---|---|---|
-| **Album-Beschreibungen** | 2026-05-29 | `description:` in `gallery.yaml` (pro Album), eigenes `<p>` unter dem Titel in `AlbumDetailView` |
+| Feature                         | Datum      | Notizen                                                                                                      |
+| ------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------ |
+| **Album-Beschreibungen**        | 2026-05-29 | `description:` in `gallery.yaml` (pro Album), eigenes `<p>` unter dem Titel in `AlbumDetailView`             |
 | **Webhook Cache-Invalidierung** | 2026-05-29 | `POST /api/webhook`, HMAC-SHA256, `WEBHOOK_SECRET` in `.env`, gezielte oder vollständige Cache-Invalidierung |
-| **Video-Support** | 2026-05-29 | Proxy `GET /api/video/[token]` mit Range-Support, Play-Button im Grid, `<video controls>` in Lightbox |
+| **Video-Support**               | 2026-05-29 | Proxy `GET /api/video/[token]` mit Range-Support, Play-Button im Grid, `<video controls>` in Lightbox        |
 
 ---
 
 ## ⚡ Quick Wins (offen)
 
-| Idee | Effort | Warum interessant |
-|---|---|---|
-| **Sequentielle Album-Navigation** | XS | „← Vorheriges / Nächstes Album →" am Ende einer Detailseite |
-| **Alt-Text aus Immich-Description** | XS | Immich-Assets haben ein `description`-Feld → als `alt`-Text → bessere Accessibility & SEO |
-| **RSS/Atom Feed** | S | `/feed.xml` mit neuen Alben — Follower können „neue Arbeit" abonnieren |
-| **Globaler Passwortschutz** | S | Eine einzige `site_password` für die gesamte Site (jetzt: nur per Subpage/Album) |
-| **Privacy-Analytics-Integration** | S | Plausible / Umami / GoatCounter via Script-Tag in `settings.yaml` konfigurieren (kein Tracking-Framework nötig) |
+| Idee                                | Effort | Warum interessant                                                                                               |
+| ----------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------- |
+| **Sequentielle Album-Navigation**   | XS     | „← Vorheriges / Nächstes Album →" am Ende einer Detailseite                                                     |
+| **Alt-Text aus Immich-Description** | XS     | Immich-Assets haben ein `description`-Feld → als `alt`-Text → bessere Accessibility & SEO                       |
+| **RSS/Atom Feed**                   | S      | `/feed.xml` mit neuen Alben — Follower können „neue Arbeit" abonnieren                                          |
+| **Globaler Passwortschutz**         | S      | Eine einzige `site_password` für die gesamte Site (jetzt: nur per Subpage/Album)                                |
+| **Privacy-Analytics-Integration**   | S      | Plausible / Umami / GoatCounter via Script-Tag in `settings.yaml` konfigurieren (kein Tracking-Framework nötig) |
 
 ---
 

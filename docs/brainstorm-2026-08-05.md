@@ -51,7 +51,7 @@ wahrgenommenen Reifegrad.
 Default 300s). Läuft ein Eintrag ab und Immich antwortet nicht, gibt es keinen
 Fallback — die Seite ist tot.
 
-**Idee:** Abgelaufene Einträge nicht wegwerfen, sondern als *stale* markieren.
+**Idee:** Abgelaufene Einträge nicht wegwerfen, sondern als _stale_ markieren.
 Bei Upstream-Fehler den veralteten Eintrag trotzdem ausliefern, im Hintergrund
 erneut versuchen, und (optional konfigurierbar) einen dezenten Hinweis
 einblenden. Das öffentliche Portfolio überlebt damit ein Immich-Update,

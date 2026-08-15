@@ -83,7 +83,11 @@ export async function POST(req: Request) {
     }
 
     // Security check: prevent directory traversal
-    if (backupFilename.includes('..') || backupFilename.includes('/') || backupFilename.includes('\\')) {
+    if (
+      backupFilename.includes('..') ||
+      backupFilename.includes('/') ||
+      backupFilename.includes('\\')
+    ) {
       return NextResponse.json({ error: 'Invalid backup filename' }, { status: 400 });
     }
 

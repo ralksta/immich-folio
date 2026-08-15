@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { parseEssayMarkdown, parseFrontmatter, sanitizeHtml, renderInlineMarkdown, serializeEssayMarkdown } from '../essay';
+import {
+  parseEssayMarkdown,
+  parseFrontmatter,
+  sanitizeHtml,
+  renderInlineMarkdown,
+  serializeEssayMarkdown,
+} from '../essay';
 
 describe('Essay Parser', () => {
   it('sanitizes script tags to prevent XSS', () => {
@@ -20,7 +26,9 @@ describe('Essay Parser', () => {
     const rendered = renderInlineMarkdown(text);
     expect(rendered).toContain('<strong>bold</strong>');
     expect(rendered).toContain('<em>italic</em>');
-    expect(rendered).toContain('<a href="https://example.com" target="_blank" rel="noopener noreferrer">link</a>');
+    expect(rendered).toContain(
+      '<a href="https://example.com" target="_blank" rel="noopener noreferrer">link</a>',
+    );
   });
 
   it('parses frontmatter correctly', () => {
@@ -111,8 +119,17 @@ A closing paragraph with **bold** details.`;
         { type: 'heading' as const, level: 1, text: 'Chapter One' },
         { type: 'paragraph' as const, html: 'This is <strong>bold</strong> text.' },
         { type: 'quote' as const, text: 'A great quote', author: 'Person' },
-        { type: 'photo' as const, assetId: 'photo-1', caption: 'Caption', layout: 'fullbleed' as const },
-        { type: 'photo-pair' as const, assetIds: ['p1', 'p2'] as [string, string], caption: 'Pair caption' },
+        {
+          type: 'photo' as const,
+          assetId: 'photo-1',
+          caption: 'Caption',
+          layout: 'fullbleed' as const,
+        },
+        {
+          type: 'photo-pair' as const,
+          assetIds: ['p1', 'p2'] as [string, string],
+          caption: 'Pair caption',
+        },
       ],
       referencedAssetIds: ['photo-1', 'p1', 'p2'],
     };

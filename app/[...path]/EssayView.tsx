@@ -22,6 +22,8 @@ interface EssayViewProps {
    * published story is not one. Album views opt in.
    */
   proofing?: boolean;
+  /** Offer the "send by email" button in the proofing modal. */
+  allowMailto?: boolean;
 }
 
 function EssayViewContent({
@@ -384,7 +386,7 @@ export function EssayView(props: EssayViewProps) {
   }
 
   return (
-    <ProofingProvider albumTokens={albumTokens}>
+    <ProofingProvider albumTokens={albumTokens} allowMailto={props.allowMailto ?? true}>
       <EssayViewContent {...props} />
     </ProofingProvider>
   );

@@ -2,7 +2,7 @@ import { env } from '../env';
 import { resolveAuthSecret } from '../secret';
 import { getInstallCredentials } from '../install';
 import { loadYaml, clearYamlCache, validateUuid } from './parser';
-import { resolveTheme, VALID_LAYOUTS } from './theme';
+import { resolveTheme, VALID_LAYOUTS, DEFAULT_PRESET } from './theme';
 import { ALBUM_SORT_MODES, isAlbumSortMode, type AlbumSortMode } from '../albumSort';
 import {
   slugify,
@@ -74,6 +74,26 @@ export function buildSubpageGrid(raw?: {
         : {}),
     },
   };
+}
+
+/**
+ * Whether client proofing is on for a page.
+ *
+ * Precedence is subpage → global, the same shape `buildSubpageGrid` gives the
+ * grid: a subpage's own `proofing:` wins in either direction, and a page
+ * reached without one follows `proofing.enabled` from settings.yaml. `??`
+ * rather than `||` is load-bearing — `proofing: false` on a subpage has to
+ * override a global `true`, which `||` would discard.
+ *
+ * Photo essays deliberately do not use this: a published story is not an album
+ * handover, so it requires an explicit `proofing: true` and ignores the global
+ * default. That exception lives at its call site in app/[...path]/page.tsx.
+ */
+export function resolveProofing(
+  subpage: { proofing?: boolean } | undefined,
+  globalEnabled: boolean,
+): boolean {
+  return subpage?.proofing ?? globalEnabled;
 }
 
 /**
@@ -359,7 +379,7 @@ export function getConfig(): AppConfig {
       heroImages: [],
       exifOnHover: true,
       grid: { columns: 3, gap: 12, aspectRatio: '1', layout: 'masonry' },
-      theme: resolveTheme('studio'),
+      theme: resolveTheme(DEFAULT_PRESET),
       footer: null,
       legal: { enabled: false, name: '', address: '', zipCity: '', country: '' },
       map: false,

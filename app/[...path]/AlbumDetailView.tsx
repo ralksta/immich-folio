@@ -18,6 +18,10 @@ interface AlbumDetailViewProps {
   heroImageUrl?: string;
   heroBlurDataURL?: string;
   watermark?: LightboxWatermark;
+  /** Client proofing — favorite hearts, selection bar and send-off modal. */
+  proofing?: boolean;
+  /** Offer the "send by email" button in the proofing modal. */
+  allowMailto?: boolean;
 }
 
 /**
@@ -56,6 +60,8 @@ export function AlbumDetailView({
   heroImageUrl,
   heroBlurDataURL,
   watermark,
+  proofing,
+  allowMailto,
 }: AlbumDetailViewProps) {
   const metaDetail = albumMetaDetail(album);
 
@@ -70,7 +76,9 @@ export function AlbumDetailView({
             priority
             sizes="100vw"
             style={{ objectFit: 'cover' }}
-            {...(heroBlurDataURL ? { placeholder: 'blur' as const, blurDataURL: heroBlurDataURL } : {})}
+            {...(heroBlurDataURL
+              ? { placeholder: 'blur' as const, blurDataURL: heroBlurDataURL }
+              : {})}
           />
           <div className="album-hero__overlay" />
         </div>
@@ -90,15 +98,18 @@ export function AlbumDetailView({
           <span className="album-header__meta-count">
             {images.length} {images.length === 1 ? 'photo' : 'photos'}
           </span>
-          {metaDetail.date && (
-            <span className="album-header__meta-date"> · {metaDetail.date}</span>
-          )}
-          {metaDetail.gear && (
-            <span className="album-header__meta-gear">{metaDetail.gear}</span>
-          )}
+          {metaDetail.date && <span className="album-header__meta-date"> · {metaDetail.date}</span>}
+          {metaDetail.gear && <span className="album-header__meta-gear">{metaDetail.gear}</span>}
         </p>
       </div>
-      <PhotoGrid assets={images} layout={layout} gridStyle={gridStyle} watermark={watermark} />
+      <PhotoGrid
+        assets={images}
+        layout={layout}
+        gridStyle={gridStyle}
+        watermark={watermark}
+        proofing={proofing}
+        allowMailto={allowMailto}
+      />
     </>
   );
 }

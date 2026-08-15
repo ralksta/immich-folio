@@ -33,9 +33,10 @@ scrollToTop: true
 #   allowMailto: true
 
 # ── Theme configuration ──────────────────────────────────────────
-# Presets: studio, studio-modern, minimal, editorial, classic, noir, monograph
+# Presets: studio-modern (default), studio, minimal, editorial, classic,
+#          noir, monograph
 theme:
-  preset: "studio"
+  preset: "studio-modern"
   # accent: "#e60012"
   # photoFrame: "passepartout" # none, passepartout, shadow
   # grain: true

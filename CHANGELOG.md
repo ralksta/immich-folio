@@ -9,8 +9,43 @@ Releases up to and including v0.9.2 are documented in the
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-08-15
+
 ### Added
 
+- **Journal** ([#432](https://github.com/ralksta/immich-folio/pull/432)). A
+  section for photo essays and travel stories at `/journal`, with its own index,
+  cover images, reading times and drafts. Entries are plain Markdown in
+  `content/journal/`, written either by hand or in the new **Journal Studio** —
+  a split-screen block editor with a resizable divider and a live preview of the
+  real page. Photos are inserted through the asset picker rather than by typing
+  UUIDs. A `/journal` link appears in the navigation as soon as one published
+  entry exists; drafts stay visible to a logged-in admin only. Entries can carry
+  their own password. See [docs/journal.md](docs/journal.md).
+- **About page editor and toggle**
+  ([#446](https://github.com/ralksta/immich-folio/pull/446)). Portrait, name,
+  location, gear list and biography are edited under admin Settings › About,
+  which writes `content/about.md`. `about.enabled: false` in `settings.yaml`
+  takes the page offline without deleting it.
+- **Per-album photo order, independent of Immich**
+  ([#414](https://github.com/ralksta/immich-folio/pull/414)). A `sort` key per
+  album — `immich`, `newest`, `oldest`, `filename` or `manual` — so a curated
+  series can have a narrative order without changing the archive. `manual` is a
+  pinned prefix: only the photos you place by hand are listed, everything else
+  follows in the Immich order, and the admin panel has a drag & drop editor
+  for it.
+- **Experimental portfolio features**
+  ([#431](https://github.com/ralksta/immich-folio/pull/431)). Marked
+  experimental in the schema and the UI:
+  - `justified` grid layout — every row fills the width at one shared height,
+    aspect ratios intact
+  - `cover` hero style — a fullscreen splash with the site title and a single
+    **Enter** link
+  - `hidden: true` subpages — reachable by direct link, absent from the
+    navigation (unlisting, not access control)
+  - per-album `grid` overrides, merged over the subpage and global grid
+  - per-album `coverPosition` — the focal point for the cover crop
+  - `navLinks` — external `http(s)` links appended to the header navigation
 - **First-run setup wizard at `/install`**
   ([#419](https://github.com/ralksta/immich-folio/pull/419)). A fresh deployment
   can now be configured from the browser: connect to Immich, optionally pick
@@ -30,6 +65,50 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Changed
 
+- **`studio-modern` is the default theme preset**, replacing `studio`. It is
+  now listed first in the docs, the setup wizard and the admin preset cards,
+  and it is what a site renders with when no preset is configured.
+
+  **This changes the appearance of an existing site only if it never picked a
+  theme** — that is, no `content/settings.yaml`, or one without a
+  `theme.preset` key. Anything with an explicit preset is untouched. To keep
+  the previous look, set it explicitly:
+
+  ```yaml
+  # content/settings.yaml
+  theme:
+    preset: studio
+  ```
+
+  Three code paths fell back to a hard-coded `'studio'` (no settings file at
+  all, a settings file without a `theme` key, and a `theme` object that
+  overrides properties without naming a preset). They now share one
+  `DEFAULT_PRESET` constant, with a test covering all three so they cannot
+  drift apart again.
+
+- **Every admin area has its own URL**
+  ([#432](https://github.com/ralksta/immich-folio/pull/432)) — `/admin/pages`,
+  `/admin/journal`, `/admin/settings/<section>`, `/admin/analytics` — so a
+  section can be bookmarked and the back button behaves. The auth gate and the
+  panel chrome moved into the layout, and no longer re-run on every tab switch.
+  A floating save bar keeps Save reachable without scrolling
+  ([#426](https://github.com/ralksta/immich-folio/pull/426)).
+- **Design system gaps in the admin panel are closed**
+  ([#432](https://github.com/ralksta/immich-folio/pull/432)). Several classes
+  were referenced but never defined — every input used a class no stylesheet
+  had, the Analytics bars had no fill, and all grid previews collapsed to the
+  same height. The album sort dropdown is now a themed listbox rendered in a
+  portal, so it no longer clips inside modals.
+- **The last emojis in the public frontend are SVG icons**
+  ([#445](https://github.com/ralksta/immich-folio/pull/445)), matching the admin
+  panel ([#415](https://github.com/ralksta/immich-folio/pull/415),
+  [#416](https://github.com/ralksta/immich-folio/pull/416),
+  [#418](https://github.com/ralksta/immich-folio/pull/418)).
+- **The sample journal story ships as a template, not a live entry**
+  ([#443](https://github.com/ralksta/immich-folio/pull/443)). It is
+  `content/journal/sample-story.md.example`, so a fresh install does not publish
+  someone else's story — and since the asset IDs in it belong to no server, the
+  template ships without any.
 - **A gallery with no albums is now a valid, rendered state**
   ([#421](https://github.com/ralksta/immich-folio/pull/421)) instead of an error
   — the setup wizard can finish without picking one, and albums can be added
@@ -46,9 +125,73 @@ Releases up to and including v0.9.2 are documented in the
   `content/` read-only: the wizard, the admin panel and the backup rotation all
   write into it, and `:ro` silently breaks all three.
 - **Contributors are credited in the README.**
+- **The documentation was brought back in line with `dev`**
+  ([#452](https://github.com/ralksta/immich-folio/pull/452),
+  [#453](https://github.com/ralksta/immich-folio/pull/453)). The README is
+  restructured and `studio-modern` is documented as the default preset, which it
+  had already become in the code.
+- **The journal guide has screenshots**
+  ([#455](https://github.com/ralksta/immich-folio/pull/455),
+  [#456](https://github.com/ralksta/immich-folio/pull/456),
+  [#457](https://github.com/ralksta/immich-folio/pull/457)). The one guide
+  describing a visual editor had no picture of it. `scripts/screenshots.ts`
+  gained a `journal` section that writes throwaway entries from real albums,
+  shoots the index, a rendered entry, the entry list and the studio — including
+  its draft and password states and the Story Settings form — and deletes them
+  again, so a run never leaves a demo story on a live site.
+
+### Fixed
+
+- **Client proofing ignored its own configuration**
+  ([#454](https://github.com/ralksta/immich-folio/pull/454)). The photo grid
+  mounted the proofing provider unconditionally, so the favourite hearts, the
+  selection bar and the export modal appeared on every album on every site.
+  `proofing.enabled` in `settings.yaml`, a subpage's own `proofing:` flag and
+  `allowMailto` were all parsed, validated — and never read.
+
+  They are honoured now, with precedence subpage → global: a subpage's flag
+  wins in either direction, and a page reached without one follows
+  `proofing.enabled`.
+
+  **What changes for an existing site.** `proofing.enabled` defaults to `true`,
+  so albums keep their proofing controls and most sites see no difference. Two
+  cases do change: a site that set `proofing.enabled: false` finally gets what
+  it asked for, and **photo essays no longer show the controls unless their
+  subpage sets `proofing: true` explicitly** — a published story is not an
+  album handover, so the global default deliberately does not reach into
+  essays. Journal entries never show them.
+
+- **Journal photos did not render**
+  ([#432](https://github.com/ralksta/immich-folio/pull/432)). Photo blocks
+  resolved to nothing, headings sat further left than the body text, fullbleed
+  photos bled only to the left, photo pairs forced both images to equal width
+  regardless of their real shapes, the preview claimed 3:2 for every photo, and
+  the lightbox had neither keyboard control nor navigation inside a journal
+  entry.
 
 ### Security
 
+- **Journal author markdown is escaped, not filtered**
+  ([#432](https://github.com/ralksta/immich-folio/pull/432)). The previous pass
+  stripped `<script>` tags, `on*="…"` handlers and the literal `javascript:` —
+  a denylist, and trivially bypassable: an unquoted `onerror=`, single-quoted
+  handlers, `<svg onload=…>` and `javasjavascript:cript:` (the replacement
+  recombines) all reached `dangerouslySetInnerHTML`. With escaping there is
+  nothing left to enumerate.
+- **Journal file paths are contained**
+  ([#432](https://github.com/ralksta/immich-folio/pull/432)), frontmatter
+  escaping is fixed, and two regexes with polynomial backtracking were replaced
+  by linear scans.
+- **The admin session signing key is derived with scrypt**
+  ([#432](https://github.com/ralksta/immich-folio/pull/432)) rather than a plain
+  digest, and the key cache is keyed on its inputs instead of on a digest of
+  them.
+- **Asset tokens are length-capped before decoding**
+  ([#423](https://github.com/ralksta/immich-folio/pull/423)). `decodeAssetId()`
+  passed arbitrary-length URL input straight to `Buffer.from(…, 'base64url')`,
+  so a huge crafted token could exhaust memory or throw `RangeError` despite the
+  surrounding `try`/`catch`. A real v2 token is ~110 characters; anything over
+  256 is now rejected outright.
 - **Next.js 16.3.0** — picks up the fix for CVE-2025-13465 in Next's vendored
   lodash ([#402](https://github.com/ralksta/immich-folio/pull/402)).
 
@@ -74,6 +217,11 @@ Nothing user-facing; recorded so the next release notes are complete.
   transitively through Next, and 0.35 moved from `export =` to ESM: the module
   namespace stopped being callable and the factory moved to `.default`. The
   Next bump above would otherwise have broken `npx tsc --noEmit`.
+- **Prettier was run across the tree**
+  ([#450](https://github.com/ralksta/immich-folio/pull/450)), and the eslint
+  errors that pass uncovered were cleared
+  ([#451](https://github.com/ralksta/immich-folio/pull/451)). The formatting
+  churn is in one commit of its own, so it does not sit inside a feature diff.
 - Dev-dependency bumps: prettier 3.9.6, eslint 9.39.5, `@types/leaflet` 1.9.22,
   and `github/codeql-action` v4.
 

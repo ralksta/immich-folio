@@ -24,7 +24,7 @@ import {
   assetAspectRatio,
 } from '@/lib/urls';
 import { encodeAssetId } from '@/lib/tokens';
-import { getConfig, type GridConfig } from '@/lib/config';
+import { getConfig, resolveProofing, type GridConfig } from '@/lib/config';
 import { isProtected, isAuthenticated } from '@/lib/auth';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import PasswordGate from '@/components/PasswordGate';
@@ -182,6 +182,12 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
   const resolveLayout = (overrides?: Partial<GridConfig>) =>
     overrides?.layout ?? config.grid.layout;
 
+  // Client proofing — `proofing.enabled` in settings.yaml is the default and a
+  // subpage's own `proofing:` flag overrides it in either direction. Albums
+  // reached without a subpage follow the global setting.
+  const proofingFor = (subpage?: { proofing?: boolean }) =>
+    resolveProofing(subpage, config.proofing.enabled);
+
   // EXPERIMENTAL: per-album grid override — merged over the subpage grid so
   // the precedence is global < subpage < album.
   const mergeAlbumGrid = (
@@ -241,6 +247,8 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         backLinkHref={`/${subpageSlug}`}
         backLinkLabel={`Back to ${subpageName}`}
         watermark={config.watermark}
+        proofing={proofingFor(subpageData?.subpage)}
+        allowMailto={config.proofing.allowMailto}
         {...heroData}
       />
     );
@@ -282,12 +290,12 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       let essayParsed = result.subpage.essayText
         ? parseEssayMarkdown(result.subpage.essayText)
         : result.subpage.essayFile
-        ? loadEssayFromFile(result.subpage.essayFile)
-        : null;
+          ? loadEssayFromFile(result.subpage.essayFile)
+          : null;
 
       // Fetch assets from all subpage albums
       const allAlbums = await Promise.all(
-        albums.map((a) => immich.getAlbumBySlug(a.slug, slug, forceFresh))
+        albums.map((a) => immich.getAlbumBySlug(a.slug, slug, forceFresh)),
       );
       const allAssets = allAlbums.flatMap((a) => (a ? a.assets : []));
       const images = toPhotoItems(allAssets, config.exifOnHover);
@@ -312,6 +320,11 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         };
       }
 
+      // A published story is not an album handover, so an essay only gets the
+      // proofing controls when its subpage asks for them explicitly — the
+      // global default does not reach in here.
+      const essayProofing = result.subpage.proofing === true;
+
       return (
         <EssayView
           essay={essayParsed}
@@ -319,6 +332,8 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
           title={result.subpage.title || result.subpage.name}
           subtitle={result.subpage.subtitle}
           watermark={config.watermark}
+          proofing={essayProofing}
+          allowMailto={config.proofing.allowMailto}
         />
       );
     }
@@ -358,6 +373,8 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
           backLinkHref="/"
           backLinkLabel="Back to Gallery"
           watermark={config.watermark}
+          proofing={proofingFor(result.subpage)}
+          allowMailto={config.proofing.allowMailto}
           {...heroData}
         />
       );
@@ -435,6 +452,8 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       backLinkHref="/"
       backLinkLabel="Back to Gallery"
       watermark={config.watermark}
+      proofing={proofingFor()}
+      allowMailto={config.proofing.allowMailto}
       {...heroData}
     />
   );

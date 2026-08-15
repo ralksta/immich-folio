@@ -2,6 +2,9 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+// Direct import from the theme module, not from '@/lib/config': the config
+// index pulls in `fs` and cannot be bundled into a client component.
+import { DEFAULT_PRESET } from '@/lib/config/theme';
 import '../admin/admin.css';
 import './install.css';
 
@@ -20,8 +23,12 @@ interface Props {
 const STEPS = ['Connect', 'Albums', 'Site', 'Finish'] as const;
 
 const THEME_OPTIONS = [
+  {
+    value: 'studio-modern',
+    label: 'Studio Modern',
+    description: 'Precision grotesque, hairline rules',
+  },
   { value: 'studio', label: 'Studio', description: 'Classic portfolio, red accent' },
-  { value: 'studio-modern', label: 'Studio Modern', description: 'Clean with soft corners' },
   { value: 'minimal', label: 'Minimal', description: 'Bare-bones, monochrome' },
   { value: 'editorial', label: 'Editorial', description: 'Magazine-style serif' },
   { value: 'classic', label: 'Classic', description: 'Warm gold, traditional' },
@@ -47,7 +54,7 @@ export function InstallWizard({ initialApiUrl, setupToken }: Props) {
   // Step 3 — site settings
   const [siteTitle, setSiteTitle] = useState('');
   const [siteSubtitle, setSiteSubtitle] = useState('');
-  const [theme, setTheme] = useState('studio');
+  const [theme, setTheme] = useState(DEFAULT_PRESET);
   const [adminPassword, setAdminPassword] = useState('');
   const [adminConfirm, setAdminConfirm] = useState('');
   const [passwordError, setPasswordError] = useState('');

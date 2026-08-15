@@ -35,15 +35,17 @@ export interface PhotoItem {
 interface PhotoGridProps {
   assets: PhotoItem[];
   layout?:
-    | 'masonry'
-    | 'uniform'
-    | 'showcase'
-    | 'filmstrip'
-    | 'editorial-flow'
-    | 'essay'
-    | 'justified';
+    'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow' | 'essay' | 'justified';
   gridStyle?: React.CSSProperties;
   watermark?: LightboxWatermark;
+  /**
+   * Client proofing — favorite hearts, the selection bar and the send-off
+   * modal. Off unless the caller opts in, so a grid rendered outside the
+   * album routes never grows a delivery workflow by accident.
+   */
+  proofing?: boolean;
+  /** Offer the "send by email" button in the proofing modal. */
+  allowMailto?: boolean;
 }
 
 /** Parse `#photo-N` from a hash string. Returns index or null. */
@@ -120,7 +122,9 @@ function PhotoGridInner({ assets, layout = 'masonry', gridStyle, watermark }: Ph
   }, [displayedAssets.length]);
 
   const goPrev = useCallback(() => {
-    setLightboxIndex((prev) => (prev !== null ? (prev - 1 + displayedAssets.length) % displayedAssets.length : null));
+    setLightboxIndex((prev) =>
+      prev !== null ? (prev - 1 + displayedAssets.length) % displayedAssets.length : null,
+    );
   }, [displayedAssets.length]);
 
   // Keyboard navigation and the scroll lock live in <Lightbox/>.
@@ -268,7 +272,9 @@ function PhotoGridInner({ assets, layout = 'masonry', gridStyle, watermark }: Ph
             type="button"
             onClick={() => proofing.setIsFilterActive((prev) => !prev)}
             style={{
-              background: proofing.isFilterActive ? 'var(--accent, #e60012)' : 'rgba(255,255,255,0.15)',
+              background: proofing.isFilterActive
+                ? 'var(--accent, #e60012)'
+                : 'rgba(255,255,255,0.15)',
               color: '#fff',
               border: 'none',
               padding: '6px 14px',
@@ -298,7 +304,7 @@ function PhotoGridInner({ assets, layout = 'masonry', gridStyle, watermark }: Ph
         </div>
       )}
 
-      <ProofingModal />
+      {proofing && <ProofingModal />}
 
       {lightboxIndex !== null && (
         <Lightbox
@@ -317,8 +323,15 @@ function PhotoGridInner({ assets, layout = 'masonry', gridStyle, watermark }: Ph
 export function PhotoGrid(props: PhotoGridProps) {
   const albumTokens = useMemo(() => props.assets.map((a) => a.id), [props.assets]);
 
+  // Without the provider useProofing() returns null, and every proofing control
+  // (hearts in the grid and in the lightbox, selection bar, modal) drops out on
+  // its own.
+  if (!props.proofing) {
+    return <PhotoGridInner {...props} />;
+  }
+
   return (
-    <ProofingProvider albumTokens={albumTokens}>
+    <ProofingProvider albumTokens={albumTokens} allowMailto={props.allowMailto ?? true}>
       <PhotoGridInner {...props} />
     </ProofingProvider>
   );

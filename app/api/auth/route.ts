@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (!isProtected(slug, type)) {
-      const typeLabel = type === 'journal' ? 'Journal entry' : type === 'subpage' ? 'Subpage' : 'Album';
+      const typeLabel =
+        type === 'journal' ? 'Journal entry' : type === 'subpage' ? 'Subpage' : 'Album';
       return NextResponse.json(
         {
           error: `${typeLabel} is not password-protected`,

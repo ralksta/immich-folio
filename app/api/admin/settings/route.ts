@@ -40,7 +40,10 @@ export async function PUT(request: Request) {
     invalidateConfigCache();
     immich.invalidateAll();
     revalidatePath('/', 'layout');
-    return NextResponse.json({ success: true, message: 'Saved successfully. Backup of previous version created.' });
+    return NextResponse.json({
+      success: true,
+      message: 'Saved successfully. Backup of previous version created.',
+    });
   } catch (err) {
     console.error('[Admin] Failed to write settings.yaml:', err);
     return NextResponse.json({ error: 'Failed to save settings' }, { status: 500 });
