@@ -33,6 +33,11 @@ A `/journal` link appears in the site navigation automatically as soon as at
 least one **published** (non-draft) entry exists. There is no setting to turn
 the journal on: an empty `content/journal/` directory means no journal.
 
+<p align="center">
+  <img src="screenshots/journal-index.png" width="98%" alt="The journal index listing entries with cover images, dates and reading times" />
+</p>
+<p align="center"><em>The index at <code>/journal</code> — cover image, title, date and reading time per entry.</em></p>
+
 A template ships with the project:
 
 ```bash
@@ -127,6 +132,11 @@ real aspect ratios rather than forced equal:
 Photos in an entry open in the same lightbox as the rest of the site, with
 keyboard and swipe navigation.
 
+<p align="center">
+  <img src="screenshots/journal-entry.png" width="98%" alt="A rendered journal entry with heading, body text, a fullbleed photo and a quote" />
+</p>
+<p align="center"><em>A rendered entry — headings, body text, a fullbleed photo and a pull quote, from the blocks above.</em></p>
+
 > [!TIP]
 > Writing asset UUIDs by hand is tedious. In the [Journal Studio](#journal-studio),
 > **Add Block → Photo** opens the asset picker and fills the UUID in for you.
@@ -153,9 +163,21 @@ A plaintext password works but is logged as a warning at startup.
 
 ## Journal Studio
 
-The admin panel's **Journal** tab is a split-screen editor: blocks on the left,
-a live preview of the real page on the right, with a draggable divider between
-them (mouse, keyboard, and touch).
+The admin panel's **Journal** tab lists every entry — drafts included, marked as
+such — with its cover, date and password state:
+
+<p align="center">
+  <img src="screenshots/admin-journal-list.png" width="98%" alt="The Journal tab listing entries with covers, dates and draft badges" />
+</p>
+
+Opening one gives a split-screen editor: blocks on the left, a live preview of
+the real page on the right, with a draggable divider between them (mouse,
+keyboard, and touch).
+
+<p align="center">
+  <img src="screenshots/admin-journal-studio.png" width="98%" alt="The Journal Studio: block editor on the left, live preview of the entry on the right" />
+</p>
+<p align="center"><em>The Journal Studio — every block on the left, the real page on the right.</em></p>
 
 - **Add Block** — heading, text, quote, photo, or photo pair
 - **Photo picker** — browse your Immich library and insert the asset UUID
