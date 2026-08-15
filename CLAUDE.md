@@ -133,7 +133,9 @@ Fixed routes outside the catch-all: `/about`, `/map`, `/impressum`, `/journal`, 
 
 ### Proofing (`lib/proofing.ts`, `components/ProofingContext.tsx`)
 
-Client-side favourite selection encoded as a bitmask in the URL and mirrored to `localStorage`; nothing is stored server-side. Note that `PhotoGrid` mounts `ProofingProvider` unconditionally — the `proofing.enabled` / per-subpage `proofing` config keys are parsed but not consulted, so the feature is currently always on for grids.
+Client-side favourite selection encoded as a bitmask in the URL and mirrored to `localStorage`; nothing is stored server-side.
+
+Whether it is offered is resolved server-side: `resolveProofing()` (`lib/config/index.ts`) treats `proofing.enabled` in `settings.yaml` as the default and lets a subpage's own `proofing:` flag override it in either direction; albums reached without a subpage follow the global setting (`lib/__tests__/proofing-resolution.test.ts`). The resolved boolean is passed down as a prop — `PhotoGrid` only mounts `ProofingProvider` when it is true, and without the provider `useProofing()` returns null and every proofing control disappears. `EssayView` takes the same prop but defaults it to **off**: proofing is a delivery workflow for album handovers, and hearts interrupt a story.
 
 ### Analytics
 

@@ -28,6 +28,20 @@ Releases up to and including v0.9.2 are documented in the
   will see its subpage cover grids change on upgrade.** That is the point of the
   change; to keep two-up covers, set `grid.columns: 2` on the subpage.
 
+### Fixed
+
+- **A failing site no longer renders a blank page.** `app/error.tsx` is rendered
+  _inside_ the root layout, so it could never catch the layout itself throwing —
+  and the layout is what reads the configuration and the request headers. The
+  new `app/global-error.tsx` replaces the whole document with a readable
+  message and a retry, self-contained so it works without the stylesheet or the
+  theme variables.
+
+### Changed
+
+- The package is named `immich-folio` instead of `immich-lightbox`, which it had
+  kept from before the rename. Only visible when working on the source.
+
 ## [0.11.0] — 2026-08-15
 
 ### Added
