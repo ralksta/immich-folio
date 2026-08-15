@@ -511,7 +511,7 @@ async function captureJournal(browser: Browser): Promise<void> {
     // reveal draft-only chrome in a shot meant to show what a visitor sees.
     await withPage(browser, VIEWPORT, async (page) => {
       await capturePage(page, '/journal', 'journal-index', 2500);
-      await capturePage(page, `/journal/${DEMO_JOURNAL_SLUG}`, 'journal-entry', 3000);
+      await captureJournalEntry(page);
     });
   } finally {
     if (written && fs.existsSync(entryPath)) {
@@ -519,6 +519,28 @@ async function captureJournal(browser: Browser): Promise<void> {
       console.log(`  🧹 Removed the demo entry (${DEMO_JOURNAL_SLUG}.md)`);
     }
   }
+}
+
+/**
+ * The rendered entry, scrolled to the quote so the shot shows the block types
+ * the guide describes. The top of the page is only a title and a cover image,
+ * which says nothing about the journal that the index shot does not already
+ * show; the quote sits between the prose and a photo block, so framing it puts
+ * three of the block types in one viewport.
+ */
+async function captureJournalEntry(page: Page): Promise<void> {
+  await page.goto(`${BASE_URL}/journal/${DEMO_JOURNAL_SLUG}`, { waitUntil: 'networkidle' });
+  await revealDeferredContent(page);
+  await waitForImages(page);
+  const quote = page.locator('.essay-quote').first();
+  if ((await quote.count()) > 0) {
+    await quote.scrollIntoViewIfNeeded();
+    // Lift the quote to the upper third, so the photo block below it is in frame.
+    await page.evaluate(() => window.scrollBy(0, -180));
+    await waitForImages(page);
+  }
+  await page.waitForTimeout(3000);
+  await capture(page, 'journal-entry');
 }
 
 /** Log in and wait for the panel chrome. Shared by the admin and journal runs. */
