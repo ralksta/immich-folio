@@ -1,19 +1,17 @@
 # Immich Folio
 
-A self-hosted photography portfolio powered by [Immich](https://immich.app). Turns your Immich albums into a beautiful, public-facing gallery — without ever exposing your Immich server to the internet.
+**Turn your Immich albums into a public photography portfolio — without ever exposing your Immich server to the internet.**
 
-Immich Folio acts as a **secure reverse proxy** between your visitors and your private Immich instance. Your Immich server stays on your local network, completely invisible to the outside world.
+<p>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/ralksta/immich-folio" alt="MIT License" /></a>
+  <a href="https://github.com/ralksta/immich-folio/releases"><img src="https://img.shields.io/github/v/release/ralksta/immich-folio" alt="Latest release" /></a>
+</p>
 
 <p align="center">
-  <img src="docs/screenshots/theme-studio-modern-home.png" width="98%" alt="Homepage — Studio Modern theme" />
+  <img src="docs/screenshots/header.png" width="100%" alt="Immich Folio — the public gallery, an album grid, and the admin page builder" />
 </p>
-<p align="center">
-  <img src="docs/screenshots/theme-studio-modern-grid.png" width="49%" alt="Album photo grid" />
-  <img src="docs/screenshots/page-collection.png" width="49%" alt="Collection overview grouping several albums" />
-</p>
-<p align="center">
-  <img src="docs/screenshots/lightbox-exif.png" width="98%" alt="Fullscreen lightbox with the EXIF panel open" />
-</p>
+
+A self-hosted portfolio powered by [Immich](https://immich.app). It acts as a **secure reverse proxy** between your visitors and your private Immich instance: your Immich server stays on your local network, completely invisible to the outside world, while your albums are published as a gallery you control.
 
 ## Contents
 
@@ -50,6 +48,11 @@ Immich Folio acts as a **secure reverse proxy** between your visitors and your p
 </p>
 <p align="center"><em>Masonry and showcase, both in Studio Modern — the same album, a different grid layout.</em></p>
 
+<p align="center">
+  <img src="docs/screenshots/lightbox-exif.png" width="98%" alt="Fullscreen lightbox with the EXIF panel open" />
+</p>
+<p align="center"><em>The fullscreen lightbox with the EXIF panel — camera, lens and exposure for the frame on screen.</em></p>
+
 ### Content & Organization
 
 - **Subpage grouping** — organize albums into named collections (e.g. `/japan/tokyo-2023`)
@@ -65,6 +68,11 @@ Immich Folio acts as a **secure reverse proxy** between your visitors and your p
 - **Lightbox watermark** — configurable overlay on fullscreen images
 - **Privacy-friendly analytics** — cookieless view counts, no third parties, can be switched off
 - **Dynamic OG images** — auto-generated social preview images per album
+
+<p align="center">
+  <img src="docs/screenshots/page-collection.png" width="98%" alt="Collection overview grouping several albums under one subpage" />
+</p>
+<p align="center"><em>A subpage grouping several albums into one collection.</em></p>
 
 <p align="center">
   <img src="docs/screenshots/page-about.png" width="49%" alt="About page rendered from content/about.md" />
