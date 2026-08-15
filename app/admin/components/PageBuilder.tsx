@@ -122,6 +122,21 @@ interface Subpage {
   grid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
 }
 
+/**
+ * Drops keys the editor cleared so an emptied field never persists as `null`
+ * in gallery.yaml, and returns undefined once nothing is left — `handleSave`
+ * only writes `grid` when it is truthy.
+ */
+function normalizeSubpageGrid(grid: Subpage['grid']): Subpage['grid'] {
+  if (!grid) return undefined;
+  const next = { ...grid };
+  for (const key of Object.keys(next) as Array<keyof typeof next>) {
+    const value = next[key];
+    if (value === undefined || value === '') delete next[key];
+  }
+  return Object.keys(next).length > 0 ? next : undefined;
+}
+
 interface GalleryState {
   hero: string[];
   albums: AlbumEntry[];
@@ -1451,6 +1466,69 @@ export default function PageBuilder() {
                                     Photo Essay Mode (Storytelling Editor)
                                   </option>
                                 </select>
+                              </div>
+
+                              {/* Album cover grid — only shown for pages that
+                                  actually render one (2+ albums, no essay). */}
+                              <div className="admin-field" style={{ marginTop: '1rem' }}>
+                                <label>Album Cover Grid</label>
+                                <div style={{ display: 'flex', gap: '12px' }}>
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    max={6}
+                                    value={sp.grid?.columns ?? ''}
+                                    placeholder="Columns (site default)"
+                                    onChange={(e) => {
+                                      const raw = e.target.value;
+                                      const columns = raw === '' ? undefined : Number(raw);
+                                      updateSubpage(spIndex, {
+                                        grid: normalizeSubpageGrid({
+                                          ...(sp.grid || {}),
+                                          columns:
+                                            columns != null && columns >= 1 && columns <= 6
+                                              ? columns
+                                              : undefined,
+                                        }),
+                                      });
+                                    }}
+                                    style={{
+                                      padding: '8px 12px',
+                                      borderRadius: '6px',
+                                      flex: 1,
+                                      fontSize: '0.9rem',
+                                    }}
+                                  />
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={80}
+                                    value={sp.grid?.gap ?? ''}
+                                    placeholder="Gap in px (theme default)"
+                                    onChange={(e) => {
+                                      const raw = e.target.value;
+                                      const gap = raw === '' ? undefined : Number(raw);
+                                      updateSubpage(spIndex, {
+                                        grid: normalizeSubpageGrid({
+                                          ...(sp.grid || {}),
+                                          gap:
+                                            gap != null && gap >= 0 && gap <= 80 ? gap : undefined,
+                                        }),
+                                      });
+                                    }}
+                                    style={{
+                                      padding: '8px 12px',
+                                      borderRadius: '6px',
+                                      flex: 1,
+                                      fontSize: '0.9rem',
+                                    }}
+                                  />
+                                </div>
+                                <p className="admin-field-hint">
+                                  Overrides how the album covers are tiled on this page. Leave the
+                                  column count empty to follow the site-wide grid setting, and the
+                                  gap empty to keep the theme&apos;s own spacing.
+                                </p>
                               </div>
                             </div>
 

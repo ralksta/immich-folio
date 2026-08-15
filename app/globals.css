@@ -820,10 +820,15 @@
   width: 100%;
 }
 
+/* The album-cover grid. `--subpage-columns` comes from the resolved grid
+   config (global settings.yaml < per-subpage override); the fallback keeps the
+   historical two-up layout for anything rendering this grid without the vars.
+   `--subpage-gap` is a *preset* decision — the theme files below set it, and
+   only an explicit per-subpage `gap:` overrides it (inline vars win). */
 .subpage-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 4px;
+  grid-template-columns: repeat(var(--subpage-columns, 2), 1fr);
+  gap: var(--subpage-gap, 4px);
 }
 
 .subpage-grid__item {

@@ -615,8 +615,7 @@
 
 /* ── Subpage: Album-Cover mit Caption-Bar ───────────────────── */
 [data-preset='studio-modern'] .subpage-grid {
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  --subpage-gap: 20px;
 }
 
 [data-preset='studio-modern'] .subpage-grid__item {
