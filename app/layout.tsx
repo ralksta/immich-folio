@@ -20,6 +20,8 @@ import { isInstallPath } from '@/lib/install';
 import { DevToolbarLoader } from '@/components/DevToolbarLoader';
 import AssetProtection from '@/components/AssetProtection';
 import AnalyticsTracker from '@/components/AnalyticsTracker';
+import { I18nProvider } from '@/components/I18nProvider';
+import { resolveLocale, getDictionary } from '@/lib/i18n';
 
 export async function generateMetadata(): Promise<Metadata> {
   const config = getConfigOrNull();
@@ -114,6 +116,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   const isAdmin = isAdminPath(pathname);
+  const locale = resolveLocale(config.lang);
+  const t = getDictionary(locale);
 
   return (
     <html
@@ -132,49 +136,51 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="stylesheet" href={fontsUrl} />
       </head>
       <body>
-        {isAdmin ? (
-          children
-        ) : (
-          <>
-            <a href="#main-content" className="skip-link">
-              Skip to content
-            </a>
-            <header className="header">
-              <nav className="header__nav">
-                {/* Brand wordmark — presets that show it pair it with the dot. */}
-                <span className="header__wordmark" aria-hidden="true">
-                  {config.siteTitle}
-                </span>
-                <Link href="/" className="header__nav-link">
-                  Home
-                </Link>
-                <SubpageNav />
-                {config.aboutEnabled && (
-                  <Link href="/about" className="header__nav-link">
-                    About
+        <I18nProvider locale={locale}>
+          {isAdmin ? (
+            children
+          ) : (
+            <>
+              <a href="#main-content" className="skip-link">
+                {t.nav.skipToContent}
+              </a>
+              <header className="header">
+                <nav className="header__nav">
+                  {/* Brand wordmark — presets that show it pair it with the dot. */}
+                  <span className="header__wordmark" aria-hidden="true">
+                    {config.siteTitle}
+                  </span>
+                  <Link href="/" className="header__nav-link">
+                    {t.nav.home}
                   </Link>
-                )}
-                {config.map && (
-                  <Link href="/map" className="header__nav-link">
-                    Map
-                  </Link>
-                )}
-                <ThemeToggle />
-              </nav>
-            </header>
-            <main id="main-content" tabIndex={-1} className="main">
-              {children}
-            </main>
-            <Footer />
-            {config.scrollToTop && <ScrollToTop />}
-            <AssetProtection
-              disableRightClick={config.protection?.disableRightClick}
-              disableImageDrag={config.protection?.disableImageDrag}
-            />
-            <AnalyticsTracker />
-            {process.env.NODE_ENV === 'development' && <DevToolbarLoader />}
-          </>
-        )}
+                  <SubpageNav />
+                  {config.aboutEnabled && (
+                    <Link href="/about" className="header__nav-link">
+                      {t.nav.about}
+                    </Link>
+                  )}
+                  {config.map && (
+                    <Link href="/map" className="header__nav-link">
+                      {t.nav.map}
+                    </Link>
+                  )}
+                  <ThemeToggle />
+                </nav>
+              </header>
+              <main id="main-content" tabIndex={-1} className="main">
+                {children}
+              </main>
+              <Footer />
+              {config.scrollToTop && <ScrollToTop />}
+              <AssetProtection
+                disableRightClick={config.protection?.disableRightClick}
+                disableImageDrag={config.protection?.disableImageDrag}
+              />
+              <AnalyticsTracker />
+              {process.env.NODE_ENV === 'development' && <DevToolbarLoader />}
+            </>
+          )}
+        </I18nProvider>
       </body>
     </html>
   );

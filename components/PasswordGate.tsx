@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import styles from './PasswordGate.module.css';
+import { useDictionary } from './I18nProvider';
 
 interface PasswordGateProps {
   slug: string;
@@ -15,6 +16,7 @@ interface PasswordGateProps {
 }
 
 export default function PasswordGate({ slug, title, type = 'subpage' }: PasswordGateProps) {
+  const t = useDictionary();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,11 +36,11 @@ export default function PasswordGate({ slug, title, type = 'subpage' }: Password
       if (res.ok) {
         window.location.reload();
       } else {
-        setError('Incorrect password. Please try again.');
+        setError(t.password.incorrect);
         setPassword('');
       }
     } catch {
-      setError('Unable to verify password. Please try again later.');
+      setError(t.password.failed);
     } finally {
       setLoading(false);
     }
@@ -48,7 +50,7 @@ export default function PasswordGate({ slug, title, type = 'subpage' }: Password
     <div className={styles.gate}>
       <div className={styles.card}>
         <h2 className={styles.title}>{title}</h2>
-        <p className={styles.subtitle}>This gallery is password-protected.</p>
+        <p className={styles.subtitle}>{t.password.subtitle}</p>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <input
@@ -56,8 +58,8 @@ export default function PasswordGate({ slug, title, type = 'subpage' }: Password
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter password"
-            aria-label="Enter password"
+            placeholder={t.password.placeholder}
+            aria-label={t.password.placeholder}
             className={styles.input}
             autoFocus
             required
@@ -83,10 +85,10 @@ export default function PasswordGate({ slug, title, type = 'subpage' }: Password
                   <circle cx="12" cy="12" r="10" strokeOpacity="0.25"></circle>
                   <path d="M12 2a10 10 0 0 1 10 10"></path>
                 </svg>
-                Verifying…
+                {t.password.verifying}
               </>
             ) : (
-              'Enter'
+              t.password.submit
             )}
           </button>
         </form>

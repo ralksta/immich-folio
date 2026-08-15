@@ -6,10 +6,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useDictionary } from './I18nProvider';
 
 const SHOW_THRESHOLD = 300;
 
 export function ScrollToTop() {
+  const t = useDictionary();
   const [visible, setVisible] = useState(false);
   const frame = useRef<number | null>(null);
 
@@ -41,8 +43,8 @@ export function ScrollToTop() {
     <button
       className={`scroll-to-top ${visible ? 'scroll-to-top--visible' : ''}`}
       onClick={scrollToTop}
-      aria-label="Scroll to top"
-      title="Scroll to top"
+      aria-label={t.theme.scrollToTop}
+      title={t.theme.scrollToTop}
       type="button"
       tabIndex={visible ? 0 : -1}
       aria-hidden={!visible}

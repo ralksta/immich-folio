@@ -5,10 +5,12 @@
 
 import Link from 'next/link';
 import { getConfig } from '@/lib/config';
+import { getServerDictionary } from '@/lib/i18n/server';
 
 export function Footer() {
   const config = getConfig();
   const { footer, legal } = config;
+  const t = getServerDictionary();
 
   // Don't render if no footer config AND no legal config
   if (
@@ -25,7 +27,7 @@ export function Footer() {
           {footer?.name && <span className="footer__name">{footer.name}</span>}
           {legal.enabled && (
             <Link href="/impressum" className="footer__legal-link">
-              Impressum
+              {t.legal.navLabel}
             </Link>
           )}
         </div>

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { imageUrl } from '@/lib/urls';
 import { SubpageSectionConfig } from '@/lib/config';
+import { getServerDictionary } from '@/lib/i18n/server';
 
 interface SubpageAlbum {
   id: string;
@@ -32,7 +33,7 @@ interface SubpageGridViewProps {
 }
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
-const photoCount = (n: number) => `${n} ${n === 1 ? 'photo' : 'photos'}`;
+const photoCount = (n: number) => getServerDictionary().common.photos(n);
 
 function AlbumGrid({
   albums,
@@ -55,7 +56,10 @@ function AlbumGrid({
             href={`/${slug}/${album.slug}`}
             className="subpage-grid__item"
             style={ph?.dominantColor ? { backgroundColor: ph.dominantColor } : undefined}
-            aria-label={`${album.albumName}, ${photoCount(album.assetCount)}`}
+            aria-label={getServerDictionary().subpage.coverAria(
+              album.albumName,
+              photoCount(album.assetCount),
+            )}
           >
             <span className="subpage-grid__item-media">
               {album.albumThumbnailAssetId ? (
@@ -115,6 +119,7 @@ export function SubpageGridView({
   const albumMap = new Map(albums.map((a) => [a.id, a]));
   const placeholderMap = new Map(albums.map((a, i) => [a.id, coverPlaceholders[i] ?? null]));
 
+  const t = getServerDictionary();
   const hasSections = sections && sections.length > 0;
   const totalPhotos = albums.reduce((sum, a) => sum + a.assetCount, 0);
 
@@ -125,21 +130,21 @@ export function SubpageGridView({
           <div className="subpage-header__main">
             {index !== undefined && (
               <p className="subpage-header__kicker" aria-hidden="true">
-                {pad2(index)} — Collection
+                {t.subpage.collectionKicker(pad2(index))}
               </p>
             )}
             {title && <h1 className="subpage-title">{title}</h1>}
             {subtitle && <p className="subpage-subtitle">{subtitle}</p>}
           </div>
           <p className="subpage-header__meta" aria-hidden="true">
-            {albums.length} {albums.length === 1 ? 'album' : 'albums'} · {photoCount(totalPhotos)}
+            {t.common.albums(albums.length)} · {photoCount(totalPhotos)}
           </p>
         </header>
       )}
 
       {/* Typographic Table of Contents */}
       {hasSections && (
-        <nav className="subpage-toc" aria-label="Sections">
+        <nav className="subpage-toc" aria-label={t.subpage.sectionsNav}>
           {sections.map((sec, i) => (
             <span key={sec.slug} className="subpage-toc__entry">
               <a href={`#${sec.slug}`} className="subpage-toc__link">

@@ -8,6 +8,7 @@ import SaveBar from './SaveBar';
 // Direct import from the theme module, not from '@/lib/config': the config
 // index pulls in `fs` and cannot be bundled into a client component.
 import { DEFAULT_PRESET } from '@/lib/config/theme';
+import { SUPPORTED_LOCALES } from '@/lib/i18n';
 
 interface Settings {
   title?: string;
@@ -537,6 +538,11 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                   <option value="es">Español (ES)</option>
                   <option value="ja">日本語 (JA)</option>
                 </select>
+                <p className="admin-field-hint">
+                  The visitor-facing interface is translated for {SUPPORTED_LOCALES.join(', ')}.
+                  Other languages still set <code>&lt;html lang&gt;</code> and date formatting, but
+                  show the English interface. The admin panel is always English.
+                </p>
               </div>
 
               <div className="settings-section-divider" />

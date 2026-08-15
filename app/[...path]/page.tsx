@@ -34,6 +34,7 @@ import { SubpageGridView } from './SubpageGridView';
 import { EssayView } from './EssayView';
 import { parseEssayMarkdown } from '@/lib/essay';
 import { loadEssayFromFile } from '@/lib/admin/journal-service';
+import { getServerDictionary } from '@/lib/i18n/server';
 
 // Render at request time — requires live Immich connection
 export const dynamic = 'force-dynamic';
@@ -378,7 +379,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
           gridStyle={buildGridStyle(mergeAlbumGrid(album.id, result.subpage.grid))}
           subtitle={result.subpage.subtitle}
           backLinkHref="/"
-          backLinkLabel="Back to Gallery"
+          backLinkLabel={getServerDictionary().common.backToGallery}
           watermark={config.watermark}
           proofing={proofingFor(result.subpage)}
           allowMailto={config.proofing.allowMailto}
@@ -458,7 +459,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       layout={resolveLayout(mergeAlbumGrid(album.id))}
       gridStyle={buildGridStyle(mergeAlbumGrid(album.id))}
       backLinkHref="/"
-      backLinkLabel="Back to Gallery"
+      backLinkLabel={getServerDictionary().common.backToGallery}
       watermark={config.watermark}
       proofing={proofingFor()}
       allowMailto={config.proofing.allowMailto}

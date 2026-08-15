@@ -9,6 +9,7 @@
 'use client';
 
 import { useSyncExternalStore, useCallback } from 'react';
+import { useDictionary } from './I18nProvider';
 
 type Theme = 'dark' | 'light';
 
@@ -47,6 +48,8 @@ if (typeof window !== 'undefined') {
 
 export function ThemeToggle() {
   const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const t = useDictionary();
+  const label = theme === 'dark' ? t.theme.switchToLight : t.theme.switchToDark;
 
   const toggle = useCallback(() => {
     applyTheme(theme === 'dark' ? 'light' : 'dark');
@@ -56,9 +59,9 @@ export function ThemeToggle() {
     <button
       className="theme-toggle"
       onClick={toggle}
-      aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+      aria-label={label}
       type="button"
-      title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+      title={label}
     >
       {theme === 'dark' ? (
         // Sun icon

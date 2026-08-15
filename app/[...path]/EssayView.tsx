@@ -9,6 +9,7 @@ import { FadeIn } from '@/components/FadeIn';
 import type { ParsedEssay, EssayBlock } from '@/lib/essay';
 import type { PhotoItem } from './PhotoGrid';
 import './essay.css';
+import { useDictionary } from '@/components/I18nProvider';
 
 interface EssayViewProps {
   essay: ParsedEssay;
@@ -34,6 +35,7 @@ function EssayViewContent({
   watermark,
   proofing: proofingEnabled = false,
 }: EssayViewProps) {
+  const t = useDictionary();
   const proofing = useProofing();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
@@ -122,7 +124,7 @@ function EssayViewContent({
                       e.stopPropagation();
                       proofing.toggleFavorite(item.id);
                     }}
-                    aria-label={isFav ? 'Remove favorite' : 'Add favorite'}
+                    aria-label={isFav ? t.proofing.removeFavorite : t.proofing.addFavorite}
                     style={{
                       position: 'absolute',
                       top: '12px',
@@ -205,7 +207,7 @@ function EssayViewContent({
                             e.stopPropagation();
                             proofing.toggleFavorite(item.id);
                           }}
-                          aria-label={isFav ? 'Remove favorite' : 'Add favorite'}
+                          aria-label={isFav ? t.proofing.removeFavorite : t.proofing.addFavorite}
                           style={{
                             position: 'absolute',
                             top: '12px',
@@ -333,7 +335,9 @@ function EssayViewContent({
               cursor: 'pointer',
             }}
           >
-            {proofing.isFilterActive ? 'Show All' : `❤️ ${proofing.favorites.size} Selected`}
+            {proofing.isFilterActive
+              ? t.proofing.showAll
+              : t.proofing.selected(proofing.favorites.size)}
           </button>
           <button
             type="button"
@@ -348,7 +352,7 @@ function EssayViewContent({
               textDecoration: 'underline',
             }}
           >
-            Share & Export
+            {t.proofing.shareExport}
           </button>
         </div>
       )}
