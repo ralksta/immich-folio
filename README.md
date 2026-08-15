@@ -15,61 +15,18 @@ Immich Folio acts as a **secure reverse proxy** between your visitors and your p
   <img src="docs/screenshots/lightbox-exif.png" width="98%" alt="Fullscreen lightbox with the EXIF panel open" />
 </p>
 
-## What's New
+## Contents
 
-### Unreleased
+- [Features](#features)
+- [Requirements](#requirements)
+- [Quick Start](#quick-start)
+- [First-Run Setup](#first-run-setup)
+- [Configuration](#configuration)
+- [Docker](#docker)
+- [Admin Panel](#admin-panel)
+- [What's New](#whats-new)
 
-Since v0.10.0 — a first-run wizard, a journal, and a set of experimental
-portfolio features.
-
-- **First-run setup wizard at `/install`** — configure a fresh deployment from the browser instead of writing config files: connect to Immich, pick albums, name the site. Credentials are verified before anything is written → [First-Run Setup](#first-run-setup)
-- **Journal** — a section for photo essays and travel stories at `/journal`, with a split-screen block editor in the admin panel, drafts, per-entry passwords, cover images and reading times → [Journal guide](docs/journal.md)
-- **About page editor** — portrait, name, location, gear and bio edited in the admin panel, plus a toggle to take the page offline
-- **Custom favicon upload** — SVG, PNG, ICO or JPEG, stored in the content volume
-- **Experimental portfolio features** — justified grid layout, `cover` hero splash screen, unlisted subpages, per-album grid overrides, cover focal points, and external navigation links
-- **Admin panel** — every area has its own URL, a floating save bar, and a manual photo-order editor with drag & drop
-
-**Upgrading:** no migration, no configuration change.
-
-### v0.10.0
-
-Two new ways to present work, a seventh theme preset, and an admin panel rebuilt around visual controls.
-
-- **New theme preset: Studio Modern** — the Leica language of `studio` rebuilt around the Archivo grotesque, with IBM Plex Mono for all photographic metadata, an indexed hero navigation with album counts, caption bars under album covers, and a film-edge EXIF strip in the lightbox → [Theming guide](docs/theming.md)
-
-<p align="center">
-  <img src="docs/screenshots/theme-studio-modern-home-light.png" width="49%" alt="Studio Modern in light mode" />
-  <img src="docs/screenshots/theme-studio-modern-grid-light.png" width="49%" alt="Studio Modern album grid in light mode" />
-</p>
-<p align="center"><em>Studio Modern in light mode — every preset ships a light and a dark variant.</em></p>
-
-- **Photo Essay mode** — storytelling pages that alternate text with fullbleed and paired image layouts, written in Markdown or assembled in the new visual block editor
-- **Client proofing** — let clients pick favorites and export the selection; the picks live in the URL as a compact bitmask, so nothing is stored server-side and a selection can be shared as a link
-- **Lightbox watermark** — configurable overlay on fullscreen images
-- **Privacy-friendly analytics** — page and album view counts without cookies or third parties, switchable off entirely
-- **Subpage on/off toggle** — take a page offline without deleting it
-- **Admin panel overhaul** — slide-over page-builder drawer with search, visual preview cards for grid, theme, photo frame and hero style, a Google SEO snippet preview, light/dark toggle, subpage live preview, and a backup manager with one-click restore
-
-<p align="center">
-  <img src="docs/screenshots/admin-page-builder.png" width="49%" alt="Visual page builder" />
-  <img src="docs/screenshots/admin-settings.png" width="49%" alt="Settings editor with visual preview cards" />
-</p>
-
-- **SEO** — configurable subpage title template and metadata descriptions, plus proper metadata on the about page
-- **Resilience** — the gallery keeps serving the last known albums during an Immich outage instead of erroring, with loading skeletons while the round-trip is in flight
-- **Fixed:** the map page ignored the configured theme fonts and borders (all presets), album order now mirrors the Immich timeline across time zones, the admin status panel no longer reports faults that are not faults, and the Docker health check no longer fails on IPv6-first `localhost` resolution
-
-**Upgrading to v0.10.0:** no migration, no configuration change — pull the new image and restart. One exception: if you copied `docker-compose.override.yml.example` in the past, its health check needs a one-line edit. See the [upgrade notes](CHANGELOG.md#upgrade-notes) for that and for the rollback caveat when switching presets.
-
-### Security releases
-
-Security fixes ship in normal releases, so **running the latest release is the recommended baseline**:
-
-- **v0.10.0** — `GET /api/admin/analytics` now requires an admin session; Docker images are scanned with Trivy on every publish
-- **v0.9.2** — closed a timing side channel that leaked the admin password length ([#395](https://github.com/ralksta/immich-folio/pull/395))
-- **v0.9.0** — fixed pre-auth bypasses and restored Immich 3.x compatibility ([#378](https://github.com/ralksta/immich-folio/pull/378))
-
-Full history in the [GitHub releases](https://github.com/ralksta/immich-folio/releases) and [CHANGELOG.md](CHANGELOG.md).
+**Guides:** [Gallery Configuration](docs/gallery-config.md) · [Theming](docs/theming.md) · [Journal & Photo Essays](docs/journal.md) · [Admin Panel](docs/admin-panel.md) · [Deployment](docs/deployment.md)
 
 ## Features
 
@@ -212,25 +169,12 @@ The token is stored in `content/.setup-token` (mode `0600`) so it survives a
 restart, and is deleted once setup completes. From then on `/install` redirects
 to the gallery and its API routes refuse to run again.
 
-### What the wizard writes
+The wizard writes `gallery.yaml`, `settings.yaml` and `content/install.json` —
+the last of which **holds your Immich API key**. Environment variables override
+everything in it, so credentials can be rotated without touching the file, and
+setting them all up front means the wizard never appears at all.
 
-| File                    | Contents                                                             |
-| ----------------------- | -------------------------------------------------------------------- |
-| `content/gallery.yaml`  | The albums you picked                                                |
-| `content/settings.yaml` | Site title, subtitle, theme — only if it does not exist yet          |
-| `content/install.json`  | Immich URL and API key, a generated site secret, admin password hash |
-
-> **`content/install.json` holds credentials.** It is written with mode `0600`,
-> and it is the reason a backup of your `content/` directory is now a backup of
-> your Immich API key as well — treat it accordingly. The admin password is
-> stored as an scrypt hash, not as you typed it; the API key and site secret have
-> to stay readable to be usable.
-
-**Environment variables always win.** `IMMICH_API_URL`, `IMMICH_API_KEY`,
-`AUTH_SECRET` and `ADMIN_PASSWORD` override anything in `install.json`, so you
-can rotate any of them by setting the variable — no need to touch the file. Set
-all of them up front and the wizard never appears, which is the usual choice for
-an infrastructure-as-code deployment.
+→ **[What the wizard writes, and environment precedence](docs/deployment.md#what-the-setup-wizard-writes)**
 
 ## Configuration
 
@@ -321,59 +265,14 @@ docker compose up -d
 
 The gallery will be available at `http://localhost:7211`.
 
-<details>
-<summary><strong>Advanced Docker (Standalone, Health Check, Proxy)</strong></summary>
+> The `content/` volume must be **read-write** — the setup wizard, the admin
+> panel, the journal and the backup rotation all write into it. A `:ro` mount
+> leaves the wizard unable to complete and the admin panel unable to save.
 
-### Standalone Docker
+For standalone `docker run`, the health check, TLS behind a reverse proxy, and
+what the gallery does while Immich is unreachable:
 
-```bash
-# Build
-docker build -t immich-folio .
-
-# Run
-docker run -d \
-  --name immich-folio \
-  --restart unless-stopped \
-  -p 7211:7211 \
-  --env-file .env.local \
-  -v ./content:/app/content \
-  immich-folio
-```
-
-> **Note:** The `content/` volume mount lets you update `gallery.yaml` and
-> `about.md` without rebuilding the image. It must be **read-write**: the setup
-> wizard, the admin panel and the backup rotation all write into it. A `:ro`
-> mount leaves the wizard unable to complete and the admin panel unable to save.
-
-### Health Check
-
-The container includes a built-in health check at `/api/health`:
-
-```bash
-curl http://localhost:7211/api/health
-```
-
-### Behaviour when Immich is unreachable
-
-Immich Folio buffers your gallery rather than merely proxying it:
-
-- Album and asset pages keep serving the last known good data for up to `STALE_MAX_AGE`, so a restarting or briefly unreachable Immich does not take the public site down with it.
-- Once nothing cached is left, they return `503`, never `404` — a `404` would tell search engines to drop a URL for content that still exists.
-- Outages are never cached, so the gallery recovers as soon as Immich does.
-
-The cache lives in the process, so it is empty right after a container restart.
-
-### Reverse Proxy
-
-Put Immich Folio behind nginx / Caddy / Traefik with TLS. Example Caddy config:
-
-```
-photos.example.com {
-    reverse_proxy localhost:7211
-}
-```
-
-</details>
+→ **[Deployment Guide](docs/deployment.md)**
 
 ## Admin Panel
 
@@ -404,6 +303,25 @@ own password, separate from any album passwords, and writes straight to
 <p align="center"><em>Login · page builder · album picker · settings editor</em></p>
 
 → **[Admin Panel Guide](docs/admin-panel.md)**
+
+## What's New
+
+Unreleased, since v0.10.0 — a first-run wizard, a journal, and a set of
+experimental portfolio features:
+
+- **First-run setup wizard at `/install`** — configure a fresh deployment from the browser instead of writing config files → [First-Run Setup](#first-run-setup)
+- **Journal** — photo essays and travel stories at `/journal`, with a split-screen block editor, drafts, per-entry passwords and cover images → [Journal guide](docs/journal.md)
+- **About page editor** — portrait, name, location, gear and bio edited in the admin panel, plus a toggle to take the page offline
+- **Custom favicon upload** — SVG, PNG, ICO or JPEG, stored in the content volume
+- **Experimental portfolio features** — justified grid layout, `cover` hero splash screen, unlisted subpages, per-album grid overrides, cover focal points, external navigation links
+- **Admin panel** — every area has its own URL, a floating save bar, and a drag & drop photo-order editor
+
+No migration and no configuration change are required to upgrade.
+
+Security fixes ship in normal releases, so **running the latest release is the
+recommended baseline**.
+
+→ Full history in [CHANGELOG.md](CHANGELOG.md) and the [GitHub releases](https://github.com/ralksta/immich-folio/releases)
 
 ## Tech Stack
 
