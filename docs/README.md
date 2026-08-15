@@ -22,7 +22,8 @@ Working documents kept for context. They record thinking at a point in time and
 are **not maintained** — where they disagree with the guides above, the guides
 are correct.
 
-- [brainstorm.md](brainstorm.md), [brainstorm-2026-08-05.md](brainstorm-2026-08-05.md) — feature brainstorming
+- [brainstorm.md](brainstorm.md), [brainstorm-2026-08-05.md](brainstorm-2026-08-05.md), [brainstorm-2026-08-15.md](brainstorm-2026-08-15.md) — feature brainstorming
+- [brainstorm-plugins-2026-08-15.md](brainstorm-plugins-2026-08-15.md) — plugin architecture options
 - [deep-dive-2026-08-05.md](deep-dive-2026-08-05.md) — architecture review
 - [ideas.md](ideas.md) — unsorted ideas backlog
 - [journal-studio-design.md](journal-studio-design.md) — design notes for the journal editor
