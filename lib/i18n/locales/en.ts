@@ -122,6 +122,13 @@ export const en = {
     iso: 'ISO',
     location: 'Location',
     noExif: 'No EXIF data available',
+    shortcuts: 'Keyboard shortcuts',
+    shortcutsTitle: 'Keyboard shortcuts (?)',
+    shortcutHint: 'Press ? for keyboard shortcuts',
+    shortcutNavigate: 'Previous / next photo',
+    shortcutInfo: 'Photo info',
+    shortcutList: 'This list',
+    shortcutClose: 'Close the viewer',
   },
 
   proofing: {

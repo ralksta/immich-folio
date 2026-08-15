@@ -6,6 +6,7 @@
  * - Previous/Next navigation (arrows + swipe)
  * - Close (Esc, click outside, X button)
  * - EXIF metadata panel (fetched on demand)
+ * - Keyboard shortcut list (`?`), with a one-time nudge for first-time visitors
  * - Preloads adjacent images
  */
 
@@ -20,6 +21,19 @@ import styles from './Lightbox.module.css';
 import { useProofing } from './ProofingContext';
 import { IconHeart } from './Icons';
 import { useDictionary } from './I18nProvider';
+
+/** Remembers that the "press ? for shortcuts" nudge has been shown. */
+const SHORTCUT_HINT_KEY = 'folio_shortcut_hint_seen';
+
+/** How long the nudge stays up before it fades itself out. */
+const SHORTCUT_HINT_MS = 6000;
+
+/**
+ * Fallback for the `localStorage` flag. Private-mode browsers throw on both
+ * read and write, and without this the nudge would reappear on every single
+ * photo — the lightbox mounts once per opening, not once per page.
+ */
+let hintSeenThisSession = false;
 
 export interface LightboxWatermark {
   enabled?: boolean;
@@ -53,6 +67,8 @@ export function Lightbox({
 }: LightboxProps) {
   const t = useDictionary();
   const [showExif, setShowExif] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   const { exifData, exifLoading, fetchExif, clearExif } = useExif();
   const [imageLoaded, setImageLoaded] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -94,6 +110,43 @@ export function Lightbox({
     }
   }, [showExif, current, fetchExif]);
 
+  const dismissHint = useCallback(() => {
+    setShowHint(false);
+    hintSeenThisSession = true;
+    try {
+      localStorage.setItem(SHORTCUT_HINT_KEY, '1');
+    } catch {
+      // Storage disabled — the session flag still stops it repeating.
+    }
+  }, []);
+
+  const toggleShortcuts = useCallback(() => {
+    setShowShortcuts((open) => !open);
+    dismissHint();
+  }, [dismissHint]);
+
+  /*
+   * The keys are worth nothing if nobody knows they exist, so the first
+   * lightbox a visitor ever opens gets one nudge towards `?`. It is marked as
+   * seen when it goes away, not when it appears: closing the lightbox after a
+   * second has not taught anyone anything, and the nudge is cheap enough to
+   * offer again.
+   */
+  useEffect(() => {
+    if (hintSeenThisSession) return;
+    try {
+      if (localStorage.getItem(SHORTCUT_HINT_KEY)) {
+        hintSeenThisSession = true;
+        return;
+      }
+    } catch {
+      // Unreadable storage — fall through and rely on the session flag.
+    }
+    setShowHint(true);
+    const timer = setTimeout(dismissHint, SHORTCUT_HINT_MS);
+    return () => clearTimeout(timer);
+  }, [dismissHint]);
+
   // Preload adjacent images (skip videos — they stream on demand)
   useEffect(() => {
     const preload = (index: number) => {
@@ -121,7 +174,10 @@ export function Lightbox({
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
         case 'Escape':
-          onClose();
+          // Innermost layer first: Esc dismisses the shortcut list, and only
+          // closes the viewer once nothing is stacked on top of it.
+          if (showShortcuts) setShowShortcuts(false);
+          else onClose();
           break;
         case 'ArrowRight':
           onNext();
@@ -133,6 +189,11 @@ export function Lightbox({
         case 'I':
           if (showExifToggle) handleExifToggle();
           break;
+        // Matched on the produced character, not the physical key: `?` is
+        // Shift+/ on a US layout and Shift+ß on a German one.
+        case '?':
+          toggleShortcuts();
+          break;
       }
     };
 
@@ -143,7 +204,7 @@ export function Lightbox({
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [handleExifToggle, onClose, onNext, onPrev, showExifToggle]);
+  }, [handleExifToggle, onClose, onNext, onPrev, showExifToggle, showShortcuts, toggleShortcuts]);
 
   // Click on overlay background → close
   const handleOverlayClick = useCallback(
@@ -154,6 +215,19 @@ export function Lightbox({
     },
     [onClose],
   );
+
+  /*
+   * The advertised shortcuts, in the order they are worth learning. This is the
+   * list the `?` panel renders — a key added to the handler above belongs here
+   * too, or it stays as undiscoverable as the whole set was before.
+   */
+  const shortcutRows = [
+    { keys: ['←', '→'], label: t.lightbox.shortcutNavigate },
+    // Journal entries hide the EXIF toggle, so `i` does nothing there.
+    ...(showExifToggle ? [{ keys: ['I'], label: t.lightbox.shortcutInfo }] : []),
+    { keys: ['?'], label: t.lightbox.shortcutList },
+    { keys: ['Esc'], label: t.lightbox.shortcutClose },
+  ];
 
   const lightboxJsx = (
     <div
@@ -383,6 +457,46 @@ export function Lightbox({
               <span className={styles.exifLabel}>{t.lightbox.noExif}</span>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Keyboard shortcuts — hidden on touch devices, which have no keys */}
+      <button
+        type="button"
+        className={styles.shortcutsToggle}
+        onClick={toggleShortcuts}
+        aria-expanded={showShortcuts}
+        aria-controls="lightbox-shortcuts"
+        aria-label={t.lightbox.shortcuts}
+        title={t.lightbox.shortcutsTitle}
+      >
+        ?
+      </button>
+
+      {/* The nudge occupies the spot the panel will open into. */}
+      {showHint && !showShortcuts && (
+        <p className={styles.shortcutHint} role="status">
+          {t.lightbox.shortcutHint}
+        </p>
+      )}
+
+      {showShortcuts && (
+        <div id="lightbox-shortcuts" className={styles.shortcutsPanel}>
+          <p className={styles.shortcutsTitle}>{t.lightbox.shortcuts}</p>
+          <dl className={styles.shortcutsList}>
+            {shortcutRows.map((row) => (
+              <div key={row.label} className={styles.shortcutsRow}>
+                <dt className={styles.shortcutsKeys}>
+                  {row.keys.map((key) => (
+                    <kbd key={key} className={styles.kbd}>
+                      {key}
+                    </kbd>
+                  ))}
+                </dt>
+                <dd className={styles.shortcutsLabel}>{row.label}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       )}
     </div>

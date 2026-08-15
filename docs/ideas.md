@@ -10,8 +10,9 @@ A consolidated list of features and ideas for future versions, cleaned up from e
 | **Fullscreen API in lightbox** | Low    | Medium — immersive (Chrome-free)                   |
 | **Download originals**         | Low    | High — client delivery (Button in lightbox)        |
 | **Photo of the Day**           | Low    | Medium — return visits (Auto-rotate hero image)    |
-| **Keyboard shortcut hints**    | Low    | Medium — `?` button for shortcuts (arrows, Esc, F) |
 | **Photo sharing**              | Low    | Medium — "Copy link" button in lightbox            |
+
+_Shipped: **Keyboard shortcut hints** — `?` opens the list in the lightbox, with a one-time nudge for first-time visitors._
 
 ---
 
