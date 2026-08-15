@@ -77,6 +77,14 @@ password: 'clients-only'
 Reading time and the index excerpt are computed from the text; you do not
 configure them.
 
+Every one of these fields is also a form control in the
+[Journal Studio](#journal-studio), behind **Story Settings**:
+
+<p align="center">
+  <img src="screenshots/admin-journal-settings.png" width="98%" alt="The Story Settings dialog: subtitle, author, publish date, cover photo, password and draft toggle" />
+</p>
+<p align="center"><em>The same frontmatter, as a form — including the cover picker, the password field and the draft toggle.</em></p>
+
 ## Block Syntax
 
 The parser is deliberately small. It understands headings, paragraphs, quotes
@@ -169,6 +177,7 @@ such — with its cover, date and password state:
 <p align="center">
   <img src="screenshots/admin-journal-list.png" width="98%" alt="The Journal tab listing entries with covers, dates and draft badges" />
 </p>
+<p align="center"><em>Published and draft entries side by side; the lock marks an entry with a password.</em></p>
 
 Opening one gives a split-screen editor: blocks on the left, a live preview of
 the real page on the right, with a draggable divider between them (mouse,
