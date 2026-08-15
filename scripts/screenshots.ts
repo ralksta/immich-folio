@@ -1,10 +1,11 @@
 /**
  * Documentation Screenshot Generator
  *
- * Captures every screenshot referenced by README.md and docs/theming.md:
- * theme presets, hero styles, grid layouts, light mode, the standard pages
- * (subpage overview, about, map), the lightbox with its EXIF panel, a mobile
- * viewport and — if ADMIN_PASSWORD is set — the admin panel.
+ * Captures every screenshot referenced by README.md, docs/theming.md and
+ * docs/journal.md: theme presets, hero styles, grid layouts, light mode, the
+ * standard pages (subpage overview, about, map), the lightbox with its EXIF
+ * panel, a mobile viewport and — if ADMIN_PASSWORD is set — the admin panel
+ * and the journal.
  *
  * Uses Playwright to wait for images to fully load (not just blurhash placeholders).
  *
@@ -13,6 +14,12 @@
  *   SCREENSHOT_GRID_PATH=/japan/koyasan-2023 npx tsx scripts/screenshots.ts
  *   SCREENSHOT_PORT=3100 npx tsx scripts/screenshots.ts
  *   SCREENSHOT_ONLY=admin,lightbox npx tsx scripts/screenshots.ts
+ *   SCREENSHOT_ONLY=journal SCREENSHOT_JOURNAL_ALBUM="Yufuin" npx tsx scripts/screenshots.ts
+ *
+ * The journal section writes a throwaway entry built from a real album's
+ * photos, shoots the public index, the entry and the studio, then deletes it.
+ * SCREENSHOT_JOURNAL_ALBUM picks the album by name; without it the largest one
+ * is used.
  *
  * The album used for the grid shots is discovered by walking the running site,
  * since album slugs come from Immich album names. SCREENSHOT_GRID_PATH picks a
@@ -82,6 +89,21 @@ const ABOUT_MD = path.join(CONTENT_DIR, 'about.md');
 /** Every file the run rewrites, and therefore has to restore. */
 const MANAGED_FILES = [SETTINGS_YAML, GALLERY_YAML, ABOUT_MD];
 const backupPath = (file: string) => `${file}.screenshot-bak`;
+
+const JOURNAL_DIR = path.join(CONTENT_DIR, 'journal');
+/**
+ * Slug of the throwaway entry written for the journal screenshots. It is
+ * created before the shots and deleted afterwards, so a run never leaves a
+ * demo story published on a real site. Namespaced to make an orphan from a
+ * killed run obvious.
+ */
+const DEMO_JOURNAL_SLUG = 'screenshot-demo-entry';
+/**
+ * Album to pull demo photos from, matched against the Immich album name.
+ * Unset picks the album with the most photos, which gives the entry enough
+ * frames to fill a fullbleed, a pair and a contained block.
+ */
+const JOURNAL_ALBUM = process.env.SCREENSHOT_JOURNAL_ALBUM;
 
 /** Pages that never carry a photo grid — skipped while looking for an album. */
 const EXCLUDED_PATHS = new Set(['/', '/about', '/map', '/impressum', '/admin']);
@@ -236,6 +258,12 @@ async function main() {
     if (wanted('admin')) {
       await applySettings({ 'theme.preset': SHOWCASE_THEME });
       await captureAdmin(browser);
+    }
+
+    // ── Journal (public views + studio) ──
+    if (wanted('journal')) {
+      await applySettings({ 'theme.preset': SHOWCASE_THEME });
+      await captureJournal(browser);
     }
   } finally {
     await browser?.close();
@@ -417,9 +445,7 @@ async function captureAdmin(browser: Browser): Promise<void> {
     await page.locator('.admin-login-card').waitFor({ timeout: 15000 });
     await capture(page, 'admin-login');
 
-    await page.locator('.admin-login-card input[type="password"]').fill(ADMIN_PASSWORD);
-    await page.locator('.admin-login-card button[type="submit"]').click();
-    await page.locator('.admin-tabs').waitFor({ timeout: 20000 });
+    await adminLogin(page);
     await page.waitForTimeout(2500);
     await waitForImages(page);
     await capture(page, 'admin-page-builder');
@@ -434,6 +460,146 @@ async function captureAdmin(browser: Browser): Promise<void> {
     await page.waitForTimeout(1500);
     await capture(page, 'admin-settings');
   });
+}
+
+/**
+ * Journal: the public index and entry, plus the studio behind them.
+ *
+ * Needs an admin session for two separate reasons — the studio shots are
+ * behind the login, and the demo entry can only be written with *raw* Immich
+ * asset UUIDs, which the public site never exposes (it hands out encrypted
+ * tokens). The admin API is the only place those UUIDs are reachable, so the
+ * entry is generated from a real album after logging in.
+ *
+ * The entry is deleted again in the `finally`, including when a capture throws.
+ */
+async function captureJournal(browser: Browser): Promise<void> {
+  section('Journal: index, entry, studio');
+  if (!ADMIN_PASSWORD) {
+    console.log('  ⏭  ADMIN_PASSWORD not set — skipping the journal screenshots.');
+    return;
+  }
+
+  const entryPath = path.join(JOURNAL_DIR, `${DEMO_JOURNAL_SLUG}.md`);
+  if (fs.existsSync(entryPath)) {
+    console.log(`  ⏭  ${DEMO_JOURNAL_SLUG}.md already exists — leaving it alone.`);
+    return;
+  }
+
+  let written = false;
+  try {
+    await withPage(browser, VIEWPORT, async (page) => {
+      await adminLogin(page);
+
+      const assetIds = await demoAssetIds(page);
+      if (assetIds.length < 4) {
+        console.log('  ⏭  Not enough photos found for a demo entry — skipping.');
+        return;
+      }
+
+      fs.mkdirSync(JOURNAL_DIR, { recursive: true });
+      fs.writeFileSync(entryPath, demoJournalMarkdown(assetIds));
+      written = true;
+      await sleep(CONFIG_RELOAD_DELAY);
+
+      // Studio first: the session is already open on this page.
+      await capturePage(page, '/admin/journal', 'admin-journal-list', 1500);
+      await capturePage(page, `/admin/journal/${DEMO_JOURNAL_SLUG}`, 'admin-journal-studio', 3000);
+    });
+
+    // Public views in a fresh context, so the admin cookie cannot leak in and
+    // reveal draft-only chrome in a shot meant to show what a visitor sees.
+    await withPage(browser, VIEWPORT, async (page) => {
+      await capturePage(page, '/journal', 'journal-index', 2500);
+      await capturePage(page, `/journal/${DEMO_JOURNAL_SLUG}`, 'journal-entry', 3000);
+    });
+  } finally {
+    if (written && fs.existsSync(entryPath)) {
+      fs.rmSync(entryPath, { force: true });
+      console.log(`  🧹 Removed the demo entry (${DEMO_JOURNAL_SLUG}.md)`);
+    }
+  }
+}
+
+/** Log in and wait for the panel chrome. Shared by the admin and journal runs. */
+async function adminLogin(page: Page): Promise<void> {
+  await page.goto(`${BASE_URL}/admin`, { waitUntil: 'networkidle' });
+  await page.locator('.admin-login-card input[type="password"]').fill(ADMIN_PASSWORD!);
+  await page.locator('.admin-login-card button[type="submit"]').click();
+  await page.locator('.admin-tabs').waitFor({ timeout: 20000 });
+}
+
+/**
+ * Raw asset UUIDs for the demo entry, via the admin API. `page.request` shares
+ * the context's cookies, so the session from adminLogin() carries over.
+ */
+async function demoAssetIds(page: Page): Promise<string[]> {
+  const albumsRes = await page.request.get(`${BASE_URL}/api/admin/albums`);
+  if (!albumsRes.ok()) return [];
+  const albums = (await albumsRes.json()) as
+    | { albums?: { id: string; albumName: string; assetCount: number }[] }
+    | { id: string; albumName: string; assetCount: number }[];
+  const list = Array.isArray(albums) ? albums : (albums.albums ?? []);
+  if (list.length === 0) return [];
+
+  const wantedName = JOURNAL_ALBUM?.toLowerCase();
+  const album = wantedName
+    ? list.find((a) => a.albumName.toLowerCase().includes(wantedName))
+    : [...list].sort((a, b) => (b.assetCount ?? 0) - (a.assetCount ?? 0))[0];
+  if (!album) {
+    console.log(`  ⏭  No album matching "${JOURNAL_ALBUM}" — skipping the journal shots.`);
+    return [];
+  }
+  console.log(`  🔎 Demo entry photos from: ${album.albumName}`);
+
+  const assetsRes = await page.request.get(`${BASE_URL}/api/admin/albums/${album.id}/assets`);
+  if (!assetsRes.ok()) return [];
+  const payload = (await assetsRes.json()) as
+    { assets?: { id: string; type?: string }[] } | { id: string; type?: string }[];
+  const assets = Array.isArray(payload) ? payload : (payload.assets ?? []);
+  // Videos render a player, not a photo block.
+  return assets.filter((a) => (a.type ?? 'IMAGE').toUpperCase() === 'IMAGE').map((a) => a.id);
+}
+
+/**
+ * A demo entry exercising every block type the parser knows, so the studio and
+ * the rendered page both show something representative rather than one
+ * paragraph. Deliberately generic prose — these screenshots ship in the docs.
+ */
+function demoJournalMarkdown(ids: string[]): string {
+  const [cover, fullbleed, pairA, pairB, ...rest] = ids;
+  const contained = rest[0];
+  return `---
+title: "A Week in the Highlands"
+subtitle: "Notes and photographs from seven days on the road"
+author: "Jane Doe"
+date: "2026-03-14"
+coverAssetId: "${cover}"
+---
+
+# Setting Out
+
+The road climbed through the last of the farmland and then simply stopped
+pretending. What followed was gravel, meltwater, and a silence that felt less
+like the absence of sound than like something with weight to it.
+
+![${fullbleed}:fullbleed](The first pass, an hour after sunrise)
+
+## Finding the Light
+
+Mornings were the only reliable hours. By noon the valley had filled with haze
+and every frame came back flatter than it looked through the viewfinder.
+
+> The camera does not record what you saw. It records what was there, which is
+> a slower and more honest thing. -- A note from the second evening
+
+![${pairA}, ${pairB}](Two mornings, the same bend in the river)
+
+### What Stayed
+
+Not the landscapes, in the end, but the small repetitions — the same tin mug,
+the same twenty minutes of light, the same walk back to the car.
+${contained ? `\n![${contained}](The last morning)\n` : ''}`;
 }
 
 /** Best effort: the picker is a modal behind a button whose label may change. */
