@@ -24,7 +24,7 @@ import {
   assetAspectRatio,
 } from '@/lib/urls';
 import { encodeAssetId } from '@/lib/tokens';
-import { getConfig, type GridConfig } from '@/lib/config';
+import { getConfig, resolveProofing, type GridConfig } from '@/lib/config';
 import { isProtected, isAuthenticated } from '@/lib/auth';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import PasswordGate from '@/components/PasswordGate';
@@ -186,7 +186,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
   // subpage's own `proofing:` flag overrides it in either direction. Albums
   // reached without a subpage follow the global setting.
   const proofingFor = (subpage?: { proofing?: boolean }) =>
-    subpage?.proofing ?? config.proofing.enabled;
+    resolveProofing(subpage, config.proofing.enabled);
 
   // EXPERIMENTAL: per-album grid override — merged over the subpage grid so
   // the precedence is global < subpage < album.
