@@ -97,7 +97,7 @@ theme:
   photoFrame: none # "none" | "passepartout" | "shadow"
   grain: false # film grain overlay on photos
   headerDot: false # accent-colored dot in the nav bar
-  heroStyle: split # "split" | "fullbleed" | "minimal" | "stacked" | "typographic" | "mosaic"
+  heroStyle: split # "split" | "fullbleed" | "minimal" | "stacked" | "typographic" | "mosaic" | "cover"
 ```
 
 All properties are optional — omitted values fall back to the preset defaults.
@@ -150,6 +150,7 @@ Controls the homepage hero layout:
 - **`stacked`** — full-viewport hero image with title gradient-overlaid at the bottom, horizontal thumbnail navigation strip below
 - **`typographic`** — no hero image; massive centered title with numbered album navigation list (used by Monograph)
 - **`mosaic`** — asymmetric multi-image grid with frosted-glass title overlay centered on top
+- **`cover`** _(experimental)_ — a splash screen: one fullscreen image, the site title and subtitle, and a single **Enter** link into the first navigation entry. The rest of the homepage is not rendered — visitors arrive at a title page and click through.
 
 <table>
   <tr>
@@ -183,15 +184,18 @@ Controls the photo grid layout on album pages:
 - **`showcase`** — first image displayed at full width (16:9), rest in standard grid
 - **`filmstrip`** — horizontal scroll of tall vertical image strips with scroll snapping
 - **`editorial-flow`** — alternating full-width (21:9) and side-by-side (4:3) image pairs
+- **`justified`** _(experimental)_ — row-based: every row fills the container width and all images in a row share one height, so aspect ratios stay intact and nothing is cropped. `columns` sets the density — more columns give shorter rows. The last row keeps its natural sizes rather than stretching.
+- **`essay`** — not a grid: renders the page as a photo essay. See **[Journal & Photo Essays](journal.md)**.
 
-Set it globally in `settings.yaml`, or per subpage in `gallery.yaml`:
+Set it globally in `settings.yaml`, per subpage in `gallery.yaml`, or on a
+single album (experimental) — the three merge, most specific winning:
 
 ```yaml
 grid:
   layout: showcase
 ```
 
-The same album in all five layouts (theme `studio-modern`):
+The same album in five of the grid layouts (theme `studio-modern`):
 
 <table>
   <tr>

@@ -11,6 +11,39 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Added
 
+- **Journal** ([#432](https://github.com/ralksta/immich-folio/pull/432)). A
+  section for photo essays and travel stories at `/journal`, with its own index,
+  cover images, reading times and drafts. Entries are plain Markdown in
+  `content/journal/`, written either by hand or in the new **Journal Studio** —
+  a split-screen block editor with a resizable divider and a live preview of the
+  real page. Photos are inserted through the asset picker rather than by typing
+  UUIDs. A `/journal` link appears in the navigation as soon as one published
+  entry exists; drafts stay visible to a logged-in admin only. Entries can carry
+  their own password. See [docs/journal.md](docs/journal.md).
+- **About page editor and toggle**
+  ([#446](https://github.com/ralksta/immich-folio/pull/446)). Portrait, name,
+  location, gear list and biography are edited under admin Settings › About,
+  which writes `content/about.md`. `about.enabled: false` in `settings.yaml`
+  takes the page offline without deleting it.
+- **Per-album photo order, independent of Immich**
+  ([#414](https://github.com/ralksta/immich-folio/pull/414)). A `sort` key per
+  album — `immich`, `newest`, `oldest`, `filename` or `manual` — so a curated
+  series can have a narrative order without changing the archive. `manual` is a
+  pinned prefix: only the photos you place by hand are listed, everything else
+  follows in the Immich order, and the admin panel has a drag & drop editor
+  for it.
+- **Experimental portfolio features**
+  ([#431](https://github.com/ralksta/immich-folio/pull/431)). Marked
+  experimental in the schema and the UI:
+  - `justified` grid layout — every row fills the width at one shared height,
+    aspect ratios intact
+  - `cover` hero style — a fullscreen splash with the site title and a single
+    **Enter** link
+  - `hidden: true` subpages — reachable by direct link, absent from the
+    navigation (unlisting, not access control)
+  - per-album `grid` overrides, merged over the subpage and global grid
+  - per-album `coverPosition` — the focal point for the cover crop
+  - `navLinks` — external `http(s)` links appended to the header navigation
 - **First-run setup wizard at `/install`**
   ([#419](https://github.com/ralksta/immich-folio/pull/419)). A fresh deployment
   can now be configured from the browser: connect to Immich, optionally pick
@@ -30,6 +63,29 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Changed
 
+- **Every admin area has its own URL**
+  ([#432](https://github.com/ralksta/immich-folio/pull/432)) — `/admin/pages`,
+  `/admin/journal`, `/admin/settings/<section>`, `/admin/analytics` — so a
+  section can be bookmarked and the back button behaves. The auth gate and the
+  panel chrome moved into the layout, and no longer re-run on every tab switch.
+  A floating save bar keeps Save reachable without scrolling
+  ([#426](https://github.com/ralksta/immich-folio/pull/426)).
+- **Design system gaps in the admin panel are closed**
+  ([#432](https://github.com/ralksta/immich-folio/pull/432)). Several classes
+  were referenced but never defined — every input used a class no stylesheet
+  had, the Analytics bars had no fill, and all grid previews collapsed to the
+  same height. The album sort dropdown is now a themed listbox rendered in a
+  portal, so it no longer clips inside modals.
+- **The last emojis in the public frontend are SVG icons**
+  ([#445](https://github.com/ralksta/immich-folio/pull/445)), matching the admin
+  panel ([#415](https://github.com/ralksta/immich-folio/pull/415),
+  [#416](https://github.com/ralksta/immich-folio/pull/416),
+  [#418](https://github.com/ralksta/immich-folio/pull/418)).
+- **The sample journal story ships as a template, not a live entry**
+  ([#443](https://github.com/ralksta/immich-folio/pull/443)). It is
+  `content/journal/sample-story.md.example`, so a fresh install does not publish
+  someone else's story — and since the asset IDs in it belong to no server, the
+  template ships without any.
 - **A gallery with no albums is now a valid, rendered state**
   ([#421](https://github.com/ralksta/immich-folio/pull/421)) instead of an error
   — the setup wizard can finish without picking one, and albums can be added
@@ -47,8 +103,39 @@ Releases up to and including v0.9.2 are documented in the
   write into it, and `:ro` silently breaks all three.
 - **Contributors are credited in the README.**
 
+### Fixed
+
+- **Journal photos did not render**
+  ([#432](https://github.com/ralksta/immich-folio/pull/432)). Photo blocks
+  resolved to nothing, headings sat further left than the body text, fullbleed
+  photos bled only to the left, photo pairs forced both images to equal width
+  regardless of their real shapes, the preview claimed 3:2 for every photo, and
+  the lightbox had neither keyboard control nor navigation inside a journal
+  entry.
+
 ### Security
 
+- **Journal author markdown is escaped, not filtered**
+  ([#432](https://github.com/ralksta/immich-folio/pull/432)). The previous pass
+  stripped `<script>` tags, `on*="…"` handlers and the literal `javascript:` —
+  a denylist, and trivially bypassable: an unquoted `onerror=`, single-quoted
+  handlers, `<svg onload=…>` and `javasjavascript:cript:` (the replacement
+  recombines) all reached `dangerouslySetInnerHTML`. With escaping there is
+  nothing left to enumerate.
+- **Journal file paths are contained**
+  ([#432](https://github.com/ralksta/immich-folio/pull/432)), frontmatter
+  escaping is fixed, and two regexes with polynomial backtracking were replaced
+  by linear scans.
+- **The admin session signing key is derived with scrypt**
+  ([#432](https://github.com/ralksta/immich-folio/pull/432)) rather than a plain
+  digest, and the key cache is keyed on its inputs instead of on a digest of
+  them.
+- **Asset tokens are length-capped before decoding**
+  ([#423](https://github.com/ralksta/immich-folio/pull/423)). `decodeAssetId()`
+  passed arbitrary-length URL input straight to `Buffer.from(…, 'base64url')`,
+  so a huge crafted token could exhaust memory or throw `RangeError` despite the
+  surrounding `try`/`catch`. A real v2 token is ~110 characters; anything over
+  256 is now rejected outright.
 - **Next.js 16.3.0** — picks up the fix for CVE-2025-13465 in Next's vendored
   lodash ([#402](https://github.com/ralksta/immich-folio/pull/402)).
 

@@ -15,9 +15,25 @@ Immich Folio acts as a **secure reverse proxy** between your visitors and your p
   <img src="docs/screenshots/lightbox-exif.png" width="98%" alt="Fullscreen lightbox with the EXIF panel open" />
 </p>
 
-## What's New in v0.10.0
+## What's New
 
-The largest release so far — two new ways to present work, a seventh theme preset, and an admin panel rebuilt around visual controls.
+### Unreleased
+
+Since v0.10.0 — a first-run wizard, a journal, and a set of experimental
+portfolio features.
+
+- **First-run setup wizard at `/install`** — configure a fresh deployment from the browser instead of writing config files: connect to Immich, pick albums, name the site. Credentials are verified before anything is written → [First-Run Setup](#first-run-setup)
+- **Journal** — a section for photo essays and travel stories at `/journal`, with a split-screen block editor in the admin panel, drafts, per-entry passwords, cover images and reading times → [Journal guide](docs/journal.md)
+- **About page editor** — portrait, name, location, gear and bio edited in the admin panel, plus a toggle to take the page offline
+- **Custom favicon upload** — SVG, PNG, ICO or JPEG, stored in the content volume
+- **Experimental portfolio features** — justified grid layout, `cover` hero splash screen, unlisted subpages, per-album grid overrides, cover focal points, and external navigation links
+- **Admin panel** — every area has its own URL, a floating save bar, and a manual photo-order editor with drag & drop
+
+**Upgrading:** no migration, no configuration change.
+
+### v0.10.0
+
+Two new ways to present work, a seventh theme preset, and an admin panel rebuilt around visual controls.
 
 - **New theme preset: Studio Modern** — the Leica language of `studio` rebuilt around the Archivo grotesque, with IBM Plex Mono for all photographic metadata, an indexed hero navigation with album counts, caption bars under album covers, and a film-edge EXIF strip in the lightbox → [Theming guide](docs/theming.md)
 
@@ -43,7 +59,7 @@ The largest release so far — two new ways to present work, a seventh theme pre
 - **Resilience** — the gallery keeps serving the last known albums during an Immich outage instead of erroring, with loading skeletons while the round-trip is in flight
 - **Fixed:** the map page ignored the configured theme fonts and borders (all presets), album order now mirrors the Immich timeline across time zones, the admin status panel no longer reports faults that are not faults, and the Docker health check no longer fails on IPv6-first `localhost` resolution
 
-**Upgrading:** no migration, no configuration change — pull the new image and restart. One exception: if you copied `docker-compose.override.yml.example` in the past, its health check needs a one-line edit. See the [upgrade notes](CHANGELOG.md#upgrade-notes) for that and for the rollback caveat when switching presets.
+**Upgrading to v0.10.0:** no migration, no configuration change — pull the new image and restart. One exception: if you copied `docker-compose.override.yml.example` in the past, its health check needs a one-line edit. See the [upgrade notes](CHANGELOG.md#upgrade-notes) for that and for the rollback caveat when switching presets.
 
 ### Security releases
 
@@ -64,7 +80,9 @@ Full history in the [GitHub releases](https://github.com/ralksta/immich-folio/re
 - **Masonry photo grid** — responsive layout with natural aspect ratios and configurable columns, gap, and aspect ratio
 - **Uniform grid mode** — switch to a fixed-aspect uniform grid per-subpage or globally
 - **Showcase / filmstrip / editorial-flow layouts** — featured hero + grid, horizontal scroll strips, or alternating full-width and paired images
-- **Per-subpage grid overrides** — each subpage can define its own columns, gap, aspect ratio, and layout mode
+- **Justified rows** _(experimental)_ — every row fills the width at one shared height, aspect ratios intact, nothing cropped
+- **Per-subpage grid overrides** — each subpage can define its own columns, gap, aspect ratio, and layout mode, and individual albums can override that again _(experimental)_
+- **Cover focal points** _(experimental)_ — decide which part of a cover survives the crop
 - **Fullscreen lightbox** — keyboard and swipe navigation, EXIF panel, adjacent image preloading
 - **EXIF metadata on hover** — camera body, lens, focal length, aperture, shutter speed, ISO shown directly on the grid
 - **ThumbHash placeholders** — instant blurred previews while full images load
@@ -74,8 +92,12 @@ Full history in the [GitHub releases](https://github.com/ralksta/immich-folio/re
 - **Subpage grouping** — organize albums into named collections (e.g. `/japan/tokyo-2023`)
 - **Auto-generated slugs** — URL slugs derived from album names automatically
 - **YAML gallery config** — all gallery structure defined in a single `content/gallery.yaml` file
-- **Markdown about page** — `content/about.md` with frontmatter for portrait, name, location, and gear list
+- **Markdown about page** — `content/about.md` with frontmatter for portrait, name, location, and gear list, editable from the admin panel
+- **Journal** — photo essays and travel stories at `/journal`, with drafts, per-entry passwords, cover images and reading times
 - **Photo Essay mode** — long-form storytelling pages alternating text with fullbleed and paired image layouts
+- **Unlisted subpages** _(experimental)_ — reachable by direct link, absent from the navigation
+- **Subpage on/off toggle** — take a page offline without deleting it
+- **External navigation links** _(experimental)_ — point the header at a shop, a blog, or a social profile
 - **Client proofing** — clients favorite photos and export the selection; picks are encoded in the URL, nothing is stored server-side
 - **Lightbox watermark** — configurable overlay on fullscreen images
 - **Privacy-friendly analytics** — cookieless view counts, no third parties, can be switched off
@@ -91,9 +113,12 @@ Full history in the [GitHub releases](https://github.com/ralksta/immich-folio/re
 
 - **Visual page builder** — drag & drop interface to manage hero images, standalone albums, subpages, and sections
 - **Album picker** — browse all shared Immich albums with search, see photo counts, and add them with one click
-- **Settings editor** — configure theme, grid layout, footer, legal/impressum, and SEO from a visual UI
+- **Settings editor** — configure theme, grid layout, footer, legal/impressum, SEO, image protection and the about page from a visual UI
 - **Visual previews everywhere** — grid layout, theme, photo frame, hero style and the Google search snippet are picked from preview cards instead of text fields
+- **Journal Studio** — split-screen block editor with a live preview of the real page
 - **Essay block editor** — assemble photo essays block by block without touching Markdown
+- **Photo order editor** — drag & drop a hand-picked opening sequence for any album
+- **Favicon upload** — give the site its own icon in the browser tab
 - **Backup manager** — every save is backed up automatically; restore any of them with one click
 - **Live YAML sync** — changes are written directly to `gallery.yaml` and `settings.yaml` with automatic backups
 - **Password protected** — secured with its own admin password, separate from album passwords
@@ -223,11 +248,14 @@ CACHE_TTL=300                          # seconds, default: 300
 STALE_MAX_AGE=86400                    # seconds an expired cache entry survives during an outage, default: 86400 (24h), 0 disables
 IMMICH_TIMEOUT_MS=15000                # Immich response wait, default: 15000
 IMAGE_CACHE_VERSION=1                  # bump to bust browser image caches, default: off
-RATE_LIMIT_RPM=1500                    # requests/min/IP, default: 1500
+RATE_LIMIT_RPM=1500                    # requests/min/IP for images, default: 1500
 AUTH_SECRET=long-random-string        # required in production
 TRUSTED_PROXY_HOPS=1                   # reverse proxies in front, default: 0
 ADMIN_PASSWORD=your-secure-password   # enables /admin panel
+WEBHOOK_SECRET=long-random-string     # enables POST /api/webhook cache invalidation
 ```
+
+> Login and setup endpoints have their own, much lower limits that `RATE_LIMIT_RPM` does not raise — see [Rate Limiting](docs/gallery-config.md#rate-limiting).
 
 > Behind a reverse proxy, set `TRUSTED_PROXY_HOPS` to the number of proxies in front of the app (nginx/Traefik/Caddy = 1; Cloudflare in front of nginx = 2). Without it the client IP is read from a header the client itself can set, which defeats the brute-force limits on the password endpoints. See [Trusted Proxies](docs/gallery-config.md#trusted-proxies).
 
@@ -250,6 +278,12 @@ Create a dedicated API key in Immich under **Account Settings → API Keys**. Im
 All gallery structure — hero images, albums, subpages, grid layout, footer — is defined in `content/gallery.yaml`.
 
 → **[Gallery Configuration Guide](docs/gallery-config.md)**
+
+### Journal & Photo Essays
+
+Long-form storytelling with fullbleed photos, side-by-side pairs, quotes and captions — as a standalone `/journal` section, or as a single essay on one subpage.
+
+→ **[Journal & Photo Essays Guide](docs/journal.md)**
 
 ### Theming
 
