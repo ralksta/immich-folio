@@ -328,8 +328,8 @@ own password, separate from any album passwords, and writes straight to
 
 ## What's New
 
-Unreleased, since v0.10.0 — a first-run wizard, a journal, and a set of
-experimental portfolio features:
+v0.11.0 — a first-run wizard, a journal, and a set of experimental portfolio
+features:
 
 - **First-run setup wizard at `/install`** — configure a fresh deployment from the browser instead of writing config files → [First-Run Setup](#first-run-setup)
 - **Journal** — photo essays and travel stories at `/journal`, with a split-screen block editor, drafts, per-entry passwords and cover images → [Journal guide](docs/journal.md)

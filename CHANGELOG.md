@@ -9,6 +9,8 @@ Releases up to and including v0.9.2 are documented in the
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-08-15
+
 ### Added
 
 - **Journal** ([#432](https://github.com/ralksta/immich-folio/pull/432)). A
@@ -123,6 +125,20 @@ Releases up to and including v0.9.2 are documented in the
   `content/` read-only: the wizard, the admin panel and the backup rotation all
   write into it, and `:ro` silently breaks all three.
 - **Contributors are credited in the README.**
+- **The documentation was brought back in line with `dev`**
+  ([#452](https://github.com/ralksta/immich-folio/pull/452),
+  [#453](https://github.com/ralksta/immich-folio/pull/453)). The README is
+  restructured and `studio-modern` is documented as the default preset, which it
+  had already become in the code.
+- **The journal guide has screenshots**
+  ([#455](https://github.com/ralksta/immich-folio/pull/455),
+  [#456](https://github.com/ralksta/immich-folio/pull/456),
+  [#457](https://github.com/ralksta/immich-folio/pull/457)). The one guide
+  describing a visual editor had no picture of it. `scripts/screenshots.ts`
+  gained a `journal` section that writes throwaway entries from real albums,
+  shoots the index, a rendered entry, the entry list and the studio — including
+  its draft and password states and the Story Settings form — and deletes them
+  again, so a run never leaves a demo story on a live site.
 
 ### Fixed
 
@@ -201,6 +217,11 @@ Nothing user-facing; recorded so the next release notes are complete.
   transitively through Next, and 0.35 moved from `export =` to ESM: the module
   namespace stopped being callable and the factory moved to `.default`. The
   Next bump above would otherwise have broken `npx tsc --noEmit`.
+- **Prettier was run across the tree**
+  ([#450](https://github.com/ralksta/immich-folio/pull/450)), and the eslint
+  errors that pass uncovered were cleared
+  ([#451](https://github.com/ralksta/immich-folio/pull/451)). The formatting
+  churn is in one commit of its own, so it does not sit inside a feature diff.
 - Dev-dependency bumps: prettier 3.9.6, eslint 9.39.5, `@types/leaflet` 1.9.22,
   and `github/codeql-action` v4.
 
