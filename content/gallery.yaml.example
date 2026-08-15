@@ -92,11 +92,20 @@ subpages:
           - "album-uuid-osaka-2"
 
   # ── Photo Essay / Storytelling Subpage Example ───────────────────
-  # Render editorial Markdown essays with fullbleed & side-by-side images
+  # Render editorial Markdown essays with fullbleed & side-by-side images.
+  #
+  # essayFile is a SLUG, not a path: "sample-story" resolves to
+  # content/journal/sample-story.md (or content/essays/sample-story.md).
+  # Slashes and dots are rejected. Copy the shipped template to get started:
+  #   cp content/journal/sample-story.md.example content/journal/sample-story.md
+  #
+  # Leave essayFile out and keep `layout: essay`, and the essay is generated
+  # from the albums below — one heading per album, followed by its photos.
+  # See docs/journal.md for the Markdown block syntax.
   - name: Highlands
     title: "Icelandic Highlands"
     subtitle: "A Photo Essay"
-    essayFile: "content/essays/sample-story.md"
+    essayFile: "sample-story"
     grid:
       layout: essay
     albums:
