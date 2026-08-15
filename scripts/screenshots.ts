@@ -24,9 +24,11 @@
  * up in a published screenshot at full size: pick an album you would show a
  * stranger, not one that happens to be large.
  *
- * Two further entries are written from albums matched by name, so the index
- * shot shows a list rather than one lonely card. They are skipped on an
- * installation without those albums — see EXTRA_JOURNAL_ENTRIES.
+ * Three further entries are written from albums matched by name, so the index
+ * shot shows a list rather than one lonely card. One of them is a draft and
+ * one carries a password, so the admin list shows the states the guide
+ * describes. They are skipped on an installation without those albums — see
+ * EXTRA_JOURNAL_ENTRIES.
  *
  * The album used for the grid shots is discovered by walking the running site,
  * since album slugs come from Immich album names. SCREENSHOT_GRID_PATH picks a
@@ -132,6 +134,7 @@ const EXTRA_JOURNAL_ENTRIES: {
 }[] = [
   { slug: 'screenshot-demo-kurokawa', album: 'kurokawa', markdown: kurokawaJournalMarkdown },
   { slug: 'screenshot-demo-kada', album: 'kada', markdown: kadaJournalMarkdown },
+  { slug: 'screenshot-demo-koyasan', album: 'koyasan', markdown: koyasanJournalMarkdown },
 ];
 
 /** Pages that never carry a photo grid — skipped while looking for an album. */
@@ -535,6 +538,7 @@ async function captureJournal(browser: Browser): Promise<void> {
       // Studio first: the session is already open on this page.
       await capturePage(page, '/admin/journal', 'admin-journal-list', 1500);
       await capturePage(page, `/admin/journal/${DEMO_JOURNAL_SLUG}`, 'admin-journal-studio', 3000);
+      await captureStudioModals(page);
     });
 
     // Public views in a fresh context, so the admin cookie cannot leak in and
@@ -550,6 +554,35 @@ async function captureJournal(browser: Browser): Promise<void> {
         console.log(`  🧹 Removed the demo entry (${path.basename(file)})`);
       }
     }
+  }
+}
+
+/**
+ * The frontmatter form, which the studio hides behind its Story Settings
+ * button and which no other shot reaches. Best effort: a renamed button costs
+ * this one shot, not the run.
+ *
+ * The studio's other dialog, the photo picker, is deliberately not captured.
+ * Its tabs are Favorites and All Photos — both show the operator's own library
+ * rather than a chosen album, and these screenshots are published.
+ */
+async function captureStudioModals(page: Page): Promise<void> {
+  try {
+    await page
+      .getByRole('button', { name: /story settings/i })
+      .first()
+      .click();
+    await page.locator('.journal-modal-card').waitFor({ timeout: 5000 });
+    await waitForImages(page);
+    await page.waitForTimeout(800);
+    await capture(page, 'admin-journal-settings');
+    await page
+      .getByRole('button', { name: /^done$/i })
+      .first()
+      .click();
+    await page.locator('.journal-modal-card').waitFor({ state: 'hidden', timeout: 5000 });
+  } catch {
+    console.log('  ⏭  Story Settings dialog did not open — skipping that shot.');
   }
 }
 
@@ -753,7 +786,13 @@ on along the river.
 `;
 }
 
-/** Companion entry for the Kada album — see kurokawaJournalMarkdown(). */
+/**
+ * Companion entry for the Kada album — see kurokawaJournalMarkdown(). Carries
+ * a password so the admin list shows the lock marker its documentation
+ * describes. `demo` is plaintext on purpose: the entry lives for the length of
+ * one run, and a scrypt hash here would only hide what the shot is meant to
+ * show. Real entries should store a hash.
+ */
 function kadaJournalMarkdown(ids: string[]): string {
   const [cover, fullbleed, pairA, pairB] = ids;
   return `---
@@ -761,6 +800,7 @@ title: "Kada, Out of Season"
 subtitle: "A fishing harbour on the Wakayama coast, mostly at 200mm"
 author: "Jane Doe"
 date: "2023-10-19"
+password: "demo"
 coverAssetId: "${cover}"
 ---
 
@@ -780,6 +820,34 @@ honest — the roof tiles, the bare tree behind them, the cats asleep on warm
 concrete all stayed where they were instead of being walked up to.
 
 ![${pairA}, ${pairB}](Two frames from the harbour road)
+`;
+}
+
+/**
+ * Companion entry for the Koyasan album, kept as a draft. The admin list
+ * documents a Draft pill and the public index documents that drafts are hidden
+ * from it — neither is visible while every demo entry is published. Being a
+ * draft it never reaches the public index shot, so it also does not crowd it.
+ */
+function koyasanJournalMarkdown(ids: string[]): string {
+  const [cover, fullbleed] = ids;
+  return `---
+title: "Koyasan, First Notes"
+subtitle: "Rough cut — still choosing which frames survive"
+author: "Jane Doe"
+date: "2023-10-08"
+draft: true
+coverAssetId: "${cover}"
+---
+
+# Under the Cedars
+
+The old graveyard runs for two kilometres under cedars big enough to make the
+path feel indoors, and the stone figures along it are dressed and looked after
+by someone. Notes for now — the light changed every few minutes and I want to
+see the frames on a proper screen before deciding what this is about.
+
+![${fullbleed}:fullbleed](Along the path, mid-morning)
 `;
 }
 
