@@ -31,7 +31,12 @@ import {
   isAlbumSortMode,
   type AlbumSortMode,
 } from '@/lib/albumSort';
-import type { AlbumEntryObject } from '@/lib/config/schema';
+import {
+  COVER_GRID_COLUMNS_MAX,
+  COVER_GRID_COLUMNS_MIN,
+  COVER_GRID_GAP_MAX,
+  type AlbumEntryObject,
+} from '@/lib/config/schema';
 import {
   IconArrowDown,
   IconArrowUp,
@@ -1468,68 +1473,79 @@ export default function PageBuilder() {
                                 </select>
                               </div>
 
-                              {/* Album cover grid — only shown for pages that
-                                  actually render one (2+ albums, no essay). */}
-                              <div className="admin-field" style={{ marginTop: '1rem' }}>
-                                <label>Album Cover Grid</label>
-                                <div style={{ display: 'flex', gap: '12px' }}>
-                                  <input
-                                    type="number"
-                                    min={1}
-                                    max={6}
-                                    value={sp.grid?.columns ?? ''}
-                                    placeholder="Columns (site default)"
-                                    onChange={(e) => {
-                                      const raw = e.target.value;
-                                      const columns = raw === '' ? undefined : Number(raw);
-                                      updateSubpage(spIndex, {
-                                        grid: normalizeSubpageGrid({
-                                          ...(sp.grid || {}),
-                                          columns:
-                                            columns != null && columns >= 1 && columns <= 6
-                                              ? columns
-                                              : undefined,
-                                        }),
-                                      });
-                                    }}
-                                    style={{
-                                      padding: '8px 12px',
-                                      borderRadius: '6px',
-                                      flex: 1,
-                                      fontSize: '0.9rem',
-                                    }}
-                                  />
-                                  <input
-                                    type="number"
-                                    min={0}
-                                    max={80}
-                                    value={sp.grid?.gap ?? ''}
-                                    placeholder="Gap in px (theme default)"
-                                    onChange={(e) => {
-                                      const raw = e.target.value;
-                                      const gap = raw === '' ? undefined : Number(raw);
-                                      updateSubpage(spIndex, {
-                                        grid: normalizeSubpageGrid({
-                                          ...(sp.grid || {}),
-                                          gap:
-                                            gap != null && gap >= 0 && gap <= 80 ? gap : undefined,
-                                        }),
-                                      });
-                                    }}
-                                    style={{
-                                      padding: '8px 12px',
-                                      borderRadius: '6px',
-                                      flex: 1,
-                                      fontSize: '0.9rem',
-                                    }}
-                                  />
+                              {/* Album cover grid — hidden in essay mode, which
+                                  renders a story instead of a cover grid. The
+                                  album count is deliberately not checked: it
+                                  changes in this very drawer, and a field that
+                                  vanishes while you edit is worse than one that
+                                  has no effect yet. */}
+                              {sp.grid?.layout !== 'essay' && sp.essayText == null && (
+                                <div className="admin-field" style={{ marginTop: '1rem' }}>
+                                  <label>Album Cover Grid</label>
+                                  <div style={{ display: 'flex', gap: '12px' }}>
+                                    <input
+                                      type="number"
+                                      min={COVER_GRID_COLUMNS_MIN}
+                                      max={COVER_GRID_COLUMNS_MAX}
+                                      value={sp.grid?.columns ?? ''}
+                                      placeholder="Columns (site default)"
+                                      onChange={(e) => {
+                                        const raw = e.target.value;
+                                        const columns = raw === '' ? undefined : Number(raw);
+                                        updateSubpage(spIndex, {
+                                          grid: normalizeSubpageGrid({
+                                            ...(sp.grid || {}),
+                                            columns:
+                                              columns != null &&
+                                              columns >= COVER_GRID_COLUMNS_MIN &&
+                                              columns <= COVER_GRID_COLUMNS_MAX
+                                                ? columns
+                                                : undefined,
+                                          }),
+                                        });
+                                      }}
+                                      style={{
+                                        padding: '8px 12px',
+                                        borderRadius: '6px',
+                                        flex: 1,
+                                        fontSize: '0.9rem',
+                                      }}
+                                    />
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      max={COVER_GRID_GAP_MAX}
+                                      value={sp.grid?.gap ?? ''}
+                                      placeholder="Gap in px (theme default)"
+                                      onChange={(e) => {
+                                        const raw = e.target.value;
+                                        const gap = raw === '' ? undefined : Number(raw);
+                                        updateSubpage(spIndex, {
+                                          grid: normalizeSubpageGrid({
+                                            ...(sp.grid || {}),
+                                            gap:
+                                              gap != null && gap >= 0 && gap <= COVER_GRID_GAP_MAX
+                                                ? gap
+                                                : undefined,
+                                          }),
+                                        });
+                                      }}
+                                      style={{
+                                        padding: '8px 12px',
+                                        borderRadius: '6px',
+                                        flex: 1,
+                                        fontSize: '0.9rem',
+                                      }}
+                                    />
+                                  </div>
+                                  <p className="admin-field-hint">
+                                    Overrides how the album covers are tiled on this page. Leave the
+                                    column count empty to follow the site-wide grid setting, and the
+                                    gap empty to keep the theme&apos;s own spacing. Tablet widths
+                                    show at most two covers per row.
+                                  </p>
                                 </div>
-                                <p className="admin-field-hint">
-                                  Overrides how the album covers are tiled on this page. Leave the
-                                  column count empty to follow the site-wide grid setting, and the
-                                  gap empty to keep the theme&apos;s own spacing.
-                                </p>
-                              </div>
+                              )}
                             </div>
 
                             {/* Visual Photo Essay Builder (if layout === 'essay') */}

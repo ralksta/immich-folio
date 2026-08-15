@@ -24,7 +24,7 @@ import {
   assetAspectRatio,
 } from '@/lib/urls';
 import { encodeAssetId } from '@/lib/tokens';
-import { getConfig, resolveProofing, type GridConfig } from '@/lib/config';
+import { buildCoverGridVars, getConfig, resolveProofing, type GridConfig } from '@/lib/config';
 import { isProtected, isAuthenticated } from '@/lib/auth';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import PasswordGate from '@/components/PasswordGate';
@@ -184,18 +184,10 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
 
   // The album-cover grid on a subpage takes its column count from the same
   // config as the photo grids, so "3 columns" in the admin means three columns
-  // everywhere. `gap` deliberately does not follow the global setting: each
-  // theme preset picks the cover spacing as part of its look (1px monograph,
-  // 20px studio-modern), so only an explicit per-subpage gap overrides it.
-  const buildCoverGridStyle = (overrides?: Partial<GridConfig>): React.CSSProperties => {
-    // A hand-edited `columns: 0` would emit `repeat(0, 1fr)` and collapse the
-    // grid, so the count is clamped rather than trusted.
-    const columns = Math.min(6, Math.max(1, overrides?.columns ?? config.grid.columns));
-    return {
-      '--subpage-columns': columns,
-      ...(overrides?.gap != null ? { '--subpage-gap': `${Math.max(0, overrides.gap)}px` } : {}),
-    } as React.CSSProperties;
-  };
+  // everywhere. `gap` deliberately does not follow the global setting — see
+  // buildCoverGridVars() for why.
+  const buildCoverGridStyle = (overrides?: Partial<GridConfig>): React.CSSProperties =>
+    buildCoverGridVars(overrides, config.grid.columns) as React.CSSProperties;
 
   // Client proofing — `proofing.enabled` in settings.yaml is the default and a
   // subpage's own `proofing:` flag overrides it in either direction. Albums

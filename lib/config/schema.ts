@@ -91,6 +91,58 @@ export interface GridConfig {
     'masonry' | 'uniform' | 'showcase' | 'filmstrip' | 'editorial-flow' | 'essay' | 'justified';
 }
 
+/**
+ * Bounds for the album-cover grid on a subpage. Shared with the admin inputs so
+ * the form and the renderer cannot drift apart.
+ */
+export const COVER_GRID_COLUMNS_MIN = 1;
+export const COVER_GRID_COLUMNS_MAX = 6;
+export const COVER_GRID_GAP_MAX = 80;
+
+/** Tablet widths show at most two covers side by side, like the photo grids. */
+export const COVER_GRID_TABLET_COLUMNS_MAX = 2;
+
+/**
+ * The CSS custom properties that size the album-cover grid on a subpage.
+ *
+ * `columns` follows the same config as the photo grids (global `settings.yaml`
+ * < per-subpage override), so "3 columns" in the admin means three columns
+ * everywhere. `gap` deliberately does not: each theme preset picks the cover
+ * spacing as part of its look (1px monograph, 20px studio-modern), so the
+ * variable is only emitted when a subpage sets `gap` explicitly — otherwise the
+ * preset's own `--subpage-gap` stands.
+ *
+ * `--subpage-columns-tablet` is computed here rather than in CSS because
+ * `repeat()` does not reliably accept a `min()` expression.
+ */
+export function buildCoverGridVars(
+  overrides: Partial<GridConfig> | undefined,
+  globalColumns: number,
+): Record<string, string | number> {
+  // A hand-edited `columns: 0` would emit `repeat(0, 1fr)` and collapse the
+  // grid, so the count is clamped rather than trusted.
+  const columns = clamp(
+    overrides?.columns ?? globalColumns,
+    COVER_GRID_COLUMNS_MIN,
+    COVER_GRID_COLUMNS_MAX,
+  );
+  const vars: Record<string, string | number> = {
+    '--subpage-columns': columns,
+    '--subpage-columns-tablet': Math.min(columns, COVER_GRID_TABLET_COLUMNS_MAX),
+  };
+  if (overrides?.gap != null) {
+    vars['--subpage-gap'] = `${clamp(overrides.gap, 0, COVER_GRID_GAP_MAX)}px`;
+  }
+  return vars;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  // NaN from a malformed YAML value would survive Math.min/Math.max, and
+  // `repeat(NaN, 1fr)` is an invalid declaration that drops the whole rule.
+  if (!Number.isFinite(value)) return min;
+  return Math.min(max, Math.max(min, Math.round(value)));
+}
+
 export interface AppConfig {
   immich: { apiUrl: string; apiKey: string };
   authSecret: string;

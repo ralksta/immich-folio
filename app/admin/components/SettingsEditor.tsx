@@ -1256,7 +1256,11 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                 <h3>
                   <Icons.IconColumns size={18} /> Spacing &amp; Columns
                 </h3>
-                <p className="settings-section-sub">Adjust column counts and grid gap spacing.</p>
+                <p className="settings-section-sub">
+                  Adjust column counts and grid gap spacing. The column count also tiles the album
+                  covers on a subpage; their spacing stays with the theme unless a page overrides
+                  it.
+                </p>
               </div>
 
               <div className="admin-field-row">
