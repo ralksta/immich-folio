@@ -182,6 +182,12 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
   const resolveLayout = (overrides?: Partial<GridConfig>) =>
     overrides?.layout ?? config.grid.layout;
 
+  // Client proofing — `proofing.enabled` in settings.yaml is the default and a
+  // subpage's own `proofing:` flag overrides it in either direction. Albums
+  // reached without a subpage follow the global setting.
+  const proofingFor = (subpage?: { proofing?: boolean }) =>
+    subpage?.proofing ?? config.proofing.enabled;
+
   // EXPERIMENTAL: per-album grid override — merged over the subpage grid so
   // the precedence is global < subpage < album.
   const mergeAlbumGrid = (
@@ -241,6 +247,8 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         backLinkHref={`/${subpageSlug}`}
         backLinkLabel={`Back to ${subpageName}`}
         watermark={config.watermark}
+        proofing={proofingFor(subpageData?.subpage)}
+        allowMailto={config.proofing.allowMailto}
         {...heroData}
       />
     );
@@ -312,6 +320,11 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         };
       }
 
+      // A published story is not an album handover, so an essay only gets the
+      // proofing controls when its subpage asks for them explicitly — the
+      // global default does not reach in here.
+      const essayProofing = result.subpage.proofing === true;
+
       return (
         <EssayView
           essay={essayParsed}
@@ -319,6 +332,8 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
           title={result.subpage.title || result.subpage.name}
           subtitle={result.subpage.subtitle}
           watermark={config.watermark}
+          proofing={essayProofing}
+          allowMailto={config.proofing.allowMailto}
         />
       );
     }
@@ -358,6 +373,8 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
           backLinkHref="/"
           backLinkLabel="Back to Gallery"
           watermark={config.watermark}
+          proofing={proofingFor(result.subpage)}
+          allowMailto={config.proofing.allowMailto}
           {...heroData}
         />
       );
@@ -435,6 +452,8 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       backLinkHref="/"
       backLinkLabel="Back to Gallery"
       watermark={config.watermark}
+      proofing={proofingFor()}
+      allowMailto={config.proofing.allowMailto}
       {...heroData}
     />
   );
