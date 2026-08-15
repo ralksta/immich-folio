@@ -1,86 +1,83 @@
-# Brainstorm: Plugin-Struktur
+# Brainstorm: Plugin architecture
 
-_Stand: 2026-08-15 · Basis: v0.11.0 (dev, nach #462) · Fokus: wie Fremdcode an
-Folio andocken könnte, ohne das Sicherheitsversprechen einzureißen_
+_As of 2026-08-15 · Base: v0.11.0 (dev, after #462) · Focus: how third-party code
+could dock onto Folio without tearing down the security promise_
 
-Dieses Dokument ergänzt [`ideas.md`](ideas.md),
-[`brainstorm.md`](brainstorm.md),
-[`brainstorm-2026-08-05.md`](brainstorm-2026-08-05.md) und
-[`brainstorm-2026-08-15.md`](brainstorm-2026-08-15.md). Das Thema Plugins kommt in
-keiner der vier Listen vor — auch nicht als Einzeiler. Es ist damit kein Feature
-unter vielen, sondern eine Architekturentscheidung, die vor den Features kommt:
-Wer sie trifft, legt fest, welche der dort gelisteten Ideen überhaupt noch im Kern
-gebaut werden müssen und welche jemand anders beisteuern kann.
+This document complements [`ideas.md`](ideas.md), [`brainstorm.md`](brainstorm.md),
+[`brainstorm-2026-08-05.md`](brainstorm-2026-08-05.md) and
+[`brainstorm-2026-08-15.md`](brainstorm-2026-08-15.md). Plugins appear in none of
+those four lists — not even as a one-liner. That makes this not one feature among
+many but an architecture decision that comes before the features: whoever makes it
+determines which of the ideas listed there still have to be built in core, and
+which somebody else can contribute.
 
-Aufwand wie in den Vorgängern: XS (Stunden), S (1 Tag), M (2–5 Tage), L (Wochen).
-
----
-
-## 0. Die Nähte, die es schon gibt
-
-Ein Plugin-System erfindet man nicht auf der grünen Wiese. Folio hat an sieben
-Stellen bereits eine Fuge, an der heute eine feste Liste steht, wo eine
-erweiterbare stehen könnte:
-
-| Naht                                  | Heute                                                            | Als Erweiterungspunkt |
-| ------------------------------------- | ---------------------------------------------------------------- | --------------------- |
-| `lib/config/theme.ts:99`              | `resolveTheme()` über sieben feste Presets                       | Theme-Packs           |
-| `app/globals.css:2-7`                 | sechs `@import` auf `app/themes/*.css`                           | dito — aber siehe A2  |
-| `lib/journal.ts:17`                   | `JournalBlock` als geschlossene Union, Renderer-`switch` ab :343 | eigene Blocktypen     |
-| `lib/config/schema.ts:261`            | `SettingsYaml` als geschlossenes Interface                       | Plugin-Namespace      |
-| `app/api/webhook/route.ts:31`         | drei eingehende Immich-Events                                    | **ausgehende** Events |
-| `app/api/analytics/track/route.ts:45` | Zähler in `analytics.json`                                       | Sink-Adapter          |
-| `SettingsEditor.tsx:192-199`          | acht feste Admin-Sektionen                                       | UI-Slots              |
-
-Dazu die zwei Stellen, die _keine_ Naht sind, sondern eine Wand:
-`lib/immich.ts` ist ein Singleton mit hart verdrahtetem Immich-Client, und
-`proxy.ts:18` erlaubt `script-src` ausschließlich per Nonce (`'strict-dynamic'`,
-kein `'unsafe-inline'`-Fallback). Beides ist für die Bewertung der Lade-Modelle
-entscheidend.
+Effort sizing as in the predecessors: XS (hours), S (1 day), M (2–5 days), L (weeks).
 
 ---
 
-## A. Vier Lade-Modelle
+## 0. The seams that already exist
 
-Die eigentliche Frage ist nicht „welche Erweiterungspunkte", sondern **„wie kommt
-fremder Code in eine laufende Instanz"**. Davon hängt alles andere ab.
+You don't invent a plugin system on a greenfield. Folio already has a joint in
+seven places where a fixed list sits today and an extensible one could:
 
-### A1. Build-time Plugins — **S für das Gerüst, aber die falsche Zielgruppe**
+| Seam                                  | Today                                                         | As an extension point |
+| ------------------------------------- | ------------------------------------------------------------- | --------------------- |
+| `lib/config/theme.ts:99`              | `resolveTheme()` over seven fixed presets                     | theme packs           |
+| `app/globals.css:2-7`                 | six `@import`s of `app/themes/*.css`                          | ditto — but see A2    |
+| `lib/journal.ts:17`                   | `JournalBlock` as a closed union, renderer `switch` from :343 | custom block types    |
+| `lib/config/schema.ts:261`            | `SettingsYaml` as a closed interface                          | plugin namespace      |
+| `app/api/webhook/route.ts:31`         | three inbound Immich events                                   | **outbound** events   |
+| `app/api/analytics/track/route.ts:45` | counters in `analytics.json`                                  | sink adapters         |
+| `SettingsEditor.tsx:192-199`          | eight fixed admin sections                                    | UI slots              |
 
-npm-Dependency plus eine Registry-Datei (`folio.plugins.ts`), die beim Build
-eingelesen wird. Technisch mit Abstand am einfachsten: kein Sandboxing-Problem,
-volle Typsicherheit, Tree-Shaking, alles was Next.js ohnehin kann.
+And the two places that are not a seam but a wall: `lib/immich.ts` is a singleton
+with a hard-wired Immich client, and `proxy.ts:18` allows `script-src` by nonce
+only (`'strict-dynamic'`, no `'unsafe-inline'` fallback). Both matter for judging
+the loading models.
 
-**Der Haken ist nicht technisch, sondern demografisch.** Die Zielgruppe eines
-self-hosted Portfolios macht `docker compose pull`. Wer ein eigenes Image baut,
-kann heute schon forken — für den ändert ein Plugin-System wenig. Build-time
-Plugins bedienen also genau die Nutzer, die das System am wenigsten brauchen.
+---
 
-**Trotzdem behalten:** als dokumentierter Power-User-Pfad und als Grundlage für
-die mitgelieferten „First-Party"-Plugins. Nur nicht als _die_ Antwort.
+## A. Four loading models
 
-### A2. Deklarative Runtime-Plugins — **S–M, sicher, deckt mehr ab als man denkt**
+The real question is not "which extension points" but **"how does foreign code get
+into a running instance"**. Everything else follows from that.
 
-Ein Verzeichnis `content/plugins/<id>/` mit Manifest, CSS, Templates,
-Übersetzungsdateien — **kein JavaScript**. Folio liest beim Start, was da liegt,
-und erweitert damit Listen, die heute Konstanten sind.
+### A1. Build-time plugins — **S for the scaffolding, but the wrong audience**
 
-Was damit geht: Theme-Packs, Layout-Varianten, EXIF-Feldbeschriftungen,
-i18n-Pakete, Grid-Presets, Blocktypen ohne eigene Logik.
-Was nicht geht: alles, was rechnen oder nach draußen reden muss.
+An npm dependency plus a registry file (`folio.plugins.ts`) read at build time. By
+far the simplest technically: no sandboxing problem, full type safety, tree
+shaking, everything Next.js can do anyway.
 
-**Der Trade-off, der benannt gehört:** Theme-CSS wird heute statisch importiert
-(`app/globals.css:2-7`) und landet im Build-Output. Ein Runtime-Theme-Pack braucht
-deshalb einen zweiten Weg — entweder ein `<style>`-Tag im Layout (die CSP erlaubt
-das, `style-src` führt `'unsafe-inline'`, `proxy.ts:19`) oder eine Route
-`/api/theme.css`. Das ist kein Blocker, aber es ist Arbeit, die man nicht sieht,
-wenn man nur „Presets sind ja schon Daten" denkt.
+**The catch is not technical but demographic.** The audience for a self-hosted
+portfolio runs `docker compose pull`. Anyone who builds their own image can
+already fork today — for them a plugin system changes little. So build-time
+plugins serve exactly the users who need the system least.
 
-### A3. Out-of-Process-Plugins — **M, das eigentliche Ziel**
+**Keep it anyway:** as a documented power-user path and as the basis for the
+bundled "first-party" plugins. Just not as _the_ answer.
 
-Ein Plugin ist ein eigener Container mit einem HTTP-Kontrakt in beide Richtungen:
-Folio schickt Events raus, das Plugin darf definierte Endpunkte abfragen und
-liefert optional HTML-Fragmente für deklarierte UI-Slots zurück.
+### A2. Declarative runtime plugins — **S–M, safe, covers more than you'd think**
+
+A directory `content/plugins/<id>/` holding a manifest, CSS, templates and
+translation files — **no JavaScript**. Folio reads what is there at startup and
+extends lists that are constants today.
+
+What this covers: theme packs, layout variants, EXIF field labels, i18n packs,
+grid presets, block types without their own logic.
+What it does not: anything that has to compute or talk to the outside.
+
+**The trade-off that deserves naming:** theme CSS is imported statically today
+(`app/globals.css:2-7`) and ends up in the build output. A runtime theme pack
+therefore needs a second delivery path — either a `<style>` tag in the layout (the
+CSP permits it, `style-src` carries `'unsafe-inline'`, `proxy.ts:19`) or an
+`/api/theme.css` route. Not a blocker, but it is work you don't see if you only
+think "presets are already data".
+
+### A3. Out-of-process plugins — **M, the actual target**
+
+A plugin is its own container with an HTTP contract in both directions: Folio
+pushes events out, the plugin may query defined endpoints and optionally returns
+HTML fragments for declared UI slots.
 
 ```yaml
 # docker-compose.override.yml
@@ -92,56 +89,54 @@ services:
       FOLIO_PLUGIN_TOKEN: ${PRINT_TOKEN}
 ```
 
-**Warum das zu diesem Projekt passt:** Die Nutzer betreiben ohnehin Compose — ein
-zweiter Service ist kein neues Konzept, sondern das bereits vorhandene. Der
-Fremdcode läuft nie im Folio-Prozess, sieht den Immich-API-Key nicht, kann
-`install.json` nicht lesen und die Admin-Session nicht signieren. Und der
-Kontrakt ist sprachneutral: Ein Plugin in Python oder Go ist genauso legitim.
+**Why this fits this project:** users already run Compose — a second service is
+not a new concept but the existing one. The foreign code never runs in the Folio
+process, never sees the Immich API key, cannot read `install.json` and cannot sign
+an admin session. And the contract is language-neutral: a plugin written in Python
+or Go is just as legitimate.
 
-**Trade-offs:** Latenz für UI-Slots (mit Timeout und Fallback auf „nichts
-rendern" beherrschbar); ein zweites Auth-Schema (Plugin-Token, nicht die
-Admin-Session); und die Einstiegshürde ist höher als „eine Datei ablegen".
+**Trade-offs:** latency for UI slots (manageable with a timeout and a "render
+nothing" fallback); a second auth scheme (plugin token, not the admin session);
+and the barrier to entry is higher than "drop in a file".
 
-### A4. In-Process-JS aus `content/plugins/` — **wogegen ich argumentiere**
+### A4. In-process JS from `content/plugins/` — **what I argue against**
 
-Das ist das Modell, an das man zuerst denkt, weil WordPress es so macht. Für
-Folio ist es die einzige Option, die das Kernversprechen des Projekts aufhebt.
+This is the model everyone thinks of first, because WordPress does it that way.
+For Folio it is the one option that voids the project's core promise.
 
-Ein solches Plugin läuft im selben Node-Prozess wie:
+Such a plugin runs in the same Node process as:
 
-- der Immich-API-Key (`lib/env.ts`),
-- `AUTH_SECRET`, aus dem `lib/tokens.ts` den Asset-Verschlüsselungs-Key ableitet,
-- der scrypt-Hash des Admin-Passworts aus `content/install.json`,
-- der Signierschlüssel der Admin-Sessions (`lib/admin/auth.ts`).
+- the Immich API key (`lib/env.ts`),
+- `AUTH_SECRET`, from which `lib/tokens.ts` derives the asset encryption key,
+- the scrypt hash of the admin password from `content/install.json`,
+- the signing key for admin sessions (`lib/admin/auth.ts`).
 
-Node hat kein belastbares Sandboxing dafür. `vm` ist keins — aus dem Kontext
-kommt man mit drei Zeilen wieder heraus. `worker_threads` trennt den Speicher,
-aber nicht das Dateisystem und nicht das Netzwerk. Die Node-Permission-API ist
-prozessweit, nicht pro Modul. Das heißt: Der Satz „der Immich-Server und der
-API-Key sind nie öffentlich exponiert" wäre danach nur noch so wahr wie das
-leichtsinnigste installierte Plugin.
+Node has no dependable sandbox for this. `vm` is not one — three lines get you back
+out of the context. `worker_threads` separates memory but not the filesystem and
+not the network. The Node permission API is process-wide, not per-module. Which
+means: the sentence "the Immich server and the API key are never publicly exposed"
+would afterwards only be as true as the most careless installed plugin.
 
-Dazu kommt die CSP: Client-seitiges Plugin-JS müsste die Nonce aus `proxy.ts`
-bekommen. Wer die Nonce vergibt, hebt `'strict-dynamic'` für diesen Code auf —
-XSS-Schutz und Plugin-Freiheit sind hier dieselbe Stellschraube in zwei
-Richtungen.
+On top of that, the CSP: client-side plugin JS would need the nonce from
+`proxy.ts`. Whoever hands out the nonce disables `'strict-dynamic'` for that code —
+XSS protection and plugin freedom are the same dial turned in two directions.
 
-**Falls es trotzdem kommen soll**, dann bitte mit drei Bedingungen: nur per
-Admin installierbar (nie automatisch aus einem Verzeichnis geladen), im Admin
-mit einem unmissverständlichen Vollzugriffs-Hinweis, und per Default aus
+**If it should happen anyway**, then please under three conditions: installable
+only via the admin panel (never auto-loaded from a directory), shown in the admin
+with an unmistakable full-access warning, and off by default
 (`PLUGINS_ALLOW_CODE=true`).
 
-### Empfehlung
+### Recommendation
 
-**A2 + A3 zuerst, A1 als dokumentierter Pfad, A4 nicht.** Das deckt geschätzt den
-größten Teil der realistischen Plugin-Wünsche ab, ohne dass irgendjemand das
-Bedrohungsmodell neu schreiben muss.
+**A2 + A3 first, A1 as a documented path, A4 not at all.** That covers what is
+likely the largest share of realistic plugin wishes without anyone having to
+rewrite the threat model.
 
 ---
 
-## B. Manifest und Capabilities
+## B. Manifest and capabilities
 
-Ein Manifest pro Plugin, gelesen beim Start, im Admin sichtbar:
+One manifest per plugin, read at startup, visible in the admin panel:
 
 ```yaml
 # content/plugins/print-orders/plugin.yaml
@@ -149,143 +144,143 @@ id: print-orders
 name: Print Orders
 version: 1.2.0
 kind: service # service | theme | blocks | locale
-endpoint: http://folio-print:8080 # nur bei kind: service
+endpoint: http://folio-print:8080 # only for kind: service
 capabilities:
   - events:album.published
   - events:proofing.submitted
   - ui:album-footer
-settings: # erzeugt das Admin-Formular
+settings: # generates the admin form
   provider: { type: enum, values: [prodigi, whitewall, saal] }
   markup: { type: number, default: 1.4 }
 ```
 
-Drei Regeln, die von Anfang an gelten sollten, weil sie sich später nicht
-nachrüsten lassen:
+Three rules that should hold from the start, because they cannot be retrofitted
+later:
 
-**B1. Capabilities sind deklariert und werden angezeigt.** Im Admin steht, was
-ein Plugin darf — nicht als Kleingedrucktes, sondern als Liste vor der
-Installation. `config:write` gibt es für Fremd-Plugins nicht.
+**B1. Capabilities are declared and displayed.** The admin panel states what a
+plugin may do — not as fine print but as a list shown before installation. There
+is no `config:write` for third-party plugins.
 
-**B2. Assets überqueren die Plugin-Grenze nur als Token.** Die Regel aus
-`CLAUDE.md` — rohe Asset-UUIDs erscheinen nie im Client — muss auch für Plugins
-gelten, sonst ist sie durch die Hintertür aufgehoben. Plugins bekommen
-`encodeAssetId()`-Tokens; wer das Original braucht, braucht eine eigene,
-begründete Capability.
+**B2. Assets cross the plugin boundary only as tokens.** The rule from `CLAUDE.md`
+— raw asset UUIDs never appear in the client — has to hold for plugins too, or it
+is voided through the back door. Plugins receive `encodeAssetId()` tokens; anything
+that needs the original needs its own, justified capability.
 
-**B3. Plugin-Settings leben in einem eigenen Namespace.** `SettingsYaml`
-(`lib/config/schema.ts:261`) bleibt geschlossen; Plugins schreiben unter
-`plugins.<id>.*`. Sonst kollidiert das erste Plugin mit dem nächsten Kern-Feature,
-das denselben Schlüsselnamen will.
+**B3. Plugin settings live in their own namespace.** `SettingsYaml`
+(`lib/config/schema.ts:261`) stays closed; plugins write under `plugins.<id>.*`.
+Otherwise the first plugin collides with the next core feature that wants the same
+key name.
 
-Zur Verteilung: ein GitHub-Topic `immich-folio-plugin` plus eine kuratierte
-`plugins.json` reicht als Registry völlig aus. Installation über URL mit
-Pinning auf einen Hash — kein eigener Paket-Server, kein Signaturschema in v1.
-
----
-
-## C. Was Leute tatsächlich reinhängen würden
-
-Sortiert nach vermuteter Nachfrage, nicht nach Aufwand.
-
-### C1. Kundengeschäft
-
-Der stärkste Treiber, weil hier Geld dranhängt:
-
-- **Print-Shop-Anbindung** (Prodigi, WhiteWall, Saal) mit „Print bestellen" am
-  Album-Fuß — der klassische UI-Slot-Fall
-- **Proofing-Auswahl → ZIP-Download**, Ablauf-Links, Download-Kontingent pro Kunde
-- **Anfrage-Formular** → SMTP, ntfy, Telegram, Discord, Matrix
-- **Kunden-Login per Magic-Link** statt statischem Passwort-Gate
-- **Rechnungs-Trigger** bei Album-Freigabe (n8n, Lexoffice, sevDesk)
-
-Anmerkung: C1 überschneidet sich bewusst mit Abschnitt A aus
-[`brainstorm-2026-08-15.md`](brainstorm-2026-08-15.md) — dort als Kern-Feature
-gedacht, hier als Plugin. Das ist genau die Entscheidung, die dieses Dokument
-aufwirft: Ablaufende Client-Links gehören in den Kern (sie fassen die
-Zugangsprüfung an), ein Print-Shop nicht (er fasst nur eine Ecke der UI an).
-
-### C2. Reichweite
-
-- **RSS/JSON-Feed**, IndexNow-Ping, erweiterte Sitemaps
-- **POSSE**: Auto-Post nach Mastodon/Bluesky/Pixelfed bei Journal-Veröffentlichung
-- **ActivityPub-Actor** fürs Journal — folgen statt abonnieren
-- **Newsletter** (Listmonk, Buttondown) bei neuem Eintrag
-- **Kommentare** via Isso, Commento, Giscus
-- **Analytics-Weiterleitung** an Plausible/Umami/GoatCounter statt der
-  JSON-Zähler (`app/api/analytics/track/route.ts`)
-
-### C3. Handwerk und Darstellung
-
-Das wird der erste echte Community-Beitrag sein, weil die Hürde am niedrigsten ist:
-
-- **Theme-Packs** inklusive Fonts, Grain, Rahmen
-- **Layout-Varianten**: Diptychon/Doppelseite, Kontaktbogen, Kiosk-/TV-Slideshow
-- **EXIF-Panel-Erweiterungen**: Filmsimulation, lesbare Objektivnamen,
-  Kamera-Badges, Entwicklungs-Rezept
-- **Journal-Blocktypen**: Video, Karte, Vorher/Nachher-Slider, Audio, Gear-Liste
-- **Kartenanbieter** tauschen (MapTiler, Thunderforest), GPX-Tracks, Reise-Modus
-
-### C4. Vertrauen und Schutz
-
-- **Wasserzeichen im Image-Proxy**, tier-abhängig (nur `preview`, nie `thumbnail`)
-- **C2PA-Credentials**, IPTC-Erhalt beim Original-Download
-- **SSO** über OIDC/Authelia/Tailscale-Header statt Per-Seite-Passwörtern
-- **Hotlink-Schutz**, per-Album-Download-Regeln
-
-### C5. Betrieb
-
-- **Source-Adapter** jenseits Immich: lokaler Ordner, PhotoPrism, Nextcloud, S3.
-  Der teuerste Punkt der Liste — `lib/immich.ts` ist ein Singleton mit
-  Request-Coalescing und LRU; daraus ein Interface zu schneiden ist **L**, nicht M.
-- **Statischer Export-Snapshot** nach S3/Netlify als ausfallsicherer Spiegel
-- **Cache-Warmer** per Cron, Healthcheck-Ping an Uptime Kuma
-- **i18n-Pakete** für die UI-Strings
-- **Auto-Alt-Text** via lokalem Ollama; Akzentfarbe aus dem Hero-Bild ableiten
+On distribution: a GitHub topic `immich-folio-plugin` plus a curated `plugins.json`
+is entirely enough as a registry. Installation by URL, pinned to a hash — no
+package server of our own, no signing scheme in v1.
 
 ---
 
-## D. Wo ich schneiden würde
+## C. What people would actually plug in
 
-Ein MVP, das für sich allein nützlich ist — auch falls nie ein zweiter Schritt kommt:
+Sorted by presumed demand, not by effort.
 
-### D1. Ausgehende Events — **S, sofort nützlich**
+### C1. Client business
 
-`album.published`, `journal.published`, `proofing.submitted`, jeweils mit
-HMAC-SHA256-Signatur über den Rohbody — spiegelbildlich zum eingehenden Webhook
-(`app/api/webhook/route.ts:64`), dieselbe Mechanik, andere Richtung. Ziel-URLs in
+The strongest driver, because money is attached:
+
+- **Print shop integration** (Prodigi, WhiteWall, Saal) with an "order a print"
+  button at the album footer — the classic UI-slot case
+- **Proofing selection → ZIP download**, expiring links, per-client download quota
+- **Enquiry form** → SMTP, ntfy, Telegram, Discord, Matrix
+- **Client login via magic link** instead of a static password gate
+- **Invoice trigger** on album release (n8n, Lexoffice, sevDesk)
+
+Note: C1 deliberately overlaps with section A of
+[`brainstorm-2026-08-15.md`](brainstorm-2026-08-15.md) — conceived there as a core
+feature, here as a plugin. That is precisely the decision this document raises:
+expiring client links belong in core (they touch the access check), a print shop
+does not (it touches one corner of the UI).
+
+### C2. Reach
+
+- **RSS/JSON feed**, IndexNow ping, extended sitemaps
+- **POSSE**: auto-post to Mastodon/Bluesky/Pixelfed on journal publish
+- **ActivityPub actor** for the journal — follow instead of subscribe
+- **Newsletter** (Listmonk, Buttondown) on a new entry
+- **Comments** via Isso, Commento, Giscus
+- **Analytics forwarding** to Plausible/Umami/GoatCounter instead of the JSON
+  counters (`app/api/analytics/track/route.ts`)
+
+### C3. Craft and presentation
+
+This will be the first real community contribution, because the barrier is lowest:
+
+- **Theme packs** including fonts, grain, frames
+- **Layout variants**: diptych/spread, contact sheet, kiosk/TV slideshow
+- **EXIF panel extensions**: film simulation, readable lens names, camera badges,
+  development recipe
+- **Journal block types**: video, map, before/after slider, audio, gear list
+- **Swappable map providers** (MapTiler, Thunderforest), GPX tracks, trip mode
+
+### C4. Trust and protection
+
+- **Watermarking in the image proxy**, tier-dependent (only `preview`, never
+  `thumbnail`)
+- **C2PA credentials**, IPTC preservation on original downloads
+- **SSO** via OIDC/Authelia/Tailscale headers instead of per-page passwords
+- **Hotlink protection**, per-album download rules
+
+### C5. Operations
+
+- **Source adapters** beyond Immich: local folder, PhotoPrism, Nextcloud, S3. The
+  most expensive item on the list — `lib/immich.ts` is a singleton with request
+  coalescing and an LRU; cutting an interface out of it is **L**, not M.
+- **Static export snapshot** to S3/Netlify as an outage-proof mirror
+- **Cache warmer** on cron, health-check ping to Uptime Kuma
+- **i18n packs** for the UI strings
+- **Auto alt text** via a local Ollama; derive the accent colour from the hero image
+
+---
+
+## D. Where I would cut
+
+An MVP that is useful on its own — even if a second step never comes:
+
+### D1. Outbound events — **S, useful immediately**
+
+`album.published`, `journal.published`, `proofing.submitted`, each with an
+HMAC-SHA256 signature over the raw body — a mirror image of the inbound webhook
+(`app/api/webhook/route.ts:64`), same mechanics, opposite direction. Target URLs in
 `settings.yaml`.
 
-Das ist der größte Hebel pro Zeile Code: Ohne jedes Plugin-Konzept sind damit
-Newsletter, POSSE, Benachrichtigungen und halbe Kundenworkflows über n8n oder ein
-Shell-Script erreichbar. Und es ist die Grundlage, auf der A3 später aufsetzt,
-ohne dass man es zurücknehmen müsste.
+This is the biggest lever per line of code: without any plugin concept at all it
+puts newsletters, POSSE, notifications and half the client workflows within reach
+of n8n or a shell script. And it is the foundation A3 later builds on, without
+having to be taken back.
 
-### D2. Theme-Packs aus `content/themes/` — **S–M, größte sichtbare Wirkung**
+### D2. Theme packs from `content/themes/` — **S–M, largest visible effect**
 
-Erweitert `resolveTheme()` (`lib/config/theme.ts:99`) um Presets aus dem
-Content-Verzeichnis, plus den CSS-Auslieferungsweg aus A2. Null
-Sicherheitsrisiko, und es ist das, was Leute teilen wollen.
+Extends `resolveTheme()` (`lib/config/theme.ts:99`) with presets from the content
+directory, plus the CSS delivery path from A2. Zero security risk, and it is what
+people want to share.
 
-### D3. Plugin-Namespace in `settings.yaml` — **S**
+### D3. Plugin namespace in `settings.yaml` — **S**
 
-`plugins.<id>.*` plus ein aus dem Manifest generiertes Admin-Formular, damit D1
-und D2 konfigurierbar sind, ohne den `SettingsEditor` pro Plugin anzufassen.
+`plugins.<id>.*` plus an admin form generated from the manifest, so that D1 and D2
+are configurable without touching `SettingsEditor` per plugin.
 
-**Reihenfolge:** D1 → D2 → D3 → A3. Alles darüber (Blocktypen, Source-Adapter,
-UI-Slots) baut darauf auf.
+**Order:** D1 → D2 → D3 → A3. Everything beyond that (block types, source adapters,
+UI slots) builds on it.
 
 ---
 
-## E. Was offen bleibt
+## E. What stays open
 
-Drei Fragen, die dieses Dokument bewusst nicht beantwortet:
+Three questions this document deliberately does not answer:
 
-1. **Support-Last.** Ein Plugin-System verlagert Bugs in fremden Code, aber nicht
-   die Issues. „Meine Galerie ist kaputt" kommt weiterhin hier an. Das spricht für
-   A3 (Plugin-Crash ist ein Container-Crash, kein 500 in Folio) und gegen A4.
-2. **Versionierung des Kontrakts.** Ab Plugin Nummer zwei ist jede Änderung an
-   Event-Payloads oder Manifest-Feldern ein Breaking Change. Ein `apiVersion` im
-   Manifest ab Tag eins kostet nichts und rettet später viel.
-3. **Ob es überhaupt Nachfrage gibt.** Ein Plugin-System für null Plugins ist
-   verlorene Zeit. D1 ist auch dann richtig, wenn die Antwort nein lautet — es ist
-   ein Webhook, kein Ökosystem. Das ist der eigentliche Grund, damit anzufangen.
+1. **Support load.** A plugin system moves bugs into foreign code but not the
+   issues. "My gallery is broken" still lands here. That argues for A3 (a plugin
+   crash is a container crash, not a 500 in Folio) and against A4.
+2. **Versioning the contract.** From plugin number two onwards, every change to
+   event payloads or manifest fields is a breaking change. An `apiVersion` in the
+   manifest from day one costs nothing and saves a lot later.
+3. **Whether there is demand at all.** A plugin system for zero plugins is wasted
+   time. D1 is right even if the answer is no — it is a webhook, not an ecosystem.
+   That is the actual reason to start there.
