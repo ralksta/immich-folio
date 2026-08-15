@@ -179,7 +179,7 @@
 
 /* Subpage grid */
 [data-preset='minimal'] .subpage-grid {
-  gap: 2px;
+  --subpage-gap: 2px;
 }
 
 [data-preset='minimal'] .subpage-grid__item {

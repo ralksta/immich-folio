@@ -820,10 +820,15 @@
   width: 100%;
 }
 
+/* The album-cover grid. `--subpage-columns` comes from the resolved grid
+   config (global settings.yaml < per-subpage override); the fallback keeps the
+   historical two-up layout for anything rendering this grid without the vars.
+   `--subpage-gap` is a *preset* decision — the theme files below set it, and
+   only an explicit per-subpage `gap:` overrides it (inline vars win). */
 .subpage-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 4px;
+  grid-template-columns: repeat(var(--subpage-columns, 2), 1fr);
+  gap: var(--subpage-gap, 4px);
 }
 
 .subpage-grid__item {
@@ -1745,6 +1750,13 @@
   .photo-grid--uniform,
   .photo-grid--showcase {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Album covers follow the photo grids here: two-up on tablet widths, so a
+     configured 4 or 6 columns does not squeeze them below ~300px. The count is
+     computed server-side because repeat() does not reliably take a min(). */
+  .subpage-grid {
+    grid-template-columns: repeat(var(--subpage-columns-tablet, 2), 1fr);
   }
 }
 

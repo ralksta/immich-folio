@@ -225,6 +225,30 @@ The same album in five of the grid layouts (theme `studio-modern`):
   </tr>
 </table>
 
+### Album cover spacing
+
+The album-cover grid on a subpage is sized by two CSS custom properties on
+`.subpage-grid`:
+
+| Property            | Set by                                                               |
+| ------------------- | -------------------------------------------------------------------- |
+| `--subpage-columns` | the app, from the resolved `grid.columns` (site-wide or per subpage) |
+| `--subpage-gap`     | the **theme preset** — a per-subpage `grid.gap` overrides it         |
+
+The column count follows the configuration, the spacing belongs to the look.
+`monograph` sets 1px, `minimal` and `editorial` 2px, `studio-modern` 20px;
+`classic` and `noir` set nothing and get the 4px default from `globals.css`.
+A custom preset does the same:
+
+```css
+[data-preset='mytheme'] .subpage-grid {
+  --subpage-gap: 12px;
+}
+```
+
+Do not set `gap` directly there — an explicit per-page gap is passed as an
+inline custom property and would no longer win.
+
 ## Examples
 
 ### Minimal portfolio

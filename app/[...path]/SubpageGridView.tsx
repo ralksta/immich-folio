@@ -27,6 +27,8 @@ interface SubpageGridViewProps {
   sections?: SubpageSectionConfig[];
   /** 1-based position among all subpages — feeds the "03 — Collection" kicker. */
   index?: number;
+  /** `--subpage-columns` / `--subpage-gap` from the resolved grid config. */
+  gridStyle?: React.CSSProperties;
 }
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
@@ -36,13 +38,15 @@ function AlbumGrid({
   albums,
   placeholderMap,
   slug,
+  gridStyle,
 }: {
   albums: SubpageAlbum[];
   placeholderMap: Map<string, Placeholder | null>;
   slug: string;
+  gridStyle?: React.CSSProperties;
 }) {
   return (
-    <div className="subpage-grid">
+    <div className="subpage-grid" style={gridStyle}>
       {albums.map((album, i) => {
         const ph = placeholderMap.get(album.id) ?? null;
         return (
@@ -105,6 +109,7 @@ export function SubpageGridView({
   coverPlaceholders,
   sections,
   index,
+  gridStyle,
 }: SubpageGridViewProps) {
   // Build lookup maps once
   const albumMap = new Map(albums.map((a) => [a.id, a]));
@@ -160,13 +165,23 @@ export function SubpageGridView({
                 {sec.description && <p className="subpage-section__desc">{sec.description}</p>}
                 <div className="subpage-section__rule" aria-hidden="true" />
               </header>
-              <AlbumGrid albums={sectionAlbums} placeholderMap={placeholderMap} slug={slug} />
+              <AlbumGrid
+                albums={sectionAlbums}
+                placeholderMap={placeholderMap}
+                slug={slug}
+                gridStyle={gridStyle}
+              />
             </section>
           );
         })
       ) : (
         /* Flat layout (no sections) */
-        <AlbumGrid albums={albums} placeholderMap={placeholderMap} slug={slug} />
+        <AlbumGrid
+          albums={albums}
+          placeholderMap={placeholderMap}
+          slug={slug}
+          gridStyle={gridStyle}
+        />
       )}
     </div>
   );

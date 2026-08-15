@@ -52,6 +52,9 @@ subpages:
     subtitle: "A collection of 2026 highlights in 35mm film." # Optional: Sub-text for headers
     password: "your-password" # Optional protection
     # hidden: true # EXPERIMENTAL: reachable by direct link, but not shown in navigation
+    # grid: # Optional per-page grid override (wins over settings.yaml)
+    #   columns: 3 # how many album covers per row on this page
+    #   gap: 8 # spacing between the covers, in px — omit to keep the theme's own
     albums:
       - "album-uuid-5"
       - "album-uuid-6":

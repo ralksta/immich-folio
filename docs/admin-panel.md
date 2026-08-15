@@ -72,7 +72,8 @@ Group albums under custom URL paths (e.g. `/japan`, `/wedding-smith`).
 - **Name** — navigation label; the URL slug is derived from it
 - **Title / Subtitle** — page heading and subline
 - **Password** — protect the whole subpage
-- **Grid override** — layout settings for this page
+- **Grid override** — layout settings for the photos on this page
+- **Album Cover Grid** — how the album covers are tiled: columns (empty = the site-wide grid setting) and gap in px (empty = the theme's own cover spacing). Hidden in essay mode
 - **Enabled** — take the page offline without deleting it
 - **Hidden** _(experimental)_ — unlisted: reachable by direct link, absent from the navigation
 - **Essay** — turn the page into a photo essay, with a block editor for the text

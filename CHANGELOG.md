@@ -9,6 +9,25 @@ Releases up to and including v0.9.2 are documented in the
 
 ## [Unreleased]
 
+### Added
+
+- **The album covers on a subpage follow the grid setting**
+  ([#460](https://github.com/ralksta/immich-folio/pull/460)). They were tiled
+  two-up by a hardcoded CSS rule, so the site-wide `grid.columns` only ever
+  reached the photo grids inside an album and the covers stayed enormous on wide
+  screens. A subpage can also override the count and the spacing on its own,
+  under Pages › _subpage_ › **Album Cover Grid**. Tablet widths show at most two
+  covers per row, phones one, as before.
+
+  `gap` deliberately does **not** follow the global setting: each theme preset
+  picks its cover spacing as part of its look (1px `monograph`, 20px
+  `studio-modern`), so only an explicit per-subpage `gap` overrides it. See
+  [docs/gallery-config.md](docs/gallery-config.md#album-covers-on-a-subpage).
+
+  **A site whose `settings.yaml` sets `grid.columns` to anything other than 2
+  will see its subpage cover grids change on upgrade.** That is the point of the
+  change; to keep two-up covers, set `grid.columns: 2` on the subpage.
+
 ## [0.11.0] — 2026-08-15
 
 ### Added

@@ -170,7 +170,7 @@
 
 /* Subpage grid */
 [data-preset='monograph'] .subpage-grid {
-  gap: 1px;
+  --subpage-gap: 1px;
 }
 
 [data-preset='monograph'] .subpage-grid__item {

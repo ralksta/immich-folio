@@ -161,7 +161,7 @@
 
 /* Subpage grid */
 [data-preset='editorial'] .subpage-grid {
-  gap: 2px;
+  --subpage-gap: 2px;
 }
 
 [data-preset='editorial'] .subpage-grid__item {

@@ -24,7 +24,7 @@ import {
   assetAspectRatio,
 } from '@/lib/urls';
 import { encodeAssetId } from '@/lib/tokens';
-import { getConfig, resolveProofing, type GridConfig } from '@/lib/config';
+import { buildCoverGridVars, getConfig, resolveProofing, type GridConfig } from '@/lib/config';
 import { isProtected, isAuthenticated } from '@/lib/auth';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import PasswordGate from '@/components/PasswordGate';
@@ -181,6 +181,13 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
   };
   const resolveLayout = (overrides?: Partial<GridConfig>) =>
     overrides?.layout ?? config.grid.layout;
+
+  // The album-cover grid on a subpage takes its column count from the same
+  // config as the photo grids, so "3 columns" in the admin means three columns
+  // everywhere. `gap` deliberately does not follow the global setting — see
+  // buildCoverGridVars() for why.
+  const buildCoverGridStyle = (overrides?: Partial<GridConfig>): React.CSSProperties =>
+    buildCoverGridVars(overrides, config.grid.columns) as React.CSSProperties;
 
   // Client proofing — `proofing.enabled` in settings.yaml is the default and a
   // subpage's own `proofing:` flag overrides it in either direction. Albums
@@ -416,6 +423,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         albums={albumsWithHero}
         coverPlaceholders={coverPlaceholders}
         sections={result.subpage.sections}
+        gridStyle={buildCoverGridStyle(result.subpage.grid)}
         {...(subpageIndex >= 0 ? { index: subpageIndex + 1 } : {})}
       />
     );
