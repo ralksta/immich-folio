@@ -562,16 +562,23 @@ async function demoAssetIds(page: Page): Promise<string[]> {
 }
 
 /**
- * A demo entry exercising every block type the parser knows, so the studio and
- * the rendered page both show something representative rather than one
- * paragraph. Deliberately generic prose — these screenshots ship in the docs.
+ * A demo entry exercising every block type the parser knows — heading,
+ * paragraph, quote with attribution, fullbleed photo, photo pair, contained
+ * photo — so the studio and the rendered page both show something
+ * representative rather than a single paragraph.
+ *
+ * The prose is deliberately about *photographing* rather than about any
+ * particular place. The source album is chosen with SCREENSHOT_JOURNAL_ALBUM
+ * and could be a coastline, a city or a mountain range; text naming a
+ * landscape would contradict the photos beside it in whatever album the
+ * operator picks. Captions are written the same way.
  */
 function demoJournalMarkdown(ids: string[]): string {
   const [cover, fullbleed, pairA, pairB, ...rest] = ids;
   const contained = rest[0];
   return `---
-title: "A Week in the Highlands"
-subtitle: "Notes and photographs from seven days on the road"
+title: "Notes from a Week of Photographing"
+subtitle: "Seven days, one camera, and what came back from it"
 author: "Jane Doe"
 date: "2026-03-14"
 coverAssetId: "${cover}"
@@ -579,27 +586,30 @@ coverAssetId: "${cover}"
 
 # Setting Out
 
-The road climbed through the last of the farmland and then simply stopped
-pretending. What followed was gravel, meltwater, and a silence that felt less
-like the absence of sound than like something with weight to it.
+Packing for a week means deciding in advance what kind of pictures you intend
+to make. One body, two lenses, and the quiet certainty that both choices will
+turn out to have been slightly wrong by the second afternoon.
 
-![${fullbleed}:fullbleed](The first pass, an hour after sunrise)
+![${fullbleed}:fullbleed](The first frame of the trip, an hour after sunrise)
 
 ## Finding the Light
 
-Mornings were the only reliable hours. By noon the valley had filled with haze
-and every frame came back flatter than it looked through the viewfinder.
+The early hours were the only reliable ones. By midday the contrast had
+collapsed and every exposure came back flatter than it had looked through the
+viewfinder — so the middle of each day became the part spent walking, looking,
+and not raising the camera at all.
 
-> The camera does not record what you saw. It records what was there, which is
-> a slower and more honest thing. -- A note from the second evening
+> A photograph does not record what you saw. It records what was there, which
+> is a slower and more honest thing. -- A note from the second evening
 
-![${pairA}, ${pairB}](Two mornings, the same bend in the river)
+![${pairA}, ${pairB}](Two mornings, photographed from nearly the same spot)
 
 ### What Stayed
 
-Not the landscapes, in the end, but the small repetitions — the same tin mug,
-the same twenty minutes of light, the same walk back to the car.
-${contained ? `\n![${contained}](The last morning)\n` : ''}`;
+Not the wide views, in the end, but the repetitions — the same twenty minutes
+of light, the same short walk back, the same handful of frames worth keeping
+out of a few hundred.
+${contained ? `\n![${contained}](The last morning, before packing up)\n` : ''}`;
 }
 
 /** Best effort: the picker is a modal behind a button whose label may change. */
