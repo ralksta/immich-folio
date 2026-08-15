@@ -147,6 +147,36 @@ describe('siteLockResponse', () => {
   });
 });
 
+describe('a subpage slugged "site"', () => {
+  beforeEach(() => {
+    config.sitePassword = 'letmein';
+  });
+
+  it('does not write to the site gate’s cookie', async () => {
+    config.subpages = [{ slug: 'site', password: 'subpage-pw' }];
+    const setCookie = (await authenticate('site', 'subpage-pw', 'subpage'))!;
+    expect(setCookie.startsWith(`${SITE_AUTH_COOKIE}=`)).toBe(false);
+    expect(setCookie).toContain('lb_auth_site=');
+    config.subpages = [];
+  });
+
+  it('does not unlock the site even when both passwords match', async () => {
+    // Same key ("site"), same password — only the domain separator in the
+    // signed payload keeps the two tokens apart.
+    config.subpages = [{ slug: 'site', password: 'letmein' }];
+    const subpageCookie = cookieValue((await authenticate('site', 'letmein', 'subpage'))!);
+    expect(isSiteUnlocked(jar(subpageCookie))).toBe(false);
+    config.subpages = [];
+  });
+
+  it('is not unlocked by the site cookie either', async () => {
+    config.subpages = [{ slug: 'site', password: 'letmein' }];
+    const siteCookie = cookieValue((await authenticate(SITE_AUTH_KEY, 'letmein', 'site'))!);
+    expect(isAuthenticated('site', () => siteCookie, 'subpage')).toBe(false);
+    config.subpages = [];
+  });
+});
+
 describe('the other gates are untouched', () => {
   it('still protects a subpage independently of the site lock', async () => {
     config.sitePassword = 'letmein';

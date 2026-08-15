@@ -19,8 +19,27 @@ export type ProtectedType = 'subpage' | 'album' | 'journal' | 'site';
  * Key used for the site-wide gate. There is only ever one, so it is a constant
  * rather than a slug — but it still flows through the same token, cookie and
  * verification path as every other protected thing.
+ *
+ * This is the *public* identifier, the one the gate form posts to `/api/auth`.
+ * The value that goes into the HMAC is `SITE_TOKEN_KEY`, see below.
  */
 export const SITE_AUTH_KEY = 'site';
+
+/**
+ * Domain separator for the site token.
+ *
+ * A subpage may legitimately be slugged `site`, and a subpage's key is its
+ * slug — so signing the site token as `site` would sign both gates with the
+ * same key. With matching passwords the two tokens are then byte-identical and
+ * either gate accepts the other's cookie. `slugify()` cannot emit an
+ * underscore, so no slug can collide with this.
+ */
+const SITE_TOKEN_KEY = '__site__';
+
+/** The key that actually gets signed: only the site gate is remapped. */
+function tokenKey(key: string, type: ProtectedType): string {
+  return type === 'site' ? SITE_TOKEN_KEY : key;
+}
 
 const TYPE_LABELS: Record<ProtectedType, string> = {
   subpage: 'Subpage',
@@ -64,8 +83,14 @@ function cookieName(key: string, type: ProtectedType): string {
   return `lb_auth_album_${key}`;
 }
 
-/** Cookie carrying the site-wide session. */
-export const SITE_AUTH_COOKIE = 'lb_auth_site';
+/**
+ * Cookie carrying the site-wide session.
+ *
+ * Deliberately *not* `lb_auth_site`: subpage cookies are `lb_auth_<slug>`, so a
+ * subpage slugged `site` would write to the site gate's cookie and log the
+ * visitor out of the site on every subpage unlock.
+ */
+export const SITE_AUTH_COOKIE = 'lb_site_auth';
 
 /**
  * Find the SubpageConfig for a given slug.
@@ -159,7 +184,7 @@ export async function authenticate(
   if (!isValid) return null;
 
   const maxAge = TOKEN_EXPIRY_HOURS * 60 * 60;
-  const token = authToken(key, storedPassword, Date.now() + maxAge * 1000);
+  const token = authToken(tokenKey(key, type), storedPassword, Date.now() + maxAge * 1000);
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
 
   return `${cookieName(key, type)}=${token}; HttpOnly; Path=/; Max-Age=${maxAge}; SameSite=Strict${secure}`;
@@ -188,7 +213,7 @@ export function isAuthenticated(
   const expiresAt = Number(cookie.slice(0, sep));
   if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) return false;
 
-  const expected = authToken(key, storedPassword, expiresAt);
+  const expected = authToken(tokenKey(key, type), storedPassword, expiresAt);
   // Constant-time comparison to prevent timing attacks
   try {
     const a = Buffer.from(cookie, 'utf8');
