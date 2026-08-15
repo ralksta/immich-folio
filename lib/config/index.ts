@@ -77,6 +77,26 @@ export function buildSubpageGrid(raw?: {
 }
 
 /**
+ * Whether client proofing is on for a page.
+ *
+ * Precedence is subpage → global, the same shape `buildSubpageGrid` gives the
+ * grid: a subpage's own `proofing:` wins in either direction, and a page
+ * reached without one follows `proofing.enabled` from settings.yaml. `??`
+ * rather than `||` is load-bearing — `proofing: false` on a subpage has to
+ * override a global `true`, which `||` would discard.
+ *
+ * Photo essays deliberately do not use this: a published story is not an album
+ * handover, so it requires an explicit `proofing: true` and ignores the global
+ * default. That exception lives at its call site in app/[...path]/page.tsx.
+ */
+export function resolveProofing(
+  subpage: { proofing?: boolean } | undefined,
+  globalEnabled: boolean,
+): boolean {
+  return subpage?.proofing ?? globalEnabled;
+}
+
+/**
  * EXPERIMENTAL: keep only nav links that are safe to render as header <a>
  * tags. Non-http(s) schemes (javascript:, data:) and incomplete entries are
  * dropped with a warning rather than throwing — a bad external link should

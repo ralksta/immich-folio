@@ -126,6 +126,25 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Fixed
 
+- **Client proofing ignored its own configuration**
+  ([#454](https://github.com/ralksta/immich-folio/pull/454)). The photo grid
+  mounted the proofing provider unconditionally, so the favourite hearts, the
+  selection bar and the export modal appeared on every album on every site.
+  `proofing.enabled` in `settings.yaml`, a subpage's own `proofing:` flag and
+  `allowMailto` were all parsed, validated — and never read.
+
+  They are honoured now, with precedence subpage → global: a subpage's flag
+  wins in either direction, and a page reached without one follows
+  `proofing.enabled`.
+
+  **What changes for an existing site.** `proofing.enabled` defaults to `true`,
+  so albums keep their proofing controls and most sites see no difference. Two
+  cases do change: a site that set `proofing.enabled: false` finally gets what
+  it asked for, and **photo essays no longer show the controls unless their
+  subpage sets `proofing: true` explicitly** — a published story is not an
+  album handover, so the global default deliberately does not reach into
+  essays. Journal entries never show them.
+
 - **Journal photos did not render**
   ([#432](https://github.com/ralksta/immich-folio/pull/432)). Photo blocks
   resolved to nothing, headings sat further left than the body text, fullbleed

@@ -407,25 +407,35 @@ The selection is encoded into the URL as a compact bitmask and mirrored into
 `localStorage`, so **nothing is stored server-side** and a set of picks can be
 shared, bookmarked, or sent back as a plain link.
 
+Configured in `settings.yaml`:
+
 ```yaml
 proofing:
-  enabled: true
-  allowMailto: true # offer "send by email" alongside the copyable list
+  enabled: true # hearts, selection bar and export modal (default: true)
+  allowMailto: true # offer "send by email" alongside the copyable list (default: true)
 ```
+
+A subpage overrides `enabled` in either direction — useful to keep proofing off
+across a public portfolio and switch it on for a single client handover:
 
 ```yaml
-# gallery.yaml — intended per-subpage switch
+# gallery.yaml
 subpages:
-  - name: Client Preview
-    proofing: true
+  - name: Wedding – Smith
+    password: clientpass123
+    proofing: true # or `false` to disable it on this subpage only
+    albums:
+      - ...
 ```
 
-> [!WARNING]
-> **These keys currently have no effect.** The photo grid mounts proofing
-> unconditionally, so the favourite button appears on every album on the site
-> whether or not `proofing.enabled` is set, and `proofing: true` on a subpage
-> changes nothing. `allowMailto` is likewise not read. The keys are parsed and
-> valid — they are simply not consulted yet.
+Precedence is **subpage → global**: a subpage's own `proofing:` wins, and an
+album reached without a subpage follows `proofing.enabled`.
+
+> [!NOTE]
+> Photo essays are the exception. A published story is not an album handover,
+> so an essay (`layout: essay`, `essayFile`, `essayText`) shows the proofing
+> controls only when its subpage sets `proofing: true` **explicitly** — the
+> global default does not reach into essays. Journal entries never show them.
 
 ## Image Protection & Watermark
 
