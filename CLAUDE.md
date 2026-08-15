@@ -166,6 +166,14 @@ All pages are `dynamic = 'force-dynamic'` (no SSG; requires live Immich).
 
 Per-subpage, per-album and per-journal-entry password gating using HMAC tokens in `HttpOnly` cookies (no database). Cookie names: `lb_auth_<slug>` (subpage), `lb_auth_album_<slug>` (album) and `lb_auth_journal_<slug>` (journal entry). Password storage supports plaintext (deprecated, logs a warning with recommended scrypt hash), `scrypt:salt:hash` format (`lib/password.ts`), and rejects legacy bcrypt. Token expiry: 24 hours.
 
+A fourth gate covers the **whole site**: `sitePassword` in `settings.yaml` (or `SITE_PASSWORD`, which overrides it), cookie `lb_auth_site`, type `'site'` through the same `authenticate()`/`isAuthenticated()` path as the rest.
+
+It is enforced in **`proxy.ts`**, not in the layout. A layout that swaps `children` for a password form still lets the page render — the RSC payload is produced either way, and album names and asset tokens travel with it. The proxy rewrites to `/gate` instead, so the protected page never renders; the rewrite (rather than a redirect) keeps the requested URL, so unlocking lands the visitor where they were going. Next 16's proxy runs on the **Node.js runtime**, which is what makes `getConfig()` and `node:crypto` usable there.
+
+The prefetch exclusion that used to live in `config.matcher` moved into `proxy()` for this: a matcher that skips prefetches skips the gate with them, and a prefetch asks for the same payload as a navigation.
+
+Route handlers bypass the proxy, so `/api/image`, `/api/video`, `/api/exif`, `/api/map` and `/api/og` call `siteLockResponse()` themselves; `app/api/__tests__/site-gate.test.ts` enforces that across all of them. `/api/health` stays open on purpose (a probe runs without cookies), as do `/admin` (own password, and where the site password is set) and `/install`.
+
 ### Rate limiting (`lib/rate-limit.ts`)
 
 In-memory sliding-window rate limiter. Important: **in-memory only** — does not work across multiple Node.js instances. Uses FIFO eviction (not reject-on-full) to prevent DoS via store flooding. `TRUSTED_PROXY_HOPS` must be set to the number of reverse proxies in front of the app (nginx = 1); the client IP is then read that many entries from the right of `X-Forwarded-For`, which proxies append to. Without it the IP comes from a spoofable header. Bucket keys are namespaced per endpoint (`image:`, `map:`, `auth:`, …) so limits don't collide.

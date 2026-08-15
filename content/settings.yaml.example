@@ -20,6 +20,14 @@ lang: "en"
 #   noIndex: false # Set to true to hide from search engines
 #   noFollow: false # Set to true to prevent search engines from following links
 
+# ── Site password (optional) ─────────────────────────────────────
+# Puts the WHOLE public site behind one password — useful while a portfolio
+# is still being built, or for a folio only ever shown to clients.
+# Log in once and the server log prints a scrypt: hash to paste back here.
+# The SITE_PASSWORD environment variable overrides this value.
+# /admin keeps its own password and is never behind this gate.
+# sitePassword: "scrypt:..."
+
 # Show EXIF metadata (camera, lens, ISO) on photo grid hover
 exifOnHover: true
 

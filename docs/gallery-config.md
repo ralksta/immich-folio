@@ -245,8 +245,8 @@ Useful when the automatic centre crop cuts off a horizon or a face.
 
 ## Password Protection
 
-A password can be set on a subpage, on a single album, and on a
-[journal entry](journal.md#password-protected-entries). Unlocking sets an
+A password can be set on the whole site, on a subpage, on a single album, and on
+a [journal entry](journal.md#password-protected-entries). Unlocking sets an
 `HttpOnly` cookie that is valid for 24 hours; nothing is stored server-side.
 
 Three storage formats are accepted:
@@ -266,6 +266,38 @@ directly.
 > Album and subpage gates protect the **page**. Image URLs handed out while a
 > gallery was unlocked keep working — see
 > [Image Token Revocation](#image-token-revocation).
+
+### Locking the whole site
+
+`sitePassword` in `settings.yaml` puts everything public behind one password —
+useful while a portfolio is still being built, or for a folio that is only ever
+shown to clients.
+
+```yaml
+# settings.yaml
+sitePassword: 'scrypt:...'
+```
+
+`SITE_PASSWORD` in the environment overrides the file, so the password can be
+rotated without editing (or backing up) `settings.yaml`. It accepts the same
+three storage formats as every other gate.
+
+Unlike the per-page gates, this one is enforced in `proxy.ts`, before the
+requested page renders at all. That matters: a gate that merely swapped the page
+for a login form would still have let the page produce its payload, album names
+and image tokens included. The public API routes carry the same check
+themselves, since route handlers do not pass through the proxy.
+
+Three things stay reachable on a locked site:
+
+| Path          | Why                                                                      |
+| ------------- | ------------------------------------------------------------------------ |
+| `/api/health` | A health probe runs without cookies; gating it takes the container down. |
+| `/admin`      | It has its own password, and it is where `sitePassword` is set.          |
+| `/install`    | A fresh deployment has to be configurable before it can be locked.       |
+
+A locked site also serves `noindex, nofollow` regardless of the SEO settings —
+there is nothing there for a crawler.
 
 ## Photo Order Within an Album
 

@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getConfig } from '@/lib/config';
 import { imageUrl } from '@/lib/urls';
-import { isAuthenticated } from '@/lib/auth';
+import { isAuthenticated, siteLockResponse } from '@/lib/auth';
 import { getMapData } from '@/lib/mapService';
 import { ImmichUnavailableError } from '@/lib/immich';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
@@ -34,6 +34,11 @@ export async function GET(request: NextRequest) {
       },
     );
   }
+
+  // The page-level gate does not cover route handlers — without this a locked
+  // site would still serve to anyone holding the URL.
+  const locked = siteLockResponse(request);
+  if (locked) return locked;
 
   const config = getConfig();
 

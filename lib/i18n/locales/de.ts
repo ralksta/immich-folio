@@ -57,6 +57,7 @@ export const de: Dictionary = {
 
   password: {
     subtitle: 'Diese Galerie ist passwortgeschützt.',
+    siteSubtitle: 'Diese Website ist passwortgeschützt.',
     placeholder: 'Passwort eingeben',
     submit: 'Öffnen',
     verifying: 'Wird geprüft…',
