@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import * as Icons from './Icons';
 import SaveBar from './SaveBar';
+// Direct import from the theme module, not from '@/lib/config': the config
+// index pulls in `fs` and cannot be bundled into a client component.
+import { DEFAULT_PRESET } from '@/lib/config/theme';
 
 interface Settings {
   title?: string;
@@ -73,7 +76,7 @@ interface Settings {
   about?: { enabled?: boolean };
 }
 
-const PRESETS = ['studio', 'studio-modern', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
+const PRESETS = ['studio-modern', 'studio', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
 const LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow', 'justified'];
 const PHOTO_FRAMES = ['none', 'passepartout', 'shadow'];
 const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic', 'cover'];
@@ -771,7 +774,7 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                       frame: 'none' as const,
                       gap: 4,
                     };
-                    const isActive = (settings.theme?.preset || 'studio') === p;
+                    const isActive = (settings.theme?.preset || DEFAULT_PRESET) === p;
                     return (
                       <button
                         key={p}

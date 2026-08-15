@@ -44,6 +44,12 @@ Immich Folio acts as a **secure reverse proxy** between your visitors and your p
 - **EXIF metadata on hover** — camera body, lens, focal length, aperture, shutter speed, ISO shown directly on the grid
 - **ThumbHash placeholders** — instant blurred previews while full images load
 
+<p align="center">
+  <img src="docs/screenshots/grid-masonry.png" width="49%" alt="Masonry grid layout" />
+  <img src="docs/screenshots/grid-showcase.png" width="49%" alt="Showcase grid layout" />
+</p>
+<p align="center"><em>Masonry and showcase, both in Studio Modern — the same album, a different grid layout.</em></p>
+
 ### Content & Organization
 
 - **Subpage grouping** — organize albums into named collections (e.g. `/japan/tokyo-2023`)
@@ -233,8 +239,16 @@ Long-form storytelling with fullbleed photos, side-by-side pairs, quotes and cap
 
 Seven built-in presets with distinct visual identities — or mix and match with fine-grained control over colors, fonts, corners, photo frames, hero layout, and grid style.
 
+**Studio Modern** is the default: Leica precision rebuilt around the Archivo grotesque, with IBM Plex Mono for every piece of photographic metadata, hairline rules, zero radius, and red as signal only.
+
+<p align="center">
+  <img src="docs/screenshots/theme-studio-modern-home.png" width="49%" alt="Studio Modern in dark mode" />
+  <img src="docs/screenshots/theme-studio-modern-home-light.png" width="49%" alt="Studio Modern in light mode" />
+</p>
+<p align="center"><em>Studio Modern, dark and light — every preset ships both, and visitors switch with a toggle in the navigation bar.</em></p>
+
 ```yaml
-theme: studio # or: studio-modern, minimal, editorial, classic, noir, monograph
+theme: studio-modern # or: studio, minimal, editorial, classic, noir, monograph
 ```
 
 → **[View all Themes & Configuration Guide](docs/theming.md)**

@@ -24,6 +24,7 @@ import yaml from 'js-yaml';
 import { env } from './env';
 import { generateScryptHash } from './password';
 import type { GalleryYaml, SettingsYaml } from './config/schema';
+import { DEFAULT_PRESET } from './config/theme';
 
 /** The directory user content is written into. Overridable for tests. */
 function installContentDir(): string {
@@ -251,7 +252,7 @@ export async function completeInstall(input: InstallInput): Promise<void> {
   const settings: SettingsYaml = {
     title: input.siteTitle?.trim() || 'Gallery',
     subtitle: input.siteSubtitle?.trim() || '',
-    theme: { preset: input.theme || 'studio' },
+    theme: { preset: input.theme || DEFAULT_PRESET },
   };
 
   const data: InstallFileData = {

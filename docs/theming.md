@@ -1,38 +1,39 @@
 # Theming
 
-Control the visual identity of your gallery from `content/gallery.yaml`. Choose a built-in preset or customize individual properties — no CSS editing required.
+Control the visual identity of your gallery from `content/settings.yaml`. Choose a built-in preset or customize individual properties — no CSS editing required.
 
 ## Quick Start
 
-Add a single line to your `gallery.yaml`:
+Add a single line to your `settings.yaml`:
 
 ```yaml
 theme: minimal
 ```
 
-That's it. Your entire gallery switches to the minimal theme.
+That's it. Your entire gallery switches to the minimal theme. Leave it out and
+you get `studio-modern`, the default.
 
 ## Built-in Presets
 
 | Preset            | Style                          | Accent       | Fonts                             | Hero        | Frame        | Grain |
 | ----------------- | ------------------------------ | ------------ | --------------------------------- | ----------- | ------------ | ----- |
-| **studio**        | Leica-inspired, editorial      | 🔴 `#e60012` | Playfair Display + DM Sans        | Split       | Passepartout | ✓     |
 | **studio-modern** | Leica precision, grotesque     | 🔴 `#e60012` | Archivo + IBM Plex Mono           | Split       | None         | ✗     |
+| **studio**        | Leica-inspired, editorial      | 🔴 `#e60012` | Playfair Display + DM Sans        | Split       | Passepartout | ✓     |
 | **minimal**       | Swiss brutalist, high contrast | ⚫ `#000000` | Geist + IBM Plex Mono             | Fullbleed   | None         | ✗     |
 | **editorial**     | Cinematic magazine, warm tones | 🟤 `#8B2500` | Bodoni Moda + Newsreader          | Split       | Shadow       | ✗     |
 | **classic**       | Gilded gallery, warm luxury    | 🟡 `#c49a3c` | Cinzel + Crimson Pro              | Minimal     | Passepartout | ✗     |
 | **noir**          | Darkroom analog, film noir     | 🟠 `#ff6b35` | Libre Baskerville + Source Sans 3 | Fullbleed   | Passepartout | ✓     |
 | **monograph**     | Typographic, book-like         | ⬛ `#333333` | Instrument Serif + Inter          | Typographic | None         | ✗     |
 
-Default is `studio` if no theme is specified.
+**`studio-modern` is the default** if no theme is specified.
 
 ### Theme Gallery
 
-_From left to right, top to bottom: Studio, Studio Modern, Minimal, Editorial, Classic, Noir, Monograph_
+_From left to right, top to bottom: Studio Modern, Studio, Minimal, Editorial, Classic, Noir, Monograph_
 
 <p align="center">
-  <img src="screenshots/theme-studio-home.png" width="49%" alt="Studio theme" />
   <img src="screenshots/theme-studio-modern-home.png" width="49%" alt="Studio Modern theme" />
+  <img src="screenshots/theme-studio-home.png" width="49%" alt="Studio theme" />
   <img src="screenshots/theme-minimal-home.png" width="49%" alt="Minimal theme" />
   <img src="screenshots/theme-editorial-home.png" width="49%" alt="Editorial theme" />
   <img src="screenshots/theme-classic-home.png" width="49%" alt="Classic theme" />
@@ -45,8 +46,8 @@ _From left to right, top to bottom: Studio, Studio Modern, Minimal, Editorial, C
 _Same order as above._
 
 <p align="center">
-  <img src="screenshots/theme-studio-grid.png" width="49%" alt="Studio grid" />
   <img src="screenshots/theme-studio-modern-grid.png" width="49%" alt="Studio Modern grid" />
+  <img src="screenshots/theme-studio-grid.png" width="49%" alt="Studio grid" />
   <img src="screenshots/theme-minimal-grid.png" width="49%" alt="Minimal grid" />
   <img src="screenshots/theme-editorial-grid.png" width="49%" alt="Editorial grid" />
   <img src="screenshots/theme-classic-grid.png" width="49%" alt="Classic grid" />
@@ -67,9 +68,9 @@ their accent, fonts and framing in both modes.
 
 ### What makes each theme unique
 
-**Studio** (default) — Leica-inspired with a red nav dot, passepartout photo frames, film grain, and a split hero layout. Clean editorial feel with Playfair Display headings.
+**Studio Modern** (default) — The Leica language of `studio` rebuilt around the precision grotesque Archivo, with IBM Plex Mono for every piece of photographic metadata (EXIF chips, counters, indices). Hairline rules at 8% opacity, zero radius, an indexed hero nav with album counts, an always-visible caption bar under album covers, and a film-edge EXIF strip in the lightbox. Red is signal only — nav dot, active state, hover, indices, map markers.
 
-**Studio Modern** — The Leica language of `studio` rebuilt around the precision grotesque Archivo, with IBM Plex Mono for every piece of photographic metadata (EXIF chips, counters, indices). Hairline rules at 8% opacity, zero radius, an indexed hero nav with album counts, an always-visible caption bar under album covers, and a film-edge EXIF strip in the lightbox. Red is signal only — nav dot, active state, hover, indices, map markers.
+**Studio** — Leica-inspired with a red nav dot, passepartout photo frames, film grain, and a split hero layout. Clean editorial feel with Playfair Display headings.
 
 **Minimal** — Swiss Brutalist aesthetic inspired by Müller-Brockmann and Dieter Rams. Fullbleed hero image, true black/white palette, zero-gap photo grid with no hover effects, ultra-tiny navigation text. Every pixel earns its place.
 
@@ -87,7 +88,7 @@ Start from any preset and override individual properties:
 
 ```yaml
 theme:
-  preset: studio # base preset to extend (default: studio)
+  preset: studio # base preset to extend (default: studio-modern)
   accent: '#2563eb' # brand/accent color (any hex)
   fonts:
     heading: 'Inter' # Google Fonts name for headings
