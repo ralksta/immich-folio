@@ -2,7 +2,7 @@ import { env } from '../env';
 import { resolveAuthSecret } from '../secret';
 import { getInstallCredentials } from '../install';
 import { loadYaml, clearYamlCache, validateUuid } from './parser';
-import { resolveTheme, VALID_LAYOUTS } from './theme';
+import { resolveTheme, VALID_LAYOUTS, DEFAULT_PRESET } from './theme';
 import { ALBUM_SORT_MODES, isAlbumSortMode, type AlbumSortMode } from '../albumSort';
 import {
   slugify,
@@ -359,7 +359,7 @@ export function getConfig(): AppConfig {
       heroImages: [],
       exifOnHover: true,
       grid: { columns: 3, gap: 12, aspectRatio: '1', layout: 'masonry' },
-      theme: resolveTheme('studio'),
+      theme: resolveTheme(DEFAULT_PRESET),
       footer: null,
       legal: { enabled: false, name: '', address: '', zipCity: '', country: '' },
       map: false,

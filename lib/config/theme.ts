@@ -1,16 +1,9 @@
 import type { ThemeConfig, SettingsYaml } from './schema';
 
+/** The preset used when none is configured. */
+export const DEFAULT_PRESET = 'studio-modern';
+
 export const THEME_PRESETS: Record<string, ThemeConfig> = {
-  studio: {
-    preset: 'studio',
-    accent: '#e60012',
-    fonts: { heading: 'Playfair Display', body: 'DM Sans', caption: 'EB Garamond' },
-    radius: 0,
-    photoFrame: 'passepartout',
-    grain: true,
-    headerDot: true,
-    heroStyle: 'split',
-  },
   'studio-modern': {
     preset: 'studio-modern',
     accent: '#e60012',
@@ -18,6 +11,16 @@ export const THEME_PRESETS: Record<string, ThemeConfig> = {
     radius: 0,
     photoFrame: 'none',
     grain: false,
+    headerDot: true,
+    heroStyle: 'split',
+  },
+  studio: {
+    preset: 'studio',
+    accent: '#e60012',
+    fonts: { heading: 'Playfair Display', body: 'DM Sans', caption: 'EB Garamond' },
+    radius: 0,
+    photoFrame: 'passepartout',
+    grain: true,
     headerDot: true,
     heroStyle: 'split',
   },
@@ -94,7 +97,7 @@ export const VALID_LAYOUTS = [
 ];
 
 export function resolveTheme(raw?: SettingsYaml['theme']): ThemeConfig {
-  if (!raw) return { ...THEME_PRESETS.studio };
+  if (!raw) return { ...THEME_PRESETS[DEFAULT_PRESET] };
 
   if (typeof raw === 'string') {
     const preset = THEME_PRESETS[raw];
@@ -106,7 +109,7 @@ export function resolveTheme(raw?: SettingsYaml['theme']): ThemeConfig {
     return { ...preset };
   }
 
-  const baseName = raw.preset ?? 'studio';
+  const baseName = raw.preset ?? DEFAULT_PRESET;
   const base = THEME_PRESETS[baseName];
   if (!base) {
     throw new Error(

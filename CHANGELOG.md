@@ -63,6 +63,27 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Changed
 
+- **`studio-modern` is the default theme preset**, replacing `studio`. It is
+  now listed first in the docs, the setup wizard and the admin preset cards,
+  and it is what a site renders with when no preset is configured.
+
+  **This changes the appearance of an existing site only if it never picked a
+  theme** — that is, no `content/settings.yaml`, or one without a
+  `theme.preset` key. Anything with an explicit preset is untouched. To keep
+  the previous look, set it explicitly:
+
+  ```yaml
+  # content/settings.yaml
+  theme:
+    preset: studio
+  ```
+
+  Three code paths fell back to a hard-coded `'studio'` (no settings file at
+  all, a settings file without a `theme` key, and a `theme` object that
+  overrides properties without naming a preset). They now share one
+  `DEFAULT_PRESET` constant, with a test covering all three so they cannot
+  drift apart again.
+
 - **Every admin area has its own URL**
   ([#432](https://github.com/ralksta/immich-folio/pull/432)) — `/admin/pages`,
   `/admin/journal`, `/admin/settings/<section>`, `/admin/analytics` — so a
