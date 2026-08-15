@@ -24,6 +24,10 @@
  * up in a published screenshot at full size: pick an album you would show a
  * stranger, not one that happens to be large.
  *
+ * Two further entries are written from albums matched by name, so the index
+ * shot shows a list rather than one lonely card. They are skipped on an
+ * installation without those albums — see EXTRA_JOURNAL_ENTRIES.
+ *
  * The album used for the grid shots is discovered by walking the running site,
  * since album slugs come from Immich album names. SCREENSHOT_GRID_PATH picks a
  * specific one instead, SCREENSHOT_SUBPAGE_PATH the collection overview.
@@ -111,6 +115,24 @@ const DEMO_JOURNAL_SLUG = 'screenshot-demo-entry';
  * site identity in DEMO_SETTINGS.
  */
 const JOURNAL_ALBUM = process.env.SCREENSHOT_JOURNAL_ALBUM;
+/**
+ * Companion entries, so the index shot shows a list of stories rather than a
+ * single card on an otherwise empty page. Unlike the main entry — whose album
+ * is chosen at run time and whose prose is therefore deliberately about
+ * photographing rather than about a place — each of these is bound to one
+ * album and its text describes that place, which only works while the two are
+ * kept together. An installation without a matching album simply skips them
+ * and the index shows the main entry alone.
+ */
+const EXTRA_JOURNAL_ENTRIES: {
+  slug: string;
+  /** Matched against the Immich album name, case-insensitive substring. */
+  album: string;
+  markdown: (ids: string[]) => string;
+}[] = [
+  { slug: 'screenshot-demo-kurokawa', album: 'kurokawa', markdown: kurokawaJournalMarkdown },
+  { slug: 'screenshot-demo-kada', album: 'kada', markdown: kadaJournalMarkdown },
+];
 
 /** Pages that never carry a photo grid — skipped while looking for an album. */
 const EXCLUDED_PATHS = new Set(['/', '/about', '/map', '/impressum', '/admin']);
@@ -493,7 +515,7 @@ async function captureJournal(browser: Browser): Promise<void> {
     return;
   }
 
-  let written = false;
+  const written: string[] = [];
   try {
     await withPage(browser, VIEWPORT, async (page) => {
       await adminLogin(page);
@@ -506,7 +528,8 @@ async function captureJournal(browser: Browser): Promise<void> {
 
       fs.mkdirSync(JOURNAL_DIR, { recursive: true });
       fs.writeFileSync(entryPath, demoJournalMarkdown(assetIds));
-      written = true;
+      written.push(entryPath);
+      await writeExtraEntries(page, written);
       await sleep(CONFIG_RELOAD_DELAY);
 
       // Studio first: the session is already open on this page.
@@ -521,10 +544,33 @@ async function captureJournal(browser: Browser): Promise<void> {
       await captureJournalEntry(page);
     });
   } finally {
-    if (written && fs.existsSync(entryPath)) {
-      fs.rmSync(entryPath, { force: true });
-      console.log(`  🧹 Removed the demo entry (${DEMO_JOURNAL_SLUG}.md)`);
+    for (const file of written) {
+      if (fs.existsSync(file)) {
+        fs.rmSync(file, { force: true });
+        console.log(`  🧹 Removed the demo entry (${path.basename(file)})`);
+      }
     }
+  }
+}
+
+/**
+ * The album-bound companion entries. Each is skipped without failing the run
+ * when its album is missing (another installation) or when a file with that
+ * slug already exists (an author's own entry is never overwritten).
+ */
+async function writeExtraEntries(page: Page, written: string[]): Promise<void> {
+  for (const extra of EXTRA_JOURNAL_ENTRIES) {
+    const file = path.join(JOURNAL_DIR, `${extra.slug}.md`);
+    if (fs.existsSync(file)) {
+      console.log(`  ⏭  ${extra.slug}.md already exists — leaving it alone.`);
+      continue;
+    }
+    const photos = await demoAlbumPhotos(page, extra.album);
+    if (!photos || photos.ids.length < 4) continue;
+    const picked = spreadSample(photos.ids, 4);
+    if (photos.coverId) picked[0] = photos.coverId;
+    fs.writeFileSync(file, extra.markdown(picked));
+    written.push(file);
   }
 }
 
@@ -562,32 +608,49 @@ async function adminLogin(page: Page): Promise<void> {
  * Raw asset UUIDs for the demo entry, via the admin API. `page.request` shares
  * the context's cookies, so the session from adminLogin() carries over.
  */
-async function demoAssetIds(page: Page): Promise<string[]> {
-  const albumsRes = await page.request.get(`${BASE_URL}/api/admin/albums`);
-  if (!albumsRes.ok()) return [];
-  const albums = (await albumsRes.json()) as
-    | { albums?: { id: string; albumName: string; assetCount: number }[] }
-    | { id: string; albumName: string; assetCount: number }[];
-  const list = Array.isArray(albums) ? albums : (albums.albums ?? []);
-  if (list.length === 0) return [];
+async function demoAssetIds(page: Page, albumName = JOURNAL_ALBUM): Promise<string[]> {
+  return (await demoAlbumPhotos(page, albumName))?.ids ?? [];
+}
 
-  const wantedName = JOURNAL_ALBUM?.toLowerCase();
+/**
+ * The matched album's photos plus the cover its owner picked in Immich, which
+ * is a better opening image for an entry than whatever happens to be first in
+ * capture order.
+ */
+async function demoAlbumPhotos(
+  page: Page,
+  albumName = JOURNAL_ALBUM,
+): Promise<{ ids: string[]; coverId?: string } | null> {
+  type AdminAlbum = {
+    id: string;
+    albumName: string;
+    assetCount: number;
+    thumbnailAssetId?: string | null;
+  };
+  const albumsRes = await page.request.get(`${BASE_URL}/api/admin/albums`);
+  if (!albumsRes.ok()) return null;
+  const albums = (await albumsRes.json()) as { albums?: AdminAlbum[] } | AdminAlbum[];
+  const list = Array.isArray(albums) ? albums : (albums.albums ?? []);
+  if (list.length === 0) return null;
+
+  const wantedName = albumName?.toLowerCase();
   const album = wantedName
     ? list.find((a) => a.albumName.toLowerCase().includes(wantedName))
     : [...list].sort((a, b) => (b.assetCount ?? 0) - (a.assetCount ?? 0))[0];
   if (!album) {
-    console.log(`  ⏭  No album matching "${JOURNAL_ALBUM}" — skipping the journal shots.`);
-    return [];
+    console.log(`  ⏭  No album matching "${albumName}" — skipping that entry.`);
+    return null;
   }
   console.log(`  🔎 Demo entry photos from: ${album.albumName}`);
 
   const assetsRes = await page.request.get(`${BASE_URL}/api/admin/albums/${album.id}/assets`);
-  if (!assetsRes.ok()) return [];
+  if (!assetsRes.ok()) return null;
   const payload = (await assetsRes.json()) as
     { assets?: { id: string; type?: string }[] } | { id: string; type?: string }[];
   const assets = Array.isArray(payload) ? payload : (payload.assets ?? []);
   // Videos render a player, not a photo block.
-  return assets.filter((a) => (a.type ?? 'IMAGE').toUpperCase() === 'IMAGE').map((a) => a.id);
+  const ids = assets.filter((a) => (a.type ?? 'IMAGE').toUpperCase() === 'IMAGE').map((a) => a.id);
+  return { ids, coverId: album.thumbnailAssetId ?? undefined };
 }
 
 /**
@@ -639,6 +702,85 @@ Not the wide views, in the end, but the repetitions — the same twenty minutes
 of light, the same short walk back, the same handful of frames worth keeping
 out of a few hundred.
 ${contained ? `\n![${contained}](The last morning, before packing up)\n` : ''}`;
+}
+
+/**
+ * `count` photos spread over the album rather than its first few. Albums are
+ * in capture order, so the opening frames are the journey there — a station,
+ * a train window — which makes a poor cover for an entry about the place. The
+ * first fifth is skipped for the same reason.
+ */
+function spreadSample(ids: string[], count: number): string[] {
+  const start = Math.floor(ids.length / 5);
+  const usable = ids.slice(start);
+  const step = Math.max(1, Math.floor(usable.length / count));
+  return Array.from({ length: count }, (_, i) => usable[Math.min(i * step, usable.length - 1)]);
+}
+
+/**
+ * Companion entry for the Kurokawa Onsen album. Shorter than the main one: it
+ * exists to fill the index, and only its card is ever screenshot. The prose
+ * stays at the level of the place and the season, since which frames it gets
+ * depends on the album's order.
+ */
+function kurokawaJournalMarkdown(ids: string[]): string {
+  const [cover, fullbleed, pairA, pairB] = ids;
+  return `---
+title: "Three Days in Kurokawa Onsen"
+subtitle: "A village built into a river gorge, photographed between baths"
+author: "Jane Doe"
+date: "2025-11-22"
+coverAssetId: "${cover}"
+---
+
+# Down to the River
+
+The village sits in the cut of a small river, dark wood and tiled roofs
+stacked up both banks, and every path eventually leads back down to the water.
+Late November had the maples going over at different speeds — one tree still
+green, the next one already halfway to bare.
+
+![${fullbleed}:fullbleed](Kurokawa Onsen, late November)
+
+## Between Baths
+
+You buy a wooden pass and it lets you into three of the baths, so the days
+arrange themselves around walking from one to the next. Most of the frames here
+were made on those walks, in the hour before it got dark and the lanterns came
+on along the river.
+
+![${pairA}, ${pairB}](Two frames from the same short walk)
+`;
+}
+
+/** Companion entry for the Kada album — see kurokawaJournalMarkdown(). */
+function kadaJournalMarkdown(ids: string[]): string {
+  const [cover, fullbleed, pairA, pairB] = ids;
+  return `---
+title: "Kada, Out of Season"
+subtitle: "A fishing harbour on the Wakayama coast, mostly at 200mm"
+author: "Jane Doe"
+date: "2023-10-19"
+coverAssetId: "${cover}"
+---
+
+# The Harbour Road
+
+Kada is a working harbour before it is anything else: crates stacked against
+the sea wall, rope coiled where it was dropped, boats tied up in the middle of
+a weekday. Nothing is arranged for a visitor, which is most of why it is worth
+photographing.
+
+![${fullbleed}:fullbleed](Kada, October light)
+
+## At 200mm
+
+A long lens turned out to be the right choice here. It kept the distance
+honest — the roof tiles, the bare tree behind them, the cats asleep on warm
+concrete all stayed where they were instead of being walked up to.
+
+![${pairA}, ${pairB}](Two frames from the harbour road)
+`;
 }
 
 /** Best effort: the picker is a modal behind a button whose label may change. */
