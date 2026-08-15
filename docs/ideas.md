@@ -23,7 +23,7 @@ A consolidated list of features and ideas for future versions, cleaned up from e
 - **EXIF analytics page** — Visual breakdown of shooting patterns: most-used focal lengths, aperture distribution.
 - **Before/After slider** — Drag-to-reveal comparison component for retouching showcases.
 - **Watermarking** — Server-side watermark overlay on proxied images.
-- **Internationalization (i18n)** — Multi-language UI support (DE/EN).
+- ~~**Internationalization (i18n)** — Multi-language UI support (DE/EN).~~ Shipped for the visitor UI; the admin panel is still English-only.
 
 ---
 

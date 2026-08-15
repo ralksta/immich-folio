@@ -6,6 +6,7 @@ import type { GridConfig } from '@/lib/config';
 import type { LightboxWatermark } from '@/components/Lightbox';
 import Image from 'next/image';
 import React from 'react';
+import { getServerDictionary } from '@/lib/i18n/server';
 
 interface AlbumDetailViewProps {
   album: ImmichAlbum;
@@ -64,6 +65,7 @@ export function AlbumDetailView({
   allowMailto,
 }: AlbumDetailViewProps) {
   const metaDetail = albumMetaDetail(album);
+  const t = getServerDictionary();
 
   return (
     <>
@@ -95,9 +97,7 @@ export function AlbumDetailView({
           {album.description && <p className="album-header__description">{album.description}</p>}
         </div>
         <p className="album-header__meta">
-          <span className="album-header__meta-count">
-            {images.length} {images.length === 1 ? 'photo' : 'photos'}
-          </span>
+          <span className="album-header__meta-count">{t.common.photos(images.length)}</span>
           {metaDetail.date && <span className="album-header__meta-date"> · {metaDetail.date}</span>}
           {metaDetail.gear && <span className="album-header__meta-gear">{metaDetail.gear}</span>}
         </p>

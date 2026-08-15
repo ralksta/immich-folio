@@ -5,12 +5,14 @@
  */
 
 import styles from '../loading.module.css';
+import { getServerDictionary } from '@/lib/i18n/server';
 
 export default function Loading() {
+  const t = getServerDictionary();
   return (
     <>
       <div className={styles.heading} aria-hidden="true" />
-      <div className={styles.grid} role="status" aria-label="Loading photos">
+      <div className={styles.grid} role="status" aria-label={t.common.loadingPhotos}>
         {Array.from({ length: 9 }).map((_, i) => (
           <div key={i} className={styles.tile} />
         ))}

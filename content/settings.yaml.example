@@ -6,6 +6,11 @@
 title: "My Portfolio"
 subtitle: "A visual journal"
 
+# Interface language of the visitor-facing site: "en" or "de".
+# Any other value still sets <html lang> and date formatting, but the
+# interface stays English. The admin panel is always English.
+lang: "en"
+
 # ── SEO & Metadata ───────────────────────────────────────────────
 # Optional: Overrides global title/subtitle for search engines and social cards
 # seo:

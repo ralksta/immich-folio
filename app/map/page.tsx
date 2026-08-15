@@ -8,16 +8,18 @@ import { notFound } from 'next/navigation';
 import { MapView } from '@/components/MapView';
 import { BackLink } from '@/components/BackLink';
 import type { Metadata } from 'next';
+import { getServerDictionary } from '@/lib/i18n/server';
 import './map.css';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'Map',
-};
+export function generateMetadata(): Metadata {
+  return { title: getServerDictionary().map.title };
+}
 
 export default function MapPage() {
   const config = getConfig();
+  const t = getServerDictionary();
 
   if (!config.map) {
     notFound();
@@ -42,16 +44,15 @@ export default function MapPage() {
       <div className="map-page">
         <div className="map-page__header">
           <div className="map-page__header-main">
-            <BackLink href="/" label="Back to Gallery" />
+            <BackLink href="/" label={t.common.backToGallery} />
             <p className="map-page__kicker" aria-hidden="true">
-              Where
+              {t.map.kicker}
             </p>
-            <h1 className="map-page__title">Map</h1>
-            <p className="map-page__subtitle">Where the photos were taken</p>
+            <h1 className="map-page__title">{t.map.title}</h1>
+            <p className="map-page__subtitle">{t.map.subtitle}</p>
           </div>
           <p className="map-page__meta" aria-hidden="true">
-            {collectionCount} {collectionCount === 1 ? 'collection' : 'collections'} · {albumCount}{' '}
-            {albumCount === 1 ? 'album' : 'albums'}
+            {t.common.collections(collectionCount)} · {t.common.albums(albumCount)}
           </p>
         </div>
         <MapView />

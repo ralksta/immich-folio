@@ -131,6 +131,21 @@ Fixed routes outside the catch-all: `/about`, `/map`, `/impressum`, `/journal`, 
 - Author markdown is escaped, never filtered — `sanitizeHtml` runs first and the renderer only emits tags it builds itself.
 - Drafts (`draft: true`) are hidden from the index and the nav check, but remain visible to an authenticated admin. Entry passwords use the `lb_auth_journal_<slug>` cookie.
 
+### Internationalisation (`lib/i18n/`)
+
+Visitor-facing strings are read off a dictionary picked by `settings.yaml: lang`. No framework, no route prefixes — a self-hosted portfolio serves one language.
+
+- `lib/i18n/locales/en.ts` is the reference locale; `Dictionary = typeof en`, so `de.ts` (typed as `Dictionary`) fails the type-check when a key is added and not translated. Values are plain strings, or functions when a count or name is interpolated — pluralisation belongs to the locale ("Alben", not "Albums").
+- `lib/i18n/index.ts` — **client-safe** (no `fs`): `resolveLocale()` (drops the region subtag, falls back to `en`), `getDictionary()`, `SUPPORTED_LOCALES`.
+- `lib/i18n/server.ts` — server only; reaches into `lib/config` and therefore `fs`. Same split as `lib/journal.ts` vs `lib/admin/journal-service.ts`: importing it from a client component breaks the build.
+- Server components call `getServerDictionary()`. Client components take the locale from `components/I18nProvider.tsx` (mounted in the root layout) and call `useDictionary()` — only the locale string crosses the boundary, since dictionaries hold functions and would not serialise.
+
+`<html lang>` keeps the raw configured value, so a `lang: fr` deployment is marked French and shows the English interface rather than lying about its language. The admin panel is deliberately untranslated, and `app/global-error.tsx` stays English because it replaces the root layout and therefore has no provider.
+
+`/impressum` is no longer hardcoded German: the headings come from the dictionary and the footer link reads "Impressum" only under `lang: de`.
+
+`lib/__tests__/i18n.test.ts` walks both dictionaries and fails on a key that was copied but never translated — the type system only catches missing ones.
+
 ### Proofing (`lib/proofing.ts`, `components/ProofingContext.tsx`)
 
 Client-side favourite selection encoded as a bitmask in the URL and mirrored to `localStorage`; nothing is stored server-side.
@@ -199,3 +214,13 @@ Next.js 16 renamed the `middleware` file convention to `proxy`: the file is `pro
 - **Rate-limit all expensive endpoints** — apply `checkRateLimit` from `lib/rate-limit.ts` to any route doing heavy computation or upstream API calls.
 - **Commit style** — Conventional Commits: `feat:`, `fix:`, `security:`, `docs:`, `chore:`.
 - **Route handlers are testable** — `vitest.config.ts` includes `app/**/__tests__/**/*.test.ts`. Logic that lives in a route (auth guards, header sanitisation) belongs in a route-level test; do not extract it into `lib/` purely to make it reachable by the test runner.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

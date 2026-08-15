@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { encodeProofBitmask, decodeProofBitmask } from '@/lib/proofing';
+import { useDictionary } from './I18nProvider';
 
 interface ProofingContextType {
   favorites: Set<string>;
@@ -30,6 +31,7 @@ export function ProofingProvider({
   albumName?: string;
   allowMailto?: boolean;
 }) {
+  const t = useDictionary();
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [isFilterActive, setIsFilterActive] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -126,8 +128,12 @@ export function ProofingProvider({
         selectedIndices.push(index + 1);
       }
     });
-    if (selectedIndices.length === 0) return `${albumName}: No photos selected.`;
-    return `${albumName} — Selected Photos (${selectedIndices.length}): #${selectedIndices.join(', #')}`;
+    if (selectedIndices.length === 0) return t.proofing.listEmpty(albumName);
+    return t.proofing.listSummary(
+      albumName,
+      selectedIndices.length,
+      `#${selectedIndices.join(', #')}`,
+    );
   };
 
   return (

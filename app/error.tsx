@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { useDictionary } from '@/components/I18nProvider';
 
 /**
  * Rendered when a page throws — in practice almost always
@@ -22,22 +23,22 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useDictionary();
+
   useEffect(() => {
     console.error('[Folio] Page render failed:', error);
   }, [error]);
 
   return (
     <div className="empty-state">
-      <h1 className="empty-state__title">Something went wrong</h1>
-      <p className="empty-state__text">
-        This page could not be loaded right now. It is usually temporary — try again in a moment.
-      </p>
+      <h1 className="empty-state__title">{t.error.errorTitle}</h1>
+      <p className="empty-state__text">{t.error.errorText}</p>
       <div className="empty-state__actions">
         <button type="button" onClick={reset} className="empty-state__button">
-          Try again
+          {t.error.tryAgain}
         </button>
         <Link href="/" className="empty-state__button empty-state__button--quiet">
-          Back to the gallery
+          {t.common.backToGallery}
         </Link>
       </div>
       {error.digest && (
@@ -45,7 +46,7 @@ export default function Error({
           className="empty-state__text"
           style={{ marginTop: 24, fontSize: '0.8rem', opacity: 0.5 }}
         >
-          Reference: {error.digest}
+          {t.error.reference(error.digest)}
         </p>
       )}
     </div>

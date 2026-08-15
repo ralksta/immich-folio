@@ -19,6 +19,7 @@ import { useSwipe } from '@/hooks/useSwipe';
 import styles from './Lightbox.module.css';
 import { useProofing } from './ProofingContext';
 import { IconHeart } from './Icons';
+import { useDictionary } from './I18nProvider';
 
 export interface LightboxWatermark {
   enabled?: boolean;
@@ -50,6 +51,7 @@ export function Lightbox({
   watermark,
   showExifToggle = true,
 }: LightboxProps) {
+  const t = useDictionary();
   const [showExif, setShowExif] = useState(false);
   const { exifData, exifLoading, fetchExif, clearExif } = useExif();
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -162,15 +164,15 @@ export function Lightbox({
       onTouchEnd={handleTouchEnd}
       role="dialog"
       aria-modal="true"
-      aria-label="Image viewer"
+      aria-label={t.lightbox.viewer}
     >
       {/* Close button */}
       <button
         ref={closeBtnRef}
         className={styles.close}
         onClick={onClose}
-        aria-label="Close"
-        title="Close (Esc)"
+        aria-label={t.lightbox.close}
+        title={t.lightbox.closeTitle}
       >
         <svg
           aria-hidden="true"
@@ -190,8 +192,8 @@ export function Lightbox({
       <button
         className={`${styles.nav} ${styles.navPrev}`}
         onClick={onPrev}
-        aria-label="Previous photo"
-        title="Previous photo (Left arrow)"
+        aria-label={t.lightbox.previous}
+        title={t.lightbox.previousTitle}
       >
         <svg
           aria-hidden="true"
@@ -262,8 +264,8 @@ export function Lightbox({
       <button
         className={`${styles.nav} ${styles.navNext}`}
         onClick={onNext}
-        aria-label="Next photo"
-        title="Next photo (Right arrow)"
+        aria-label={t.lightbox.next}
+        title={t.lightbox.nextTitle}
       >
         <svg
           aria-hidden="true"
@@ -297,11 +299,11 @@ export function Lightbox({
             fontWeight: isFav ? 600 : 400,
           }}
           onClick={() => proofing.toggleFavorite(current.id)}
-          aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
-          title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+          aria-label={isFav ? t.proofing.removeFromFavorites : t.proofing.addToFavorites}
+          title={isFav ? t.proofing.removeFromFavorites : t.proofing.addToFavorites}
         >
           <IconHeart size={14} fill={isFav ? 'currentColor' : 'none'} aria-hidden="true" />
-          {isFav ? 'Saved' : 'Favorite'}
+          {isFav ? t.proofing.saved : t.proofing.favorite}
         </button>
       )}
 
@@ -312,10 +314,10 @@ export function Lightbox({
           onClick={handleExifToggle}
           aria-expanded={showExif}
           aria-controls="exif-panel"
-          aria-label="Toggle photo info"
-          title="Toggle photo info (i)"
+          aria-label={t.lightbox.toggleInfo}
+          title={t.lightbox.toggleInfoTitle}
         >
-          {showExif ? 'Hide Info' : 'Info'}
+          {showExif ? t.lightbox.hideInfo : t.lightbox.info}
         </button>
       )}
 
@@ -324,14 +326,14 @@ export function Lightbox({
         <div id="exif-panel" className={styles.exifPanel}>
           {exifLoading ? (
             <div className={styles.exifRow}>
-              <span className={styles.exifLabel}>Loading...</span>
+              <span className={styles.exifLabel}>{t.lightbox.loading}</span>
             </div>
           ) : exifData ? (
             <>
               {exifData.description && <p className={styles.exifCaption}>{exifData.description}</p>}
               {exifData.model && (
                 <div className={styles.exifRow}>
-                  <span className={styles.exifLabel}>Camera</span>
+                  <span className={styles.exifLabel}>{t.lightbox.camera}</span>
                   <span className={styles.exifValue}>
                     {[exifData.make, exifData.model].filter(Boolean).join(' ')}
                   </span>
@@ -339,37 +341,37 @@ export function Lightbox({
               )}
               {exifData.lensModel && (
                 <div className={styles.exifRow}>
-                  <span className={styles.exifLabel}>Lens</span>
+                  <span className={styles.exifLabel}>{t.lightbox.lens}</span>
                   <span className={styles.exifValue}>{exifData.lensModel}</span>
                 </div>
               )}
               {exifData.focalLength && (
                 <div className={styles.exifRow}>
-                  <span className={styles.exifLabel}>Focal Length</span>
+                  <span className={styles.exifLabel}>{t.lightbox.focalLength}</span>
                   <span className={styles.exifValue}>{exifData.focalLength}mm</span>
                 </div>
               )}
               {exifData.fNumber && (
                 <div className={styles.exifRow}>
-                  <span className={styles.exifLabel}>Aperture</span>
+                  <span className={styles.exifLabel}>{t.lightbox.aperture}</span>
                   <span className={styles.exifValue}>ƒ/{exifData.fNumber}</span>
                 </div>
               )}
               {exifData.exposureTime && (
                 <div className={styles.exifRow}>
-                  <span className={styles.exifLabel}>Shutter</span>
+                  <span className={styles.exifLabel}>{t.lightbox.shutter}</span>
                   <span className={styles.exifValue}>{exifData.exposureTime}s</span>
                 </div>
               )}
               {exifData.iso && (
                 <div className={`${styles.exifRow} ${styles.exifRowIso}`}>
-                  <span className={styles.exifLabel}>ISO</span>
+                  <span className={styles.exifLabel}>{t.lightbox.iso}</span>
                   <span className={styles.exifValue}>{exifData.iso}</span>
                 </div>
               )}
               {(exifData.city || exifData.country) && (
                 <div className={styles.exifRow}>
-                  <span className={styles.exifLabel}>Location</span>
+                  <span className={styles.exifLabel}>{t.lightbox.location}</span>
                   <span className={styles.exifValue}>
                     {[exifData.city, exifData.country].filter(Boolean).join(', ')}
                   </span>
@@ -378,7 +380,7 @@ export function Lightbox({
             </>
           ) : (
             <div className={styles.exifRow}>
-              <span className={styles.exifLabel}>No EXIF data available</span>
+              <span className={styles.exifLabel}>{t.lightbox.noExif}</span>
             </div>
           )}
         </div>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getServerDictionary } from '@/lib/i18n/server';
 
 /**
  * Rendered when a page calls notFound() — i.e. Immich answered and the album
@@ -10,15 +11,14 @@ import Link from 'next/link';
  * crawler) that their content is gone.
  */
 export default function NotFound() {
+  const t = getServerDictionary();
   return (
     <div className="empty-state">
-      <h1 className="empty-state__title">Not found</h1>
-      <p className="empty-state__text">
-        This page does not exist, or the album is no longer published.
-      </p>
+      <h1 className="empty-state__title">{t.error.notFoundTitle}</h1>
+      <p className="empty-state__text">{t.error.notFoundText}</p>
       <div className="empty-state__actions">
         <Link href="/" className="empty-state__button">
-          Back to the gallery
+          {t.common.backToGallery}
         </Link>
       </div>
     </div>
