@@ -19,7 +19,10 @@
  * The journal section writes a throwaway entry built from a real album's
  * photos, shoots the public index, the entry and the studio, then deletes it.
  * SCREENSHOT_JOURNAL_ALBUM picks the album by name; without it the largest one
- * is used.
+ * is used — which is usually an import dump rather than a presentable set, so
+ * set it whenever the output is going to be committed. Whatever it names ends
+ * up in a published screenshot at full size: pick an album you would show a
+ * stranger, not one that happens to be large.
  *
  * The album used for the grid shots is discovered by walking the running site,
  * since album slugs come from Immich album names. SCREENSHOT_GRID_PATH picks a
@@ -100,8 +103,12 @@ const JOURNAL_DIR = path.join(CONTENT_DIR, 'journal');
 const DEMO_JOURNAL_SLUG = 'screenshot-demo-entry';
 /**
  * Album to pull demo photos from, matched against the Immich album name.
- * Unset picks the album with the most photos, which gives the entry enough
- * frames to fill a fullbleed, a pair and a contained block.
+ * Unset picks the album with the most photos, which reliably gives the entry
+ * enough frames to fill a fullbleed, a pair and a contained block — but the
+ * largest album on a real library is typically an unsorted import, so a run
+ * whose output gets committed should always name one. The photos are published
+ * at full size in the screenshots; nothing about them is anonymised, unlike the
+ * site identity in DEMO_SETTINGS.
  */
 const JOURNAL_ALBUM = process.env.SCREENSHOT_JOURNAL_ALBUM;
 
