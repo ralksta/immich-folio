@@ -11,6 +11,14 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Added
 
+- **The lightbox lists its keyboard shortcuts under `?` or `H`**
+  ([#501](https://github.com/ralksta/immich-folio/pull/501)). The viewer has
+  always had keys — arrows, `i`, `Esc` — with nothing that wrote them down.
+  There is deliberately no button and no first-run hint: a permanent control in
+  the corner of a photograph costs every visitor something, and whoever tries
+  `?` or `h` finds the list. `Esc` now unwinds one layer at a time, closing the
+  panel before the viewer.
+
 - **The album covers on a subpage follow the grid setting**
   ([#460](https://github.com/ralksta/immich-folio/pull/460)). They were tiled
   two-up by a hardcoded CSS rule, so the site-wide `grid.columns` only ever

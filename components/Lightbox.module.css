@@ -243,64 +243,15 @@
   display: flex;
 }
 
-/* ── Keyboard shortcuts ───────────────────────────── */
-.shortcutsToggle {
-  position: fixed;
-  bottom: 24px;
-  left: 24px;
-  z-index: 1001;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  color: var(--text-secondary);
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  line-height: 1;
-  cursor: pointer;
-  transition:
-    background var(--transition-fast),
-    color var(--transition-fast);
-}
-
-.shortcutsToggle:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: var(--text-primary);
-}
-
-/* The one-time nudge sits where the panel will open, so the eye is already
-   in the right place when it does. */
-.shortcutHint,
+/* ── Keyboard shortcuts ─────────────────────────────
+   The panel has no trigger of its own — `?` or `h` opens it. It sits where a
+   trigger would have been, bottom left, clear of the EXIF panel opposite. */
 .shortcutsPanel {
   position: fixed;
   bottom: 62px;
   left: 24px;
   z-index: 1001;
   animation: exif-slide-up var(--transition-normal) ease forwards;
-}
-
-.shortcutHint {
-  margin: 0;
-  padding: 6px 10px;
-  background: rgba(20, 20, 20, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-  pointer-events: none;
-}
-
-.shortcutsPanel {
   min-width: 240px;
   padding: 16px 20px;
   background: rgba(20, 20, 20, 0.92);
@@ -362,10 +313,8 @@
   color: var(--text-secondary);
 }
 
-/* No keyboard, nothing to advertise. */
+/* No keyboard, nothing to show. */
 @media (hover: none) {
-  .shortcutsToggle,
-  .shortcutHint,
   .shortcutsPanel {
     display: none;
   }
@@ -396,16 +345,14 @@
 
 .close,
 .nav,
-.counter,
-.shortcutsToggle {
+.counter {
   opacity: 0.5;
   transition: opacity 400ms ease;
 }
 
 .overlay:hover .close,
 .overlay:hover .nav,
-.overlay:hover .counter,
-.overlay:hover .shortcutsToggle {
+.overlay:hover .counter {
   opacity: 1;
 }
 
@@ -559,39 +506,8 @@
   right: 176px;
 }
 
-/* The EXIF strip owns the bottom edge in this preset, so the shortcut control
-   moves into the topbar and the counter shifts right to make room for it. */
-:global([data-preset='studio-modern']) .shortcutsToggle {
-  top: 20px;
-  bottom: auto;
-  left: 32px;
-  width: 26px;
-  height: 26px;
-  border-radius: 0;
-  background: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border-color: rgba(255, 255, 255, 0.15);
-  font-family: var(--font-caption);
-  font-size: 0.6875rem;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-:global([data-preset='studio-modern']) .shortcutsToggle:hover {
-  background: none;
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-/* Only where the button is actually rendered — it is hidden on touch, and an
-   indented counter with nothing to its left would just look misaligned. */
-@media (hover: hover) {
-  :global([data-preset='studio-modern']) .counter {
-    left: 74px;
-  }
-}
-
-:global([data-preset='studio-modern']) .shortcutHint,
+/* The EXIF strip owns the bottom edge in this preset, so the panel opens from
+   the top instead. */
 :global([data-preset='studio-modern']) .shortcutsPanel {
   top: 58px;
   bottom: auto;
