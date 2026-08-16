@@ -14,6 +14,7 @@ interface Settings {
   title?: string;
   subtitle?: string;
   lang?: string;
+  sitePassword?: string;
   exifOnHover?: boolean;
   map?: boolean;
   transitions?: boolean;
@@ -1628,6 +1629,35 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
 
           {activeSection === 'security' && (
             <div className="settings-panel">
+              <div className="settings-section-header">
+                <h3>
+                  <Icons.IconLock size={18} /> Site Password
+                </h3>
+                <p className="settings-section-sub">
+                  Puts the whole public site behind one password — useful while a portfolio is still
+                  being built, or for a folio only ever shown to clients.
+                </p>
+              </div>
+
+              <div className="admin-field">
+                <label>Site Password</label>
+                <input
+                  type="text"
+                  value={settings.sitePassword || ''}
+                  onChange={(e) => update('sitePassword', e.target.value)}
+                  placeholder="Leave empty for a public site"
+                  autoComplete="off"
+                />
+                <p className="admin-field-hint">
+                  Stored in <code>settings.yaml</code>. Log in once and the server log prints a{' '}
+                  <code>scrypt:…</code> hash to paste back here instead of the plaintext. The{' '}
+                  <code>SITE_PASSWORD</code> environment variable overrides this field. The admin
+                  panel keeps its own password and is never behind this gate.
+                </p>
+              </div>
+
+              <div className="settings-section-divider" />
+
               <div className="settings-section-header">
                 <h3>
                   <Icons.IconShieldCheck size={18} /> Asset Protection &amp; Watermark

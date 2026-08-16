@@ -369,6 +369,9 @@ export function getConfig(): AppConfig {
       siteTitle: env.SITE_TITLE || 'Immich Folio',
       siteSubtitle: env.SITE_SUBTITLE || 'Setup Required',
       lang: 'en',
+      // Nothing to protect yet, and a gate here would sit in front of the
+      // setup screen that is trying to tell the operator what is missing.
+      sitePassword: '',
       seo: {
         title: 'Setup Required',
         description: 'Please configure Immich Folio',
@@ -433,6 +436,9 @@ export function getConfig(): AppConfig {
     siteTitle: settings.title ?? env.SITE_TITLE,
     siteSubtitle: settings.subtitle ?? env.SITE_SUBTITLE,
     lang: settings.lang ?? 'en',
+    // Env wins, so a deployment can rotate the site password without touching
+    // settings.yaml — the same precedence the Immich credentials use.
+    sitePassword: env.SITE_PASSWORD ?? settings.sitePassword ?? '',
     seo: {
       title: siteSeoTitle,
       description:

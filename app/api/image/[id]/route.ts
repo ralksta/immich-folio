@@ -13,6 +13,7 @@ import { resolveImageSize } from '@/lib/imageSize';
 import { decodeAssetId } from '@/lib/tokens';
 import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
+import { siteLockResponse } from '@/lib/auth';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // ── Rate limiting ──────────────────────────────────
@@ -37,6 +38,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       },
     );
   }
+
+  // The page-level gate does not cover route handlers — without this a locked
+  // site would still serve to anyone holding the URL.
+  const locked = siteLockResponse(request);
+  if (locked) return locked;
 
   const { id: token } = await params;
 

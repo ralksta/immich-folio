@@ -57,6 +57,7 @@ export const en = {
 
   password: {
     subtitle: 'This gallery is password-protected.',
+    siteSubtitle: 'This site is password-protected.',
     placeholder: 'Enter password',
     submit: 'Enter',
     verifying: 'Verifying…',

@@ -12,7 +12,7 @@ import { useDictionary } from './I18nProvider';
 interface PasswordGateProps {
   slug: string;
   title: string;
-  type?: 'subpage' | 'album' | 'journal';
+  type?: 'subpage' | 'album' | 'journal' | 'site';
 }
 
 export default function PasswordGate({ slug, title, type = 'subpage' }: PasswordGateProps) {
@@ -50,7 +50,9 @@ export default function PasswordGate({ slug, title, type = 'subpage' }: Password
     <div className={styles.gate}>
       <div className={styles.card}>
         <h2 className={styles.title}>{title}</h2>
-        <p className={styles.subtitle}>{t.password.subtitle}</p>
+        <p className={styles.subtitle}>
+          {type === 'site' ? t.password.siteSubtitle : t.password.subtitle}
+        </p>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <input

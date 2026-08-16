@@ -197,6 +197,11 @@ export interface AppConfig {
   rateLimitRpm: number;
   trustedProxyHops: number;
   needsSetup?: boolean;
+  /**
+   * Password for the whole public site, or `''` when the site is open.
+   * Plaintext or `scrypt:salt:hash`, same as every other password in the app.
+   */
+  sitePassword: string;
   protection?: {
     disableRightClick?: boolean;
     disableImageDrag?: boolean;
@@ -304,6 +309,8 @@ export interface SettingsYaml {
     disableRightClick?: boolean;
     disableImageDrag?: boolean;
   };
+  /** Puts the whole public site behind one password. `SITE_PASSWORD` overrides it. */
+  sitePassword?: string;
   watermark?: {
     enabled?: boolean;
     text?: string;

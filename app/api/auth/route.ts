@@ -1,10 +1,13 @@
 /**
- * Auth API — validates album passwords and sets auth cookies.
- * POST /api/auth { slug, password }
+ * Auth API — validates passwords and sets auth cookies.
+ * POST /api/auth { slug, password, type }
+ *
+ * `type: 'site'` unlocks the whole site; its `slug` is the fixed
+ * SITE_AUTH_KEY, since there is only ever one site-wide gate.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, isProtected } from '@/lib/auth';
+import { authenticate, isProtected, type ProtectedType } from '@/lib/auth';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 
 /** Tight limit for auth attempts — 10 per minute per IP. */
@@ -46,13 +49,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid password format or length' }, { status: 400 });
     }
 
-    if (type !== 'subpage' && type !== 'album' && type !== 'journal') {
+    const TYPES: ProtectedType[] = ['subpage', 'album', 'journal', 'site'];
+    if (!TYPES.includes(type)) {
       return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
     }
 
     if (!isProtected(slug, type)) {
       const typeLabel =
-        type === 'journal' ? 'Journal entry' : type === 'subpage' ? 'Subpage' : 'Album';
+        type === 'journal'
+          ? 'Journal entry'
+          : type === 'subpage'
+            ? 'Subpage'
+            : type === 'site'
+              ? 'Site'
+              : 'Album';
       return NextResponse.json(
         {
           error: `${typeLabel} is not password-protected`,

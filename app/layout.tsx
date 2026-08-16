@@ -5,7 +5,7 @@
  */
 
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import Link from 'next/link';
 import './globals.css';
 import { SubpageNav } from '@/components/SubpageNav';
@@ -16,6 +16,7 @@ import { SetupScreen } from '@/components/SetupScreen';
 import { getConfigOrNull, getGoogleFontsUrl, AppConfig } from '@/lib/config';
 import { isAdminPath } from '@/lib/admin/paths';
 import { isInstallPath } from '@/lib/install';
+import { isSiteLocked, isSiteUnlocked } from '@/lib/auth';
 // DevToolbarLoader is a Client Component (ssr: false is only allowed there)
 import { DevToolbarLoader } from '@/components/DevToolbarLoader';
 import AssetProtection from '@/components/AssetProtection';
@@ -36,9 +37,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const siteTitle = config.seo.title;
   const siteDescription = config.seo.description;
+  // A site behind a password has nothing to offer a crawler, and the SEO
+  // toggles are about a *public* site — so the lock overrides them rather
+  // than depending on the operator also remembering to set noIndex.
+  const locked = isSiteLocked();
   const robots = {
-    index: !config.seo.noIndex,
-    follow: !config.seo.noFollow,
+    index: !locked && !config.seo.noIndex,
+    follow: !locked && !config.seo.noFollow,
   };
 
   return {
@@ -119,6 +124,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const locale = resolveLocale(config.lang);
   const t = getDictionary(locale);
 
+  /*
+   * Whether this render is the site-wide gate. The gate itself is a page
+   * (`app/gate/page.tsx`) that `proxy.ts` rewrites to; all the layout does is
+   * strip the chrome around it, because a header listing every subpage would
+   * give away the shape of a site that is supposed to be shut.
+   */
+  const cookieStore = await cookies();
+  const siteGated =
+    !isAdmin && !isInstallPath(pathname) && !isSiteUnlocked((name) => cookieStore.get(name)?.value);
+
   return (
     <html
       lang={config.lang || 'en'}
@@ -137,7 +152,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <I18nProvider locale={locale}>
-          {isAdmin ? (
+          {siteGated || isAdmin ? (
             children
           ) : (
             <>
