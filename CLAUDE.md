@@ -146,6 +146,16 @@ Visitor-facing strings are read off a dictionary picked by `settings.yaml: lang`
 
 `lib/__tests__/i18n.test.ts` walks both dictionaries and fails on a key that was copied but never translated — the type system only catches missing ones.
 
+### Lightbox keyboard shortcuts (`components/Lightbox.tsx`)
+
+The lightbox owns its key bindings (`Esc`, `←`/`→`, `i`, `?`) — callers must not install their own, which is how `EssayView` ended up with no keyboard navigation at all.
+
+`?` or `h` toggles a panel listing them, built from the `shortcutRows` array. **Adding a key means adding a row** — the panel is the only place a binding is written down. Rows can be conditional: `i` only appears when `showExifToggle` is on, since journal entries hide the EXIF panel. The `?` case matches the produced character, not the physical key, so it works on a German layout (Shift+ß) as well as a US one; `h` is the fallback for layouts where `?` is awkward.
+
+`Esc` unwinds one layer at a time — it closes the shortcut panel first and only then the viewer.
+
+**The panel has no trigger and is not advertised.** There is no `?` button and no first-run nudge: a permanent control in the corner of a photograph costs every visitor something, and a visitor who never presses a key loses nothing by not knowing. Whoever tries `?` or `h` finds it. The panel is `display: none` under `@media (hover: none)`, and `studio-modern` opens it from the top because that preset's EXIF strip owns the bottom edge.
+
 ### Proofing (`lib/proofing.ts`, `components/ProofingContext.tsx`)
 
 Client-side favourite selection encoded as a bitmask in the URL and mirrored to `localStorage`; nothing is stored server-side.

@@ -123,6 +123,11 @@ export const de: Dictionary = {
     iso: 'ISO',
     location: 'Ort',
     noExif: 'Keine EXIF-Daten vorhanden',
+    shortcuts: 'Tastaturkürzel',
+    shortcutNavigate: 'Vorheriges / nächstes Foto',
+    shortcutInfo: 'Fotoinfos',
+    shortcutList: 'Diese Liste',
+    shortcutClose: 'Ansicht schließen',
   },
 
   proofing: {

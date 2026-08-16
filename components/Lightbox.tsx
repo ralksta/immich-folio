@@ -6,6 +6,7 @@
  * - Previous/Next navigation (arrows + swipe)
  * - Close (Esc, click outside, X button)
  * - EXIF metadata panel (fetched on demand)
+ * - Keyboard shortcut list (`?` or `h`), deliberately unadvertised
  * - Preloads adjacent images
  */
 
@@ -53,6 +54,7 @@ export function Lightbox({
 }: LightboxProps) {
   const t = useDictionary();
   const [showExif, setShowExif] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const { exifData, exifLoading, fetchExif, clearExif } = useExif();
   const [imageLoaded, setImageLoaded] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -94,6 +96,10 @@ export function Lightbox({
     }
   }, [showExif, current, fetchExif]);
 
+  const toggleShortcuts = useCallback(() => {
+    setShowShortcuts((open) => !open);
+  }, []);
+
   // Preload adjacent images (skip videos — they stream on demand)
   useEffect(() => {
     const preload = (index: number) => {
@@ -121,7 +127,10 @@ export function Lightbox({
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
         case 'Escape':
-          onClose();
+          // Innermost layer first: Esc dismisses the shortcut list, and only
+          // closes the viewer once nothing is stacked on top of it.
+          if (showShortcuts) setShowShortcuts(false);
+          else onClose();
           break;
         case 'ArrowRight':
           onNext();
@@ -133,6 +142,15 @@ export function Lightbox({
         case 'I':
           if (showExifToggle) handleExifToggle();
           break;
+        // `?` is matched on the produced character, not the physical key:
+        // Shift+/ on a US layout, Shift+ß on a German one. `h` is the escape
+        // hatch for layouts where `?` is awkward — and the one key someone
+        // guesses without having been told.
+        case '?':
+        case 'h':
+        case 'H':
+          toggleShortcuts();
+          break;
       }
     };
 
@@ -143,7 +161,7 @@ export function Lightbox({
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [handleExifToggle, onClose, onNext, onPrev, showExifToggle]);
+  }, [handleExifToggle, onClose, onNext, onPrev, showExifToggle, showShortcuts, toggleShortcuts]);
 
   // Click on overlay background → close
   const handleOverlayClick = useCallback(
@@ -154,6 +172,19 @@ export function Lightbox({
     },
     [onClose],
   );
+
+  /*
+   * The advertised shortcuts, in the order they are worth learning. This is the
+   * list the `?` panel renders — a key added to the handler above belongs here
+   * too, or it stays as undiscoverable as the whole set was before.
+   */
+  const shortcutRows = [
+    { keys: ['←', '→'], label: t.lightbox.shortcutNavigate },
+    // Journal entries hide the EXIF toggle, so `i` does nothing there.
+    ...(showExifToggle ? [{ keys: ['I'], label: t.lightbox.shortcutInfo }] : []),
+    { keys: ['?', 'H'], label: t.lightbox.shortcutList },
+    { keys: ['Esc'], label: t.lightbox.shortcutClose },
+  ];
 
   const lightboxJsx = (
     <div
@@ -383,6 +414,32 @@ export function Lightbox({
               <span className={styles.exifLabel}>{t.lightbox.noExif}</span>
             </div>
           )}
+        </div>
+      )}
+
+      {/*
+        The shortcuts have no control of their own and are not advertised: a
+        permanent button in the corner of a photograph costs every visitor
+        something, and the keys are worth nothing to the ones who would never
+        press them anyway. Whoever tries `?` or `h` finds them.
+      */}
+      {showShortcuts && (
+        <div id="lightbox-shortcuts" className={styles.shortcutsPanel}>
+          <p className={styles.shortcutsTitle}>{t.lightbox.shortcuts}</p>
+          <dl className={styles.shortcutsList}>
+            {shortcutRows.map((row) => (
+              <div key={row.label} className={styles.shortcutsRow}>
+                <dt className={styles.shortcutsKeys}>
+                  {row.keys.map((key) => (
+                    <kbd key={key} className={styles.kbd}>
+                      {key}
+                    </kbd>
+                  ))}
+                </dt>
+                <dd className={styles.shortcutsLabel}>{row.label}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       )}
     </div>
