@@ -127,6 +127,8 @@ export const en = {
     shortcutHint: 'Press ? for keyboard shortcuts',
     shortcutNavigate: 'Previous / next photo',
     shortcutInfo: 'Photo info',
+    shortcutFullscreen: 'Fullscreen',
+    shortcutExitFullscreen: 'Leave fullscreen',
     shortcutList: 'This list',
     shortcutClose: 'Close the viewer',
   },
