@@ -11,6 +11,14 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Added
 
+- **The lightbox lists its keyboard shortcuts under `?` or `H`**
+  ([#501](https://github.com/ralksta/immich-folio/pull/501)). The viewer has
+  always had keys — arrows, `i`, `Esc` — with nothing that wrote them down.
+  There is deliberately no button and no first-run hint: a permanent control in
+  the corner of a photograph costs every visitor something, and whoever tries
+  `?` or `h` finds the list. `Esc` now unwinds one layer at a time, closing the
+  panel before the viewer.
+
 - **`F` puts the lightbox into real fullscreen**
   ([#474](https://github.com/ralksta/immich-folio/issues/474)). The viewer
   covered the viewport but not the browser's own chrome, so every photo was

@@ -148,15 +148,15 @@ Visitor-facing strings are read off a dictionary picked by `settings.yaml: lang`
 
 ### Lightbox keyboard shortcuts (`components/Lightbox.tsx`)
 
-The lightbox owns its key bindings (`Esc`, `←`/`→`, `i`, `?`, `f`) — callers must not install their own, which is how `EssayView` ended up with no keyboard navigation at all.
+The lightbox owns its key bindings (`Esc`, `←`/`→`, `i`, `?`/`h`, `f`) — callers must not install their own, which is how `EssayView` ended up with no keyboard navigation at all.
 
-`?` toggles a panel listing them, built from the `shortcutRows` array. **Adding a key means adding a row**, otherwise the binding stays as undiscoverable as the whole set was before #477. Rows can be conditional: `i` only appears when `showExifToggle` is on, since journal entries hide the EXIF panel. The `?` case matches the produced character, not the physical key, so it works on a German layout (Shift+ß) as well as a US one.
+`?` or `h` toggles a panel listing them, built from the `shortcutRows` array. **Adding a key means adding a row** — the panel is the only place a binding is written down. Rows can be conditional: `i` only appears when `showExifToggle` is on, since journal entries hide the EXIF panel. The `?` case matches the produced character, not the physical key, so it works on a German layout (Shift+ß) as well as a US one; `h` is the fallback for layouts where `?` is awkward.
 
 `Esc` unwinds one layer at a time — shortcut panel, then fullscreen, then the viewer.
 
 `f` calls `requestFullscreen()` on the overlay. The `isFullscreen` state is derived from the `fullscreenchange` event rather than set on the click, because F11, the browser's own Esc and the window manager all leave fullscreen without telling the component; the same event is why the Esc branch above is mostly unreachable in Chrome, which swallows that keypress. An unmount cleanup exits fullscreen when the overlay is still the fullscreen element, so closing the viewer cannot strand the gallery page in fullscreen. `document.fullscreenEnabled` gates both the key and its shortcut row — iPhone Safari implements the API for `<video>` only.
 
-First-time visitors get one nudge towards `?`, remembered under `folio_shortcut_hint_seen`. It is marked seen when it goes away rather than when it appears, so a lightbox closed after a second offers it again; a module-level flag covers private-mode browsers, where the lightbox mounting once per opening would otherwise re-nudge on every photo. The whole control is `display: none` under `@media (hover: none)` — nothing to advertise without a keyboard — and `studio-modern` moves it into its topbar, because that preset's EXIF strip owns the bottom edge.
+**The panel has no trigger and is not advertised.** There is no `?` button and no first-run nudge: a permanent control in the corner of a photograph costs every visitor something, and a visitor who never presses a key loses nothing by not knowing. Whoever tries `?` or `h` finds it. The panel is `display: none` under `@media (hover: none)`, and `studio-modern` opens it from the top because that preset's EXIF strip owns the bottom edge.
 
 ### Proofing (`lib/proofing.ts`, `components/ProofingContext.tsx`)
 

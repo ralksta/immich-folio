@@ -6,7 +6,7 @@
  * - Previous/Next navigation (arrows + swipe)
  * - Close (Esc, click outside, X button)
  * - EXIF metadata panel (fetched on demand)
- * - Keyboard shortcut list (`?`), with a one-time nudge for first-time visitors
+ * - Keyboard shortcut list (`?` or `h`), deliberately unadvertised
  * - Real fullscreen (`f`), where the browser offers it
  * - Preloads adjacent images
  */
@@ -22,19 +22,6 @@ import styles from './Lightbox.module.css';
 import { useProofing } from './ProofingContext';
 import { IconHeart } from './Icons';
 import { useDictionary } from './I18nProvider';
-
-/** Remembers that the "press ? for shortcuts" nudge has been shown. */
-const SHORTCUT_HINT_KEY = 'folio_shortcut_hint_seen';
-
-/** How long the nudge stays up before it fades itself out. */
-const SHORTCUT_HINT_MS = 6000;
-
-/**
- * Fallback for the `localStorage` flag. Private-mode browsers throw on both
- * read and write, and without this the nudge would reappear on every single
- * photo — the lightbox mounts once per opening, not once per page.
- */
-let hintSeenThisSession = false;
 
 export interface LightboxWatermark {
   enabled?: boolean;
@@ -69,7 +56,6 @@ export function Lightbox({
   const t = useDictionary();
   const [showExif, setShowExif] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
-  const [showHint, setShowHint] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [canFullscreen, setCanFullscreen] = useState(false);
   const { exifData, exifLoading, fetchExif, clearExif } = useExif();
@@ -113,20 +99,9 @@ export function Lightbox({
     }
   }, [showExif, current, fetchExif]);
 
-  const dismissHint = useCallback(() => {
-    setShowHint(false);
-    hintSeenThisSession = true;
-    try {
-      localStorage.setItem(SHORTCUT_HINT_KEY, '1');
-    } catch {
-      // Storage disabled — the session flag still stops it repeating.
-    }
-  }, []);
-
   const toggleShortcuts = useCallback(() => {
     setShowShortcuts((open) => !open);
-    dismissHint();
-  }, [dismissHint]);
+  }, []);
 
   /*
    * Real fullscreen. The overlay already covers the viewport, but the browser's
@@ -179,28 +154,6 @@ export function Lightbox({
     };
   }, []);
 
-  /*
-   * The keys are worth nothing if nobody knows they exist, so the first
-   * lightbox a visitor ever opens gets one nudge towards `?`. It is marked as
-   * seen when it goes away, not when it appears: closing the lightbox after a
-   * second has not taught anyone anything, and the nudge is cheap enough to
-   * offer again.
-   */
-  useEffect(() => {
-    if (hintSeenThisSession) return;
-    try {
-      if (localStorage.getItem(SHORTCUT_HINT_KEY)) {
-        hintSeenThisSession = true;
-        return;
-      }
-    } catch {
-      // Unreadable storage — fall through and rely on the session flag.
-    }
-    setShowHint(true);
-    const timer = setTimeout(dismissHint, SHORTCUT_HINT_MS);
-    return () => clearTimeout(timer);
-  }, [dismissHint]);
-
   // Preload adjacent images (skip videos — they stream on demand)
   useEffect(() => {
     const preload = (index: number) => {
@@ -248,9 +201,13 @@ export function Lightbox({
         case 'I':
           if (showExifToggle) handleExifToggle();
           break;
-        // Matched on the produced character, not the physical key: `?` is
-        // Shift+/ on a US layout and Shift+ß on a German one.
+        // `?` is matched on the produced character, not the physical key:
+        // Shift+/ on a US layout, Shift+ß on a German one. `h` is the escape
+        // hatch for layouts where `?` is awkward — and the one key someone
+        // guesses without having been told.
         case '?':
+        case 'h':
+        case 'H':
           toggleShortcuts();
           break;
         case 'f':
@@ -307,7 +264,7 @@ export function Lightbox({
           },
         ]
       : []),
-    { keys: ['?'], label: t.lightbox.shortcutList },
+    { keys: ['?', 'H'], label: t.lightbox.shortcutList },
     { keys: ['Esc'], label: t.lightbox.shortcutClose },
   ];
 
@@ -542,26 +499,12 @@ export function Lightbox({
         </div>
       )}
 
-      {/* Keyboard shortcuts — hidden on touch devices, which have no keys */}
-      <button
-        type="button"
-        className={styles.shortcutsToggle}
-        onClick={toggleShortcuts}
-        aria-expanded={showShortcuts}
-        aria-controls="lightbox-shortcuts"
-        aria-label={t.lightbox.shortcuts}
-        title={t.lightbox.shortcutsTitle}
-      >
-        ?
-      </button>
-
-      {/* The nudge occupies the spot the panel will open into. */}
-      {showHint && !showShortcuts && (
-        <p className={styles.shortcutHint} role="status">
-          {t.lightbox.shortcutHint}
-        </p>
-      )}
-
+      {/*
+        The shortcuts have no control of their own and are not advertised: a
+        permanent button in the corner of a photograph costs every visitor
+        something, and the keys are worth nothing to the ones who would never
+        press them anyway. Whoever tries `?` or `h` finds them.
+      */}
       {showShortcuts && (
         <div id="lightbox-shortcuts" className={styles.shortcutsPanel}>
           <p className={styles.shortcutsTitle}>{t.lightbox.shortcuts}</p>

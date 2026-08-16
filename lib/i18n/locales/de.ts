@@ -123,8 +123,6 @@ export const de: Dictionary = {
     location: 'Ort',
     noExif: 'Keine EXIF-Daten vorhanden',
     shortcuts: 'Tastaturkürzel',
-    shortcutsTitle: 'Tastaturkürzel (?)',
-    shortcutHint: '? drücken für Tastaturkürzel',
     shortcutNavigate: 'Vorheriges / nächstes Foto',
     shortcutInfo: 'Fotoinfos',
     shortcutFullscreen: 'Vollbild',

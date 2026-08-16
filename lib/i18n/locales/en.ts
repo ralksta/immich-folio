@@ -123,8 +123,6 @@ export const en = {
     location: 'Location',
     noExif: 'No EXIF data available',
     shortcuts: 'Keyboard shortcuts',
-    shortcutsTitle: 'Keyboard shortcuts (?)',
-    shortcutHint: 'Press ? for keyboard shortcuts',
     shortcutNavigate: 'Previous / next photo',
     shortcutInfo: 'Photo info',
     shortcutFullscreen: 'Fullscreen',
