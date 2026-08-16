@@ -19,6 +19,16 @@ Releases up to and including v0.9.2 are documented in the
   `?` or `h` finds the list. `Esc` now unwinds one layer at a time, closing the
   panel before the viewer.
 
+- **`F` puts the lightbox into real fullscreen**
+  ([#474](https://github.com/ralksta/immich-folio/issues/474)). The viewer
+  covered the viewport but not the browser's own chrome, so every photo was
+  shown inside a tab strip and a URL bar. `F` toggles it, the shortcut panel
+  lists it, and `Esc` unwinds one layer at a time — shortcut panel, then
+  fullscreen, then the viewer. Leaving the lightbox while fullscreen returns the
+  page to normal instead of stranding the gallery there. Browsers without
+  element fullscreen (iPhone Safari, which offers it for video only) do not
+  advertise the key.
+
 - **The album covers on a subpage follow the grid setting**
   ([#460](https://github.com/ralksta/immich-folio/pull/460)). They were tiled
   two-up by a hardcoded CSS rule, so the site-wide `grid.columns` only ever

@@ -126,6 +126,8 @@ export const de: Dictionary = {
     shortcuts: 'Tastaturkürzel',
     shortcutNavigate: 'Vorheriges / nächstes Foto',
     shortcutInfo: 'Fotoinfos',
+    shortcutFullscreen: 'Vollbild',
+    shortcutExitFullscreen: 'Vollbild verlassen',
     shortcutList: 'Diese Liste',
     shortcutClose: 'Ansicht schließen',
   },

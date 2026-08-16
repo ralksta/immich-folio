@@ -148,11 +148,13 @@ Visitor-facing strings are read off a dictionary picked by `settings.yaml: lang`
 
 ### Lightbox keyboard shortcuts (`components/Lightbox.tsx`)
 
-The lightbox owns its key bindings (`Esc`, `←`/`→`, `i`, `?`) — callers must not install their own, which is how `EssayView` ended up with no keyboard navigation at all.
+The lightbox owns its key bindings (`Esc`, `←`/`→`, `i`, `?`/`h`, `f`) — callers must not install their own, which is how `EssayView` ended up with no keyboard navigation at all.
 
 `?` or `h` toggles a panel listing them, built from the `shortcutRows` array. **Adding a key means adding a row** — the panel is the only place a binding is written down. Rows can be conditional: `i` only appears when `showExifToggle` is on, since journal entries hide the EXIF panel. The `?` case matches the produced character, not the physical key, so it works on a German layout (Shift+ß) as well as a US one; `h` is the fallback for layouts where `?` is awkward.
 
-`Esc` unwinds one layer at a time — it closes the shortcut panel first and only then the viewer.
+`Esc` unwinds one layer at a time — shortcut panel, then fullscreen, then the viewer.
+
+`f` calls `requestFullscreen()` on the overlay. The `isFullscreen` state is derived from the `fullscreenchange` event rather than set on the click, because F11, the browser's own Esc and the window manager all leave fullscreen without telling the component; the same event is why the Esc branch above is mostly unreachable in Chrome, which swallows that keypress. An unmount cleanup exits fullscreen when the overlay is still the fullscreen element, so closing the viewer cannot strand the gallery page in fullscreen. `document.fullscreenEnabled` gates both the key and its shortcut row — iPhone Safari implements the API for `<video>` only.
 
 **The panel has no trigger and is not advertised.** There is no `?` button and no first-run nudge: a permanent control in the corner of a photograph costs every visitor something, and a visitor who never presses a key loses nothing by not knowing. Whoever tries `?` or `h` finds it. The panel is `display: none` under `@media (hover: none)`, and `studio-modern` opens it from the top because that preset's EXIF strip owns the bottom edge.
 

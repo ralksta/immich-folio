@@ -7,6 +7,7 @@
  * - Close (Esc, click outside, X button)
  * - EXIF metadata panel (fetched on demand)
  * - Keyboard shortcut list (`?` or `h`), deliberately unadvertised
+ * - Real fullscreen (`f`), where the browser offers it
  * - Preloads adjacent images
  */
 
@@ -55,6 +56,8 @@ export function Lightbox({
   const t = useDictionary();
   const [showExif, setShowExif] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [canFullscreen, setCanFullscreen] = useState(false);
   const { exifData, exifLoading, fetchExif, clearExif } = useExif();
   const [imageLoaded, setImageLoaded] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -100,6 +103,57 @@ export function Lightbox({
     setShowShortcuts((open) => !open);
   }, []);
 
+  /*
+   * Real fullscreen. The overlay already covers the viewport, but the browser's
+   * own chrome sits above it — tab strip, URL bar, bookmarks — which is exactly
+   * the frame a photograph should not be shown in.
+   *
+   * `fullscreenEnabled` is the honest gate: iPhone Safari implements the API on
+   * `<video>` only, so the key and its shortcut row are simply absent there
+   * rather than failing silently.
+   */
+  useEffect(() => {
+    setCanFullscreen(typeof document !== 'undefined' && !!document.fullscreenEnabled);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    const overlay = overlayRef.current;
+    if (!overlay) return;
+    // Every rejection here is a decision the browser is entitled to make
+    // (denied permission, gesture requirement, already exiting) — the state
+    // then simply stays where it was.
+    if (document.fullscreenElement) {
+      void document.exitFullscreen().catch(() => {});
+    } else {
+      void overlay.requestFullscreen().catch(() => {});
+    }
+  }, []);
+
+  /*
+   * The state is derived from the event, never from the click: F11, the browser
+   * Esc and the window manager all leave fullscreen without asking us.
+   */
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    return () => document.removeEventListener('fullscreenchange', syncFullscreen);
+  }, []);
+
+  /*
+   * Leaving the lightbox by any route — X, backdrop click, Esc, a navigation —
+   * unmounts this component while the document is still fullscreen. Without
+   * this the visitor is left in a fullscreen *gallery page* with no obvious way
+   * back. Only ever exits a fullscreen this component asked for.
+   */
+  useEffect(() => {
+    const overlay = overlayRef.current;
+    return () => {
+      if (overlay && document.fullscreenElement === overlay) {
+        void document.exitFullscreen().catch(() => {});
+      }
+    };
+  }, []);
+
   // Preload adjacent images (skip videos — they stream on demand)
   useEffect(() => {
     const preload = (index: number) => {
@@ -127,9 +181,14 @@ export function Lightbox({
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
         case 'Escape':
-          // Innermost layer first: Esc dismisses the shortcut list, and only
-          // closes the viewer once nothing is stacked on top of it.
+          // Innermost layer first: Esc dismisses the shortcut list, then leaves
+          // fullscreen, and only closes the viewer once nothing is stacked on
+          // top of it. Most browsers swallow this Esc to exit fullscreen
+          // themselves and never dispatch it — the middle branch is for the
+          // ones that do dispatch it, which would otherwise close the lightbox
+          // and leave the page behind it fullscreen.
           if (showShortcuts) setShowShortcuts(false);
+          else if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
           else onClose();
           break;
         case 'ArrowRight':
@@ -151,6 +210,10 @@ export function Lightbox({
         case 'H':
           toggleShortcuts();
           break;
+        case 'f':
+        case 'F':
+          if (canFullscreen) toggleFullscreen();
+          break;
       }
     };
 
@@ -161,7 +224,17 @@ export function Lightbox({
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [handleExifToggle, onClose, onNext, onPrev, showExifToggle, showShortcuts, toggleShortcuts]);
+  }, [
+    canFullscreen,
+    handleExifToggle,
+    onClose,
+    onNext,
+    onPrev,
+    showExifToggle,
+    showShortcuts,
+    toggleFullscreen,
+    toggleShortcuts,
+  ]);
 
   // Click on overlay background → close
   const handleOverlayClick = useCallback(
@@ -182,6 +255,15 @@ export function Lightbox({
     { keys: ['←', '→'], label: t.lightbox.shortcutNavigate },
     // Journal entries hide the EXIF toggle, so `i` does nothing there.
     ...(showExifToggle ? [{ keys: ['I'], label: t.lightbox.shortcutInfo }] : []),
+    // Absent where the browser has no element fullscreen to give (iPhone).
+    ...(canFullscreen
+      ? [
+          {
+            keys: ['F'],
+            label: isFullscreen ? t.lightbox.shortcutExitFullscreen : t.lightbox.shortcutFullscreen,
+          },
+        ]
+      : []),
     { keys: ['?', 'H'], label: t.lightbox.shortcutList },
     { keys: ['Esc'], label: t.lightbox.shortcutClose },
   ];
