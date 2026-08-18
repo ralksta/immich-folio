@@ -259,7 +259,6 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
   // The About panel has its own route, so load its content when that section opens
   useEffect(() => {
     if (activeSection === 'about') loadAboutContent();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSection]);
 
   const toggleMode = (mode: 'dark' | 'light') => {

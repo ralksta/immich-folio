@@ -80,6 +80,9 @@ export function createAdminToken(): string {
 
 /** Verify a session token. Returns true if valid. */
 export function verifyAdminToken(token: string): boolean {
+  // 🛡️ SECURITY: Enforce maximum token length to prevent memory exhaustion DoS
+  if (token.length > 512) return false;
+
   const parts = token.split('.');
   if (parts.length !== 2) return false;
 

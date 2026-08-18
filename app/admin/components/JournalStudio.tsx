@@ -531,7 +531,7 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [handleSave]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [handleSave]);
 
   /*
    * The preview used to hard-code 3:2 for every photo, so the studio showed a
