@@ -40,6 +40,11 @@ interface PhotoGridProps {
   gridStyle?: React.CSSProperties;
   watermark?: LightboxWatermark;
   /**
+   * Offer the lightbox info panel. Off when every EXIF group is switched off,
+   * so the `i` key does not open an empty panel (#506).
+   */
+  showExifPanel?: boolean;
+  /**
    * Client proofing — favorite hearts, the selection bar and the send-off
    * modal. Off unless the caller opts in, so a grid rendered outside the
    * album routes never grows a delivery workflow by accident.
@@ -62,7 +67,13 @@ function buildPhotoHash(index: number): string {
   return `#photo-${index + 1}`; // 1-indexed for user-friendliness
 }
 
-function PhotoGridInner({ assets, layout = 'masonry', gridStyle, watermark }: PhotoGridProps) {
+function PhotoGridInner({
+  assets,
+  layout = 'masonry',
+  gridStyle,
+  watermark,
+  showExifPanel = true,
+}: PhotoGridProps) {
   const t = useDictionary();
   const proofing = useProofing();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -318,6 +329,7 @@ function PhotoGridInner({ assets, layout = 'masonry', gridStyle, watermark }: Ph
           onNext={goNext}
           onPrev={goPrev}
           watermark={watermark}
+          showExifToggle={showExifPanel}
         />
       )}
     </>

@@ -28,8 +28,18 @@ lang: "en"
 # /admin keeps its own password and is never behind this gate.
 # sitePassword: "scrypt:..."
 
-# Show EXIF metadata (camera, lens, ISO) on photo grid hover
+# Show the EXIF summary overlay on photo grid hover
 exifOnHover: true
+
+# Which EXIF groups the site may publish at all — the grid overlay, the
+# lightbox info panel and the album header all follow this.
+# caption is the description written in Immich; turn it off if you use that
+# field for private notes.
+# exif:
+#   camera: true      # body, lens, focal length
+#   settings: true    # aperture, shutter speed, ISO
+#   location: true    # city and country
+#   caption: true     # the Immich description
 
 # Enable the interactive world map view (/map)
 map: true

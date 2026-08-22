@@ -24,7 +24,13 @@ import {
   assetAspectRatio,
 } from '@/lib/urls';
 import { encodeAssetId } from '@/lib/tokens';
-import { buildCoverGridVars, getConfig, resolveProofing, type GridConfig } from '@/lib/config';
+import {
+  buildCoverGridVars,
+  getConfig,
+  hasExifPanelContent,
+  resolveProofing,
+  type GridConfig,
+} from '@/lib/config';
 import { isProtected, isAuthenticated } from '@/lib/auth';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import PasswordGate from '@/components/PasswordGate';
@@ -105,6 +111,10 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
 }
 
 /** Map Immich assets to PhotoItem props for the grid/lightbox. */
+/**
+ * `showExif` covers the hover overlay only, and that overlay carries camera,
+ * lens and focal length — so it follows the `camera` group, not the panel.
+ */
 function toPhotoItems(assets: ImmichAsset[], showExif: boolean): PhotoItem[] {
   return assets
     .filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO')
@@ -238,7 +248,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
     const spGrid = subpageData?.subpage.grid;
     const subpageName = subpageData?.subpage.name ?? subpageSlug;
 
-    const images = toPhotoItems(album.assets, config.exifOnHover);
+    const images = toPhotoItems(album.assets, config.exif.onHover && config.exif.camera);
 
     // Password gate for protected albums
     const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
@@ -255,6 +265,8 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         backLinkHref={`/${subpageSlug}`}
         backLinkLabel={`Back to ${subpageName}`}
         watermark={config.watermark}
+        showExifPanel={hasExifPanelContent(config.exif)}
+        showGear={config.exif.camera}
         proofing={proofingFor(subpageData?.subpage)}
         allowMailto={config.proofing.allowMailto}
         {...heroData}
@@ -306,7 +318,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         albums.map((a) => immich.getAlbumBySlug(a.slug, slug, forceFresh)),
       );
       const allAssets = allAlbums.flatMap((a) => (a ? a.assets : []));
-      const images = toPhotoItems(allAssets, config.exifOnHover);
+      const images = toPhotoItems(allAssets, config.exif.onHover && config.exif.camera);
 
       // Fallback structured essay if layout: 'essay' is set without custom markdown file
       if (!essayParsed) {
@@ -363,7 +375,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         notFound();
       }
 
-      const images = toPhotoItems(album.assets, config.exifOnHover);
+      const images = toPhotoItems(album.assets, config.exif.onHover && config.exif.camera);
 
       // Password gate for protected albums
       const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
@@ -381,6 +393,8 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
           backLinkHref="/"
           backLinkLabel={getServerDictionary().common.backToGallery}
           watermark={config.watermark}
+          showExifPanel={hasExifPanelContent(config.exif)}
+          showGear={config.exif.camera}
           proofing={proofingFor(result.subpage)}
           allowMailto={config.proofing.allowMailto}
           {...heroData}
@@ -444,7 +458,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
     notFound();
   }
 
-  const images = toPhotoItems(album.assets, config.exifOnHover);
+  const images = toPhotoItems(album.assets, config.exif.onHover && config.exif.camera);
 
   // Password gate for protected albums
   const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
@@ -461,6 +475,8 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       backLinkHref="/"
       backLinkLabel={getServerDictionary().common.backToGallery}
       watermark={config.watermark}
+      showExifPanel={hasExifPanelContent(config.exif)}
+      showGear={config.exif.camera}
       proofing={proofingFor()}
       allowMailto={config.proofing.allowMailto}
       {...heroData}

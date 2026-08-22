@@ -11,6 +11,19 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Added
 
+- **`exif:` decides which EXIF groups a site publishes**
+  ([#506](https://github.com/ralksta/immich-folio/issues/506)). Four switches —
+  `camera`, `settings`, `location`, `caption` — in `settings.yaml` or under
+  Settings › Portfolio Features. They govern all three places the data appears
+  (grid hover, lightbox panel, album header), so those cannot disagree. Grouped
+  rather than field-by-field on purpose: a list of individual field names is a
+  small language of its own, for a choice people make in groups anyway.
+
+  `exifOnHover` keeps its meaning and supplies the default for the three
+  technical groups, so an existing `exifOnHover: false` still hides all of them.
+  With every group off, the lightbox withdraws its info button and the `i` key
+  instead of opening an empty panel.
+
 - **The lightbox lists its keyboard shortcuts under `?` or `H`**
   ([#501](https://github.com/ralksta/immich-folio/pull/501)). The viewer has
   always had keys — arrows, `i`, `Esc` — with nothing that wrote them down.
@@ -47,6 +60,21 @@ Releases up to and including v0.9.2 are documented in the
   change; to keep two-up covers, set `grid.columns: 2` on the subpage.
 
 ### Fixed
+
+- **The Immich description can be switched off**
+  ([#506](https://github.com/ralksta/immich-folio/issues/506)). It was served
+  regardless of `exifOnHover`, on the grounds that a caption is editorial rather
+  than metadata — which made it the one field an operator could not hide, while
+  Immich descriptions are exactly where people keep private notes and whatever a
+  decade of cataloguing software left behind. It is now a group like any other.
+
+- **The album header no longer picks a camera at random**
+  ([#509](https://github.com/ralksta/immich-folio/issues/509)). The date and the
+  camera/lens line were read off the first asset that happened to carry EXIF, so
+  an album shot on three bodies advertised whichever one sorted first — and
+  changing the album's sort mode changed the claim. The line now appears only
+  when the whole album agrees on one body and one lens, and the date spans a
+  range when the photos do.
 
 - **The lightbox watermark honours the configured opacity**
   ([#508](https://github.com/ralksta/immich-folio/issues/508)). The docs and the

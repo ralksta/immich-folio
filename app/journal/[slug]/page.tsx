@@ -173,7 +173,10 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
     .filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO')
     .map((a) => {
       const ph = assetPlaceholder(a);
-      const exif = config.exifOnHover && a.type === 'IMAGE' ? assetExifSummary(a) : undefined;
+      const exif =
+        config.exif.onHover && config.exif.camera && a.type === 'IMAGE'
+          ? assetExifSummary(a)
+          : undefined;
       const isVideo = a.type === 'VIDEO';
       return {
         id: encodeAssetId(a.id),

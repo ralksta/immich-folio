@@ -161,6 +161,8 @@ export interface AppConfig {
   };
   heroImages: string[];
   exifOnHover: boolean;
+  /** Which EXIF groups the grid hover, the lightbox panel and the album header may show. */
+  exif: ExifDisplayConfig;
   grid: GridConfig;
   theme: ThemeConfig;
   footer: FooterConfig | null;
@@ -291,6 +293,7 @@ export interface SettingsYaml {
     noFollow?: boolean;
   };
   exifOnHover?: boolean;
+  exif?: ExifDisplayYaml;
   map?: boolean;
   transitions?: boolean;
   scrollToTop?: boolean;
@@ -334,6 +337,70 @@ export interface SettingsYaml {
     position?: 'bottom-right' | 'bottom-left' | 'center';
   };
   about?: { enabled?: boolean };
+}
+
+/**
+ * Which EXIF groups a site publishes, as written in settings.yaml.
+ *
+ * Grouped rather than field-by-field on purpose: a list of individual field
+ * names becomes a small language of its own — it needs validation, an error
+ * path for typos, and an admin control per field — for a choice people make in
+ * groups anyway ("no locations", "no descriptions") (#506).
+ */
+export interface ExifDisplayYaml {
+  /** Camera body, lens, focal length. */
+  camera?: boolean;
+  /** Aperture, shutter speed, ISO. */
+  settings?: boolean;
+  /** City and country. */
+  location?: boolean;
+  /** The Immich asset description. */
+  caption?: boolean;
+}
+
+/** The resolved form: every group decided, plus whether the grid hovers at all. */
+export interface ExifDisplayConfig extends Required<ExifDisplayYaml> {
+  /** Whether the photo grid shows its summary overlay on hover. */
+  onHover: boolean;
+}
+
+/**
+ * Merge the `exif:` block over the older `exifOnHover` switch.
+ *
+ * `exifOnHover: false` used to mean "no technical EXIF anywhere" — it gated the
+ * grid overlay *and* every technical field in the lightbox panel — while the
+ * Immich description was served regardless, as editorial caption. That left the
+ * one field holding private notes as the only one nobody could switch off
+ * (#506). The description is now a group like any other, and the old switch
+ * survives as the default the explicit groups are merged over, so both existing
+ * spellings keep their current meaning.
+ */
+export function resolveExifDisplay(
+  raw?: ExifDisplayYaml,
+  exifOnHover?: boolean,
+): ExifDisplayConfig {
+  const onHover = exifOnHover !== false;
+  // What `exifOnHover: false` implied for the technical groups.
+  const technical = onHover;
+
+  return {
+    camera: raw?.camera ?? technical,
+    settings: raw?.settings ?? technical,
+    location: raw?.location ?? technical,
+    // Captions were never covered by the old switch, so their default does not
+    // follow it: a site that only ever set `exifOnHover: false` keeps showing
+    // them until it says otherwise.
+    caption: raw?.caption ?? true,
+    onHover,
+  };
+}
+
+/**
+ * Whether the lightbox info panel has anything left to show. When it does not,
+ * the `i` key and its button are withdrawn rather than opening an empty panel.
+ */
+export function hasExifPanelContent(exif: ExifDisplayConfig): boolean {
+  return exif.camera || exif.settings || exif.location || exif.caption;
 }
 
 /** Opacity used when `watermark.opacity` is unset. Matches the documented example. */

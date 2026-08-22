@@ -413,7 +413,12 @@ title: 'My Portfolio'
 subtitle: 'A visual journal'
 lang: 'en'
 
-exifOnHover: true # camera/lens/settings on photo grid hover
+exifOnHover: true # the summary overlay on photo grid hover
+exif: # which groups may be shown at all
+  camera: true # body, lens, focal length
+  settings: true # aperture, shutter speed, ISO
+  location: true # city and country
+  caption: true # the description written in Immich
 map: true # the interactive world map at /map
 transitions: true # smooth page transitions between routes
 scrollToTop: true # floating back-to-top arrow on long pages
@@ -426,12 +431,35 @@ about:
 | Key             | Default | Notes                                       |
 | --------------- | ------- | ------------------------------------------- |
 | `lang`          | `en`    | Interface language, `<html lang>`, dates    |
-| `exifOnHover`   | on      |                                             |
+| `exifOnHover`   | on      | The grid hover overlay only, see below      |
+| `exif.*`        | on      | Per-group EXIF visibility, see below        |
 | `map`           | **off** | Opt-in: must be set to `true` explicitly    |
 | `transitions`   | on      |                                             |
 | `scrollToTop`   | on      |                                             |
 | `analytics`     | on      |                                             |
 | `about.enabled` | on      | Needs a `content/about.md` to show anything |
+
+### EXIF visibility
+
+`exif` decides what the site may publish about a photo. It governs all three
+places the data appears — the grid hover overlay, the lightbox info panel, and
+the camera line in the album header — so they cannot disagree.
+
+`caption` is the description written in Immich. It used to be shown regardless
+of any setting, on the grounds that a caption is editorial rather than
+metadata — which left it as the one field nobody could switch off, and Immich
+descriptions are also where people keep private notes and whatever a decade of
+cataloguing software left behind ([#506](https://github.com/ralksta/immich-folio/issues/506)).
+It is a group like any other now.
+
+`exifOnHover` predates the block and stays: it decides whether the grid shows
+its overlay at all, and it supplies the default for the three technical groups,
+so an existing `exifOnHover: false` still means "no technical EXIF anywhere". An
+explicit `exif` key always wins over it. Captions never followed that switch and
+still do not — set `caption: false` to turn them off.
+
+With every group off, the lightbox withdraws its info button and the `i` key
+rather than opening an empty panel.
 
 ### Interface language
 

@@ -8,7 +8,7 @@ import SaveBar from './SaveBar';
 // Direct import from the theme module, not from '@/lib/config': the config
 // index pulls in `fs` and cannot be bundled into a client component.
 import { DEFAULT_PRESET } from '@/lib/config/theme';
-import { resolveWatermarkOpacity } from '@/lib/config/schema';
+import { resolveExifDisplay, resolveWatermarkOpacity } from '@/lib/config/schema';
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
 
 interface Settings {
@@ -17,6 +17,12 @@ interface Settings {
   lang?: string;
   sitePassword?: string;
   exifOnHover?: boolean;
+  exif?: {
+    camera?: boolean;
+    settings?: boolean;
+    location?: boolean;
+    caption?: boolean;
+  };
   map?: boolean;
   transitions?: boolean;
   scrollToTop?: boolean;
@@ -460,6 +466,11 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
     );
   }
 
+  // Resolved the same way the site resolves it, so the switches show what a
+  // visitor actually sees — including a config that only ever set the older
+  // `exifOnHover`.
+  const exif = resolveExifDisplay(settings.exif, settings.exifOnHover);
+
   return (
     <div className="settings-editor">
       {/* The About panel edits about.md, not settings.yaml, so it drives the bar itself. */}
@@ -573,6 +584,72 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                     </span>
                   </div>
                   <div className={`switch-toggle ${settings.exifOnHover !== false ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${exif.camera ? 'active' : ''}`}
+                  onClick={() => update('exif.camera', !exif.camera)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title">
+                      <Icons.IconCamera size={16} /> Camera & Lens
+                    </span>
+                    <span className="toggle-card-desc">Body, lens and focal length</span>
+                  </div>
+                  <div className={`switch-toggle ${exif.camera ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${exif.settings ? 'active' : ''}`}
+                  onClick={() => update('exif.settings', !exif.settings)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title">
+                      <Icons.IconGear size={16} /> Exposure Settings
+                    </span>
+                    <span className="toggle-card-desc">Aperture, shutter speed and ISO</span>
+                  </div>
+                  <div className={`switch-toggle ${exif.settings ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${exif.location ? 'active' : ''}`}
+                  onClick={() => update('exif.location', !exif.location)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title">
+                      <Icons.IconMap size={16} /> Location
+                    </span>
+                    <span className="toggle-card-desc">
+                      City and country from the photo's GPS data
+                    </span>
+                  </div>
+                  <div className={`switch-toggle ${exif.location ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${exif.caption ? 'active' : ''}`}
+                  onClick={() => update('exif.caption', !exif.caption)}
+                >
+                  <div className="toggle-card-info">
+                    <span className="toggle-card-title">
+                      <Icons.IconFileText size={16} /> Photo Description
+                    </span>
+                    <span className="toggle-card-desc">The description written in Immich</span>
+                  </div>
+                  <div className={`switch-toggle ${exif.caption ? 'on' : ''}`}>
                     <span className="switch-slider" />
                   </div>
                 </button>

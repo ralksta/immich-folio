@@ -6,6 +6,7 @@ import { resolveTheme, VALID_LAYOUTS, DEFAULT_PRESET } from './theme';
 import { ALBUM_SORT_MODES, isAlbumSortMode, type AlbumSortMode } from '../albumSort';
 import {
   slugify,
+  resolveExifDisplay,
   AppConfig,
   AlbumEntryObject,
   SubpageConfig,
@@ -389,6 +390,7 @@ export function getConfig(): AppConfig {
       },
       heroImages: [],
       exifOnHover: true,
+      exif: resolveExifDisplay(),
       grid: { columns: 3, gap: 12, aspectRatio: '1', layout: 'masonry' },
       theme: resolveTheme(DEFAULT_PRESET),
       footer: null,
@@ -466,6 +468,7 @@ export function getConfig(): AppConfig {
         )
       : [],
     exifOnHover: settings.exifOnHover !== false,
+    exif: resolveExifDisplay(settings.exif, settings.exifOnHover),
     grid: {
       columns: settings.grid?.columns ?? 3,
       gap: settings.grid?.gap ?? 12,
