@@ -336,6 +336,29 @@ export interface SettingsYaml {
   about?: { enabled?: boolean };
 }
 
+/** Opacity used when `watermark.opacity` is unset. Matches the documented example. */
+export const WATERMARK_DEFAULT_OPACITY = 0.5;
+
+/**
+ * Normalise `watermark.opacity` to a CSS opacity (0–1).
+ *
+ * The documented unit is a fraction (`opacity: 0.5`), and the admin slider
+ * writes one — but the lightbox used to divide by 100 regardless, so a
+ * configured 0.9 rendered as 0.009 and was invisible. People worked around that
+ * by writing `90`, which the admin panel then displayed as "9000%" (#508).
+ *
+ * Both readings are therefore accepted, and the ambiguity is smaller than it
+ * looks: a fraction never exceeds 1, and a percentage below 1 would be an
+ * invisible watermark nobody configures on purpose. Anything above 1 is read as
+ * a percentage, so those workarounds keep working; the admin panel writes the
+ * fraction back on the next save.
+ */
+export function resolveWatermarkOpacity(raw?: number): number {
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) return WATERMARK_DEFAULT_OPACITY;
+  const fraction = raw > 1 ? raw / 100 : raw;
+  return Math.min(1, Math.max(0, fraction));
+}
+
 export function slugify(name: string): string {
   return name
     .toLowerCase()

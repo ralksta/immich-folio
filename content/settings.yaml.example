@@ -45,6 +45,13 @@ scrollToTop: true
 #   enabled: true
 #   allowMailto: true
 
+# Watermark overlay on the lightbox. opacity is a fraction: 0.5 = 50%.
+# watermark:
+#   enabled: true
+#   text: "© Your Name"
+#   opacity: 0.5
+#   position: "bottom-right"   # bottom-right | bottom-left | center
+
 # ── Theme configuration ──────────────────────────────────────────
 # Presets: studio-modern (default), studio, minimal, editorial, classic,
 #          noir, monograph

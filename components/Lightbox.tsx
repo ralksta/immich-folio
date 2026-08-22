@@ -22,6 +22,9 @@ import styles from './Lightbox.module.css';
 import { useProofing } from './ProofingContext';
 import { IconHeart } from './Icons';
 import { useDictionary } from './I18nProvider';
+// From lib/config/schema directly: lib/config/index.ts pulls in `fs`, which a
+// client component cannot import.
+import { resolveWatermarkOpacity } from '@/lib/config/schema';
 
 export interface LightboxWatermark {
   enabled?: boolean;
@@ -366,7 +369,7 @@ export function Lightbox({
                   ? styles.watermark_center
                   : styles.watermark_bottom_right
             }`}
-            style={{ opacity: (watermark.opacity ?? 50) / 100 }}
+            style={{ opacity: resolveWatermarkOpacity(watermark.opacity) }}
           >
             {watermark.text}
           </div>

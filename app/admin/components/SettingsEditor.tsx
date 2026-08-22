@@ -8,6 +8,7 @@ import SaveBar from './SaveBar';
 // Direct import from the theme module, not from '@/lib/config': the config
 // index pulls in `fs` and cannot be bundled into a client component.
 import { DEFAULT_PRESET } from '@/lib/config/theme';
+import { resolveWatermarkOpacity } from '@/lib/config/schema';
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
 
 interface Settings {
@@ -1770,15 +1771,20 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                       </select>
                     </div>
                     <div className="admin-field">
+                      {/* Read through the same normaliser the lightbox uses, so a
+                          config written as a percentage shows as "90%" here rather
+                          than "9000%" — and is written back as a fraction on save. */}
                       <label>
-                        Opacity ({Math.round((settings.watermark?.opacity ?? 0.3) * 100)}%)
+                        Opacity (
+                        {Math.round(resolveWatermarkOpacity(settings.watermark?.opacity) * 100)}
+                        %)
                       </label>
                       <input
                         type="range"
                         min="0.1"
-                        max="0.8"
+                        max="1"
                         step="0.05"
-                        value={settings.watermark?.opacity ?? 0.3}
+                        value={resolveWatermarkOpacity(settings.watermark?.opacity)}
                         onChange={(e) => update('watermark.opacity', parseFloat(e.target.value))}
                       />
                     </div>

@@ -542,9 +542,13 @@ protection:
 watermark:
   enabled: true
   text: '© Your Name'
-  opacity: 0.5
+  opacity: 0.5 # fraction, 0–1: 0.5 is 50%
   position: 'bottom-right' # bottom-right | bottom-left | center
 ```
+
+`opacity` is a fraction between 0 and 1, the same unit the admin slider writes.
+A value above 1 is read as a percentage (`90` means 0.9), so configs written
+that way before the unit was fixed keep working.
 
 > [!NOTE]
 > Both are deterrents against casual copying, not protection. The image is in

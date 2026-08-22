@@ -48,6 +48,16 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Fixed
 
+- **The lightbox watermark honours the configured opacity**
+  ([#508](https://github.com/ralksta/immich-folio/issues/508)). The docs and the
+  admin slider express it as a fraction (`opacity: 0.5`), but the lightbox
+  divided by 100 anyway — so a configured `0.9` rendered as `0.009` and was
+  invisible, and the workaround of writing `90` came back as "9000%" in the
+  admin panel. The fraction is now used as written; a value above 1 is still
+  read as a percentage so those workarounds keep working, and the panel writes
+  the fraction back on the next save. Its slider reaches 100% instead of
+  stopping at 80%.
+
 - **A deployment with credentials but no `gallery.yaml` no longer reports
   "System Degraded"** ([#507](https://github.com/ralksta/immich-folio/issues/507)).
   A missing `gallery.yaml` and missing Immich credentials were one and the same
