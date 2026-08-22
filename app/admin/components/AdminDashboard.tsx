@@ -89,7 +89,16 @@ export default function AdminDashboard({ onLogout, children }: Props) {
     'Connected',
     'Disconnected',
   );
-  const configIndicator = indicator(status?.config?.status === 'valid', 'Valid', 'Degraded');
+  const configIndicator =
+    !statusLoading && !statusError && status?.config?.status === 'setup'
+      ? { className: 'unknown', label: 'Not set up' }
+      : indicator(status?.config?.status === 'valid', 'Valid', 'Degraded');
+
+  // An installation that was never finished is not a fault. It used to render
+  // as "System Degraded" with no further hint, which sent operators looking for
+  // a network problem that did not exist (#507).
+  const setupIncomplete = !statusLoading && !statusError && status?.setup?.complete === false;
+  const missingCredentials = status?.setup?.credentials === 'missing';
 
   return (
     <div className="admin-dashboard">
@@ -112,7 +121,7 @@ export default function AdminDashboard({ onLogout, children }: Props) {
           {/* Diagnostics Badge */}
           <div className="status-indicator-container">
             <button
-              className={`status-badge-btn ${immichIndicator.className === 'ok' ? 'connected' : immichIndicator.className === 'error' ? 'disconnected' : 'unknown'}`}
+              className={`status-badge-btn ${setupIncomplete ? 'unknown' : immichIndicator.className === 'ok' ? 'connected' : immichIndicator.className === 'error' ? 'disconnected' : 'unknown'}`}
               onClick={() => {
                 setShowStatus(!showStatus);
                 if (!showStatus) fetchStatus();
@@ -123,11 +132,13 @@ export default function AdminDashboard({ onLogout, children }: Props) {
               <span className="status-text">
                 {statusLoading
                   ? 'Checking...'
-                  : immichIndicator.className === 'ok'
-                    ? 'System OK'
-                    : immichIndicator.className === 'error'
-                      ? 'System Degraded'
-                      : 'Status Unknown'}
+                  : setupIncomplete
+                    ? 'Setup Incomplete'
+                    : immichIndicator.className === 'ok'
+                      ? 'System OK'
+                      : immichIndicator.className === 'error'
+                        ? 'System Degraded'
+                        : 'Status Unknown'}
               </span>
             </button>
 
@@ -147,6 +158,19 @@ export default function AdminDashboard({ onLogout, children }: Props) {
                     </button>
                   </div>
                   <div className="status-dropdown-body">
+                    {setupIncomplete && (
+                      <p className="status-setup-note">
+                        {missingCredentials
+                          ? 'No Immich URL or API key configured. Set IMMICH_API_URL and IMMICH_API_KEY, or run the '
+                          : 'No content/gallery.yaml yet — the public site has nothing to show. Add a page below, or run the '}
+                        <a href="/install" target="_blank" rel="noopener noreferrer">
+                          setup wizard
+                        </a>
+                        {missingCredentials
+                          ? '.'
+                          : ' (the one-time token is printed to the server log).'}
+                      </p>
+                    )}
                     <div className="status-item">
                       <span className="status-label">Immich Connection</span>
                       <span className={`status-val ${immichIndicator.className}`}>

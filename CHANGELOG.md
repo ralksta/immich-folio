@@ -48,6 +48,23 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Fixed
 
+- **A deployment with credentials but no `gallery.yaml` no longer reports
+  "System Degraded"** ([#507](https://github.com/ralksta/immich-folio/issues/507)).
+  A missing `gallery.yaml` and missing Immich credentials were one and the same
+  `needsSetup` flag, and the Immich client returned `null` on that flag before
+  ever reaching the network. The admin panel showed the server as disconnected,
+  the album pickers refused with "Immich not configured" — so the panel could
+  not create the very file it was waiting for — and nothing at all appeared in
+  the log. The two faults are now separate: with credentials present, Immich is
+  contacted and the admin pickers work, the badge reads "Setup Incomplete" and
+  names what is missing, and an unreachable Immich is logged instead of being
+  swallowed.
+
+- **The first-run setup token is printed at startup**, not on the first visit to
+  `/install`. An operator who set `ADMIN_PASSWORD` and went straight to `/admin`
+  never triggered it and found nothing in `docker logs`. The setup screen now
+  points at the wizard as well.
+
 - **A failing site no longer renders a blank page.** `app/error.tsx` is rendered
   _inside_ the root layout, so it could never catch the layout itself throwing —
   and the layout is what reads the configuration and the request headers. The

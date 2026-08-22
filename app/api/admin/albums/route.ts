@@ -22,7 +22,10 @@ export async function GET() {
   }
 
   const config = getConfig();
-  if (config.needsSetup) {
+  // Credentials, not `needsSetup`: this route is how the operator picks the
+  // albums that gallery.yaml is built from, so refusing to run until that file
+  // exists is a deadlock (#507).
+  if (config.needsCredentials) {
     return NextResponse.json({ error: 'Immich not configured' }, { status: 503 });
   }
 

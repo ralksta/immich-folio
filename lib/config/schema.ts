@@ -196,7 +196,23 @@ export interface AppConfig {
   immichTimeoutMs: number;
   rateLimitRpm: number;
   trustedProxyHops: number;
+  /**
+   * True while the app is not fully installed — either credentials or
+   * `gallery.yaml` are missing. Kept as the union of the two flags below for
+   * callers that only care whether the setup screen is due.
+   */
   needsSetup?: boolean;
+  /**
+   * No Immich URL or API key. Nothing can talk to Immich, and the setup wizard
+   * is the only way forward.
+   */
+  needsCredentials?: boolean;
+  /**
+   * Credentials are present but `content/gallery.yaml` is not. The public site
+   * has nothing to show, yet Immich is perfectly reachable — the admin panel
+   * must stay usable so the file can be created from there.
+   */
+  needsGallery?: boolean;
   /**
    * Password for the whole public site, or `''` when the site is open.
    * Plaintext or `scrypt:salt:hash`, same as every other password in the app.

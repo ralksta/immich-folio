@@ -46,8 +46,12 @@ export function SetupScreen() {
           }}
         >
           <p style={{ marginBottom: '1rem' }}>
-            To get started, follow these steps in your repository or mounted <code>content/</code>{' '}
-            volume:
+            The quickest way is the setup wizard at <code>/install</code>. It is gated by a one-time
+            token printed to the server log at startup (<code>docker logs</code>) — append it as{' '}
+            <code>?token=…</code>.
+          </p>
+          <p style={{ marginBottom: '1rem' }}>
+            Or configure it by hand, in your repository or mounted <code>content/</code> volume:
           </p>
           <ol style={{ margin: 0, paddingLeft: '1.25rem' }}>
             <li style={{ marginBottom: '0.5rem' }}>

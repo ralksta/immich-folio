@@ -358,7 +358,15 @@ export function getConfig(): AppConfig {
   const gallery = loadYaml<GalleryYaml>('gallery.yaml');
   const settings = loadYaml<SettingsYaml>('settings.yaml') || {};
 
-  if (!gallery || !apiKey || !apiUrl) {
+  // Two separate faults, deliberately kept apart. Missing credentials mean
+  // nothing can reach Immich; a missing gallery.yaml only means the public site
+  // has nothing to list yet. Conflating them made a credentialed deployment
+  // without gallery.yaml report "Immich disconnected" and locked the admin
+  // panel out of the album pickers that would have created the file (#507).
+  const needsCredentials = !apiKey || !apiUrl;
+  const needsGallery = !gallery;
+
+  if (needsCredentials || needsGallery) {
     // Return dummy config if gallery.yaml is missing
     return {
       immich: { apiUrl: immichApiUrl, apiKey },
@@ -406,6 +414,8 @@ export function getConfig(): AppConfig {
       rateLimitRpm: env.RATE_LIMIT_RPM,
       trustedProxyHops: env.TRUSTED_PROXY_HOPS,
       needsSetup: true,
+      needsCredentials,
+      needsGallery,
     };
   }
 
@@ -511,5 +521,7 @@ export function getConfig(): AppConfig {
     rateLimitRpm: env.RATE_LIMIT_RPM,
     trustedProxyHops: env.TRUSTED_PROXY_HOPS,
     needsSetup: false,
+    needsCredentials: false,
+    needsGallery: false,
   };
 }

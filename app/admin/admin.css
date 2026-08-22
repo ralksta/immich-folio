@@ -1581,6 +1581,24 @@
   flex-direction: column;
 }
 
+/* Explains an unfinished installation before the indicators below it, which
+   would otherwise read as a fault rather than a pending step. */
+.status-setup-note {
+  margin: 0 0 0.35rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.status-setup-note a {
+  color: var(--admin-text);
+  text-decoration: underline;
+}
+
 .status-item {
   display: flex;
   justify-content: space-between;
