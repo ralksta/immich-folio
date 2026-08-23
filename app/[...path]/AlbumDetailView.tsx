@@ -8,6 +8,8 @@ import Image from 'next/image';
 import React from 'react';
 import { getServerDictionary } from '@/lib/i18n/server';
 import { albumMetaDetail } from '@/lib/albumMeta';
+import { AlbumNav } from '@/components/AlbumNav';
+import type { AlbumNavPair } from '@/lib/albumNav';
 
 interface AlbumDetailViewProps {
   album: ImmichAlbum;
@@ -28,6 +30,8 @@ interface AlbumDetailViewProps {
   proofing?: boolean;
   /** Offer the "send by email" button in the proofing modal. */
   allowMailto?: boolean;
+  /** Neighbouring albums in the surrounding list, for the foot navigation. */
+  nav?: AlbumNavPair;
 }
 
 export function AlbumDetailView({
@@ -45,6 +49,7 @@ export function AlbumDetailView({
   showGear = true,
   proofing,
   allowMailto,
+  nav,
 }: AlbumDetailViewProps) {
   const metaDetail = albumMetaDetail(album, showGear);
   const t = getServerDictionary();
@@ -93,6 +98,7 @@ export function AlbumDetailView({
         proofing={proofing}
         allowMailto={allowMailto}
       />
+      {nav && <AlbumNav {...nav} />}
     </>
   );
 }

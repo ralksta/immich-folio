@@ -36,6 +36,7 @@ import { isAdminAuthenticated } from '@/lib/admin/auth';
 import PasswordGate from '@/components/PasswordGate';
 import { AdminDiagnosticBanner } from '@/components/AdminDiagnosticBanner';
 import { AlbumDetailView } from './AlbumDetailView';
+import { albumNeighbours } from '@/lib/albumNav';
 import { SubpageGridView } from './SubpageGridView';
 import { EssayView } from './EssayView';
 import { parseEssayMarkdown } from '@/lib/essay';
@@ -262,10 +263,15 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
 
     const heroData = await getAlbumHeroData(album.id, config);
 
+    // Neighbours come from the subpage list the visitor just came through, in
+    // that list's own order, so "next" agrees with the grid they saw (#483).
+    const nav = subpageData ? albumNeighbours(subpageData.albums, album.id, `/${subpageSlug}`) : {};
+
     return (
       <AlbumDetailView
         album={album}
         images={images}
+        nav={nav}
         layout={resolveLayout(mergeAlbumGrid(album.id, spGrid))}
         gridStyle={buildGridStyle(mergeAlbumGrid(album.id, spGrid))}
         backLinkHref={`/${subpageSlug}`}
@@ -480,6 +486,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       gridStyle={buildGridStyle(mergeAlbumGrid(album.id))}
       backLinkHref="/"
       backLinkLabel={getServerDictionary().common.backToGallery}
+      nav={albumNeighbours(await immich.getStandaloneAlbums(forceFresh), album.id)}
       watermark={config.watermark}
       showExifPanel={hasExifPanelContent(config.exif)}
       showGear={config.exif.camera}
