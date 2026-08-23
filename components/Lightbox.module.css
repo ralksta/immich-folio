@@ -225,6 +225,10 @@
 
 .exifRow {
   display: flex;
+  /* `space-between` distributes the *free* space, so a value long enough to
+     leave none ran straight into its own label (#514). An explicit gap is the
+     floor; the panel has no max-width and grows to keep it. */
+  gap: 16px;
   justify-content: space-between;
   align-items: baseline;
   padding: 6px 0;
@@ -246,6 +250,9 @@
   font-size: 0.85rem;
   color: var(--lb-panel-text);
   font-weight: 400;
+  /* Right-aligned so a value that does wrap stays flush with the ones above it,
+     rather than starting a ragged second column. */
+  text-align: right;
 }
 
 /* Marks the ISO row so a preset can keep its label — "200" alone reads

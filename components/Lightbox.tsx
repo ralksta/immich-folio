@@ -25,6 +25,7 @@ import { useDictionary } from './I18nProvider';
 // From lib/config/schema directly: lib/config/index.ts pulls in `fs`, which a
 // client component cannot import.
 import { resolveWatermarkOpacity } from '@/lib/config/schema';
+import { formatCamera } from '@/lib/exif';
 
 export interface LightboxWatermark {
   enabled?: boolean;
@@ -451,7 +452,7 @@ export function Lightbox({
                 <div className={styles.exifRow}>
                   <span className={styles.exifLabel}>{t.lightbox.camera}</span>
                   <span className={styles.exifValue}>
-                    {[exifData.make, exifData.model].filter(Boolean).join(' ')}
+                    {formatCamera(exifData.make, exifData.model)}
                   </span>
                 </div>
               )}

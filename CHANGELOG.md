@@ -70,6 +70,13 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Fixed
 
+- **Long values in the lightbox info panel no longer run into their label**
+  ([#514](https://github.com/ralksta/immich-folio/issues/514)). The rows are
+  `space-between` with no gap, so a value that left no free space simply touched
+  its label — `CAMERALEICA CAMERA AG LEICA Q3`. The rows carry a gap now, and
+  the camera name drops a maker the model already spells out, so a Leica reads
+  `LEICA Q3` and a Nikon `NIKON Z 6` instead of saying the brand twice.
+
 - **The lightbox info panel is readable in light mode**
   ([#511](https://github.com/ralksta/immich-folio/issues/511)). The EXIF panel
   and the shortcut list paint their own dark surface but took their text and
