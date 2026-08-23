@@ -1581,6 +1581,232 @@
   flex-direction: column;
 }
 
+/* ── Grouped feature settings (#510) ──────────────────────────
+   The features panel used to be one flat grid of identical cards. These give it
+   the structure the config already had: labelled groups, and sub-settings that
+   look like sub-settings instead of peers. */
+.settings-group {
+  margin-bottom: 1.75rem;
+}
+
+.settings-group-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-bottom: 0.65rem;
+}
+
+.settings-group-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--admin-text-secondary);
+}
+
+/* Marks a group whose switches publish something, so it does not read like the
+   one next to it that controls a fade. */
+.settings-group-chip {
+  margin-left: 4px;
+  padding: 2px 7px;
+  border: 1px solid var(--admin-border);
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--admin-text-secondary);
+}
+
+.settings-group-desc {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  line-height: 1.35;
+}
+
+.settings-subpanel {
+  padding: 1rem 1.25rem;
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+}
+
+.settings-subpanel-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-bottom: 0.75rem;
+}
+
+.settings-subpanel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.settings-subpanel-desc {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+}
+
+/* The metadata group as one card with an expander: four permanently visible
+   sub-switches read as four decisions, when they are details of one. */
+.metadata-card {
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.metadata-card.active {
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 1px var(--admin-accent);
+}
+
+.metadata-card-main {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: none;
+  border: none;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.metadata-details-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 1.25rem 0.9rem;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--admin-text-secondary);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.metadata-details-btn:hover {
+  color: var(--admin-text);
+}
+
+.metadata-details-chevron {
+  transition: transform 0.15s ease;
+}
+
+.metadata-details-chevron.open {
+  transform: rotate(180deg);
+}
+
+.metadata-details {
+  padding: 0 1.25rem 0.6rem;
+  border-top: 1px solid var(--admin-border);
+}
+
+/* The first row sits directly under that border and does not need its own. */
+.metadata-details .setting-row:first-child {
+  border-top: none;
+}
+
+.setting-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 0;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--admin-border);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* A sub-setting of the rows above it — indented so the dependency is visible
+   rather than only true. */
+.setting-row--indented {
+  padding-left: 0.9rem;
+  margin-top: 0.35rem;
+}
+
+.setting-row--disabled {
+  cursor: default;
+}
+
+.setting-row--disabled .setting-row-title,
+.setting-row--disabled .setting-row-desc {
+  color: var(--admin-text-muted);
+}
+
+.setting-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.setting-row-title {
+  font-size: 0.81rem;
+  font-weight: 500;
+  color: var(--admin-text);
+}
+
+.setting-row-desc {
+  font-size: 0.72rem;
+  color: var(--admin-text-muted);
+  line-height: 1.3;
+}
+
+/* Says why an inert row is inert, instead of leaving it looking broken. */
+.setting-row-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 0.2rem;
+  font-size: 0.69rem;
+  color: var(--admin-text-secondary);
+}
+
+.switch-toggle--sm {
+  width: 34px;
+  height: 20px;
+  border-radius: 10px;
+}
+
+.switch-toggle--sm .switch-slider {
+  width: 14px;
+  height: 14px;
+}
+
+.switch-toggle--sm.on .switch-slider {
+  transform: translateX(14px);
+}
+
+/* An inert switch must not look like an off switch someone can turn on. */
+.setting-row--disabled .switch-toggle {
+  background: var(--admin-bg-elevated);
+}
+
+.setting-row--disabled .switch-slider {
+  background: var(--admin-text-muted);
+}
+
 /* Explains an unfinished installation before the indicators below it, which
    would otherwise read as a fault rather than a pending step. */
 .status-setup-note {

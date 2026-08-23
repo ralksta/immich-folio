@@ -214,6 +214,91 @@ interface SettingsEditorProps {
   section?: string;
 }
 
+/**
+ * One labelled block of related switches.
+ *
+ * The features panel was a single flat grid of identical cards, so nothing said
+ * which switches belonged together — and a switch that publishes private notes
+ * looked exactly like one that controls a fade (#510).
+ */
+function FeatureGroup({
+  icon,
+  title,
+  description,
+  chip,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  /** Short marker for a group that needs its own weight, e.g. what visitors see. */
+  chip?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="settings-group">
+      <div className="settings-group-head">
+        <span className="settings-group-title">
+          {icon}
+          {title}
+          {chip && <span className="settings-group-chip">{chip}</span>}
+        </span>
+        <span className="settings-group-desc">{description}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/**
+ * A switch inside a group panel. Deliberately lighter than a toggle card: these
+ * are settings *of* the panel they sit in, and rendering them as peers of the
+ * top-level cards is what hid the structure in the first place.
+ */
+function SettingRow({
+  title,
+  description,
+  checked,
+  onToggle,
+  disabled,
+  hint,
+  indented,
+}: {
+  title: string;
+  description: string;
+  checked: boolean;
+  onToggle: () => void;
+  /** A row whose parent switch is off — shown, but inert and explained. */
+  disabled?: boolean;
+  hint?: string;
+  indented?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      className={`setting-row${indented ? ' setting-row--indented' : ''}${
+        disabled ? ' setting-row--disabled' : ''
+      }`}
+      onClick={onToggle}
+      disabled={disabled}
+      aria-pressed={checked}
+    >
+      <span className="setting-row-info">
+        <span className="setting-row-title">{title}</span>
+        <span className="setting-row-desc">{description}</span>
+        {hint && (
+          <span className="setting-row-hint">
+            <Icons.IconBan size={11} /> {hint}
+          </span>
+        )}
+      </span>
+      <span className={`switch-toggle switch-toggle--sm ${checked && !disabled ? 'on' : ''}`}>
+        <span className="switch-slider" />
+      </span>
+    </button>
+  );
+}
+
 export default function SettingsEditor({ section }: SettingsEditorProps) {
   const router = useRouter();
   // An unknown section in the URL falls back to General instead of an empty panel.
@@ -222,6 +307,9 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
     : 'general';
   const [settings, setSettings] = useState<Settings>({});
   const [loading, setLoading] = useState(true);
+  // Collapsed by default: the four metadata switches are a detail of one
+  // decision, and showing them permanently is what made the section a wall (#510).
+  const [metadataOpen, setMetadataOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
@@ -338,6 +426,25 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
     } finally {
       setLoading(false);
     }
+  }
+
+  /** Write several paths in one state update — used by the metadata master switch. */
+  function updateMany(entries: Record<string, unknown>) {
+    setSettings((s) => {
+      const copy = JSON.parse(JSON.stringify(s));
+      for (const [path, value] of Object.entries(entries)) {
+        const parts = path.split('.');
+        let obj = copy;
+        for (let i = 0; i < parts.length - 1; i++) {
+          if (!obj[parts[i]]) obj[parts[i]] = {};
+          obj = obj[parts[i]];
+        }
+        obj[parts[parts.length - 1]] = value;
+      }
+      return copy;
+    });
+    setDirty(true);
+    setSaveMessage('');
   }
 
   function update(path: string, value: unknown) {
@@ -472,6 +579,29 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
   // `exifOnHover`.
   const exif = resolveExifDisplay(settings.exif, settings.exifOnHover);
 
+  // The master switch has no key of its own and needs none: "off" is all four
+  // groups off, a state the site already acts on — with nothing left to show,
+  // the lightbox withdraws its info button and the `i` key entirely (#506).
+  const anyMetadata = exif.camera || exif.settings || exif.location || exif.caption;
+  const metadataSummary =
+    [
+      exif.camera && 'Camera & lens',
+      exif.settings && 'Exposure',
+      exif.location && 'Location',
+      exif.caption && 'Description',
+    ]
+      .filter(Boolean)
+      .join(' · ') || 'Nothing published — the lightbox hides its info panel';
+
+  /** Turning it back on selects everything; the details below narrow it again. */
+  const toggleMetadata = () =>
+    updateMany({
+      'exif.camera': !anyMetadata,
+      'exif.settings': !anyMetadata,
+      'exif.location': !anyMetadata,
+      'exif.caption': !anyMetadata,
+    });
+
   return (
     <div className="settings-editor">
       {/* The About panel edits about.md, not settings.yaml, so it drives the bar itself. */}
@@ -570,202 +700,224 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                 </p>
               </div>
 
-              <div className="admin-toggle-cards-grid">
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.exifOnHover !== false ? 'active' : ''}`}
-                  onClick={() => update('exifOnHover', settings.exifOnHover === false)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconCamera size={16} /> EXIF Data on Hover
-                    </span>
-                    <span className="toggle-card-desc">
-                      Display camera gear, lens, aperture &amp; shutter speed on hover
-                    </span>
-                  </div>
-                  <div className={`switch-toggle ${settings.exifOnHover !== false ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${exif.camera ? 'active' : ''}`}
-                  onClick={() => update('exif.camera', !exif.camera)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconCamera size={16} /> Camera & Lens
-                    </span>
-                    <span className="toggle-card-desc">Body, lens and focal length</span>
-                  </div>
-                  <div className={`switch-toggle ${exif.camera ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${exif.settings ? 'active' : ''}`}
-                  onClick={() => update('exif.settings', !exif.settings)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconGear size={16} /> Exposure Settings
-                    </span>
-                    <span className="toggle-card-desc">Aperture, shutter speed and ISO</span>
-                  </div>
-                  <div className={`switch-toggle ${exif.settings ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${exif.location ? 'active' : ''}`}
-                  onClick={() => update('exif.location', !exif.location)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconMap size={16} /> Location
-                    </span>
-                    <span className="toggle-card-desc">
-                      City and country from the photo's GPS data
-                    </span>
-                  </div>
-                  <div className={`switch-toggle ${exif.location ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${exif.caption ? 'active' : ''}`}
-                  onClick={() => update('exif.caption', !exif.caption)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconFileText size={16} /> Photo Description
-                    </span>
-                    <span className="toggle-card-desc">The description written in Immich</span>
-                  </div>
-                  <div className={`switch-toggle ${exif.caption ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.map === true ? 'active' : ''}`}
-                  onClick={() => update('map', !settings.map)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconMap size={16} /> Interactive GPS Map
-                    </span>
-                    <span className="toggle-card-desc">
-                      Enable /map view showing photo locations on a world map
-                    </span>
-                  </div>
-                  <div className={`switch-toggle ${settings.map === true ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.transitions !== false ? 'active' : ''}`}
-                  onClick={() => update('transitions', settings.transitions === false)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconSparkles size={16} /> Smooth Page Transitions
-                    </span>
-                    <span className="toggle-card-desc">
-                      Enable subtle fade-in animations between page navigation
-                    </span>
-                  </div>
-                  <div className={`switch-toggle ${settings.transitions !== false ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.scrollToTop !== false ? 'active' : ''}`}
-                  onClick={() => update('scrollToTop', settings.scrollToTop === false)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconArrowUp size={16} /> Scroll-to-Top Button
-                    </span>
-                    <span className="toggle-card-desc">
-                      Show a floating arrow that returns visitors to the top of long pages
-                    </span>
-                  </div>
-                  <div className={`switch-toggle ${settings.scrollToTop !== false ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.analytics !== false ? 'active' : ''}`}
-                  onClick={() => update('analytics', settings.analytics === false)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconBarChart size={16} /> Analytics Tracking
-                    </span>
-                    <span className="toggle-card-desc">
-                      Collect anonymous privacy-friendly visit statistics
-                    </span>
-                  </div>
-                  <div className={`switch-toggle ${settings.analytics !== false ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.proofing?.enabled !== false ? 'active' : ''}`}
-                  onClick={() => update('proofing.enabled', settings.proofing?.enabled === false)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconHeart size={16} /> Client Proofing &amp; Favorites
-                    </span>
-                    <span className="toggle-card-desc">
-                      Allow visitors &amp; clients to heart, filter, and export favorite photo
-                      selections
-                    </span>
-                  </div>
-                  <div
-                    className={`switch-toggle ${settings.proofing?.enabled !== false ? 'on' : ''}`}
+              <FeatureGroup
+                icon={<Icons.IconFrame size={13} />}
+                title="Pages &amp; motion"
+                description="Chrome the visitor sees on every page."
+              >
+                <div className="admin-toggle-cards-grid">
+                  <button
+                    type="button"
+                    className={`admin-toggle-card ${settings.about?.enabled !== false ? 'active' : ''}`}
+                    onClick={() => update('about.enabled', settings.about?.enabled === false)}
                   >
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                    <div className="toggle-card-info">
+                      <span className="toggle-card-title">
+                        <Icons.IconCamera size={16} /> About Page
+                      </span>
+                      <span className="toggle-card-desc">
+                        Show a portrait, bio, and gear section on your portfolio
+                      </span>
+                    </div>
+                    <div
+                      className={`switch-toggle ${settings.about?.enabled !== false ? 'on' : ''}`}
+                    >
+                      <span className="switch-slider" />
+                    </div>
+                  </button>
 
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.about?.enabled !== false ? 'active' : ''}`}
-                  onClick={() => update('about.enabled', settings.about?.enabled === false)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconCamera size={16} /> About Page
+                  <button
+                    type="button"
+                    className={`admin-toggle-card ${settings.transitions !== false ? 'active' : ''}`}
+                    onClick={() => update('transitions', settings.transitions === false)}
+                  >
+                    <div className="toggle-card-info">
+                      <span className="toggle-card-title">
+                        <Icons.IconSparkles size={16} /> Smooth Page Transitions
+                      </span>
+                      <span className="toggle-card-desc">
+                        Enable subtle fade-in animations between page navigation
+                      </span>
+                    </div>
+                    <div className={`switch-toggle ${settings.transitions !== false ? 'on' : ''}`}>
+                      <span className="switch-slider" />
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`admin-toggle-card ${settings.scrollToTop !== false ? 'active' : ''}`}
+                    onClick={() => update('scrollToTop', settings.scrollToTop === false)}
+                  >
+                    <div className="toggle-card-info">
+                      <span className="toggle-card-title">
+                        <Icons.IconArrowUp size={16} /> Scroll-to-Top Button
+                      </span>
+                      <span className="toggle-card-desc">
+                        Show a floating arrow that returns visitors to the top of long pages
+                      </span>
+                    </div>
+                    <div className={`switch-toggle ${settings.scrollToTop !== false ? 'on' : ''}`}>
+                      <span className="switch-slider" />
+                    </div>
+                  </button>
+                </div>
+              </FeatureGroup>
+
+              <FeatureGroup
+                icon={<Icons.IconShieldCheck size={13} />}
+                title="What each photo reveals"
+                description="Published to anyone who opens a photo."
+                chip="visible to visitors"
+              >
+                <div className={`metadata-card ${anyMetadata ? 'active' : ''}`}>
+                  <button
+                    type="button"
+                    className="metadata-card-main"
+                    onClick={toggleMetadata}
+                    aria-pressed={anyMetadata}
+                  >
+                    <span className="toggle-card-info">
+                      <span className="toggle-card-title">
+                        <Icons.IconCamera size={16} /> Photo metadata
+                      </span>
+                      <span className="toggle-card-desc">{metadataSummary}</span>
                     </span>
-                    <span className="toggle-card-desc">
-                      Show a portrait, bio, and gear section on your portfolio
+                    <span className={`switch-toggle ${anyMetadata ? 'on' : ''}`}>
+                      <span className="switch-slider" />
                     </span>
-                  </div>
-                  <div className={`switch-toggle ${settings.about?.enabled !== false ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
-              </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="metadata-details-btn"
+                    onClick={() => setMetadataOpen((open) => !open)}
+                    aria-expanded={metadataOpen}
+                  >
+                    Details
+                    <Icons.IconChevronDown
+                      size={13}
+                      className={`metadata-details-chevron${metadataOpen ? ' open' : ''}`}
+                    />
+                  </button>
+
+                  {metadataOpen && (
+                    <div className="metadata-details">
+                      <SettingRow
+                        title="Camera &amp; Lens"
+                        description="Body, lens and focal length"
+                        checked={exif.camera}
+                        onToggle={() => update('exif.camera', !exif.camera)}
+                      />
+                      <SettingRow
+                        title="Exposure Settings"
+                        description="Aperture, shutter speed and ISO"
+                        checked={exif.settings}
+                        onToggle={() => update('exif.settings', !exif.settings)}
+                      />
+                      <SettingRow
+                        title="Location"
+                        description="City and country from the photo's GPS data"
+                        checked={exif.location}
+                        onToggle={() => update('exif.location', !exif.location)}
+                      />
+                      <SettingRow
+                        title="Photo Description"
+                        description="The description written in Immich"
+                        checked={exif.caption}
+                        onToggle={() => update('exif.caption', !exif.caption)}
+                      />
+
+                      {/* Dependent, not a peer: this only controls the grid overlay, and
+                      the overlay carries camera and lens. With those off it has
+                      nothing to show, which used to leave it switched on and
+                      silently doing nothing (#510). */}
+                      <SettingRow
+                        indented
+                        title="Summary on grid hover"
+                        description="Camera and lens over the photo, not only in the lightbox"
+                        checked={settings.exifOnHover !== false}
+                        disabled={!exif.camera}
+                        hint={exif.camera ? undefined : 'Needs Camera & Lens'}
+                        onToggle={() => update('exifOnHover', settings.exifOnHover === false)}
+                      />
+                    </div>
+                  )}
+                </div>
+              </FeatureGroup>
+
+              <FeatureGroup
+                icon={<Icons.IconHeart size={13} />}
+                title="What visitors can do"
+                description="Optional pages and interactions."
+              >
+                <div className="admin-toggle-cards-grid">
+                  <button
+                    type="button"
+                    className={`admin-toggle-card ${settings.map === true ? 'active' : ''}`}
+                    onClick={() => update('map', !settings.map)}
+                  >
+                    <div className="toggle-card-info">
+                      <span className="toggle-card-title">
+                        <Icons.IconMap size={16} /> Interactive GPS Map
+                      </span>
+                      <span className="toggle-card-desc">
+                        Enable /map view showing photo locations on a world map
+                      </span>
+                    </div>
+                    <div className={`switch-toggle ${settings.map === true ? 'on' : ''}`}>
+                      <span className="switch-slider" />
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`admin-toggle-card ${settings.proofing?.enabled !== false ? 'active' : ''}`}
+                    onClick={() => update('proofing.enabled', settings.proofing?.enabled === false)}
+                  >
+                    <div className="toggle-card-info">
+                      <span className="toggle-card-title">
+                        <Icons.IconHeart size={16} /> Client Proofing &amp; Favorites
+                      </span>
+                      <span className="toggle-card-desc">
+                        Allow visitors &amp; clients to heart, filter, and export favorite photo
+                        selections
+                      </span>
+                    </div>
+                    <div
+                      className={`switch-toggle ${settings.proofing?.enabled !== false ? 'on' : ''}`}
+                    >
+                      <span className="switch-slider" />
+                    </div>
+                  </button>
+                </div>
+              </FeatureGroup>
+
+              <FeatureGroup
+                icon={<Icons.IconBarChart size={13} />}
+                title="Measurement"
+                description="Cookieless and self-hosted — nothing leaves your server."
+              >
+                <div className="admin-toggle-cards-grid">
+                  <button
+                    type="button"
+                    className={`admin-toggle-card ${settings.analytics !== false ? 'active' : ''}`}
+                    onClick={() => update('analytics', settings.analytics === false)}
+                  >
+                    <div className="toggle-card-info">
+                      <span className="toggle-card-title">
+                        <Icons.IconBarChart size={16} /> Analytics Tracking
+                      </span>
+                      <span className="toggle-card-desc">
+                        Collect anonymous privacy-friendly visit statistics
+                      </span>
+                    </div>
+                    <div className={`switch-toggle ${settings.analytics !== false ? 'on' : ''}`}>
+                      <span className="switch-slider" />
+                    </div>
+                  </button>
+                </div>
+              </FeatureGroup>
 
               <div className="admin-field favicon-field">
                 <label>Favicon</label>
