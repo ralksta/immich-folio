@@ -11,6 +11,7 @@ import {
   exifUrl,
   assetPlaceholder,
   assetAspectRatio,
+  assetCaption,
   assetExifSummary,
 } from '@/lib/urls';
 import { encodeAssetId } from '@/lib/tokens';
@@ -177,6 +178,7 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
         config.exif.onHover && config.exif.camera && a.type === 'IMAGE'
           ? assetExifSummary(a)
           : undefined;
+      const caption = assetCaption(a, config.exif.caption);
       const isVideo = a.type === 'VIDEO';
       return {
         id: encodeAssetId(a.id),
@@ -186,6 +188,7 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
         exifUrl: exifUrl(a.id),
         ...(ph ? { blurDataURL: ph.blurDataURL, dominantColor: ph.dominantColor } : {}),
         ...(exif ?? {}),
+        ...(caption ? { caption } : {}),
         aspectRatio: assetAspectRatio(a),
       };
     });

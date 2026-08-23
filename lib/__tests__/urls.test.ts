@@ -17,6 +17,7 @@ import {
   assetPlaceholder,
   assetExifSummary,
   assetAspectRatio,
+  assetCaption,
 } from '@/lib/urls';
 
 describe('imageUrl', () => {
@@ -166,5 +167,60 @@ describe('assetAspectRatio', () => {
         },
       }),
     ).toBeUndefined();
+  });
+});
+
+describe('assetCaption', () => {
+  /** An asset carrying nothing but the description under test. */
+  const withDescription = (description: string | null) => ({
+    exifInfo: {
+      make: null,
+      model: null,
+      lensModel: null,
+      focalLength: null,
+      fNumber: null,
+      exposureTime: null,
+      iso: null,
+      exifImageWidth: null,
+      exifImageHeight: null,
+      latitude: null,
+      longitude: null,
+      city: null,
+      state: null,
+      country: null,
+      dateTimeOriginal: null,
+      description,
+    },
+  });
+
+  it('returns the description when captions are shown', () => {
+    expect(assetCaption(withDescription('A gull over the harbour'), true)).toBe(
+      'A gull over the harbour',
+    );
+  });
+
+  it('trims surrounding whitespace', () => {
+    expect(assetCaption(withDescription('  Low tide\n'), true)).toBe('Low tide');
+  });
+
+  it.each([
+    ['null', null],
+    ['empty', ''],
+    ['whitespace only', '   \n\t '],
+  ])('returns undefined for a %s description, leaving alt=""', (_label, value) => {
+    expect(assetCaption(withDescription(value), true)).toBeUndefined();
+  });
+
+  it('returns undefined when the asset has no exifInfo at all', () => {
+    expect(assetCaption({ exifInfo: undefined }, true)).toBeUndefined();
+  });
+
+  /**
+   * The point of #506: the description is the one field that can hold private
+   * notes. Alt text publishes it as surely as a visible caption does, so the
+   * caption switch has to gate it too.
+   */
+  it('withholds the description when captions are switched off', () => {
+    expect(assetCaption(withDescription('Client hates this crop'), false)).toBeUndefined();
   });
 });

@@ -31,6 +31,8 @@ export interface PhotoItem {
   focalLength?: string;
   /** Natural image aspect ratio (width/height) for masonry layout */
   aspectRatio?: number;
+  /** Immich asset description, used as alt text. Absent when captions are off. */
+  caption?: string;
 }
 
 interface PhotoGridProps {
@@ -186,7 +188,7 @@ function PhotoGridInner({
           >
             <Image
               src={asset.thumbUrl}
-              alt=""
+              alt={asset.caption ?? ''}
               fill
               sizes="(max-width: 600px) 50vw, (max-width: 1000px) 33vw, 25vw"
               loading={index < 6 ? 'eager' : 'lazy'}

@@ -20,6 +20,7 @@ import {
   exifUrl,
   videoUrl,
   assetPlaceholder,
+  assetCaption,
   assetExifSummary,
   assetAspectRatio,
 } from '@/lib/urls';
@@ -114,13 +115,17 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
 /**
  * `showExif` covers the hover overlay only, and that overlay carries camera,
  * lens and focal length — so it follows the `camera` group, not the panel.
+ *
+ * `showCaption` follows the `caption` group and decides whether the Immich
+ * description becomes alt text; see `assetCaption`.
  */
-function toPhotoItems(assets: ImmichAsset[], showExif: boolean): PhotoItem[] {
+function toPhotoItems(assets: ImmichAsset[], showExif: boolean, showCaption: boolean): PhotoItem[] {
   return assets
     .filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO')
     .map((a) => {
       const ph = assetPlaceholder(a);
       const exif = showExif && a.type === 'IMAGE' ? assetExifSummary(a) : undefined;
+      const caption = assetCaption(a, showCaption);
       const isVideo = a.type === 'VIDEO';
       return {
         id: encodeAssetId(a.id),
@@ -131,6 +136,7 @@ function toPhotoItems(assets: ImmichAsset[], showExif: boolean): PhotoItem[] {
         exifUrl: exifUrl(a.id),
         ...(ph ? { blurDataURL: ph.blurDataURL, dominantColor: ph.dominantColor } : {}),
         ...(exif ?? {}),
+        ...(caption ? { caption } : {}),
         aspectRatio: assetAspectRatio(a),
       };
     });
@@ -254,7 +260,11 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
     const spGrid = subpageData?.subpage.grid;
     const subpageName = subpageData?.subpage.name ?? subpageSlug;
 
-    const images = toPhotoItems(album.assets, config.exif.onHover && config.exif.camera);
+    const images = toPhotoItems(
+      album.assets,
+      config.exif.onHover && config.exif.camera,
+      config.exif.caption,
+    );
 
     // Password gate for protected albums
     const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
@@ -324,7 +334,11 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         albums.map((a) => immich.getAlbumBySlug(a.slug, slug, forceFresh)),
       );
       const allAssets = allAlbums.flatMap((a) => (a ? a.assets : []));
-      const images = toPhotoItems(allAssets, config.exif.onHover && config.exif.camera);
+      const images = toPhotoItems(
+        allAssets,
+        config.exif.onHover && config.exif.camera,
+        config.exif.caption,
+      );
 
       // Fallback structured essay if layout: 'essay' is set without custom markdown file
       if (!essayParsed) {
@@ -381,7 +395,11 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         notFound();
       }
 
-      const images = toPhotoItems(album.assets, config.exif.onHover && config.exif.camera);
+      const images = toPhotoItems(
+        album.assets,
+        config.exif.onHover && config.exif.camera,
+        config.exif.caption,
+      );
 
       // Password gate for protected albums
       const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
@@ -464,7 +482,11 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
     notFound();
   }
 
-  const images = toPhotoItems(album.assets, config.exif.onHover && config.exif.camera);
+  const images = toPhotoItems(
+    album.assets,
+    config.exif.onHover && config.exif.camera,
+    config.exif.caption,
+  );
 
   // Password gate for protected albums
   const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
