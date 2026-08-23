@@ -347,11 +347,18 @@ override it in `gallery.yaml`. The three levels merge, most specific winning:
 
 **global (`settings.yaml`) → subpage → album**
 
+> [!NOTE]
+> Leaving `gap` out is not the same as setting `12`. Each theme preset picks its
+> own photo spacing (2px `minimal`, 32px `editorial`, 40px `monograph`), and an
+> unset `gap` lets that stand. Setting one wins in every preset — which is what
+> `minimal`, `editorial` and `monograph` used to ignore
+> ([#513](https://github.com/ralksta/immich-folio/issues/513)).
+
 ```yaml
 # settings.yaml — global defaults
 grid:
   columns: 3 # number of columns (default: 3)
-  gap: 12 # gap in pixels (default: 12)
+  gap: 12 # gap in pixels — unset means the theme preset decides
   aspectRatio: '1' # "1", "3/2", "2/3", "16/9", "auto" (default: "1")
   layout: masonry
 ```
@@ -413,6 +420,7 @@ title: 'My Portfolio'
 subtitle: 'A visual journal'
 lang: 'en'
 
+mode: dark # dark (default) | light | auto — what a first-time visitor sees
 exifOnHover: true # the summary overlay on photo grid hover
 exif: # which groups may be shown at all
   camera: true # body, lens, focal length
@@ -431,6 +439,7 @@ about:
 | Key             | Default | Notes                                       |
 | --------------- | ------- | ------------------------------------------- |
 | `lang`          | `en`    | Interface language, `<html lang>`, dates    |
+| `mode`          | `dark`  | Visitor's starting colour mode, see below   |
 | `exifOnHover`   | on      | The grid hover overlay only, see below      |
 | `exif.*`        | on      | Per-group EXIF visibility, see below        |
 | `map`           | **off** | Opt-in: must be set to `true` explicitly    |
@@ -438,6 +447,19 @@ about:
 | `scrollToTop`   | on      |                                             |
 | `analytics`     | on      |                                             |
 | `about.enabled` | on      | Needs a `content/about.md` to show anything |
+
+### Colour mode
+
+`mode` decides what a visitor sees before they touch anything: `dark` (the
+default the site has always had), `light`, or `auto` to follow their operating
+system. It is rendered onto `<html>` server-side, so the first paint is already
+right rather than flipping after the page loads.
+
+A visitor's own choice from the header toggle is kept in their browser and
+always wins over this — `mode` only sets the starting point. The light/dark
+switch in the admin panel previews _your_ view and does not change what
+visitors get; that is what this setting is for
+([#512](https://github.com/ralksta/immich-folio/issues/512)).
 
 ### EXIF visibility
 

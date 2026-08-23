@@ -30,7 +30,8 @@
 /* Photo grid: numbered indices with CSS counter */
 [data-preset='monograph'] .photo-grid {
   counter-reset: photo-index;
-  column-gap: 40px;
+  /* Preset default only — an explicit grid.gap lands inline and wins (#513). */
+  --grid-gap: 40px;
 }
 
 [data-preset='monograph'] .photo-grid__item {

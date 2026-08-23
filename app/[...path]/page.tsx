@@ -184,9 +184,15 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
   // Build grid CSS custom properties, optionally merging subpage overrides
   const buildGridStyle = (overrides?: Partial<GridConfig>): React.CSSProperties => {
     const g = { ...config.grid, ...overrides };
+    // `gap` is only emitted when someone chose one. Each preset declares its own
+    // photo spacing as part of its look (2px minimal, 40px monograph), and
+    // emitting the resolved fallback unconditionally overwrote that — the three
+    // presets that fought back with a hardcoded `column-gap` then ignored the
+    // setting entirely, which is #513. Inline beats the preset's declaration, so
+    // an explicit value still wins everywhere.
     return {
       '--grid-columns': g.columns,
-      '--grid-gap': `${g.gap}px`,
+      ...(overrides?.gap != null || config.gridGapExplicit ? { '--grid-gap': `${g.gap}px` } : {}),
       '--grid-aspect-ratio': g.aspectRatio,
     } as React.CSSProperties;
   };

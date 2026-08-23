@@ -11,6 +11,15 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Added
 
+- **`mode:` sets the colour mode visitors land on**
+  ([#512](https://github.com/ralksta/immich-folio/issues/512)). `dark` (the
+  existing default), `light`, or `auto` to follow the visitor's operating
+  system — in `settings.yaml` or under Settings › Theme. It is rendered onto
+  `<html>` server-side, so the first paint is already right. The admin panel's
+  own light/dark switch previews your view and never decided what visitors saw,
+  which is what made this necessary; a visitor's choice from the header toggle
+  is still remembered on their device and still wins.
+
 - **`exif:` decides which EXIF groups a site publishes**
   ([#506](https://github.com/ralksta/immich-folio/issues/506)). Four switches —
   `camera`, `settings`, `location`, `caption` — in `settings.yaml` or under
@@ -60,6 +69,26 @@ Releases up to and including v0.9.2 are documented in the
   change; to keep two-up covers, set `grid.columns: 2` on the subpage.
 
 ### Fixed
+
+- **The lightbox info panel is readable in light mode**
+  ([#511](https://github.com/ralksta/immich-folio/issues/511)). The EXIF panel
+  and the shortcut list paint their own dark surface but took their text and
+  border colours from the site theme, so in light mode they rendered dark text
+  on a dark panel. Both now carry their own light-on-dark colours, as the
+  caption line always did. The rest of the lightbox chrome still follows the
+  theme, because the overlay behind it does too.
+
+- **`grid.gap` reaches every theme**
+  ([#513](https://github.com/ralksta/immich-folio/issues/513)). `minimal`,
+  `editorial` and `monograph` hardcoded the column spacing on `.photo-grid`, so
+  the Gap Spacing control did nothing in those presets — while the row spacing
+  followed it, leaving columns and rows visibly out of step. Each preset now
+  declares its spacing as a default that an explicit `grid.gap` overrides.
+
+  **An unset `gap` is now the preset's own spacing rather than a flat 12px.**
+  That is what those three presets already rendered horizontally, so the visible
+  change is that their rows finally match their columns. Sites that set `gap`
+  are unaffected, and `classic` and `studio-modern` keep the 12px they had.
 
 - **The Immich description can be switched off**
   ([#506](https://github.com/ralksta/immich-folio/issues/506)). It was served

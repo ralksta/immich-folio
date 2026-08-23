@@ -1048,6 +1048,13 @@
 }
 
 .photo-grid {
+  /* The gap the grid uses when settings.yaml does not set one. Declared rather
+     than left to each layout's own `var(--grid-gap, N)` fallback, because those
+     fallbacks disagree (6px filmstrip, 16px editorial-flow) and were dead code
+     while the variable was emitted unconditionally — 12px is what every layout
+     has actually rendered. A preset overrides it, an explicit setting beats
+     both by landing inline on this element (#513). */
+  --grid-gap: 12px;
   column-count: var(--grid-columns, 3);
   column-gap: var(--grid-gap, 12px);
 }
