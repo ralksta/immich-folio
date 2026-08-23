@@ -47,6 +47,9 @@ Thumbs.db
 .Jules/
 .jules/
 .claude/
+
+# Agent instructions — local working notes, not part of the published project.
+CLAUDE.md
 .planning/
 
 # ── One-off Scripts (Root) ───────────────────────────

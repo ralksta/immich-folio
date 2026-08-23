@@ -23,8 +23,7 @@ Releases up to and including v0.9.2 are documented in the
   ([#515](https://github.com/ralksta/immich-folio/issues/515)). Not a warning
   and not a barrier — publishing them has always worked, because Immich ignores
   the `?shared=true` the list is fetched with. It is there so nobody publishes a
-  private album unaware. The same appears in the config doctor as a warning, and
-  `CLAUDE.md` no longer claims the filter as a security property.
+  private album unaware. The same appears in the config doctor as a warning.
 
 - **`mode:` sets the colour mode visitors land on**
   ([#512](https://github.com/ralksta/immich-folio/issues/512)). `dark` (the
