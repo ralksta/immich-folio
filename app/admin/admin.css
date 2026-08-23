@@ -1654,6 +1654,68 @@
   color: var(--admin-text-muted);
 }
 
+/* ── Config doctor report (#491) ──────────────────────────────
+   Each finding is one line with a severity dot: the point is scanning a list
+   for the ones that are not green, not reading prose. */
+.doctor-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doctor-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.doctor-item:last-child {
+  border-bottom: none;
+}
+
+.doctor-dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 0.42rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--admin-success);
+}
+
+.doctor-item--warn .doctor-dot {
+  background: var(--admin-accent);
+}
+
+.doctor-item--error .doctor-dot {
+  background: var(--admin-error);
+}
+
+.doctor-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.doctor-item-title {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+/* A finding that needs nothing recedes; the eye should land on the others. */
+.doctor-item--ok .doctor-item-title {
+  font-weight: 500;
+  color: var(--admin-text-secondary);
+}
+
+.doctor-item-detail {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--admin-text-muted);
+}
+
 /* The metadata group as one card with an expander: four permanently visible
    sub-switches read as four decisions, when they are details of one. */
 .metadata-card {

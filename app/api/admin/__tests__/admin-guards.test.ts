@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 
 vi.mock('@/lib/admin/auth', () => ({
   isAdminEnabled: vi.fn(),
@@ -72,6 +73,14 @@ const ROUTES: {
     load: () => import('../status/route'),
     method: 'GET',
     args: () => [],
+  },
+  {
+    // Reports album titles, where passwords live and the proxy topology.
+    name: 'GET /api/admin/doctor',
+    path: 'doctor',
+    load: () => import('../doctor/route'),
+    method: 'GET',
+    args: () => [new NextRequest('http://localhost/api/admin/doctor')],
   },
   {
     name: 'GET /api/admin/assets',
