@@ -82,9 +82,15 @@ describe('dictionary parity', () => {
   });
 
   it('leaves no English string untranslated', () => {
-    // Proper nouns and units read the same in both languages; `coverAria` is
-    // pure interpolation with no words of its own.
-    const shared = new Set(['nav.journal', 'journal.title', 'lightbox.iso', 'subpage.coverAria']);
+    // Proper nouns, loanwords and units read the same in both languages;
+    // `coverAria` is pure interpolation with no words of its own.
+    const shared = new Set([
+      'nav.journal',
+      'journal.title',
+      'lightbox.iso',
+      'lightbox.copyLinkShort',
+      'subpage.coverAria',
+    ]);
 
     const identical = enLeaves
       .filter(([path]) => !shared.has(path))

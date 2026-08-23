@@ -26,6 +26,7 @@ import { useDictionary } from './I18nProvider';
 // client component cannot import.
 import { resolveWatermarkOpacity } from '@/lib/config/schema';
 import { formatCamera } from '@/lib/exif';
+import { buildPhotoPermalink } from '@/lib/photoHash';
 
 export interface LightboxWatermark {
   enabled?: boolean;
@@ -64,6 +65,14 @@ export function Lightbox({
   const [canFullscreen, setCanFullscreen] = useState(false);
   const { exifData, exifLoading, fetchExif, clearExif } = useExif();
   const [imageLoaded, setImageLoaded] = useState(false);
+  /**
+   * 'manual' is the honest outcome when the clipboard is unavailable — which is
+   * not a rarity here: `navigator.clipboard` is undefined outside a secure
+   * context, and a self-hosted portfolio reached over plain http on a LAN is
+   * exactly that. The link is then shown for the visitor to copy by hand
+   * rather than the button appearing to do nothing.
+   */
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'manual'>('idle');
   const overlayRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -106,6 +115,46 @@ export function Lightbox({
   const toggleShortcuts = useCallback(() => {
     setShowShortcuts((open) => !open);
   }, []);
+
+  /**
+   * The deep link to the photo on screen.
+   *
+   * Built from the current index rather than read back from `location.hash`,
+   * so it does not depend on the grid's hash-sync effect having run yet. The
+   * `#photo-N` form is the permalink the grid already writes and restores;
+   * this only supplies the affordance to copy it (#478).
+   *
+   * The link is positional, as `gallery.yaml.example` documents: reordering an
+   * album moves where a shared link lands. That is a property of the existing
+   * permalink, not of the button.
+   */
+  const permalink = useCallback(() => {
+    if (typeof window === 'undefined') return '';
+    return buildPhotoPermalink(window.location, currentIndex);
+  }, [currentIndex]);
+
+  const handleCopyLink = useCallback(() => {
+    const url = permalink();
+    if (!navigator.clipboard) {
+      setCopyState('manual');
+      return;
+    }
+    navigator.clipboard.writeText(url).then(
+      () => setCopyState('copied'),
+      () => setCopyState('manual'),
+    );
+  }, [permalink]);
+
+  // A confirmation must not outlive the photo it was about.
+  useEffect(() => {
+    setCopyState('idle');
+  }, [currentIndex]);
+
+  useEffect(() => {
+    if (copyState !== 'copied') return;
+    const timer = setTimeout(() => setCopyState('idle'), 2000);
+    return () => clearTimeout(timer);
+  }, [copyState]);
 
   /*
    * Real fullscreen. The overlay already covers the viewport, but the browser's
@@ -183,6 +232,17 @@ export function Lightbox({
    */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      /*
+       * Bare keys only. The manual copy fallback puts a real text field on
+       * screen, and a visitor pressing Cmd/Ctrl+C in it means the browser's
+       * copy, not this viewer's — swallowing it would break the one gesture
+       * that field exists for. Esc stays available so the viewer can always
+       * be left.
+       */
+      const target = e.target as HTMLElement | null;
+      const inTextField = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA';
+      if (e.key !== 'Escape' && (e.metaKey || e.ctrlKey || e.altKey || inTextField)) return;
+
       switch (e.key) {
         case 'Escape':
           // Innermost layer first: Esc dismisses the shortcut list, then leaves
@@ -209,6 +269,11 @@ export function Lightbox({
         // Shift+/ on a US layout, Shift+ß on a German one. `h` is the escape
         // hatch for layouts where `?` is awkward — and the one key someone
         // guesses without having been told.
+        case 'c':
+        case 'C':
+          e.preventDefault();
+          handleCopyLink();
+          break;
         case '?':
         case 'h':
         case 'H':
@@ -230,6 +295,7 @@ export function Lightbox({
     };
   }, [
     canFullscreen,
+    handleCopyLink,
     handleExifToggle,
     onClose,
     onNext,
@@ -268,6 +334,7 @@ export function Lightbox({
           },
         ]
       : []),
+    { keys: ['C'], label: t.lightbox.shortcutCopyLink },
     { keys: ['?', 'H'], label: t.lightbox.shortcutList },
     { keys: ['Esc'], label: t.lightbox.shortcutClose },
   ];
@@ -422,6 +489,48 @@ export function Lightbox({
           <IconHeart size={14} fill={isFav ? 'currentColor' : 'none'} aria-hidden="true" />
           {isFav ? t.proofing.saved : t.proofing.favorite}
         </button>
+      )}
+
+      {/* Copy link — bottom left, opposite the info toggle */}
+      <button
+        className={`${styles.infoToggle} ${styles.copyToggle}`}
+        onClick={handleCopyLink}
+        aria-label={t.lightbox.copyLink}
+        title={t.lightbox.copyLinkTitle}
+      >
+        <svg
+          aria-hidden="true"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+        </svg>
+        {copyState === 'copied' ? t.lightbox.copied : t.lightbox.copyLinkShort}
+      </button>
+
+      {/* Clipboard unavailable — show the link rather than fail quietly */}
+      {copyState === 'manual' && (
+        <div className={styles.copyManual} role="status">
+          <label className={styles.copyManualLabel} htmlFor="lightbox-permalink">
+            {t.lightbox.copyManual}
+          </label>
+          <input
+            id="lightbox-permalink"
+            className={styles.copyManualInput}
+            type="text"
+            readOnly
+            autoFocus
+            value={permalink()}
+            onFocus={(e) => e.currentTarget.select()}
+          />
+        </div>
       )}
 
       {/* EXIF toggle */}

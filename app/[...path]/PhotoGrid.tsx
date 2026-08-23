@@ -15,6 +15,7 @@ import { FadeIn } from '@/components/FadeIn';
 import { ProofingProvider, useProofing } from '@/components/ProofingContext';
 import { ProofingModal } from '@/components/ProofingModal';
 import { useDictionary } from '@/components/I18nProvider';
+import { parsePhotoHash, buildPhotoHash } from '@/lib/photoHash';
 
 export interface PhotoItem {
   id: string;
@@ -52,19 +53,6 @@ interface PhotoGridProps {
   proofing?: boolean;
   /** Offer the "send by email" button in the proofing modal. */
   allowMailto?: boolean;
-}
-
-/** Parse `#photo-N` from a hash string. Returns index or null. */
-function parsePhotoHash(hash: string): number | null {
-  const match = hash.match(/^#photo-(\d+)$/);
-  if (!match) return null;
-  const idx = parseInt(match[1], 10) - 1; // 1-indexed in URL, 0-indexed internally
-  return idx >= 0 ? idx : null;
-}
-
-/** Build the hash string for a given 0-based index. */
-function buildPhotoHash(index: number): string {
-  return `#photo-${index + 1}`; // 1-indexed for user-friendliness
 }
 
 function PhotoGridInner({
