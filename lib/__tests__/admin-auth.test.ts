@@ -71,6 +71,23 @@ describe('admin session tokens', () => {
     expect(verifyAdminToken(createAdminToken())).toBe(true);
   });
 
+  /**
+   * A cookie far longer than any token we issue is rejected before it is
+   * parsed. The decode below the signature check was never reachable without
+   * the key, so this is boundary hygiene rather than a fix for an exploitable
+   * exhaustion — but a bound on untrusted input costs nothing (#505).
+   */
+  it('rejects an implausibly long token without parsing it', async () => {
+    const { createAdminToken, verifyAdminToken } = await loadAuth();
+    const valid = createAdminToken();
+
+    expect(valid.length).toBeLessThan(512);
+    expect(verifyAdminToken(valid)).toBe(true);
+    expect(verifyAdminToken('a'.repeat(513))).toBe(false);
+    // Padding a genuine token past the bound must not sneak through either.
+    expect(verifyAdminToken(valid + 'a'.repeat(512))).toBe(false);
+  });
+
   it('rejects a token forged with the old hardcoded dev fallback secret', async () => {
     const { verifyAdminToken } = await loadAuth();
     // The exact key an attacker could derive from the public source before the fix.

@@ -82,6 +82,15 @@ Releases up to and including v0.9.2 are documented in the
   will see its subpage cover grids change on upgrade.** That is the point of the
   change; to keep two-up covers, set `grid.columns: 2` on the subpage.
 
+### Security
+
+- **The admin session token is bounded before it is parsed**
+  ([#505](https://github.com/ralksta/immich-folio/pull/505)). A cookie longer
+  than 512 characters is rejected outright. Reported as a memory-exhaustion DoS;
+  the decode it named is only reached after the HMAC matches, which needs the
+  signing key, so this is hygiene at the boundary rather than a fix for a
+  reachable exhaustion — but a bound on untrusted input costs nothing.
+
 ### Fixed
 
 - **An ID that is not a UUID is dropped instead of becoming the zero UUID**
