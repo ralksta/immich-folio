@@ -16,6 +16,7 @@ interface Settings {
   subtitle?: string;
   lang?: string;
   sitePassword?: string;
+  mode?: 'light' | 'dark' | 'auto';
   exifOnHover?: boolean;
   exif?: {
     camera?: boolean;
@@ -840,6 +841,23 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                 </h3>
                 <p className="settings-section-sub">
                   Choose a typography preset and preview in Light or Dark mode.
+                </p>
+              </div>
+
+              <div className="admin-field">
+                <label>Visitor Default Mode</label>
+                <select
+                  value={settings.mode || 'dark'}
+                  onChange={(e) => update('mode', e.target.value)}
+                >
+                  <option value="dark">Dark</option>
+                  <option value="light">Light</option>
+                  <option value="auto">Follow the visitor's system</option>
+                </select>
+                <p className="admin-field-hint">
+                  What a first-time visitor sees. The light/dark toggle in the site header still
+                  lets them choose, and their choice is remembered on their device. The preview
+                  below is your own, and does not change this.
                 </p>
               </div>
 

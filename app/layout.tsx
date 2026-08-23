@@ -144,6 +144,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       data-header-dot={String(theme.headerDot)}
       data-photo-frame={theme.photoFrame}
       data-transitions={String(config.transitions)}
+      /* The configured starting mode is rendered server-side so the first paint
+         is already right; `auto` deliberately carries no data-theme and lets the
+         inline script below decide from the OS. data-default-theme is what
+         ThemeToggle reads for a visitor who has never chosen (#512). */
+      {...(config.colorMode === 'auto' ? {} : { 'data-theme': config.colorMode })}
+      data-default-theme={config.colorMode}
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />

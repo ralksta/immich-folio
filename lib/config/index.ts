@@ -7,6 +7,7 @@ import { ALBUM_SORT_MODES, isAlbumSortMode, type AlbumSortMode } from '../albumS
 import {
   slugify,
   resolveExifDisplay,
+  resolveColorMode,
   AppConfig,
   AlbumEntryObject,
   SubpageConfig,
@@ -389,9 +390,11 @@ export function getConfig(): AppConfig {
         noFollow: true,
       },
       heroImages: [],
+      colorMode: 'dark',
       exifOnHover: true,
       exif: resolveExifDisplay(),
       grid: { columns: 3, gap: 12, aspectRatio: '1', layout: 'masonry' },
+      gridGapExplicit: false,
       theme: resolveTheme(DEFAULT_PRESET),
       footer: null,
       legal: { enabled: false, name: '', address: '', zipCity: '', country: '' },
@@ -467,6 +470,7 @@ export function getConfig(): AppConfig {
           validateUuid(id, 'gallery.yaml hero'),
         )
       : [],
+    colorMode: resolveColorMode(settings.mode),
     exifOnHover: settings.exifOnHover !== false,
     exif: resolveExifDisplay(settings.exif, settings.exifOnHover),
     grid: {
@@ -477,6 +481,7 @@ export function getConfig(): AppConfig {
         ? settings.grid!.layout
         : 'masonry') as GridConfig['layout'],
     },
+    gridGapExplicit: settings.grid?.gap != null,
     theme,
     footer: settings.footer
       ? {

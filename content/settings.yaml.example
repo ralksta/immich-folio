@@ -28,6 +28,10 @@ lang: "en"
 # /admin keeps its own password and is never behind this gate.
 # sitePassword: "scrypt:..."
 
+# What a first-time visitor sees: dark (default), light, or auto to follow
+# their operating system. Their own choice from the header toggle overrides it.
+mode: dark
+
 # Show the EXIF summary overlay on photo grid hover
 exifOnHover: true
 

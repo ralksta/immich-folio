@@ -160,10 +160,19 @@ export interface AppConfig {
     noFollow: boolean;
   };
   heroImages: string[];
+  /** Colour mode a first-time visitor lands on; their own choice overrides it. */
+  colorMode: ColorMode;
   exifOnHover: boolean;
   /** Which EXIF groups the grid hover, the lightbox panel and the album header may show. */
   exif: ExifDisplayConfig;
   grid: GridConfig;
+  /**
+   * Whether `grid.gap` was set in settings.yaml. The resolved `grid.gap` cannot
+   * say — it carries the fallback either way — and each theme preset picks its
+   * own photo spacing as part of its look, so the CSS variable is only emitted
+   * when someone actually chose a value (#513).
+   */
+  gridGapExplicit: boolean;
   theme: ThemeConfig;
   footer: FooterConfig | null;
   legal: LegalConfig;
@@ -292,6 +301,8 @@ export interface SettingsYaml {
     noIndex?: boolean;
     noFollow?: boolean;
   };
+  /** 'dark' (default), 'light' or 'auto' — the visitor's starting colour mode. */
+  mode?: ColorMode;
   exifOnHover?: boolean;
   exif?: ExifDisplayYaml;
   map?: boolean;
@@ -347,6 +358,19 @@ export interface SettingsYaml {
  * path for typos, and an admin control per field — for a choice people make in
  * groups anyway ("no locations", "no descriptions") (#506).
  */
+/**
+ * The colour mode a visitor sees before they touch the toggle. `auto` follows
+ * the operating system. A visitor's own choice is kept in localStorage and
+ * always wins — this only decides the starting point (#512).
+ */
+export type ColorMode = 'light' | 'dark' | 'auto';
+
+export const COLOR_MODES: ColorMode[] = ['dark', 'light', 'auto'];
+
+export function resolveColorMode(raw?: string): ColorMode {
+  return (COLOR_MODES as string[]).includes(raw ?? '') ? (raw as ColorMode) : 'dark';
+}
+
 export interface ExifDisplayYaml {
   /** Camera body, lens, focal length. */
   camera?: boolean;

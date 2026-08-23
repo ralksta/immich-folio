@@ -1,8 +1,15 @@
 /**
  * ThemeToggle — dark/light mode switch.
  *
- * Persists preference in localStorage and sets data-theme on <html>.
- * Defaults to dark theme (matching existing design).
+ * A visitor's own choice is kept in localStorage and always wins. Without one,
+ * the starting mode comes from `mode:` in settings.yaml, which the layout has
+ * already rendered onto <html> as data-default-theme — reading it from the DOM
+ * rather than taking a prop keeps this component mountable anywhere without
+ * threading config through the tree. `auto` follows the operating system.
+ *
+ * It used to hardcode dark, so an operator who preferred light had no way to
+ * give visitors anything else (#512).
+ *
  * Uses useSyncExternalStore to satisfy React strict mode lint rules.
  */
 
@@ -30,6 +37,22 @@ function getServerSnapshot(): Theme {
   return 'dark'; // SSR default
 }
 
+/** What the OS asks for. Dark unless it says otherwise, as before. */
+function systemTheme(): Theme {
+  return typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-color-scheme: light)').matches
+    ? 'light'
+    : 'dark';
+}
+
+/** The configured starting mode, read off the <html> the server rendered. */
+function configuredTheme(): Theme {
+  const mode = document.documentElement.getAttribute('data-default-theme');
+  if (mode === 'light' || mode === 'dark') return mode;
+  // 'auto', or an older layout that renders no attribute at all.
+  return systemTheme();
+}
+
 function applyTheme(theme: Theme) {
   currentTheme = theme;
   if (typeof document !== 'undefined') {
@@ -41,8 +64,8 @@ function applyTheme(theme: Theme) {
 
 // Initialize from localStorage on module load (client-side only)
 if (typeof window !== 'undefined') {
-  const stored = localStorage.getItem('theme') as Theme | null;
-  currentTheme = stored === 'light' ? 'light' : 'dark';
+  const stored = localStorage.getItem('theme');
+  currentTheme = stored === 'light' || stored === 'dark' ? stored : configuredTheme();
   document.documentElement.setAttribute('data-theme', currentTheme);
 }
 
