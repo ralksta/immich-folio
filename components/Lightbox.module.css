@@ -203,6 +203,13 @@
   left: 24px;
 }
 
+/* Download the original — sits right of the copy button, when offered. */
+.downloadToggle {
+  right: auto;
+  left: 8.5rem;
+  text-decoration: none;
+}
+
 /* Shown only when the clipboard API is unavailable. */
 .copyManual {
   position: fixed;
@@ -241,6 +248,10 @@
 @media (max-width: 600px) {
   .copyToggle {
     left: 16px;
+  }
+
+  .downloadToggle {
+    left: 7.5rem;
   }
 
   .copyManual {

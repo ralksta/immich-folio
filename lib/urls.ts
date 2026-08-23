@@ -97,6 +97,17 @@ export function assetExifSummary(asset: Pick<ImmichAsset, 'exifInfo'>): ExifSumm
 }
 
 /**
+ * The download URL for an original file (#475).
+ *
+ * Carries the album as well as the asset: the route authorises the download
+ * against the album that offered it, and checks the asset really belongs to
+ * that album.
+ */
+export function downloadUrl(albumId: string, assetId: string): string {
+  return `/api/download/${encodeAssetId(albumId)}/${encodeAssetId(assetId)}`;
+}
+
+/**
  * Compute the natural aspect ratio (width / height) from EXIF dimensions.
  * Returns undefined if dimensions are not available.
  */

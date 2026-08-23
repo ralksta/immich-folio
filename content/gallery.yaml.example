@@ -69,6 +69,15 @@ subpages:
           #   layout: "justified"
           #   columns: 2
           # coverPosition: "50% 25%" # EXPERIMENTAL: focal point for the cover crop ("top", "center bottom", "50% 25%")
+          #
+          # download: true
+          #   Offer the original file from the lightbox for this album.
+          #   Off everywhere by default, and opt-in per album on purpose: a
+          #   public portfolio should not start handing out full-resolution
+          #   originals because one client gallery needed to.
+          #   The download route checks the allowlist, this switch, the
+          #   album's password and that the asset really belongs to the
+          #   album, so an edited URL cannot reach anything else.
 
   # ── Subpage with Sections ────────────────────────────────────────
   # Use sections to group albums by location, theme, or any other logic.

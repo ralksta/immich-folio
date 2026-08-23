@@ -32,6 +32,8 @@ export interface PhotoItem {
   focalLength?: string;
   /** Natural image aspect ratio (width/height) for masonry layout */
   aspectRatio?: number;
+  /** Present only when the surrounding album offers its originals (#475). */
+  downloadUrl?: string;
 }
 
 interface PhotoGridProps {

@@ -139,6 +139,7 @@ export interface GalleryDerivation {
   albumManualOrders: Record<string, string[]>;
   albumGrids: Record<string, Partial<GridConfig>>;
   albumCoverPositions: Record<string, string>;
+  albumDownloads: Record<string, boolean>;
 }
 
 /**
@@ -162,6 +163,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   const albumManualOrders: Record<string, string[]> = {};
   const albumGrids: Record<string, Partial<GridConfig>> = {};
   const albumCoverPositions: Record<string, string> = {};
+  const albumDownloads: Record<string, boolean> = {};
 
   /** Returns null for an entry whose album ID is not a UUID; callers drop it. */
   function processAlbumEntry(
@@ -246,6 +248,11 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         }
         albumCoverPositions[validatedUuid] = pos;
       }
+
+      // Opt-in per album, never global: a public portfolio must not start
+      // handing out full-resolution originals because one client gallery
+      // needed to (#475).
+      if (value.download === true) albumDownloads[validatedUuid] = true;
     }
     return validatedUuid;
   }
@@ -354,6 +361,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
     albumManualOrders,
     albumGrids,
     albumCoverPositions,
+    albumDownloads,
   };
 }
 
@@ -434,6 +442,7 @@ export function getConfig(): AppConfig {
       albumManualOrders: {},
       albumGrids: {},
       albumCoverPositions: {},
+      albumDownloads: {},
       navLinks: [],
       cacheTtl: env.CACHE_TTL * 1000,
       staleMaxAge: env.STALE_MAX_AGE * 1000,
@@ -460,6 +469,7 @@ export function getConfig(): AppConfig {
     albumManualOrders,
     albumGrids,
     albumCoverPositions,
+    albumDownloads,
   } = deriveGallery(gallery);
 
   const siteSeoTitle = settings.seo?.title || settings.title || env.SITE_TITLE || 'Gallery';
@@ -547,6 +557,7 @@ export function getConfig(): AppConfig {
     albumManualOrders,
     albumGrids,
     albumCoverPositions,
+    albumDownloads,
     navLinks: sanitizeNavLinks(settings.navLinks),
     cacheTtl: env.CACHE_TTL * 1000,
     staleMaxAge: env.STALE_MAX_AGE * 1000,

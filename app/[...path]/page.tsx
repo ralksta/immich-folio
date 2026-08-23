@@ -21,6 +21,7 @@ import {
   videoUrl,
   assetPlaceholder,
   assetExifSummary,
+  downloadUrl,
   assetAspectRatio,
 } from '@/lib/urls';
 import { encodeAssetId } from '@/lib/tokens';
@@ -115,7 +116,12 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
  * `showExif` covers the hover overlay only, and that overlay carries camera,
  * lens and focal length — so it follows the `camera` group, not the panel.
  */
-function toPhotoItems(assets: ImmichAsset[], showExif: boolean): PhotoItem[] {
+function toPhotoItems(
+  assets: ImmichAsset[],
+  showExif: boolean,
+  /** The album offering downloads, or undefined when it does not. */
+  downloadAlbumId?: string,
+): PhotoItem[] {
   return assets
     .filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO')
     .map((a) => {
@@ -131,6 +137,7 @@ function toPhotoItems(assets: ImmichAsset[], showExif: boolean): PhotoItem[] {
         exifUrl: exifUrl(a.id),
         ...(ph ? { blurDataURL: ph.blurDataURL, dominantColor: ph.dominantColor } : {}),
         ...(exif ?? {}),
+        ...(downloadAlbumId ? { downloadUrl: downloadUrl(downloadAlbumId, a.id) } : {}),
         aspectRatio: assetAspectRatio(a),
       };
     });
@@ -254,7 +261,11 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
     const spGrid = subpageData?.subpage.grid;
     const subpageName = subpageData?.subpage.name ?? subpageSlug;
 
-    const images = toPhotoItems(album.assets, config.exif.onHover && config.exif.camera);
+    const images = toPhotoItems(
+      album.assets,
+      config.exif.onHover && config.exif.camera,
+      config.albumDownloads[album.id] ? album.id : undefined,
+    );
 
     // Password gate for protected albums
     const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
@@ -381,7 +392,11 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         notFound();
       }
 
-      const images = toPhotoItems(album.assets, config.exif.onHover && config.exif.camera);
+      const images = toPhotoItems(
+        album.assets,
+        config.exif.onHover && config.exif.camera,
+        config.albumDownloads[album.id] ? album.id : undefined,
+      );
 
       // Password gate for protected albums
       const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
@@ -464,7 +479,11 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
     notFound();
   }
 
-  const images = toPhotoItems(album.assets, config.exif.onHover && config.exif.camera);
+  const images = toPhotoItems(
+    album.assets,
+    config.exif.onHover && config.exif.camera,
+    config.albumDownloads[album.id] ? album.id : undefined,
+  );
 
   // Password gate for protected albums
   const albumGate = await gateIfProtected(album.id, 'album', album.albumName);

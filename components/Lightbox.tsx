@@ -316,6 +316,13 @@ export function Lightbox({
           e.preventDefault();
           cycleSlideshow();
           break;
+        case 'd':
+        case 'D':
+          if (current?.downloadUrl) {
+            e.preventDefault();
+            window.location.href = current.downloadUrl;
+          }
+          break;
         case 'c':
         case 'C':
           e.preventDefault();
@@ -342,6 +349,7 @@ export function Lightbox({
     };
   }, [
     canFullscreen,
+    current,
     cycleSlideshow,
     handleCopyLink,
     handleExifToggle,
@@ -390,6 +398,7 @@ export function Lightbox({
           : t.lightbox.shortcutSlideshowRunning(slideshowSeconds),
     },
     { keys: ['C'], label: t.lightbox.shortcutCopyLink },
+    ...(current?.downloadUrl ? [{ keys: ['D'], label: t.lightbox.shortcutDownload }] : []),
     { keys: ['?', 'H'], label: t.lightbox.shortcutList },
     { keys: ['Esc'], label: t.lightbox.shortcutClose },
   ];
@@ -580,6 +589,34 @@ export function Lightbox({
         </svg>
         {copyState === 'copied' ? t.lightbox.copied : t.lightbox.copyLinkShort}
       </button>
+
+      {/* Download the original — only when the album offers it (#475) */}
+      {current?.downloadUrl && (
+        <a
+          className={`${styles.infoToggle} ${styles.downloadToggle}`}
+          href={current.downloadUrl}
+          download
+          aria-label={t.lightbox.download}
+          title={t.lightbox.downloadTitle}
+        >
+          <svg
+            aria-hidden="true"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          {t.lightbox.downloadShort}
+        </a>
+      )}
 
       {/* Clipboard unavailable — show the link rather than fail quietly */}
       {copyState === 'manual' && (

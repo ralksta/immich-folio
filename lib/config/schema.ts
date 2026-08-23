@@ -198,6 +198,8 @@ export interface AppConfig {
   albumGrids: Record<string, Partial<GridConfig>>;
   /** EXPERIMENTAL: per-album focal point for cover crops (CSS object-position). */
   albumCoverPositions: Record<string, string>;
+  /** Albums whose originals may be downloaded. Absent means no (#475). */
+  albumDownloads: Record<string, boolean>;
   /** EXPERIMENTAL: external links appended to the header navigation. */
   navLinks: NavLinkConfig[];
   cacheTtl: number;
@@ -258,6 +260,8 @@ export interface AlbumEntryObject {
   grid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
   /** EXPERIMENTAL: focal point for the cover crop, e.g. "50% 25%" or "top" */
   coverPosition?: string;
+  /** Offer the original file for download from the lightbox (#475). Off by default. */
+  download?: boolean;
 }
 
 export interface GalleryYaml {

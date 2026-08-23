@@ -89,6 +89,7 @@ describe('dictionary parity', () => {
       'journal.title',
       'lightbox.iso',
       'lightbox.copyLinkShort',
+      'lightbox.downloadShort',
       'subpage.coverAria',
     ]);
 
