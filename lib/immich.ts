@@ -461,7 +461,15 @@ class ImmichClient {
           console.log('─'.repeat(80) + '\n');
         }
 
-        this.cacheSet(cacheKey, filtered);
+        // Not while the install is unfinished. The dummy setup config carries an
+        // empty allowlist, so `filtered` is [] no matter what Immich returned —
+        // and caching that outlives the wizard that fixes it, because
+        // invalidateAll() runs in the install route's own module instance
+        // (Next bundles each route separately; see lib/install.ts). The gallery
+        // then looks empty until the server restarts.
+        if (!this.config.needsSetup) {
+          this.cacheSet(cacheKey, filtered);
+        }
         return filtered;
       } catch (error) {
         return this.staleOrThrow<ImmichAlbum[]>(cacheKey, error, 'album list');
