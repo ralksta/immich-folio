@@ -65,6 +65,23 @@
   transform: scale(1);
 }
 
+/*
+ * The photograph enters with a fade and a slight scale. Under a slideshow
+ * that repeats every few seconds, which is exactly the motion this preference
+ * is about — so it simply appears instead. It still fades in from nothing, so
+ * a half-loaded image is never shown.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .image {
+    transform: none;
+    transition: none;
+  }
+
+  .imageLoaded {
+    transform: none;
+  }
+}
+
 .close {
   position: fixed;
   top: 20px;

@@ -27,6 +27,7 @@ import { useDictionary } from './I18nProvider';
 import { resolveWatermarkOpacity } from '@/lib/config/schema';
 import { formatCamera } from '@/lib/exif';
 import { buildPhotoPermalink } from '@/lib/photoHash';
+import { nextSlideshowSpeed, type SlideshowSpeed } from '@/lib/slideshow';
 
 export interface LightboxWatermark {
   enabled?: boolean;
@@ -73,6 +74,12 @@ export function Lightbox({
    * rather than the button appearing to do nothing.
    */
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'manual'>('idle');
+  /**
+   * Slideshow interval in seconds, or null for off. `s` cycles through the
+   * three speeds and back to off, so the feature needs no configuration and no
+   * control of its own — in keeping with how the viewer treats its other keys.
+   */
+  const [slideshowSeconds, setSlideshowSeconds] = useState<SlideshowSpeed>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -144,6 +151,41 @@ export function Lightbox({
       () => setCopyState('manual'),
     );
   }, [permalink]);
+
+  /**
+   * Auto-advance, so a gallery can run unattended at an exhibition, a fair
+   * booth or on a second screen (#473).
+   *
+   * `onNext` already wraps at the end of the album, so the sequence loops on
+   * its own with nothing further to arrange.
+   */
+  const cycleSlideshow = useCallback(() => {
+    setSlideshowSeconds((current) => nextSlideshowSpeed(current));
+  }, []);
+
+  useEffect(() => {
+    if (slideshowSeconds === null) return;
+    const timer = setInterval(onNext, slideshowSeconds * 1000);
+    return () => clearInterval(timer);
+  }, [slideshowSeconds, onNext]);
+
+  /*
+   * Any deliberate move through the album stops the slideshow. Someone
+   * reaching for an arrow has taken over; leaving the timer running would
+   * yank the photo away from under them a second later.
+   *
+   * The timer above keeps calling the raw `onNext`, so it does not stop
+   * itself.
+   */
+  const manualNext = useCallback(() => {
+    setSlideshowSeconds(null);
+    onNext();
+  }, [onNext]);
+
+  const manualPrev = useCallback(() => {
+    setSlideshowSeconds(null);
+    onPrev();
+  }, [onPrev]);
 
   // A confirmation must not outlive the photo it was about.
   useEffect(() => {
@@ -220,8 +262,8 @@ export function Lightbox({
   }, [currentIndex, assets]);
 
   const { handleTouchStart, handleTouchEnd } = useSwipe({
-    onSwipeLeft: onNext,
-    onSwipeRight: onPrev,
+    onSwipeLeft: manualNext,
+    onSwipeRight: manualPrev,
   });
 
   /*
@@ -256,10 +298,10 @@ export function Lightbox({
           else onClose();
           break;
         case 'ArrowRight':
-          onNext();
+          manualNext();
           break;
         case 'ArrowLeft':
-          onPrev();
+          manualPrev();
           break;
         case 'i':
         case 'I':
@@ -269,6 +311,11 @@ export function Lightbox({
         // Shift+/ on a US layout, Shift+ß on a German one. `h` is the escape
         // hatch for layouts where `?` is awkward — and the one key someone
         // guesses without having been told.
+        case 's':
+        case 'S':
+          e.preventDefault();
+          cycleSlideshow();
+          break;
         case 'c':
         case 'C':
           e.preventDefault();
@@ -295,11 +342,12 @@ export function Lightbox({
     };
   }, [
     canFullscreen,
+    cycleSlideshow,
     handleCopyLink,
     handleExifToggle,
     onClose,
-    onNext,
-    onPrev,
+    manualNext,
+    manualPrev,
     showExifToggle,
     showShortcuts,
     toggleFullscreen,
@@ -334,6 +382,13 @@ export function Lightbox({
           },
         ]
       : []),
+    {
+      keys: ['S'],
+      label:
+        slideshowSeconds === null
+          ? t.lightbox.shortcutSlideshow
+          : t.lightbox.shortcutSlideshowRunning(slideshowSeconds),
+    },
     { keys: ['C'], label: t.lightbox.shortcutCopyLink },
     { keys: ['?', 'H'], label: t.lightbox.shortcutList },
     { keys: ['Esc'], label: t.lightbox.shortcutClose },
@@ -375,7 +430,7 @@ export function Lightbox({
       {/* Previous button */}
       <button
         className={`${styles.nav} ${styles.navPrev}`}
-        onClick={onPrev}
+        onClick={manualPrev}
         aria-label={t.lightbox.previous}
         title={t.lightbox.previousTitle}
       >
@@ -447,7 +502,7 @@ export function Lightbox({
       {/* Next button */}
       <button
         className={`${styles.nav} ${styles.navNext}`}
-        onClick={onNext}
+        onClick={manualNext}
         aria-label={t.lightbox.next}
         title={t.lightbox.nextTitle}
       >
@@ -490,6 +545,17 @@ export function Lightbox({
           {isFav ? t.proofing.saved : t.proofing.favorite}
         </button>
       )}
+
+      {/*
+        Slideshow state, announced but not drawn: a badge over a photograph
+        would be paid for by every visitor, and the shortcut list already
+        carries the speed for anyone who wants to see it.
+      */}
+      <p className="sr-only" role="status">
+        {slideshowSeconds === null
+          ? t.lightbox.slideshowStopped
+          : t.lightbox.slideshowRunning(slideshowSeconds)}
+      </p>
 
       {/* Copy link — bottom left, opposite the info toggle */}
       <button
