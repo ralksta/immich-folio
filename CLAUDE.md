@@ -58,7 +58,7 @@ The whole `content/` directory must be writable: the wizard, admin panel, journa
 
 Singleton `ImmichClient` class exported as `immich`. All Immich API calls are server-side only. Key design points:
 
-- **Album allowlist** — `getAlbums()` fetches `?shared=true` albums but only returns IDs listed in `config.albums`. Requests for unlisted albums are silently rejected.
+- **Album allowlist** — `getAlbums()` returns only the IDs listed in `config.albums`; requests for unlisted albums are silently rejected. That allowlist is the whole protection: the `?shared=true` on the request is inert, because current Immich ignores the parameter and answers with every album either way (#515). Do not treat "shared in Immich" as a second barrier — the admin panel can publish any album.
 - **Request coalescing** — pending promises are stored in `Map<id, Promise>` fields to deduplicate concurrent requests for the same album/asset (important for `Promise.all` calls in grids).
 - **In-memory LRU cache** (`lib/cache.ts`) — 200-entry LRU. Entries carry two deadlines: `staleAt` (the `CACHE_TTL` window, after which `get()` reports a miss) and `hardExpiresAt` (`STALE_MAX_AGE`, after which the entry is dropped). Between the two, `getStale()` still returns the data — `lib/immich.ts` falls back to it when a request fails with `ImmichUnavailableError`, so the gallery keeps serving the last known albums during an Immich outage instead of erroring. Definitive 404s are cached as a `MISSING` sentinel under the normal TTL and are deliberately excluded from the stale window. Cache keys: `albums-list`, `album-<id>`, `asset-<id>`.
 - **Image streaming** — `streamAsset()` proxies binary responses; never loads the full image into memory.

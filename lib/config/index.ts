@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { env } from '../env';
 import { resolveAuthSecret } from '../secret';
 import { getInstallCredentials } from '../install';
@@ -355,6 +357,15 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   };
 }
 
+/** Whether content/about.md exists — the About page has nothing to show without it. */
+function aboutContentExists(): boolean {
+  try {
+    return fs.existsSync(path.join(process.cwd(), 'content', 'about.md'));
+  } catch {
+    return false;
+  }
+}
+
 export function getConfig(): AppConfig {
   // No in-memory config cache: admin saves can land in a different
   // worker/process than page rendering, so a per-worker cache goes stale
@@ -524,7 +535,10 @@ export function getConfig(): AppConfig {
     },
     protection: settings.protection,
     watermark: settings.watermark,
-    aboutEnabled: settings.about?.enabled !== false,
+    // The setting alone is not enough: about.md does not exist until someone
+    // writes it, so a fresh install put a nav link in front of an empty page
+    // (#518). `enabled: false` still hides it even when the file is there.
+    aboutEnabled: settings.about?.enabled !== false && aboutContentExists(),
     albumOverrides,
     albumDescriptions,
     albumPasswords,

@@ -218,6 +218,8 @@ export interface InstallInput {
   siteSubtitle?: string;
   theme?: string;
   albums?: string[];
+  /** Asset IDs for the home page carousel, usually the covers of `albums`. */
+  hero?: string[];
   adminPassword?: string;
 }
 
@@ -245,7 +247,11 @@ export async function completeInstall(input: InstallInput): Promise<void> {
   await fs.promises.mkdir(dir, { recursive: true });
 
   const gallery: GalleryYaml = {
-    hero: [],
+    // A photography portfolio whose front page carries no photograph reads as
+    // unfinished, and the wizard already knows which albums were picked (#518).
+    // The caller seeds these from their Immich covers; an empty list is still
+    // valid, and the admin panel can change them afterwards.
+    hero: (input.hero ?? []).filter((id) => typeof id === 'string'),
     albums: (input.albums ?? []).filter((id) => typeof id === 'string'),
   };
 

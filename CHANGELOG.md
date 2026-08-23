@@ -11,6 +11,21 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Added
 
+- **The setup wizard seeds the home page with photographs**
+  ([#518](https://github.com/ralksta/immich-folio/issues/518)). It always wrote
+  `hero: []`, so a finished portfolio opened with a title and a list of album
+  names and no image — on the one page that most needs to show a photograph.
+  The covers of the albums just chosen are used, up to five, changeable in the
+  admin panel afterwards. Best effort: if the lookup fails the install proceeds
+  with an empty hero, as before.
+
+- **The album picker marks albums Immich does not consider shared**
+  ([#515](https://github.com/ralksta/immich-folio/issues/515)). Not a warning
+  and not a barrier — publishing them has always worked, because Immich ignores
+  the `?shared=true` the list is fetched with. It is there so nobody publishes a
+  private album unaware. The same appears in the config doctor as a warning, and
+  `CLAUDE.md` no longer claims the filter as a security property.
+
 - **`mode:` sets the colour mode visitors land on**
   ([#512](https://github.com/ralksta/immich-folio/issues/512)). `dark` (the
   existing default), `light`, or `auto` to follow the visitor's operating
@@ -69,6 +84,32 @@ Releases up to and including v0.9.2 are documented in the
   change; to keep two-up covers, set `grid.columns: 2` on the subpage.
 
 ### Fixed
+
+- **An ID that is not a UUID is dropped instead of becoming the zero UUID**
+  ([#517](https://github.com/ralksta/immich-folio/issues/517)). `validateUuid()`
+  logged "(Ignored for build/setup)" and returned
+  `00000000-0000-0000-0000-000000000000`, which then travelled on as a real
+  asset ID and came back 400 from Immich — so a leftover placeholder turned the
+  home page into "Something went wrong" while the log claimed it had been
+  ignored. Now it is: one fewer hero image, one album not published, an album
+  falling back to its Immich cover — each with a warning naming the entry.
+
+  **A copied `gallery.yaml.example` therefore yields page structure and no
+  albums**, since its IDs are placeholders. That is the honest outcome; replace
+  them with real album IDs.
+
+- **A malformed `gallery.yaml` shows the setup screen instead of a 500**
+  ([#516](https://github.com/ralksta/immich-folio/issues/516)). The site gate
+  resolves the password through `getConfig()`, which throws on a config it
+  cannot parse — inside `proxy.ts`, before `app/layout.tsx` could fall back to
+  `getConfigOrNull()`. One typo became a bare "Internal Server Error" on every
+  route, with nothing naming the file.
+
+- **The About link no longer points at an empty page**
+  ([#518](https://github.com/ralksta/immich-folio/issues/518)). `about.enabled`
+  defaults to on, but `content/about.md` does not exist until someone writes it,
+  so a fresh install shipped a navigation entry leading nowhere. The link now
+  needs the file as well.
 
 - **A gallery finished through the setup wizard is no longer empty until the
   next restart.** While the install was unfinished the album list was fetched,

@@ -1654,6 +1654,17 @@
   color: var(--admin-text-muted);
 }
 
+/* Quiet marker on an album Immich still considers private (#515). Deliberately
+   not styled as a warning: publishing it is allowed, this only says what it is. */
+.picker-item-note {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.2rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  color: var(--admin-text-muted);
+}
+
 /* ── Config doctor report (#491) ──────────────────────────────
    Each finding is one line with a severity dot: the point is scanning a list
    for the ones that are not green, not reading prose. */
