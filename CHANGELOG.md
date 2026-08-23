@@ -70,6 +70,31 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Fixed
 
+- **A gallery finished through the setup wizard is no longer empty until the
+  next restart.** While the install was unfinished the album list was fetched,
+  filtered against the still-empty allowlist, and the resulting `[]` was cached
+  — and the wizard's cache invalidation runs in the install route's own module
+  instance, so it never reached the one the page render used. The list is not
+  cached while setup is unfinished.
+
+- **`content/gallery.yaml.example` is valid YAML again.** It carried two
+  `subpages:` keys, so js-yaml refused the file — and README, CONTRIBUTING and
+  the setup screen all tell a new user to copy exactly that file, which meant a
+  fresh installation answered HTTP 500 on every route. The two blocks are now
+  one list, and a test loads both shipped examples through the config pipeline
+  so this cannot come back.
+
+- **Corrected three claims in `.env.local.example`.** It advertised Zod
+  validation (Zod is not a dependency), described a fallback from `AUTH_SECRET`
+  to `IMMICH_API_KEY` that does not exist, and left `AUTH_SECRET` commented out
+  — which in production stops the server from starting and in development
+  regenerates a random secret on every restart, invalidating every image URL.
+  It is now set, with a command to generate one.
+
+- **The README's command for reading the setup token works.**
+  `docker compose logs immich-folio` names the container, not the service, and
+  fails with "no such service".
+
 - **Long values in the lightbox info panel no longer run into their label**
   ([#514](https://github.com/ralksta/immich-folio/issues/514)). The rows are
   `space-between` with no gap, so a value that left no free space simply touched
