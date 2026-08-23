@@ -10,7 +10,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import { getConfig } from './config';
+import { env } from './env';
 
 /** Bucket key used when the client cannot be identified with any confidence. */
 const UNIDENTIFIED = 'unknown';
@@ -67,7 +67,14 @@ export function __resetProxyWarningForTests(): void {
  * control the whole header and no parsing strategy can help.
  */
 export function getClientIp(request: NextRequest): string {
-  const hops = getConfig().trustedProxyHops;
+  // Read straight from the environment rather than through getConfig(): the
+  // config parses gallery.yaml and resolves AUTH_SECRET, which throws in
+  // production when neither an env var nor install.json carries one. That made
+  // every rate-limited route — including the install wizard's own API, whose
+  // job is to *create* that secret — answer 500 on a container started with no
+  // environment at all (#519). Rate limiting has no business depending on
+  // whether the site's content config can be read.
+  const hops = env.TRUSTED_PROXY_HOPS;
 
   // @ts-expect-error - Next.js 15+ removed request.ip from types but hosting platforms still populate it
   const directIp = request.ip as string | undefined;

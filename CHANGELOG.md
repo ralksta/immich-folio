@@ -93,6 +93,22 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Fixed
 
+- **The setup wizard runs on a container with no environment variables**
+  ([#519](https://github.com/ralksta/immich-folio/issues/519)). Its own API
+  answered 500, because rate limiting resolved the client IP through
+  `getConfig()`, which resolves `AUTH_SECRET`, which throws in production when
+  none is set — and the secret the wizard is meant to _generate_ therefore had
+  to exist before the wizard could run. That is the deployment
+  `docs/deployment.md` recommends. `getClientIp()` reads the one value it needs
+  straight from the environment now.
+
+- **A container with a broken `gallery.yaml` no longer restarts in a loop**
+  ([#519](https://github.com/ralksta/immich-folio/issues/519)). `/api/health` is
+  the Dockerfile's health probe and reported 503 when the config could not be
+  parsed. Restarting cannot fix a YAML typo, and the app is still serving the
+  setup screen and `/admin`, which is where the fix happens. It answers 200 with
+  `status: "setup"` instead. An unreachable Immich keeps its 503.
+
 - **An ID that is not a UUID is dropped instead of becoming the zero UUID**
   ([#517](https://github.com/ralksta/immich-folio/issues/517)). `validateUuid()`
   logged "(Ignored for build/setup)" and returned
