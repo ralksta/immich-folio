@@ -160,6 +160,8 @@ export interface AppConfig {
     noFollow: boolean;
   };
   heroImages: string[];
+  /** How the hero list is presented: crossfade, or one image per calendar day. */
+  heroRotation: HeroRotation;
   /** Colour mode a first-time visitor lands on; their own choice overrides it. */
   colorMode: ColorMode;
   exifOnHover: boolean;
@@ -290,6 +292,17 @@ export interface GalleryYaml {
       }>;
 }
 
+/**
+ * How the hero list is shown. 'carousel' is the long-standing crossfade;
+ * 'daily' picks one image per calendar day (#476).
+ */
+export type HeroRotation = 'carousel' | 'daily';
+
+/** Anything unrecognised falls back to the existing behaviour. */
+export function resolveHeroRotation(raw?: string): HeroRotation {
+  return raw === 'daily' ? 'daily' : 'carousel';
+}
+
 export interface SettingsYaml {
   title?: string;
   subtitle?: string;
@@ -305,6 +318,8 @@ export interface SettingsYaml {
   mode?: ColorMode;
   exifOnHover?: boolean;
   exif?: ExifDisplayYaml;
+  /** 'carousel' (default) crossfades the hero list; 'daily' shows one per day. */
+  heroRotation?: HeroRotation;
   map?: boolean;
   transitions?: boolean;
   scrollToTop?: boolean;

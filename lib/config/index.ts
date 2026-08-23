@@ -10,6 +10,7 @@ import {
   slugify,
   resolveExifDisplay,
   resolveColorMode,
+  resolveHeroRotation,
   AppConfig,
   AlbumEntryObject,
   SubpageConfig,
@@ -412,6 +413,7 @@ export function getConfig(): AppConfig {
         noFollow: true,
       },
       heroImages: [],
+      heroRotation: 'carousel',
       colorMode: 'dark',
       exifOnHover: true,
       exif: resolveExifDisplay(),
@@ -492,6 +494,7 @@ export function getConfig(): AppConfig {
           .map((id) => validateUuid(id, 'gallery.yaml hero'))
           .filter((id): id is string => id !== null)
       : [],
+    heroRotation: resolveHeroRotation(settings.heroRotation),
     colorMode: resolveColorMode(settings.mode),
     exifOnHover: settings.exifOnHover !== false,
     exif: resolveExifDisplay(settings.exif, settings.exifOnHover),
