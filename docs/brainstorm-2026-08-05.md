@@ -271,10 +271,11 @@ gibt, überhaupt PRs zu stellen.
 
 ---
 
-### B8. Kleinigkeit: Projektname in `package.json` — **XS**
+### B8. Kleinigkeit: Projektname in `package.json` — **XS** — ✅ erledigt
 
 `"name": "immich-lightbox"` bei einem Projekt namens Immich Folio. Fällt jedem
-Contributor beim ersten `npm install` auf.
+Contributor beim ersten `npm install` auf. Heißt seit dem Housekeeping-PR
+`immich-folio`.
 
 ---
 

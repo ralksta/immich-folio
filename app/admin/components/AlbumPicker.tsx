@@ -11,6 +11,8 @@ interface ImmichAlbumInfo {
   thumbnailAssetId: string | null;
   assetCount: number;
   isConfigured: boolean;
+  /** Immich's own flag. Undefined on older Immich — silence beats a false alarm. */
+  shared?: boolean;
 }
 
 interface Props {
@@ -89,6 +91,13 @@ export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }:
                     {album.assetCount} photos
                     {album.description && ` · ${album.description.slice(0, 40)}`}
                   </span>
+                  {/* Not a warning and not a barrier: publishing an unshared
+                      album has always worked, because Immich ignores the
+                      ?shared=true filter this list is fetched with (#515). It
+                      is here so nobody publishes a private album unaware. */}
+                  {album.shared === false && (
+                    <span className="picker-item-note">Not shared in Immich</span>
+                  )}
                 </div>
                 <div className="picker-item-action">
                   {isUsed ? (

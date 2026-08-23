@@ -92,8 +92,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Could not reach Immich at this URL' }, { status: 502 });
   }
 
+  // The covers of the albums just chosen, as the home page hero. One extra
+  // request during install, and it is the difference between a portfolio that
+  // opens with a photograph and one that opens with a list of names (#518).
+  const hero = albums.length ? await fetchAlbumCovers(apiBase, apiKey, albums) : [];
+
   try {
     await completeInstall({
+      hero,
       apiUrl,
       apiKey,
       siteTitle: typeof body.siteTitle === 'string' ? body.siteTitle : undefined,
@@ -113,5 +119,39 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error('[Install] Failed to write configuration files:', err);
     return NextResponse.json({ error: 'Failed to write configuration files' }, { status: 500 });
+  }
+}
+
+/** How many covers the home page carousel is seeded with. */
+const HERO_SEED_MAX = 5;
+
+/**
+ * Cover asset IDs for the given albums, in the order they were chosen.
+ *
+ * Best effort by design: this runs while the wizard is finishing, and a hero
+ * image is a nicety. Anything that goes wrong here leaves `hero: []`, which is
+ * exactly what the wizard wrote before.
+ */
+async function fetchAlbumCovers(
+  apiBase: string,
+  apiKey: string,
+  albumIds: string[],
+): Promise<string[]> {
+  try {
+    const res = await fetch(`${apiBase}/albums`, {
+      headers: { 'x-api-key': apiKey, Accept: 'application/json' },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) return [];
+
+    const all = (await res.json()) as Array<{ id: string; albumThumbnailAssetId: string | null }>;
+    const covers = new Map(all.map((a) => [a.id, a.albumThumbnailAssetId]));
+
+    return albumIds
+      .map((id) => covers.get(id))
+      .filter((assetId): assetId is string => !!assetId && UUID_REGEX.test(assetId))
+      .slice(0, HERO_SEED_MAX);
+  } catch {
+    return [];
   }
 }

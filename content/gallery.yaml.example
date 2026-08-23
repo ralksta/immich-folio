@@ -42,16 +42,23 @@ albums:
         - "asset-uuid-opening-frame"
         - "asset-uuid-second-frame"
 
-# Subpages: group albums under custom URL paths
+# Subpages: group albums under custom URL paths.
+# One `subpages:` key for the whole file — every page below is one entry in it.
 subpages:
-  "Travel":
-    - "album-uuid-3"
-    - "album-uuid-4"
-  "Projects":
-    title: "My Creative Projects" # Optional: Header title, defaults to Navigation key ("Projects")
+  # Simple form: a name and its albums.
+  - name: Travel
+    albums:
+      - "album-uuid-3"
+      - "album-uuid-4"
+
+  - name: Projects
+    title: "My Creative Projects" # Optional: Header title, defaults to `name`
     subtitle: "A collection of 2026 highlights in 35mm film." # Optional: Sub-text for headers
     password: "your-password" # Optional protection
     # hidden: true # EXPERIMENTAL: reachable by direct link, but not shown in navigation
+    # grid: # Optional per-page grid override (wins over settings.yaml)
+    #   columns: 3 # how many album covers per row on this page
+    #   gap: 8 # spacing between the covers, in px — omit to keep the theme's own
     albums:
       - "album-uuid-5"
       - "album-uuid-6":
@@ -63,11 +70,10 @@ subpages:
           #   columns: 2
           # coverPosition: "50% 25%" # EXPERIMENTAL: focal point for the cover crop ("top", "center bottom", "50% 25%")
 
-# ── Subpage with Sections ──────────────────────────────────────────
-# Use sections to group albums by location, theme, or any other logic.
-# A typographic table of contents is rendered above the albums.
-# Sections are optional: leave them out and you get a flat album grid (as above).
-subpages:
+  # ── Subpage with Sections ────────────────────────────────────────
+  # Use sections to group albums by location, theme, or any other logic.
+  # A typographic table of contents is rendered above the albums.
+  # Sections are optional: leave them out and you get a flat album grid (as above).
   - name: Japan
     title: Japan
     subtitle: "Reisen durch ein Land voller Kontraste."

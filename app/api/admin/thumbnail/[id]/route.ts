@@ -17,7 +17,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 
   const config = getConfig();
-  if (config.needsSetup) {
+  // Credentials, not `needsSetup`: this route is how the operator picks the
+  // albums that gallery.yaml is built from, so refusing to run until that file
+  // exists is a deadlock (#507).
+  if (config.needsCredentials) {
     return NextResponse.json({ error: 'Not configured' }, { status: 503 });
   }
 

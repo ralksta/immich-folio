@@ -54,7 +54,8 @@
 
 /* Photo grid: generous spacing, cinematic transitions */
 [data-preset='editorial'] .photo-grid {
-  column-gap: 32px;
+  /* Preset default only — an explicit grid.gap lands inline and wins (#513). */
+  --grid-gap: 32px;
 }
 
 [data-preset='editorial'] .photo-grid__item {
@@ -161,7 +162,7 @@
 
 /* Subpage grid */
 [data-preset='editorial'] .subpage-grid {
-  gap: 2px;
+  --subpage-gap: 2px;
 }
 
 [data-preset='editorial'] .subpage-grid__item {

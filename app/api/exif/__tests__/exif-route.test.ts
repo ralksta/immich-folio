@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 /**
- * EXPERIMENTAL captions (L10): the route serves the Immich asset description
- * as a caption. Captions are editorial, not technical — so exifOnHover: false
- * must strip the technical fields but still serve the caption, instead of the
- * old blanket 403.
+ * The route serves the Immich asset description as a caption. It used to do so
+ * unconditionally — captions were treated as editorial rather than technical —
+ * which left it as the one field an operator could not hide (#506). Each group
+ * is now switchable, and `exifOnHover: false` keeps meaning "no technical EXIF"
+ * without touching captions.
  */
 
 vi.mock('@/lib/config', () => ({
@@ -27,6 +28,8 @@ vi.mock('@/lib/rate-limit', () => ({
 }));
 
 import { GET } from '../[id]/route';
+// Not from '@/lib/config' — that module is mocked above.
+import { resolveExifDisplay, type ExifDisplayYaml } from '@/lib/config/schema';
 import { getConfig } from '@/lib/config';
 import { immich } from '@/lib/immich';
 import { NextRequest } from 'next/server';
@@ -55,6 +58,15 @@ function makeRequest() {
 
 const params = { params: Promise.resolve({ id: 'token123' }) };
 
+/** A config shaped the way getConfig() builds it, for the groups under test. */
+function configWith(raw?: ExifDisplayYaml, exifOnHover?: boolean) {
+  return {
+    exifOnHover: exifOnHover !== false,
+    exif: resolveExifDisplay(raw, exifOnHover),
+    rateLimitRpm: 120,
+  };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockAssetInfo.mockResolvedValue(EXIF_ASSET);
@@ -62,7 +74,7 @@ beforeEach(() => {
 
 describe('GET /api/exif/[id] captions', () => {
   it('includes the trimmed description alongside technical fields', async () => {
-    mockConfig.mockReturnValue({ exifOnHover: true, rateLimitRpm: 120 });
+    mockConfig.mockReturnValue(configWith());
 
     const res = await GET(makeRequest(), params);
     expect(res.status).toBe(200);
@@ -72,7 +84,7 @@ describe('GET /api/exif/[id] captions', () => {
   });
 
   it('serves only the caption when exifOnHover is disabled', async () => {
-    mockConfig.mockReturnValue({ exifOnHover: false, rateLimitRpm: 120 });
+    mockConfig.mockReturnValue(configWith(undefined, false));
 
     const res = await GET(makeRequest(), params);
     expect(res.status).toBe(200);
@@ -83,7 +95,7 @@ describe('GET /api/exif/[id] captions', () => {
   });
 
   it('omits the description entirely when the asset has none', async () => {
-    mockConfig.mockReturnValue({ exifOnHover: true, rateLimitRpm: 120 });
+    mockConfig.mockReturnValue(configWith());
     mockAssetInfo.mockResolvedValue({
       exifInfo: { ...EXIF_ASSET.exifInfo, description: null },
     });
@@ -91,5 +103,52 @@ describe('GET /api/exif/[id] captions', () => {
     const res = await GET(makeRequest(), params);
     const body = await res.json();
     expect(body).not.toHaveProperty('description');
+  });
+
+  it('drops the caption when the group is off', async () => {
+    mockConfig.mockReturnValue(configWith({ caption: false }));
+
+    const body = await (await GET(makeRequest(), params)).json();
+    expect(body).not.toHaveProperty('description');
+    expect(body.model).toBe('X-T5');
+  });
+
+  it('drops the location without touching the camera', async () => {
+    mockConfig.mockReturnValue(configWith({ location: false }));
+
+    const body = await (await GET(makeRequest(), params)).json();
+    expect(body).not.toHaveProperty('city');
+    expect(body).not.toHaveProperty('country');
+    expect(body.model).toBe('X-T5');
+    expect(body.iso).toBe(200);
+  });
+
+  it('drops the exposure settings without touching the camera', async () => {
+    mockConfig.mockReturnValue(configWith({ settings: false }));
+
+    const body = await (await GET(makeRequest(), params)).json();
+    expect(body).not.toHaveProperty('iso');
+    expect(body).not.toHaveProperty('fNumber');
+    expect(body.lensModel).toBe('XF 35mm');
+  });
+
+  /** An empty object would render as a blank panel rather than "no data". */
+  it('answers 404 when every group is switched off', async () => {
+    mockConfig.mockReturnValue(
+      configWith({ camera: false, settings: false, location: false, caption: false }),
+    );
+
+    const res = await GET(makeRequest(), params);
+    expect(res.status).toBe(404);
+  });
+
+  it('answers 404 when the enabled groups carry nothing for this asset', async () => {
+    mockConfig.mockReturnValue(configWith({ camera: false, settings: false, caption: false }));
+    mockAssetInfo.mockResolvedValue({
+      exifInfo: { ...EXIF_ASSET.exifInfo, city: null, country: null },
+    });
+
+    const res = await GET(makeRequest(), params);
+    expect(res.status).toBe(404);
   });
 });

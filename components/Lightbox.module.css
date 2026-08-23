@@ -175,6 +175,17 @@
 }
 
 .exifPanel {
+  /* Both floating panels paint their own dark surface, so their contents have
+     to stay light-on-dark. In dark mode the theme tokens already are, and each
+     preset tints them (warm #6b6359 in editorial, neutral #555 in monograph) —
+     so they are used as-is and dark mode is untouched. Only light mode, where
+     --text-primary is near-black and put dark text on that dark panel (#511),
+     swaps in fixed light values below. .exifCaption never had the bug because
+     it was hardcoded. */
+  --lb-panel-text: var(--text-primary);
+  --lb-panel-text-dim: var(--text-secondary);
+  --lb-panel-muted: var(--text-muted);
+  --lb-panel-border: var(--border-subtle);
   position: fixed;
   bottom: 60px;
   right: 24px;
@@ -182,7 +193,7 @@
   background: rgba(20, 20, 20, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--lb-panel-border);
   border-radius: var(--radius-lg);
   padding: 20px;
   min-width: 240px;
@@ -214,10 +225,14 @@
 
 .exifRow {
   display: flex;
+  /* `space-between` distributes the *free* space, so a value long enough to
+     leave none ran straight into its own label (#514). An explicit gap is the
+     floor; the panel has no max-width and grows to keep it. */
+  gap: 16px;
   justify-content: space-between;
   align-items: baseline;
   padding: 6px 0;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--lb-panel-border);
 }
 
 .exifRow:last-child {
@@ -226,21 +241,123 @@
 
 .exifLabel {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--lb-panel-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .exifValue {
   font-size: 0.85rem;
-  color: var(--text-primary);
+  color: var(--lb-panel-text);
   font-weight: 400;
+  /* Right-aligned so a value that does wrap stays flush with the ones above it,
+     rather than starting a ragged second column. */
+  text-align: right;
 }
 
 /* Marks the ISO row so a preset can keep its label — "200" alone reads
    as nothing once the labels are hidden. */
 .exifRowIso {
   display: flex;
+}
+
+/* ── Keyboard shortcuts ─────────────────────────────
+   The panel has no trigger of its own — `?` or `h` opens it. It sits where a
+   trigger would have been, bottom left, clear of the EXIF panel opposite. */
+.shortcutsPanel {
+  /* Both floating panels paint their own dark surface, so their contents have
+     to stay light-on-dark. In dark mode the theme tokens already are, and each
+     preset tints them (warm #6b6359 in editorial, neutral #555 in monograph) —
+     so they are used as-is and dark mode is untouched. Only light mode, where
+     --text-primary is near-black and put dark text on that dark panel (#511),
+     swaps in fixed light values below. .exifCaption never had the bug because
+     it was hardcoded. */
+  --lb-panel-text: var(--text-primary);
+  --lb-panel-text-dim: var(--text-secondary);
+  --lb-panel-muted: var(--text-muted);
+  --lb-panel-border: var(--border-subtle);
+  position: fixed;
+  bottom: 62px;
+  left: 24px;
+  z-index: 1001;
+  animation: exif-slide-up var(--transition-normal) ease forwards;
+  min-width: 240px;
+  padding: 16px 20px;
+  background: rgba(20, 20, 20, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--lb-panel-border);
+  border-radius: var(--radius-lg);
+}
+
+.shortcutsTitle {
+  margin: 0 0 10px;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--lb-panel-muted);
+}
+
+.shortcutsList {
+  margin: 0;
+}
+
+/* Two columns, not space-between: a ragged left edge on the descriptions is
+   what makes a shortcut list hard to scan. */
+.shortcutsRow {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--lb-panel-border);
+}
+
+.shortcutsRow:last-child {
+  border-bottom: none;
+}
+
+.shortcutsKeys {
+  display: flex;
+  flex: 0 0 66px;
+  gap: 4px;
+}
+
+.shortcutsLabel {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--lb-panel-text);
+}
+
+.kbd {
+  min-width: 22px;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-caption);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--lb-panel-text-dim);
+}
+
+/* The panels stay dark while the page around them turns light, so their
+   contents cannot follow the theme here. Preset tinting is lost in light mode;
+   an unreadable panel is the worse trade (#511). */
+:global([data-theme='light']) .exifPanel,
+:global([data-theme='light']) .shortcutsPanel {
+  --lb-panel-text: rgba(255, 255, 255, 0.92);
+  --lb-panel-text-dim: rgba(255, 255, 255, 0.62);
+  --lb-panel-muted: rgba(255, 255, 255, 0.5);
+  --lb-panel-border: rgba(255, 255, 255, 0.12);
+}
+
+/* No keyboard, nothing to show. */
+@media (hover: none) {
+  .shortcutsPanel {
+    display: none;
+  }
 }
 
 /* ── Responsive ──────────────────────────────────── */
@@ -427,6 +544,24 @@
 
 :global([data-preset='studio-modern']) .favToggle {
   right: 176px;
+}
+
+/* The EXIF strip owns the bottom edge in this preset, so the panel opens from
+   the top instead. */
+:global([data-preset='studio-modern']) .shortcutsPanel {
+  top: 58px;
+  bottom: auto;
+  left: 32px;
+  border-radius: 0;
+  background: rgba(10, 10, 10, 0.94);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:global([data-preset='studio-modern']) .shortcutsTitle,
+:global([data-preset='studio-modern']) .kbd {
+  border-radius: 0;
+  font-family: var(--font-caption);
 }
 
 /* Film-edge strip replaces the popup panel */

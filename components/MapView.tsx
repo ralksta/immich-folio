@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { useDictionary } from './I18nProvider';
 
 /** Escapes special HTML characters to prevent XSS in Leaflet popup templates. */
 function escapeHtml(str: string): string {
@@ -28,6 +29,7 @@ interface MapLocationPublic {
 }
 
 export function MapView() {
+  const t = useDictionary();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<unknown>(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +54,7 @@ export function MapView() {
           /* ignore */
         }
         console.error('[Map] API error', res.status, detail);
-        setError(`Failed to load map data (${res.status})`);
+        setError(t.map.loadFailed(res.status));
         setLoading(false);
         return;
       }
@@ -107,7 +109,7 @@ export function MapView() {
             <div class="map-popup__body">
               <h3 class="map-popup__city">${escapeHtml(loc.city)}</h3>
               <p class="map-popup__country">${escapeHtml(loc.country)}</p>
-              <p class="map-popup__count">${loc.photoCount} photo${loc.photoCount === 1 ? '' : 's'}</p>
+              <p class="map-popup__count">${escapeHtml(t.common.photos(loc.photoCount))}</p>
               <div class="map-popup__albums">${albumLinks}</div>
             </div>
           </div>
@@ -135,7 +137,7 @@ export function MapView() {
     init().catch((err) => {
       console.error('[Map] Init error:', err);
       if (!cancelled) {
-        setError('Failed to initialize map');
+        setError(t.map.initFailed);
         setLoading(false);
       }
     });
@@ -147,7 +149,7 @@ export function MapView() {
         mapRef.current = null;
       }
     };
-  }, []);
+  }, [t]);
 
   if (error) {
     return (
@@ -194,7 +196,7 @@ export function MapView() {
             <circle cx="12" cy="12" r="10" strokeOpacity="0.25"></circle>
             <path d="M12 2a10 10 0 0 1 10 10"></path>
           </svg>
-          <p>Loading map…</p>
+          <p>{t.map.loading}</p>
           <style>{`
             @keyframes spin {
               from { transform: rotate(0deg); }

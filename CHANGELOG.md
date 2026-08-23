@@ -7,7 +7,239 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
-## [Unreleased]
+## [0.12.0] — 2026-08-23
+
+### Added
+
+- **The setup wizard seeds the home page with photographs**
+  ([#518](https://github.com/ralksta/immich-folio/issues/518)). It always wrote
+  `hero: []`, so a finished portfolio opened with a title and a list of album
+  names and no image — on the one page that most needs to show a photograph.
+  The covers of the albums just chosen are used, up to five, changeable in the
+  admin panel afterwards. Best effort: if the lookup fails the install proceeds
+  with an empty hero, as before.
+
+- **The album picker marks albums Immich does not consider shared**
+  ([#515](https://github.com/ralksta/immich-folio/issues/515)). Not a warning
+  and not a barrier — publishing them has always worked, because Immich ignores
+  the `?shared=true` the list is fetched with. It is there so nobody publishes a
+  private album unaware. The same appears in the config doctor as a warning.
+
+- **`mode:` sets the colour mode visitors land on**
+  ([#512](https://github.com/ralksta/immich-folio/issues/512)). `dark` (the
+  existing default), `light`, or `auto` to follow the visitor's operating
+  system — in `settings.yaml` or under Settings › Theme. It is rendered onto
+  `<html>` server-side, so the first paint is already right. The admin panel's
+  own light/dark switch previews your view and never decided what visitors saw,
+  which is what made this necessary; a visitor's choice from the header toggle
+  is still remembered on their device and still wins.
+
+- **`exif:` decides which EXIF groups a site publishes**
+  ([#506](https://github.com/ralksta/immich-folio/issues/506)). Four switches —
+  `camera`, `settings`, `location`, `caption` — in `settings.yaml` or under
+  Settings › Portfolio Features. They govern all three places the data appears
+  (grid hover, lightbox panel, album header), so those cannot disagree. Grouped
+  rather than field-by-field on purpose: a list of individual field names is a
+  small language of its own, for a choice people make in groups anyway.
+
+  `exifOnHover` keeps its meaning and supplies the default for the three
+  technical groups, so an existing `exifOnHover: false` still hides all of them.
+  With every group off, the lightbox withdraws its info button and the `i` key
+  instead of opening an empty panel.
+
+- **The lightbox lists its keyboard shortcuts under `?` or `H`**
+  ([#501](https://github.com/ralksta/immich-folio/pull/501)). The viewer has
+  always had keys — arrows, `i`, `Esc` — with nothing that wrote them down.
+  There is deliberately no button and no first-run hint: a permanent control in
+  the corner of a photograph costs every visitor something, and whoever tries
+  `?` or `h` finds the list. `Esc` now unwinds one layer at a time, closing the
+  panel before the viewer.
+
+- **`F` puts the lightbox into real fullscreen**
+  ([#474](https://github.com/ralksta/immich-folio/issues/474)). The viewer
+  covered the viewport but not the browser's own chrome, so every photo was
+  shown inside a tab strip and a URL bar. `F` toggles it, the shortcut panel
+  lists it, and `Esc` unwinds one layer at a time — shortcut panel, then
+  fullscreen, then the viewer. Leaving the lightbox while fullscreen returns the
+  page to normal instead of stranding the gallery there. Browsers without
+  element fullscreen (iPhone Safari, which offers it for video only) do not
+  advertise the key.
+
+- **The album covers on a subpage follow the grid setting**
+  ([#460](https://github.com/ralksta/immich-folio/pull/460)). They were tiled
+  two-up by a hardcoded CSS rule, so the site-wide `grid.columns` only ever
+  reached the photo grids inside an album and the covers stayed enormous on wide
+  screens. A subpage can also override the count and the spacing on its own,
+  under Pages › _subpage_ › **Album Cover Grid**. Tablet widths show at most two
+  covers per row, phones one, as before.
+
+  `gap` deliberately does **not** follow the global setting: each theme preset
+  picks its cover spacing as part of its look (1px `monograph`, 20px
+  `studio-modern`), so only an explicit per-subpage `gap` overrides it. See
+  [docs/gallery-config.md](docs/gallery-config.md#album-covers-on-a-subpage).
+
+  **A site whose `settings.yaml` sets `grid.columns` to anything other than 2
+  will see its subpage cover grids change on upgrade.** That is the point of the
+  change; to keep two-up covers, set `grid.columns: 2` on the subpage.
+
+### Security
+
+- **The admin session token is bounded before it is parsed**
+  ([#505](https://github.com/ralksta/immich-folio/pull/505)). A cookie longer
+  than 512 characters is rejected outright. Reported as a memory-exhaustion DoS;
+  the decode it named is only reached after the HMAC matches, which needs the
+  signing key, so this is hygiene at the boundary rather than a fix for a
+  reachable exhaustion — but a bound on untrusted input costs nothing.
+
+### Fixed
+
+- **The setup wizard runs on a container with no environment variables**
+  ([#519](https://github.com/ralksta/immich-folio/issues/519)). Its own API
+  answered 500, because rate limiting resolved the client IP through
+  `getConfig()`, which resolves `AUTH_SECRET`, which throws in production when
+  none is set — and the secret the wizard is meant to _generate_ therefore had
+  to exist before the wizard could run. That is the deployment
+  `docs/deployment.md` recommends. `getClientIp()` reads the one value it needs
+  straight from the environment now.
+
+- **A container with a broken `gallery.yaml` no longer restarts in a loop**
+  ([#519](https://github.com/ralksta/immich-folio/issues/519)). `/api/health` is
+  the Dockerfile's health probe and reported 503 when the config could not be
+  parsed. Restarting cannot fix a YAML typo, and the app is still serving the
+  setup screen and `/admin`, which is where the fix happens. It answers 200 with
+  `status: "setup"` instead. An unreachable Immich keeps its 503.
+
+- **An ID that is not a UUID is dropped instead of becoming the zero UUID**
+  ([#517](https://github.com/ralksta/immich-folio/issues/517)). `validateUuid()`
+  logged "(Ignored for build/setup)" and returned
+  `00000000-0000-0000-0000-000000000000`, which then travelled on as a real
+  asset ID and came back 400 from Immich — so a leftover placeholder turned the
+  home page into "Something went wrong" while the log claimed it had been
+  ignored. Now it is: one fewer hero image, one album not published, an album
+  falling back to its Immich cover — each with a warning naming the entry.
+
+  **A copied `gallery.yaml.example` therefore yields page structure and no
+  albums**, since its IDs are placeholders. That is the honest outcome; replace
+  them with real album IDs.
+
+- **A malformed `gallery.yaml` shows the setup screen instead of a 500**
+  ([#516](https://github.com/ralksta/immich-folio/issues/516)). The site gate
+  resolves the password through `getConfig()`, which throws on a config it
+  cannot parse — inside `proxy.ts`, before `app/layout.tsx` could fall back to
+  `getConfigOrNull()`. One typo became a bare "Internal Server Error" on every
+  route, with nothing naming the file.
+
+- **The About link no longer points at an empty page**
+  ([#518](https://github.com/ralksta/immich-folio/issues/518)). `about.enabled`
+  defaults to on, but `content/about.md` does not exist until someone writes it,
+  so a fresh install shipped a navigation entry leading nowhere. The link now
+  needs the file as well.
+
+- **A gallery finished through the setup wizard is no longer empty until the
+  next restart.** While the install was unfinished the album list was fetched,
+  filtered against the still-empty allowlist, and the resulting `[]` was cached
+  — and the wizard's cache invalidation runs in the install route's own module
+  instance, so it never reached the one the page render used. The list is not
+  cached while setup is unfinished.
+
+- **`content/gallery.yaml.example` is valid YAML again.** It carried two
+  `subpages:` keys, so js-yaml refused the file — and README, CONTRIBUTING and
+  the setup screen all tell a new user to copy exactly that file, which meant a
+  fresh installation answered HTTP 500 on every route. The two blocks are now
+  one list, and a test loads both shipped examples through the config pipeline
+  so this cannot come back.
+
+- **Corrected three claims in `.env.local.example`.** It advertised Zod
+  validation (Zod is not a dependency), described a fallback from `AUTH_SECRET`
+  to `IMMICH_API_KEY` that does not exist, and left `AUTH_SECRET` commented out
+  — which in production stops the server from starting and in development
+  regenerates a random secret on every restart, invalidating every image URL.
+  It is now set, with a command to generate one.
+
+- **The README's command for reading the setup token works.**
+  `docker compose logs immich-folio` names the container, not the service, and
+  fails with "no such service".
+
+- **Long values in the lightbox info panel no longer run into their label**
+  ([#514](https://github.com/ralksta/immich-folio/issues/514)). The rows are
+  `space-between` with no gap, so a value that left no free space simply touched
+  its label — `CAMERALEICA CAMERA AG LEICA Q3`. The rows carry a gap now, and
+  the camera name drops a maker the model already spells out, so a Leica reads
+  `LEICA Q3` and a Nikon `NIKON Z 6` instead of saying the brand twice.
+
+- **The lightbox info panel is readable in light mode**
+  ([#511](https://github.com/ralksta/immich-folio/issues/511)). The EXIF panel
+  and the shortcut list paint their own dark surface but took their text and
+  border colours from the site theme, so in light mode they rendered dark text
+  on a dark panel. Both now carry their own light-on-dark colours, as the
+  caption line always did. The rest of the lightbox chrome still follows the
+  theme, because the overlay behind it does too.
+
+- **`grid.gap` reaches every theme**
+  ([#513](https://github.com/ralksta/immich-folio/issues/513)). `minimal`,
+  `editorial` and `monograph` hardcoded the column spacing on `.photo-grid`, so
+  the Gap Spacing control did nothing in those presets — while the row spacing
+  followed it, leaving columns and rows visibly out of step. Each preset now
+  declares its spacing as a default that an explicit `grid.gap` overrides.
+
+  **An unset `gap` is now the preset's own spacing rather than a flat 12px.**
+  That is what those three presets already rendered horizontally, so the visible
+  change is that their rows finally match their columns. Sites that set `gap`
+  are unaffected, and `classic` and `studio-modern` keep the 12px they had.
+
+- **The Immich description can be switched off**
+  ([#506](https://github.com/ralksta/immich-folio/issues/506)). It was served
+  regardless of `exifOnHover`, on the grounds that a caption is editorial rather
+  than metadata — which made it the one field an operator could not hide, while
+  Immich descriptions are exactly where people keep private notes and whatever a
+  decade of cataloguing software left behind. It is now a group like any other.
+
+- **The album header no longer picks a camera at random**
+  ([#509](https://github.com/ralksta/immich-folio/issues/509)). The date and the
+  camera/lens line were read off the first asset that happened to carry EXIF, so
+  an album shot on three bodies advertised whichever one sorted first — and
+  changing the album's sort mode changed the claim. The line now appears only
+  when the whole album agrees on one body and one lens, and the date spans a
+  range when the photos do.
+
+- **The lightbox watermark honours the configured opacity**
+  ([#508](https://github.com/ralksta/immich-folio/issues/508)). The docs and the
+  admin slider express it as a fraction (`opacity: 0.5`), but the lightbox
+  divided by 100 anyway — so a configured `0.9` rendered as `0.009` and was
+  invisible, and the workaround of writing `90` came back as "9000%" in the
+  admin panel. The fraction is now used as written; a value above 1 is still
+  read as a percentage so those workarounds keep working, and the panel writes
+  the fraction back on the next save. Its slider reaches 100% instead of
+  stopping at 80%.
+
+- **A deployment with credentials but no `gallery.yaml` no longer reports
+  "System Degraded"** ([#507](https://github.com/ralksta/immich-folio/issues/507)).
+  A missing `gallery.yaml` and missing Immich credentials were one and the same
+  `needsSetup` flag, and the Immich client returned `null` on that flag before
+  ever reaching the network. The admin panel showed the server as disconnected,
+  the album pickers refused with "Immich not configured" — so the panel could
+  not create the very file it was waiting for — and nothing at all appeared in
+  the log. The two faults are now separate: with credentials present, Immich is
+  contacted and the admin pickers work, the badge reads "Setup Incomplete" and
+  names what is missing, and an unreachable Immich is logged instead of being
+  swallowed.
+
+- **The first-run setup token is printed at startup**, not on the first visit to
+  `/install`. An operator who set `ADMIN_PASSWORD` and went straight to `/admin`
+  never triggered it and found nothing in `docker logs`. The setup screen now
+  points at the wizard as well.
+
+- **A failing site no longer renders a blank page.** `app/error.tsx` is rendered
+  _inside_ the root layout, so it could never catch the layout itself throwing —
+  and the layout is what reads the configuration and the request headers. The
+  new `app/global-error.tsx` replaces the whole document with a readable
+  message and a retry, self-contained so it works without the stylesheet or the
+  theme variables.
+
+### Changed
+
+- The package is named `immich-folio` instead of `immich-lightbox`, which it had
+  kept from before the rename. Only visible when working on the source.
 
 ## [0.11.0] — 2026-08-15
 

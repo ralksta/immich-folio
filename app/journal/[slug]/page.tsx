@@ -19,6 +19,7 @@ import type { PhotoItem } from '@/app/[...path]/PhotoGrid';
 import type { ImmichAsset } from '@/lib/immich';
 import PasswordGate from '@/components/PasswordGate';
 import { BackLink } from '@/components/BackLink';
+import { getServerDictionary } from '@/lib/i18n/server';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
@@ -30,11 +31,12 @@ interface JournalDetailPageProps {
 export async function generateMetadata({ params }: JournalDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
   const entry = await readJournalEntry(slug);
-  if (!entry) return { title: 'Not Found' };
+  const t = getServerDictionary();
+  if (!entry) return { title: t.journal.notFound };
 
   const { frontmatter } = entry.parsed;
   const title = frontmatter.title || slug;
-  const description = frontmatter.subtitle || 'Journal entry on Immich Folio';
+  const description = frontmatter.subtitle || t.journal.entryDescription;
 
   const ogImages = frontmatter.coverAssetId
     ? [{ url: imageUrl(frontmatter.coverAssetId, 'preview') }]
@@ -171,7 +173,10 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
     .filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO')
     .map((a) => {
       const ph = assetPlaceholder(a);
-      const exif = config.exifOnHover && a.type === 'IMAGE' ? assetExifSummary(a) : undefined;
+      const exif =
+        config.exif.onHover && config.exif.camera && a.type === 'IMAGE'
+          ? assetExifSummary(a)
+          : undefined;
       const isVideo = a.type === 'VIDEO';
       return {
         id: encodeAssetId(a.id),
@@ -188,7 +193,7 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
   return (
     <div style={{ paddingTop: '2rem' }}>
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 1.5rem 1rem' }}>
-        <BackLink href="/journal" label="Back to Journal" />
+        <BackLink href="/journal" label={getServerDictionary().common.backToJournal} />
       </div>
       <EssayView
         essay={essayForClient}

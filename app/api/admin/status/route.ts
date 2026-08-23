@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 import { immich } from '@/lib/immich';
+import { getConfig } from '@/lib/config';
 import { cache } from '@/lib/cache';
 import { listBackups, readGalleryYaml, readSettingsYaml } from '@/lib/admin/yaml-service';
 
@@ -22,6 +23,7 @@ export async function GET() {
 
   // 2. Config Health Check
   let galleryValid = false;
+  let galleryMissing = false;
   // settings.yaml is optional — getConfig() falls back to defaults when it is
   // absent, so a missing file is a valid installation, not a fault. Only a file
   // that exists and cannot be parsed counts as degraded: readSettingsYaml()
@@ -31,6 +33,10 @@ export async function GET() {
   try {
     const gallery = await readGalleryYaml();
     galleryValid = !!gallery;
+    // A file that was never created is a pending setup step, not a corrupt
+    // config. Reporting both as "invalid" told a fresh deployment its config
+    // was broken and offered a backup restore as the cure (#507).
+    galleryMissing = !gallery;
   } catch (err) {
     console.error('[Admin API] Gallery YAML parse failed:', err);
   }
@@ -60,13 +66,20 @@ export async function GET() {
     }
   }
 
+  const config = getConfig();
+
   return NextResponse.json({
     immich: {
       status: immichOk ? 'connected' : 'disconnected',
     },
+    setup: {
+      complete: !config.needsSetup,
+      credentials: config.needsCredentials ? 'missing' : 'present',
+      gallery: config.needsGallery ? 'missing' : 'present',
+    },
     config: {
-      status: galleryValid && settingsValid ? 'valid' : 'invalid',
-      gallery: galleryValid ? 'valid' : 'invalid',
+      status: galleryValid && settingsValid ? 'valid' : galleryMissing ? 'setup' : 'invalid',
+      gallery: galleryValid ? 'valid' : galleryMissing ? 'missing' : 'invalid',
       settings: settingsValid ? 'valid' : 'invalid',
     },
     cache: {

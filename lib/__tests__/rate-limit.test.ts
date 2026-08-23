@@ -1,9 +1,19 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
+/*
+ * getClientIp() reads the hop count straight from the environment, not through
+ * getConfig(): the config resolves AUTH_SECRET, which throws in production when
+ * none is set — and that took down the install wizard's own API on a container
+ * started with no environment at all (#519).
+ */
 let mockHops = 0;
-vi.mock('@/lib/config', () => ({
-  getConfig: () => ({ trustedProxyHops: mockHops }),
+vi.mock('@/lib/env', () => ({
+  env: {
+    get TRUSTED_PROXY_HOPS() {
+      return mockHops;
+    },
+  },
 }));
 
 import {

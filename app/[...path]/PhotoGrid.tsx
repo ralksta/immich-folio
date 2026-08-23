@@ -14,6 +14,7 @@ import { Lightbox, type LightboxWatermark } from '@/components/Lightbox';
 import { FadeIn } from '@/components/FadeIn';
 import { ProofingProvider, useProofing } from '@/components/ProofingContext';
 import { ProofingModal } from '@/components/ProofingModal';
+import { useDictionary } from '@/components/I18nProvider';
 
 export interface PhotoItem {
   id: string;
@@ -39,6 +40,11 @@ interface PhotoGridProps {
   gridStyle?: React.CSSProperties;
   watermark?: LightboxWatermark;
   /**
+   * Offer the lightbox info panel. Off when every EXIF group is switched off,
+   * so the `i` key does not open an empty panel (#506).
+   */
+  showExifPanel?: boolean;
+  /**
    * Client proofing — favorite hearts, the selection bar and the send-off
    * modal. Off unless the caller opts in, so a grid rendered outside the
    * album routes never grows a delivery workflow by accident.
@@ -61,7 +67,14 @@ function buildPhotoHash(index: number): string {
   return `#photo-${index + 1}`; // 1-indexed for user-friendliness
 }
 
-function PhotoGridInner({ assets, layout = 'masonry', gridStyle, watermark }: PhotoGridProps) {
+function PhotoGridInner({
+  assets,
+  layout = 'masonry',
+  gridStyle,
+  watermark,
+  showExifPanel = true,
+}: PhotoGridProps) {
+  const t = useDictionary();
   const proofing = useProofing();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
@@ -190,8 +203,8 @@ function PhotoGridInner({ assets, layout = 'masonry', gridStyle, watermark }: Ph
                   e.stopPropagation();
                   proofing.toggleFavorite(asset.id);
                 }}
-                aria-label={isFav ? 'Remove favorite' : 'Add favorite'}
-                title={isFav ? 'Remove favorite' : 'Add favorite'}
+                aria-label={isFav ? t.proofing.removeFavorite : t.proofing.addFavorite}
+                title={isFav ? t.proofing.removeFavorite : t.proofing.addFavorite}
                 style={{
                   position: 'absolute',
                   top: '8px',
@@ -240,7 +253,7 @@ function PhotoGridInner({ assets, layout = 'masonry', gridStyle, watermark }: Ph
         </FadeIn>
       );
     });
-  }, [displayedAssets, layout, openLightbox, proofing]);
+  }, [displayedAssets, layout, openLightbox, proofing, t]);
 
   return (
     <>
@@ -284,7 +297,9 @@ function PhotoGridInner({ assets, layout = 'masonry', gridStyle, watermark }: Ph
               cursor: 'pointer',
             }}
           >
-            {proofing.isFilterActive ? 'Show All' : `❤️ ${proofing.favorites.size} Selected`}
+            {proofing.isFilterActive
+              ? t.proofing.showAll
+              : t.proofing.selected(proofing.favorites.size)}
           </button>
           <button
             type="button"
@@ -299,7 +314,7 @@ function PhotoGridInner({ assets, layout = 'masonry', gridStyle, watermark }: Ph
               textDecoration: 'underline',
             }}
           >
-            Share & Export
+            {t.proofing.shareExport}
           </button>
         </div>
       )}
@@ -314,6 +329,7 @@ function PhotoGridInner({ assets, layout = 'masonry', gridStyle, watermark }: Ph
           onNext={goNext}
           onPrev={goPrev}
           watermark={watermark}
+          showExifToggle={showExifPanel}
         />
       )}
     </>

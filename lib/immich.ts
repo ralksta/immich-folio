@@ -124,12 +124,37 @@ export interface SubpageSummary {
 
 class ImmichClient {
   private hasLoggedAlbums = false;
+  private hasWarnedNoCredentials = false;
   private pendingAlbumsPromise: Promise<ImmichAlbum[]> | null = null;
   private pendingAlbumPromises = new Map<string, Promise<ImmichAlbum | null>>();
   private pendingAssetPromises = new Map<string, Promise<ImmichAsset | null>>();
 
   private get config() {
     return getConfig();
+  }
+
+  /**
+   * Whether a request to Immich is possible at all.
+   *
+   * Deliberately *not* `needsSetup`: a deployment with credentials but no
+   * gallery.yaml can talk to Immich perfectly well, and the admin panel depends
+   * on that to browse albums before the file exists. Gating on `needsSetup`
+   * made every call return null before the fetch, so `ping()` reported the
+   * server as disconnected without a single line in the log (#507).
+   */
+  private get hasCredentials(): boolean {
+    const { apiUrl, apiKey } = this.config.immich;
+    return !!apiUrl && !!apiKey;
+  }
+
+  /** Says once why nothing is being requested, rather than failing in silence. */
+  private warnNoCredentials(what: string): void {
+    if (this.hasWarnedNoCredentials) return;
+    this.hasWarnedNoCredentials = true;
+    console.warn(
+      `[Immich] No API URL or API key configured — skipping ${what} and every ` +
+        'later request. Set IMMICH_API_URL and IMMICH_API_KEY, or run the setup wizard at /install.',
+    );
   }
 
   /** Cache write that carries the configured stale window. */
@@ -155,7 +180,10 @@ class ImmichClient {
   }
 
   private async request<T>(endpoint: string, body?: unknown): Promise<T | null> {
-    if (this.config.needsSetup) return null;
+    if (!this.hasCredentials) {
+      this.warnNoCredentials(endpoint);
+      return null;
+    }
 
     const url = `${this.config.immich.apiUrl}${endpoint}`;
 
@@ -234,7 +262,7 @@ class ImmichClient {
     contentRange: string | null;
     status: 200 | 206;
   } | null> {
-    if (this.config.needsSetup || !this.config.immich.apiUrl) return null;
+    if (!this.hasCredentials) return null;
 
     const endpoint = `/assets/${encodeURIComponent(assetId)}/video/playback`;
     const url = `${this.config.immich.apiUrl}${endpoint}`;
@@ -303,7 +331,7 @@ class ImmichClient {
     assetId: string,
     size: ImageSize = 'preview',
   ): Promise<{ stream: ReadableStream; contentType: string; contentLength: string | null } | null> {
-    if (this.config.needsSetup || !this.config.immich.apiUrl) return null;
+    if (!this.hasCredentials) return null;
 
     const endpoint =
       size === 'original'
@@ -433,7 +461,15 @@ class ImmichClient {
           console.log('─'.repeat(80) + '\n');
         }
 
-        this.cacheSet(cacheKey, filtered);
+        // Not while the install is unfinished. The dummy setup config carries an
+        // empty allowlist, so `filtered` is [] no matter what Immich returned —
+        // and caching that outlives the wizard that fixes it, because
+        // invalidateAll() runs in the install route's own module instance
+        // (Next bundles each route separately; see lib/install.ts). The gallery
+        // then looks empty until the server restarts.
+        if (!this.config.needsSetup) {
+          this.cacheSet(cacheKey, filtered);
+        }
         return filtered;
       } catch (error) {
         return this.staleOrThrow<ImmichAlbum[]>(cacheKey, error, 'album list');
@@ -776,9 +812,12 @@ class ImmichClient {
     try {
       const res = await this.request<{ res: string }>('/server/ping');
       return !!res;
-    } catch {
+    } catch (error) {
       // "Is Immich reachable?" — unreachable is the answer, not an exception.
       // Both callers (/api/health, /api/admin/status) render this as a status.
+      // It is still logged: a red badge in the admin panel with nothing in the
+      // log leaves the operator guessing (#507).
+      console.warn('[Immich] Ping failed:', error);
       return false;
     }
   }

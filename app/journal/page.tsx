@@ -8,14 +8,15 @@ import { immich } from '@/lib/immich';
 import { imageUrl, assetPlaceholder } from '@/lib/urls';
 import { BackLink } from '@/components/BackLink';
 import { IconBook } from '@/components/Icons';
+import { getServerDictionary } from '@/lib/i18n/server';
 import './journal.css';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'Journal',
-  description: 'Photo essays, travel stories, and behind-the-scenes journals.',
-};
+export function generateMetadata(): Metadata {
+  const t = getServerDictionary();
+  return { title: t.journal.title, description: t.journal.description };
+}
 
 interface EnrichedJournalEntry extends JournalEntrySummary {
   coverUrl?: string;
@@ -24,6 +25,7 @@ interface EnrichedJournalEntry extends JournalEntrySummary {
 }
 
 export default async function JournalIndexPage() {
+  const t = getServerDictionary();
   const isAuthedAdmin = await isAdminAuthenticated();
   const allEntries = await listJournalEntries();
 
@@ -60,25 +62,23 @@ export default async function JournalIndexPage() {
   return (
     <div className="journal-index-container">
       <div className="journal-index-header">
-        <BackLink href="/" label="Back to Gallery" />
+        <BackLink href="/" label={t.common.backToGallery} />
         <p className="journal-index-header__kicker" aria-hidden="true">
-          Stories &amp; Essays
+          {t.journal.kicker}
         </p>
-        <h1 className="journal-index-header__title">Journal</h1>
-        <p className="journal-index-header__subtitle">
-          Photo essays, visual stories, and field notes.
-        </p>
+        <h1 className="journal-index-header__title">{t.journal.title}</h1>
+        <p className="journal-index-header__subtitle">{t.journal.subtitle}</p>
       </div>
 
       {enrichedEntries.length === 0 ? (
         <div className="journal-empty-state">
-          <p>No journal entries published yet.</p>
+          <p>{t.journal.empty}</p>
         </div>
       ) : (
         <div className="journal-grid">
           {enrichedEntries.map((entry) => {
             const dateStr = entry.frontmatter.date
-              ? new Date(entry.frontmatter.date).toLocaleDateString('en-US', {
+              ? new Date(entry.frontmatter.date).toLocaleDateString(t.dateLocale, {
                   year: 'numeric',
                   month: 'short',
                   day: 'numeric',
@@ -113,9 +113,11 @@ export default async function JournalIndexPage() {
                   <div className="journal-card__meta">
                     {dateStr && <span>{dateStr}</span>}
                     {dateStr && entry.readingTimeMinutes && <span>•</span>}
-                    {entry.readingTimeMinutes && <span>{entry.readingTimeMinutes} min read</span>}
+                    {entry.readingTimeMinutes && (
+                      <span>{t.journal.minRead(entry.readingTimeMinutes)}</span>
+                    )}
                     {entry.frontmatter.draft && (
-                      <span className="journal-card__draft-badge">Draft</span>
+                      <span className="journal-card__draft-badge">{t.journal.draft}</span>
                     )}
                   </div>
 
@@ -134,9 +136,11 @@ export default async function JournalIndexPage() {
                   )}
 
                   <div className="journal-card__footer">
-                    <span className="journal-card__read-more">Read Story →</span>
+                    <span className="journal-card__read-more">{t.journal.readStory}</span>
                     {entry.frontmatter.author && (
-                      <span style={{ opacity: 0.65 }}>by {entry.frontmatter.author}</span>
+                      <span style={{ opacity: 0.65 }}>
+                        {t.journal.by(entry.frontmatter.author)}
+                      </span>
                     )}
                   </div>
                 </div>

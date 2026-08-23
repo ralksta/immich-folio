@@ -5,7 +5,7 @@
  */
 
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import Link from 'next/link';
 import './globals.css';
 import { SubpageNav } from '@/components/SubpageNav';
@@ -16,10 +16,13 @@ import { SetupScreen } from '@/components/SetupScreen';
 import { getConfigOrNull, getGoogleFontsUrl, AppConfig } from '@/lib/config';
 import { isAdminPath } from '@/lib/admin/paths';
 import { isInstallPath } from '@/lib/install';
+import { isSiteLocked, isSiteUnlocked } from '@/lib/auth';
 // DevToolbarLoader is a Client Component (ssr: false is only allowed there)
 import { DevToolbarLoader } from '@/components/DevToolbarLoader';
 import AssetProtection from '@/components/AssetProtection';
 import AnalyticsTracker from '@/components/AnalyticsTracker';
+import { I18nProvider } from '@/components/I18nProvider';
+import { resolveLocale, getDictionary } from '@/lib/i18n';
 
 export async function generateMetadata(): Promise<Metadata> {
   const config = getConfigOrNull();
@@ -34,9 +37,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const siteTitle = config.seo.title;
   const siteDescription = config.seo.description;
+  // A site behind a password has nothing to offer a crawler, and the SEO
+  // toggles are about a *public* site — so the lock overrides them rather
+  // than depending on the operator also remembering to set noIndex.
+  const locked = isSiteLocked();
   const robots = {
-    index: !config.seo.noIndex,
-    follow: !config.seo.noFollow,
+    index: !locked && !config.seo.noIndex,
+    follow: !locked && !config.seo.noFollow,
   };
 
   return {
@@ -114,6 +121,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   const isAdmin = isAdminPath(pathname);
+  const locale = resolveLocale(config.lang);
+  const t = getDictionary(locale);
+
+  /*
+   * Whether this render is the site-wide gate. The gate itself is a page
+   * (`app/gate/page.tsx`) that `proxy.ts` rewrites to; all the layout does is
+   * strip the chrome around it, because a header listing every subpage would
+   * give away the shape of a site that is supposed to be shut.
+   */
+  const cookieStore = await cookies();
+  const siteGated =
+    !isAdmin && !isInstallPath(pathname) && !isSiteUnlocked((name) => cookieStore.get(name)?.value);
 
   return (
     <html
@@ -125,6 +144,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       data-header-dot={String(theme.headerDot)}
       data-photo-frame={theme.photoFrame}
       data-transitions={String(config.transitions)}
+      /* The configured starting mode is rendered server-side so the first paint
+         is already right; `auto` deliberately carries no data-theme and lets the
+         inline script below decide from the OS. data-default-theme is what
+         ThemeToggle reads for a visitor who has never chosen (#512). */
+      {...(config.colorMode === 'auto' ? {} : { 'data-theme': config.colorMode })}
+      data-default-theme={config.colorMode}
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -132,49 +157,51 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="stylesheet" href={fontsUrl} />
       </head>
       <body>
-        {isAdmin ? (
-          children
-        ) : (
-          <>
-            <a href="#main-content" className="skip-link">
-              Skip to content
-            </a>
-            <header className="header">
-              <nav className="header__nav">
-                {/* Brand wordmark — presets that show it pair it with the dot. */}
-                <span className="header__wordmark" aria-hidden="true">
-                  {config.siteTitle}
-                </span>
-                <Link href="/" className="header__nav-link">
-                  Home
-                </Link>
-                <SubpageNav />
-                {config.aboutEnabled && (
-                  <Link href="/about" className="header__nav-link">
-                    About
+        <I18nProvider locale={locale}>
+          {siteGated || isAdmin ? (
+            children
+          ) : (
+            <>
+              <a href="#main-content" className="skip-link">
+                {t.nav.skipToContent}
+              </a>
+              <header className="header">
+                <nav className="header__nav">
+                  {/* Brand wordmark — presets that show it pair it with the dot. */}
+                  <span className="header__wordmark" aria-hidden="true">
+                    {config.siteTitle}
+                  </span>
+                  <Link href="/" className="header__nav-link">
+                    {t.nav.home}
                   </Link>
-                )}
-                {config.map && (
-                  <Link href="/map" className="header__nav-link">
-                    Map
-                  </Link>
-                )}
-                <ThemeToggle />
-              </nav>
-            </header>
-            <main id="main-content" tabIndex={-1} className="main">
-              {children}
-            </main>
-            <Footer />
-            {config.scrollToTop && <ScrollToTop />}
-            <AssetProtection
-              disableRightClick={config.protection?.disableRightClick}
-              disableImageDrag={config.protection?.disableImageDrag}
-            />
-            <AnalyticsTracker />
-            {process.env.NODE_ENV === 'development' && <DevToolbarLoader />}
-          </>
-        )}
+                  <SubpageNav />
+                  {config.aboutEnabled && (
+                    <Link href="/about" className="header__nav-link">
+                      {t.nav.about}
+                    </Link>
+                  )}
+                  {config.map && (
+                    <Link href="/map" className="header__nav-link">
+                      {t.nav.map}
+                    </Link>
+                  )}
+                  <ThemeToggle />
+                </nav>
+              </header>
+              <main id="main-content" tabIndex={-1} className="main">
+                {children}
+              </main>
+              <Footer />
+              {config.scrollToTop && <ScrollToTop />}
+              <AssetProtection
+                disableRightClick={config.protection?.disableRightClick}
+                disableImageDrag={config.protection?.disableImageDrag}
+              />
+              <AnalyticsTracker />
+              {process.env.NODE_ENV === 'development' && <DevToolbarLoader />}
+            </>
+          )}
+        </I18nProvider>
       </body>
     </html>
   );

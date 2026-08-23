@@ -1,7 +1,84 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { isSiteUnlocked } from '@/lib/auth';
+import { isAdminPath } from '@/lib/admin/paths';
+import { isInstallPath } from '@/lib/install';
+
+/** Where a locked-out visitor is rewritten to. */
+const GATE_PATH = '/gate';
+
+/**
+ * Site-wide password gate.
+ *
+ * This has to happen here rather than in the root layout. A layout that swaps
+ * `children` for a password form still lets the page render — the RSC payload
+ * for the requested route is produced either way, and album names and asset
+ * tokens travel with it. Rewriting means the protected page is never rendered
+ * at all.
+ *
+ * Route handlers are outside the matcher and carry their own check; see
+ * `siteLockResponse` in `lib/auth.ts`.
+ */
+function siteGate(request: NextRequest): NextResponse | null {
+  const { pathname } = request.nextUrl;
+
+  // /admin owns its own password and is where the site password is set;
+  // /install is the wizard a fresh deployment needs before it can have a
+  // password at all. Locking either would be locking out the operator.
+  if (isAdminPath(pathname) || isInstallPath(pathname) || pathname === GATE_PATH) return null;
+
+  // A config that cannot be parsed makes getConfig() throw, and it throws in
+  // here — before app/layout.tsx gets to call getConfigOrNull() and render the
+  // setup screen instead. Unhandled, that turned one typo in gallery.yaml into
+  // a bare 500 on every route, with nothing naming the file (#516).
+  //
+  // Letting the request through is safe precisely because the config is
+  // unreadable: every page below reaches the same throw and renders the setup
+  // screen, so there is no album name and no asset token left to protect. The
+  // operator gets a page that explains itself, and /admin — exempt above — stays
+  // reachable to fix the file.
+  let unlocked: boolean;
+  try {
+    unlocked = isSiteUnlocked((name) => request.cookies.get(name)?.value);
+  } catch (error) {
+    console.error(
+      '[Folio] The site password could not be resolved — content/gallery.yaml or ' +
+        'content/settings.yaml cannot be read. Serving the setup screen:',
+      error,
+    );
+    return null;
+  }
+
+  if (unlocked) return null;
+
+  // Rewrite, not redirect: the URL the visitor asked for stays in the address
+  // bar, so unlocking lands them where they were going.
+  return NextResponse.rewrite(new URL(GATE_PATH, request.url));
+}
 
 export function proxy(request: NextRequest) {
+  /*
+   * Runs before the prefetch shortcut below, and must keep doing so: a
+   * prefetch asks for the same RSC payload as a normal navigation, so a gate
+   * that skipped them could be walked straight past with one request header.
+   */
+  const gated = siteGate(request);
+  if (gated) return gated;
+
+  /*
+   * Prefetches used to be excluded by the matcher itself. They are filtered
+   * here instead, because the matcher is now also what makes the gate above
+   * run — and a matcher that skips prefetches would skip the gate with them.
+   * The effect on the CSP is unchanged: a prefetch gets no nonce and no
+   * policy header, exactly as before.
+   */
+  if (
+    request.headers.get('next-router-prefetch') !== null ||
+    request.headers.get('purpose') === 'prefetch'
+  ) {
+    return NextResponse.next();
+  }
+
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
 
   const isDev = process.env.NODE_ENV === 'development';
@@ -50,20 +127,17 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes — JSON/binary responses, no document CSP needed)
+     * - api (API routes — JSON/binary responses, no document CSP needed;
+     *   the public ones enforce the site gate themselves)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
      *
      * /admin is NOT excluded: it is the highest-privilege surface in the app
      * and previously ran with no enforced CSP at all.
+     *
+     * Prefetches are no longer excluded here — see the note in proxy().
      */
-    {
-      source: '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
-      missing: [
-        { type: 'header', key: 'next-router-prefetch' },
-        { type: 'header', key: 'purpose', value: 'prefetch' },
-      ],
-    },
+    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
   ],
 };

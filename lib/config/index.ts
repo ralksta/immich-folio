@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { env } from '../env';
 import { resolveAuthSecret } from '../secret';
 import { getInstallCredentials } from '../install';
@@ -6,6 +8,8 @@ import { resolveTheme, VALID_LAYOUTS, DEFAULT_PRESET } from './theme';
 import { ALBUM_SORT_MODES, isAlbumSortMode, type AlbumSortMode } from '../albumSort';
 import {
   slugify,
+  resolveExifDisplay,
+  resolveColorMode,
   AppConfig,
   AlbumEntryObject,
   SubpageConfig,
@@ -159,15 +163,17 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   const albumGrids: Record<string, Partial<GridConfig>> = {};
   const albumCoverPositions: Record<string, string> = {};
 
+  /** Returns null for an entry whose album ID is not a UUID; callers drop it. */
   function processAlbumEntry(
     entry: string | Record<string, string | AlbumEntryObject>,
     context: string,
-  ): string {
+  ): string | null {
     if (typeof entry === 'string') {
       return validateUuid(entry, context);
     }
     const [uuid, value] = Object.entries(entry)[0];
     const validatedUuid = validateUuid(uuid, context);
+    if (!validatedUuid) return null;
 
     if (typeof value === 'string') {
       albumOverrides[validatedUuid] = value;
@@ -182,10 +188,13 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
       // the log naming the cause. Every other ID in this file goes through
       // validateUuid; this one was the gap.
       if (value.heroImage) {
-        albumHeroImages[validatedUuid] = validateUuid(
+        const heroId = validateUuid(
           value.heroImage,
           `${context} heroImage for album ${validatedUuid}`,
         );
+        // Dropped rather than defaulted: without one the album falls back to its
+        // Immich cover, which is a better answer than a request that 400s.
+        if (heroId) albumHeroImages[validatedUuid] = heroId;
       }
 
       // Throw rather than fall back to the default: a typo would otherwise be
@@ -208,9 +217,11 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
       // Kept regardless of the mode, so switching manual → newest → manual does
       // not silently destroy a hand-curated order.
       if (value.assetOrder?.length) {
-        albumManualOrders[validatedUuid] = value.assetOrder.map((assetId, i) =>
-          validateUuid(assetId, `${context} assetOrder[${i}] for album ${validatedUuid}`),
-        );
+        albumManualOrders[validatedUuid] = value.assetOrder
+          .map((assetId, i) =>
+            validateUuid(assetId, `${context} assetOrder[${i}] for album ${validatedUuid}`),
+          )
+          .filter((id): id is string => id !== null);
       }
 
       // EXPERIMENTAL: per-album grid override — reuses the subpage-grid
@@ -239,9 +250,17 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
     return validatedUuid;
   }
 
-  const standaloneAlbumIds = (gallery.albums ?? []).map((entry) =>
-    processAlbumEntry(entry, 'gallery.yaml albums'),
-  );
+  /** Album entries, with the ones whose ID is not a UUID dropped (#517). */
+  function processAlbumEntries(
+    entries: Array<string | Record<string, string | AlbumEntryObject>>,
+    context: string,
+  ): string[] {
+    return entries
+      .map((entry) => processAlbumEntry(entry, context))
+      .filter((id): id is string => id !== null);
+  }
+
+  const standaloneAlbumIds = processAlbumEntries(gallery.albums ?? [], 'gallery.yaml albums');
 
   let subpages: SubpageConfig[] = [];
 
@@ -260,23 +279,19 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
           title: sec.title,
           slug: slugify(sec.title),
           description: sec.description,
-          albumIds: sec.albums.map((entry) =>
-            processAlbumEntry(entry, `subpage "${sp.name}" section "${sec.title}"`),
-          ),
+          albumIds: processAlbumEntries(sec.albums, `subpage "${sp.name}" section "${sec.title}"`),
         }));
         // flat union of all section albums
-        albumIds = sections.flatMap((s) => s.albumIds);
+        albumIds = sections!.flatMap((sec) => sec.albumIds);
         // Also include any top-level albums (outside sections)
-        const topLevel = (sp.albums ?? []).map((entry) =>
-          processAlbumEntry(entry, `subpage "${sp.name}"`),
-        );
+        const topLevel = processAlbumEntries(sp.albums ?? [], `subpage "${sp.name}"`);
         albumIds = [...topLevel, ...albumIds];
       } else {
         const albums = sp.albums ?? [];
         if (albums.length === 0) {
           throw new Error(`Subpage "${sp.name}" must have albums or sections`);
         }
-        albumIds = albums.map((entry) => processAlbumEntry(entry, `subpage "${sp.name}"`));
+        albumIds = processAlbumEntries(albums, `subpage "${sp.name}"`);
       }
 
       return {
@@ -301,7 +316,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         return {
           name,
           slug: slugify(name),
-          albumIds: value.map((entry) => processAlbumEntry(entry, `subpage "${name}"`)),
+          albumIds: processAlbumEntries(value, `subpage "${name}"`),
           enabled: true,
         };
       }
@@ -312,7 +327,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         slug: slugify(name),
         title: sp.title,
         subtitle: sp.subtitle,
-        albumIds: albumEntries.map((entry) => processAlbumEntry(entry, `subpage "${name}"`)),
+        albumIds: processAlbumEntries(albumEntries, `subpage "${name}"`),
         password: sp.password,
         proofing: sp.proofing,
         essayFile: sp.essayFile,
@@ -342,6 +357,15 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   };
 }
 
+/** Whether content/about.md exists — the About page has nothing to show without it. */
+function aboutContentExists(): boolean {
+  try {
+    return fs.existsSync(path.join(process.cwd(), 'content', 'about.md'));
+  } catch {
+    return false;
+  }
+}
+
 export function getConfig(): AppConfig {
   // No in-memory config cache: admin saves can land in a different
   // worker/process than page rendering, so a per-worker cache goes stale
@@ -358,7 +382,15 @@ export function getConfig(): AppConfig {
   const gallery = loadYaml<GalleryYaml>('gallery.yaml');
   const settings = loadYaml<SettingsYaml>('settings.yaml') || {};
 
-  if (!gallery || !apiKey || !apiUrl) {
+  // Two separate faults, deliberately kept apart. Missing credentials mean
+  // nothing can reach Immich; a missing gallery.yaml only means the public site
+  // has nothing to list yet. Conflating them made a credentialed deployment
+  // without gallery.yaml report "Immich disconnected" and locked the admin
+  // panel out of the album pickers that would have created the file (#507).
+  const needsCredentials = !apiKey || !apiUrl;
+  const needsGallery = !gallery;
+
+  if (needsCredentials || needsGallery) {
     // Return dummy config if gallery.yaml is missing
     return {
       immich: { apiUrl: immichApiUrl, apiKey },
@@ -369,6 +401,9 @@ export function getConfig(): AppConfig {
       siteTitle: env.SITE_TITLE || 'Immich Folio',
       siteSubtitle: env.SITE_SUBTITLE || 'Setup Required',
       lang: 'en',
+      // Nothing to protect yet, and a gate here would sit in front of the
+      // setup screen that is trying to tell the operator what is missing.
+      sitePassword: '',
       seo: {
         title: 'Setup Required',
         description: 'Please configure Immich Folio',
@@ -377,8 +412,11 @@ export function getConfig(): AppConfig {
         noFollow: true,
       },
       heroImages: [],
+      colorMode: 'dark',
       exifOnHover: true,
+      exif: resolveExifDisplay(),
       grid: { columns: 3, gap: 12, aspectRatio: '1', layout: 'masonry' },
+      gridGapExplicit: false,
       theme: resolveTheme(DEFAULT_PRESET),
       footer: null,
       legal: { enabled: false, name: '', address: '', zipCity: '', country: '' },
@@ -403,6 +441,8 @@ export function getConfig(): AppConfig {
       rateLimitRpm: env.RATE_LIMIT_RPM,
       trustedProxyHops: env.TRUSTED_PROXY_HOPS,
       needsSetup: true,
+      needsCredentials,
+      needsGallery,
     };
   }
 
@@ -433,6 +473,9 @@ export function getConfig(): AppConfig {
     siteTitle: settings.title ?? env.SITE_TITLE,
     siteSubtitle: settings.subtitle ?? env.SITE_SUBTITLE,
     lang: settings.lang ?? 'en',
+    // Env wins, so a deployment can rotate the site password without touching
+    // settings.yaml — the same precedence the Immich credentials use.
+    sitePassword: env.SITE_PASSWORD ?? settings.sitePassword ?? '',
     seo: {
       title: siteSeoTitle,
       description:
@@ -445,11 +488,13 @@ export function getConfig(): AppConfig {
       noFollow: settings.seo?.noFollow === true,
     },
     heroImages: gallery.hero
-      ? (Array.isArray(gallery.hero) ? gallery.hero : [gallery.hero]).map((id) =>
-          validateUuid(id, 'gallery.yaml hero'),
-        )
+      ? (Array.isArray(gallery.hero) ? gallery.hero : [gallery.hero])
+          .map((id) => validateUuid(id, 'gallery.yaml hero'))
+          .filter((id): id is string => id !== null)
       : [],
+    colorMode: resolveColorMode(settings.mode),
     exifOnHover: settings.exifOnHover !== false,
+    exif: resolveExifDisplay(settings.exif, settings.exifOnHover),
     grid: {
       columns: settings.grid?.columns ?? 3,
       gap: settings.grid?.gap ?? 12,
@@ -458,6 +503,7 @@ export function getConfig(): AppConfig {
         ? settings.grid!.layout
         : 'masonry') as GridConfig['layout'],
     },
+    gridGapExplicit: settings.grid?.gap != null,
     theme,
     footer: settings.footer
       ? {
@@ -489,7 +535,10 @@ export function getConfig(): AppConfig {
     },
     protection: settings.protection,
     watermark: settings.watermark,
-    aboutEnabled: settings.about?.enabled !== false,
+    // The setting alone is not enough: about.md does not exist until someone
+    // writes it, so a fresh install put a nav link in front of an empty page
+    // (#518). `enabled: false` still hides it even when the file is there.
+    aboutEnabled: settings.about?.enabled !== false && aboutContentExists(),
     albumOverrides,
     albumDescriptions,
     albumPasswords,
@@ -505,5 +554,7 @@ export function getConfig(): AppConfig {
     rateLimitRpm: env.RATE_LIMIT_RPM,
     trustedProxyHops: env.TRUSTED_PROXY_HOPS,
     needsSetup: false,
+    needsCredentials: false,
+    needsGallery: false,
   };
 }

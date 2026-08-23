@@ -41,7 +41,8 @@ server, so a typo cannot leave you with an "installed" site that loads no photos
 
 `IMMICH_API_URL`, `IMMICH_API_KEY`, `AUTH_SECRET` and `ADMIN_PASSWORD` override
 anything in `install.json`, so any of them can be rotated by setting the variable
-— no need to touch the file.
+— no need to touch the file. `SITE_PASSWORD` works the same way over
+`sitePassword` in `settings.yaml`.
 
 Set all of them up front and the wizard never appears, which is the usual choice
 for an infrastructure-as-code deployment.

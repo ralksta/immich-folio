@@ -24,7 +24,13 @@ import {
   assetAspectRatio,
 } from '@/lib/urls';
 import { encodeAssetId } from '@/lib/tokens';
-import { getConfig, resolveProofing, type GridConfig } from '@/lib/config';
+import {
+  buildCoverGridVars,
+  getConfig,
+  hasExifPanelContent,
+  resolveProofing,
+  type GridConfig,
+} from '@/lib/config';
 import { isProtected, isAuthenticated } from '@/lib/auth';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import PasswordGate from '@/components/PasswordGate';
@@ -34,6 +40,7 @@ import { SubpageGridView } from './SubpageGridView';
 import { EssayView } from './EssayView';
 import { parseEssayMarkdown } from '@/lib/essay';
 import { loadEssayFromFile } from '@/lib/admin/journal-service';
+import { getServerDictionary } from '@/lib/i18n/server';
 
 // Render at request time — requires live Immich connection
 export const dynamic = 'force-dynamic';
@@ -104,6 +111,10 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
 }
 
 /** Map Immich assets to PhotoItem props for the grid/lightbox. */
+/**
+ * `showExif` covers the hover overlay only, and that overlay carries camera,
+ * lens and focal length — so it follows the `camera` group, not the panel.
+ */
 function toPhotoItems(assets: ImmichAsset[], showExif: boolean): PhotoItem[] {
   return assets
     .filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO')
@@ -173,14 +184,27 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
   // Build grid CSS custom properties, optionally merging subpage overrides
   const buildGridStyle = (overrides?: Partial<GridConfig>): React.CSSProperties => {
     const g = { ...config.grid, ...overrides };
+    // `gap` is only emitted when someone chose one. Each preset declares its own
+    // photo spacing as part of its look (2px minimal, 40px monograph), and
+    // emitting the resolved fallback unconditionally overwrote that — the three
+    // presets that fought back with a hardcoded `column-gap` then ignored the
+    // setting entirely, which is #513. Inline beats the preset's declaration, so
+    // an explicit value still wins everywhere.
     return {
       '--grid-columns': g.columns,
-      '--grid-gap': `${g.gap}px`,
+      ...(overrides?.gap != null || config.gridGapExplicit ? { '--grid-gap': `${g.gap}px` } : {}),
       '--grid-aspect-ratio': g.aspectRatio,
     } as React.CSSProperties;
   };
   const resolveLayout = (overrides?: Partial<GridConfig>) =>
     overrides?.layout ?? config.grid.layout;
+
+  // The album-cover grid on a subpage takes its column count from the same
+  // config as the photo grids, so "3 columns" in the admin means three columns
+  // everywhere. `gap` deliberately does not follow the global setting — see
+  // buildCoverGridVars() for why.
+  const buildCoverGridStyle = (overrides?: Partial<GridConfig>): React.CSSProperties =>
+    buildCoverGridVars(overrides, config.grid.columns) as React.CSSProperties;
 
   // Client proofing — `proofing.enabled` in settings.yaml is the default and a
   // subpage's own `proofing:` flag overrides it in either direction. Albums
@@ -230,7 +254,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
     const spGrid = subpageData?.subpage.grid;
     const subpageName = subpageData?.subpage.name ?? subpageSlug;
 
-    const images = toPhotoItems(album.assets, config.exifOnHover);
+    const images = toPhotoItems(album.assets, config.exif.onHover && config.exif.camera);
 
     // Password gate for protected albums
     const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
@@ -247,6 +271,8 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         backLinkHref={`/${subpageSlug}`}
         backLinkLabel={`Back to ${subpageName}`}
         watermark={config.watermark}
+        showExifPanel={hasExifPanelContent(config.exif)}
+        showGear={config.exif.camera}
         proofing={proofingFor(subpageData?.subpage)}
         allowMailto={config.proofing.allowMailto}
         {...heroData}
@@ -298,7 +324,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         albums.map((a) => immich.getAlbumBySlug(a.slug, slug, forceFresh)),
       );
       const allAssets = allAlbums.flatMap((a) => (a ? a.assets : []));
-      const images = toPhotoItems(allAssets, config.exifOnHover);
+      const images = toPhotoItems(allAssets, config.exif.onHover && config.exif.camera);
 
       // Fallback structured essay if layout: 'essay' is set without custom markdown file
       if (!essayParsed) {
@@ -355,7 +381,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         notFound();
       }
 
-      const images = toPhotoItems(album.assets, config.exifOnHover);
+      const images = toPhotoItems(album.assets, config.exif.onHover && config.exif.camera);
 
       // Password gate for protected albums
       const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
@@ -371,8 +397,10 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
           gridStyle={buildGridStyle(mergeAlbumGrid(album.id, result.subpage.grid))}
           subtitle={result.subpage.subtitle}
           backLinkHref="/"
-          backLinkLabel="Back to Gallery"
+          backLinkLabel={getServerDictionary().common.backToGallery}
           watermark={config.watermark}
+          showExifPanel={hasExifPanelContent(config.exif)}
+          showGear={config.exif.camera}
           proofing={proofingFor(result.subpage)}
           allowMailto={config.proofing.allowMailto}
           {...heroData}
@@ -416,6 +444,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         albums={albumsWithHero}
         coverPlaceholders={coverPlaceholders}
         sections={result.subpage.sections}
+        gridStyle={buildCoverGridStyle(result.subpage.grid)}
         {...(subpageIndex >= 0 ? { index: subpageIndex + 1 } : {})}
       />
     );
@@ -435,7 +464,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
     notFound();
   }
 
-  const images = toPhotoItems(album.assets, config.exifOnHover);
+  const images = toPhotoItems(album.assets, config.exif.onHover && config.exif.camera);
 
   // Password gate for protected albums
   const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
@@ -450,8 +479,10 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       layout={resolveLayout(mergeAlbumGrid(album.id))}
       gridStyle={buildGridStyle(mergeAlbumGrid(album.id))}
       backLinkHref="/"
-      backLinkLabel="Back to Gallery"
+      backLinkLabel={getServerDictionary().common.backToGallery}
       watermark={config.watermark}
+      showExifPanel={hasExifPanelContent(config.exif)}
+      showGear={config.exif.camera}
       proofing={proofingFor()}
       allowMailto={config.proofing.allowMailto}
       {...heroData}

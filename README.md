@@ -172,8 +172,9 @@ and without the gate, whoever finds the URL first could configure it:
   Token:  PTmUKFIdce2DwuqBG71RAExH7tVxceXX
 ```
 
-Read it from your container logs (`docker compose logs immich-folio`) and append
-it to the URL:
+Read it from your container logs (`docker logs immich-folio`, or
+`docker compose logs lightbox` — `immich-folio` is the container name, `lightbox`
+the service) and append it to the URL:
 
 ```
 http://your-site/install?token=PTmUKFIdce2DwuqBG71RAExH7tVxceXX

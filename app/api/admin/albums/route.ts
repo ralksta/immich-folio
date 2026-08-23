@@ -5,6 +5,8 @@ import { getConfig } from '@/lib/config';
 interface ImmichAlbumSummary {
   id: string;
   albumName: string;
+  /** Immich's own flag. Absent on older versions, which is not the same as false. */
+  shared?: boolean;
   description: string;
   albumThumbnailAssetId: string | null;
   assetCount: number;
@@ -22,7 +24,10 @@ export async function GET() {
   }
 
   const config = getConfig();
-  if (config.needsSetup) {
+  // Credentials, not `needsSetup`: this route is how the operator picks the
+  // albums that gallery.yaml is built from, so refusing to run until that file
+  // exists is a deadlock (#507).
+  if (config.needsCredentials) {
     return NextResponse.json({ error: 'Immich not configured' }, { status: 503 });
   }
 
@@ -51,6 +56,12 @@ export async function GET() {
       createdAt: album.createdAt,
       updatedAt: album.updatedAt,
       isConfigured: configuredIds.has(album.id),
+      // Immich ignores ?shared=true and returns everything, so this list is the
+      // whole library rather than the shared part of it (#515). Passing the flag
+      // through lets the picker say which albums Immich still considers private
+      // — the accident-prevention the filter was supposed to give, without
+      // taking away the ability to publish them.
+      shared: album.shared,
     }));
 
     // Sort: configured first, then by name

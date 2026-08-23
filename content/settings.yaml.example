@@ -6,6 +6,11 @@
 title: "My Portfolio"
 subtitle: "A visual journal"
 
+# Interface language of the visitor-facing site: "en" or "de".
+# Any other value still sets <html lang> and date formatting, but the
+# interface stays English. The admin panel is always English.
+lang: "en"
+
 # ── SEO & Metadata ───────────────────────────────────────────────
 # Optional: Overrides global title/subtitle for search engines and social cards
 # seo:
@@ -15,8 +20,30 @@ subtitle: "A visual journal"
 #   noIndex: false # Set to true to hide from search engines
 #   noFollow: false # Set to true to prevent search engines from following links
 
-# Show EXIF metadata (camera, lens, ISO) on photo grid hover
+# ── Site password (optional) ─────────────────────────────────────
+# Puts the WHOLE public site behind one password — useful while a portfolio
+# is still being built, or for a folio only ever shown to clients.
+# Log in once and the server log prints a scrypt: hash to paste back here.
+# The SITE_PASSWORD environment variable overrides this value.
+# /admin keeps its own password and is never behind this gate.
+# sitePassword: "scrypt:..."
+
+# What a first-time visitor sees: dark (default), light, or auto to follow
+# their operating system. Their own choice from the header toggle overrides it.
+mode: dark
+
+# Show the EXIF summary overlay on photo grid hover
 exifOnHover: true
+
+# Which EXIF groups the site may publish at all — the grid overlay, the
+# lightbox info panel and the album header all follow this.
+# caption is the description written in Immich; turn it off if you use that
+# field for private notes.
+# exif:
+#   camera: true      # body, lens, focal length
+#   settings: true    # aperture, shutter speed, ISO
+#   location: true    # city and country
+#   caption: true     # the Immich description
 
 # Enable the interactive world map view (/map)
 map: true
@@ -31,6 +58,13 @@ scrollToTop: true
 # proofing:
 #   enabled: true
 #   allowMailto: true
+
+# Watermark overlay on the lightbox. opacity is a fraction: 0.5 = 50%.
+# watermark:
+#   enabled: true
+#   text: "© Your Name"
+#   opacity: 0.5
+#   position: "bottom-right"   # bottom-right | bottom-left | center
 
 # ── Theme configuration ──────────────────────────────────────────
 # Presets: studio-modern (default), studio, minimal, editorial, classic,

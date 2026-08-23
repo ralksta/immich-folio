@@ -3,8 +3,10 @@
 import React, { useState } from 'react';
 import { useProofing } from './ProofingContext';
 import { IconCheck, IconCopy, IconLink } from './Icons';
+import { useDictionary } from './I18nProvider';
 
 export function ProofingModal() {
+  const t = useDictionary();
   const proofing = useProofing();
   const [copiedState, setCopiedState] = useState<'none' | 'link' | 'list'>('none');
 
@@ -36,10 +38,8 @@ export function ProofingModal() {
   };
 
   const handleMailto = () => {
-    const subject = encodeURIComponent(`Photo Selection (${favorites.size} items)`);
-    const body = encodeURIComponent(
-      `Hello,\n\nHere is my photo selection:\n\n${getFormattedList()}\n\nShare Link: ${getProofingUrl()}\n\nBest regards,`,
-    );
+    const subject = encodeURIComponent(t.proofing.mailSubject(favorites.size));
+    const body = encodeURIComponent(t.proofing.mailBody(getFormattedList(), getProofingUrl()));
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
 
@@ -82,12 +82,12 @@ export function ProofingModal() {
           }}
         >
           <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
-            ❤️ Selection ({favorites.size})
+            {t.proofing.modalTitle(favorites.size)}
           </h3>
           <button
             type="button"
             onClick={() => setIsModalOpen(false)}
-            aria-label="Close modal"
+            aria-label={t.proofing.closeModal}
             style={{
               background: 'none',
               border: 'none',
@@ -103,8 +103,7 @@ export function ProofingModal() {
         </div>
 
         <p style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '1rem' }}>
-          You have selected {favorites.size} photo{favorites.size === 1 ? '' : 's'}. Choose an
-          export option below to share your selection:
+          {t.proofing.intro(favorites.size)}
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -127,11 +126,11 @@ export function ProofingModal() {
           >
             {copiedState === 'link' ? (
               <>
-                <IconCheck size={15} aria-hidden="true" /> Link Copied!
+                <IconCheck size={15} aria-hidden="true" /> {t.proofing.linkCopied}
               </>
             ) : (
               <>
-                <IconLink size={15} aria-hidden="true" /> Copy Shareable Link
+                <IconLink size={15} aria-hidden="true" /> {t.proofing.copyLink}
               </>
             )}
           </button>
@@ -155,11 +154,11 @@ export function ProofingModal() {
           >
             {copiedState === 'list' ? (
               <>
-                <IconCheck size={15} aria-hidden="true" /> List Copied!
+                <IconCheck size={15} aria-hidden="true" /> {t.proofing.listCopied}
               </>
             ) : (
               <>
-                <IconCopy size={15} aria-hidden="true" /> Copy Text List (#1, #2...)
+                <IconCopy size={15} aria-hidden="true" /> {t.proofing.copyList}
               </>
             )}
           </button>
@@ -182,14 +181,14 @@ export function ProofingModal() {
                 cursor: 'pointer',
               }}
             >
-              ✉️ Send Email to Photographer
+              {t.proofing.sendEmail}
             </button>
           )}
 
           <button
             type="button"
             onClick={() => {
-              if (confirm('Clear all selected favorites?')) {
+              if (confirm(t.proofing.confirmClear)) {
                 clearFavorites();
                 setIsModalOpen(false);
               }
@@ -204,7 +203,7 @@ export function ProofingModal() {
               opacity: 0.8,
             }}
           >
-            Clear Selection
+            {t.proofing.clearSelection}
           </button>
         </div>
       </div>

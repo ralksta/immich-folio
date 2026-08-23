@@ -6,6 +6,8 @@ import type { GridConfig } from '@/lib/config';
 import type { LightboxWatermark } from '@/components/Lightbox';
 import Image from 'next/image';
 import React from 'react';
+import { getServerDictionary } from '@/lib/i18n/server';
+import { albumMetaDetail } from '@/lib/albumMeta';
 
 interface AlbumDetailViewProps {
   album: ImmichAlbum;
@@ -18,35 +20,14 @@ interface AlbumDetailViewProps {
   heroImageUrl?: string;
   heroBlurDataURL?: string;
   watermark?: LightboxWatermark;
+  /** Whether the lightbox may offer its info panel at all. */
+  showExifPanel?: boolean;
+  /** Whether the header may name the camera and lens. Follows the `camera` group. */
+  showGear?: boolean;
   /** Client proofing — favorite hearts, selection bar and send-off modal. */
   proofing?: boolean;
   /** Offer the "send by email" button in the proofing modal. */
   allowMailto?: boolean;
-}
-
-/**
- * Extra detail for the album header — shooting date and camera/lens, read off
- * the first asset that carries EXIF. Both are rendered in their own spans and
- * hidden by default; only presets that ask for them show them, so the header
- * keeps reading "86 photos" everywhere else.
- */
-function albumMetaDetail(album: ImmichAlbum): { date?: string; gear?: string } {
-  const first = album.assets.find((a) => a.exifInfo);
-  const exif = first?.exifInfo;
-
-  const taken = exif?.dateTimeOriginal || first?.fileCreatedAt;
-  const gear = [exif?.model, exif?.lensModel].filter(Boolean).join(' · ');
-
-  return {
-    ...(taken ? { date: formatMonthYear(taken) } : {}),
-    ...(gear ? { gear } : {}),
-  };
-}
-
-function formatMonthYear(iso: string): string | undefined {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return undefined;
-  return `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
 export function AlbumDetailView({
@@ -60,10 +41,13 @@ export function AlbumDetailView({
   heroImageUrl,
   heroBlurDataURL,
   watermark,
+  showExifPanel = true,
+  showGear = true,
   proofing,
   allowMailto,
 }: AlbumDetailViewProps) {
-  const metaDetail = albumMetaDetail(album);
+  const metaDetail = albumMetaDetail(album, showGear);
+  const t = getServerDictionary();
 
   return (
     <>
@@ -95,9 +79,7 @@ export function AlbumDetailView({
           {album.description && <p className="album-header__description">{album.description}</p>}
         </div>
         <p className="album-header__meta">
-          <span className="album-header__meta-count">
-            {images.length} {images.length === 1 ? 'photo' : 'photos'}
-          </span>
+          <span className="album-header__meta-count">{t.common.photos(images.length)}</span>
           {metaDetail.date && <span className="album-header__meta-date"> · {metaDetail.date}</span>}
           {metaDetail.gear && <span className="album-header__meta-gear">{metaDetail.gear}</span>}
         </p>
@@ -107,6 +89,7 @@ export function AlbumDetailView({
         layout={layout}
         gridStyle={gridStyle}
         watermark={watermark}
+        showExifPanel={showExifPanel}
         proofing={proofing}
         allowMailto={allowMailto}
       />

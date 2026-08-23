@@ -78,8 +78,24 @@ export function createAdminToken(): string {
   return `${data}.${sig}`;
 }
 
+/**
+ * Upper bound on a session token, well above the ~200 characters a real one
+ * needs. A token that long is not one we issued, so rejecting it early costs a
+ * legitimate visitor nothing.
+ *
+ * The work being avoided is modest and worth stating honestly: the base64url
+ * decode below only runs once the HMAC matches, which an attacker cannot
+ * produce — so the unbounded part is the HMAC over the token itself, and the
+ * server's own header limit already caps how much of it can arrive. This is
+ * hygiene at the boundary rather than a fix for a reachable exhaustion.
+ * Reported as #505.
+ */
+const MAX_TOKEN_LENGTH = 512;
+
 /** Verify a session token. Returns true if valid. */
 export function verifyAdminToken(token: string): boolean {
+  if (token.length > MAX_TOKEN_LENGTH) return false;
+
   const parts = token.split('.');
   if (parts.length !== 2) return false;
 

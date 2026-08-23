@@ -11,6 +11,8 @@ import { getConfig } from '@/lib/config';
 import { imageUrl, assetPlaceholder } from '@/lib/urls';
 import { HeroCarousel } from '@/components/HeroCarousel';
 import { FadeIn } from '@/components/FadeIn';
+import { getServerDictionary } from '@/lib/i18n/server';
+import type { Dictionary } from '@/lib/i18n';
 
 // Render at request time — requires live Immich connection
 export const dynamic = 'force-dynamic';
@@ -19,25 +21,24 @@ type HeroSubpage = { slug: string; name: string; albumCount: number };
 type HeroAlbum = { id: string; slug: string; albumName: string; assetCount: number };
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 /**
  * Flatten subpages + standalone albums into one indexed nav list.
  * Every entry carries an index and a count; presets decide what to show.
  */
-function heroNavEntries(subpages: HeroSubpage[], albums: HeroAlbum[]) {
+function heroNavEntries(subpages: HeroSubpage[], albums: HeroAlbum[], t: Dictionary) {
   return [
     ...subpages.map((sp) => ({
       key: `sp-${sp.slug}`,
       href: `/${sp.slug}`,
       label: sp.name,
-      count: plural(sp.albumCount, 'album'),
+      count: t.common.albums(sp.albumCount),
     })),
     ...albums.map((a) => ({
       key: `al-${a.id}`,
       href: `/${a.slug}`,
       label: a.albumName,
-      count: plural(a.assetCount, 'photo'),
+      count: t.common.photos(a.assetCount),
     })),
   ];
 }
@@ -61,9 +62,10 @@ function heroExifLine(asset: ImmichAsset): string | undefined {
 
 /** Shared nav links for hero sections. */
 function HeroNavLinks({ subpages, albums }: { subpages: HeroSubpage[]; albums: HeroAlbum[] }) {
+  const t = getServerDictionary();
   return (
     <>
-      {heroNavEntries(subpages, albums).map((entry, i) => (
+      {heroNavEntries(subpages, albums, t).map((entry, i) => (
         <Link key={entry.key} href={entry.href} className="hero__nav-link">
           <span className="hero__nav-index" aria-hidden="true">
             {pad2(i + 1)}
@@ -111,6 +113,7 @@ function HeroTextContent({
 
 export default async function HomePage() {
   const config = getConfig();
+  const t = getServerDictionary();
 
   if (config.needsSetup) {
     return null;
@@ -141,7 +144,7 @@ export default async function HomePage() {
   // Welcome-page splash: one fullbleed image, the site
   // title, and one link into the portfolio (the first nav entry).
   if (heroStyle === 'cover') {
-    const entries = heroNavEntries(subpages, albums);
+    const entries = heroNavEntries(subpages, albums, t);
     const enterHref = entries[0]?.href ?? '/about';
 
     return (
@@ -158,7 +161,7 @@ export default async function HomePage() {
           )}
           <FadeIn delay={250}>
             <Link href={enterHref} className="hero__cover-enter">
-              Enter
+              {t.home.enter}
               <span className="hero__cover-enter-arrow" aria-hidden="true">
                 →
               </span>
@@ -197,7 +200,7 @@ export default async function HomePage() {
 
   // ── Stacked: fullbleed image + text at bottom + thumbnail strip ─
   if (heroStyle === 'stacked') {
-    const allEntries = heroNavEntries(subpages, albums);
+    const allEntries = heroNavEntries(subpages, albums, t);
 
     return (
       <div className="hero hero--stacked">

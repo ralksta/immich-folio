@@ -90,7 +90,11 @@
 
 /* Photo grid: zero hover effects, clinical stillness */
 [data-preset='minimal'] .photo-grid {
-  column-gap: 2px;
+  /* The preset's own spacing, and only its default: an explicit grid.gap lands
+     inline on this element and wins. It used to be a hardcoded column-gap, which
+     no setting could override and which left the row spacing on the global 12px
+     while the columns stayed at 2px (#513). */
+  --grid-gap: 2px;
 }
 
 [data-preset='minimal'] .photo-grid__item {
@@ -179,7 +183,7 @@
 
 /* Subpage grid */
 [data-preset='minimal'] .subpage-grid {
-  gap: 2px;
+  --subpage-gap: 2px;
 }
 
 [data-preset='minimal'] .subpage-grid__item {

@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import BackupManagerModal from './BackupManagerModal';
+import DoctorModal from './DoctorModal';
+import type { DoctorLevel } from '@/lib/admin/doctor';
 import * as Icons from './Icons';
 
 interface Props {
@@ -26,6 +28,10 @@ export default function AdminDashboard({ onLogout, children }: Props) {
   // Diagnostics & Backup state
   const [showStatus, setShowStatus] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
+  const [showDoctor, setShowDoctor] = useState(false);
+  // The badge's job is "does anything need me?", and the doctor is the only
+  // check that can answer that beyond "is Immich up" (#491).
+  const [doctorLevel, setDoctorLevel] = useState<DoctorLevel | null>(null);
   const [status, setStatus] = useState<any>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   // Distinct from `status === null`: the check itself did not run. Without this
@@ -80,16 +86,37 @@ export default function AdminDashboard({ onLogout, children }: Props) {
     return healthy ? { className: 'ok', label: okLabel } : { className: 'error', label: badLabel };
   };
 
+  const fetchDoctor = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/doctor');
+      if (!res.ok) return;
+      const data = await res.json();
+      setDoctorLevel(data.level ?? null);
+    } catch {
+      // A failed check must not colour the badge — "unknown" is not "broken".
+    }
+  }, []);
+
   useEffect(() => {
     fetchStatus();
-  }, []);
+    fetchDoctor();
+  }, [fetchDoctor]);
 
   const immichIndicator = indicator(
     status?.immich?.status === 'connected',
     'Connected',
     'Disconnected',
   );
-  const configIndicator = indicator(status?.config?.status === 'valid', 'Valid', 'Degraded');
+  const configIndicator =
+    !statusLoading && !statusError && status?.config?.status === 'setup'
+      ? { className: 'unknown', label: 'Not set up' }
+      : indicator(status?.config?.status === 'valid', 'Valid', 'Degraded');
+
+  // An installation that was never finished is not a fault. It used to render
+  // as "System Degraded" with no further hint, which sent operators looking for
+  // a network problem that did not exist (#507).
+  const setupIncomplete = !statusLoading && !statusError && status?.setup?.complete === false;
+  const missingCredentials = status?.setup?.credentials === 'missing';
 
   return (
     <div className="admin-dashboard">
@@ -112,7 +139,15 @@ export default function AdminDashboard({ onLogout, children }: Props) {
           {/* Diagnostics Badge */}
           <div className="status-indicator-container">
             <button
-              className={`status-badge-btn ${immichIndicator.className === 'ok' ? 'connected' : immichIndicator.className === 'error' ? 'disconnected' : 'unknown'}`}
+              className={`status-badge-btn ${
+                setupIncomplete || doctorLevel === 'warn'
+                  ? 'unknown'
+                  : immichIndicator.className === 'error' || doctorLevel === 'error'
+                    ? 'disconnected'
+                    : immichIndicator.className === 'ok'
+                      ? 'connected'
+                      : 'unknown'
+              }`}
               onClick={() => {
                 setShowStatus(!showStatus);
                 if (!showStatus) fetchStatus();
@@ -123,11 +158,17 @@ export default function AdminDashboard({ onLogout, children }: Props) {
               <span className="status-text">
                 {statusLoading
                   ? 'Checking...'
-                  : immichIndicator.className === 'ok'
-                    ? 'System OK'
+                  : setupIncomplete
+                    ? 'Setup Incomplete'
                     : immichIndicator.className === 'error'
                       ? 'System Degraded'
-                      : 'Status Unknown'}
+                      : doctorLevel === 'error'
+                        ? 'Needs Attention'
+                        : doctorLevel === 'warn'
+                          ? 'Check Diagnostics'
+                          : immichIndicator.className === 'ok'
+                            ? 'System OK'
+                            : 'Status Unknown'}
               </span>
             </button>
 
@@ -147,6 +188,19 @@ export default function AdminDashboard({ onLogout, children }: Props) {
                     </button>
                   </div>
                   <div className="status-dropdown-body">
+                    {setupIncomplete && (
+                      <p className="status-setup-note">
+                        {missingCredentials
+                          ? 'No Immich URL or API key configured. Set IMMICH_API_URL and IMMICH_API_KEY, or run the '
+                          : 'No content/gallery.yaml yet — the public site has nothing to show. Add a page below, or run the '}
+                        <a href="/install" target="_blank" rel="noopener noreferrer">
+                          setup wizard
+                        </a>
+                        {missingCredentials
+                          ? '.'
+                          : ' (the one-time token is printed to the server log).'}
+                      </p>
+                    )}
                     <div className="status-item">
                       <span className="status-label">Immich Connection</span>
                       <span className={`status-val ${immichIndicator.className}`}>
@@ -177,6 +231,15 @@ export default function AdminDashboard({ onLogout, children }: Props) {
                     </div>
                   </div>
                   <div className="status-dropdown-footer">
+                    <button
+                      className="admin-btn admin-btn-sm"
+                      onClick={() => {
+                        setShowStatus(false);
+                        setShowDoctor(true);
+                      }}
+                    >
+                      <Icons.IconShieldCheck size={14} /> Diagnostics
+                    </button>
                     <button
                       className="admin-btn admin-btn-sm"
                       onClick={() => {
@@ -225,6 +288,14 @@ export default function AdminDashboard({ onLogout, children }: Props) {
       </header>
 
       <main className="admin-main">{children}</main>
+
+      <DoctorModal
+        isOpen={showDoctor}
+        onClose={() => {
+          setShowDoctor(false);
+          fetchDoctor();
+        }}
+      />
 
       <BackupManagerModal
         isOpen={showBackupModal}

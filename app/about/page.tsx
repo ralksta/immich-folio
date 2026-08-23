@@ -11,6 +11,7 @@ import type { Metadata } from 'next';
 import { imageUrl, assetPlaceholder } from '@/lib/urls';
 import { immich } from '@/lib/immich';
 import { getConfig } from '@/lib/config';
+import { getServerDictionary } from '@/lib/i18n/server';
 import { notFound } from 'next/navigation';
 import './about.css';
 
@@ -51,7 +52,8 @@ async function getAboutContent() {
 
 export async function generateMetadata(): Promise<Metadata> {
   const { meta, body } = await getAboutContent();
-  const title = meta.name ? `About — ${meta.name}` : 'About';
+  const t = getServerDictionary();
+  const title = meta.name ? t.about.metaTitle(meta.name) : t.about.title;
   const description = body ? body.slice(0, 160).replace(/\s+/g, ' ').trim() : undefined;
 
   return {
@@ -72,6 +74,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AboutPage() {
   const config = getConfig();
   if (!config.aboutEnabled) notFound();
+  const t = getServerDictionary();
 
   const { meta, body } = await getAboutContent();
 
@@ -86,7 +89,7 @@ export default async function AboutPage() {
         {meta.portrait ? (
           <Image
             src={imageUrl(meta.portrait, 'preview')}
-            alt={meta.name || 'Portrait'}
+            alt={meta.name || t.about.portraitAlt}
             className="about__portrait"
             fill
             sizes="(max-width: 768px) 100vw, 40vw"
@@ -102,7 +105,7 @@ export default async function AboutPage() {
       {/* ── Text ─────────────────────────────────────── */}
       <div className="about__text-col">
         <p className="about__kicker" aria-hidden="true">
-          About
+          {t.about.kicker}
         </p>
         {meta.name && <h1 className="about__name">{meta.name}</h1>}
         {meta.location && <p className="about__location">{meta.location}</p>}
@@ -123,7 +126,7 @@ export default async function AboutPage() {
         {meta.gear && meta.gear.length > 0 && (
           <>
             <hr className="about__rule" />
-            <h2 className="about__section-label">Gear</h2>
+            <h2 className="about__section-label">{t.about.gear}</h2>
             <ul className="about__gear">
               {meta.gear.map((item) => (
                 <li key={item}>{item}</li>

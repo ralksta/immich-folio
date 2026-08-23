@@ -10,6 +10,7 @@ import { ImageResponse } from 'next/og';
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
+import { siteLockResponse } from '@/lib/auth';
 
 /**
  * OG image rendering runs satori + resvg per request and each unique ?title
@@ -33,6 +34,11 @@ export async function GET(request: NextRequest) {
       },
     });
   }
+
+  // The page-level gate does not cover route handlers — without this a locked
+  // site would still serve to anyone holding the URL.
+  const locked = siteLockResponse(request);
+  if (locked) return locked;
 
   const { searchParams } = request.nextUrl;
   const title = (searchParams.get('title') || 'Gallery').slice(0, 200);

@@ -110,20 +110,20 @@ subpages:
 
 ### Subpage Options
 
-| Key         | Type    | Description                                                                          |
-| ----------- | ------- | ------------------------------------------------------------------------------------ |
-| `name`      | string  | Navigation label; the URL slug is derived from it                                    |
-| `title`     | string  | Page heading, defaults to `name`                                                     |
-| `subtitle`  | string  | Subline under the heading                                                            |
-| `password`  | string  | Gates the whole subpage — see [Password Protection](#password-protection)            |
-| `albums`    | list    | Album UUIDs, optionally with [per-album options](#per-album-options)                 |
-| `sections`  | list    | Named groups of albums — see [Sections](#sections)                                   |
-| `grid`      | object  | Grid override for this page — see [Grid Layout](#grid-layout)                        |
-| `proofing`  | boolean | Enables [client proofing](#client-proofing) on this page                             |
-| `essayFile` | string  | Render a Markdown essay instead of a grid — see [Journal & Photo Essays](journal.md) |
-| `essayText` | string  | Essay Markdown inline; written by the admin block editor                             |
-| `enabled`   | boolean | `false` takes the page offline without deleting it                                   |
-| `hidden`    | boolean | **Experimental.** Reachable by direct link, but hidden from the navigation           |
+| Key         | Type    | Description                                                                            |
+| ----------- | ------- | -------------------------------------------------------------------------------------- |
+| `name`      | string  | Navigation label; the URL slug is derived from it                                      |
+| `title`     | string  | Page heading, defaults to `name`                                                       |
+| `subtitle`  | string  | Subline under the heading                                                              |
+| `password`  | string  | Gates the whole subpage — see [Password Protection](#password-protection)              |
+| `albums`    | list    | Album UUIDs, optionally with [per-album options](#per-album-options)                   |
+| `sections`  | list    | Named groups of albums — see [Sections](#sections)                                     |
+| `grid`      | object  | Grid override for this page, photos and album covers — see [Grid Layout](#grid-layout) |
+| `proofing`  | boolean | Enables [client proofing](#client-proofing) on this page                               |
+| `essayFile` | string  | Render a Markdown essay instead of a grid — see [Journal & Photo Essays](journal.md)   |
+| `essayText` | string  | Essay Markdown inline; written by the admin block editor                               |
+| `enabled`   | boolean | `false` takes the page offline without deleting it                                     |
+| `hidden`    | boolean | **Experimental.** Reachable by direct link, but hidden from the navigation             |
 
 ```yaml
 subpages:
@@ -245,8 +245,8 @@ Useful when the automatic centre crop cuts off a horizon or a face.
 
 ## Password Protection
 
-A password can be set on a subpage, on a single album, and on a
-[journal entry](journal.md#password-protected-entries). Unlocking sets an
+A password can be set on the whole site, on a subpage, on a single album, and on
+a [journal entry](journal.md#password-protected-entries). Unlocking sets an
 `HttpOnly` cookie that is valid for 24 hours; nothing is stored server-side.
 
 Three storage formats are accepted:
@@ -266,6 +266,38 @@ directly.
 > Album and subpage gates protect the **page**. Image URLs handed out while a
 > gallery was unlocked keep working — see
 > [Image Token Revocation](#image-token-revocation).
+
+### Locking the whole site
+
+`sitePassword` in `settings.yaml` puts everything public behind one password —
+useful while a portfolio is still being built, or for a folio that is only ever
+shown to clients.
+
+```yaml
+# settings.yaml
+sitePassword: 'scrypt:...'
+```
+
+`SITE_PASSWORD` in the environment overrides the file, so the password can be
+rotated without editing (or backing up) `settings.yaml`. It accepts the same
+three storage formats as every other gate.
+
+Unlike the per-page gates, this one is enforced in `proxy.ts`, before the
+requested page renders at all. That matters: a gate that merely swapped the page
+for a login form would still have let the page produce its payload, album names
+and image tokens included. The public API routes carry the same check
+themselves, since route handlers do not pass through the proxy.
+
+Three things stay reachable on a locked site:
+
+| Path          | Why                                                                      |
+| ------------- | ------------------------------------------------------------------------ |
+| `/api/health` | A health probe runs without cookies; gating it takes the container down. |
+| `/admin`      | It has its own password, and it is where `sitePassword` is set.          |
+| `/install`    | A fresh deployment has to be configurable before it can be locked.       |
+
+A locked site also serves `noindex, nofollow` regardless of the SEO settings —
+there is nothing there for a crawler.
 
 ## Photo Order Within an Album
 
@@ -315,11 +347,18 @@ override it in `gallery.yaml`. The three levels merge, most specific winning:
 
 **global (`settings.yaml`) → subpage → album**
 
+> [!NOTE]
+> Leaving `gap` out is not the same as setting `12`. Each theme preset picks its
+> own photo spacing (2px `minimal`, 32px `editorial`, 40px `monograph`), and an
+> unset `gap` lets that stand. Setting one wins in every preset — which is what
+> `minimal`, `editorial` and `monograph` used to ignore
+> ([#513](https://github.com/ralksta/immich-folio/issues/513)).
+
 ```yaml
 # settings.yaml — global defaults
 grid:
   columns: 3 # number of columns (default: 3)
-  gap: 12 # gap in pixels (default: 12)
+  gap: 12 # gap in pixels — unset means the theme preset decides
   aspectRatio: '1' # "1", "3/2", "2/3", "16/9", "auto" (default: "1")
   layout: masonry
 ```
@@ -341,6 +380,37 @@ Available layouts: `masonry`, `uniform`, `showcase`, `filmstrip`,
 (see [Journal & Photo Essays](journal.md)). Each is illustrated in the
 **[Theming guide](theming.md#gridlayout)**.
 
+### Album covers on a subpage
+
+A subpage with more than one album shows a grid of album covers rather than
+photos. That grid follows the same `columns` value — set it globally in
+`settings.yaml` or per page in `gallery.yaml`, and the covers are tiled the same
+way the photos are. Valid range is 1–6; below 1024px viewport width at most two
+covers share a row, and below 640px they stack.
+
+`gap` is the deliberate exception: it does **not** cascade from the global
+setting to the covers. Every theme preset picks its own cover spacing as part of
+its look — 1px in `monograph`, 2px in `minimal` and `editorial`, 20px in
+`studio-modern` — and letting the site-wide photo gap through would flatten all
+of them into one look. Only an explicit `gap` on the subpage overrides the
+preset:
+
+```yaml
+# gallery.yaml — album covers on this page only
+subpages:
+  - name: Editorial
+    grid:
+      columns: 3 # three covers per row (site-wide default otherwise)
+      gap: 24 # overrides the theme's own cover spacing
+    albums:
+      - '33333333-3333-3333-3333-333333333333'
+      - '44444444-4444-4444-4444-444444444444'
+```
+
+Both fields are editable per page in the admin panel under
+**Pages › _subpage_ › Album Cover Grid**; left empty they follow the site-wide
+setting and the theme respectively.
+
 ## Site Behaviour
 
 Feature toggles in `settings.yaml`:
@@ -350,7 +420,13 @@ title: 'My Portfolio'
 subtitle: 'A visual journal'
 lang: 'en'
 
-exifOnHover: true # camera/lens/settings on photo grid hover
+mode: dark # dark (default) | light | auto — what a first-time visitor sees
+exifOnHover: true # the summary overlay on photo grid hover
+exif: # which groups may be shown at all
+  camera: true # body, lens, focal length
+  settings: true # aperture, shutter speed, ISO
+  location: true # city and country
+  caption: true # the description written in Immich
 map: true # the interactive world map at /map
 transitions: true # smooth page transitions between routes
 scrollToTop: true # floating back-to-top arrow on long pages
@@ -362,13 +438,82 @@ about:
 
 | Key             | Default | Notes                                       |
 | --------------- | ------- | ------------------------------------------- |
-| `lang`          | `en`    | `<html lang>` and date formatting           |
-| `exifOnHover`   | on      |                                             |
+| `lang`          | `en`    | Interface language, `<html lang>`, dates    |
+| `mode`          | `dark`  | Visitor's starting colour mode, see below   |
+| `exifOnHover`   | on      | The grid hover overlay only, see below      |
+| `exif.*`        | on      | Per-group EXIF visibility, see below        |
 | `map`           | **off** | Opt-in: must be set to `true` explicitly    |
 | `transitions`   | on      |                                             |
 | `scrollToTop`   | on      |                                             |
 | `analytics`     | on      |                                             |
 | `about.enabled` | on      | Needs a `content/about.md` to show anything |
+
+### Colour mode
+
+`mode` decides what a visitor sees before they touch anything: `dark` (the
+default the site has always had), `light`, or `auto` to follow their operating
+system. It is rendered onto `<html>` server-side, so the first paint is already
+right rather than flipping after the page loads.
+
+A visitor's own choice from the header toggle is kept in their browser and
+always wins over this — `mode` only sets the starting point. The light/dark
+switch in the admin panel previews _your_ view and does not change what
+visitors get; that is what this setting is for
+([#512](https://github.com/ralksta/immich-folio/issues/512)).
+
+### EXIF visibility
+
+`exif` decides what the site may publish about a photo. It governs all three
+places the data appears — the grid hover overlay, the lightbox info panel, and
+the camera line in the album header — so they cannot disagree.
+
+`caption` is the description written in Immich. It used to be shown regardless
+of any setting, on the grounds that a caption is editorial rather than
+metadata — which left it as the one field nobody could switch off, and Immich
+descriptions are also where people keep private notes and whatever a decade of
+cataloguing software left behind ([#506](https://github.com/ralksta/immich-folio/issues/506)).
+It is a group like any other now.
+
+`exifOnHover` predates the block and stays: it decides whether the grid shows
+its overlay at all, and it supplies the default for the three technical groups,
+so an existing `exifOnHover: false` still means "no technical EXIF anywhere". An
+explicit `exif` key always wins over it. Captions never followed that switch and
+still do not — set `caption: false` to turn them off.
+
+With every group off, the lightbox withdraws its info button and the `i` key
+rather than opening an empty panel.
+
+### Interface language
+
+`lang` picks the language of the visitor-facing interface — navigation, the
+lightbox, the password gate, the proofing dialog, the legal notice, error pages
+— and is also emitted as `<html lang>` and used for date formatting.
+
+| Value | Interface         |
+| ----- | ----------------- |
+| `en`  | English (default) |
+| `de`  | German            |
+
+Any other value (`fr`, `ja`, …) still reaches `<html lang>` and
+`toLocaleDateString`, but the interface stays English: there is no dictionary
+for it yet. That is deliberate — claiming `lang="en"` on a French site would be
+worse for screen readers than an English interface on a page correctly marked
+as French.
+
+Two things stay in one language by design:
+
+- **The admin panel** is always English, whatever `lang` says.
+- **`/impressum`** keeps its German headings when `lang: de` and the § 5 TMG
+  citation in both, because that is what the statute names. Under `lang: en`
+  the footer link reads "Legal Notice" rather than "Impressum" — the page is
+  optional (`legal.enabled`), and an unexplained German word in the footer of
+  an English site is what drove this out of the backlog.
+
+Adding a language means adding one file under `lib/i18n/locales/` and listing
+it in `SUPPORTED_LOCALES` (`lib/i18n/index.ts`). The dictionary is typed
+against the English one, so a missing key fails the type-check rather than
+falling back silently, and `lib/__tests__/i18n.test.ts` additionally catches
+keys that were copied over but never translated.
 
 ### Analytics
 
@@ -447,9 +592,13 @@ protection:
 watermark:
   enabled: true
   text: '© Your Name'
-  opacity: 0.5
+  opacity: 0.5 # fraction, 0–1: 0.5 is 50%
   position: 'bottom-right' # bottom-right | bottom-left | center
 ```
+
+`opacity` is a fraction between 0 and 1, the same unit the admin slider writes.
+A value above 1 is read as a percentage (`90` means 0.9), so configs written
+that way before the unit was fixed keep working.
 
 > [!NOTE]
 > Both are deterrents against casual copying, not protection. The image is in
