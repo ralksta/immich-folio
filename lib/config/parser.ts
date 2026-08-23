@@ -41,13 +41,25 @@ export function loadYaml<T>(filename: string): T | null {
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export function validateUuid(id: string, context: string): string {
+/**
+ * An ID from the config, or `null` when it is not a UUID at all.
+ *
+ * It used to substitute the all-zeros UUID and log "(Ignored for build/setup)",
+ * which was untrue twice over: nothing ignored it, and it was not a build-time
+ * concern. The sentinel travelled on as a real asset ID — encoded into a token,
+ * requested through /api/image, forwarded to Immich, answered with 400 — so a
+ * placeholder left in the example file turned the home page into "Something
+ * went wrong" (#517).
+ *
+ * Returning null lets each caller drop the entry instead, which is what
+ * "ignored" was supposed to mean: one fewer hero image, one album not
+ * published, rather than a request that cannot succeed.
+ */
+export function validateUuid(id: string, context: string): string | null {
   const trimmed = id.trim();
   if (!UUID_REGEX.test(trimmed)) {
-    // If we are in setup mode or using dummy data, don't crash the build.
-    // Return a valid dummy UUID so Next.js doesn't panic.
-    console.warn(`Invalid UUID in ${context}: "${trimmed}" (Ignored for build/setup)`);
-    return '00000000-0000-0000-0000-000000000000';
+    console.warn(`Invalid UUID in ${context}: "${trimmed}" — entry dropped.`);
+    return null;
   }
   return trimmed;
 }

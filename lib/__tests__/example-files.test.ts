@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import yaml from 'js-yaml';
@@ -27,14 +27,25 @@ describe('shipped example files', () => {
   });
 
   /** Parsing is not enough — it has to survive the config pipeline too. */
-  it('gallery.yaml.example produces a usable gallery', () => {
+  it('gallery.yaml.example produces a usable gallery structure', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const derived = deriveGallery(load('gallery.yaml.example') as GalleryYaml);
 
     expect(derived.subpages.length).toBeGreaterThan(0);
-    expect(derived.albums.length).toBeGreaterThan(0);
     // Every subpage needs a slug to be reachable at all.
     for (const sp of derived.subpages) {
       expect(sp.slug).toBeTruthy();
     }
+
+    /*
+     * No albums, on purpose: the example's IDs are placeholders like
+     * "album-uuid-3", which are not UUIDs and are therefore dropped with a
+     * named warning each (#517). A copied example gives a site with page
+     * structure and no photos, which is honest — before, the placeholders
+     * became the all-zeros UUID and produced an error page.
+     */
+    expect(derived.albums).toEqual([]);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });

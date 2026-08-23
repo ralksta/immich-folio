@@ -161,15 +161,17 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   const albumGrids: Record<string, Partial<GridConfig>> = {};
   const albumCoverPositions: Record<string, string> = {};
 
+  /** Returns null for an entry whose album ID is not a UUID; callers drop it. */
   function processAlbumEntry(
     entry: string | Record<string, string | AlbumEntryObject>,
     context: string,
-  ): string {
+  ): string | null {
     if (typeof entry === 'string') {
       return validateUuid(entry, context);
     }
     const [uuid, value] = Object.entries(entry)[0];
     const validatedUuid = validateUuid(uuid, context);
+    if (!validatedUuid) return null;
 
     if (typeof value === 'string') {
       albumOverrides[validatedUuid] = value;
@@ -184,10 +186,13 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
       // the log naming the cause. Every other ID in this file goes through
       // validateUuid; this one was the gap.
       if (value.heroImage) {
-        albumHeroImages[validatedUuid] = validateUuid(
+        const heroId = validateUuid(
           value.heroImage,
           `${context} heroImage for album ${validatedUuid}`,
         );
+        // Dropped rather than defaulted: without one the album falls back to its
+        // Immich cover, which is a better answer than a request that 400s.
+        if (heroId) albumHeroImages[validatedUuid] = heroId;
       }
 
       // Throw rather than fall back to the default: a typo would otherwise be
@@ -210,9 +215,11 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
       // Kept regardless of the mode, so switching manual → newest → manual does
       // not silently destroy a hand-curated order.
       if (value.assetOrder?.length) {
-        albumManualOrders[validatedUuid] = value.assetOrder.map((assetId, i) =>
-          validateUuid(assetId, `${context} assetOrder[${i}] for album ${validatedUuid}`),
-        );
+        albumManualOrders[validatedUuid] = value.assetOrder
+          .map((assetId, i) =>
+            validateUuid(assetId, `${context} assetOrder[${i}] for album ${validatedUuid}`),
+          )
+          .filter((id): id is string => id !== null);
       }
 
       // EXPERIMENTAL: per-album grid override — reuses the subpage-grid
@@ -241,9 +248,17 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
     return validatedUuid;
   }
 
-  const standaloneAlbumIds = (gallery.albums ?? []).map((entry) =>
-    processAlbumEntry(entry, 'gallery.yaml albums'),
-  );
+  /** Album entries, with the ones whose ID is not a UUID dropped (#517). */
+  function processAlbumEntries(
+    entries: Array<string | Record<string, string | AlbumEntryObject>>,
+    context: string,
+  ): string[] {
+    return entries
+      .map((entry) => processAlbumEntry(entry, context))
+      .filter((id): id is string => id !== null);
+  }
+
+  const standaloneAlbumIds = processAlbumEntries(gallery.albums ?? [], 'gallery.yaml albums');
 
   let subpages: SubpageConfig[] = [];
 
@@ -262,23 +277,19 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
           title: sec.title,
           slug: slugify(sec.title),
           description: sec.description,
-          albumIds: sec.albums.map((entry) =>
-            processAlbumEntry(entry, `subpage "${sp.name}" section "${sec.title}"`),
-          ),
+          albumIds: processAlbumEntries(sec.albums, `subpage "${sp.name}" section "${sec.title}"`),
         }));
         // flat union of all section albums
-        albumIds = sections.flatMap((s) => s.albumIds);
+        albumIds = sections!.flatMap((sec) => sec.albumIds);
         // Also include any top-level albums (outside sections)
-        const topLevel = (sp.albums ?? []).map((entry) =>
-          processAlbumEntry(entry, `subpage "${sp.name}"`),
-        );
+        const topLevel = processAlbumEntries(sp.albums ?? [], `subpage "${sp.name}"`);
         albumIds = [...topLevel, ...albumIds];
       } else {
         const albums = sp.albums ?? [];
         if (albums.length === 0) {
           throw new Error(`Subpage "${sp.name}" must have albums or sections`);
         }
-        albumIds = albums.map((entry) => processAlbumEntry(entry, `subpage "${sp.name}"`));
+        albumIds = processAlbumEntries(albums, `subpage "${sp.name}"`);
       }
 
       return {
@@ -303,7 +314,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         return {
           name,
           slug: slugify(name),
-          albumIds: value.map((entry) => processAlbumEntry(entry, `subpage "${name}"`)),
+          albumIds: processAlbumEntries(value, `subpage "${name}"`),
           enabled: true,
         };
       }
@@ -314,7 +325,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         slug: slugify(name),
         title: sp.title,
         subtitle: sp.subtitle,
-        albumIds: albumEntries.map((entry) => processAlbumEntry(entry, `subpage "${name}"`)),
+        albumIds: processAlbumEntries(albumEntries, `subpage "${name}"`),
         password: sp.password,
         proofing: sp.proofing,
         essayFile: sp.essayFile,
@@ -466,9 +477,9 @@ export function getConfig(): AppConfig {
       noFollow: settings.seo?.noFollow === true,
     },
     heroImages: gallery.hero
-      ? (Array.isArray(gallery.hero) ? gallery.hero : [gallery.hero]).map((id) =>
-          validateUuid(id, 'gallery.yaml hero'),
-        )
+      ? (Array.isArray(gallery.hero) ? gallery.hero : [gallery.hero])
+          .map((id) => validateUuid(id, 'gallery.yaml hero'))
+          .filter((id): id is string => id !== null)
       : [],
     colorMode: resolveColorMode(settings.mode),
     exifOnHover: settings.exifOnHover !== false,

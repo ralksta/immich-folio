@@ -27,7 +27,29 @@ function siteGate(request: NextRequest): NextResponse | null {
   // password at all. Locking either would be locking out the operator.
   if (isAdminPath(pathname) || isInstallPath(pathname) || pathname === GATE_PATH) return null;
 
-  if (isSiteUnlocked((name) => request.cookies.get(name)?.value)) return null;
+  // A config that cannot be parsed makes getConfig() throw, and it throws in
+  // here — before app/layout.tsx gets to call getConfigOrNull() and render the
+  // setup screen instead. Unhandled, that turned one typo in gallery.yaml into
+  // a bare 500 on every route, with nothing naming the file (#516).
+  //
+  // Letting the request through is safe precisely because the config is
+  // unreadable: every page below reaches the same throw and renders the setup
+  // screen, so there is no album name and no asset token left to protect. The
+  // operator gets a page that explains itself, and /admin — exempt above — stays
+  // reachable to fix the file.
+  let unlocked: boolean;
+  try {
+    unlocked = isSiteUnlocked((name) => request.cookies.get(name)?.value);
+  } catch (error) {
+    console.error(
+      '[Folio] The site password could not be resolved — content/gallery.yaml or ' +
+        'content/settings.yaml cannot be read. Serving the setup screen:',
+      error,
+    );
+    return null;
+  }
+
+  if (unlocked) return null;
 
   // Rewrite, not redirect: the URL the visitor asked for stays in the address
   // bar, so unlocking lands them where they were going.

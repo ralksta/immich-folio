@@ -88,6 +88,33 @@ describe('proxy', () => {
     expect(source).not.toContain('admin');
   });
 
+  /**
+   * The gate resolves the site password through getConfig(), which throws on a
+   * config it cannot parse — inside the proxy, before app/layout.tsx can fall
+   * back to the setup screen. Unhandled, one typo in gallery.yaml became a bare
+   * 500 on every route (#516).
+   */
+  it('serves the page instead of a 500 when the config cannot be read', () => {
+    mockUnlocked.mockImplementation(() => {
+      throw new Error('duplicated mapping key');
+    });
+
+    const res = proxy(new NextRequest('https://example.com/japan'));
+
+    // Not a rewrite to the gate, and not a throw: the page renders and shows
+    // the setup screen, which is the thing that can explain the fault.
+    expect(res.headers.get('x-middleware-rewrite')).toBeNull();
+    expect(res.headers.get('Content-Security-Policy')).toBeTruthy();
+  });
+
+  it('still gates a locked site when the config is fine', () => {
+    mockUnlocked.mockReturnValue(false);
+
+    const res = proxy(new NextRequest('https://example.com/japan'));
+
+    expect(res.headers.get('x-middleware-rewrite')).toContain('/gate');
+  });
+
   it('no longer lets the matcher skip prefetches', () => {
     /*
      * The exclusion used to live in the matcher. It moved into proxy() when the

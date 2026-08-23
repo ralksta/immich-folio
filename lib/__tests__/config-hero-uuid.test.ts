@@ -97,16 +97,20 @@ describe('gallery.yaml per-album heroImage', () => {
     expect(call?.[1]).toContain(ALBUM_ID);
   });
 
-  // The substitution the wiring above depends on: validateUuid never throws, so
-  // a bad ID degrades to a 404 image rather than taking the whole page down.
-  it('real validateUuid warns and substitutes rather than throwing', async () => {
+  /**
+   * validateUuid never throws — a bad ID must not take the page down. It used to
+   * substitute the all-zeros UUID, which then travelled on as a real asset ID and
+   * came back 400 from Immich, while the log claimed it had been ignored (#517).
+   * Null lets the caller drop the entry, which is what "ignored" should mean.
+   */
+  it('real validateUuid returns null and names the context', async () => {
     const actual =
       await vi.importActual<typeof import('@/lib/config/parser')>('@/lib/config/parser');
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const result = actual.validateUuid('not-a-uuid', 'gallery.yaml heroImage');
 
-    expect(result).toBe('00000000-0000-0000-0000-000000000000');
+    expect(result).toBeNull();
     expect(warn).toHaveBeenCalled();
     expect(String(warn.mock.calls[0][0])).toContain('gallery.yaml heroImage');
     warn.mockRestore();
