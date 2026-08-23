@@ -175,6 +175,17 @@
 }
 
 .exifPanel {
+  /* Both floating panels paint their own dark surface, so their contents have
+     to stay light-on-dark. In dark mode the theme tokens already are, and each
+     preset tints them (warm #6b6359 in editorial, neutral #555 in monograph) —
+     so they are used as-is and dark mode is untouched. Only light mode, where
+     --text-primary is near-black and put dark text on that dark panel (#511),
+     swaps in fixed light values below. .exifCaption never had the bug because
+     it was hardcoded. */
+  --lb-panel-text: var(--text-primary);
+  --lb-panel-text-dim: var(--text-secondary);
+  --lb-panel-muted: var(--text-muted);
+  --lb-panel-border: var(--border-subtle);
   position: fixed;
   bottom: 60px;
   right: 24px;
@@ -182,7 +193,7 @@
   background: rgba(20, 20, 20, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--lb-panel-border);
   border-radius: var(--radius-lg);
   padding: 20px;
   min-width: 240px;
@@ -217,7 +228,7 @@
   justify-content: space-between;
   align-items: baseline;
   padding: 6px 0;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--lb-panel-border);
 }
 
 .exifRow:last-child {
@@ -226,14 +237,14 @@
 
 .exifLabel {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--lb-panel-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .exifValue {
   font-size: 0.85rem;
-  color: var(--text-primary);
+  color: var(--lb-panel-text);
   font-weight: 400;
 }
 
@@ -247,6 +258,17 @@
    The panel has no trigger of its own — `?` or `h` opens it. It sits where a
    trigger would have been, bottom left, clear of the EXIF panel opposite. */
 .shortcutsPanel {
+  /* Both floating panels paint their own dark surface, so their contents have
+     to stay light-on-dark. In dark mode the theme tokens already are, and each
+     preset tints them (warm #6b6359 in editorial, neutral #555 in monograph) —
+     so they are used as-is and dark mode is untouched. Only light mode, where
+     --text-primary is near-black and put dark text on that dark panel (#511),
+     swaps in fixed light values below. .exifCaption never had the bug because
+     it was hardcoded. */
+  --lb-panel-text: var(--text-primary);
+  --lb-panel-text-dim: var(--text-secondary);
+  --lb-panel-muted: var(--text-muted);
+  --lb-panel-border: var(--border-subtle);
   position: fixed;
   bottom: 62px;
   left: 24px;
@@ -257,7 +279,7 @@
   background: rgba(20, 20, 20, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--lb-panel-border);
   border-radius: var(--radius-lg);
 }
 
@@ -267,7 +289,7 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-muted);
+  color: var(--lb-panel-muted);
 }
 
 .shortcutsList {
@@ -281,7 +303,7 @@
   align-items: baseline;
   gap: 16px;
   padding: 6px 0;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--lb-panel-border);
 }
 
 .shortcutsRow:last-child {
@@ -297,7 +319,7 @@
 .shortcutsLabel {
   margin: 0;
   font-size: 0.8rem;
-  color: var(--text-primary);
+  color: var(--lb-panel-text);
 }
 
 .kbd {
@@ -310,7 +332,18 @@
   font-size: 0.75rem;
   line-height: 1.4;
   text-align: center;
-  color: var(--text-secondary);
+  color: var(--lb-panel-text-dim);
+}
+
+/* The panels stay dark while the page around them turns light, so their
+   contents cannot follow the theme here. Preset tinting is lost in light mode;
+   an unreadable panel is the worse trade (#511). */
+:global([data-theme='light']) .exifPanel,
+:global([data-theme='light']) .shortcutsPanel {
+  --lb-panel-text: rgba(255, 255, 255, 0.92);
+  --lb-panel-text-dim: rgba(255, 255, 255, 0.62);
+  --lb-panel-muted: rgba(255, 255, 255, 0.5);
+  --lb-panel-border: rgba(255, 255, 255, 0.12);
 }
 
 /* No keyboard, nothing to show. */
