@@ -12,7 +12,7 @@ vi.mock('@/lib/env', () => ({
   },
 }));
 
-import { slugify, buildSubpageGrid, sanitizeNavLinks } from '@/lib/config';
+import { slugify, albumSlug, buildSubpageGrid, sanitizeNavLinks } from '@/lib/config';
 
 // EXPERIMENTAL: external navigation links — rendered as <a href> in the
 // header, so only http(s) URLs may survive sanitisation.
@@ -80,6 +80,42 @@ describe('slugify', () => {
 
   it('preserves numbers', () => {
     expect(slugify('Album 2024')).toBe('album-2024');
+  });
+
+  // #522: stripping every non-ASCII character left CJK names with an empty
+  // slug, so their links pointed at "/" and clicking an album did nothing.
+  it('preserves CJK characters', () => {
+    expect(slugify('家族相册')).toBe('家族相册');
+    expect(slugify('写真')).toBe('写真');
+    expect(slugify('旅行 2024')).toBe('旅行-2024');
+  });
+
+  it('preserves Hangul in composed (NFC) form', () => {
+    const slug = slugify('가족 앨범');
+    expect(slug).toBe('가족-앨범');
+    expect(slug).toBe(slug.normalize('NFC'));
+  });
+
+  it('preserves other non-Latin scripts', () => {
+    expect(slugify('Москва 2024')).toBe('москва-2024');
+  });
+
+  it('still returns empty when nothing letter-like remains', () => {
+    expect(slugify('🎉🎉')).toBe('');
+  });
+});
+
+describe('albumSlug', () => {
+  it('uses the slugified name when it yields something', () => {
+    expect(albumSlug('Kloster Chorin', 'abc-123')).toBe('kloster-chorin');
+    expect(albumSlug('家族相册', 'abc-123')).toBe('家族相册');
+  });
+
+  // Without a fallback two emoji-only albums would both slugify to '' and
+  // collide on the same (unreachable) URL.
+  it('falls back to the album id when the name slugifies to nothing', () => {
+    expect(albumSlug('🎉', 'abc-123')).toBe('abc-123');
+    expect(albumSlug('', 'abc-123')).toBe('abc-123');
   });
 });
 

@@ -482,11 +482,44 @@ export function resolveWatermarkOpacity(raw?: number): number {
   return Math.min(1, Math.max(0, fraction));
 }
 
+/**
+ * URL slug for a display name.
+ *
+ * NFD + combining-mark removal folds Latin diacritics ("Café" -> "cafe"), but
+ * everything else keeps its letters: the separator class is \p{L}\p{N}, not
+ * [a-z0-9]. The ASCII-only version stripped CJK, Hangul and Cyrillic names down
+ * to an empty slug, which turned their links into "/" (#522). NFC at the end
+ * recomposes what NFD split — Hangul syllables decompose into jamo, and only
+ * the composed form matches what a browser sends back in the URL.
+ *
+ * Can still return '' for a name made purely of symbols or emoji; callers that
+ * need a routable slug must supply a fallback (see albumSlug).
+ */
 export function slugify(name: string): string {
   return name
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-+|-+$/g, '')
+    .normalize('NFC');
+}
+
+/**
+ * Routable slug for an album. Falls back to the album id when the name has no
+ * letters or digits at all, so an emoji-only album is still reachable — and so
+ * two of them do not collide on the same empty slug.
+ */
+export function albumSlug(name: string, id: string): string {
+  return slugify(name) || id;
+}
+
+/**
+ * Normalize a slug that came in from a URL before comparing it to a stored one.
+ * Slugs are stored NFC; a non-Latin slug typed or pasted on macOS can arrive
+ * NFD, and the two forms are different strings even though they render the
+ * same. ASCII slugs are unaffected.
+ */
+export function normalizeSlug(slug: string): string {
+  return slug.normalize('NFC');
 }

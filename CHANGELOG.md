@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [Unreleased]
+
+### Fixed
+
+- **Albums whose name is written in CJK are reachable again**
+  ([#522](https://github.com/ralksta/immich-folio/issues/522)). The slug was
+  built by dropping every character outside `[a-z0-9]`, so a Chinese, Japanese,
+  Korean, Cyrillic or Greek name was reduced to nothing at all. The album's link
+  then pointed at `/`, clicking it went nowhere, and because no album lookup was
+  ever attempted there was nothing in the log to explain it. Slugs now keep any
+  letter or digit, whatever the script, and fold Latin diacritics as before
+  (`Café` still becomes `cafe`). An album whose name has no letters at all — one
+  written purely in emoji — falls back to its id, so it stays reachable and two
+  of them no longer collide. A slug typed into the address bar is matched in
+  both its composed and decomposed Unicode form.
+
 ## [0.12.0] — 2026-08-23
 
 ### Added

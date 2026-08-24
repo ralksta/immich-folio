@@ -35,6 +35,7 @@ import {
   COVER_GRID_COLUMNS_MAX,
   COVER_GRID_COLUMNS_MIN,
   COVER_GRID_GAP_MAX,
+  slugify,
   type AlbumEntryObject,
 } from '@/lib/config/schema';
 import {
@@ -908,13 +909,6 @@ export default function PageBuilder() {
       }
     }
     return null;
-  }
-
-  function slugify(str: string): string {
-    return str
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
   }
 
   // ── Render ───────────────────────────────────────────────────
