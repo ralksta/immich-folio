@@ -41,6 +41,7 @@ export function compareVersions(a: string, b: string): number {
     version
       .trim()
       .replace(/^v/i, '')
+      .split('+')[0]
       .split('-')[0]
       .split('.')
       .map((part) => Number.parseInt(part, 10) || 0);
@@ -74,8 +75,13 @@ export function parseLatestTag(payload: unknown): string | null {
   if (typeof tag !== 'string') return null;
   const trimmed = tag.trim();
   // A tag that is not a version cannot be compared, and guessing would be
-  // worse than saying nothing.
-  return /^v?\d+(\.\d+)*/.test(trimmed) ? trimmed : null;
+  // worse than saying nothing. Anchored at both ends: guarding only the start
+  // let anything beginning with a digit through, and a date-style tag then
+  // read as version 2024 and left every instance showing an update that does
+  // not exist. A pre-release suffix is allowed but may not itself contain a
+  // '-', which is what keeps "2024-01-05" out; build metadata is allowed and
+  // ignored when ordering, as semver says.
+  return /^v?\d+(\.\d+)*(-[0-9A-Za-z.]+)?(\+[0-9A-Za-z.]+)?$/.test(trimmed) ? trimmed : null;
 }
 
 let cached: { latest: string | null; at: number } | null = null;

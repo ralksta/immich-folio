@@ -68,7 +68,23 @@ describe('parseLatestTag', () => {
     ['an error object served with 200', { message: 'API rate limit exceeded' }],
     ['a non-string tag', { tag_name: 42 }],
     ['a tag that is not a version', { tag_name: 'nightly' }],
+    // The check only guarded the *start* of the tag, so anything beginning
+    // with a digit slipped through and was then compared as a version. A
+    // date-style tag reads as version 2024 and leaves every instance showing
+    // an update that does not exist, permanently.
+    ['a date-style tag', { tag_name: '2024-01-05' }],
+    ['a tag with a digit and then rubbish', { tag_name: '1abc' }],
   ])('returns null for %s', (_label, payload) => {
     expect(parseLatestTag(payload)).toBeNull();
+  });
+
+  it('still accepts the shapes the project actually tags', () => {
+    expect(parseLatestTag({ tag_name: 'v0.13.0' })).toBe('v0.13.0');
+    expect(parseLatestTag({ tag_name: '0.13.0' })).toBe('0.13.0');
+    expect(parseLatestTag({ tag_name: 'v1.0' })).toBe('v1.0');
+    expect(parseLatestTag({ tag_name: 'v1.2.3-rc1' })).toBe('v1.2.3-rc1');
+    // Build metadata is ignorable for ordering, so rejecting it would mean
+    // never mentioning a release that is genuinely newer.
+    expect(parseLatestTag({ tag_name: 'v1.2.3+build.7' })).toBe('v1.2.3+build.7');
   });
 });
