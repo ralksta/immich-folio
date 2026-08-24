@@ -6,11 +6,17 @@ vi.mock('@/lib/config', () => ({
   getConfig: () => ({
     immich: { apiKey: 'test-api-key-for-auth-tests' },
     authSecret: 'test-auth-secret-32-chars-long-min',
+    standaloneAlbums: ['00000000-0000-0000-0000-000000000004'],
+    albumPasswords: { '00000000-0000-0000-0000-000000000005': 'albumpass' },
     subpages: [
       {
         name: 'Private',
         slug: 'private',
-        albumIds: ['00000000-0000-0000-0000-000000000001'],
+        albumIds: [
+          '00000000-0000-0000-0000-000000000001',
+          '00000000-0000-0000-0000-000000000004',
+          '00000000-0000-0000-0000-000000000005',
+        ],
         password: 'secret123',
       },
       {
@@ -32,7 +38,13 @@ vi.mock('@/lib/config', () => ({
   }),
 }));
 
-import { isProtected, authenticate, isAuthenticated, findSubpageBySlug } from '@/lib/auth';
+import {
+  isProtected,
+  authenticate,
+  isAuthenticated,
+  isAlbumReachable,
+  findSubpageBySlug,
+} from '@/lib/auth';
 
 describe('findSubpageBySlug', () => {
   it('returns the subpage config for a known slug', () => {
@@ -195,5 +207,54 @@ describe('token expiry', () => {
     const maxAge = Number(cookie.match(/Max-Age=(\d+)/)![1]);
     const exp = Number(cookie.split('=')[1].split(';')[0].split('.')[0]);
     expect(Math.abs(exp - (Date.now() + maxAge * 1000))).toBeLessThan(2000);
+  });
+});
+
+/**
+ * A route handler is reached without ever passing through the page that would
+ * have asked for the subpage password, so it has to ask the same question
+ * itself (#475).
+ */
+describe('isAlbumReachable', () => {
+  const IN_PRIVATE = '00000000-0000-0000-0000-000000000001';
+  const IN_PUBLIC = '00000000-0000-0000-0000-000000000002';
+  const ALSO_STANDALONE = '00000000-0000-0000-0000-000000000004';
+  const OWN_PASSWORD = '00000000-0000-0000-0000-000000000005';
+  const none = () => undefined;
+
+  async function cookieFor(key: string, password: string, type: 'subpage' | 'album' = 'subpage') {
+    const header = (await authenticate(key, password, type))!;
+    const token = header.split('=')[1].split(';')[0];
+    const name = header.split('=')[0];
+    return (asked: string) => (asked === name ? token : undefined);
+  }
+
+  it('allows an album in a subpage that asks for nothing', () => {
+    expect(isAlbumReachable(IN_PUBLIC, none)).toBe(true);
+  });
+
+  it('refuses an album whose only route is a protected subpage', () => {
+    expect(isAlbumReachable(IN_PRIVATE, none)).toBe(false);
+  });
+
+  it('allows it once that subpage has been unlocked', async () => {
+    const getCookie = await cookieFor('private', 'secret123');
+    expect(isAlbumReachable(IN_PRIVATE, getCookie)).toBe(true);
+  });
+
+  // Listing an album on the home page publishes it, whatever else it is in.
+  it('allows a standalone album even when a protected subpage also lists it', () => {
+    expect(isAlbumReachable(ALSO_STANDALONE, none)).toBe(true);
+  });
+
+  it('still refuses an album that carries its own password', async () => {
+    const subpageOnly = await cookieFor('private', 'secret123');
+    expect(isAlbumReachable(OWN_PASSWORD, subpageOnly)).toBe(false);
+  });
+
+  it('allows that one once its own password is given too', async () => {
+    const subpage = await cookieFor('private', 'secret123');
+    const album = await cookieFor(OWN_PASSWORD, 'albumpass', 'album');
+    expect(isAlbumReachable(OWN_PASSWORD, (n) => subpage(n) ?? album(n))).toBe(true);
   });
 });

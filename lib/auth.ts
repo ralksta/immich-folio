@@ -96,6 +96,37 @@ function cookieName(key: string, type: ProtectedType): string {
 export const SITE_AUTH_COOKIE = 'lb_site_auth';
 
 /**
+ * Whether this visitor may have the album at all — every gate on every route
+ * to it, not just the album's own (#475).
+ *
+ * A page checks the subpage's password before it renders anything; a route
+ * handler is reached without ever passing through that page, so it has to ask
+ * the same question itself. Checking only the album's own password let an
+ * album that carries none through, even when the sole way to it was a subpage
+ * that does.
+ *
+ * An album listed on the home page is published there whatever else lists it,
+ * so it stays reachable. Where the only routes are subpages, one of them has
+ * to be open — which mirrors what the visitor could actually have clicked.
+ */
+export function isAlbumReachable(
+  albumId: string,
+  getCookie: (name: string) => string | undefined,
+): boolean {
+  if (!isAuthenticated(albumId, getCookie, 'album')) return false;
+
+  const config = getConfig();
+  if (config.standaloneAlbums?.includes(albumId)) return true;
+
+  const routes = config.subpages.filter(
+    (sp) => sp.enabled !== false && sp.albumIds.includes(albumId),
+  );
+  if (routes.length === 0) return true;
+
+  return routes.some((sp) => isAuthenticated(sp.slug, getCookie, 'subpage'));
+}
+
+/**
  * Find the SubpageConfig for a given slug.
  */
 export function findSubpageBySlug(slug: string): SubpageConfig | undefined {
