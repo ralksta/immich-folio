@@ -28,6 +28,7 @@ import { resolveWatermarkOpacity } from '@/lib/config/schema';
 import { formatCamera } from '@/lib/exif';
 import { buildPhotoPermalink } from '@/lib/photoHash';
 import { nextSlideshowSpeed, type SlideshowSpeed } from '@/lib/slideshow';
+import { LIGHTBOX_SHORTCUTS, shortcutKeyLabel } from '@/lib/lightboxShortcuts';
 
 export interface LightboxWatermark {
   enabled?: boolean;
@@ -373,35 +374,27 @@ export function Lightbox({
   );
 
   /*
-   * The advertised shortcuts, in the order they are worth learning. This is the
-   * list the `?` panel renders — a key added to the handler above belongs here
-   * too, or it stays as undiscoverable as the whole set was before.
+   * The advertised shortcuts, resolved from the shared catalogue.
+   *
+   * The set of keys lives in lib/lightboxShortcuts.ts because the admin help
+   * renders the same list; only the two labels that depend on current state
+   * are decided here.
    */
-  const shortcutRows = [
-    { keys: ['←', '→'], label: t.lightbox.shortcutNavigate },
-    // Journal entries hide the EXIF toggle, so `i` does nothing there.
-    ...(showExifToggle ? [{ keys: ['I'], label: t.lightbox.shortcutInfo }] : []),
-    // Absent where the browser has no element fullscreen to give (iPhone).
-    ...(canFullscreen
-      ? [
-          {
-            keys: ['F'],
-            label: isFullscreen ? t.lightbox.shortcutExitFullscreen : t.lightbox.shortcutFullscreen,
-          },
-        ]
-      : []),
-    {
-      keys: ['S'],
-      label:
-        slideshowSeconds === null
-          ? t.lightbox.shortcutSlideshow
-          : t.lightbox.shortcutSlideshowRunning(slideshowSeconds),
-    },
-    { keys: ['C'], label: t.lightbox.shortcutCopyLink },
-    ...(current?.downloadUrl ? [{ keys: ['D'], label: t.lightbox.shortcutDownload }] : []),
-    { keys: ['?', 'H'], label: t.lightbox.shortcutList },
-    { keys: ['Esc'], label: t.lightbox.shortcutClose },
-  ];
+  const shortcutRows = LIGHTBOX_SHORTCUTS.filter((shortcut) => {
+    if (shortcut.availability === 'exifPanel') return showExifToggle;
+    if (shortcut.availability === 'fullscreen') return canFullscreen;
+    if (shortcut.availability === 'download') return Boolean(current?.downloadUrl);
+    return true;
+  }).map((shortcut) => {
+    let label: string = t.lightbox[shortcut.labelKey];
+    if (shortcut.labelKey === 'shortcutFullscreen' && isFullscreen) {
+      label = t.lightbox.shortcutExitFullscreen;
+    }
+    if (shortcut.labelKey === 'shortcutSlideshow' && slideshowSeconds !== null) {
+      label = t.lightbox.shortcutSlideshowRunning(slideshowSeconds);
+    }
+    return { keys: shortcut.keys.map(shortcutKeyLabel), label };
+  });
 
   const lightboxJsx = (
     <div

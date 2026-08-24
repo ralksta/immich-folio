@@ -19,6 +19,7 @@ const TABS = [
   { label: 'Journal', href: '/admin/journal', match: /^\/admin\/journal/ },
   { label: 'Settings', href: '/admin/settings', match: /^\/admin\/settings/ },
   { label: 'Analytics', href: '/admin/analytics', match: /^\/admin\/analytics/ },
+  { label: 'Help', href: '/admin/help', match: /^\/admin\/help/ },
 ];
 
 export default function AdminDashboard({ onLogout, children }: Props) {
