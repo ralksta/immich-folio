@@ -109,3 +109,42 @@ describe('absoluteUrl', () => {
     expect(absoluteUrl(null, '/travel')).toBeNull();
   });
 });
+
+/**
+ * A sitemap, a canonical link and a JSON-LD block all want a URI, not an IRI.
+ * Non-Latin album slugs only became possible with #522, so this surfaced with
+ * them.
+ */
+describe('absoluteUrl encoding', () => {
+  it('percent-encodes a non-ASCII path', () => {
+    expect(absoluteUrl('https://example.com', '/家族相册')).toBe(
+      'https://example.com/%E5%AE%B6%E6%97%8F%E7%9B%B8%E5%86%8C',
+    );
+  });
+
+  it('leaves an ASCII path exactly as it was', () => {
+    expect(absoluteUrl('https://example.com', '/kloster-chorin')).toBe(
+      'https://example.com/kloster-chorin',
+    );
+  });
+
+  it('keeps a query string intact', () => {
+    expect(absoluteUrl('https://example.com', '/api/image/abc?size=preview')).toBe(
+      'https://example.com/api/image/abc?size=preview',
+    );
+  });
+
+  // A portfolio may live under a sub-path, which normaliseSiteUrl keeps.
+  it('preserves a sub-path in the site URL', () => {
+    expect(absoluteUrl('https://example.com/folio', '/家族相册')).toBe(
+      'https://example.com/folio/%E5%AE%B6%E6%97%8F%E7%9B%B8%E5%86%8C',
+    );
+  });
+
+  // Encoding blindly would turn a '%' into '%25' and corrupt the URL.
+  it('does not encode an already-encoded path a second time', () => {
+    expect(absoluteUrl('https://example.com', '/%E5%AE%B6%E6%97%8F%E7%9B%B8%E5%86%8C')).toBe(
+      'https://example.com/%E5%AE%B6%E6%97%8F%E7%9B%B8%E5%86%8C',
+    );
+  });
+});

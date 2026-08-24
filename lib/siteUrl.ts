@@ -74,6 +74,21 @@ export function resolveSiteUrl(
  */
 export function absoluteUrl(siteUrl: string | null, path: string): string | null {
   if (!siteUrl) return null;
-  const suffix = path.startsWith('/') ? path : `/${path}`;
-  return `${siteUrl}${suffix === '/' ? '/' : suffix.replace(/\/+$/, '')}`;
+  const raw = path.startsWith('/') ? path : `/${path}`;
+  const suffix = raw === '/' ? '/' : raw.replace(/\/+$/, '');
+  return `${siteUrl}${encodePathBytes(suffix)}`;
+}
+
+/**
+ * Percent-encode exactly what a URI may not carry: anything outside printable
+ * ASCII. Album slugs keep their own script since #522, so a path can now hold
+ * characters a sitemap, a canonical link or a JSON-LD block must not.
+ *
+ * Deliberately not `encodeURI()`, which would also re-encode the `%` of an
+ * already-encoded path and corrupt it, and deliberately not `new URL(path,
+ * siteUrl)`, which would drop the sub-path a portfolio may be published under
+ * — the one thing `normaliseSiteUrl()` goes out of its way to keep.
+ */
+function encodePathBytes(path: string): string {
+  return path.replace(/[^\x20-\x7E]/g, (character) => encodeURIComponent(character));
 }
