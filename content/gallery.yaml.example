@@ -78,6 +78,20 @@ subpages:
           #   The download route checks the allowlist, this switch, the
           #   album's password and that the asset really belongs to the
           #   album, so an edited URL cannot reach anything else.
+          #
+          # location: city
+          #   How precisely this album may be placed on the map.
+          #     exact    (default) the mean of the photographs' own coordinates
+          #     city     rounded to 0.05° — roughly 5 km
+          #     country  rounded to 1° — roughly 100 km
+          #     hidden   the album does not appear on the map at all
+          #   Worth setting for an album shot in one place — a garden, a
+          #   studio, a client's home, a fragile site — where the mean of the
+          #   coordinates is that place, and the marker stands on the property.
+          #   May also be set once on a subpage, where it applies to every
+          #   album on it unless the album says otherwise.
+          #   Where one marker merges several albums, the most cautious of
+          #   them governs the whole marker.
 
   # ── Subpage with Sections ────────────────────────────────────────
   # Use sections to group albums by location, theme, or any other logic.

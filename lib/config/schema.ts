@@ -1,4 +1,5 @@
 import type { AlbumSortMode } from '../albumSort';
+import type { LocationPrecision } from '../mapPrecision';
 
 export interface SubpageSectionConfig {
   title: string;
@@ -35,6 +36,8 @@ export interface SubpageObjectValue {
   enabled?: boolean;
   /** EXPERIMENTAL: reachable by direct link, but not shown in navigation */
   hidden?: boolean;
+  /** Map precision for every album here that does not set its own (#469). */
+  location?: string;
   // Both album lists reuse AlbumEntryObject rather than inlining the shape:
   // the inline copies had already drifted (they never gained `heroImage`), and
   // this path is live for map-style subpages.
@@ -202,6 +205,8 @@ export interface AppConfig {
   albumCoverPositions: Record<string, string>;
   /** Albums whose originals may be downloaded. Absent means no (#475). */
   albumDownloads: Record<string, boolean>;
+  /** Per-album map precision. Absent means `exact` (#469). */
+  albumLocationPrecision: Record<string, LocationPrecision>;
   /** EXPERIMENTAL: external links appended to the header navigation. */
   navLinks: NavLinkConfig[];
   cacheTtl: number;
@@ -264,6 +269,12 @@ export interface AlbumEntryObject {
   coverPosition?: string;
   /** Offer the original file for download from the lightbox (#475). Off by default. */
   download?: boolean;
+  /**
+   * How precisely this album's photographs may be placed on the map:
+   * `exact` (default), `city`, `country` or `hidden`. Narrowed to
+   * `LocationPrecision` in deriveGallery(), where a typo has to be rejected.
+   */
+  location?: string;
 }
 
 export interface GalleryYaml {
@@ -287,6 +298,8 @@ export interface GalleryYaml {
         essayText?: string;
         enabled?: boolean;
         hidden?: boolean;
+        /** Map precision inherited by every album here (#469). */
+        location?: string;
         grid?: {
           columns?: number;
           gap?: number;

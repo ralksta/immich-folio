@@ -6,6 +6,7 @@ import { getInstallCredentials } from '../install';
 import { loadYaml, clearYamlCache, validateUuid } from './parser';
 import { resolveTheme, VALID_LAYOUTS, DEFAULT_PRESET } from './theme';
 import { ALBUM_SORT_MODES, isAlbumSortMode, type AlbumSortMode } from '../albumSort';
+import { LOCATION_PRECISIONS, isLocationPrecision, type LocationPrecision } from '../mapPrecision';
 import {
   slugify,
   resolveExifDisplay,
@@ -141,6 +142,7 @@ export interface GalleryDerivation {
   albumGrids: Record<string, Partial<GridConfig>>;
   albumCoverPositions: Record<string, string>;
   albumDownloads: Record<string, boolean>;
+  albumLocationPrecision: Record<string, LocationPrecision>;
 }
 
 /**
@@ -165,18 +167,23 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   const albumGrids: Record<string, Partial<GridConfig>> = {};
   const albumCoverPositions: Record<string, string> = {};
   const albumDownloads: Record<string, boolean> = {};
+  const albumLocationPrecision: Record<string, LocationPrecision> = {};
 
   /** Returns null for an entry whose album ID is not a UUID; callers drop it. */
   function processAlbumEntry(
     entry: string | Record<string, string | AlbumEntryObject>,
     context: string,
+    inheritedLocation?: LocationPrecision,
   ): string | null {
     if (typeof entry === 'string') {
+      if (inheritedLocation) albumLocationPrecision[entry] = inheritedLocation;
       return validateUuid(entry, context);
     }
     const [uuid, value] = Object.entries(entry)[0];
     const validatedUuid = validateUuid(uuid, context);
     if (!validatedUuid) return null;
+    // The subpage's setting applies unless the album states its own below.
+    if (inheritedLocation) albumLocationPrecision[validatedUuid] = inheritedLocation;
 
     if (typeof value === 'string') {
       albumOverrides[validatedUuid] = value;
@@ -254,6 +261,8 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
       // handing out full-resolution originals because one client gallery
       // needed to (#475).
       if (value.download === true) albumDownloads[validatedUuid] = true;
+      const location = parseLocation(value.location, `${context}: album ${validatedUuid} location`);
+      if (location) albumLocationPrecision[validatedUuid] = location;
     }
     return validatedUuid;
   }
@@ -262,10 +271,27 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   function processAlbumEntries(
     entries: Array<string | Record<string, string | AlbumEntryObject>>,
     context: string,
+    inheritedLocation?: LocationPrecision,
   ): string[] {
     return entries
-      .map((entry) => processAlbumEntry(entry, context))
+      .map((entry) => processAlbumEntry(entry, context, inheritedLocation))
       .filter((id): id is string => id !== null);
+  }
+
+  /**
+   * Narrow a raw `location:` value, or throw. Rejected rather than defaulted
+   * for the same reason as `sort`: a typo in a privacy setting that silently
+   * fell back to `exact` would publish the position it was meant to withhold.
+   */
+  function parseLocation(raw: string | undefined, context: string): LocationPrecision | undefined {
+    if (raw == null) return undefined;
+    if (!isLocationPrecision(raw)) {
+      throw new Error(
+        `${context}: unknown location "${raw}". ` +
+          `Valid values are: ${LOCATION_PRECISIONS.join(', ')}.`,
+      );
+    }
+    return raw;
   }
 
   const standaloneAlbumIds = processAlbumEntries(gallery.albums ?? [], 'gallery.yaml albums');
@@ -287,19 +313,31 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
           title: sec.title,
           slug: slugify(sec.title),
           description: sec.description,
-          albumIds: processAlbumEntries(sec.albums, `subpage "${sp.name}" section "${sec.title}"`),
+          albumIds: processAlbumEntries(
+            sec.albums,
+            `subpage "${sp.name}" section "${sec.title}"`,
+            parseLocation(sp.location, `subpage "${sp.name}" location`),
+          ),
         }));
         // flat union of all section albums
         albumIds = sections!.flatMap((sec) => sec.albumIds);
         // Also include any top-level albums (outside sections)
-        const topLevel = processAlbumEntries(sp.albums ?? [], `subpage "${sp.name}"`);
+        const topLevel = processAlbumEntries(
+          sp.albums ?? [],
+          `subpage "${sp.name}"`,
+          parseLocation(sp.location, `subpage "${sp.name}" location`),
+        );
         albumIds = [...topLevel, ...albumIds];
       } else {
         const albums = sp.albums ?? [];
         if (albums.length === 0) {
           throw new Error(`Subpage "${sp.name}" must have albums or sections`);
         }
-        albumIds = processAlbumEntries(albums, `subpage "${sp.name}"`);
+        albumIds = processAlbumEntries(
+          albums,
+          `subpage "${sp.name}"`,
+          parseLocation(sp.location, `subpage "${sp.name}" location`),
+        );
       }
 
       return {
@@ -335,7 +373,11 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         slug: slugify(name),
         title: sp.title,
         subtitle: sp.subtitle,
-        albumIds: processAlbumEntries(albumEntries, `subpage "${name}"`),
+        albumIds: processAlbumEntries(
+          albumEntries,
+          `subpage "${name}"`,
+          parseLocation(sp.location, `subpage "${name}" location`),
+        ),
         password: sp.password,
         proofing: sp.proofing,
         essayFile: sp.essayFile,
@@ -363,6 +405,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
     albumGrids,
     albumCoverPositions,
     albumDownloads,
+    albumLocationPrecision,
   };
 }
 
@@ -445,6 +488,7 @@ export function getConfig(): AppConfig {
       albumGrids: {},
       albumCoverPositions: {},
       albumDownloads: {},
+      albumLocationPrecision: {},
       navLinks: [],
       cacheTtl: env.CACHE_TTL * 1000,
       staleMaxAge: env.STALE_MAX_AGE * 1000,
@@ -472,6 +516,7 @@ export function getConfig(): AppConfig {
     albumGrids,
     albumCoverPositions,
     albumDownloads,
+    albumLocationPrecision,
   } = deriveGallery(gallery);
 
   const siteSeoTitle = settings.seo?.title || settings.title || env.SITE_TITLE || 'Gallery';
@@ -561,6 +606,7 @@ export function getConfig(): AppConfig {
     albumGrids,
     albumCoverPositions,
     albumDownloads,
+    albumLocationPrecision,
     navLinks: sanitizeNavLinks(settings.navLinks),
     cacheTtl: env.CACHE_TTL * 1000,
     staleMaxAge: env.STALE_MAX_AGE * 1000,
