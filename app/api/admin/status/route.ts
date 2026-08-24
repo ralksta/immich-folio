@@ -4,6 +4,7 @@ import { immich } from '@/lib/immich';
 import { getConfig } from '@/lib/config';
 import { cache } from '@/lib/cache';
 import { listBackups, readGalleryYaml, readSettingsYaml } from '@/lib/admin/yaml-service';
+import { getUpdateStatus } from '@/lib/updateCheck';
 
 export async function GET() {
   if (!isAdminEnabled()) {
@@ -68,6 +69,10 @@ export async function GET() {
 
   const config = getConfig();
 
+  // Answered from a day-long cache and never throws, so a blocked or offline
+  // instance still gets the rest of its status.
+  const update = await getUpdateStatus();
+
   return NextResponse.json({
     immich: {
       status: immichOk ? 'connected' : 'disconnected',
@@ -89,5 +94,6 @@ export async function GET() {
       count: backupCount,
       lastBackup,
     },
+    update,
   });
 }

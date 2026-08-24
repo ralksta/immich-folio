@@ -1928,6 +1928,10 @@
   color: var(--admin-error, #ef4444);
 }
 
+.status-val.update {
+  color: var(--admin-warning, #f59e0b);
+}
+
 .status-val.unknown {
   color: var(--admin-text-secondary);
 }
