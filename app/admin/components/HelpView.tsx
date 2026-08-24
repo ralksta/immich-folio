@@ -4,7 +4,7 @@ import { useState } from 'react';
 import DoctorModal from './DoctorModal';
 import * as Icons from './Icons';
 import { en } from '@/lib/i18n/locales/en';
-import { LIGHTBOX_SHORTCUTS, shortcutKeyLabel } from '@/lib/lightboxShortcuts';
+import { LIGHTBOX_SHORTCUTS, shortcutDisplayKeys } from '@/lib/lightboxShortcuts';
 
 /**
  * The admin help section.
@@ -50,9 +50,9 @@ export default function HelpView() {
           {LIGHTBOX_SHORTCUTS.map((shortcut) => (
             <div key={shortcut.labelKey} className="help-shortcuts-row">
               <dt className="help-shortcuts-keys">
-                {shortcut.keys.map((key) => (
+                {shortcutDisplayKeys(shortcut).map((key) => (
                   <kbd key={key} className="help-kbd">
-                    {shortcutKeyLabel(key)}
+                    {key}
                   </kbd>
                 ))}
               </dt>
