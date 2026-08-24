@@ -12,7 +12,6 @@ import {
   slugify,
   resolveExifDisplay,
   resolveColorMode,
-  resolveHeroRotation,
   AppConfig,
   AlbumEntryObject,
   SubpageConfig,
@@ -468,7 +467,6 @@ export function getConfig(): AppConfig {
       heroImages: [],
       siteUrl: null,
       siteUrlSource: 'none',
-      heroRotation: 'carousel',
       colorMode: 'dark',
       exifOnHover: true,
       exif: resolveExifDisplay(),
@@ -558,7 +556,6 @@ export function getConfig(): AppConfig {
       const site = resolveSiteUrl(settings.url, env.SITE_URL);
       return { siteUrl: site.url, siteUrlSource: site.source };
     })(),
-    heroRotation: resolveHeroRotation(settings.heroRotation),
     colorMode: resolveColorMode(settings.mode),
     exifOnHover: settings.exifOnHover !== false,
     exif: resolveExifDisplay(settings.exif, settings.exifOnHover),
