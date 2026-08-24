@@ -13,7 +13,7 @@ vi.mock('@/lib/config', () => ({
 }));
 
 vi.mock('@/lib/immich', () => ({
-  immich: { getAssetInfo: vi.fn() },
+  immich: { getAssetInfo: vi.fn(), getAlbum: vi.fn() },
   ImmichUnavailableError: class ImmichUnavailableError extends Error {},
 }));
 
@@ -36,6 +36,7 @@ import { NextRequest } from 'next/server';
 
 const mockConfig = getConfig as unknown as ReturnType<typeof vi.fn>;
 const mockAssetInfo = immich.getAssetInfo as unknown as ReturnType<typeof vi.fn>;
+const mockGetAlbum = immich.getAlbum as unknown as ReturnType<typeof vi.fn>;
 
 const EXIF_ASSET = {
   exifInfo: {
@@ -64,6 +65,9 @@ function configWith(raw?: ExifDisplayYaml, exifOnHover?: boolean) {
     exifOnHover: exifOnHover !== false,
     exif: resolveExifDisplay(raw, exifOnHover),
     rateLimitRpm: 120,
+    // No album restricts its location, so the place comes through as the
+    // asset carries it — the shape getConfig() always builds (#469).
+    albumLocationPrecision: {},
   };
 }
 
@@ -150,5 +154,42 @@ describe('GET /api/exif/[id] captions', () => {
 
     const res = await GET(makeRequest(), params);
     expect(res.status).toBe(404);
+  });
+});
+
+/**
+ * `location:` used to govern the map and nothing else, so an album asking to
+ * be absent from it still named its city here (#469).
+ */
+describe('GET /api/exif/[id] album location precision', () => {
+  /** The album that carries the asset the mocked token decodes to. */
+  const carrying = { id: 'album-a', assets: [{ id: 'asset-uuid' }] };
+
+  async function respond(precision: Record<string, string>) {
+    mockConfig.mockReturnValue({ ...configWith(), albumLocationPrecision: precision });
+    mockAssetInfo.mockResolvedValue(EXIF_ASSET);
+    mockGetAlbum.mockResolvedValue(carrying);
+    const res = await GET(new NextRequest('http://localhost/api/exif/token'), {
+      params: Promise.resolve({ id: 'token' }),
+    });
+    return res.json();
+  }
+
+  it('names the city when nothing restricts it', async () => {
+    expect(await respond({})).toMatchObject({ city: 'Vienna', country: 'Austria' });
+  });
+
+  it('drops the city but keeps the country at country precision', async () => {
+    const body = await respond({ 'album-a': 'country' });
+    expect(body.country).toBe('Austria');
+    expect(body).not.toHaveProperty('city');
+  });
+
+  it('names no place at all when the album is hidden', async () => {
+    const body = await respond({ 'album-a': 'hidden' });
+    expect(body).not.toHaveProperty('city');
+    expect(body).not.toHaveProperty('country');
+    // The rest of the panel is untouched.
+    expect(body.model).toBe('X-T5');
   });
 });
