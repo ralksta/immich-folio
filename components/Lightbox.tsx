@@ -521,33 +521,6 @@ export function Lightbox({
         </svg>
       </button>
 
-      {/* Counter */}
-      <div className={styles.counter} aria-live="polite" aria-atomic="true">
-        <span className="sr-only">
-          Photo {currentIndex + 1} of {assets.length}
-        </span>
-        <span aria-hidden="true">
-          {currentIndex + 1} / {assets.length}
-        </span>
-      </div>
-
-      {/* Proofing favorite button */}
-      {proofing && current && (
-        <button
-          className={`${styles.infoToggle} ${styles.favToggle}`}
-          style={{
-            color: isFav ? '#ff4d4f' : 'inherit',
-            fontWeight: isFav ? 600 : 400,
-          }}
-          onClick={() => proofing.toggleFavorite(current.id)}
-          aria-label={isFav ? t.proofing.removeFromFavorites : t.proofing.addToFavorites}
-          title={isFav ? t.proofing.removeFromFavorites : t.proofing.addToFavorites}
-        >
-          <IconHeart size={14} fill={isFav ? 'currentColor' : 'none'} aria-hidden="true" />
-          {isFav ? t.proofing.saved : t.proofing.favorite}
-        </button>
-      )}
-
       {/*
         Slideshow state, announced but not drawn: a badge over a photograph
         would be paid for by every visitor, and the shortcut list already
@@ -559,57 +532,114 @@ export function Lightbox({
           : t.lightbox.slideshowRunning(slideshowSeconds)}
       </p>
 
-      {/* Copy link — bottom left, opposite the info toggle */}
-      <button
-        className={`${styles.infoToggle} ${styles.copyToggle}`}
-        onClick={handleCopyLink}
-        aria-label={t.lightbox.copyLink}
-        title={t.lightbox.copyLinkTitle}
-      >
-        <svg
-          aria-hidden="true"
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-        </svg>
-        {copyState === 'copied' ? t.lightbox.copied : t.lightbox.copyLinkShort}
-      </button>
+      {/*
+        One bottom bar rather than five separately anchored controls.
+        They used to carry hard-coded offsets, which broke in two ways: the
+        info button grows when its label becomes "Hide info" and walked into
+        the favourite button, and the left-hand controls ran into the centred
+        counter on a narrow viewport. A flex row cannot collide with itself.
 
-      {/* Download the original — only when the album offers it (#475) */}
-      {current?.downloadUrl && (
-        <a
-          className={`${styles.infoToggle} ${styles.downloadToggle}`}
-          href={current.downloadUrl}
-          download
-          aria-label={t.lightbox.download}
-          title={t.lightbox.downloadTitle}
-        >
-          <svg
-            aria-hidden="true"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        The bar itself ignores pointer events so it does not swallow clicks
+        on the photograph behind it; each group takes them back.
+      */}
+      <div className={styles.bottomBar}>
+        <div className={`${styles.bottomBarGroup} ${styles.bottomBarLeft}`}>
+          {/* Copy link — bottom left, opposite the info toggle */}
+          <button
+            className={styles.infoToggle}
+            onClick={handleCopyLink}
+            aria-label={t.lightbox.copyLink}
+            title={t.lightbox.copyLinkTitle}
           >
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          {t.lightbox.downloadShort}
-        </a>
-      )}
+            <svg
+              aria-hidden="true"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+            {copyState === 'copied' ? t.lightbox.copied : t.lightbox.copyLinkShort}
+          </button>
+
+          {/* Download the original — only when the album offers it (#475) */}
+          {current?.downloadUrl && (
+            <a
+              className={`${styles.infoToggle} ${styles.downloadToggle}`}
+              href={current.downloadUrl}
+              download
+              aria-label={t.lightbox.download}
+              title={t.lightbox.downloadTitle}
+            >
+              <svg
+                aria-hidden="true"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              {t.lightbox.downloadShort}
+            </a>
+          )}
+        </div>
+
+        {/* Counter */}
+        <div className={styles.counter} aria-live="polite" aria-atomic="true">
+          <span className="sr-only">
+            Photo {currentIndex + 1} of {assets.length}
+          </span>
+          <span aria-hidden="true">
+            {currentIndex + 1} / {assets.length}
+          </span>
+        </div>
+
+        <div className={`${styles.bottomBarGroup} ${styles.bottomBarRight}`}>
+          {/* Proofing favorite button */}
+          {proofing && current && (
+            <button
+              className={styles.infoToggle}
+              style={{
+                color: isFav ? '#ff4d4f' : 'inherit',
+                fontWeight: isFav ? 600 : 400,
+              }}
+              onClick={() => proofing.toggleFavorite(current.id)}
+              aria-label={isFav ? t.proofing.removeFromFavorites : t.proofing.addToFavorites}
+              title={isFav ? t.proofing.removeFromFavorites : t.proofing.addToFavorites}
+            >
+              <IconHeart size={14} fill={isFav ? 'currentColor' : 'none'} aria-hidden="true" />
+              {isFav ? t.proofing.saved : t.proofing.favorite}
+            </button>
+          )}
+
+          {/* EXIF toggle */}
+          {showExifToggle && (
+            <button
+              className={styles.infoToggle}
+              onClick={handleExifToggle}
+              aria-expanded={showExif}
+              aria-controls="exif-panel"
+              aria-label={t.lightbox.toggleInfo}
+              title={t.lightbox.toggleInfoTitle}
+            >
+              {showExif ? t.lightbox.hideInfo : t.lightbox.info}
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Clipboard unavailable — show the link rather than fail quietly */}
       {copyState === 'manual' && (
@@ -627,20 +657,6 @@ export function Lightbox({
             onFocus={(e) => e.currentTarget.select()}
           />
         </div>
-      )}
-
-      {/* EXIF toggle */}
-      {showExifToggle && (
-        <button
-          className={styles.infoToggle}
-          onClick={handleExifToggle}
-          aria-expanded={showExif}
-          aria-controls="exif-panel"
-          aria-label={t.lightbox.toggleInfo}
-          title={t.lightbox.toggleInfoTitle}
-        >
-          {showExif ? t.lightbox.hideInfo : t.lightbox.info}
-        </button>
       )}
 
       {/* EXIF panel */}
