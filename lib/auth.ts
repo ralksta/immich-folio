@@ -8,6 +8,9 @@
 
 import crypto from 'crypto';
 import { getConfig, SubpageConfig } from './config';
+// From the pure schema module, not the config barrel: tests that stub out
+// '@/lib/config' wholesale would otherwise lose this helper.
+import { normalizeSlug } from './config/schema';
 import { verifyScrypt, generateScryptHash, isScryptHash } from './password';
 
 const TOKEN_EXPIRY_HOURS = 24;
@@ -96,7 +99,8 @@ export const SITE_AUTH_COOKIE = 'lb_site_auth';
  * Find the SubpageConfig for a given slug.
  */
 export function findSubpageBySlug(slug: string): SubpageConfig | undefined {
-  return getConfig().subpages.find((sp) => sp.slug === slug);
+  const wanted = normalizeSlug(slug);
+  return getConfig().subpages.find((sp) => sp.slug === wanted);
 }
 
 /**
@@ -108,7 +112,8 @@ function findPassword(key: string, type: ProtectedType): string | undefined {
     return config.sitePassword || undefined;
   }
   if (type === 'subpage') {
-    return config.subpages.find((sp) => sp.slug === key)?.password;
+    const wanted = normalizeSlug(key);
+    return config.subpages.find((sp) => sp.slug === wanted)?.password;
   }
   if (type === 'album') {
     return config.albumPasswords[key];

@@ -381,6 +381,63 @@ describe('ImmichClient', () => {
     });
   });
 
+  // #522: a CJK album name slugified to '', so its link was "/" and the album
+  // was unreachable — no URL segment can ever be the empty string.
+  describe('getAlbumBySlug() with non-Latin names', () => {
+    function mockList(albumName: string) {
+      const json = (body: unknown) => ({
+        ok: true,
+        headers: { get: () => 'application/json' },
+        json: async () => body,
+      });
+      mockFetch.mockImplementation(async (url: string) => {
+        if (url.includes('/search/metadata')) {
+          return json({ assets: { items: [], nextPage: null, total: 0 } });
+        }
+        if (/\/albums\/album-2/.test(url)) {
+          return json({ id: 'album-2', albumName, assetCount: 0, assets: [], order: 'desc' });
+        }
+        return json([{ id: 'album-2', albumName, assetCount: 0 }]);
+      });
+    }
+
+    it('gives a CJK album a non-empty slug and resolves it', async () => {
+      mockList('家族相册');
+      const albums = await immich.getAlbums();
+      expect(albums[0].slug).toBe('家族相册');
+
+      const album = await immich.getAlbumBySlug('家族相册');
+      expect(album?.id).toBe('album-2');
+    });
+
+    it('resolves a Hangul slug that arrives decomposed (NFD) from the URL', async () => {
+      mockList('가족 앨범');
+      await immich.getAlbums();
+
+      const album = await immich.getAlbumBySlug('가족-앨범'.normalize('NFD'));
+      expect(album?.id).toBe('album-2');
+    });
+
+    it('resolves a slug that arrives percent-encoded from the route', async () => {
+      mockList('家族相册');
+      await immich.getAlbums();
+
+      const encoded = encodeURIComponent('家族相册');
+      expect(encoded).not.toBe('家族相册');
+      const album = await immich.getAlbumBySlug(encoded);
+      expect(album?.id).toBe('album-2');
+    });
+
+    it('falls back to the album id when the name has no letters at all', async () => {
+      mockList('🎉');
+      const albums = await immich.getAlbums();
+      expect(albums[0].slug).toBe('album-2');
+
+      const album = await immich.getAlbumBySlug('album-2');
+      expect(album?.id).toBe('album-2');
+    });
+  });
+
   describe('getStandaloneAlbums()', () => {
     it('orders albums by gallery.yaml order, not Immich API order', async () => {
       // The Immich API returns albums in its own (creation/update) order;
