@@ -516,10 +516,26 @@ export function albumSlug(name: string, id: string): string {
 
 /**
  * Normalize a slug that came in from a URL before comparing it to a stored one.
- * Slugs are stored NFC; a non-Latin slug typed or pasted on macOS can arrive
- * NFD, and the two forms are different strings even though they render the
- * same. ASCII slugs are unaffected.
+ *
+ * Two things can differ even when the slug is "the same":
+ *
+ *   - Percent-encoding. A non-ASCII path segment reaches the route handler
+ *     still encoded ("%E5%AE%B6..."), so comparing it raw against the stored
+ *     slug never matches — the half of #522 that survived fixing slugify().
+ *   - Unicode form. Slugs are stored NFC; a non-Latin slug typed or pasted on
+ *     macOS can arrive NFD, and the two are different strings that render the
+ *     same.
+ *
+ * ASCII slugs are unaffected by either step. No stored slug can contain a '%',
+ * since slugify() drops it, so decoding cannot collide with a real slug.
  */
 export function normalizeSlug(slug: string): string {
-  return slug.normalize('NFC');
+  let decoded = slug;
+  try {
+    decoded = decodeURIComponent(slug);
+  } catch {
+    // Malformed percent sequence — compare what we were actually given rather
+    // than throwing a 500 on a hand-mangled URL.
+  }
+  return decoded.normalize('NFC');
 }

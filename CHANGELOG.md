@@ -20,8 +20,15 @@ Releases up to and including v0.9.2 are documented in the
   letter or digit, whatever the script, and fold Latin diacritics as before
   (`Café` still becomes `cafe`). An album whose name has no letters at all — one
   written purely in emoji — falls back to its id, so it stays reachable and two
-  of them no longer collide. A slug typed into the address bar is matched in
-  both its composed and decomposed Unicode form.
+  of them no longer collide.
+
+  Generating a usable slug was only half of it: Next hands a catch-all route
+  segment to the page still percent-encoded, so `/家族相册` arrived as
+  `%E5%AE%B6...` and matched no album even once the slug was right — the album
+  link rendered, and opening it produced an empty page. Incoming slugs are now
+  decoded once at the route boundary, and matched in both their composed and
+  decomposed Unicode form, so a slug typed or pasted into the address bar
+  resolves too.
 
 ## [0.12.0] — 2026-08-23
 

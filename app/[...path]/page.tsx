@@ -30,6 +30,7 @@ import {
   buildCoverGridVars,
   getConfig,
   hasExifPanelContent,
+  normalizeSlug,
   resolveProofing,
   type GridConfig,
 } from '@/lib/config';
@@ -54,7 +55,11 @@ interface PathPageProps {
 }
 
 export async function generateMetadata({ params }: PathPageProps): Promise<Metadata> {
-  const { path } = await params;
+  // Next hands catch-all segments over percent-encoded, so a non-ASCII slug
+  // ("/家族相册") would never match a stored one. Decode once, here, and every
+  // comparison downstream works on the same form (#522).
+  const { path: rawPath } = await params;
+  const path = rawPath?.map(normalizeSlug);
   if (!path || path.length === 0) return {};
 
   const slug = path[0];
@@ -190,7 +195,11 @@ async function getAlbumHeroData(
 }
 
 export default async function PathPage({ params, searchParams }: PathPageProps) {
-  const { path } = await params;
+  // Next hands catch-all segments over percent-encoded, so a non-ASCII slug
+  // ("/家族相册") would never match a stored one. Decode once, here, and every
+  // comparison downstream works on the same form (#522).
+  const { path: rawPath } = await params;
+  const path = rawPath?.map(normalizeSlug);
   const sParams = (await searchParams) || {};
   const forceFresh = sParams.fresh === '1' || sParams.preview === 'true';
 

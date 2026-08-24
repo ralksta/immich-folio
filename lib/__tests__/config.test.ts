@@ -12,7 +12,13 @@ vi.mock('@/lib/env', () => ({
   },
 }));
 
-import { slugify, albumSlug, buildSubpageGrid, sanitizeNavLinks } from '@/lib/config';
+import {
+  slugify,
+  albumSlug,
+  normalizeSlug,
+  buildSubpageGrid,
+  sanitizeNavLinks,
+} from '@/lib/config';
 
 // EXPERIMENTAL: external navigation links — rendered as <a href> in the
 // header, so only http(s) URLs may survive sanitisation.
@@ -116,6 +122,28 @@ describe('albumSlug', () => {
   it('falls back to the album id when the name slugifies to nothing', () => {
     expect(albumSlug('🎉', 'abc-123')).toBe('abc-123');
     expect(albumSlug('', 'abc-123')).toBe('abc-123');
+  });
+});
+
+describe('normalizeSlug', () => {
+  // Next hands catch-all route segments over percent-encoded, so this is the
+  // half of #522 that fixing slugify() alone did not cure.
+  it('percent-decodes an encoded slug', () => {
+    expect(normalizeSlug('%E5%AE%B6%E6%97%8F%E7%9B%B8%E5%86%8C')).toBe('家族相册');
+  });
+
+  it('leaves an already decoded slug alone', () => {
+    expect(normalizeSlug('家族相册')).toBe('家族相册');
+    expect(normalizeSlug('kloster-chorin')).toBe('kloster-chorin');
+  });
+
+  it('composes decomposed (NFD) input', () => {
+    expect(normalizeSlug('가족-앨범'.normalize('NFD'))).toBe('가족-앨범');
+  });
+
+  it('survives a malformed percent sequence instead of throwing', () => {
+    expect(() => normalizeSlug('%E5%AE')).not.toThrow();
+    expect(normalizeSlug('100%-real')).toBe('100%-real');
   });
 });
 

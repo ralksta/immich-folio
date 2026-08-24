@@ -418,6 +418,16 @@ describe('ImmichClient', () => {
       expect(album?.id).toBe('album-2');
     });
 
+    it('resolves a slug that arrives percent-encoded from the route', async () => {
+      mockList('家族相册');
+      await immich.getAlbums();
+
+      const encoded = encodeURIComponent('家族相册');
+      expect(encoded).not.toBe('家族相册');
+      const album = await immich.getAlbumBySlug(encoded);
+      expect(album?.id).toBe('album-2');
+    });
+
     it('falls back to the album id when the name has no letters at all', async () => {
       mockList('🎉');
       const albums = await immich.getAlbums();
