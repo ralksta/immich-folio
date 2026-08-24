@@ -1017,6 +1017,79 @@
   height: 16px;
 }
 
+/* ── Album navigation (previous / next) ── */
+
+.album-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 16px;
+  max-width: var(--max-width);
+  margin: 64px auto 96px;
+  padding: 24px 24px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.album-nav__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 45%;
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.album-nav__link:hover {
+  color: var(--text-primary);
+}
+
+.album-nav__link--next {
+  margin-left: auto;
+  text-align: right;
+}
+
+.album-nav__link svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.album-nav__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.album-nav__kicker {
+  font-family: var(--font-caption);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.album-nav__name {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: inherit;
+  /* Long album names must not push the pair apart. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .album-nav {
+    margin: 48px auto 64px;
+    padding: 20px 16px 0;
+  }
+
+  .album-nav__name {
+    font-size: 0.95rem;
+  }
+}
+
 .album-header__title {
   font-family: var(--font-serif);
   font-size: 2.5rem;
