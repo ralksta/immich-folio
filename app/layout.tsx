@@ -47,6 +47,10 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 
   return {
+    // Without this, Next resolves Open Graph and canonical URLs against
+    // localhost. Absent when nobody configured a site URL, which leaves the
+    // previous behaviour rather than inventing a host.
+    ...(config.siteUrl ? { metadataBase: new URL(config.siteUrl) } : {}),
     title: {
       default: siteTitle,
       template: config.seo.titleTemplate,

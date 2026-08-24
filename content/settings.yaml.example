@@ -19,6 +19,9 @@ lang: "en"
 #   titleTemplate: "%s | My Portfolio" # Template for subpages (%s is replaced with subpage/album title)
 #   noIndex: false # Set to true to hide from search engines
 #   noFollow: false # Set to true to prevent search engines from following links
+#   # Licence your photographs are published under, emitted as structured
+#   # data on album pages. A URL or a short identifier.
+#   license: "https://creativecommons.org/licenses/by-nc-nd/4.0/"
 
 # ── Site password (optional) ─────────────────────────────────────
 # Puts the WHOLE public site behind one password — useful while a portfolio
@@ -76,6 +79,14 @@ theme:
   # grain: true
   # heroStyle: "split" # split, fullbleed, minimal, stacked, typographic, mosaic, cover (EXPERIMENTAL)
   #   Note: "mosaic" needs at least 3 hero images in gallery.yaml (optimal: 6)
+
+# ── Site URL ─────────────────────────────────────────────────────
+# The address this portfolio is reachable at, e.g. https://folio.example
+# Needed for sitemap.xml, the feed and structured data: those are built
+# without a request, so the host cannot be derived from one. Left empty,
+# the sitemap stays empty rather than guessing a wrong address.
+# The SITE_URL environment variable is used when this is not set.
+# url: "https://folio.example"
 
 # ── Hero rotation ────────────────────────────────────────────────
 # How the `hero:` list in gallery.yaml is shown.

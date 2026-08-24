@@ -161,7 +161,16 @@ export interface AppConfig {
     titleTemplate: string;
     noIndex: boolean;
     noFollow: boolean;
+    /** Emitted as `license` in JSON-LD when set. */
+    license: string;
   };
+  /**
+   * The site's own absolute URL, or null when nobody configured one. Sitemap,
+   * feed and JSON-LD need it and have no request context to derive it from.
+   */
+  siteUrl: string | null;
+  /** Where `siteUrl` came from, so the admin panel can name it (#472). */
+  siteUrlSource: 'env' | 'settings' | 'none';
   heroImages: string[];
   /** How the hero list is presented: crossfade, or one image per calendar day. */
   heroRotation: HeroRotation;
@@ -323,6 +332,8 @@ export function resolveHeroRotation(raw?: string): HeroRotation {
 export interface SettingsYaml {
   title?: string;
   subtitle?: string;
+  /** Absolute site URL, e.g. https://folio.example. `SITE_URL` overrides it. */
+  url?: string;
   lang?: string;
   seo?: {
     title?: string;
@@ -330,6 +341,8 @@ export interface SettingsYaml {
     titleTemplate?: string;
     noIndex?: boolean;
     noFollow?: boolean;
+    /** Licence URL or identifier for structured data, e.g. a CC link (#472). */
+    license?: string;
   };
   /** 'dark' (default), 'light' or 'auto' — the visitor's starting colour mode. */
   mode?: ColorMode;

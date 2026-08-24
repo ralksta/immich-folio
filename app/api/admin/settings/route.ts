@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 import { readSettingsYaml, writeSettingsYaml } from '@/lib/admin/yaml-service';
-import { invalidateConfigCache } from '@/lib/config';
+import { invalidateConfigCache, getConfigOrNull } from '@/lib/config';
 import { immich } from '@/lib/immich';
 import type { SettingsYaml } from '@/lib/config/schema';
 
@@ -16,7 +16,16 @@ export async function GET() {
   }
 
   const settings = await readSettingsYaml();
-  return NextResponse.json({ settings: settings || {} });
+  const config = getConfigOrNull();
+  return NextResponse.json({
+    settings: settings || {},
+    // The resolved value and its origin, so the panel can say when what it
+    // shows came from SITE_URL rather than from the field itself (#472).
+    siteUrl: {
+      effective: config?.siteUrl ?? null,
+      source: config?.siteUrlSource ?? 'none',
+    },
+  });
 }
 
 /** PUT: Write settings.yaml config. */

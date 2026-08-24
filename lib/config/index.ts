@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { env } from '../env';
 import { resolveAuthSecret } from '../secret';
+import { resolveSiteUrl } from '../siteUrl';
 import { getInstallCredentials } from '../install';
 import { loadYaml, clearYamlCache, validateUuid } from './parser';
 import { resolveTheme, VALID_LAYOUTS, DEFAULT_PRESET } from './theme';
@@ -460,10 +461,13 @@ export function getConfig(): AppConfig {
         title: 'Setup Required',
         description: 'Please configure Immich Folio',
         titleTemplate: '%s | Setup Required',
+        license: '',
         noIndex: true,
         noFollow: true,
       },
       heroImages: [],
+      siteUrl: null,
+      siteUrlSource: 'none',
       heroRotation: 'carousel',
       colorMode: 'dark',
       exifOnHover: true,
@@ -543,12 +547,17 @@ export function getConfig(): AppConfig {
       titleTemplate: settings.seo?.titleTemplate || `%s | ${siteSeoTitle}`,
       noIndex: settings.seo?.noIndex === true,
       noFollow: settings.seo?.noFollow === true,
+      license: settings.seo?.license?.trim() || '',
     },
     heroImages: gallery.hero
       ? (Array.isArray(gallery.hero) ? gallery.hero : [gallery.hero])
           .map((id) => validateUuid(id, 'gallery.yaml hero'))
           .filter((id): id is string => id !== null)
       : [],
+    ...(() => {
+      const site = resolveSiteUrl(settings.url, env.SITE_URL);
+      return { siteUrl: site.url, siteUrlSource: site.source };
+    })(),
     heroRotation: resolveHeroRotation(settings.heroRotation),
     colorMode: resolveColorMode(settings.mode),
     exifOnHover: settings.exifOnHover !== false,

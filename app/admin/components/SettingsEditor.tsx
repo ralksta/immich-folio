@@ -14,6 +14,8 @@ import { SUPPORTED_LOCALES } from '@/lib/i18n';
 interface Settings {
   title?: string;
   subtitle?: string;
+  /** Absolute site URL for sitemap, feed and structured data (#472). */
+  url?: string;
   lang?: string;
   sitePassword?: string;
   mode?: 'light' | 'dark' | 'auto';
@@ -306,6 +308,11 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
     ? (section as string)
     : 'general';
   const [settings, setSettings] = useState<Settings>({});
+  /** Resolved site URL and its origin, so the panel can name SITE_URL (#472). */
+  const [siteUrlInfo, setSiteUrlInfo] = useState<{
+    effective: string | null;
+    source: 'env' | 'settings' | 'none';
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   // Collapsed by default: the four metadata switches are a detail of one
   // decision, and showing them permanently is what made the section a wall (#510).
@@ -418,8 +425,9 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
     try {
       const res = await fetch('/api/admin/settings');
       if (res.ok) {
-        const { settings: data } = await res.json();
+        const { settings: data, siteUrl } = await res.json();
         setSettings(data || {});
+        setSiteUrlInfo(siteUrl ?? null);
       }
     } catch (err) {
       console.error('Failed to load settings:', err);
@@ -1784,6 +1792,28 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                       'A curated selection of photography work.'}
                   </div>
                 </div>
+              </div>
+
+              <div className="admin-field">
+                <label>Site URL</label>
+                <input
+                  value={settings.url || ''}
+                  onChange={(e) => update('url', e.target.value)}
+                  placeholder="https://folio.example"
+                />
+                <p style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '4px' }}>
+                  Needed for <code>sitemap.xml</code>, the feed and structured data — those are
+                  generated without a request, so the address cannot be derived from it. Leave empty
+                  and the sitemap stays empty rather than guessing.
+                  {siteUrlInfo?.source === 'env' && (
+                    <>
+                      <br />
+                      Currently supplied by the <code>SITE_URL</code> environment variable (
+                      <code>{siteUrlInfo.effective}</code>). A value entered here takes precedence
+                      once saved.
+                    </>
+                  )}
+                </p>
               </div>
 
               <div className="admin-field">

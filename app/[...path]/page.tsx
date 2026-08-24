@@ -39,6 +39,8 @@ import PasswordGate from '@/components/PasswordGate';
 import { AdminDiagnosticBanner } from '@/components/AdminDiagnosticBanner';
 import { AlbumDetailView } from './AlbumDetailView';
 import { albumNeighbours } from '@/lib/albumNav';
+import { albumStructuredData } from '@/lib/structuredData';
+import { absoluteUrl } from '@/lib/siteUrl';
 import { SubpageGridView } from './SubpageGridView';
 import { EssayView } from './EssayView';
 import { parseEssayMarkdown } from '@/lib/essay';
@@ -149,6 +151,32 @@ function toPhotoItems(
         aspectRatio: assetAspectRatio(a),
       };
     });
+}
+
+/**
+ * JSON-LD for an album page. Null unless a site URL is configured — structured
+ * data is a set of claims about absolute URLs, and there is nothing truthful to
+ * claim without one (#472).
+ */
+function structuredDataFor(
+  album: { albumName: string; description?: string; albumThumbnailAssetId?: string | null },
+  path: string,
+  photoCount: number,
+) {
+  const config = getConfig();
+  const cover = album.albumThumbnailAssetId
+    ? absoluteUrl(config.siteUrl, imageUrl(album.albumThumbnailAssetId, 'preview'))
+    : null;
+  return albumStructuredData({
+    siteUrl: config.siteUrl,
+    pageUrl: absoluteUrl(config.siteUrl, path),
+    albumName: album.albumName,
+    ...(album.description ? { description: album.description } : {}),
+    coverUrl: cover,
+    ...(config.legal.name?.trim() ? { creator: config.legal.name } : {}),
+    ...(config.seo.license ? { license: config.seo.license } : {}),
+    photoCount,
+  });
 }
 
 /**
@@ -291,6 +319,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         album={album}
         images={images}
         nav={nav}
+        structuredData={structuredDataFor(album, `/${subpageSlug}/${albumSlug}`, images.length)}
         layout={resolveLayout(mergeAlbumGrid(album.id, spGrid))}
         gridStyle={buildGridStyle(mergeAlbumGrid(album.id, spGrid))}
         backLinkHref={`/${subpageSlug}`}
@@ -520,6 +549,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       backLinkHref="/"
       backLinkLabel={getServerDictionary().common.backToGallery}
       nav={albumNeighbours(await immich.getStandaloneAlbums(forceFresh), album.id)}
+      structuredData={structuredDataFor(album, `/${slug}`, images.length)}
       watermark={config.watermark}
       showExifPanel={hasExifPanelContent(config.exif)}
       showGear={config.exif.camera}
