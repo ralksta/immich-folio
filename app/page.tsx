@@ -10,6 +10,7 @@ import { immich, type ImmichAsset } from '@/lib/immich';
 import { getConfig } from '@/lib/config';
 import { imageUrl, assetPlaceholder } from '@/lib/urls';
 import { HeroCarousel } from '@/components/HeroCarousel';
+import { photoOfTheDay, localDateKey } from '@/lib/photoOfTheDay';
 import { FadeIn } from '@/components/FadeIn';
 import { getServerDictionary } from '@/lib/i18n/server';
 import type { Dictionary } from '@/lib/i18n';
@@ -124,9 +125,24 @@ export default async function HomePage() {
     immich.getStandaloneAlbums(),
   ]);
 
+  /*
+   * Photo of the Day (#476): with `heroRotation: daily`, one hero image is
+   * chosen per calendar day instead of crossfading through all of them.
+   *
+   * Not applied to the mosaic style, which lays several images out side by
+   * side and needs at least three — narrowing the list to one would leave it
+   * with empty cells.
+   */
+  const heroIds =
+    config.heroRotation === 'daily' && config.theme.heroStyle !== 'mosaic'
+      ? [photoOfTheDay(config.heroImages, localDateKey(new Date()))].filter(
+          (id): id is string => id !== undefined,
+        )
+      : config.heroImages;
+
   // Fetch ThumbHash + camera line for all hero images
   const heroData = await Promise.all(
-    config.heroImages.map(async (id) => {
+    heroIds.map(async (id) => {
       const asset = await immich.getAssetInfo(id);
       const ph = asset ? assetPlaceholder(asset) : null;
       const exif = asset ? heroExifLine(asset) : undefined;

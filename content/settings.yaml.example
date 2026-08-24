@@ -77,6 +77,16 @@ theme:
   # heroStyle: "split" # split, fullbleed, minimal, stacked, typographic, mosaic, cover (EXPERIMENTAL)
   #   Note: "mosaic" needs at least 3 hero images in gallery.yaml (optimal: 6)
 
+# ── Hero rotation ────────────────────────────────────────────────
+# How the `hero:` list in gallery.yaml is shown.
+#   carousel  (default) crossfade through every hero image, 6s apart
+#   daily     show one image per calendar day — "photo of the day", so a
+#             returning visitor sees something new without you touching
+#             the config. Walks the list in order, one step per day.
+# The day follows the server clock; in Docker set the container's TZ.
+# Ignored by the "mosaic" hero style, which shows several images at once.
+# heroRotation: daily
+
 # ── Grid configuration ───────────────────────────────────────────
 grid:
   columns: 3
