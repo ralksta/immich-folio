@@ -11,6 +11,8 @@ import { decodeAssetId } from '@/lib/tokens';
 import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 import { siteLockResponse } from '@/lib/auth';
+import { assetLocationPrecision } from '@/lib/assetLocation';
+import { placeLabel } from '@/lib/mapPrecision';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const config = getConfig();
@@ -73,6 +75,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const exif = asset.exifInfo;
   const caption = show.caption ? exif.description?.trim() || undefined : undefined;
 
+  const place = show.location
+    ? placeLabel(await assetLocationPrecision(assetId), {
+        city: exif.city ?? '',
+        country: exif.country ?? '',
+      })
+    : { city: '', country: '' };
+
   const payload = {
     ...(show.camera
       ? {
@@ -89,7 +98,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           iso: exif.iso,
         }
       : {}),
-    ...(show.location ? { city: exif.city, country: exif.country } : {}),
+    // Two gates, not one. `exifDisplay.location` decides whether this site
+    // publishes places at all; the album's `location:` decides how precisely
+    // this photograph may be placed — the same setting the map obeys, which
+    // used to stop at the map (#469).
+    // Emitted only when there is something to say. An empty string is not
+    // null, so keeping the keys would defeat the "no data" check below and
+    // render the blank panel it exists to prevent.
+    ...(place.city ? { city: place.city } : {}),
+    ...(place.country ? { country: place.country } : {}),
     ...(caption ? { description: caption } : {}),
   };
 
