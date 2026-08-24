@@ -84,3 +84,24 @@ export function applyPrecision(
     lng: quantiseCoordinate(position.lng, level),
   };
 }
+
+/**
+ * The place name a marker may carry at this precision.
+ *
+ * Quantising the coordinates is only half of withholding a position: the
+ * marker is also *named*, and a city name is far more precise than the 1° grid
+ * `country` snaps to. At `country` the name is reduced to the country, which
+ * is what the coordinates already say. `city` keeps it — a 0.05° cell is
+ * roughly what naming a city discloses anyway.
+ *
+ * `hidden` returns neither, so a caller that forgets to drop the marker
+ * entirely cannot leak the place through its label.
+ */
+export function placeLabel(
+  level: LocationPrecision,
+  place: { city: string; country: string },
+): { city: string; country: string } {
+  if (level === 'hidden') return { city: '', country: '' };
+  if (level === 'country') return { city: '', country: place.country };
+  return { city: place.city, country: place.country };
+}

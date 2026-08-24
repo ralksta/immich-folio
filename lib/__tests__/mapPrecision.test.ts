@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  placeLabel,
   isLocationPrecision,
   strictestPrecision,
   quantiseCoordinate,
@@ -102,5 +103,30 @@ describe('applyPrecision', () => {
   /** Not {0,0} — the caller must drop the marker, not place it in the Atlantic. */
   it('returns null for hidden', () => {
     expect(applyPrecision(berlin, 'hidden')).toBeNull();
+  });
+});
+
+/**
+ * Quantising the coordinates while still naming the city left the label more
+ * precise than the position it was meant to blur: a 1° grid cell is ~100 km,
+ * and "Kloster Chorin" is a village.
+ */
+describe('placeLabel', () => {
+  const place = { city: 'Chorin', country: 'Germany' };
+
+  it('keeps the city at exact', () => {
+    expect(placeLabel('exact', place)).toEqual({ city: 'Chorin', country: 'Germany' });
+  });
+
+  it('keeps the city at city precision, which is roughly what a city name says', () => {
+    expect(placeLabel('city', place)).toEqual({ city: 'Chorin', country: 'Germany' });
+  });
+
+  it('drops the city at country precision', () => {
+    expect(placeLabel('country', place)).toEqual({ city: '', country: 'Germany' });
+  });
+
+  it('drops both when the marker is hidden, so a caller cannot leak one by accident', () => {
+    expect(placeLabel('hidden', place)).toEqual({ city: '', country: '' });
   });
 });
