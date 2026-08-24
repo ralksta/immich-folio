@@ -103,12 +103,20 @@ export function MapView() {
           )
           .join('');
 
+        /*
+         * An album set to `location: country` has no city name to show — the
+         * API withholds it rather than naming a village inside a 100 km cell
+         * (#469). The country then carries the heading on its own.
+         */
+        const heading = loc.city || loc.country;
+        const subheading = loc.city ? loc.country : '';
+
         const popupHtml = `
           <div class="map-popup">
-            <img src="${escapeHtml(loc.coverUrl)}" alt="${escapeHtml(loc.city)}" class="map-popup__cover" loading="lazy" />
+            <img src="${escapeHtml(loc.coverUrl)}" alt="${escapeHtml(heading)}" class="map-popup__cover" loading="lazy" />
             <div class="map-popup__body">
-              <h3 class="map-popup__city">${escapeHtml(loc.city)}</h3>
-              <p class="map-popup__country">${escapeHtml(loc.country)}</p>
+              <h3 class="map-popup__city">${escapeHtml(heading)}</h3>
+              ${subheading ? `<p class="map-popup__country">${escapeHtml(subheading)}</p>` : ''}
               <p class="map-popup__count">${escapeHtml(t.common.photos(loc.photoCount))}</p>
               <div class="map-popup__albums">${albumLinks}</div>
             </div>
