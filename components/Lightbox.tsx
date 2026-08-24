@@ -28,7 +28,11 @@ import { resolveWatermarkOpacity } from '@/lib/config/schema';
 import { formatCamera } from '@/lib/exif';
 import { buildPhotoPermalink } from '@/lib/photoHash';
 import { nextSlideshowSpeed, type SlideshowSpeed } from '@/lib/slideshow';
-import { LIGHTBOX_SHORTCUTS, shortcutKeyLabel } from '@/lib/lightboxShortcuts';
+import {
+  LIGHTBOX_SHORTCUTS,
+  lightboxActionFor,
+  shortcutDisplayKeys,
+} from '@/lib/lightboxShortcuts';
 
 export interface LightboxWatermark {
   enabled?: boolean;
@@ -286,8 +290,18 @@ export function Lightbox({
       const inTextField = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA';
       if (e.key !== 'Escape' && (e.metaKey || e.ctrlKey || e.altKey || inTextField)) return;
 
-      switch (e.key) {
-        case 'Escape':
+      /*
+       * Which keys exist is the catalogue's business, not this handler's — see
+       * lib/lightboxShortcuts.ts. A key it does not list never gets here, and
+       * the switch below is exhaustive over LightboxAction, so an action added
+       * there without a branch here fails to compile rather than silently
+       * doing nothing.
+       */
+      const action = lightboxActionFor(e.key);
+      if (action === null) return;
+
+      switch (action) {
+        case 'close':
           // Innermost layer first: Esc dismisses the shortcut list, then leaves
           // fullscreen, and only closes the viewer once nothing is stacked on
           // top of it. Most browsers swallow this Esc to exit fullscreen
@@ -298,46 +312,41 @@ export function Lightbox({
           else if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
           else onClose();
           break;
-        case 'ArrowRight':
+        case 'next':
           manualNext();
           break;
-        case 'ArrowLeft':
+        case 'prev':
           manualPrev();
           break;
-        case 'i':
-        case 'I':
+        case 'info':
           if (showExifToggle) handleExifToggle();
           break;
-        // `?` is matched on the produced character, not the physical key:
-        // Shift+/ on a US layout, Shift+ß on a German one. `h` is the escape
-        // hatch for layouts where `?` is awkward — and the one key someone
-        // guesses without having been told.
-        case 's':
-        case 'S':
+        case 'slideshow':
           e.preventDefault();
           cycleSlideshow();
           break;
-        case 'd':
-        case 'D':
+        case 'download':
           if (current?.downloadUrl) {
             e.preventDefault();
             window.location.href = current.downloadUrl;
           }
           break;
-        case 'c':
-        case 'C':
+        case 'copyLink':
           e.preventDefault();
           handleCopyLink();
           break;
-        case '?':
-        case 'h':
-        case 'H':
+        case 'shortcutList':
           toggleShortcuts();
           break;
-        case 'f':
-        case 'F':
+        case 'fullscreen':
           if (canFullscreen) toggleFullscreen();
           break;
+        default: {
+          // Exhaustiveness guard: this only type-checks while every
+          // LightboxAction has a branch above.
+          const unhandled: never = action;
+          void unhandled;
+        }
       }
     };
 
@@ -393,7 +402,7 @@ export function Lightbox({
     if (shortcut.labelKey === 'shortcutSlideshow' && slideshowSeconds !== null) {
       label = t.lightbox.shortcutSlideshowRunning(slideshowSeconds);
     }
-    return { keys: shortcut.keys.map(shortcutKeyLabel), label };
+    return { keys: shortcutDisplayKeys(shortcut), label };
   });
 
   const lightboxJsx = (
