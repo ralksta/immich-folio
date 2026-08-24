@@ -478,7 +478,7 @@ export function Lightbox({
           <img
             className={`${styles.image}${imageLoaded ? ` ${styles.imageLoaded}` : ''}`}
             src={current.previewUrl}
-            alt=""
+            alt={current.caption ?? ''}
             draggable={false}
             onLoad={() => setImageLoaded(true)}
             onError={() => console.error(`[Lightbox] Failed to load image: ${current.previewUrl}`)}
