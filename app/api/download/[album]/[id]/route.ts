@@ -9,7 +9,8 @@
  *
  *   - the album must be on the allowlist,
  *   - the album must have opted in with `download: true`,
- *   - the album's password gate must be satisfied, and
+ *   - every password gate on a route to it must be satisfied — the album's own
+ *     and, where that is the only way to it, the subpage's, and
  *   - the asset must actually belong to that album.
  *
  * The last one is what stops one enabled album's URL being edited into a
@@ -22,7 +23,7 @@ import { immich, ImmichUnavailableError } from '@/lib/immich';
 import { decodeAssetId } from '@/lib/tokens';
 import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
-import { isAuthenticated, siteLockResponse } from '@/lib/auth';
+import { isAlbumReachable, siteLockResponse } from '@/lib/auth';
 import { contentDisposition } from '@/lib/downloadName';
 
 export const dynamic = 'force-dynamic';
@@ -74,11 +75,14 @@ export async function GET(
   if (!config.albums.includes(albumId)) return notFound();
   if (!config.albumDownloads[albumId]) return notFound();
 
-  // The album's own password gate. The page checks this before rendering; a
-  // route handler is reached without ever passing through the page.
+  // Every gate on every route to the album, not just its own: an album with no
+  // password of its own, reachable only through a subpage that has one, was
+  // downloadable without that subpage ever being unlocked. The page checks
+  // this before rendering; a route handler is reached without passing through
+  // the page at all.
   const cookieStore = await cookies();
   const getCookie = (name: string) => cookieStore.get(name)?.value;
-  if (!isAuthenticated(albumId, getCookie, 'album')) return notFound();
+  if (!isAlbumReachable(albumId, getCookie)) return notFound();
 
   let album;
   try {
