@@ -241,6 +241,10 @@ export function isAuthenticated(
   const cookie = getCookie(cookieName(key, type));
   if (!cookie) return false;
 
+  // 🛡️ SECURITY: Enforce maximum cookie length to prevent memory exhaustion DoS
+  // Expected token length is ~100 characters.
+  if (cookie.length > 512) return false;
+
   // Legacy tokens (bare HMAC, no expiry) do not parse here and are rejected;
   // the visitor simply re-enters the password.
   const sep = cookie.indexOf('.');

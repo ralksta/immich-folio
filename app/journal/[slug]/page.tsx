@@ -63,6 +63,10 @@ function isJournalAuthenticated(
   if (!storedPassword) return true;
   if (!cookieVal) return false;
 
+  // 🛡️ SECURITY: Enforce maximum cookie length to prevent memory exhaustion DoS
+  // Expected token length is ~100 characters.
+  if (cookieVal.length > 512) return false;
+
   const sep = cookieVal.indexOf('.');
   if (sep === -1) return false;
 

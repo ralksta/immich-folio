@@ -93,6 +93,11 @@ export function getSetupToken(): string {
 
 export function validateSetupToken(token: string | null): boolean {
   if (!token) return false;
+
+  // 🛡️ SECURITY: Enforce maximum token length to prevent memory exhaustion DoS
+  // Expected length is 32 chars (24 bytes in base64url).
+  if (token.length > 128) return false;
+
   const expected = generateSetupToken();
   try {
     const a = Buffer.from(token, 'utf8');
