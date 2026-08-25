@@ -9,6 +9,19 @@ Releases up to and including v0.9.2 are documented in the
 
 ## [Unreleased]
 
+### Added
+
+- **CI loads the admin panel in a real browser.** A Playwright spec walks all
+  fourteen admin routes against a production build and fails on an error
+  boundary, a missing page body, or anything thrown during hydration. It exists
+  because of [#542](https://github.com/ralksta/immich-folio/issues/542): a
+  temporal-dead-zone error at module evaluation took the whole panel down while
+  the type check, the build and the unit tests all stayed green — none of them
+  evaluates a client module in a browser, which is the only place that bug is
+  visible. The spec was checked against the bug: with it reintroduced, the run
+  names every broken route and reports the original
+  `Cannot access 'THEME_INFO' before initialization`.
+
 ### Fixed
 
 - **The dashboard status badge's colour and words agree**
