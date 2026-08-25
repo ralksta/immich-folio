@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import BackupManagerModal from './BackupManagerModal';
 import DoctorModal from './DoctorModal';
 import type { DoctorLevel } from '@/lib/admin/doctor';
+import { systemHealth } from './systemHealth';
 import * as Icons from './Icons';
 
 interface Props {
@@ -117,6 +118,15 @@ export default function AdminDashboard({ onLogout, children }: Props) {
   // as "System Degraded" with no further hint, which sent operators looking for
   // a network problem that did not exist (#507).
   const setupIncomplete = !statusLoading && !statusError && status?.setup?.complete === false;
+
+  // Colour and words decided together — they used to be two separately-ordered
+  // nested ternaries over the same inputs, and disagreed in two states (#539).
+  const health = systemHealth({
+    statusLoading,
+    setupIncomplete,
+    immich: immichIndicator.className,
+    doctorLevel,
+  });
   const missingCredentials = status?.setup?.credentials === 'missing';
 
   return (
@@ -140,15 +150,7 @@ export default function AdminDashboard({ onLogout, children }: Props) {
           {/* Diagnostics Badge */}
           <div className="status-indicator-container">
             <button
-              className={`status-badge-btn ${
-                setupIncomplete || doctorLevel === 'warn'
-                  ? 'unknown'
-                  : immichIndicator.className === 'error' || doctorLevel === 'error'
-                    ? 'disconnected'
-                    : immichIndicator.className === 'ok'
-                      ? 'connected'
-                      : 'unknown'
-              }`}
+              className={`status-badge-btn ${health.tone}`}
               onClick={() => {
                 setShowStatus(!showStatus);
                 if (!showStatus) fetchStatus();
@@ -156,21 +158,7 @@ export default function AdminDashboard({ onLogout, children }: Props) {
               title="Show system status"
             >
               <span className="status-dot"></span>
-              <span className="status-text">
-                {statusLoading
-                  ? 'Checking...'
-                  : setupIncomplete
-                    ? 'Setup Incomplete'
-                    : immichIndicator.className === 'error'
-                      ? 'System Degraded'
-                      : doctorLevel === 'error'
-                        ? 'Needs Attention'
-                        : doctorLevel === 'warn'
-                          ? 'Check Diagnostics'
-                          : immichIndicator.className === 'ok'
-                            ? 'System OK'
-                            : 'Status Unknown'}
-              </span>
+              <span className="status-text">{health.label}</span>
             </button>
 
             {showStatus && (

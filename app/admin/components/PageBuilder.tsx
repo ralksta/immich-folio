@@ -26,6 +26,7 @@ import { EssayBlockEditor } from './EssayBlockEditor';
 import SaveBar from './SaveBar';
 import GridOverrideFields from './fields/GridOverrideFields';
 import { useScrollLock } from './useScrollLock';
+import { useUnsavedGuard } from './useUnsavedGuard';
 import {
   ALBUM_SORT_MODES,
   DEFAULT_ALBUM_SORT,
@@ -513,17 +514,7 @@ export default function PageBuilder() {
     return () => window.removeEventListener('keydown', handleEscape);
   }, [expandedSubpage, editingAlbumAddress, pickerTarget, heroPickerTarget, orderEditorTarget]);
 
-  // ── Unsaved changes guard ────────────────────────────────────
-  useEffect(() => {
-    function handleBeforeUnload(e: BeforeUnloadEvent) {
-      if (dirty) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    }
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [dirty]);
+  useUnsavedGuard(dirty);
 
   async function loadData() {
     setLoading(true);
