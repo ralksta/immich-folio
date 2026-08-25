@@ -9,6 +9,28 @@ Releases up to and including v0.9.2 are documented in the
 
 ## [Unreleased]
 
+### Fixed
+
+- **`grid.gap` moves both axes, and two presets get their spacing back**
+  ([#513](https://github.com/ralksta/immich-folio/issues/513)). The earlier fix
+  changed the hardcoded `column-gap` in `editorial`, `minimal` and `monograph`
+  into a `--grid-gap` default, but left the hardcoded `margin-bottom` sitting a
+  few lines below it in the same three files. In the masonry layout that margin
+  _is_ the row spacing — a `column-count` layout has no `row-gap` — so the
+  setting moved the columns and left the rows pinned. It now derives from
+  `--grid-gap` like everything else. `monograph` keeps its rows deliberately
+  looser than its columns, so it derives the ratio instead of the value.
+
+  The same change also declared `--grid-gap: 12px` on the base grid, which
+  meant `classic` and `studio-modern` — which asked for `var(--grid-gap, 20px)`
+  — never reached their fallback and silently rendered at 12px from v0.12.0 on.
+  Both declare their 20px outright now, as the other presets do.
+
+  Verified in a browser rather than by reading the cascade: for all seven
+  presets, an explicit gap of 50px produces 50px on both axes (60px rows for
+  `monograph`), and with no gap set each preset renders its own intended
+  default.
+
 ### Added
 
 - **CI loads the admin panel in a real browser.** A Playwright spec walks all
@@ -401,6 +423,11 @@ Releases up to and including v0.9.2 are documented in the
   That is what those three presets already rendered horizontally, so the visible
   change is that their rows finally match their columns. Sites that set `gap`
   are unaffected, and `classic` and `studio-modern` keep the 12px they had.
+
+  > **Correction.** Two claims above were wrong: the row spacing did _not_
+  > follow the setting in those three presets, and `classic` and
+  > `studio-modern` did not keep what they had — they dropped from 20px to
+  > 12px. Both were fixed later; see the entry under Unreleased.
 
 - **The Immich description can be switched off**
   ([#506](https://github.com/ralksta/immich-folio/issues/506)). It was served

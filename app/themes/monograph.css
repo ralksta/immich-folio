@@ -36,7 +36,10 @@
 
 [data-preset='monograph'] .photo-grid__item {
   counter-increment: photo-index;
-  margin-bottom: 48px;
+  /* Rows sit looser than columns by design — 48px against 40px. Derived from
+     --grid-gap rather than hardcoded so an explicit grid.gap keeps that ratio
+     instead of leaving the rows behind (#513). */
+  margin-bottom: calc(var(--grid-gap, 40px) * 1.2);
 }
 
 [data-preset='monograph'] .photo-grid__item::before {

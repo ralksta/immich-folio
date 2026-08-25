@@ -98,7 +98,8 @@
 }
 
 [data-preset='minimal'] .photo-grid__item {
-  margin-bottom: 2px;
+  /* Row spacing deliberately omitted — the base rule reads var(--grid-gap) and
+     inherits the 2px above, so grid.gap moves both axes (#513). */
   border-radius: 0;
   cursor: pointer;
 }

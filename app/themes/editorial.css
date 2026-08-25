@@ -58,9 +58,10 @@
   --grid-gap: 32px;
 }
 
-[data-preset='editorial'] .photo-grid__item {
-  margin-bottom: 32px;
-}
+/* No row spacing here on purpose. The base .photo-grid__item rule reads
+   var(--grid-gap), which inherits the 32px declared above — so the default look
+   is unchanged and an explicit grid.gap now moves rows as well as columns.
+   A hardcoded margin-bottom here was the other half of #513. */
 
 [data-preset='editorial'] .photo-grid__item img {
   transition:
