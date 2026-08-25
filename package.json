@@ -12,7 +12,8 @@
     "test": "vitest",
     "test:unit": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:admin": "playwright test e2e/admin-smoke.spec.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
