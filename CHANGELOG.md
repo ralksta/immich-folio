@@ -11,6 +11,16 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Fixed
 
+- **The dashboard status badge's colour and words agree**
+  ([#539](https://github.com/ralksta/immich-folio/issues/539)). The badge decided
+  its colour and its label through two separately-ordered nested ternaries over
+  the same four inputs, and they disagreed in two states: with Immich
+  unreachable _and_ the config doctor warning, the colour matched the warning
+  first and stayed neutral while the words read "System Degraded"; and a refresh
+  that followed an earlier error left the badge red under "Checking...". Both
+  are now decided together, most serious first, so a condition cannot be added
+  to one and forgotten in the other.
+
 - **The journal editor warns before you close it with unsaved work**
   ([#538](https://github.com/ralksta/immich-folio/issues/538)). It tracked
   unsaved changes and used them to drive its save button, but registered no
