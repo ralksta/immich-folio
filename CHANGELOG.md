@@ -9,6 +9,76 @@ Releases up to and including v0.9.2 are documented in the
 
 ## [Unreleased]
 
+### Added
+
+- **`npm run doctor` — the config doctor in the terminal**
+  ([#521](https://github.com/ralksta/immich-folio/issues/521)). The doctor
+  shipped in v0.12.0 as a panel in `/admin`. That is the wrong place for the
+  case it is best at: a deployment that will not come up, where there is no
+  panel to open and no admin password to get past. The same checks now run from
+  a terminal — `AUTH_SECRET`, whether the YAML parses, whether Immich answers
+  the three calls Folio depends on, whether every published album still exists
+  and is shared, whether a password is still plaintext or an unusable bcrypt
+  hash, and whether `content/` can be written.
+
+  It runs in the shipped image too, which is where it matters:
+
+  ```bash
+  docker compose exec folio npm run doctor
+  ```
+
+  The exit code is the worst thing it found — `0` clean, `1` warnings, `2`
+  errors, `3` the doctor itself could not run — so it can gate a deployment
+  script. No secret is ever printed, only whether something is set.
+
+  Two findings are reported rather than judged, and say so under their own
+  **NOTES** heading instead of being counted as passed checks:
+  `TRUSTED_PROXY_HOPS`, which can only be measured against a real request, and
+  `content/` writability, which is tested as whoever typed the command — on a
+  Docker deployment that is not the user the app writes as, so the report names
+  both and points back at `docker compose exec`. An unwritable path stays a
+  plain error when the CLI does run as the owner.
+
+  No check was reimplemented: the CLI calls the same functions as the panel and
+  only gathers their inputs differently. It needs no new dependency either —
+  Node strips the types itself, which works because those checks import nothing.
+
+- **CI loads the admin panel in a real browser.** A Playwright spec walks all
+  fourteen admin routes against a production build and fails on an error
+  boundary, a missing page body, or anything thrown during hydration. It exists
+  because of [#542](https://github.com/ralksta/immich-folio/issues/542): a
+  temporal-dead-zone error at module evaluation took the whole panel down while
+  the type check, the build and the unit tests all stayed green — none of them
+  evaluates a client module in a browser, which is the only place that bug is
+  visible. The spec was checked against the bug: with it reintroduced, the run
+  names every broken route and reports the original
+  `Cannot access 'THEME_INFO' before initialization`.
+
+### Changed
+
+- **The admin panel has a form-field layer**
+  ([#533](https://github.com/ralksta/immich-folio/issues/533)). Nothing changes
+  on screen; this is about what the panel costs to change. It had grown 171% in
+  thirty days, and three files were two thirds of it. Every field was
+  hand-written markup: the toggle card existed as fourteen copies, the five card
+  pickers as five hand-rolled grids, and the grid editor as two 58-line blocks
+  differing only in which config key they wrote. A new setting cost twenty lines
+  of copied markup, and changing how a field looks meant editing it fourteen
+  times.
+
+  `ToggleCard`, `OptionGrid` and `GridOverrideFields` replace those copies; the
+  subpage and album drawers moved out of `PageBuilder.tsx`, which went from
+  2,290 lines and 46 characters of indentation to 1,153 and 22; and `admin.css`
+  — 4,855 lines in one file — became a load order over twenty sheets named
+  after what they style. The CSS class names are untouched throughout, which is
+  what kept the appearance out of it.
+
+  Two things were deliberately left undone rather than half-done: adopting or
+  deleting the custom `Listbox` (a product decision about a keyboard model, not
+  a mechanical one), and a `Field` wrapper that would generate an id and wire
+  `htmlFor` — no admin label does today, so clicking one does not focus its
+  input. Both are written down on the issue.
+
 ### Fixed
 
 - **`grid.gap` moves both axes, and two presets get their spacing back**
@@ -30,21 +100,6 @@ Releases up to and including v0.9.2 are documented in the
   presets, an explicit gap of 50px produces 50px on both axes (60px rows for
   `monograph`), and with no gap set each preset renders its own intended
   default.
-
-### Added
-
-- **CI loads the admin panel in a real browser.** A Playwright spec walks all
-  fourteen admin routes against a production build and fails on an error
-  boundary, a missing page body, or anything thrown during hydration. It exists
-  because of [#542](https://github.com/ralksta/immich-folio/issues/542): a
-  temporal-dead-zone error at module evaluation took the whole panel down while
-  the type check, the build and the unit tests all stayed green — none of them
-  evaluates a client module in a browser, which is the only place that bug is
-  visible. The spec was checked against the bug: with it reintroduced, the run
-  names every broken route and reports the original
-  `Cannot access 'THEME_INFO' before initialization`.
-
-### Fixed
 
 - **The dashboard status badge's colour and words agree**
   ([#539](https://github.com/ralksta/immich-folio/issues/539)). The badge decided
