@@ -7,7 +7,7 @@
  * requests go through our proxy route.
  */
 
-import { getConfig, slugify, type SubpageConfig } from './config';
+import { getConfig, albumSlug, normalizeSlug, type SubpageConfig } from './config';
 import { cache } from './cache';
 import { compareByCaptureTime, sortAlbumAssets, DEFAULT_ALBUM_SORT } from './albumSort';
 
@@ -423,7 +423,7 @@ class ImmichClient {
               ...album,
               albumName: name,
               description,
-              slug: slugify(name),
+              slug: albumSlug(name, album.id),
             };
           });
 
@@ -530,9 +530,8 @@ class ImmichClient {
     subpageSlug: string,
     forceFresh = false,
   ): Promise<{ subpage: SubpageConfig; albums: ImmichAlbum[] } | null> {
-    const subpage = this.config.subpages.find(
-      (sp) => sp.slug === subpageSlug && sp.enabled !== false,
-    );
+    const wanted = normalizeSlug(subpageSlug);
+    const subpage = this.config.subpages.find((sp) => sp.slug === wanted && sp.enabled !== false);
     if (!subpage) return null;
 
     const allAlbums = await this.getAlbums(forceFresh);
@@ -700,7 +699,7 @@ class ImmichClient {
         const description = this.config.albumDescriptions[album.id] ?? album.description ?? '';
         album.albumName = name;
         album.description = description;
-        album.slug = slugify(name);
+        album.slug = albumSlug(name, album.id);
 
         this.cacheSet(cacheKey, album);
         return album;
@@ -728,13 +727,15 @@ class ImmichClient {
 
     let searchSet = albums;
     if (subpageSlug) {
-      const subpage = this.config.subpages.find((sp) => sp.slug === subpageSlug);
+      const wantedSubpage = normalizeSlug(subpageSlug);
+      const subpage = this.config.subpages.find((sp) => sp.slug === wantedSubpage);
       if (!subpage) return null;
       const subpageIds = new Set(subpage.albumIds);
       searchSet = albums.filter((a) => subpageIds.has(a.id));
     }
 
-    const match = searchSet.find((a) => a.slug === slug);
+    const wanted = normalizeSlug(slug);
+    const match = searchSet.find((a) => a.slug === wanted);
     if (!match) return null;
     return this.getAlbum(match.id, forceFresh);
   }
@@ -743,7 +744,8 @@ class ImmichClient {
    * Check if a slug corresponds to a subpage.
    */
   isSubpageSlug(slug: string): boolean {
-    return this.config.subpages.some((sp) => sp.slug === slug && sp.enabled !== false);
+    const wanted = normalizeSlug(slug);
+    return this.config.subpages.some((sp) => sp.slug === wanted && sp.enabled !== false);
   }
 
   /**

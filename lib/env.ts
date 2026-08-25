@@ -19,6 +19,10 @@ export interface Env {
   ADMIN_PASSWORD?: string;
   SITE_PASSWORD?: string;
   INSTALL_CONTENT_DIR?: string;
+  /** Whether the admin dashboard may ask GitHub for the latest release. */
+  UPDATE_CHECK: boolean;
+  /** Absolute site URL for sitemap, feed and JSON-LD. Overrides settings.yaml. */
+  SITE_URL?: string;
 }
 
 function parseEnv(): Env {
@@ -111,6 +115,11 @@ function parseEnv(): Env {
     ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || undefined,
     SITE_PASSWORD: process.env.SITE_PASSWORD || undefined,
     INSTALL_CONTENT_DIR: process.env.INSTALL_CONTENT_DIR || undefined,
+    // On unless switched off: an instance that never learns about a security
+    // release is the worse default. Only `false` disables it, so a typo does
+    // not silently turn the check off.
+    UPDATE_CHECK: process.env.UPDATE_CHECK !== 'false',
+    SITE_URL: process.env.SITE_URL || undefined,
   };
 }
 

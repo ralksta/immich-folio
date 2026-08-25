@@ -19,6 +19,7 @@ const TABS = [
   { label: 'Journal', href: '/admin/journal', match: /^\/admin\/journal/ },
   { label: 'Settings', href: '/admin/settings', match: /^\/admin\/settings/ },
   { label: 'Analytics', href: '/admin/analytics', match: /^\/admin\/analytics/ },
+  { label: 'Help', href: '/admin/help', match: /^\/admin\/help/ },
 ];
 
 export default function AdminDashboard({ onLogout, children }: Props) {
@@ -228,6 +229,28 @@ export default function AdminDashboard({ onLogout, children }: Props) {
                     <div className="status-item">
                       <span className="status-label">In-Memory Cache</span>
                       <span className="status-val">{status?.cache?.size ?? 0} items</span>
+                    </div>
+                    {/*
+                      Discreet on purpose: a row in the status list, not a
+                      banner. When the check is off or could not run, the row
+                      still names the running version and says nothing about
+                      updates (#496).
+                    */}
+                    <div className="status-item">
+                      <span className="status-label">Version</span>
+                      {status?.update?.updateAvailable ? (
+                        <a
+                          className="status-val update"
+                          href="https://github.com/ralksta/immich-folio/releases/latest"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`Version ${status.update.latest} is available`}
+                        >
+                          {status.update.current} → {status.update.latest}
+                        </a>
+                      ) : (
+                        <span className="status-val">{status?.update?.current ?? '—'}</span>
+                      )}
                     </div>
                   </div>
                   <div className="status-dropdown-footer">

@@ -97,6 +97,37 @@ export function assetExifSummary(asset: Pick<ImmichAsset, 'exifInfo'>): ExifSumm
 }
 
 /**
+ * The download URL for an original file (#475).
+ *
+ * Carries the album as well as the asset: the route authorises the download
+ * against the album that offered it, and checks the asset really belongs to
+ * that album.
+ */
+export function downloadUrl(albumId: string, assetId: string): string {
+  return `/api/download/${encodeAssetId(albumId)}/${encodeAssetId(assetId)}`;
+}
+
+/**
+ * The Immich asset description, trimmed, for use as image alt text.
+ *
+ * Gated on the `caption` EXIF group rather than served unconditionally. That
+ * switch exists because the description is the one field that can hold private
+ * notes (#506), and an alt attribute publishes it to crawlers and view-source
+ * exactly as a visible caption would. A site that has switched captions off has
+ * said it does not want that text on the page.
+ *
+ * Returns undefined when there is nothing to say, which leaves `alt=""` — the
+ * correct markup for a decorative image, and better than inventing filler.
+ */
+export function assetCaption(
+  asset: Pick<ImmichAsset, 'exifInfo'>,
+  showCaption: boolean,
+): string | undefined {
+  if (!showCaption) return undefined;
+  return asset.exifInfo?.description?.trim() || undefined;
+}
+
+/**
  * Compute the natural aspect ratio (width / height) from EXIF dimensions.
  * Returns undefined if dimensions are not available.
  */

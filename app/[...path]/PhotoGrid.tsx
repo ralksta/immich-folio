@@ -15,6 +15,7 @@ import { FadeIn } from '@/components/FadeIn';
 import { ProofingProvider, useProofing } from '@/components/ProofingContext';
 import { ProofingModal } from '@/components/ProofingModal';
 import { useDictionary } from '@/components/I18nProvider';
+import { parsePhotoHash, buildPhotoHash } from '@/lib/photoHash';
 
 export interface PhotoItem {
   id: string;
@@ -31,6 +32,10 @@ export interface PhotoItem {
   focalLength?: string;
   /** Natural image aspect ratio (width/height) for masonry layout */
   aspectRatio?: number;
+  /** Immich asset description, used as alt text. Absent when captions are off. */
+  caption?: string;
+  /** Present only when the surrounding album offers its originals (#475). */
+  downloadUrl?: string;
 }
 
 interface PhotoGridProps {
@@ -52,19 +57,6 @@ interface PhotoGridProps {
   proofing?: boolean;
   /** Offer the "send by email" button in the proofing modal. */
   allowMailto?: boolean;
-}
-
-/** Parse `#photo-N` from a hash string. Returns index or null. */
-function parsePhotoHash(hash: string): number | null {
-  const match = hash.match(/^#photo-(\d+)$/);
-  if (!match) return null;
-  const idx = parseInt(match[1], 10) - 1; // 1-indexed in URL, 0-indexed internally
-  return idx >= 0 ? idx : null;
-}
-
-/** Build the hash string for a given 0-based index. */
-function buildPhotoHash(index: number): string {
-  return `#photo-${index + 1}`; // 1-indexed for user-friendliness
 }
 
 function PhotoGridInner({
@@ -186,7 +178,7 @@ function PhotoGridInner({
           >
             <Image
               src={asset.thumbUrl}
-              alt=""
+              alt={asset.caption ?? ''}
               fill
               sizes="(max-width: 600px) 50vw, (max-width: 1000px) 33vw, 25vw"
               loading={index < 6 ? 'eager' : 'lazy'}

@@ -26,6 +26,13 @@ import { useDictionary } from './I18nProvider';
 // client component cannot import.
 import { resolveWatermarkOpacity } from '@/lib/config/schema';
 import { formatCamera } from '@/lib/exif';
+import { buildPhotoPermalink } from '@/lib/photoHash';
+import { nextSlideshowSpeed, type SlideshowSpeed } from '@/lib/slideshow';
+import {
+  LIGHTBOX_SHORTCUTS,
+  lightboxActionFor,
+  shortcutDisplayKeys,
+} from '@/lib/lightboxShortcuts';
 
 export interface LightboxWatermark {
   enabled?: boolean;
@@ -64,6 +71,20 @@ export function Lightbox({
   const [canFullscreen, setCanFullscreen] = useState(false);
   const { exifData, exifLoading, fetchExif, clearExif } = useExif();
   const [imageLoaded, setImageLoaded] = useState(false);
+  /**
+   * 'manual' is the honest outcome when the clipboard is unavailable — which is
+   * not a rarity here: `navigator.clipboard` is undefined outside a secure
+   * context, and a self-hosted portfolio reached over plain http on a LAN is
+   * exactly that. The link is then shown for the visitor to copy by hand
+   * rather than the button appearing to do nothing.
+   */
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'manual'>('idle');
+  /**
+   * Slideshow interval in seconds, or null for off. `s` cycles through the
+   * three speeds and back to off, so the feature needs no configuration and no
+   * control of its own — in keeping with how the viewer treats its other keys.
+   */
+  const [slideshowSeconds, setSlideshowSeconds] = useState<SlideshowSpeed>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -106,6 +127,81 @@ export function Lightbox({
   const toggleShortcuts = useCallback(() => {
     setShowShortcuts((open) => !open);
   }, []);
+
+  /**
+   * The deep link to the photo on screen.
+   *
+   * Built from the current index rather than read back from `location.hash`,
+   * so it does not depend on the grid's hash-sync effect having run yet. The
+   * `#photo-N` form is the permalink the grid already writes and restores;
+   * this only supplies the affordance to copy it (#478).
+   *
+   * The link is positional, as `gallery.yaml.example` documents: reordering an
+   * album moves where a shared link lands. That is a property of the existing
+   * permalink, not of the button.
+   */
+  const permalink = useCallback(() => {
+    if (typeof window === 'undefined') return '';
+    return buildPhotoPermalink(window.location, currentIndex);
+  }, [currentIndex]);
+
+  const handleCopyLink = useCallback(() => {
+    const url = permalink();
+    if (!navigator.clipboard) {
+      setCopyState('manual');
+      return;
+    }
+    navigator.clipboard.writeText(url).then(
+      () => setCopyState('copied'),
+      () => setCopyState('manual'),
+    );
+  }, [permalink]);
+
+  /**
+   * Auto-advance, so a gallery can run unattended at an exhibition, a fair
+   * booth or on a second screen (#473).
+   *
+   * `onNext` already wraps at the end of the album, so the sequence loops on
+   * its own with nothing further to arrange.
+   */
+  const cycleSlideshow = useCallback(() => {
+    setSlideshowSeconds((current) => nextSlideshowSpeed(current));
+  }, []);
+
+  useEffect(() => {
+    if (slideshowSeconds === null) return;
+    const timer = setInterval(onNext, slideshowSeconds * 1000);
+    return () => clearInterval(timer);
+  }, [slideshowSeconds, onNext]);
+
+  /*
+   * Any deliberate move through the album stops the slideshow. Someone
+   * reaching for an arrow has taken over; leaving the timer running would
+   * yank the photo away from under them a second later.
+   *
+   * The timer above keeps calling the raw `onNext`, so it does not stop
+   * itself.
+   */
+  const manualNext = useCallback(() => {
+    setSlideshowSeconds(null);
+    onNext();
+  }, [onNext]);
+
+  const manualPrev = useCallback(() => {
+    setSlideshowSeconds(null);
+    onPrev();
+  }, [onPrev]);
+
+  // A confirmation must not outlive the photo it was about.
+  useEffect(() => {
+    setCopyState('idle');
+  }, [currentIndex]);
+
+  useEffect(() => {
+    if (copyState !== 'copied') return;
+    const timer = setTimeout(() => setCopyState('idle'), 2000);
+    return () => clearTimeout(timer);
+  }, [copyState]);
 
   /*
    * Real fullscreen. The overlay already covers the viewport, but the browser's
@@ -171,8 +267,8 @@ export function Lightbox({
   }, [currentIndex, assets]);
 
   const { handleTouchStart, handleTouchEnd } = useSwipe({
-    onSwipeLeft: onNext,
-    onSwipeRight: onPrev,
+    onSwipeLeft: manualNext,
+    onSwipeRight: manualPrev,
   });
 
   /*
@@ -183,8 +279,29 @@ export function Lightbox({
    */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      switch (e.key) {
-        case 'Escape':
+      /*
+       * Bare keys only. The manual copy fallback puts a real text field on
+       * screen, and a visitor pressing Cmd/Ctrl+C in it means the browser's
+       * copy, not this viewer's — swallowing it would break the one gesture
+       * that field exists for. Esc stays available so the viewer can always
+       * be left.
+       */
+      const target = e.target as HTMLElement | null;
+      const inTextField = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA';
+      if (e.key !== 'Escape' && (e.metaKey || e.ctrlKey || e.altKey || inTextField)) return;
+
+      /*
+       * Which keys exist is the catalogue's business, not this handler's — see
+       * lib/lightboxShortcuts.ts. A key it does not list never gets here, and
+       * the switch below is exhaustive over LightboxAction, so an action added
+       * there without a branch here fails to compile rather than silently
+       * doing nothing.
+       */
+      const action = lightboxActionFor(e.key);
+      if (action === null) return;
+
+      switch (action) {
+        case 'close':
           // Innermost layer first: Esc dismisses the shortcut list, then leaves
           // fullscreen, and only closes the viewer once nothing is stacked on
           // top of it. Most browsers swallow this Esc to exit fullscreen
@@ -195,29 +312,41 @@ export function Lightbox({
           else if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
           else onClose();
           break;
-        case 'ArrowRight':
-          onNext();
+        case 'next':
+          manualNext();
           break;
-        case 'ArrowLeft':
-          onPrev();
+        case 'prev':
+          manualPrev();
           break;
-        case 'i':
-        case 'I':
+        case 'info':
           if (showExifToggle) handleExifToggle();
           break;
-        // `?` is matched on the produced character, not the physical key:
-        // Shift+/ on a US layout, Shift+ß on a German one. `h` is the escape
-        // hatch for layouts where `?` is awkward — and the one key someone
-        // guesses without having been told.
-        case '?':
-        case 'h':
-        case 'H':
+        case 'slideshow':
+          e.preventDefault();
+          cycleSlideshow();
+          break;
+        case 'download':
+          if (current?.downloadUrl) {
+            e.preventDefault();
+            window.location.href = current.downloadUrl;
+          }
+          break;
+        case 'copyLink':
+          e.preventDefault();
+          handleCopyLink();
+          break;
+        case 'shortcutList':
           toggleShortcuts();
           break;
-        case 'f':
-        case 'F':
+        case 'fullscreen':
           if (canFullscreen) toggleFullscreen();
           break;
+        default: {
+          // Exhaustiveness guard: this only type-checks while every
+          // LightboxAction has a branch above.
+          const unhandled: never = action;
+          void unhandled;
+        }
       }
     };
 
@@ -230,10 +359,13 @@ export function Lightbox({
     };
   }, [
     canFullscreen,
+    current,
+    cycleSlideshow,
+    handleCopyLink,
     handleExifToggle,
     onClose,
-    onNext,
-    onPrev,
+    manualNext,
+    manualPrev,
     showExifToggle,
     showShortcuts,
     toggleFullscreen,
@@ -251,26 +383,27 @@ export function Lightbox({
   );
 
   /*
-   * The advertised shortcuts, in the order they are worth learning. This is the
-   * list the `?` panel renders — a key added to the handler above belongs here
-   * too, or it stays as undiscoverable as the whole set was before.
+   * The advertised shortcuts, resolved from the shared catalogue.
+   *
+   * The set of keys lives in lib/lightboxShortcuts.ts because the admin help
+   * renders the same list; only the two labels that depend on current state
+   * are decided here.
    */
-  const shortcutRows = [
-    { keys: ['←', '→'], label: t.lightbox.shortcutNavigate },
-    // Journal entries hide the EXIF toggle, so `i` does nothing there.
-    ...(showExifToggle ? [{ keys: ['I'], label: t.lightbox.shortcutInfo }] : []),
-    // Absent where the browser has no element fullscreen to give (iPhone).
-    ...(canFullscreen
-      ? [
-          {
-            keys: ['F'],
-            label: isFullscreen ? t.lightbox.shortcutExitFullscreen : t.lightbox.shortcutFullscreen,
-          },
-        ]
-      : []),
-    { keys: ['?', 'H'], label: t.lightbox.shortcutList },
-    { keys: ['Esc'], label: t.lightbox.shortcutClose },
-  ];
+  const shortcutRows = LIGHTBOX_SHORTCUTS.filter((shortcut) => {
+    if (shortcut.availability === 'exifPanel') return showExifToggle;
+    if (shortcut.availability === 'fullscreen') return canFullscreen;
+    if (shortcut.availability === 'download') return Boolean(current?.downloadUrl);
+    return true;
+  }).map((shortcut) => {
+    let label: string = t.lightbox[shortcut.labelKey];
+    if (shortcut.labelKey === 'shortcutFullscreen' && isFullscreen) {
+      label = t.lightbox.shortcutExitFullscreen;
+    }
+    if (shortcut.labelKey === 'shortcutSlideshow' && slideshowSeconds !== null) {
+      label = t.lightbox.shortcutSlideshowRunning(slideshowSeconds);
+    }
+    return { keys: shortcutDisplayKeys(shortcut), label };
+  });
 
   const lightboxJsx = (
     <div
@@ -308,7 +441,7 @@ export function Lightbox({
       {/* Previous button */}
       <button
         className={`${styles.nav} ${styles.navPrev}`}
-        onClick={onPrev}
+        onClick={manualPrev}
         aria-label={t.lightbox.previous}
         title={t.lightbox.previousTitle}
       >
@@ -354,7 +487,7 @@ export function Lightbox({
           <img
             className={`${styles.image}${imageLoaded ? ` ${styles.imageLoaded}` : ''}`}
             src={current.previewUrl}
-            alt=""
+            alt={current.caption ?? ''}
             draggable={false}
             onLoad={() => setImageLoaded(true)}
             onError={() => console.error(`[Lightbox] Failed to load image: ${current.previewUrl}`)}
@@ -380,7 +513,7 @@ export function Lightbox({
       {/* Next button */}
       <button
         className={`${styles.nav} ${styles.navNext}`}
-        onClick={onNext}
+        onClick={manualNext}
         aria-label={t.lightbox.next}
         title={t.lightbox.nextTitle}
       >
@@ -397,45 +530,142 @@ export function Lightbox({
         </svg>
       </button>
 
-      {/* Counter */}
-      <div className={styles.counter} aria-live="polite" aria-atomic="true">
-        <span className="sr-only">
-          Photo {currentIndex + 1} of {assets.length}
-        </span>
-        <span aria-hidden="true">
-          {currentIndex + 1} / {assets.length}
-        </span>
+      {/*
+        Slideshow state, announced but not drawn: a badge over a photograph
+        would be paid for by every visitor, and the shortcut list already
+        carries the speed for anyone who wants to see it.
+      */}
+      <p className="sr-only" role="status">
+        {slideshowSeconds === null
+          ? t.lightbox.slideshowStopped
+          : t.lightbox.slideshowRunning(slideshowSeconds)}
+      </p>
+
+      {/*
+        One bottom bar rather than five separately anchored controls.
+        They used to carry hard-coded offsets, which broke in two ways: the
+        info button grows when its label becomes "Hide info" and walked into
+        the favourite button, and the left-hand controls ran into the centred
+        counter on a narrow viewport. A flex row cannot collide with itself.
+
+        The bar itself ignores pointer events so it does not swallow clicks
+        on the photograph behind it; each group takes them back.
+      */}
+      <div className={styles.bottomBar}>
+        <div className={`${styles.bottomBarGroup} ${styles.bottomBarLeft}`}>
+          {/* Copy link — bottom left, opposite the info toggle */}
+          <button
+            className={styles.infoToggle}
+            onClick={handleCopyLink}
+            aria-label={t.lightbox.copyLink}
+            title={t.lightbox.copyLinkTitle}
+          >
+            <svg
+              aria-hidden="true"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+            {copyState === 'copied' ? t.lightbox.copied : t.lightbox.copyLinkShort}
+          </button>
+
+          {/* Download the original — only when the album offers it (#475) */}
+          {current?.downloadUrl && (
+            <a
+              className={`${styles.infoToggle} ${styles.downloadToggle}`}
+              href={current.downloadUrl}
+              download
+              aria-label={t.lightbox.download}
+              title={t.lightbox.downloadTitle}
+            >
+              <svg
+                aria-hidden="true"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              {t.lightbox.downloadShort}
+            </a>
+          )}
+        </div>
+
+        {/* Counter */}
+        <div className={styles.counter} aria-live="polite" aria-atomic="true">
+          <span className="sr-only">
+            Photo {currentIndex + 1} of {assets.length}
+          </span>
+          <span aria-hidden="true">
+            {currentIndex + 1} / {assets.length}
+          </span>
+        </div>
+
+        <div className={`${styles.bottomBarGroup} ${styles.bottomBarRight}`}>
+          {/* Proofing favorite button */}
+          {proofing && current && (
+            <button
+              className={styles.infoToggle}
+              style={{
+                color: isFav ? '#ff4d4f' : 'inherit',
+                fontWeight: isFav ? 600 : 400,
+              }}
+              onClick={() => proofing.toggleFavorite(current.id)}
+              aria-label={isFav ? t.proofing.removeFromFavorites : t.proofing.addToFavorites}
+              title={isFav ? t.proofing.removeFromFavorites : t.proofing.addToFavorites}
+            >
+              <IconHeart size={14} fill={isFav ? 'currentColor' : 'none'} aria-hidden="true" />
+              {isFav ? t.proofing.saved : t.proofing.favorite}
+            </button>
+          )}
+
+          {/* EXIF toggle */}
+          {showExifToggle && (
+            <button
+              className={styles.infoToggle}
+              onClick={handleExifToggle}
+              aria-expanded={showExif}
+              aria-controls="exif-panel"
+              aria-label={t.lightbox.toggleInfo}
+              title={t.lightbox.toggleInfoTitle}
+            >
+              {showExif ? t.lightbox.hideInfo : t.lightbox.info}
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Proofing favorite button */}
-      {proofing && current && (
-        <button
-          className={`${styles.infoToggle} ${styles.favToggle}`}
-          style={{
-            color: isFav ? '#ff4d4f' : 'inherit',
-            fontWeight: isFav ? 600 : 400,
-          }}
-          onClick={() => proofing.toggleFavorite(current.id)}
-          aria-label={isFav ? t.proofing.removeFromFavorites : t.proofing.addToFavorites}
-          title={isFav ? t.proofing.removeFromFavorites : t.proofing.addToFavorites}
-        >
-          <IconHeart size={14} fill={isFav ? 'currentColor' : 'none'} aria-hidden="true" />
-          {isFav ? t.proofing.saved : t.proofing.favorite}
-        </button>
-      )}
-
-      {/* EXIF toggle */}
-      {showExifToggle && (
-        <button
-          className={styles.infoToggle}
-          onClick={handleExifToggle}
-          aria-expanded={showExif}
-          aria-controls="exif-panel"
-          aria-label={t.lightbox.toggleInfo}
-          title={t.lightbox.toggleInfoTitle}
-        >
-          {showExif ? t.lightbox.hideInfo : t.lightbox.info}
-        </button>
+      {/* Clipboard unavailable — show the link rather than fail quietly */}
+      {copyState === 'manual' && (
+        <div className={styles.copyManual} role="status">
+          <label className={styles.copyManualLabel} htmlFor="lightbox-permalink">
+            {t.lightbox.copyManual}
+          </label>
+          <input
+            id="lightbox-permalink"
+            className={styles.copyManualInput}
+            type="text"
+            readOnly
+            autoFocus
+            value={permalink()}
+            onFocus={(e) => e.currentTarget.select()}
+          />
+        </div>
       )}
 
       {/* EXIF panel */}

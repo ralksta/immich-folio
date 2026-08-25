@@ -1928,8 +1928,81 @@
   color: var(--admin-error, #ef4444);
 }
 
+.status-val.update {
+  color: var(--admin-warning, #f59e0b);
+}
+
 .status-val.unknown {
   color: var(--admin-text-secondary);
+}
+
+/* ── Help section ──────────────────────────────────────────── */
+
+.help-kbd {
+  display: inline-block;
+  min-width: 1.6rem;
+  padding: 2px 6px;
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.15));
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--admin-bg-elevated, rgba(255, 255, 255, 0.06));
+  color: var(--admin-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.help-shortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 4px 0 0;
+}
+
+.help-shortcuts-row {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr;
+  gap: 12px;
+  align-items: baseline;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--admin-border-subtle, rgba(255, 255, 255, 0.06));
+}
+
+.help-shortcuts-row:last-child {
+  border-bottom: none;
+}
+
+.help-shortcuts-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+}
+
+.help-shortcuts-label {
+  margin: 0;
+  color: var(--admin-text);
+  font-size: 0.85rem;
+}
+
+.help-shortcuts-note {
+  display: block;
+  margin-top: 2px;
+  color: var(--admin-text-secondary);
+  font-size: 0.78rem;
+}
+
+.help-action {
+  padding: 12px 4px 4px;
+}
+
+@media (max-width: 600px) {
+  .help-shortcuts-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
 }
 
 /* ── Search Bar ────────────────────────────────────────────── */

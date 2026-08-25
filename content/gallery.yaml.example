@@ -56,9 +56,13 @@ subpages:
     subtitle: "A collection of 2026 highlights in 35mm film." # Optional: Sub-text for headers
     password: "your-password" # Optional protection
     # hidden: true # EXPERIMENTAL: reachable by direct link, but not shown in navigation
-    # grid: # Optional per-page grid override (wins over settings.yaml)
+    # coverGrid: # Optional: the album covers on this page (nothing else)
     #   columns: 3 # how many album covers per row on this page
     #   gap: 8 # spacing between the covers, in px — omit to keep the theme's own
+    # grid: # Optional: the photos inside the albums (wins over settings.yaml)
+    #   columns: 4
+    #   gap: 6 # omit to keep the theme's own photo spacing
+    #   layout: "masonry"
     albums:
       - "album-uuid-5"
       - "album-uuid-6":
@@ -69,6 +73,32 @@ subpages:
           #   layout: "justified"
           #   columns: 2
           # coverPosition: "50% 25%" # EXPERIMENTAL: focal point for the cover crop ("top", "center bottom", "50% 25%")
+          #
+          # download: true
+          #   Offer the original file from the lightbox for this album.
+          #   Off everywhere by default, and opt-in per album on purpose: a
+          #   public portfolio should not start handing out full-resolution
+          #   originals because one client gallery needed to.
+          #   The download route checks the allowlist, this switch, the
+          #   album's password and that the asset really belongs to the
+          #   album, so an edited URL cannot reach anything else.
+          #
+          # location: city
+          #   How precisely this album's photographs may be placed — on the
+          #   map, and in the info panel of the viewer, which names the city
+          #   and country of each photo.
+          #     exact    (default) the mean of the photographs' own coordinates
+          #     city     rounded to 0.05° — roughly 5 km, city still named
+          #     country  rounded to 1° — roughly 100 km, only the country named
+          #     hidden   no marker on the map, and no place in the info panel
+          #   Worth setting for an album shot in one place — a garden, a
+          #   studio, a client's home, a fragile site — where the mean of the
+          #   coordinates is that place, and the marker stands on the property.
+          #   May also be set once on a subpage, where it applies to every
+          #   album on it unless the album says otherwise.
+          #   Where one marker merges several albums, the most cautious of
+          #   them governs the whole marker. A photograph that is in several
+          #   albums likewise follows the most cautious of them.
 
   # ── Subpage with Sections ────────────────────────────────────────
   # Use sections to group albums by location, theme, or any other logic.

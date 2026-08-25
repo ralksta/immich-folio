@@ -20,7 +20,9 @@ import {
   exifUrl,
   videoUrl,
   assetPlaceholder,
+  assetCaption,
   assetExifSummary,
+  downloadUrl,
   assetAspectRatio,
 } from '@/lib/urls';
 import { encodeAssetId } from '@/lib/tokens';
@@ -28,6 +30,7 @@ import {
   buildCoverGridVars,
   getConfig,
   hasExifPanelContent,
+  normalizeSlug,
   resolveProofing,
   type GridConfig,
 } from '@/lib/config';
@@ -36,6 +39,9 @@ import { isAdminAuthenticated } from '@/lib/admin/auth';
 import PasswordGate from '@/components/PasswordGate';
 import { AdminDiagnosticBanner } from '@/components/AdminDiagnosticBanner';
 import { AlbumDetailView } from './AlbumDetailView';
+import { albumNeighbours } from '@/lib/albumNav';
+import { albumStructuredData } from '@/lib/structuredData';
+import { absoluteUrl } from '@/lib/siteUrl';
 import { SubpageGridView } from './SubpageGridView';
 import { EssayView } from './EssayView';
 import { parseEssayMarkdown } from '@/lib/essay';
@@ -51,7 +57,11 @@ interface PathPageProps {
 }
 
 export async function generateMetadata({ params }: PathPageProps): Promise<Metadata> {
-  const { path } = await params;
+  // Next hands catch-all segments over percent-encoded, so a non-ASCII slug
+  // ("/家族相册") would never match a stored one. Decode once, here, and every
+  // comparison downstream works on the same form (#522).
+  const { path: rawPath } = await params;
+  const path = rawPath?.map(normalizeSlug);
   if (!path || path.length === 0) return {};
 
   const slug = path[0];
@@ -114,13 +124,23 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
 /**
  * `showExif` covers the hover overlay only, and that overlay carries camera,
  * lens and focal length — so it follows the `camera` group, not the panel.
+ *
+ * `showCaption` follows the `caption` group and decides whether the Immich
+ * description becomes alt text; see `assetCaption`.
  */
-function toPhotoItems(assets: ImmichAsset[], showExif: boolean): PhotoItem[] {
+function toPhotoItems(
+  assets: ImmichAsset[],
+  showExif: boolean,
+  showCaption: boolean,
+  /** The album offering downloads, or undefined when it does not. */
+  downloadAlbumId?: string,
+): PhotoItem[] {
   return assets
     .filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO')
     .map((a) => {
       const ph = assetPlaceholder(a);
       const exif = showExif && a.type === 'IMAGE' ? assetExifSummary(a) : undefined;
+      const caption = assetCaption(a, showCaption);
       const isVideo = a.type === 'VIDEO';
       return {
         id: encodeAssetId(a.id),
@@ -131,9 +151,37 @@ function toPhotoItems(assets: ImmichAsset[], showExif: boolean): PhotoItem[] {
         exifUrl: exifUrl(a.id),
         ...(ph ? { blurDataURL: ph.blurDataURL, dominantColor: ph.dominantColor } : {}),
         ...(exif ?? {}),
+        ...(caption ? { caption } : {}),
+        ...(downloadAlbumId ? { downloadUrl: downloadUrl(downloadAlbumId, a.id) } : {}),
         aspectRatio: assetAspectRatio(a),
       };
     });
+}
+
+/**
+ * JSON-LD for an album page. Null unless a site URL is configured — structured
+ * data is a set of claims about absolute URLs, and there is nothing truthful to
+ * claim without one (#472).
+ */
+function structuredDataFor(
+  album: { albumName: string; description?: string; albumThumbnailAssetId?: string | null },
+  path: string,
+  photoCount: number,
+) {
+  const config = getConfig();
+  const cover = album.albumThumbnailAssetId
+    ? absoluteUrl(config.siteUrl, imageUrl(album.albumThumbnailAssetId, 'preview'))
+    : null;
+  return albumStructuredData({
+    siteUrl: config.siteUrl,
+    pageUrl: absoluteUrl(config.siteUrl, path),
+    albumName: album.albumName,
+    ...(album.description ? { description: album.description } : {}),
+    coverUrl: cover,
+    ...(config.legal.name?.trim() ? { creator: config.legal.name } : {}),
+    ...(config.seo.license ? { license: config.seo.license } : {}),
+    photoCount,
+  });
 }
 
 /**
@@ -175,7 +223,11 @@ async function getAlbumHeroData(
 }
 
 export default async function PathPage({ params, searchParams }: PathPageProps) {
-  const { path } = await params;
+  // Next hands catch-all segments over percent-encoded, so a non-ASCII slug
+  // ("/家族相册") would never match a stored one. Decode once, here, and every
+  // comparison downstream works on the same form (#522).
+  const { path: rawPath } = await params;
+  const path = rawPath?.map(normalizeSlug);
   const sParams = (await searchParams) || {};
   const forceFresh = sParams.fresh === '1' || sParams.preview === 'true';
 
@@ -199,10 +251,10 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
   const resolveLayout = (overrides?: Partial<GridConfig>) =>
     overrides?.layout ?? config.grid.layout;
 
-  // The album-cover grid on a subpage takes its column count from the same
-  // config as the photo grids, so "3 columns" in the admin means three columns
-  // everywhere. `gap` deliberately does not follow the global setting — see
-  // buildCoverGridVars() for why.
+  // The album-cover grid on a subpage is sized by its own `coverGrid`, which
+  // touches nothing but the cover tiles (#523). An unset column count still
+  // falls back to the global one; `gap` deliberately does not follow the global
+  // setting — see buildCoverGridVars() for why.
   const buildCoverGridStyle = (overrides?: Partial<GridConfig>): React.CSSProperties =>
     buildCoverGridVars(overrides, config.grid.columns) as React.CSSProperties;
 
@@ -254,7 +306,12 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
     const spGrid = subpageData?.subpage.grid;
     const subpageName = subpageData?.subpage.name ?? subpageSlug;
 
-    const images = toPhotoItems(album.assets, config.exif.onHover && config.exif.camera);
+    const images = toPhotoItems(
+      album.assets,
+      config.exif.onHover && config.exif.camera,
+      config.exif.caption,
+      config.albumDownloads[album.id] ? album.id : undefined,
+    );
 
     // Password gate for protected albums
     const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
@@ -262,10 +319,16 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
 
     const heroData = await getAlbumHeroData(album.id, config);
 
+    // Neighbours come from the subpage list the visitor just came through, in
+    // that list's own order, so "next" agrees with the grid they saw (#483).
+    const nav = subpageData ? albumNeighbours(subpageData.albums, album.id, `/${subpageSlug}`) : {};
+
     return (
       <AlbumDetailView
         album={album}
         images={images}
+        nav={nav}
+        structuredData={structuredDataFor(album, `/${subpageSlug}/${albumSlug}`, images.length)}
         layout={resolveLayout(mergeAlbumGrid(album.id, spGrid))}
         gridStyle={buildGridStyle(mergeAlbumGrid(album.id, spGrid))}
         backLinkHref={`/${subpageSlug}`}
@@ -324,7 +387,11 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         albums.map((a) => immich.getAlbumBySlug(a.slug, slug, forceFresh)),
       );
       const allAssets = allAlbums.flatMap((a) => (a ? a.assets : []));
-      const images = toPhotoItems(allAssets, config.exif.onHover && config.exif.camera);
+      const images = toPhotoItems(
+        allAssets,
+        config.exif.onHover && config.exif.camera,
+        config.exif.caption,
+      );
 
       // Fallback structured essay if layout: 'essay' is set without custom markdown file
       if (!essayParsed) {
@@ -381,7 +448,12 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         notFound();
       }
 
-      const images = toPhotoItems(album.assets, config.exif.onHover && config.exif.camera);
+      const images = toPhotoItems(
+        album.assets,
+        config.exif.onHover && config.exif.camera,
+        config.exif.caption,
+        config.albumDownloads[album.id] ? album.id : undefined,
+      );
 
       // Password gate for protected albums
       const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
@@ -444,7 +516,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         albums={albumsWithHero}
         coverPlaceholders={coverPlaceholders}
         sections={result.subpage.sections}
-        gridStyle={buildCoverGridStyle(result.subpage.grid)}
+        gridStyle={buildCoverGridStyle(result.subpage.coverGrid)}
         {...(subpageIndex >= 0 ? { index: subpageIndex + 1 } : {})}
       />
     );
@@ -464,7 +536,12 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
     notFound();
   }
 
-  const images = toPhotoItems(album.assets, config.exif.onHover && config.exif.camera);
+  const images = toPhotoItems(
+    album.assets,
+    config.exif.onHover && config.exif.camera,
+    config.exif.caption,
+    config.albumDownloads[album.id] ? album.id : undefined,
+  );
 
   // Password gate for protected albums
   const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
@@ -480,6 +557,8 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       gridStyle={buildGridStyle(mergeAlbumGrid(album.id))}
       backLinkHref="/"
       backLinkLabel={getServerDictionary().common.backToGallery}
+      nav={albumNeighbours(await immich.getStandaloneAlbums(forceFresh), album.id)}
+      structuredData={structuredDataFor(album, `/${slug}`, images.length)}
       watermark={config.watermark}
       showExifPanel={hasExifPanelContent(config.exif)}
       showGear={config.exif.camera}

@@ -10,6 +10,12 @@ import { getConfig } from '@/lib/config';
 import { imageUrl } from '@/lib/urls';
 import { isAuthenticated, siteLockResponse } from '@/lib/auth';
 import { getMapData } from '@/lib/mapService';
+import {
+  applyPrecision,
+  placeLabel,
+  strictestPrecision,
+  type LocationPrecision,
+} from '@/lib/mapPrecision';
 import { ImmichUnavailableError } from '@/lib/immich';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 
@@ -88,11 +94,17 @@ export async function GET(request: NextRequest) {
     return result;
   };
 
+  const precisionOf = (albumId: string): LocationPrecision =>
+    config.albumLocationPrecision[albumId] ?? 'exact';
+
   const publicLocations = locations
     .map((loc) => {
-      const allowedAlbums = loc.albums.filter(
-        (a) => (!a.subpageSlug || isSubpageAllowed(a.subpageSlug)) && isAlbumAllowed(a.id),
-      );
+      const allowedAlbums = loc.albums
+        .filter((a) => (!a.subpageSlug || isSubpageAllowed(a.subpageSlug)) && isAlbumAllowed(a.id))
+        // `location: hidden` drops the album from the map entirely, before it
+        // can contribute. Withholding only its coordinates would still let the
+        // photo count and the cover name a place it asked to be absent from.
+        .filter((a) => precisionOf(a.id) !== 'hidden');
 
       if (allowedAlbums.length === 0) return null;
 
@@ -102,11 +114,31 @@ export async function GET(request: NextRequest) {
       const latSum = allowedAlbums.reduce((sum, a) => sum + a.latSum, 0);
       const lngSum = allowedAlbums.reduce((sum, a) => sum + a.lngSum, 0);
 
+      /*
+       * One marker merges several albums, so the most cautious of them governs
+       * the whole marker. Splitting it instead would itself announce that one
+       * album is set more carefully — which is the thing being hidden.
+       *
+       * Quantised here, server-side: coordinates are never sent exact for the
+       * client to round.
+       */
+      const level = strictestPrecision(allowedAlbums.map((a) => precisionOf(a.id)));
+      const position = applyPrecision(
+        { lat: latSum / photoCount, lng: lngSum / photoCount },
+        level,
+      );
+      if (!position) return null;
+
+      // The name has to follow the coordinates down. Rounding the position to
+      // a 100 km cell while still calling the marker "Chorin" left the label
+      // more precise than the position it was meant to blur.
+      const place = placeLabel(level, { city: loc.city, country: loc.country });
+
       return {
-        city: loc.city,
-        country: loc.country,
-        lat: latSum / photoCount,
-        lng: lngSum / photoCount,
+        city: place.city,
+        country: place.country,
+        lat: position.lat,
+        lng: position.lng,
         photoCount,
         coverUrl: imageUrl(allowedAlbums[0].coverAssetId, 'thumbnail'),
         albums: allowedAlbums.map((a) => ({

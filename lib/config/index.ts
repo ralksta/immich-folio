@@ -2,10 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { env } from '../env';
 import { resolveAuthSecret } from '../secret';
+import { resolveSiteUrl } from '../siteUrl';
 import { getInstallCredentials } from '../install';
 import { loadYaml, clearYamlCache, validateUuid } from './parser';
 import { resolveTheme, VALID_LAYOUTS, DEFAULT_PRESET } from './theme';
 import { ALBUM_SORT_MODES, isAlbumSortMode, type AlbumSortMode } from '../albumSort';
+import { LOCATION_PRECISIONS, isLocationPrecision, type LocationPrecision } from '../mapPrecision';
 import {
   slugify,
   resolveExifDisplay,
@@ -56,27 +58,54 @@ export function getConfigOrNull(): AppConfig | null {
   }
 }
 
-/** Converts raw YAML grid overrides into a typed partial GridConfig. */
-export function buildSubpageGrid(raw?: {
+interface RawGridOverrides {
   columns?: number;
   gap?: number;
   aspectRatio?: string;
   layout?: string;
-}): { grid: Partial<GridConfig> } | Record<string, never> {
-  if (!raw) return {};
+}
+
+/** Converts raw YAML grid overrides into a typed partial GridConfig. */
+function parseGridOverrides(raw: RawGridOverrides): Partial<GridConfig> {
   return {
-    grid: {
-      ...(raw.columns != null ? { columns: raw.columns } : {}),
-      ...(raw.gap != null ? { gap: raw.gap } : {}),
-      ...(raw.aspectRatio != null ? { aspectRatio: raw.aspectRatio } : {}),
-      ...(raw.layout != null
-        ? {
-            layout: (VALID_LAYOUTS.includes(raw.layout)
-              ? raw.layout
-              : 'masonry') as GridConfig['layout'],
-          }
-        : {}),
-    },
+    ...(raw.columns != null ? { columns: raw.columns } : {}),
+    ...(raw.gap != null ? { gap: raw.gap } : {}),
+    ...(raw.aspectRatio != null ? { aspectRatio: raw.aspectRatio } : {}),
+    ...(raw.layout != null
+      ? {
+          layout: (VALID_LAYOUTS.includes(raw.layout)
+            ? raw.layout
+            : 'masonry') as GridConfig['layout'],
+        }
+      : {}),
+  };
+}
+
+/** Converts raw YAML grid overrides into a typed partial GridConfig. */
+export function buildSubpageGrid(
+  raw?: RawGridOverrides,
+): { grid: Partial<GridConfig> } | Record<string, never> {
+  if (!raw) return {};
+  return { grid: parseGridOverrides(raw) };
+}
+
+/**
+ * The two grids a subpage can override, as one spread-able object.
+ *
+ * `grid` sizes the photos inside its albums, `coverGrid` the album-cover tiles
+ * on the page itself. They were a single key until #523, where the admin field
+ * labelled "Album Cover Grid" turned out to retune every photo grid on the page
+ * as well. A gallery.yaml written before the split has no `coverGrid`, so the
+ * covers fall back to `grid` and such a page renders exactly as it did.
+ */
+function buildSubpageGrids(
+  grid?: RawGridOverrides,
+  coverGrid?: RawGridOverrides,
+): { grid?: Partial<GridConfig>; coverGrid?: Partial<GridConfig> } {
+  const resolved = coverGrid ?? grid;
+  return {
+    ...buildSubpageGrid(grid),
+    ...(resolved ? { coverGrid: parseGridOverrides(resolved) } : {}),
   };
 }
 
@@ -139,6 +168,8 @@ export interface GalleryDerivation {
   albumManualOrders: Record<string, string[]>;
   albumGrids: Record<string, Partial<GridConfig>>;
   albumCoverPositions: Record<string, string>;
+  albumDownloads: Record<string, boolean>;
+  albumLocationPrecision: Record<string, LocationPrecision>;
 }
 
 /**
@@ -162,18 +193,24 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   const albumManualOrders: Record<string, string[]> = {};
   const albumGrids: Record<string, Partial<GridConfig>> = {};
   const albumCoverPositions: Record<string, string> = {};
+  const albumDownloads: Record<string, boolean> = {};
+  const albumLocationPrecision: Record<string, LocationPrecision> = {};
 
   /** Returns null for an entry whose album ID is not a UUID; callers drop it. */
   function processAlbumEntry(
     entry: string | Record<string, string | AlbumEntryObject>,
     context: string,
+    inheritedLocation?: LocationPrecision,
   ): string | null {
     if (typeof entry === 'string') {
+      if (inheritedLocation) albumLocationPrecision[entry] = inheritedLocation;
       return validateUuid(entry, context);
     }
     const [uuid, value] = Object.entries(entry)[0];
     const validatedUuid = validateUuid(uuid, context);
     if (!validatedUuid) return null;
+    // The subpage's setting applies unless the album states its own below.
+    if (inheritedLocation) albumLocationPrecision[validatedUuid] = inheritedLocation;
 
     if (typeof value === 'string') {
       albumOverrides[validatedUuid] = value;
@@ -246,6 +283,13 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         }
         albumCoverPositions[validatedUuid] = pos;
       }
+
+      // Opt-in per album, never global: a public portfolio must not start
+      // handing out full-resolution originals because one client gallery
+      // needed to (#475).
+      if (value.download === true) albumDownloads[validatedUuid] = true;
+      const location = parseLocation(value.location, `${context}: album ${validatedUuid} location`);
+      if (location) albumLocationPrecision[validatedUuid] = location;
     }
     return validatedUuid;
   }
@@ -254,10 +298,27 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   function processAlbumEntries(
     entries: Array<string | Record<string, string | AlbumEntryObject>>,
     context: string,
+    inheritedLocation?: LocationPrecision,
   ): string[] {
     return entries
-      .map((entry) => processAlbumEntry(entry, context))
+      .map((entry) => processAlbumEntry(entry, context, inheritedLocation))
       .filter((id): id is string => id !== null);
+  }
+
+  /**
+   * Narrow a raw `location:` value, or throw. Rejected rather than defaulted
+   * for the same reason as `sort`: a typo in a privacy setting that silently
+   * fell back to `exact` would publish the position it was meant to withhold.
+   */
+  function parseLocation(raw: string | undefined, context: string): LocationPrecision | undefined {
+    if (raw == null) return undefined;
+    if (!isLocationPrecision(raw)) {
+      throw new Error(
+        `${context}: unknown location "${raw}". ` +
+          `Valid values are: ${LOCATION_PRECISIONS.join(', ')}.`,
+      );
+    }
+    return raw;
   }
 
   const standaloneAlbumIds = processAlbumEntries(gallery.albums ?? [], 'gallery.yaml albums');
@@ -279,19 +340,31 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
           title: sec.title,
           slug: slugify(sec.title),
           description: sec.description,
-          albumIds: processAlbumEntries(sec.albums, `subpage "${sp.name}" section "${sec.title}"`),
+          albumIds: processAlbumEntries(
+            sec.albums,
+            `subpage "${sp.name}" section "${sec.title}"`,
+            parseLocation(sp.location, `subpage "${sp.name}" location`),
+          ),
         }));
         // flat union of all section albums
         albumIds = sections!.flatMap((sec) => sec.albumIds);
         // Also include any top-level albums (outside sections)
-        const topLevel = processAlbumEntries(sp.albums ?? [], `subpage "${sp.name}"`);
+        const topLevel = processAlbumEntries(
+          sp.albums ?? [],
+          `subpage "${sp.name}"`,
+          parseLocation(sp.location, `subpage "${sp.name}" location`),
+        );
         albumIds = [...topLevel, ...albumIds];
       } else {
         const albums = sp.albums ?? [];
         if (albums.length === 0) {
           throw new Error(`Subpage "${sp.name}" must have albums or sections`);
         }
-        albumIds = processAlbumEntries(albums, `subpage "${sp.name}"`);
+        albumIds = processAlbumEntries(
+          albums,
+          `subpage "${sp.name}"`,
+          parseLocation(sp.location, `subpage "${sp.name}" location`),
+        );
       }
 
       return {
@@ -307,7 +380,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         essayText: sp.essayText,
         enabled: sp.enabled !== false,
         hidden: sp.hidden === true,
-        ...buildSubpageGrid(sp.grid),
+        ...buildSubpageGrids(sp.grid, sp.coverGrid),
       };
     });
   } else if (gallery.subpages) {
@@ -327,14 +400,18 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         slug: slugify(name),
         title: sp.title,
         subtitle: sp.subtitle,
-        albumIds: processAlbumEntries(albumEntries, `subpage "${name}"`),
+        albumIds: processAlbumEntries(
+          albumEntries,
+          `subpage "${name}"`,
+          parseLocation(sp.location, `subpage "${name}" location`),
+        ),
         password: sp.password,
         proofing: sp.proofing,
         essayFile: sp.essayFile,
         essayText: sp.essayText,
         enabled: sp.enabled !== false,
         hidden: sp.hidden === true,
-        ...buildSubpageGrid(sp.grid),
+        ...buildSubpageGrids(sp.grid, sp.coverGrid),
       };
     });
   }
@@ -354,6 +431,8 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
     albumManualOrders,
     albumGrids,
     albumCoverPositions,
+    albumDownloads,
+    albumLocationPrecision,
   };
 }
 
@@ -408,10 +487,13 @@ export function getConfig(): AppConfig {
         title: 'Setup Required',
         description: 'Please configure Immich Folio',
         titleTemplate: '%s | Setup Required',
+        license: '',
         noIndex: true,
         noFollow: true,
       },
       heroImages: [],
+      siteUrl: null,
+      siteUrlSource: 'none',
       colorMode: 'dark',
       exifOnHover: true,
       exif: resolveExifDisplay(),
@@ -434,6 +516,8 @@ export function getConfig(): AppConfig {
       albumManualOrders: {},
       albumGrids: {},
       albumCoverPositions: {},
+      albumDownloads: {},
+      albumLocationPrecision: {},
       navLinks: [],
       cacheTtl: env.CACHE_TTL * 1000,
       staleMaxAge: env.STALE_MAX_AGE * 1000,
@@ -460,6 +544,8 @@ export function getConfig(): AppConfig {
     albumManualOrders,
     albumGrids,
     albumCoverPositions,
+    albumDownloads,
+    albumLocationPrecision,
   } = deriveGallery(gallery);
 
   const siteSeoTitle = settings.seo?.title || settings.title || env.SITE_TITLE || 'Gallery';
@@ -486,12 +572,17 @@ export function getConfig(): AppConfig {
       titleTemplate: settings.seo?.titleTemplate || `%s | ${siteSeoTitle}`,
       noIndex: settings.seo?.noIndex === true,
       noFollow: settings.seo?.noFollow === true,
+      license: settings.seo?.license?.trim() || '',
     },
     heroImages: gallery.hero
       ? (Array.isArray(gallery.hero) ? gallery.hero : [gallery.hero])
           .map((id) => validateUuid(id, 'gallery.yaml hero'))
           .filter((id): id is string => id !== null)
       : [],
+    ...(() => {
+      const site = resolveSiteUrl(settings.url, env.SITE_URL);
+      return { siteUrl: site.url, siteUrlSource: site.source };
+    })(),
     colorMode: resolveColorMode(settings.mode),
     exifOnHover: settings.exifOnHover !== false,
     exif: resolveExifDisplay(settings.exif, settings.exifOnHover),
@@ -547,6 +638,8 @@ export function getConfig(): AppConfig {
     albumManualOrders,
     albumGrids,
     albumCoverPositions,
+    albumDownloads,
+    albumLocationPrecision,
     navLinks: sanitizeNavLinks(settings.navLinks),
     cacheTtl: env.CACHE_TTL * 1000,
     staleMaxAge: env.STALE_MAX_AGE * 1000,

@@ -7,6 +7,166 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [0.13.0] — 2026-08-25
+
+### Added
+
+- **Discoverability: site URL, `robots.txt`, `sitemap.xml` and JSON-LD**
+  ([#472](https://github.com/ralksta/immich-folio/issues/472)). A portfolio that
+  cannot be found is a portfolio nobody sees, and there was no way to write any
+  of it because nothing knew the site's own address. `url:` in `settings.yaml`,
+  editable under Settings › SEO, with `SITE_URL` as a fallback. Without one the
+  sitemap stays empty and the JSON-LD is omitted rather than guessing a host: a
+  wrong absolute URL is worse than a missing one.
+
+  What may appear in a listing is decided by one pure function, so a sitemap
+  cannot become the leak nobody notices — it excludes protected and hidden
+  subpages, protected albums, journal drafts, and the case easiest to miss:
+  public albums sitting under a protected or hidden subpage, which are not
+  reachable and whose names would otherwise be published. A locked site yields
+  nothing at all. Paths are percent-encoded, so an album named in a non-Latin
+  script produces a valid URL rather than an IRI the sitemap protocol will not
+  accept.
+
+- **Slideshow mode in the lightbox**
+  ([#473](https://github.com/ralksta/immich-folio/issues/473)). `s` cycles off →
+  3s → 5s → 10s → off, so a gallery can run unattended at an exhibition, a fair
+  booth or on a second screen. No configuration and no button: the speeds live
+  in the key itself, and a permanent control in the corner of a photograph costs
+  every visitor something. Any deliberate move — arrow key, nav button, swipe —
+  stops it, since someone reaching for an arrow has taken over. Under
+  `prefers-reduced-motion` the photograph appears instead of fading and scaling
+  in, because a running slideshow is exactly the repeated motion that preference
+  is about.
+
+- **Download the original, opt-in per album**
+  ([#475](https://github.com/ralksta/immich-folio/issues/475)). `download: true`
+  on an album offers the file from the lightbox, on a button and on `d`. Off
+  everywhere by default and opt-in per album on purpose: a public portfolio must
+  not start handing out full-resolution originals because one client gallery
+  needed to.
+
+  The route re-checks rather than inheriting the image proxy's assumptions — the
+  album must be on the allowlist, must have opted in, must have its password
+  gate satisfied, and the asset must actually belong to it, which is what stops
+  one enabled album's URL being edited into a download of anything in the Immich
+  instance. The gate check follows the whole route to the album, so an album
+  with no password of its own, reachable only through a subpage that has one,
+  cannot be downloaded until that subpage is unlocked. Every refusal answers
+  404, so the response never reveals which check failed.
+
+- **Copy a link to the photo on screen**
+  ([#478](https://github.com/ralksta/immich-folio/issues/478)). Positional
+  permalinks already existed — the grid writes `#photo-N` and restores it on
+  load — but nothing told a visitor they could share one. Now there is a button,
+  and `c`.
+
+  The clipboard is not assumed: `navigator.clipboard` is undefined outside a
+  secure context, and a self-hosted portfolio reached over plain http on a LAN
+  is exactly that, so the link appears in a selected field instead of the button
+  appearing to do nothing. The link is positional, as `gallery.yaml.example`
+  documents — reordering an album moves where a shared link lands.
+
+- **Previous / next album at the foot of an album**
+  ([#483](https://github.com/ralksta/immich-folio/issues/483)). An album detail
+  page ended nowhere: a visitor reached the last photograph and had only the
+  back link, so the sequence the photographer arranged stopped being a sequence.
+  The order comes from whatever list the visitor just came through rather than
+  an ordering of its own — a "next" that disagreed with the grid they were
+  looking at a moment ago would be worse than no control at all. Neighbours do
+  not wrap around, so reaching the end is visible as the end.
+
+- **The Immich asset description becomes image alt text**
+  ([#484](https://github.com/ralksta/immich-folio/issues/484)). Grid and
+  lightbox images rendered `alt=""` throughout while the description was already
+  flowing to the client as an editorial caption. It is gated on the `caption`
+  EXIF group rather than served unconditionally: that switch exists because the
+  description is the one field that can hold private notes, and an alt attribute
+  publishes it to crawlers exactly as a visible caption would. An absent
+  description leaves `alt=""` — the correct markup for a decorative image,
+  rather than inventing filler text.
+
+- **Location precision, per album or per subpage**
+  ([#469](https://github.com/ralksta/immich-folio/issues/469)).
+  `location: exact | city | country | hidden`. The map is the only public GPS
+  surface, and a public album's marker sat at the mean of its photographs'
+  coordinates — for an album shot in one place, a garden, a studio, a client's
+  home, that mean _is_ that place. Nobody chose that; it followed from the
+  camera writing GPS.
+
+  Coordinates are quantised server-side against a fixed global grid — city to
+  0.05°, country to 1° — rather than jittered per request, which could be
+  averaged away by asking twice. The place _name_ is reduced with the position,
+  so a marker rounded to a 1° cell is not still labelled with the town. The
+  lightbox info panel follows the same setting: an album set to `hidden`, which
+  asks to be absent from the map entirely, no longer tells anyone who clicks
+  "Info" where the photograph was taken. Where one marker merges several albums,
+  the strictest setting among them governs the whole marker.
+
+- **The admin panel says when a newer release exists**
+  ([#496](https://github.com/ralksta/immich-folio/issues/496)). Self-hosted
+  software that never mentions a new release gets run for months on an old
+  version, and there have already been security releases. The running version
+  comes from `package.json`, the latest from the GitHub releases API, one
+  request a day, riding on the status call the dashboard already makes.
+
+  Discreet by design: a row in the status list, not a banner, which only turns
+  into a link when there is something newer. It fails quietly in every direction
+  — no network, a rate limit, a changed payload — and a tag that is not a
+  version is rejected rather than read as one, so a date-style release tag
+  cannot announce an update that does not exist.
+
+- **A Help tab in the admin panel, starting with the image viewer.** The
+  lightbox's keys are deliberately unadvertised to visitors, but that also left
+  the site owner with no way to learn that the slideshow, the copy-link and the
+  download exist at all — and a feature nobody can find is not shipped. Help
+  lists the viewer's shortcuts, notes the ones that are conditionally absent,
+  and explains the two that need it. The labels are read from the same
+  dictionary the viewer uses, so what the help promises is what a visitor is
+  shown.
+
+- **A subpage's album covers get their own grid**
+  ([#523](https://github.com/ralksta/immich-folio/issues/523)). `coverGrid`
+  sizes the cover tiles and nothing else; `grid` keeps the
+  `global < subpage < album` precedence for the photos. Until now a subpage had
+  a single `grid` key that both consumers read, so a gap typed into the field
+  labelled **Album Cover Grid** silently retuned every photo grid on the page
+  and overrode Settings › Grid.
+
+  A `gallery.yaml` written before the split has no `coverGrid`, so the covers
+  fall back to `grid` and such a page renders exactly as it did. The page
+  builder seeds the new cover fields from the old value, so the drawer reflects
+  what the page really renders and the first save writes the two out separately.
+
+### Fixed
+
+- **Albums whose name is written in CJK are reachable again**
+  ([#522](https://github.com/ralksta/immich-folio/issues/522)). The slug was
+  built by dropping every character outside `[a-z0-9]`, so a Chinese, Japanese,
+  Korean, Cyrillic or Greek name was reduced to nothing at all. The album's link
+  then pointed at `/`, clicking it went nowhere, and because no album lookup was
+  ever attempted there was nothing in the log to explain it. Slugs now keep any
+  letter or digit, whatever the script, and fold Latin diacritics as before
+  (`Café` still becomes `cafe`). An album whose name has no letters at all — one
+  written purely in emoji — falls back to its id, so it stays reachable and two
+  of them no longer collide.
+
+  Generating a usable slug was only half of it: Next hands a catch-all route
+  segment to the page still percent-encoded, so `/家族相册` arrived as
+  `%E5%AE%B6...` and matched no album even once the slug was right — the album
+  link rendered, and opening it produced an empty page. Incoming slugs are now
+  decoded once at the route boundary, and matched in both their composed and
+  decomposed Unicode form, so a slug typed or pasted into the address bar
+  resolves too.
+
+- **The lightbox controls are one bar instead of five anchors.** Reported
+  against studio-modern: the link, favourite and info controls sat on top of the
+  photo counter, and pressing Info made its label grow into the favourite button
+  beside it. Both followed from the same cause — each control positioned itself
+  with a hard-coded offset, so a button that changed width walked into its
+  neighbour and a conditionally absent one left a hole. They now sit in one flex
+  row, which cannot collide with itself.
+
 ## [0.12.0] — 2026-08-23
 
 ### Added
