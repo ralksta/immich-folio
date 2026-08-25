@@ -13,7 +13,8 @@
     "test:unit": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "test:e2e:admin": "playwright test e2e/admin-smoke.spec.ts"
+    "test:e2e:admin": "playwright test e2e/admin-smoke.spec.ts",
+    "doctor": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/doctor.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
