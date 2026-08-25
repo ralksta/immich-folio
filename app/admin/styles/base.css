@@ -1,0 +1,298 @@
+/* Loading and disabled states, the login screen, the plain field wrappers, the listbox, the error box. */
+/* Split out of admin.css (#533). Loaded from admin.css in a fixed order —
+   later sheets override earlier ones, so the order there is the cascade. */
+
+/* ── Loading / Disabled ─────────────────────────────────────── */
+
+.admin-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--admin-border);
+  border-top-color: var(--admin-text);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.admin-disabled {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.admin-disabled-card {
+  max-width: 420px;
+  text-align: center;
+}
+
+.admin-disabled-card h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-disabled-card code {
+  background: var(--admin-bg-raised);
+  padding: 0.2em 0.5em;
+  border-radius: 4px;
+  font-size: 0.85em;
+  color: var(--admin-accent);
+}
+
+/* ── Login ─────────────────────────────────────────────────── */
+
+.admin-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.admin-login-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.admin-login-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.admin-login-header h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.admin-login-header p {
+  color: var(--admin-text-secondary);
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+}
+
+/* ── Fields ─────────────────────────────────────────────────── */
+
+.admin-field {
+  margin-bottom: 0.75rem;
+}
+
+.admin-field label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--admin-text-secondary);
+  margin-bottom: 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.admin-field input,
+.admin-field select,
+.admin-field textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  background: var(--admin-bg-input);
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  color: var(--admin-text);
+  font-size: 0.875rem;
+  transition: border-color 0.15s;
+}
+
+.admin-field input:focus,
+.admin-field select:focus,
+.admin-field textarea:focus {
+  outline: none;
+  border-color: var(--admin-border-focus);
+}
+
+.admin-field textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+/* ── Listbox (select replacement that can render SVG icons) ────── */
+
+.admin-listbox {
+  position: relative;
+  width: 100%;
+}
+
+.admin-listbox-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  background: var(--admin-bg-input);
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  color: var(--admin-text);
+  font-size: 0.875rem;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.admin-listbox-trigger:hover:not(:disabled) {
+  border-color: var(--admin-border-hover);
+}
+
+.admin-listbox-trigger:focus-visible {
+  outline: none;
+  border-color: var(--admin-border-focus);
+}
+
+.admin-listbox-trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-listbox-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.admin-listbox-value > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-listbox-value .svg-icon,
+.admin-listbox-option > .svg-icon {
+  color: var(--admin-text-secondary);
+}
+
+.admin-listbox-caret {
+  color: var(--admin-text-secondary);
+  transition: transform 0.15s ease;
+}
+
+.admin-listbox-trigger[aria-expanded='true'] .admin-listbox-caret {
+  transform: rotate(180deg);
+}
+
+/* Portalled to <body>, so it escapes the overflow of any scrolling ancestor.
+   left/top/bottom/width/max-height are measured from the trigger and set inline
+   by the component; the z-index clears the modal overlay (1000). */
+.admin-listbox-popup {
+  position: fixed;
+  z-index: 1100;
+  overflow-y: auto;
+  /* A long list scrolls internally; without this, reaching its end hands the
+     wheel to whatever is behind the modal. */
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  /* Also outside .admin-layout, so the font does not inherit either. */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--admin-bg-elevated);
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme='light'] .admin-listbox-popup {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.admin-listbox-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 5px;
+  color: var(--admin-text);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.admin-listbox-option.is-active {
+  background: var(--admin-bg-raised);
+}
+
+.admin-listbox-option.is-selected {
+  color: var(--admin-accent);
+}
+
+.admin-listbox-option.is-selected > .svg-icon {
+  color: var(--admin-accent);
+}
+
+.admin-listbox-option-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-listbox-check {
+  color: var(--admin-accent);
+}
+
+.admin-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.admin-field-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.admin-field-checks label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--admin-text);
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.admin-field-checks input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--admin-btn-primary-bg);
+}
+
+/* ── Error ─────────────────────────────────────────────────── */
+
+.admin-error {
+  background: var(--admin-error-bg);
+  border: 1px solid var(--admin-error-border);
+  color: var(--admin-error);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  margin-bottom: 0.75rem;
+}

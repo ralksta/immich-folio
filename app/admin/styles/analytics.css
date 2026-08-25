@@ -1,0 +1,211 @@
+/* The analytics view. */
+/* Split out of admin.css (#533). Loaded from admin.css in a fixed order —
+   later sheets override earlier ones, so the order there is the cascade. */
+
+/* ── Analytics View ────────────────────────────────────────── */
+.analytics-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 1100px;
+}
+
+.analytics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.analytics-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.analytics-subtitle {
+  font-size: 0.8rem;
+  color: var(--admin-text-muted);
+  margin: 0.25rem 0 0;
+}
+
+.analytics-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.metric-card {
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-text-muted);
+}
+
+.metric-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--admin-text);
+  font-family: var(--font-mono, monospace);
+}
+
+.metric-sub {
+  font-size: 0.7rem;
+  color: var(--admin-text-muted);
+}
+
+.analytics-panel {
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.analytics-section-title h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.analytics-bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  height: 180px;
+  padding-top: 1.5rem;
+}
+
+.bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.bar-wrapper {
+  flex: 1;
+  width: 100%;
+  max-width: 32px;
+  display: flex;
+  align-items: flex-end;
+  background: var(--admin-bg-elevated);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  width: 100%;
+  background: var(--admin-primary, #3b82f6);
+  border-radius: 6px 6px 0 0;
+  transition: height 0.3s ease;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.bar-val {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #fff;
+  margin-top: 4px;
+}
+
+.bar-label {
+  font-size: 0.68rem;
+  color: var(--admin-text-muted);
+  margin-top: 0.5rem;
+  font-family: var(--font-mono, monospace);
+}
+
+.analytics-top-pages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.top-page-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.page-rank {
+  font-size: 0.8rem;
+  font-family: var(--font-mono, monospace);
+  color: var(--admin-text-muted);
+  width: 24px;
+}
+
+.page-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.page-path-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.page-path {
+  font-family: var(--font-mono, monospace);
+  color: var(--admin-text);
+}
+
+.page-count {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+}
+
+.page-progress-bg {
+  width: 100%;
+  height: 6px;
+  background: var(--admin-bg-elevated);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+/* The bar itself. Without this the track stayed empty and the view count had
+ * no visual weight at all. */
+.page-progress-fill {
+  height: 100%;
+  min-width: 2px;
+  border-radius: 3px;
+  background: var(--admin-accent);
+  transition: width 0.3s ease;
+}
+
+.analytics-empty {
+  margin: 0;
+  padding: 2rem 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--admin-text-muted);
+}
+
+.admin-loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+}

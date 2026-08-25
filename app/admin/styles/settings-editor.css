@@ -1,0 +1,699 @@
+/* Sidebar nav, preset preview mockups, the status badge and its dropdown, grouped feature settings, the doctor report. */
+/* Split out of admin.css (#533). Loaded from admin.css in a fixed order —
+   later sheets override earlier ones, so the order there is the cascade. */
+
+/* ── Settings Editor ──────────────────────────────────────── */
+
+.settings-live-sync-note {
+  margin: 0 0 1.25rem;
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.settings-layout {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 2rem;
+}
+
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Rendered as an <a> — each settings section is its own route. */
+.settings-nav-item {
+  background: none;
+  border: none;
+  color: var(--admin-text-muted);
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.1s;
+  display: block;
+  text-decoration: none;
+}
+
+.settings-nav-item:hover {
+  color: var(--admin-text);
+  background: var(--admin-bg-raised);
+}
+
+.settings-nav-item.active {
+  color: var(--admin-text);
+  background: var(--admin-bg-elevated);
+}
+
+.settings-content {
+  min-width: 0;
+}
+
+.settings-panel h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+/* Preset Card Grid */
+.preset-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+.preset-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  transition:
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.2s,
+    box-shadow 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.preset-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--admin-border-hover);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.preset-card.active {
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 2px var(--admin-accent);
+}
+
+/* ── Preset Mini Preview Mockup ──────────────────────────────────
+ * Driven entirely by the --preset-* custom properties the card sets inline,
+ * so each mockup reflects that preset's real background, tile colour, corner
+ * radius, grid density and photo frame instead of looking identical.
+ */
+.preset-card-preview {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  padding: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  border-bottom: 1px solid var(--admin-border);
+  position: relative;
+  overflow: hidden;
+  background: var(--preset-bg);
+}
+
+.preset-card-preview .mini-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+/* Type specimen: generic families stand in for the preset's real webfont,
+ * which is not loaded inside the admin panel. */
+.preset-card-preview .mini-specimen {
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--preset-accent);
+}
+
+.preset-card-preview .mini-specimen.type-serif {
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.preset-card-preview .mini-specimen.type-sans {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.preset-card-preview .mini-specimen.type-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+}
+
+.preset-card-preview .mini-line {
+  height: 2px;
+  flex: 1;
+  max-width: 46px;
+  border-radius: 1px;
+  background: var(--preset-accent);
+  opacity: 0.4;
+}
+
+.preset-card.active .preset-card-preview .mini-line {
+  opacity: 1;
+}
+
+.preset-card-preview .mini-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--preset-gap, 4px);
+}
+
+.preset-card-preview .mini-tile {
+  background: var(--preset-tile);
+  border-radius: var(--preset-radius, 0);
+  /* Keeps near-white tiles on a white page (Minimal, Classic) readable. */
+  box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.16);
+}
+
+/* Passepartout: a mat board in the page colour framing the photo. */
+.preset-card-preview[data-frame='passepartout'] .mini-tile {
+  padding: 4px;
+  background-clip: content-box;
+  border: 1px solid rgba(128, 128, 128, 0.3);
+}
+
+.preset-card-preview[data-frame='shadow'] .mini-tile {
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 1px rgba(128, 128, 128, 0.16);
+}
+
+.preset-card-specs {
+  font-size: 0.62rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--admin-text-muted);
+  opacity: 0.75;
+  margin-top: 0.15rem;
+}
+
+.preset-card-info {
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.preset-card-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--admin-text);
+  text-transform: capitalize;
+}
+
+.preset-card-desc {
+  font-size: 0.68rem;
+  color: var(--admin-text-muted);
+  line-height: 1.3;
+}
+
+/* ── Status Diagnostics & Badge ──────────────────────────────── */
+.status-indicator-container {
+  position: relative;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+/*
+ * A status readout, not an action: same height and typography as the buttons
+ * beside it, but pill-shaped so the row still reads as "state | actions".
+ * It inherited the browser's default button font before, which is why it looked
+ * like it came from a different app.
+ */
+.status-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0 0.85rem;
+  min-height: var(--admin-control-height);
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--admin-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.status-badge-btn:hover {
+  background: var(--admin-bg-elevated);
+  border-color: var(--admin-border-hover);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  position: relative;
+}
+
+/* Healthy is the resting state — no animation. A permanently pulsing dot pulls
+ * the eye toward the one thing that needs no attention. */
+.status-badge-btn.connected .status-dot {
+  background-color: var(--admin-success, #10b981);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
+}
+
+.status-badge-btn.disconnected .status-dot {
+  background-color: var(--admin-error, #ef4444);
+  box-shadow: 0 0 8px var(--admin-error, #ef4444);
+  animation: pulse-red 1.5s infinite;
+}
+
+/* The diagnostics request itself did not run — deliberately not red, and not
+   animated: an unanswered check is not a fault report. */
+.status-badge-btn.unknown .status-dot {
+  background-color: var(--admin-text-secondary);
+}
+
+.status-text {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+}
+
+/* Status Dropdown */
+.status-dropdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: transparent;
+}
+
+.status-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  width: 260px;
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  overflow: hidden;
+  animation: slideDown 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.status-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid var(--admin-border);
+  background: var(--admin-bg-elevated);
+}
+
+.status-dropdown-header h4 {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-text-muted);
+}
+
+.status-refresh-btn {
+  background: none;
+  border: none;
+  color: var(--admin-text-muted);
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 0 0.2rem;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.status-refresh-btn:hover {
+  color: var(--admin-text);
+}
+
+.status-dropdown-body {
+  padding: 0.5rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Grouped feature settings (#510) ──────────────────────────
+   The features panel used to be one flat grid of identical cards. These give it
+   the structure the config already had: labelled groups, and sub-settings that
+   look like sub-settings instead of peers. */
+.settings-group {
+  margin-bottom: 1.75rem;
+}
+
+.settings-group-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-bottom: 0.65rem;
+}
+
+.settings-group-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--admin-text-secondary);
+}
+
+/* Marks a group whose switches publish something, so it does not read like the
+   one next to it that controls a fade. */
+.settings-group-chip {
+  margin-left: 4px;
+  padding: 2px 7px;
+  border: 1px solid var(--admin-border);
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--admin-text-secondary);
+}
+
+.settings-group-desc {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  line-height: 1.35;
+}
+
+.settings-subpanel {
+  padding: 1rem 1.25rem;
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+}
+
+.settings-subpanel-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-bottom: 0.75rem;
+}
+
+.settings-subpanel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.settings-subpanel-desc {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+}
+
+/* Quiet marker on an album Immich still considers private (#515). Deliberately
+   not styled as a warning: publishing it is allowed, this only says what it is. */
+.picker-item-note {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.2rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  color: var(--admin-text-muted);
+}
+
+/* ── Config doctor report (#491) ──────────────────────────────
+   Each finding is one line with a severity dot: the point is scanning a list
+   for the ones that are not green, not reading prose. */
+.doctor-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doctor-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.doctor-item:last-child {
+  border-bottom: none;
+}
+
+.doctor-dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 0.42rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--admin-success);
+}
+
+.doctor-item--warn .doctor-dot {
+  background: var(--admin-accent);
+}
+
+.doctor-item--error .doctor-dot {
+  background: var(--admin-error);
+}
+
+.doctor-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.doctor-item-title {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+/* A finding that needs nothing recedes; the eye should land on the others. */
+.doctor-item--ok .doctor-item-title {
+  font-weight: 500;
+  color: var(--admin-text-secondary);
+}
+
+.doctor-item-detail {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--admin-text-muted);
+}
+
+/* The metadata group as one card with an expander: four permanently visible
+   sub-switches read as four decisions, when they are details of one. */
+.metadata-card {
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.metadata-card.active {
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 1px var(--admin-accent);
+}
+
+.metadata-card-main {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: none;
+  border: none;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.metadata-details-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 1.25rem 0.9rem;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--admin-text-secondary);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.metadata-details-btn:hover {
+  color: var(--admin-text);
+}
+
+.metadata-details-chevron {
+  transition: transform 0.15s ease;
+}
+
+.metadata-details-chevron.open {
+  transform: rotate(180deg);
+}
+
+.metadata-details {
+  padding: 0 1.25rem 0.6rem;
+  border-top: 1px solid var(--admin-border);
+}
+
+/* The first row sits directly under that border and does not need its own. */
+.metadata-details .setting-row:first-child {
+  border-top: none;
+}
+
+.setting-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 0;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--admin-border);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* A sub-setting of the rows above it — indented so the dependency is visible
+   rather than only true. */
+.setting-row--indented {
+  padding-left: 0.9rem;
+  margin-top: 0.35rem;
+}
+
+.setting-row--disabled {
+  cursor: default;
+}
+
+.setting-row--disabled .setting-row-title,
+.setting-row--disabled .setting-row-desc {
+  color: var(--admin-text-muted);
+}
+
+.setting-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.setting-row-title {
+  font-size: 0.81rem;
+  font-weight: 500;
+  color: var(--admin-text);
+}
+
+.setting-row-desc {
+  font-size: 0.72rem;
+  color: var(--admin-text-muted);
+  line-height: 1.3;
+}
+
+/* Says why an inert row is inert, instead of leaving it looking broken. */
+.setting-row-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 0.2rem;
+  font-size: 0.69rem;
+  color: var(--admin-text-secondary);
+}
+
+.switch-toggle--sm {
+  width: 34px;
+  height: 20px;
+  border-radius: 10px;
+}
+
+.switch-toggle--sm .switch-slider {
+  width: 14px;
+  height: 14px;
+}
+
+.switch-toggle--sm.on .switch-slider {
+  transform: translateX(14px);
+}
+
+/* An inert switch must not look like an off switch someone can turn on. */
+.setting-row--disabled .switch-toggle {
+  background: var(--admin-bg-elevated);
+}
+
+.setting-row--disabled .switch-slider {
+  background: var(--admin-text-muted);
+}
+
+/* Explains an unfinished installation before the indicators below it, which
+   would otherwise read as a fault rather than a pending step. */
+.status-setup-note {
+  margin: 0 0 0.35rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.status-setup-note a {
+  color: var(--admin-text);
+  text-decoration: underline;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0;
+  border-bottom: 1px dashed var(--admin-border);
+  font-size: 0.78rem;
+}
+
+.status-item:last-child {
+  border-bottom: none;
+}
+
+.status-label {
+  color: var(--admin-text-muted);
+}
+
+.status-val {
+  font-weight: 500;
+  color: var(--admin-text);
+}
+
+.status-val.ok {
+  color: var(--admin-success, #10b981);
+}
+
+.status-val.error {
+  color: var(--admin-error, #ef4444);
+}
+
+.status-val.update {
+  color: var(--admin-warning, #f59e0b);
+}
+
+.status-val.unknown {
+  color: var(--admin-text-secondary);
+}
