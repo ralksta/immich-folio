@@ -14,6 +14,7 @@ For the quick path — clone, `npm run dev`, open `/install` — see the
 - [Docker Compose](#docker-compose)
 - [Standalone Docker](#standalone-docker)
 - [Health Check](#health-check)
+- [Config Doctor](#config-doctor)
 - [Behaviour when Immich is Unreachable](#behaviour-when-immich-is-unreachable)
 - [Reverse Proxy](#reverse-proxy)
 
@@ -99,6 +100,52 @@ The container includes a built-in health check at `/api/health`:
 ```bash
 curl http://localhost:7211/api/health
 ```
+
+## Config Doctor
+
+```bash
+npm run doctor
+```
+
+Checks an installation from the terminal and prints what it finds: whether
+`AUTH_SECRET` is set and long enough, whether `gallery.yaml` and
+`settings.yaml` parse, whether Immich answers the three calls Folio depends on,
+whether every published album ID still exists in Immich (and is shared there),
+whether any password is still stored in plaintext or as an unusable bcrypt
+hash, and whether `content/` can be written to.
+
+This is the same set of checks as the **Diagnostics** panel in `/admin`, but it
+needs neither a running app nor an admin password — which is the point. It is
+the tool for the case where the site will not come up at all.
+
+It runs in the shipped image too:
+
+```bash
+docker compose exec folio npm run doctor
+```
+
+No secret is ever printed — only whether something is set, and where to look.
+The exit code is the worst thing it found, so it can gate a deployment script:
+
+| Code | Meaning                         |
+| ---- | ------------------------------- |
+| `0`  | every check passed              |
+| `1`  | warnings, no errors             |
+| `2`  | at least one error              |
+| `3`  | the doctor itself could not run |
+
+One check cannot run here: `TRUSTED_PROXY_HOPS` is judged against the
+`X-Forwarded-For` chain of a live request, and a CLI has none. It reports the
+configured value and says so rather than guessing — use the Diagnostics panel,
+reached over your public URL, to have that one measured.
+
+Run from a checkout, it reads `.env.local` and `.env` the way `npm run dev`
+does; real environment variables and `content/install.json` are resolved in the
+same order the app resolves them.
+
+It needs **Node 22.18 or newer**, which is what runs the TypeScript directly
+and is why the CLI adds no dependency of its own. The shipped image is already
+on it; an older local Node is told so instead of crashing.
 
 ## Behaviour when Immich is Unreachable
 
