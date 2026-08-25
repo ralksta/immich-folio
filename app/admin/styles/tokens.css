@@ -1,0 +1,63 @@
+/* Theme variables — every other sheet here reads them. */
+/* Split out of admin.css (#533). Loaded from admin.css in a fixed order —
+   later sheets override earlier ones, so the order there is the cascade. */
+
+/* ── Theme Variables ───────────────────────────────────────── */
+/* .admin-listbox-popup is listed alongside .admin-layout because it is
+   portalled to <body>, outside the layout subtree. Without its own copy every
+   var below resolves to nothing there, and the popup paints transparent. */
+.admin-layout,
+.admin-listbox-popup {
+  /* Dark mode (default) */
+  --admin-bg: #111111;
+  --admin-bg-raised: #1a1a1a;
+  --admin-bg-elevated: #222222;
+  --admin-bg-input: #161616;
+  --admin-border: #2e2e2e;
+  --admin-border-hover: #444444;
+  --admin-border-focus: #666666;
+  --admin-text: #f0f0f0;
+  --admin-text-secondary: #a0a0a0;
+  --admin-text-muted: #707070;
+  --admin-accent: #f59e0b;
+  /* One height for every control in the header row. */
+  --admin-control-height: 36px;
+  --admin-success: #4ade80;
+  --admin-error: #f87171;
+  --admin-error-bg: #2d1111;
+  --admin-error-border: #5c2020;
+  --admin-btn-primary-bg: #ffffff;
+  --admin-btn-primary-text: #000000;
+  --admin-btn-primary-hover: #e5e5e5;
+  --admin-overlay: rgba(0, 0, 0, 0.7);
+}
+
+[data-theme='light'] .admin-layout,
+[data-theme='light'] .admin-listbox-popup {
+  --admin-bg: #f8f8f8;
+  --admin-bg-raised: #ffffff;
+  --admin-bg-elevated: #f0f0f0;
+  --admin-bg-input: #ffffff;
+  --admin-border: #e0e0e0;
+  --admin-border-hover: #c0c0c0;
+  --admin-border-focus: #999999;
+  --admin-text: #1a1a1a;
+  --admin-text-secondary: #555555;
+  --admin-text-muted: #888888;
+  --admin-accent: #d97706;
+  --admin-success: #16a34a;
+  --admin-error: #dc2626;
+  --admin-error-bg: #fef2f2;
+  --admin-error-border: #fecaca;
+  --admin-btn-primary-bg: #1a1a1a;
+  --admin-btn-primary-text: #ffffff;
+  --admin-btn-primary-hover: #333333;
+  --admin-overlay: rgba(0, 0, 0, 0.4);
+}
+
+.admin-layout {
+  min-height: 100vh;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}

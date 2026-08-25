@@ -1,0 +1,135 @@
+/* The button scale. */
+/* Split out of admin.css (#533). Loaded from admin.css in a fixed order —
+   later sheets override earlier ones, so the order there is the cascade. */
+
+/* ── Buttons ───────────────────────────────────────────────── */
+
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0 1.2rem;
+  min-height: var(--admin-control-height);
+  /* <button> gets this from the UA stylesheet, <a> does not — without it the
+   * ghost border pushed the "Site" link 2px past its neighbours. */
+  box-sizing: border-box;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  /*
+   * Explicit, because <a class="admin-btn"> and <button class="admin-btn">
+   * otherwise resolve `normal` against different inline boxes — the "Site" link
+   * ended up half a pixel taller than the buttons next to it.
+   */
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.admin-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-btn-primary {
+  background: var(--admin-btn-primary-bg);
+  color: var(--admin-btn-primary-text);
+}
+
+.admin-btn-primary:hover:not(:disabled) {
+  background: var(--admin-btn-primary-hover);
+}
+
+.admin-btn-ghost {
+  background: transparent;
+  color: var(--admin-text-secondary);
+  border: 1px solid var(--admin-border);
+}
+
+.admin-btn-ghost:hover:not(:disabled) {
+  color: var(--admin-text);
+  border-color: var(--admin-border-hover);
+}
+
+/*
+ * Written as `.admin-btn.admin-btn-*` on purpose: these variants are combined
+ * with the size classes (`admin-btn-sm`, `admin-btn-xs`), which set their own
+ * background further down. The doubled class outranks them whatever the order.
+ */
+
+/* Neutral action next to a primary one. */
+.admin-btn.admin-btn-secondary {
+  background: var(--admin-bg-elevated);
+  color: var(--admin-text);
+  border: 1px solid var(--admin-border);
+}
+
+.admin-btn.admin-btn-secondary:hover:not(:disabled) {
+  background: var(--admin-bg-raised);
+  border-color: var(--admin-border-hover);
+}
+
+/* Destructive action — must read as destructive before it is clicked. */
+.admin-btn.admin-btn-danger {
+  background: transparent;
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.admin-btn.admin-btn-danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #fca5a5;
+}
+
+.admin-btn-sm {
+  padding: 0 0.8rem;
+  min-height: 30px;
+  font-size: 0.8rem;
+  background: var(--admin-bg-elevated);
+  color: var(--admin-text-secondary);
+  border: 1px solid var(--admin-border);
+}
+
+.admin-btn-sm:hover {
+  background: var(--admin-border);
+  border-color: var(--admin-border-hover);
+  color: var(--admin-text);
+}
+
+.admin-btn-xs {
+  padding: 0 0.6rem;
+  min-height: 26px;
+  font-size: 0.75rem;
+  background: var(--admin-bg-raised);
+  color: var(--admin-text-secondary);
+  border: 1px solid var(--admin-border);
+}
+
+.admin-btn-xs:hover {
+  color: var(--admin-text);
+  border-color: var(--admin-border-hover);
+}
+
+.admin-btn-icon {
+  background: none;
+  border: none;
+  color: var(--admin-text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.admin-btn-icon:hover {
+  color: var(--admin-text);
+}
+
+.admin-btn-icon:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}

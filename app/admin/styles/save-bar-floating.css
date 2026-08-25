@@ -1,0 +1,78 @@
+/* The floating save bar. */
+/* Split out of admin.css (#533). Loaded from admin.css in a fixed order —
+   later sheets override earlier ones, so the order there is the cascade. */
+
+/* ── Dynamic Floating Save Bar ───────────────────────────────── */
+.floating-save-bar {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--admin-bg-raised, #1f1f1f);
+  border: 1px solid var(--admin-border-hover, #444);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 0.75rem 1.25rem;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  width: calc(100% - 3rem);
+  max-width: 800px;
+  transition: border-color 0.2s ease;
+  animation: save-bar-in 0.2s ease-out;
+}
+
+.floating-save-bar.dirty {
+  border-color: var(--admin-accent);
+}
+
+/* Keyframes must carry the translateX(-50%) or the bar jumps horizontally. */
+@keyframes save-bar-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.badge-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff9800;
+  display: inline-block;
+  margin-right: 6px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(255, 152, 0, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-save-bar {
+    animation: none;
+  }
+  .badge-pulse-dot {
+    animation: none;
+  }
+}

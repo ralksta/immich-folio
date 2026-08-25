@@ -1,0 +1,159 @@
+/* The Immich album browser. */
+/* Split out of admin.css (#533). Loaded from admin.css in a fixed order —
+   later sheets override earlier ones, so the order there is the cascade. */
+
+/* ── Album Picker ──────────────────────────────────────────── */
+
+.picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--admin-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  backdrop-filter: blur(4px);
+}
+
+.picker-modal {
+  width: 100%;
+  max-width: 560px;
+  max-height: 80vh;
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.picker-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.picker-search {
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.picker-search input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  background: var(--admin-bg-input);
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  color: var(--admin-text);
+  font-size: 0.85rem;
+}
+
+.picker-search input:focus {
+  outline: none;
+  border-color: var(--admin-border-focus);
+}
+
+.picker-list {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.5rem;
+}
+
+.picker-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.picker-item:hover:not(.used) {
+  background: var(--admin-bg-elevated);
+}
+
+.picker-item.used {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.picker-item-thumb {
+  flex-shrink: 0;
+}
+
+.picker-thumb-placeholder {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--admin-bg-elevated);
+  border-radius: 8px;
+  font-size: 1.2rem;
+}
+
+.picker-thumb-img {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--admin-bg-elevated);
+}
+
+.picker-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.picker-item-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.picker-item-meta {
+  font-size: 0.7rem;
+  color: var(--admin-text-muted);
+}
+
+.picker-item-action {
+  flex-shrink: 0;
+}
+
+.picker-used-badge {
+  font-size: 0.7rem;
+  color: var(--admin-text-muted);
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 4px;
+}
+
+.picker-select-badge {
+  font-size: 0.7rem;
+  color: var(--admin-success);
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--admin-success);
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.picker-item:hover .picker-select-badge {
+  opacity: 1;
+}
