@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [Unreleased]
+
+### Fixed
+
+- **The admin panel's switches and pickers announce their state.** The toggle
+  cards and the five card pickers — theme preset, photo frame, hero style,
+  layout, aspect ratio — showed which option was active by colour alone, with
+  no `aria-pressed`, so a screen reader read a row of buttons without saying
+  which one was on. `SettingRow` already announced itself; the cards beside it
+  did not. Fixed while giving the panel a form-field layer
+  ([#533](https://github.com/ralksta/immich-folio/issues/533)), which is what
+  made it one change instead of nineteen.
+
 ## [0.13.0] — 2026-08-25
 
 ### Added
