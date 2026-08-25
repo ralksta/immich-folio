@@ -137,7 +137,10 @@ The exit code is the worst thing it found, so it can gate a deployment script:
 One check cannot run here: `TRUSTED_PROXY_HOPS` is judged against the
 `X-Forwarded-For` chain of a live request, and a CLI has none. It reports the
 configured value and says so rather than guessing — use the Diagnostics panel,
-reached over your public URL, to have that one measured.
+reached over your public URL, to have that one measured. It is printed under
+**NOTES** rather than among the passed checks, since nothing was verified, and
+counted separately in the summary line for the same reason. Notes never affect
+the exit code.
 
 Run from a checkout, it reads `.env.local` and `.env` the way `npm run dev`
 does; real environment variables and `content/install.json` are resolved in the
