@@ -6,6 +6,7 @@ import Link from 'next/link';
 import * as Icons from './Icons';
 import SaveBar from './SaveBar';
 import ToggleCard from './fields/ToggleCard';
+import OptionGrid, { toOptions } from './fields/OptionGrid';
 // Direct import from the theme module, not from '@/lib/config': the config
 // index pulls in `fs` and cannot be bundled into a client component.
 import { DEFAULT_PRESET } from '@/lib/config/theme';
@@ -100,6 +101,266 @@ const LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow'
 const PHOTO_FRAMES = ['none', 'passepartout', 'shadow'];
 const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic', 'cover'];
 const ASPECT_RATIOS = ['1', '3/2', '2/3', '16/9', 'auto'];
+
+/** The theme picker's own metadata, with the fallback the card grid needs. */
+function themeInfo(value: string) {
+  return (
+    THEME_INFO[value] || {
+      label: value,
+      desc: '',
+      bg: '#fff',
+      tile: '#eee',
+      accent: '#333',
+      font: 'System',
+      type: 'sans' as const,
+      radius: 0,
+      frame: 'none' as const,
+      gap: 4,
+    }
+  );
+}
+
+const PRESET_OPTIONS = PRESETS.map((value) => ({
+  value,
+  label: themeInfo(value).label,
+  desc: themeInfo(value).desc,
+}));
+
+function PresetPreview({ value }: { value: string }) {
+  const i = themeInfo(value);
+  return (
+    <div className="preset-card-preview" data-frame={i.frame}>
+      <div className="mini-header">
+        <span className={`mini-specimen type-${i.type}`}>Aa</span>
+        <span className="mini-line" />
+      </div>
+      <div className="mini-grid">
+        <div className="mini-tile" />
+        <div className="mini-tile" />
+        <div className="mini-tile" />
+      </div>
+    </div>
+  );
+}
+
+function PresetSpecs({ value }: { value: string }) {
+  const i = themeInfo(value);
+  return (
+    <span className="preset-card-specs">
+      {i.font} &middot; radius {i.radius} &middot; {i.frame}
+    </span>
+  );
+}
+
+const PHOTO_FRAME_INFO: Record<string, { label: string; desc: string }> = {
+  none: { label: 'None', desc: 'Flush image with crisp edges' },
+  passepartout: {
+    label: 'Passepartout',
+    desc: 'Classic gallery matting border',
+  },
+  shadow: { label: 'Shadow', desc: 'Soft floating drop shadow' },
+};
+const PHOTO_FRAME_OPTIONS = toOptions(PHOTO_FRAMES, PHOTO_FRAME_INFO);
+
+function PhotoFramePreview({ value }: { value: string }) {
+  return (
+    <div className="frame-card-preview">
+      <div className={`mini-frame-demo frame-${value}`}>
+        <div className="mini-frame-photo" />
+      </div>
+    </div>
+  );
+}
+
+const HERO_STYLE_INFO: Record<string, { label: string; desc: string }> = {
+  split: { label: 'Split', desc: 'Side-by-side title & photo' },
+  fullbleed: { label: 'Fullbleed', desc: 'Edge-to-edge full width banner' },
+  minimal: { label: 'Minimal', desc: 'Centered title with subtle photo' },
+  stacked: { label: 'Stacked', desc: 'Title stacked directly over photo' },
+  typographic: { label: 'Typographic', desc: 'Oversized magazine masthead' },
+  mosaic: { label: 'Mosaic', desc: 'Dynamic photo collage layout' },
+  cover: {
+    label: 'Cover (Experimental)',
+    desc: 'Fullscreen splash with a single Enter link',
+  },
+};
+const HERO_STYLE_OPTIONS = toOptions(HERO_STYLES, HERO_STYLE_INFO);
+
+function HeroStylePreview({ value }: { value: string }) {
+  return (
+    <div className="hero-card-preview">
+      <div className={`mini-hero-demo hero-demo-${value}`}>
+        {value === 'split' && (
+          <>
+            <div className="hero-demo-text">
+              <div className="demo-line title" />
+              <div className="demo-line sub" />
+            </div>
+            <div className="hero-demo-photo" />
+          </>
+        )}
+        {value === 'fullbleed' && (
+          <div className="hero-demo-full">
+            <div className="demo-line title light" />
+          </div>
+        )}
+        {value === 'minimal' && (
+          <>
+            <div className="hero-demo-center-text">
+              <div className="demo-line title short" />
+            </div>
+            <div className="hero-demo-photo small" />
+          </>
+        )}
+        {value === 'stacked' && (
+          <>
+            <div className="hero-demo-text">
+              <div className="demo-line title" />
+            </div>
+            <div className="hero-demo-photo banner" />
+          </>
+        )}
+        {value === 'typographic' && (
+          <>
+            <div className="demo-line title giant" />
+            <div className="hero-demo-grid2">
+              <div className="hero-demo-photo" />
+              <div className="hero-demo-photo" />
+            </div>
+          </>
+        )}
+        {value === 'mosaic' && (
+          <div className="hero-demo-mosaic">
+            <div className="hero-demo-photo big" />
+            <div className="hero-demo-photo-col">
+              <div className="hero-demo-photo" />
+              <div className="hero-demo-photo" />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const LAYOUT_INFO: Record<string, { label: string; desc: string }> = {
+  masonry: {
+    label: 'Masonry',
+    desc: 'Dynamic pinterest-style staggered columns',
+  },
+  uniform: { label: 'Uniform Grid', desc: 'Clean equal aspect ratio grid' },
+  showcase: {
+    label: 'Showcase',
+    desc: 'Featured hero photos mixed with smaller tiles',
+  },
+  filmstrip: {
+    label: 'Filmstrip',
+    desc: 'Horizontal scrollable film strip timeline',
+  },
+  'editorial-flow': {
+    label: 'Editorial Flow',
+    desc: 'Magazine story layout with varying photo sizes',
+  },
+  justified: {
+    label: 'Justified (Experimental)',
+    desc: 'Equal-height rows that fill the full width',
+  },
+};
+const LAYOUT_OPTIONS = toOptions(LAYOUTS, LAYOUT_INFO);
+
+function LayoutPreview({ value }: { value: string }) {
+  return (
+    <div className="grid-card-preview">
+      <div className={`mini-layout-demo layout-demo-${value}`}>
+        {value === 'masonry' && (
+          <div className="demo-masonry-col-group">
+            <div className="demo-col">
+              <div className="demo-tile h-high" />
+              <div className="demo-tile h-low" />
+            </div>
+            <div className="demo-col">
+              <div className="demo-tile h-low" />
+              <div className="demo-tile h-high" />
+            </div>
+            <div className="demo-col">
+              <div className="demo-tile h-med" />
+              <div className="demo-tile h-med" />
+            </div>
+          </div>
+        )}
+        {value === 'uniform' && (
+          <div className="demo-uniform-grid">
+            <div className="demo-tile" />
+            <div className="demo-tile" />
+            <div className="demo-tile" />
+            <div className="demo-tile" />
+            <div className="demo-tile" />
+            <div className="demo-tile" />
+          </div>
+        )}
+        {value === 'showcase' && (
+          <div className="demo-showcase-grid">
+            <div className="demo-tile demo-hero" />
+            <div className="demo-col">
+              <div className="demo-tile" />
+              <div className="demo-tile" />
+            </div>
+          </div>
+        )}
+        {value === 'filmstrip' && (
+          <div className="demo-filmstrip-row">
+            <div className="demo-tile strip" />
+            <div className="demo-tile strip" />
+            <div className="demo-tile strip" />
+          </div>
+        )}
+        {value === 'editorial-flow' && (
+          <div className="demo-editorial-flow">
+            <div className="demo-tile wide" />
+            <div className="demo-row">
+              <div className="demo-tile" />
+              <div className="demo-tile" />
+            </div>
+          </div>
+        )}
+        {value === 'justified' && (
+          <div className="demo-editorial-flow">
+            <div className="demo-row">
+              <div className="demo-tile wide" />
+              <div className="demo-tile" />
+            </div>
+            <div className="demo-row">
+              <div className="demo-tile" />
+              <div className="demo-tile wide" />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const ASPECT_RATIO_INFO: Record<string, { label: string; desc: string }> = {
+  '1': { label: 'Square (1:1)', desc: '1:1 ratio square crops' },
+  '3/2': { label: 'Landscape (3:2)', desc: 'Standard 35mm DSLR landscape' },
+  '2/3': { label: 'Portrait (2:3)', desc: 'Vertical portrait orientation' },
+  '16/9': { label: 'Cinema (16:9)', desc: 'Widescreen 16:9 cinematic ratio' },
+  auto: {
+    label: 'Original Auto',
+    desc: 'Uncropped original image proportions',
+  },
+};
+const ASPECT_RATIO_OPTIONS = toOptions(ASPECT_RATIOS, ASPECT_RATIO_INFO);
+
+function AspectRatioPreview({ value }: { value: string }) {
+  return (
+    <div className="ratio-card-preview">
+      <div className={`mini-aspect-box ratio-${value.replace('/', '-')}`}>
+        <div className="mini-aspect-inner" />
+      </div>
+    </div>
+  );
+}
 
 /**
  * Card metadata for the theme picker. `font`, `radius` and `frame` mirror the
@@ -965,62 +1226,25 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                 </p>
               </div>
 
-              <div className="admin-field">
-                <label>Preset</label>
-                <div className="preset-card-grid">
-                  {PRESETS.map((p) => {
-                    const info = THEME_INFO[p] || {
-                      label: p,
-                      desc: '',
-                      bg: '#fff',
-                      tile: '#eee',
-                      accent: '#333',
-                      font: 'System',
-                      type: 'sans' as const,
-                      radius: 0,
-                      frame: 'none' as const,
-                      gap: 4,
-                    };
-                    const isActive = (settings.theme?.preset || DEFAULT_PRESET) === p;
-                    return (
-                      <button
-                        key={p}
-                        type="button"
-                        className={`preset-card theme-preset-card ${isActive ? 'active' : ''}`}
-                        onClick={() => update('theme.preset', p)}
-                        style={
-                          {
-                            '--preset-accent': info.accent,
-                            '--preset-bg': info.bg,
-                            '--preset-tile': info.tile,
-                            '--preset-radius': `${info.radius}px`,
-                            '--preset-gap': `${info.gap}px`,
-                          } as React.CSSProperties
-                        }
-                      >
-                        <div className="preset-card-preview" data-frame={info.frame}>
-                          <div className="mini-header">
-                            <span className={`mini-specimen type-${info.type}`}>Aa</span>
-                            <span className="mini-line" />
-                          </div>
-                          <div className="mini-grid">
-                            <div className="mini-tile" />
-                            <div className="mini-tile" />
-                            <div className="mini-tile" />
-                          </div>
-                        </div>
-                        <div className="preset-card-info">
-                          <span className="preset-card-name">{info.label}</span>
-                          <span className="preset-card-desc">{info.desc}</span>
-                          <span className="preset-card-specs">
-                            {info.font} &middot; radius {info.radius} &middot; {info.frame}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <OptionGrid
+                label="Preset"
+                options={PRESET_OPTIONS}
+                value={settings.theme?.preset || DEFAULT_PRESET}
+                onSelect={(v) => update('theme.preset', v)}
+                cardClassName="theme-preset-card"
+                renderPreview={(o) => <PresetPreview value={o.value} />}
+                renderSpecs={(o) => <PresetSpecs value={o.value} />}
+                cardStyle={(o) => {
+                  const i = themeInfo(o.value);
+                  return {
+                    '--preset-accent': i.accent,
+                    '--preset-bg': i.bg,
+                    '--preset-tile': i.tile,
+                    '--preset-radius': `${i.radius}px`,
+                    '--preset-gap': `${i.gap}px`,
+                  } as React.CSSProperties;
+                }}
+              />
 
               <div className="admin-field">
                 <label>Color Mode</label>
@@ -1119,128 +1343,23 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                 </p>
               </div>
 
-              <div className="admin-field">
-                <label>Photo Frame</label>
-                <div className="preset-card-grid">
-                  {PHOTO_FRAMES.map((f) => {
-                    const info = {
-                      none: { label: 'None', desc: 'Flush image with crisp edges' },
-                      passepartout: {
-                        label: 'Passepartout',
-                        desc: 'Classic gallery matting border',
-                      },
-                      shadow: { label: 'Shadow', desc: 'Soft floating drop shadow' },
-                    }[f] || { label: f, desc: '' };
-                    const isActive = (settings.theme?.photoFrame || 'none') === f;
+              <OptionGrid
+                label="Photo Frame"
+                options={PHOTO_FRAME_OPTIONS}
+                value={settings.theme?.photoFrame || 'none'}
+                onSelect={(v) => update('theme.photoFrame', v)}
+                cardClassName="frame-card"
+                renderPreview={(o) => <PhotoFramePreview value={o.value} />}
+              />
 
-                    return (
-                      <button
-                        key={f}
-                        type="button"
-                        className={`preset-card frame-card ${isActive ? 'active' : ''}`}
-                        onClick={() => update('theme.photoFrame', f)}
-                      >
-                        <div className="frame-card-preview">
-                          <div className={`mini-frame-demo frame-${f}`}>
-                            <div className="mini-frame-photo" />
-                          </div>
-                        </div>
-                        <div className="preset-card-info">
-                          <span className="preset-card-name">{info.label}</span>
-                          <span className="preset-card-desc">{info.desc}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="admin-field">
-                <label>Hero Style</label>
-                <div className="preset-card-grid">
-                  {HERO_STYLES.map((s) => {
-                    const info = {
-                      split: { label: 'Split', desc: 'Side-by-side title & photo' },
-                      fullbleed: { label: 'Fullbleed', desc: 'Edge-to-edge full width banner' },
-                      minimal: { label: 'Minimal', desc: 'Centered title with subtle photo' },
-                      stacked: { label: 'Stacked', desc: 'Title stacked directly over photo' },
-                      typographic: { label: 'Typographic', desc: 'Oversized magazine masthead' },
-                      mosaic: { label: 'Mosaic', desc: 'Dynamic photo collage layout' },
-                      cover: {
-                        label: 'Cover (Experimental)',
-                        desc: 'Fullscreen splash with a single Enter link',
-                      },
-                    }[s] || { label: s, desc: '' };
-                    const isActive = (settings.theme?.heroStyle || 'split') === s;
-
-                    return (
-                      <button
-                        key={s}
-                        type="button"
-                        className={`preset-card hero-card ${isActive ? 'active' : ''}`}
-                        onClick={() => update('theme.heroStyle', s)}
-                      >
-                        <div className="hero-card-preview">
-                          <div className={`mini-hero-demo hero-demo-${s}`}>
-                            {s === 'split' && (
-                              <>
-                                <div className="hero-demo-text">
-                                  <div className="demo-line title" />
-                                  <div className="demo-line sub" />
-                                </div>
-                                <div className="hero-demo-photo" />
-                              </>
-                            )}
-                            {s === 'fullbleed' && (
-                              <div className="hero-demo-full">
-                                <div className="demo-line title light" />
-                              </div>
-                            )}
-                            {s === 'minimal' && (
-                              <>
-                                <div className="hero-demo-center-text">
-                                  <div className="demo-line title short" />
-                                </div>
-                                <div className="hero-demo-photo small" />
-                              </>
-                            )}
-                            {s === 'stacked' && (
-                              <>
-                                <div className="hero-demo-text">
-                                  <div className="demo-line title" />
-                                </div>
-                                <div className="hero-demo-photo banner" />
-                              </>
-                            )}
-                            {s === 'typographic' && (
-                              <>
-                                <div className="demo-line title giant" />
-                                <div className="hero-demo-grid2">
-                                  <div className="hero-demo-photo" />
-                                  <div className="hero-demo-photo" />
-                                </div>
-                              </>
-                            )}
-                            {s === 'mosaic' && (
-                              <div className="hero-demo-mosaic">
-                                <div className="hero-demo-photo big" />
-                                <div className="hero-demo-photo-col">
-                                  <div className="hero-demo-photo" />
-                                  <div className="hero-demo-photo" />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="preset-card-info">
-                          <span className="preset-card-name">{info.label}</span>
-                          <span className="preset-card-desc">{info.desc}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <OptionGrid
+                label="Hero Style"
+                options={HERO_STYLE_OPTIONS}
+                value={settings.theme?.heroStyle || 'split'}
+                onSelect={(v) => update('theme.heroStyle', v)}
+                cardClassName="hero-card"
+                renderPreview={(o) => <HeroStylePreview value={o.value} />}
+              />
 
               <div className="settings-section-divider" />
 
@@ -1284,156 +1403,23 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                 </p>
               </div>
 
-              <div className="admin-field">
-                <label>Layout Algorithm</label>
-                <div className="preset-card-grid">
-                  {LAYOUTS.map((l) => {
-                    const info = {
-                      masonry: {
-                        label: 'Masonry',
-                        desc: 'Dynamic pinterest-style staggered columns',
-                      },
-                      uniform: { label: 'Uniform Grid', desc: 'Clean equal aspect ratio grid' },
-                      showcase: {
-                        label: 'Showcase',
-                        desc: 'Featured hero photos mixed with smaller tiles',
-                      },
-                      filmstrip: {
-                        label: 'Filmstrip',
-                        desc: 'Horizontal scrollable film strip timeline',
-                      },
-                      'editorial-flow': {
-                        label: 'Editorial Flow',
-                        desc: 'Magazine story layout with varying photo sizes',
-                      },
-                      justified: {
-                        label: 'Justified (Experimental)',
-                        desc: 'Equal-height rows that fill the full width',
-                      },
-                    }[l] || { label: l, desc: '' };
-                    const isActive = (settings.grid?.layout || 'masonry') === l;
+              <OptionGrid
+                label="Layout Algorithm"
+                options={LAYOUT_OPTIONS}
+                value={settings.grid?.layout || 'masonry'}
+                onSelect={(v) => update('grid.layout', v)}
+                cardClassName="grid-layout-card"
+                renderPreview={(o) => <LayoutPreview value={o.value} />}
+              />
 
-                    return (
-                      <button
-                        key={l}
-                        type="button"
-                        className={`preset-card grid-layout-card ${isActive ? 'active' : ''}`}
-                        onClick={() => update('grid.layout', l)}
-                      >
-                        <div className="grid-card-preview">
-                          <div className={`mini-layout-demo layout-demo-${l}`}>
-                            {l === 'masonry' && (
-                              <div className="demo-masonry-col-group">
-                                <div className="demo-col">
-                                  <div className="demo-tile h-high" />
-                                  <div className="demo-tile h-low" />
-                                </div>
-                                <div className="demo-col">
-                                  <div className="demo-tile h-low" />
-                                  <div className="demo-tile h-high" />
-                                </div>
-                                <div className="demo-col">
-                                  <div className="demo-tile h-med" />
-                                  <div className="demo-tile h-med" />
-                                </div>
-                              </div>
-                            )}
-                            {l === 'uniform' && (
-                              <div className="demo-uniform-grid">
-                                <div className="demo-tile" />
-                                <div className="demo-tile" />
-                                <div className="demo-tile" />
-                                <div className="demo-tile" />
-                                <div className="demo-tile" />
-                                <div className="demo-tile" />
-                              </div>
-                            )}
-                            {l === 'showcase' && (
-                              <div className="demo-showcase-grid">
-                                <div className="demo-tile demo-hero" />
-                                <div className="demo-col">
-                                  <div className="demo-tile" />
-                                  <div className="demo-tile" />
-                                </div>
-                              </div>
-                            )}
-                            {l === 'filmstrip' && (
-                              <div className="demo-filmstrip-row">
-                                <div className="demo-tile strip" />
-                                <div className="demo-tile strip" />
-                                <div className="demo-tile strip" />
-                              </div>
-                            )}
-                            {l === 'editorial-flow' && (
-                              <div className="demo-editorial-flow">
-                                <div className="demo-tile wide" />
-                                <div className="demo-row">
-                                  <div className="demo-tile" />
-                                  <div className="demo-tile" />
-                                </div>
-                              </div>
-                            )}
-                            {l === 'justified' && (
-                              <div className="demo-editorial-flow">
-                                <div className="demo-row">
-                                  <div className="demo-tile wide" />
-                                  <div className="demo-tile" />
-                                </div>
-                                <div className="demo-row">
-                                  <div className="demo-tile" />
-                                  <div className="demo-tile wide" />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="preset-card-info">
-                          <span className="preset-card-name">{info.label}</span>
-                          <span className="preset-card-desc">{info.desc}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="admin-field">
-                <label>Aspect Ratio</label>
-                <div className="preset-card-grid">
-                  {ASPECT_RATIOS.map((r) => {
-                    const info = {
-                      '1': { label: 'Square (1:1)', desc: '1:1 ratio square crops' },
-                      '3/2': { label: 'Landscape (3:2)', desc: 'Standard 35mm DSLR landscape' },
-                      '2/3': { label: 'Portrait (2:3)', desc: 'Vertical portrait orientation' },
-                      '16/9': { label: 'Cinema (16:9)', desc: 'Widescreen 16:9 cinematic ratio' },
-                      auto: {
-                        label: 'Original Auto',
-                        desc: 'Uncropped original image proportions',
-                      },
-                    }[r] || { label: r, desc: '' };
-                    const isActive = (settings.grid?.aspectRatio || '1') === r;
-
-                    return (
-                      <button
-                        key={r}
-                        type="button"
-                        className={`preset-card ratio-card ${isActive ? 'active' : ''}`}
-                        onClick={() => update('grid.aspectRatio', r)}
-                      >
-                        <div className="ratio-card-preview">
-                          <div className={`mini-aspect-box ratio-${r.replace('/', '-')}`}>
-                            <div className="mini-aspect-inner" />
-                          </div>
-                        </div>
-                        <div className="preset-card-info">
-                          <span className="preset-card-name">{info.label}</span>
-                          <span className="preset-card-desc">{info.desc}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <OptionGrid
+                label="Aspect Ratio"
+                options={ASPECT_RATIO_OPTIONS}
+                value={settings.grid?.aspectRatio || '1'}
+                onSelect={(v) => update('grid.aspectRatio', v)}
+                cardClassName="ratio-card"
+                renderPreview={(o) => <AspectRatioPreview value={o.value} />}
+              />
 
               <div className="settings-section-divider" />
 
