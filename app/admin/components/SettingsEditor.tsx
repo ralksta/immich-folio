@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import * as Icons from './Icons';
 import SaveBar from './SaveBar';
+import ToggleCard from './fields/ToggleCard';
+import OptionGrid, { toOptions } from './fields/OptionGrid';
 // Direct import from the theme module, not from '@/lib/config': the config
 // index pulls in `fs` and cannot be bundled into a client component.
 import { DEFAULT_PRESET } from '@/lib/config/theme';
@@ -99,6 +101,266 @@ const LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow'
 const PHOTO_FRAMES = ['none', 'passepartout', 'shadow'];
 const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic', 'cover'];
 const ASPECT_RATIOS = ['1', '3/2', '2/3', '16/9', 'auto'];
+
+/** The theme picker's own metadata, with the fallback the card grid needs. */
+function themeInfo(value: string) {
+  return (
+    THEME_INFO[value] || {
+      label: value,
+      desc: '',
+      bg: '#fff',
+      tile: '#eee',
+      accent: '#333',
+      font: 'System',
+      type: 'sans' as const,
+      radius: 0,
+      frame: 'none' as const,
+      gap: 4,
+    }
+  );
+}
+
+const PRESET_OPTIONS = PRESETS.map((value) => ({
+  value,
+  label: themeInfo(value).label,
+  desc: themeInfo(value).desc,
+}));
+
+function PresetPreview({ value }: { value: string }) {
+  const i = themeInfo(value);
+  return (
+    <div className="preset-card-preview" data-frame={i.frame}>
+      <div className="mini-header">
+        <span className={`mini-specimen type-${i.type}`}>Aa</span>
+        <span className="mini-line" />
+      </div>
+      <div className="mini-grid">
+        <div className="mini-tile" />
+        <div className="mini-tile" />
+        <div className="mini-tile" />
+      </div>
+    </div>
+  );
+}
+
+function PresetSpecs({ value }: { value: string }) {
+  const i = themeInfo(value);
+  return (
+    <span className="preset-card-specs">
+      {i.font} &middot; radius {i.radius} &middot; {i.frame}
+    </span>
+  );
+}
+
+const PHOTO_FRAME_INFO: Record<string, { label: string; desc: string }> = {
+  none: { label: 'None', desc: 'Flush image with crisp edges' },
+  passepartout: {
+    label: 'Passepartout',
+    desc: 'Classic gallery matting border',
+  },
+  shadow: { label: 'Shadow', desc: 'Soft floating drop shadow' },
+};
+const PHOTO_FRAME_OPTIONS = toOptions(PHOTO_FRAMES, PHOTO_FRAME_INFO);
+
+function PhotoFramePreview({ value }: { value: string }) {
+  return (
+    <div className="frame-card-preview">
+      <div className={`mini-frame-demo frame-${value}`}>
+        <div className="mini-frame-photo" />
+      </div>
+    </div>
+  );
+}
+
+const HERO_STYLE_INFO: Record<string, { label: string; desc: string }> = {
+  split: { label: 'Split', desc: 'Side-by-side title & photo' },
+  fullbleed: { label: 'Fullbleed', desc: 'Edge-to-edge full width banner' },
+  minimal: { label: 'Minimal', desc: 'Centered title with subtle photo' },
+  stacked: { label: 'Stacked', desc: 'Title stacked directly over photo' },
+  typographic: { label: 'Typographic', desc: 'Oversized magazine masthead' },
+  mosaic: { label: 'Mosaic', desc: 'Dynamic photo collage layout' },
+  cover: {
+    label: 'Cover (Experimental)',
+    desc: 'Fullscreen splash with a single Enter link',
+  },
+};
+const HERO_STYLE_OPTIONS = toOptions(HERO_STYLES, HERO_STYLE_INFO);
+
+function HeroStylePreview({ value }: { value: string }) {
+  return (
+    <div className="hero-card-preview">
+      <div className={`mini-hero-demo hero-demo-${value}`}>
+        {value === 'split' && (
+          <>
+            <div className="hero-demo-text">
+              <div className="demo-line title" />
+              <div className="demo-line sub" />
+            </div>
+            <div className="hero-demo-photo" />
+          </>
+        )}
+        {value === 'fullbleed' && (
+          <div className="hero-demo-full">
+            <div className="demo-line title light" />
+          </div>
+        )}
+        {value === 'minimal' && (
+          <>
+            <div className="hero-demo-center-text">
+              <div className="demo-line title short" />
+            </div>
+            <div className="hero-demo-photo small" />
+          </>
+        )}
+        {value === 'stacked' && (
+          <>
+            <div className="hero-demo-text">
+              <div className="demo-line title" />
+            </div>
+            <div className="hero-demo-photo banner" />
+          </>
+        )}
+        {value === 'typographic' && (
+          <>
+            <div className="demo-line title giant" />
+            <div className="hero-demo-grid2">
+              <div className="hero-demo-photo" />
+              <div className="hero-demo-photo" />
+            </div>
+          </>
+        )}
+        {value === 'mosaic' && (
+          <div className="hero-demo-mosaic">
+            <div className="hero-demo-photo big" />
+            <div className="hero-demo-photo-col">
+              <div className="hero-demo-photo" />
+              <div className="hero-demo-photo" />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const LAYOUT_INFO: Record<string, { label: string; desc: string }> = {
+  masonry: {
+    label: 'Masonry',
+    desc: 'Dynamic pinterest-style staggered columns',
+  },
+  uniform: { label: 'Uniform Grid', desc: 'Clean equal aspect ratio grid' },
+  showcase: {
+    label: 'Showcase',
+    desc: 'Featured hero photos mixed with smaller tiles',
+  },
+  filmstrip: {
+    label: 'Filmstrip',
+    desc: 'Horizontal scrollable film strip timeline',
+  },
+  'editorial-flow': {
+    label: 'Editorial Flow',
+    desc: 'Magazine story layout with varying photo sizes',
+  },
+  justified: {
+    label: 'Justified (Experimental)',
+    desc: 'Equal-height rows that fill the full width',
+  },
+};
+const LAYOUT_OPTIONS = toOptions(LAYOUTS, LAYOUT_INFO);
+
+function LayoutPreview({ value }: { value: string }) {
+  return (
+    <div className="grid-card-preview">
+      <div className={`mini-layout-demo layout-demo-${value}`}>
+        {value === 'masonry' && (
+          <div className="demo-masonry-col-group">
+            <div className="demo-col">
+              <div className="demo-tile h-high" />
+              <div className="demo-tile h-low" />
+            </div>
+            <div className="demo-col">
+              <div className="demo-tile h-low" />
+              <div className="demo-tile h-high" />
+            </div>
+            <div className="demo-col">
+              <div className="demo-tile h-med" />
+              <div className="demo-tile h-med" />
+            </div>
+          </div>
+        )}
+        {value === 'uniform' && (
+          <div className="demo-uniform-grid">
+            <div className="demo-tile" />
+            <div className="demo-tile" />
+            <div className="demo-tile" />
+            <div className="demo-tile" />
+            <div className="demo-tile" />
+            <div className="demo-tile" />
+          </div>
+        )}
+        {value === 'showcase' && (
+          <div className="demo-showcase-grid">
+            <div className="demo-tile demo-hero" />
+            <div className="demo-col">
+              <div className="demo-tile" />
+              <div className="demo-tile" />
+            </div>
+          </div>
+        )}
+        {value === 'filmstrip' && (
+          <div className="demo-filmstrip-row">
+            <div className="demo-tile strip" />
+            <div className="demo-tile strip" />
+            <div className="demo-tile strip" />
+          </div>
+        )}
+        {value === 'editorial-flow' && (
+          <div className="demo-editorial-flow">
+            <div className="demo-tile wide" />
+            <div className="demo-row">
+              <div className="demo-tile" />
+              <div className="demo-tile" />
+            </div>
+          </div>
+        )}
+        {value === 'justified' && (
+          <div className="demo-editorial-flow">
+            <div className="demo-row">
+              <div className="demo-tile wide" />
+              <div className="demo-tile" />
+            </div>
+            <div className="demo-row">
+              <div className="demo-tile" />
+              <div className="demo-tile wide" />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const ASPECT_RATIO_INFO: Record<string, { label: string; desc: string }> = {
+  '1': { label: 'Square (1:1)', desc: '1:1 ratio square crops' },
+  '3/2': { label: 'Landscape (3:2)', desc: 'Standard 35mm DSLR landscape' },
+  '2/3': { label: 'Portrait (2:3)', desc: 'Vertical portrait orientation' },
+  '16/9': { label: 'Cinema (16:9)', desc: 'Widescreen 16:9 cinematic ratio' },
+  auto: {
+    label: 'Original Auto',
+    desc: 'Uncropped original image proportions',
+  },
+};
+const ASPECT_RATIO_OPTIONS = toOptions(ASPECT_RATIOS, ASPECT_RATIO_INFO);
+
+function AspectRatioPreview({ value }: { value: string }) {
+  return (
+    <div className="ratio-card-preview">
+      <div className={`mini-aspect-box ratio-${value.replace('/', '-')}`}>
+        <div className="mini-aspect-inner" />
+      </div>
+    </div>
+  );
+}
 
 /**
  * Card metadata for the theme picker. `font`, `radius` and `frame` mirror the
@@ -720,61 +982,29 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                 description="Chrome the visitor sees on every page."
               >
                 <div className="admin-toggle-cards-grid">
-                  <button
-                    type="button"
-                    className={`admin-toggle-card ${settings.about?.enabled !== false ? 'active' : ''}`}
-                    onClick={() => update('about.enabled', settings.about?.enabled === false)}
-                  >
-                    <div className="toggle-card-info">
-                      <span className="toggle-card-title">
-                        <Icons.IconCamera size={16} /> About Page
-                      </span>
-                      <span className="toggle-card-desc">
-                        Show a portrait, bio, and gear section on your portfolio
-                      </span>
-                    </div>
-                    <div
-                      className={`switch-toggle ${settings.about?.enabled !== false ? 'on' : ''}`}
-                    >
-                      <span className="switch-slider" />
-                    </div>
-                  </button>
+                  <ToggleCard
+                    icon={<Icons.IconCamera size={16} />}
+                    title="About Page"
+                    description="Show a portrait, bio, and gear section on your portfolio"
+                    checked={settings.about?.enabled !== false}
+                    onToggle={() => update('about.enabled', settings.about?.enabled === false)}
+                  />
 
-                  <button
-                    type="button"
-                    className={`admin-toggle-card ${settings.transitions !== false ? 'active' : ''}`}
-                    onClick={() => update('transitions', settings.transitions === false)}
-                  >
-                    <div className="toggle-card-info">
-                      <span className="toggle-card-title">
-                        <Icons.IconSparkles size={16} /> Smooth Page Transitions
-                      </span>
-                      <span className="toggle-card-desc">
-                        Enable subtle fade-in animations between page navigation
-                      </span>
-                    </div>
-                    <div className={`switch-toggle ${settings.transitions !== false ? 'on' : ''}`}>
-                      <span className="switch-slider" />
-                    </div>
-                  </button>
+                  <ToggleCard
+                    icon={<Icons.IconSparkles size={16} />}
+                    title="Smooth Page Transitions"
+                    description="Enable subtle fade-in animations between page navigation"
+                    checked={settings.transitions !== false}
+                    onToggle={() => update('transitions', settings.transitions === false)}
+                  />
 
-                  <button
-                    type="button"
-                    className={`admin-toggle-card ${settings.scrollToTop !== false ? 'active' : ''}`}
-                    onClick={() => update('scrollToTop', settings.scrollToTop === false)}
-                  >
-                    <div className="toggle-card-info">
-                      <span className="toggle-card-title">
-                        <Icons.IconArrowUp size={16} /> Scroll-to-Top Button
-                      </span>
-                      <span className="toggle-card-desc">
-                        Show a floating arrow that returns visitors to the top of long pages
-                      </span>
-                    </div>
-                    <div className={`switch-toggle ${settings.scrollToTop !== false ? 'on' : ''}`}>
-                      <span className="switch-slider" />
-                    </div>
-                  </button>
+                  <ToggleCard
+                    icon={<Icons.IconArrowUp size={16} />}
+                    title="Scroll-to-Top Button"
+                    description="Show a floating arrow that returns visitors to the top of long pages"
+                    checked={settings.scrollToTop !== false}
+                    onToggle={() => update('scrollToTop', settings.scrollToTop === false)}
+                  />
                 </div>
               </FeatureGroup>
 
@@ -866,44 +1096,23 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                 description="Optional pages and interactions."
               >
                 <div className="admin-toggle-cards-grid">
-                  <button
-                    type="button"
-                    className={`admin-toggle-card ${settings.map === true ? 'active' : ''}`}
-                    onClick={() => update('map', !settings.map)}
-                  >
-                    <div className="toggle-card-info">
-                      <span className="toggle-card-title">
-                        <Icons.IconMap size={16} /> Interactive GPS Map
-                      </span>
-                      <span className="toggle-card-desc">
-                        Enable /map view showing photo locations on a world map
-                      </span>
-                    </div>
-                    <div className={`switch-toggle ${settings.map === true ? 'on' : ''}`}>
-                      <span className="switch-slider" />
-                    </div>
-                  </button>
+                  <ToggleCard
+                    icon={<Icons.IconMap size={16} />}
+                    title="Interactive GPS Map"
+                    description="Enable /map view showing photo locations on a world map"
+                    checked={settings.map === true}
+                    onToggle={() => update('map', !settings.map)}
+                  />
 
-                  <button
-                    type="button"
-                    className={`admin-toggle-card ${settings.proofing?.enabled !== false ? 'active' : ''}`}
-                    onClick={() => update('proofing.enabled', settings.proofing?.enabled === false)}
-                  >
-                    <div className="toggle-card-info">
-                      <span className="toggle-card-title">
-                        <Icons.IconHeart size={16} /> Client Proofing &amp; Favorites
-                      </span>
-                      <span className="toggle-card-desc">
-                        Allow visitors &amp; clients to heart, filter, and export favorite photo
-                        selections
-                      </span>
-                    </div>
-                    <div
-                      className={`switch-toggle ${settings.proofing?.enabled !== false ? 'on' : ''}`}
-                    >
-                      <span className="switch-slider" />
-                    </div>
-                  </button>
+                  <ToggleCard
+                    icon={<Icons.IconHeart size={16} />}
+                    title="Client Proofing & Favorites"
+                    description="Allow visitors & clients to heart, filter, and export favorite photo selections"
+                    checked={settings.proofing?.enabled !== false}
+                    onToggle={() =>
+                      update('proofing.enabled', settings.proofing?.enabled === false)
+                    }
+                  />
                 </div>
               </FeatureGroup>
 
@@ -913,23 +1122,13 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                 description="Cookieless and self-hosted — nothing leaves your server."
               >
                 <div className="admin-toggle-cards-grid">
-                  <button
-                    type="button"
-                    className={`admin-toggle-card ${settings.analytics !== false ? 'active' : ''}`}
-                    onClick={() => update('analytics', settings.analytics === false)}
-                  >
-                    <div className="toggle-card-info">
-                      <span className="toggle-card-title">
-                        <Icons.IconBarChart size={16} /> Analytics Tracking
-                      </span>
-                      <span className="toggle-card-desc">
-                        Collect anonymous privacy-friendly visit statistics
-                      </span>
-                    </div>
-                    <div className={`switch-toggle ${settings.analytics !== false ? 'on' : ''}`}>
-                      <span className="switch-slider" />
-                    </div>
-                  </button>
+                  <ToggleCard
+                    icon={<Icons.IconBarChart size={16} />}
+                    title="Analytics Tracking"
+                    description="Collect anonymous privacy-friendly visit statistics"
+                    checked={settings.analytics !== false}
+                    onToggle={() => update('analytics', settings.analytics === false)}
+                  />
                 </div>
               </FeatureGroup>
 
@@ -1027,62 +1226,25 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                 </p>
               </div>
 
-              <div className="admin-field">
-                <label>Preset</label>
-                <div className="preset-card-grid">
-                  {PRESETS.map((p) => {
-                    const info = THEME_INFO[p] || {
-                      label: p,
-                      desc: '',
-                      bg: '#fff',
-                      tile: '#eee',
-                      accent: '#333',
-                      font: 'System',
-                      type: 'sans' as const,
-                      radius: 0,
-                      frame: 'none' as const,
-                      gap: 4,
-                    };
-                    const isActive = (settings.theme?.preset || DEFAULT_PRESET) === p;
-                    return (
-                      <button
-                        key={p}
-                        type="button"
-                        className={`preset-card theme-preset-card ${isActive ? 'active' : ''}`}
-                        onClick={() => update('theme.preset', p)}
-                        style={
-                          {
-                            '--preset-accent': info.accent,
-                            '--preset-bg': info.bg,
-                            '--preset-tile': info.tile,
-                            '--preset-radius': `${info.radius}px`,
-                            '--preset-gap': `${info.gap}px`,
-                          } as React.CSSProperties
-                        }
-                      >
-                        <div className="preset-card-preview" data-frame={info.frame}>
-                          <div className="mini-header">
-                            <span className={`mini-specimen type-${info.type}`}>Aa</span>
-                            <span className="mini-line" />
-                          </div>
-                          <div className="mini-grid">
-                            <div className="mini-tile" />
-                            <div className="mini-tile" />
-                            <div className="mini-tile" />
-                          </div>
-                        </div>
-                        <div className="preset-card-info">
-                          <span className="preset-card-name">{info.label}</span>
-                          <span className="preset-card-desc">{info.desc}</span>
-                          <span className="preset-card-specs">
-                            {info.font} &middot; radius {info.radius} &middot; {info.frame}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <OptionGrid
+                label="Preset"
+                options={PRESET_OPTIONS}
+                value={settings.theme?.preset || DEFAULT_PRESET}
+                onSelect={(v) => update('theme.preset', v)}
+                cardClassName="theme-preset-card"
+                renderPreview={(o) => <PresetPreview value={o.value} />}
+                renderSpecs={(o) => <PresetSpecs value={o.value} />}
+                cardStyle={(o) => {
+                  const i = themeInfo(o.value);
+                  return {
+                    '--preset-accent': i.accent,
+                    '--preset-bg': i.bg,
+                    '--preset-tile': i.tile,
+                    '--preset-radius': `${i.radius}px`,
+                    '--preset-gap': `${i.gap}px`,
+                  } as React.CSSProperties;
+                }}
+              />
 
               <div className="admin-field">
                 <label>Color Mode</label>
@@ -1181,128 +1343,23 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                 </p>
               </div>
 
-              <div className="admin-field">
-                <label>Photo Frame</label>
-                <div className="preset-card-grid">
-                  {PHOTO_FRAMES.map((f) => {
-                    const info = {
-                      none: { label: 'None', desc: 'Flush image with crisp edges' },
-                      passepartout: {
-                        label: 'Passepartout',
-                        desc: 'Classic gallery matting border',
-                      },
-                      shadow: { label: 'Shadow', desc: 'Soft floating drop shadow' },
-                    }[f] || { label: f, desc: '' };
-                    const isActive = (settings.theme?.photoFrame || 'none') === f;
+              <OptionGrid
+                label="Photo Frame"
+                options={PHOTO_FRAME_OPTIONS}
+                value={settings.theme?.photoFrame || 'none'}
+                onSelect={(v) => update('theme.photoFrame', v)}
+                cardClassName="frame-card"
+                renderPreview={(o) => <PhotoFramePreview value={o.value} />}
+              />
 
-                    return (
-                      <button
-                        key={f}
-                        type="button"
-                        className={`preset-card frame-card ${isActive ? 'active' : ''}`}
-                        onClick={() => update('theme.photoFrame', f)}
-                      >
-                        <div className="frame-card-preview">
-                          <div className={`mini-frame-demo frame-${f}`}>
-                            <div className="mini-frame-photo" />
-                          </div>
-                        </div>
-                        <div className="preset-card-info">
-                          <span className="preset-card-name">{info.label}</span>
-                          <span className="preset-card-desc">{info.desc}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="admin-field">
-                <label>Hero Style</label>
-                <div className="preset-card-grid">
-                  {HERO_STYLES.map((s) => {
-                    const info = {
-                      split: { label: 'Split', desc: 'Side-by-side title & photo' },
-                      fullbleed: { label: 'Fullbleed', desc: 'Edge-to-edge full width banner' },
-                      minimal: { label: 'Minimal', desc: 'Centered title with subtle photo' },
-                      stacked: { label: 'Stacked', desc: 'Title stacked directly over photo' },
-                      typographic: { label: 'Typographic', desc: 'Oversized magazine masthead' },
-                      mosaic: { label: 'Mosaic', desc: 'Dynamic photo collage layout' },
-                      cover: {
-                        label: 'Cover (Experimental)',
-                        desc: 'Fullscreen splash with a single Enter link',
-                      },
-                    }[s] || { label: s, desc: '' };
-                    const isActive = (settings.theme?.heroStyle || 'split') === s;
-
-                    return (
-                      <button
-                        key={s}
-                        type="button"
-                        className={`preset-card hero-card ${isActive ? 'active' : ''}`}
-                        onClick={() => update('theme.heroStyle', s)}
-                      >
-                        <div className="hero-card-preview">
-                          <div className={`mini-hero-demo hero-demo-${s}`}>
-                            {s === 'split' && (
-                              <>
-                                <div className="hero-demo-text">
-                                  <div className="demo-line title" />
-                                  <div className="demo-line sub" />
-                                </div>
-                                <div className="hero-demo-photo" />
-                              </>
-                            )}
-                            {s === 'fullbleed' && (
-                              <div className="hero-demo-full">
-                                <div className="demo-line title light" />
-                              </div>
-                            )}
-                            {s === 'minimal' && (
-                              <>
-                                <div className="hero-demo-center-text">
-                                  <div className="demo-line title short" />
-                                </div>
-                                <div className="hero-demo-photo small" />
-                              </>
-                            )}
-                            {s === 'stacked' && (
-                              <>
-                                <div className="hero-demo-text">
-                                  <div className="demo-line title" />
-                                </div>
-                                <div className="hero-demo-photo banner" />
-                              </>
-                            )}
-                            {s === 'typographic' && (
-                              <>
-                                <div className="demo-line title giant" />
-                                <div className="hero-demo-grid2">
-                                  <div className="hero-demo-photo" />
-                                  <div className="hero-demo-photo" />
-                                </div>
-                              </>
-                            )}
-                            {s === 'mosaic' && (
-                              <div className="hero-demo-mosaic">
-                                <div className="hero-demo-photo big" />
-                                <div className="hero-demo-photo-col">
-                                  <div className="hero-demo-photo" />
-                                  <div className="hero-demo-photo" />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="preset-card-info">
-                          <span className="preset-card-name">{info.label}</span>
-                          <span className="preset-card-desc">{info.desc}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <OptionGrid
+                label="Hero Style"
+                options={HERO_STYLE_OPTIONS}
+                value={settings.theme?.heroStyle || 'split'}
+                onSelect={(v) => update('theme.heroStyle', v)}
+                cardClassName="hero-card"
+                renderPreview={(o) => <HeroStylePreview value={o.value} />}
+              />
 
               <div className="settings-section-divider" />
 
@@ -1316,43 +1373,21 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
               </div>
 
               <div className="admin-toggle-cards-grid">
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.theme?.grain === true ? 'active' : ''}`}
-                  onClick={() => update('theme.grain', !settings.theme?.grain)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconFilm size={16} /> Film Grain Texture
-                    </span>
-                    <span className="toggle-card-desc">
-                      Adds analog noise overlay across portfolio background
-                    </span>
-                  </div>
-                  <div className={`switch-toggle ${settings.theme?.grain === true ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                <ToggleCard
+                  icon={<Icons.IconFilm size={16} />}
+                  title="Film Grain Texture"
+                  description="Adds analog noise overlay across portfolio background"
+                  checked={settings.theme?.grain === true}
+                  onToggle={() => update('theme.grain', !settings.theme?.grain)}
+                />
 
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.theme?.headerDot !== false ? 'active' : ''}`}
-                  onClick={() => update('theme.headerDot', settings.theme?.headerDot === false)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconTarget size={16} /> Header Accent Dot
-                    </span>
-                    <span className="toggle-card-desc">
-                      Displays accent dot next to active section header
-                    </span>
-                  </div>
-                  <div
-                    className={`switch-toggle ${settings.theme?.headerDot !== false ? 'on' : ''}`}
-                  >
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                <ToggleCard
+                  icon={<Icons.IconTarget size={16} />}
+                  title="Header Accent Dot"
+                  description="Displays accent dot next to active section header"
+                  checked={settings.theme?.headerDot !== false}
+                  onToggle={() => update('theme.headerDot', settings.theme?.headerDot === false)}
+                />
               </div>
             </div>
           )}
@@ -1368,156 +1403,23 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                 </p>
               </div>
 
-              <div className="admin-field">
-                <label>Layout Algorithm</label>
-                <div className="preset-card-grid">
-                  {LAYOUTS.map((l) => {
-                    const info = {
-                      masonry: {
-                        label: 'Masonry',
-                        desc: 'Dynamic pinterest-style staggered columns',
-                      },
-                      uniform: { label: 'Uniform Grid', desc: 'Clean equal aspect ratio grid' },
-                      showcase: {
-                        label: 'Showcase',
-                        desc: 'Featured hero photos mixed with smaller tiles',
-                      },
-                      filmstrip: {
-                        label: 'Filmstrip',
-                        desc: 'Horizontal scrollable film strip timeline',
-                      },
-                      'editorial-flow': {
-                        label: 'Editorial Flow',
-                        desc: 'Magazine story layout with varying photo sizes',
-                      },
-                      justified: {
-                        label: 'Justified (Experimental)',
-                        desc: 'Equal-height rows that fill the full width',
-                      },
-                    }[l] || { label: l, desc: '' };
-                    const isActive = (settings.grid?.layout || 'masonry') === l;
+              <OptionGrid
+                label="Layout Algorithm"
+                options={LAYOUT_OPTIONS}
+                value={settings.grid?.layout || 'masonry'}
+                onSelect={(v) => update('grid.layout', v)}
+                cardClassName="grid-layout-card"
+                renderPreview={(o) => <LayoutPreview value={o.value} />}
+              />
 
-                    return (
-                      <button
-                        key={l}
-                        type="button"
-                        className={`preset-card grid-layout-card ${isActive ? 'active' : ''}`}
-                        onClick={() => update('grid.layout', l)}
-                      >
-                        <div className="grid-card-preview">
-                          <div className={`mini-layout-demo layout-demo-${l}`}>
-                            {l === 'masonry' && (
-                              <div className="demo-masonry-col-group">
-                                <div className="demo-col">
-                                  <div className="demo-tile h-high" />
-                                  <div className="demo-tile h-low" />
-                                </div>
-                                <div className="demo-col">
-                                  <div className="demo-tile h-low" />
-                                  <div className="demo-tile h-high" />
-                                </div>
-                                <div className="demo-col">
-                                  <div className="demo-tile h-med" />
-                                  <div className="demo-tile h-med" />
-                                </div>
-                              </div>
-                            )}
-                            {l === 'uniform' && (
-                              <div className="demo-uniform-grid">
-                                <div className="demo-tile" />
-                                <div className="demo-tile" />
-                                <div className="demo-tile" />
-                                <div className="demo-tile" />
-                                <div className="demo-tile" />
-                                <div className="demo-tile" />
-                              </div>
-                            )}
-                            {l === 'showcase' && (
-                              <div className="demo-showcase-grid">
-                                <div className="demo-tile demo-hero" />
-                                <div className="demo-col">
-                                  <div className="demo-tile" />
-                                  <div className="demo-tile" />
-                                </div>
-                              </div>
-                            )}
-                            {l === 'filmstrip' && (
-                              <div className="demo-filmstrip-row">
-                                <div className="demo-tile strip" />
-                                <div className="demo-tile strip" />
-                                <div className="demo-tile strip" />
-                              </div>
-                            )}
-                            {l === 'editorial-flow' && (
-                              <div className="demo-editorial-flow">
-                                <div className="demo-tile wide" />
-                                <div className="demo-row">
-                                  <div className="demo-tile" />
-                                  <div className="demo-tile" />
-                                </div>
-                              </div>
-                            )}
-                            {l === 'justified' && (
-                              <div className="demo-editorial-flow">
-                                <div className="demo-row">
-                                  <div className="demo-tile wide" />
-                                  <div className="demo-tile" />
-                                </div>
-                                <div className="demo-row">
-                                  <div className="demo-tile" />
-                                  <div className="demo-tile wide" />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="preset-card-info">
-                          <span className="preset-card-name">{info.label}</span>
-                          <span className="preset-card-desc">{info.desc}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="admin-field">
-                <label>Aspect Ratio</label>
-                <div className="preset-card-grid">
-                  {ASPECT_RATIOS.map((r) => {
-                    const info = {
-                      '1': { label: 'Square (1:1)', desc: '1:1 ratio square crops' },
-                      '3/2': { label: 'Landscape (3:2)', desc: 'Standard 35mm DSLR landscape' },
-                      '2/3': { label: 'Portrait (2:3)', desc: 'Vertical portrait orientation' },
-                      '16/9': { label: 'Cinema (16:9)', desc: 'Widescreen 16:9 cinematic ratio' },
-                      auto: {
-                        label: 'Original Auto',
-                        desc: 'Uncropped original image proportions',
-                      },
-                    }[r] || { label: r, desc: '' };
-                    const isActive = (settings.grid?.aspectRatio || '1') === r;
-
-                    return (
-                      <button
-                        key={r}
-                        type="button"
-                        className={`preset-card ratio-card ${isActive ? 'active' : ''}`}
-                        onClick={() => update('grid.aspectRatio', r)}
-                      >
-                        <div className="ratio-card-preview">
-                          <div className={`mini-aspect-box ratio-${r.replace('/', '-')}`}>
-                            <div className="mini-aspect-inner" />
-                          </div>
-                        </div>
-                        <div className="preset-card-info">
-                          <span className="preset-card-name">{info.label}</span>
-                          <span className="preset-card-desc">{info.desc}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <OptionGrid
+                label="Aspect Ratio"
+                options={ASPECT_RATIO_OPTIONS}
+                value={settings.grid?.aspectRatio || '1'}
+                onSelect={(v) => update('grid.aspectRatio', v)}
+                cardClassName="ratio-card"
+                renderPreview={(o) => <AspectRatioPreview value={o.value} />}
+              />
 
               <div className="settings-section-divider" />
 
@@ -1680,23 +1582,13 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
               </div>
 
               <div className="admin-toggle-cards-grid" style={{ marginBottom: '1.25rem' }}>
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.legal?.enabled === true ? 'active' : ''}`}
-                  onClick={() => update('legal.enabled', !settings.legal?.enabled)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconFileText size={16} /> Enable Impressum Page (/impressum)
-                    </span>
-                    <span className="toggle-card-desc">
-                      Automatically generates and links /impressum in footer
-                    </span>
-                  </div>
-                  <div className={`switch-toggle ${settings.legal?.enabled === true ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                <ToggleCard
+                  icon={<Icons.IconFileText size={16} />}
+                  title="Enable Impressum Page (/impressum)"
+                  description="Automatically generates and links /impressum in footer"
+                  checked={settings.legal?.enabled === true}
+                  onToggle={() => update('legal.enabled', !settings.legal?.enabled)}
+                />
               </div>
 
               {settings.legal?.enabled && (
@@ -1874,41 +1766,21 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
               </div>
 
               <div className="admin-toggle-cards-grid">
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.seo?.noIndex === true ? 'active' : ''}`}
-                  onClick={() => update('seo.noIndex', !settings.seo?.noIndex)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconBan size={16} /> noindex (Hide from Google)
-                    </span>
-                    <span className="toggle-card-desc">
-                      Instructs search engines NOT to index this site in search results
-                    </span>
-                  </div>
-                  <div className={`switch-toggle ${settings.seo?.noIndex === true ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                <ToggleCard
+                  icon={<Icons.IconBan size={16} />}
+                  title="noindex (Hide from Google)"
+                  description="Instructs search engines NOT to index this site in search results"
+                  checked={settings.seo?.noIndex === true}
+                  onToggle={() => update('seo.noIndex', !settings.seo?.noIndex)}
+                />
 
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.seo?.noFollow === true ? 'active' : ''}`}
-                  onClick={() => update('seo.noFollow', !settings.seo?.noFollow)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconLink size={16} /> nofollow (Block Link Following)
-                    </span>
-                    <span className="toggle-card-desc">
-                      Instructs search engine crawlers not to follow outgoing links
-                    </span>
-                  </div>
-                  <div className={`switch-toggle ${settings.seo?.noFollow === true ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                <ToggleCard
+                  icon={<Icons.IconLink size={16} />}
+                  title="nofollow (Block Link Following)"
+                  description="Instructs search engine crawlers not to follow outgoing links"
+                  checked={settings.seo?.noFollow === true}
+                  onToggle={() => update('seo.noFollow', !settings.seo?.noFollow)}
+                />
               </div>
             </div>
           )}
@@ -1954,49 +1826,25 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
               </div>
 
               <div className="admin-toggle-cards-grid">
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.protection?.disableRightClick === true ? 'active' : ''}`}
-                  onClick={() =>
+                <ToggleCard
+                  icon={<Icons.IconLock size={16} />}
+                  title="Disable Right-Click Menu"
+                  description="Prevents context menu on portfolio images to hinder unauthorized downloads"
+                  checked={settings.protection?.disableRightClick === true}
+                  onToggle={() =>
                     update('protection.disableRightClick', !settings.protection?.disableRightClick)
                   }
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconLock size={16} /> Disable Right-Click Menu
-                    </span>
-                    <span className="toggle-card-desc">
-                      Prevents context menu on portfolio images to hinder unauthorized downloads
-                    </span>
-                  </div>
-                  <div
-                    className={`switch-toggle ${settings.protection?.disableRightClick === true ? 'on' : ''}`}
-                  >
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                />
 
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.protection?.disableImageDrag === true ? 'active' : ''}`}
-                  onClick={() =>
+                <ToggleCard
+                  icon={<Icons.IconBan size={16} />}
+                  title="Disable Image Dragging"
+                  description="Prevents visitors from dragging images off the portfolio page"
+                  checked={settings.protection?.disableImageDrag === true}
+                  onToggle={() =>
                     update('protection.disableImageDrag', !settings.protection?.disableImageDrag)
                   }
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconBan size={16} /> Disable Image Dragging
-                    </span>
-                    <span className="toggle-card-desc">
-                      Prevents visitors from dragging images off the portfolio page
-                    </span>
-                  </div>
-                  <div
-                    className={`switch-toggle ${settings.protection?.disableImageDrag === true ? 'on' : ''}`}
-                  >
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                />
               </div>
 
               <div className="settings-section-divider" />
@@ -2011,25 +1859,13 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
               </div>
 
               <div className="admin-toggle-cards-grid" style={{ marginBottom: '1.25rem' }}>
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.watermark?.enabled === true ? 'active' : ''}`}
-                  onClick={() => update('watermark.enabled', !settings.watermark?.enabled)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconFrame size={16} /> Enable Watermark
-                    </span>
-                    <span className="toggle-card-desc">
-                      Overlay copyright text on portfolio image views
-                    </span>
-                  </div>
-                  <div
-                    className={`switch-toggle ${settings.watermark?.enabled === true ? 'on' : ''}`}
-                  >
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                <ToggleCard
+                  icon={<Icons.IconFrame size={16} />}
+                  title="Enable Watermark"
+                  description="Overlay copyright text on portfolio image views"
+                  checked={settings.watermark?.enabled === true}
+                  onToggle={() => update('watermark.enabled', !settings.watermark?.enabled)}
+                />
               </div>
 
               {settings.watermark?.enabled && (
