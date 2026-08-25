@@ -89,9 +89,10 @@ Releases up to and including v0.9.2 are documented in the
 - **Location precision, per album or per subpage**
   ([#469](https://github.com/ralksta/immich-folio/issues/469)).
   `location: exact | city | country | hidden`. The map is the only public GPS
-  surface, and a public album's marker sat at the mean of its photographs' coordinates — for an
-  album shot in one place, a garden, a studio, a client's home, that mean _is_
-  that place. Nobody chose that; it followed from the camera writing GPS.
+  surface, and a public album's marker sat at the mean of its photographs'
+  coordinates — for an album shot in one place, a garden, a studio, a client's
+  home, that mean _is_ that place. Nobody chose that; it followed from the
+  camera writing GPS.
 
   Coordinates are quantised server-side against a fixed global grid — city to
   0.05°, country to 1° — rather than jittered per request, which could be
@@ -127,10 +128,10 @@ Releases up to and including v0.9.2 are documented in the
 - **A subpage's album covers get their own grid**
   ([#523](https://github.com/ralksta/immich-folio/issues/523)). `coverGrid`
   sizes the cover tiles and nothing else; `grid` keeps the
-  `global < subpage < album` precedence for the photos. Until now a subpage had a single `grid` key
-  that both consumers read, so a gap typed into the field labelled **Album Cover
-  Grid** silently retuned every photo grid on the page and overrode Settings ›
-  Grid.
+  `global < subpage < album` precedence for the photos. Until now a subpage had
+  a single `grid` key that both consumers read, so a gap typed into the field
+  labelled **Album Cover Grid** silently retuned every photo grid on the page
+  and overrode Settings › Grid.
 
   A `gallery.yaml` written before the split has no `coverGrid`, so the covers
   fall back to `grid` and such a page renders exactly as it did. The page
