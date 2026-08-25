@@ -55,7 +55,6 @@ import {
   checkAuthSecret,
   checkImmichCalls,
   checkPasswords,
-  checkWritable,
   worstLevel,
   type AlbumRef,
   type DoctorFinding,
@@ -264,23 +263,113 @@ export function frontmatterPassword(markdown: string): string | null {
   return null;
 }
 
-/** Content paths that exist but refuse writes. Absent is fine — see the route. */
-export function findUnwritable(contentDir: string): string[] {
-  const unwritable: string[] = [];
+export interface UnwritablePath {
+  /** As the report names it, e.g. `content/.backups`. */
+  label: string;
+  /** Owner of the path, so the report can say whose permission problem it is. */
+  ownerUid: number;
+}
+
+/**
+ * Content paths that exist but refuse writes. Absent is fine — see the route.
+ *
+ * The owner comes back with each path because "not writable" from a terminal
+ * is only half a finding: the panel asks as the app's own user, a CLI asks as
+ * whoever typed the command, and on a Docker deployment those differ (#551).
+ */
+export function findUnwritable(contentDir: string): UnwritablePath[] {
+  const unwritable: UnwritablePath[] = [];
   for (const dir of ['', '.backups', 'journal']) {
     const target = path.join(contentDir, dir);
     try {
       fs.accessSync(target, fs.constants.W_OK);
     } catch {
       try {
-        fs.statSync(target);
-        unwritable.push(`content/${dir}`.replace(/\/$/, ''));
+        const stat = fs.statSync(target);
+        unwritable.push({ label: `content/${dir}`.replace(/\/$/, ''), ownerUid: stat.uid });
       } catch {
         // Not created yet: the app makes it on first write.
       }
     }
   }
   return unwritable;
+}
+
+/** The uid this process runs as, or null where the platform has none. */
+export function currentUid(): number | null {
+  return typeof process.getuid === 'function' ? process.getuid() : null;
+}
+
+/**
+ * The writability finding, in the CLI's own words.
+ *
+ * `checkWritable()` in lib/admin/doctor.ts says "saving from the admin panel
+ * will fail", which is true where it runs — inside the app, as the app's user.
+ * A CLI tests whoever typed the command. Run from the host against a container
+ * that writes as uid 1001, that produced an error on a deployment with nothing
+ * wrong with it, and the obvious reaction (chown the volume from the host) is
+ * the one change that would actually break the container's access (#551).
+ *
+ * So the level follows what the answer is worth:
+ *
+ * - running as the owner — the app's own user, or a bare-metal install — the
+ *   result is about the app, and stays an error.
+ * - anyone else: reported, attributed, and left in NOTES, because the CLI
+ *   cannot tell whether the user it tested is the one that matters.
+ *
+ * The id stays `content-writable`, so the panel and the CLI still name the
+ * same check.
+ */
+export function reportWritable(unwritable: UnwritablePath[], uid: number | null): CliFinding {
+  if (!unwritable.length) {
+    return {
+      id: 'content-writable',
+      level: 'ok',
+      title: 'content/ is writable',
+      detail: 'Config, journal and backups can be saved.',
+    };
+  }
+
+  const labels = unwritable.map((u) => u.label).join(', ');
+  const count = unwritable.length;
+  const noun = `${count} content ${count === 1 ? 'path is' : 'paths are'} not writable`;
+
+  // No getuid(): Windows. Nothing can be attributed, so nothing is claimed.
+  if (uid === null) {
+    return {
+      id: 'content-writable',
+      level: 'ok',
+      note: true,
+      title: `${noun} for this user`,
+      detail:
+        'Checked as the account running this command, which may not be the account the app ' +
+        `runs as. If it is, saving from the admin panel will fail, and so will backups: ${labels}`,
+    };
+  }
+
+  if (unwritable.every((u) => u.ownerUid === uid)) {
+    return {
+      id: 'content-writable',
+      level: 'error',
+      title: noun,
+      detail:
+        'Saving from the admin panel will fail, and so will backups. Check the ownership of the ' +
+        `mounted volume: ${labels}`,
+    };
+  }
+
+  const owners = [...new Set(unwritable.map((u) => u.ownerUid))].join(', ');
+  return {
+    id: 'content-writable',
+    level: 'ok',
+    note: true,
+    title: `${noun} by uid ${uid} — but ${count === 1 ? 'it is' : 'they are'} owned by uid ${owners}`,
+    detail:
+      'Checked as the user running this command, not as the user the app runs as. The paths ' +
+      `belong to uid ${owners}, which can write them; the Docker image runs the app as uid 1001. ` +
+      `This only matters if the app itself runs as uid ${uid}. To check as the app: ` +
+      `docker compose exec folio npm run doctor. Paths: ${labels}`,
+  };
 }
 
 // ── Report formatting ─────────────────────────────────────────────────────
@@ -294,16 +383,19 @@ const LEVEL_LABEL: Record<DoctorLevel, string> = {
 };
 
 /**
- * Findings the CLI reports without having checked anything.
+ * A finding, plus whether the CLI actually established it.
  *
- * They carry level `ok` so they cannot skew `worstLevel()` or the exit code,
+ * Notes carry level `ok` so they cannot skew `worstLevel()` or the exit code,
  * but listing them under PASSED would claim a check that never ran. They get
- * their own group instead. Membership is by `id` rather than by a field on
- * `DoctorFinding`, because the type is shared with the panel — where these
- * findings are real checks — and this is a fact about the terminal, not about
- * the finding.
+ * their own group instead. The flag lives here rather than on `DoctorFinding`
+ * because the type is shared with the panel, where the same checks are real —
+ * being unverifiable is a fact about the terminal, not about the finding.
+ *
+ * It is per finding rather than per id: `content-writable` is a note when the
+ * CLI ran as someone other than the owner, and a genuine error when it did not
+ * (#551).
  */
-const NOTE_IDS = new Set(['proxy-hops']);
+export type CliFinding = DoctorFinding & { note?: boolean };
 
 const NOTE_LABEL = 'NOTES';
 const NOTE_MARK = 'i';
@@ -343,17 +435,17 @@ export interface FormatOptions {
 }
 
 /** The whole report as one string, so it can be asserted on in a test. */
-export function formatReport(findings: DoctorFinding[], options: FormatOptions = {}): string {
+export function formatReport(findings: CliFinding[], options: FormatOptions = {}): string {
   const color = options.color ?? false;
   const width = Math.max(40, Math.min(options.width ?? 80, 120));
   const paint = (code: string, text: string) => (color ? `${code}${text}${RESET}` : text);
 
   const out: string[] = ['', paint(BOLD, 'Immich Folio — config doctor'), ''];
 
-  const notes = findings.filter((f) => NOTE_IDS.has(f.id));
-  const checks = findings.filter((f) => !NOTE_IDS.has(f.id));
+  const notes = findings.filter((f) => f.note === true);
+  const checks = findings.filter((f) => f.note !== true);
 
-  const group = (label: string, color: string, mark: string, group: DoctorFinding[]) => {
+  const group = (label: string, color: string, mark: string, group: CliFinding[]) => {
     if (!group.length) return;
     out.push(paint(color + BOLD, `${label} (${group.length})`));
     for (const finding of group) {
@@ -415,12 +507,13 @@ export function shouldUseColor(
  * that is not there — the CLI reports the configured value and says where the
  * real check lives.
  */
-function reportProxyHops(env: EnvLike): DoctorFinding {
+function reportProxyHops(env: EnvLike): CliFinding {
   const raw = env.TRUSTED_PROXY_HOPS;
   const hops = raw && !isNaN(parseInt(raw, 10)) ? Math.max(0, parseInt(raw, 10)) : 0;
   return {
     id: 'proxy-hops',
     level: 'ok',
+    note: true,
     title: `TRUSTED_PROXY_HOPS is ${hops}${raw ? '' : ' (unset)'} — not verifiable from the terminal`,
     detail:
       'Whether this is right can only be judged against a real request: the value says how far ' +
@@ -430,9 +523,9 @@ function reportProxyHops(env: EnvLike): DoctorFinding {
   };
 }
 
-async function gatherFindings(cwd: string, env: EnvLike): Promise<DoctorFinding[]> {
+async function gatherFindings(cwd: string, env: EnvLike): Promise<CliFinding[]> {
   const contentDir = env.INSTALL_CONTENT_DIR || path.join(cwd, 'content');
-  const findings: DoctorFinding[] = [];
+  const findings: CliFinding[] = [];
   const credentials = resolveCredentials(contentDir, env);
 
   findings.push(checkAuthSecret(credentials.authSecret || undefined));
@@ -612,7 +705,7 @@ async function gatherFindings(cwd: string, env: EnvLike): Promise<DoctorFinding[
         'run the doctor from the project root, or check that the volume is mounted.',
     });
   } else {
-    findings.push(checkWritable(findUnwritable(contentDir)));
+    findings.push(reportWritable(findUnwritable(contentDir), currentUid()));
   }
 
   return findings;
@@ -624,7 +717,7 @@ export async function main(
 ): Promise<number> {
   loadDotEnv(cwd, env);
 
-  let findings: DoctorFinding[];
+  let findings: CliFinding[];
   try {
     findings = await gatherFindings(cwd, env);
   } catch (error) {

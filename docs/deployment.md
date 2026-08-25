@@ -134,13 +134,26 @@ The exit code is the worst thing it found, so it can gate a deployment script:
 | `2`  | at least one error              |
 | `3`  | the doctor itself could not run |
 
-One check cannot run here: `TRUSTED_PROXY_HOPS` is judged against the
+Two findings are reported rather than judged. `content/` writability is tested
+as the user who typed the command, and on a Docker deployment that is not the
+user the app writes as — so when the paths belong to someone else, the CLI says
+whose they are and leaves it at that. Run it through the container to have it
+checked as the app itself:
+
+```bash
+docker compose exec folio npm run doctor
+```
+
+The other is `TRUSTED_PROXY_HOPS`, judged against the
 `X-Forwarded-For` chain of a live request, and a CLI has none. It reports the
 configured value and says so rather than guessing — use the Diagnostics panel,
-reached over your public URL, to have that one measured. It is printed under
-**NOTES** rather than among the passed checks, since nothing was verified, and
-counted separately in the summary line for the same reason. Notes never affect
-the exit code.
+reached over your public URL, to have that one measured.
+
+Both are printed under **NOTES** rather than among the passed checks, since
+nothing was established, and counted separately in the summary line for the
+same reason. Notes never affect the exit code. An unwritable path _does_ stay a
+plain error when the CLI runs as the owner, which is the case that is really
+about the app.
 
 Run from a checkout, it reads `.env.local` and `.env` the way `npm run dev`
 does; real environment variables and `content/install.json` are resolved in the

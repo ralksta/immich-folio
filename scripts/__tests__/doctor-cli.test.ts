@@ -3,15 +3,18 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import yaml from 'js-yaml';
+import type { CliFinding } from '../doctor.mts';
 import {
   EXIT_CODES,
   EXIT_INTERNAL,
   collectAlbumIds,
   collectPasswords,
   exitCodeFor,
+  currentUid,
   findUnwritable,
   formatReport,
   frontmatterPassword,
+  reportWritable,
   loadDotEnv,
   resolveCredentials,
   shouldUseColor,
@@ -242,6 +245,81 @@ describe('findUnwritable', () => {
   it('does not report a directory that has not been created yet', () => {
     expect(findUnwritable(tmpdir())).toEqual([]);
   });
+
+  it('reports the owner alongside a path it cannot write', () => {
+    const dir = tmpdir();
+    const backups = path.join(dir, '.backups');
+    fs.mkdirSync(backups);
+    fs.chmodSync(backups, 0o555);
+    try {
+      const found = findUnwritable(dir);
+      // Running as root, 0555 is still writable — the case cannot be staged.
+      if (currentUid() === 0) return;
+      expect(found).toHaveLength(1);
+      expect(found[0].label).toBe('content/.backups');
+      expect(found[0].ownerUid).toBe(fs.statSync(backups).uid);
+    } finally {
+      fs.chmodSync(backups, 0o755);
+    }
+  });
+});
+
+/**
+ * The CLI tests whoever typed the command; the panel tests the app's own user.
+ * On a Docker deployment those differ, and calling that an error accused a
+ * healthy install (#551).
+ */
+describe('reportWritable', () => {
+  const mine = { label: 'content/.backups', ownerUid: 1000 };
+  const theirs = { label: 'content/.backups', ownerUid: 1001 };
+
+  it('passes when everything is writable', () => {
+    const finding = reportWritable([], 1000);
+    expect(finding.level).toBe('ok');
+    expect(finding.note).toBeUndefined();
+    expect(finding.title).toBe('content/ is writable');
+  });
+
+  it('is a real error when the CLI runs as the owner', () => {
+    const finding = reportWritable([mine], 1000);
+    expect(finding.level).toBe('error');
+    expect(finding.note).toBeUndefined();
+    expect(finding.detail).toContain('Saving from the admin panel will fail');
+  });
+
+  it('is a note, not an error, when the owner is someone else', () => {
+    const finding = reportWritable([theirs], 1000);
+    expect(finding.level).toBe('ok');
+    expect(finding.note).toBe(true);
+    expect(finding.title).toContain('uid 1000');
+    expect(finding.title).toContain('uid 1001');
+    expect(finding.detail).toContain('docker compose exec');
+  });
+
+  it('does not downgrade a mixed result to a note', () => {
+    const finding = reportWritable([mine, theirs], 1000);
+    expect(finding.level).toBe('ok');
+    expect(finding.note).toBe(true);
+  });
+
+  it('claims nothing on a platform without uids', () => {
+    const finding = reportWritable([theirs], null);
+    expect(finding.level).toBe('ok');
+    expect(finding.note).toBe(true);
+    expect(finding.title).not.toContain('undefined');
+    expect(finding.detail).toContain('may not be the account the app');
+  });
+
+  it('keeps the id the panel uses, whatever the outcome', () => {
+    for (const finding of [
+      reportWritable([], 1000),
+      reportWritable([mine], 1000),
+      reportWritable([theirs], 1000),
+      reportWritable([theirs], null),
+    ]) {
+      expect(finding.id).toBe('content-writable');
+    }
+  });
 });
 
 describe('wrap', () => {
@@ -288,12 +366,20 @@ describe('formatReport', () => {
   // but the CLI never checked it — listing it under PASSED would claim a check
   // that did not run.
   describe('notes', () => {
-    const proxy: DoctorFinding = {
+    const proxy: CliFinding = {
       id: 'proxy-hops',
       level: 'ok',
+      note: true,
       title: 'TRUSTED_PROXY_HOPS is 0 (unset) — not verifiable from the terminal',
       detail: 'Open the Diagnostics panel to have it measured.',
     };
+
+    it('needs the flag, not the id: the same check can be a real finding', () => {
+      const notANote = { ...proxy, note: undefined };
+      const report = formatReport([notANote]);
+      expect(report).not.toContain('NOTES');
+      expect(report).toContain('PASSED (1)');
+    });
 
     it('lists a note in its own group rather than under PASSED', () => {
       const report = formatReport([...findings, proxy]);
