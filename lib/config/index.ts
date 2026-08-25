@@ -58,27 +58,54 @@ export function getConfigOrNull(): AppConfig | null {
   }
 }
 
-/** Converts raw YAML grid overrides into a typed partial GridConfig. */
-export function buildSubpageGrid(raw?: {
+interface RawGridOverrides {
   columns?: number;
   gap?: number;
   aspectRatio?: string;
   layout?: string;
-}): { grid: Partial<GridConfig> } | Record<string, never> {
-  if (!raw) return {};
+}
+
+/** Converts raw YAML grid overrides into a typed partial GridConfig. */
+function parseGridOverrides(raw: RawGridOverrides): Partial<GridConfig> {
   return {
-    grid: {
-      ...(raw.columns != null ? { columns: raw.columns } : {}),
-      ...(raw.gap != null ? { gap: raw.gap } : {}),
-      ...(raw.aspectRatio != null ? { aspectRatio: raw.aspectRatio } : {}),
-      ...(raw.layout != null
-        ? {
-            layout: (VALID_LAYOUTS.includes(raw.layout)
-              ? raw.layout
-              : 'masonry') as GridConfig['layout'],
-          }
-        : {}),
-    },
+    ...(raw.columns != null ? { columns: raw.columns } : {}),
+    ...(raw.gap != null ? { gap: raw.gap } : {}),
+    ...(raw.aspectRatio != null ? { aspectRatio: raw.aspectRatio } : {}),
+    ...(raw.layout != null
+      ? {
+          layout: (VALID_LAYOUTS.includes(raw.layout)
+            ? raw.layout
+            : 'masonry') as GridConfig['layout'],
+        }
+      : {}),
+  };
+}
+
+/** Converts raw YAML grid overrides into a typed partial GridConfig. */
+export function buildSubpageGrid(
+  raw?: RawGridOverrides,
+): { grid: Partial<GridConfig> } | Record<string, never> {
+  if (!raw) return {};
+  return { grid: parseGridOverrides(raw) };
+}
+
+/**
+ * The two grids a subpage can override, as one spread-able object.
+ *
+ * `grid` sizes the photos inside its albums, `coverGrid` the album-cover tiles
+ * on the page itself. They were a single key until #523, where the admin field
+ * labelled "Album Cover Grid" turned out to retune every photo grid on the page
+ * as well. A gallery.yaml written before the split has no `coverGrid`, so the
+ * covers fall back to `grid` and such a page renders exactly as it did.
+ */
+function buildSubpageGrids(
+  grid?: RawGridOverrides,
+  coverGrid?: RawGridOverrides,
+): { grid?: Partial<GridConfig>; coverGrid?: Partial<GridConfig> } {
+  const resolved = coverGrid ?? grid;
+  return {
+    ...buildSubpageGrid(grid),
+    ...(resolved ? { coverGrid: parseGridOverrides(resolved) } : {}),
   };
 }
 
@@ -353,7 +380,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         essayText: sp.essayText,
         enabled: sp.enabled !== false,
         hidden: sp.hidden === true,
-        ...buildSubpageGrid(sp.grid),
+        ...buildSubpageGrids(sp.grid, sp.coverGrid),
       };
     });
   } else if (gallery.subpages) {
@@ -384,7 +411,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         essayText: sp.essayText,
         enabled: sp.enabled !== false,
         hidden: sp.hidden === true,
-        ...buildSubpageGrid(sp.grid),
+        ...buildSubpageGrids(sp.grid, sp.coverGrid),
       };
     });
   }

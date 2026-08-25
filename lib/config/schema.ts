@@ -16,7 +16,13 @@ export interface SubpageConfig {
   albumIds: string[]; // flat list (all albums, incl. from sections)
   sections?: SubpageSectionConfig[];
   password?: string;
+  /** Photo grid for the albums on this page: global < subpage < album. */
   grid?: Partial<GridConfig>;
+  /**
+   * The album-cover tiles on this page. Falls back to `grid` when unset, which
+   * is what a pre-#523 gallery.yaml renders with (#523).
+   */
+  coverGrid?: Partial<GridConfig>;
   proofing?: boolean;
   essayFile?: string;
   essayText?: string;
@@ -30,6 +36,8 @@ export interface SubpageObjectValue {
   subtitle?: string;
   password?: string;
   grid?: Partial<GridConfig>;
+  /** Album-cover tiles only; falls back to `grid` when unset (#523). */
+  coverGrid?: Partial<GridConfig>;
   proofing?: boolean;
   essayFile?: string;
   essayText?: string;
@@ -95,6 +103,14 @@ export interface GridConfig {
 }
 
 /**
+ * Bounds for the photo grid, shared by the site-wide and per-subpage inputs so
+ * the two forms cannot offer different ranges for the same setting.
+ */
+export const PHOTO_GRID_COLUMNS_MIN = 1;
+export const PHOTO_GRID_COLUMNS_MAX = 6;
+export const PHOTO_GRID_GAP_MAX = 48;
+
+/**
  * Bounds for the album-cover grid on a subpage. Shared with the admin inputs so
  * the form and the renderer cannot drift apart.
  */
@@ -108,12 +124,16 @@ export const COVER_GRID_TABLET_COLUMNS_MAX = 2;
 /**
  * The CSS custom properties that size the album-cover grid on a subpage.
  *
- * `columns` follows the same config as the photo grids (global `settings.yaml`
- * < per-subpage override), so "3 columns" in the admin means three columns
- * everywhere. `gap` deliberately does not: each theme preset picks the cover
- * spacing as part of its look (1px monograph, 20px studio-modern), so the
- * variable is only emitted when a subpage sets `gap` explicitly — otherwise the
- * preset's own `--subpage-gap` stands.
+ * The overrides come from the subpage's own `coverGrid`, which sizes the cover
+ * tiles and nothing else — it used to be the same `grid` key the photos read,
+ * so a cover gap silently retuned every photo grid on the page (#523).
+ *
+ * `columns` still falls back to the global `settings.yaml` count, so a page
+ * that states nothing tiles its covers like its photos. `gap` deliberately does
+ * not: each theme preset picks the cover spacing as part of its look (1px
+ * monograph, 20px studio-modern), so the variable is only emitted when a
+ * subpage sets `gap` explicitly — otherwise the preset's own `--subpage-gap`
+ * stands.
  *
  * `--subpage-columns-tablet` is computed here rather than in CSS because
  * `repeat()` does not reliably accept a `min()` expression.
@@ -308,6 +328,13 @@ export interface GalleryYaml {
         /** Map precision inherited by every album here (#469). */
         location?: string;
         grid?: {
+          columns?: number;
+          gap?: number;
+          aspectRatio?: string;
+          layout?: string;
+        };
+        /** Album covers only; falls back to `grid` when unset (#523). */
+        coverGrid?: {
           columns?: number;
           gap?: number;
           aspectRatio?: string;

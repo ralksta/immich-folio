@@ -72,8 +72,9 @@ Group albums under custom URL paths (e.g. `/japan`, `/wedding-smith`).
 - **Name** — navigation label; the URL slug is derived from it
 - **Title / Subtitle** — page heading and subline
 - **Password** — protect the whole subpage
-- **Grid override** — layout settings for the photos on this page
+- **Page Layout Style** — the layout the photos on this page are shown in (masonry, uniform, showcase, …), or essay mode
 - **Album Cover Grid** — how the album covers are tiled: columns (empty = the site-wide grid setting) and gap in px (empty = the theme's own cover spacing). Hidden in essay mode
+- **Photo Grid (Albums On This Page)** — columns and gap for the photos inside those albums; empty follows _Settings › Grid_. Separate from the cover grid: one field used to size both until [#523](https://github.com/ralksta/immich-folio/issues/523)
 - **Enabled** — take the page offline without deleting it
 - **Hidden** _(experimental)_ — unlisted: reachable by direct link, absent from the navigation
 - **Essay** — turn the page into a photo essay, with a block editor for the text

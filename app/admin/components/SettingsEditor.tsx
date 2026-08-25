@@ -8,7 +8,13 @@ import SaveBar from './SaveBar';
 // Direct import from the theme module, not from '@/lib/config': the config
 // index pulls in `fs` and cannot be bundled into a client component.
 import { DEFAULT_PRESET } from '@/lib/config/theme';
-import { resolveExifDisplay, resolveWatermarkOpacity } from '@/lib/config/schema';
+import {
+  PHOTO_GRID_COLUMNS_MAX,
+  PHOTO_GRID_COLUMNS_MIN,
+  PHOTO_GRID_GAP_MAX,
+  resolveExifDisplay,
+  resolveWatermarkOpacity,
+} from '@/lib/config/schema';
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
 
 interface Settings {
@@ -1528,11 +1534,13 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
 
               <div className="admin-field-row">
                 <div className="admin-field">
-                  <label>Columns (1 - 6)</label>
+                  <label>
+                    Columns ({PHOTO_GRID_COLUMNS_MIN} - {PHOTO_GRID_COLUMNS_MAX})
+                  </label>
                   <input
                     type="number"
-                    min={1}
-                    max={6}
+                    min={PHOTO_GRID_COLUMNS_MIN}
+                    max={PHOTO_GRID_COLUMNS_MAX}
                     value={settings.grid?.columns ?? 3}
                     onChange={(e) => update('grid.columns', parseInt(e.target.value) || 3)}
                   />
@@ -1542,7 +1550,7 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                   <input
                     type="number"
                     min={0}
-                    max={48}
+                    max={PHOTO_GRID_GAP_MAX}
                     value={settings.grid?.gap ?? 12}
                     onChange={(e) => update('grid.gap', parseInt(e.target.value) || 0)}
                   />

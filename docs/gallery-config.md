@@ -110,20 +110,21 @@ subpages:
 
 ### Subpage Options
 
-| Key         | Type    | Description                                                                            |
-| ----------- | ------- | -------------------------------------------------------------------------------------- |
-| `name`      | string  | Navigation label; the URL slug is derived from it                                      |
-| `title`     | string  | Page heading, defaults to `name`                                                       |
-| `subtitle`  | string  | Subline under the heading                                                              |
-| `password`  | string  | Gates the whole subpage — see [Password Protection](#password-protection)              |
-| `albums`    | list    | Album UUIDs, optionally with [per-album options](#per-album-options)                   |
-| `sections`  | list    | Named groups of albums — see [Sections](#sections)                                     |
-| `grid`      | object  | Grid override for this page, photos and album covers — see [Grid Layout](#grid-layout) |
-| `proofing`  | boolean | Enables [client proofing](#client-proofing) on this page                               |
-| `essayFile` | string  | Render a Markdown essay instead of a grid — see [Journal & Photo Essays](journal.md)   |
-| `essayText` | string  | Essay Markdown inline; written by the admin block editor                               |
-| `enabled`   | boolean | `false` takes the page offline without deleting it                                     |
-| `hidden`    | boolean | **Experimental.** Reachable by direct link, but hidden from the navigation             |
+| Key         | Type    | Description                                                                                      |
+| ----------- | ------- | ------------------------------------------------------------------------------------------------ |
+| `name`      | string  | Navigation label; the URL slug is derived from it                                                |
+| `title`     | string  | Page heading, defaults to `name`                                                                 |
+| `subtitle`  | string  | Subline under the heading                                                                        |
+| `password`  | string  | Gates the whole subpage — see [Password Protection](#password-protection)                        |
+| `albums`    | list    | Album UUIDs, optionally with [per-album options](#per-album-options)                             |
+| `sections`  | list    | Named groups of albums — see [Sections](#sections)                                               |
+| `grid`      | object  | Grid override for the photos on this page — see [Grid Layout](#grid-layout)                      |
+| `coverGrid` | object  | Grid override for the album covers on this page — see [Album covers](#album-covers-on-a-subpage) |
+| `proofing`  | boolean | Enables [client proofing](#client-proofing) on this page                                         |
+| `essayFile` | string  | Render a Markdown essay instead of a grid — see [Journal & Photo Essays](journal.md)             |
+| `essayText` | string  | Essay Markdown inline; written by the admin block editor                                         |
+| `enabled`   | boolean | `false` takes the page offline without deleting it                                               |
+| `hidden`    | boolean | **Experimental.** Reachable by direct link, but hidden from the navigation                       |
 
 ```yaml
 subpages:
@@ -383,33 +384,47 @@ Available layouts: `masonry`, `uniform`, `showcase`, `filmstrip`,
 ### Album covers on a subpage
 
 A subpage with more than one album shows a grid of album covers rather than
-photos. That grid follows the same `columns` value — set it globally in
-`settings.yaml` or per page in `gallery.yaml`, and the covers are tiled the same
-way the photos are. Valid range is 1–6; below 1024px viewport width at most two
-covers share a row, and below 640px they stack.
+photos. That grid has its own key, `coverGrid`, which sizes the cover tiles and
+nothing else. `grid` next to it stays what it always was: the photos inside
+those albums.
+
+An unset `columns` falls back to the site-wide `grid.columns`, so a page that
+states nothing tiles its covers the way it tiles its photos. Valid range is 1–6;
+below 1024px viewport width at most two covers share a row, and below 640px they
+stack.
 
 `gap` is the deliberate exception: it does **not** cascade from the global
 setting to the covers. Every theme preset picks its own cover spacing as part of
 its look — 1px in `monograph`, 2px in `minimal` and `editorial`, 20px in
 `studio-modern` — and letting the site-wide photo gap through would flatten all
-of them into one look. Only an explicit `gap` on the subpage overrides the
-preset:
+of them into one look. Only an explicit `coverGrid.gap` overrides the preset:
 
 ```yaml
-# gallery.yaml — album covers on this page only
+# gallery.yaml — the two grids of one page, set independently
 subpages:
   - name: Editorial
-    grid:
+    coverGrid:
       columns: 3 # three covers per row (site-wide default otherwise)
       gap: 24 # overrides the theme's own cover spacing
+    grid:
+      columns: 4 # the photos inside each album
+      gap: 6
     albums:
       - '33333333-3333-3333-3333-333333333333'
       - '44444444-4444-4444-4444-444444444444'
 ```
 
-Both fields are editable per page in the admin panel under
-**Pages › _subpage_ › Album Cover Grid**; left empty they follow the site-wide
+Both are editable per page in the admin panel, under **Pages › _subpage_ ›
+Album Cover Grid** and **Photo Grid**; left empty they follow the site-wide
 setting and the theme respectively.
+
+> [!NOTE]
+> The covers and the photos shared a single `grid` key until
+> [#523](https://github.com/ralksta/immich-folio/issues/523), where a gap typed
+> into the admin's cover field turned out to retune every photo grid on the page
+> as well. A `gallery.yaml` that predates the split has no `coverGrid`, so the
+> covers fall back to `grid` and the page renders exactly as before; the first
+> save from the admin panel writes the two out separately.
 
 ## Site Behaviour
 

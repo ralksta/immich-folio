@@ -251,10 +251,10 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
   const resolveLayout = (overrides?: Partial<GridConfig>) =>
     overrides?.layout ?? config.grid.layout;
 
-  // The album-cover grid on a subpage takes its column count from the same
-  // config as the photo grids, so "3 columns" in the admin means three columns
-  // everywhere. `gap` deliberately does not follow the global setting — see
-  // buildCoverGridVars() for why.
+  // The album-cover grid on a subpage is sized by its own `coverGrid`, which
+  // touches nothing but the cover tiles (#523). An unset column count still
+  // falls back to the global one; `gap` deliberately does not follow the global
+  // setting — see buildCoverGridVars() for why.
   const buildCoverGridStyle = (overrides?: Partial<GridConfig>): React.CSSProperties =>
     buildCoverGridVars(overrides, config.grid.columns) as React.CSSProperties;
 
@@ -516,7 +516,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         albums={albumsWithHero}
         coverPlaceholders={coverPlaceholders}
         sections={result.subpage.sections}
-        gridStyle={buildCoverGridStyle(result.subpage.grid)}
+        gridStyle={buildCoverGridStyle(result.subpage.coverGrid)}
         {...(subpageIndex >= 0 ? { index: subpageIndex + 1 } : {})}
       />
     );
