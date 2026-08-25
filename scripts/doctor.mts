@@ -293,6 +293,22 @@ const LEVEL_LABEL: Record<DoctorLevel, string> = {
   ok: 'PASSED',
 };
 
+/**
+ * Findings the CLI reports without having checked anything.
+ *
+ * They carry level `ok` so they cannot skew `worstLevel()` or the exit code,
+ * but listing them under PASSED would claim a check that never ran. They get
+ * their own group instead. Membership is by `id` rather than by a field on
+ * `DoctorFinding`, because the type is shared with the panel — where these
+ * findings are real checks — and this is a fact about the terminal, not about
+ * the finding.
+ */
+const NOTE_IDS = new Set(['proxy-hops']);
+
+const NOTE_LABEL = 'NOTES';
+const NOTE_MARK = 'i';
+const NOTE_COLOR = '\x1b[36m';
+
 const LEVEL_MARK: Record<DoctorLevel, string> = { error: 'x', warn: '!', ok: 'v' };
 
 /** Hand-written, so the CLI needs no colour dependency. */
@@ -334,28 +350,43 @@ export function formatReport(findings: DoctorFinding[], options: FormatOptions =
 
   const out: string[] = ['', paint(BOLD, 'Immich Folio — config doctor'), ''];
 
-  for (const level of LEVEL_ORDER) {
-    const group = findings.filter((f) => f.level === level);
-    if (!group.length) continue;
+  const notes = findings.filter((f) => NOTE_IDS.has(f.id));
+  const checks = findings.filter((f) => !NOTE_IDS.has(f.id));
 
-    out.push(paint(LEVEL_COLOR[level] + BOLD, `${LEVEL_LABEL[level]} (${group.length})`));
+  const group = (label: string, color: string, mark: string, group: DoctorFinding[]) => {
+    if (!group.length) return;
+    out.push(paint(color + BOLD, `${label} (${group.length})`));
     for (const finding of group) {
-      out.push(`  ${paint(LEVEL_COLOR[level], LEVEL_MARK[level])} ${finding.title}`);
+      out.push(`  ${paint(color, mark)} ${finding.title}`);
       for (const line of wrap(finding.detail, width - 6, '    ')) {
         out.push(paint(DIM, line));
       }
       out.push('');
     }
+  };
+
+  for (const level of LEVEL_ORDER) {
+    // Notes sit between the warnings and the passes: they are not a problem,
+    // but they are the part of the report a reader still has to act on.
+    if (level === 'ok') group(NOTE_LABEL, NOTE_COLOR, NOTE_MARK, notes);
+    group(
+      LEVEL_LABEL[level],
+      LEVEL_COLOR[level],
+      LEVEL_MARK[level],
+      checks.filter((f) => f.level === level),
+    );
   }
 
-  const counts = LEVEL_ORDER.map((level) => findings.filter((f) => f.level === level).length);
+  const counts = LEVEL_ORDER.map((level) => checks.filter((f) => f.level === level).length);
   const [errors, warns, oks] = counts;
   out.push(
     paint(
       BOLD,
       `${errors} error${errors === 1 ? '' : 's'}, ` +
         `${warns} warning${warns === 1 ? '' : 's'}, ` +
-        `${oks} check${oks === 1 ? '' : 's'} passed.`,
+        `${oks} check${oks === 1 ? '' : 's'} passed` +
+        (notes.length ? `, ${notes.length} note${notes.length === 1 ? '' : 's'}` : '') +
+        `.`,
     ),
   );
   out.push('');

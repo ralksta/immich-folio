@@ -283,6 +283,45 @@ describe('formatReport', () => {
     expect(ansi.test(formatReport(findings))).toBe(false);
     expect(ansi.test(formatReport(findings, { color: true }))).toBe(true);
   });
+
+  // The proxy-hop finding carries level `ok` so it cannot skew the exit code,
+  // but the CLI never checked it — listing it under PASSED would claim a check
+  // that did not run.
+  describe('notes', () => {
+    const proxy: DoctorFinding = {
+      id: 'proxy-hops',
+      level: 'ok',
+      title: 'TRUSTED_PROXY_HOPS is 0 (unset) — not verifiable from the terminal',
+      detail: 'Open the Diagnostics panel to have it measured.',
+    };
+
+    it('lists a note in its own group rather than under PASSED', () => {
+      const report = formatReport([...findings, proxy]);
+      expect(report).toContain('NOTES (1)');
+      expect(report).toContain('PASSED (1)');
+      expect(report).toContain(proxy.title);
+      expect(report.indexOf(proxy.title)).toBeGreaterThan(report.indexOf('NOTES (1)'));
+      expect(report.indexOf(proxy.title)).toBeLessThan(report.indexOf('PASSED (1)'));
+    });
+
+    it('sits between the warnings and the passes', () => {
+      const report = formatReport([...findings, proxy]);
+      expect(report.indexOf('WARNINGS (1)')).toBeLessThan(report.indexOf('NOTES (1)'));
+      expect(report.indexOf('NOTES (1)')).toBeLessThan(report.indexOf('PASSED (1)'));
+    });
+
+    it('is counted separately, not as a passed check', () => {
+      expect(formatReport([...findings, proxy])).toContain(
+        '1 error, 1 warning, 1 check passed, 1 note.',
+      );
+    });
+
+    it('says nothing about notes when there are none', () => {
+      const report = formatReport(findings);
+      expect(report).not.toContain('NOTES');
+      expect(report).toContain('1 error, 1 warning, 1 check passed.');
+    });
+  });
 });
 
 describe('shouldUseColor', () => {
