@@ -11,6 +11,17 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Fixed
 
+- **Editing an essay paragraph no longer strips its italics and links**
+  ([#537](https://github.com/ralksta/immich-folio/issues/537)). The essay block
+  editor rendered its textarea from a stripped copy of the paragraph — it turned
+  `<strong>` into `**` and replaced every other tag, `<em>` and `<a>` included,
+  with nothing — and then wrote that stripped text straight back on the next
+  keystroke. Touching a paragraph destroyed its markup. The transform was a
+  partial re-implementation of the serializer, which converts the HTML back to
+  markdown on save and handles `<em>` correctly, so there was nothing to convert
+  in the editor at all. It now shows the value raw, as the journal editor
+  already did for the same data.
+
 - **The admin panel's switches and pickers announce their state.** The toggle
   cards and the five card pickers — theme preset, photo frame, hero style,
   layout, aspect ratio — showed which option was active by colour alone, with
