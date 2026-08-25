@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import * as Icons from './Icons';
 import SaveBar from './SaveBar';
+import { useUnsavedGuard } from './useUnsavedGuard';
 import ToggleCard from './fields/ToggleCard';
 import OptionGrid, { toOptions } from './fields/OptionGrid';
 // Direct import from the theme module, not from '@/lib/config': the config
@@ -676,17 +677,7 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleSaveRef]);
 
-  // ── Unsaved changes guard ────────────────────────────────────
-  useEffect(() => {
-    function handleBeforeUnload(e: BeforeUnloadEvent) {
-      if (dirty) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    }
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [dirty]);
+  useUnsavedGuard(dirty);
 
   async function loadSettings() {
     setLoading(true);

@@ -25,6 +25,7 @@ import {
 } from './Icons';
 import AssetPicker from './AssetPicker';
 import { BlockBadge } from './BlockBadge';
+import { useUnsavedGuard } from './useUnsavedGuard';
 import { EssayView } from '@/app/[...path]/EssayView';
 import type { PhotoItem } from '@/app/[...path]/PhotoGrid';
 import './journal-studio.css';
@@ -520,6 +521,8 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
       setSaving(false);
     }
   };
+
+  useUnsavedGuard(dirty);
 
   // Keyboard shortcut: Cmd+S / Ctrl+S
   useEffect(() => {

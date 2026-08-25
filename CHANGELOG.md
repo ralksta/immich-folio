@@ -11,6 +11,14 @@ Releases up to and including v0.9.2 are documented in the
 
 ### Fixed
 
+- **The journal editor warns before you close it with unsaved work**
+  ([#538](https://github.com/ralksta/immich-folio/issues/538)). It tracked
+  unsaved changes and used them to drive its save button, but registered no
+  `beforeunload` handler — so closing the tab mid-entry discarded the work
+  silently, while the same action in the page builder or the settings editor
+  asked first. Those two carried the guard as a copy each; all three now share
+  one, so a fourth editor cannot quietly be the next to forget it.
+
 - **Editing an essay paragraph no longer strips its italics and links**
   ([#537](https://github.com/ralksta/immich-folio/issues/537)). The essay block
   editor rendered its textarea from a stripped copy of the paragraph — it turned
