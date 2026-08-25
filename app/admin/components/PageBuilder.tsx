@@ -35,6 +35,9 @@ import {
   COVER_GRID_COLUMNS_MAX,
   COVER_GRID_COLUMNS_MIN,
   COVER_GRID_GAP_MAX,
+  PHOTO_GRID_COLUMNS_MAX,
+  PHOTO_GRID_COLUMNS_MIN,
+  PHOTO_GRID_GAP_MAX,
   slugify,
   type AlbumEntryObject,
 } from '@/lib/config/schema';
@@ -125,7 +128,24 @@ interface Subpage {
   essayFile?: string;
   sections?: Section[];
   albums: AlbumEntry[];
+  /** Photo grid for the albums on this page (and the page layout style). */
   grid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
+  /** The album-cover tiles on this page only (#523). */
+  coverGrid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
+}
+
+/**
+ * The cover grid a subpage renders with when its gallery.yaml predates #523.
+ *
+ * Back then one `grid` key sized both the covers and the photos, so the values
+ * a user typed into "Album Cover Grid" live there. Seeding the new field from
+ * them means the drawer shows what the page actually renders, and the first
+ * save writes the split out explicitly. Only the two keys the cover grid reads
+ * are carried over — `layout` and `aspectRatio` never reached the covers.
+ */
+function seedCoverGrid(grid: Subpage['grid']): Subpage['coverGrid'] {
+  if (!grid) return undefined;
+  return normalizeSubpageGrid({ columns: grid.columns, gap: grid.gap });
 }
 
 /**
@@ -554,6 +574,8 @@ export default function PageBuilder() {
             }))
           : undefined,
         grid: sp.grid as Subpage['grid'],
+        coverGrid:
+          (sp.coverGrid as Subpage['coverGrid']) ?? seedCoverGrid(sp.grid as Subpage['grid']),
       }));
     } else if (raw.subpages && typeof raw.subpages === 'object') {
       subpages = Object.entries(raw.subpages as Record<string, unknown>).map(([name, value]) => {
@@ -575,6 +597,8 @@ export default function PageBuilder() {
           ),
           sections: undefined,
           grid: sp.grid as Subpage['grid'],
+          coverGrid:
+            (sp.coverGrid as Subpage['coverGrid']) ?? seedCoverGrid(sp.grid as Subpage['grid']),
         };
       });
     }
@@ -611,6 +635,7 @@ export default function PageBuilder() {
         if (sp.essayText) entry.essayText = sp.essayText;
         if (sp.essayFile) entry.essayFile = sp.essayFile;
         if (sp.grid) entry.grid = sp.grid;
+        if (sp.coverGrid) entry.coverGrid = sp.coverGrid;
 
         if (sp.sections && sp.sections.length > 0) {
           entry.sections = sp.sections.map((sec) => {
@@ -1481,14 +1506,14 @@ export default function PageBuilder() {
                                       type="number"
                                       min={COVER_GRID_COLUMNS_MIN}
                                       max={COVER_GRID_COLUMNS_MAX}
-                                      value={sp.grid?.columns ?? ''}
+                                      value={sp.coverGrid?.columns ?? ''}
                                       placeholder="Columns (site default)"
                                       onChange={(e) => {
                                         const raw = e.target.value;
                                         const columns = raw === '' ? undefined : Number(raw);
                                         updateSubpage(spIndex, {
-                                          grid: normalizeSubpageGrid({
-                                            ...(sp.grid || {}),
+                                          coverGrid: normalizeSubpageGrid({
+                                            ...(sp.coverGrid || {}),
                                             columns:
                                               columns != null &&
                                               columns >= COVER_GRID_COLUMNS_MIN &&
@@ -1509,14 +1534,14 @@ export default function PageBuilder() {
                                       type="number"
                                       min={0}
                                       max={COVER_GRID_GAP_MAX}
-                                      value={sp.grid?.gap ?? ''}
+                                      value={sp.coverGrid?.gap ?? ''}
                                       placeholder="Gap in px (theme default)"
                                       onChange={(e) => {
                                         const raw = e.target.value;
                                         const gap = raw === '' ? undefined : Number(raw);
                                         updateSubpage(spIndex, {
-                                          grid: normalizeSubpageGrid({
-                                            ...(sp.grid || {}),
+                                          coverGrid: normalizeSubpageGrid({
+                                            ...(sp.coverGrid || {}),
                                             gap:
                                               gap != null && gap >= 0 && gap <= COVER_GRID_GAP_MAX
                                                 ? gap
@@ -1533,10 +1558,82 @@ export default function PageBuilder() {
                                     />
                                   </div>
                                   <p className="admin-field-hint">
-                                    Overrides how the album covers are tiled on this page. Leave the
-                                    column count empty to follow the site-wide grid setting, and the
-                                    gap empty to keep the theme&apos;s own spacing. Tablet widths
-                                    show at most two covers per row.
+                                    Overrides how the album covers are tiled on this page — the
+                                    photos inside the albums are not affected. Leave the column
+                                    count empty to follow the site-wide grid setting, and the gap
+                                    empty to keep the theme&apos;s own spacing. Tablet widths show
+                                    at most two covers per row.
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Photo grid — the albums opened from this page.
+                                  Separate from the cover grid above: one field
+                                  used to drive both, so a cover gap retuned
+                                  every photo grid on the page (#523). */}
+                              {sp.essayText == null && (
+                                <div className="admin-field" style={{ marginTop: '1rem' }}>
+                                  <label>Photo Grid (Albums On This Page)</label>
+                                  <div style={{ display: 'flex', gap: '12px' }}>
+                                    <input
+                                      type="number"
+                                      min={PHOTO_GRID_COLUMNS_MIN}
+                                      max={PHOTO_GRID_COLUMNS_MAX}
+                                      value={sp.grid?.columns ?? ''}
+                                      placeholder="Columns (site default)"
+                                      onChange={(e) => {
+                                        const raw = e.target.value;
+                                        const columns = raw === '' ? undefined : Number(raw);
+                                        updateSubpage(spIndex, {
+                                          grid: normalizeSubpageGrid({
+                                            ...(sp.grid || {}),
+                                            columns:
+                                              columns != null &&
+                                              columns >= PHOTO_GRID_COLUMNS_MIN &&
+                                              columns <= PHOTO_GRID_COLUMNS_MAX
+                                                ? columns
+                                                : undefined,
+                                          }),
+                                        });
+                                      }}
+                                      style={{
+                                        padding: '8px 12px',
+                                        borderRadius: '6px',
+                                        flex: 1,
+                                        fontSize: '0.9rem',
+                                      }}
+                                    />
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      max={PHOTO_GRID_GAP_MAX}
+                                      value={sp.grid?.gap ?? ''}
+                                      placeholder="Gap in px (theme default)"
+                                      onChange={(e) => {
+                                        const raw = e.target.value;
+                                        const gap = raw === '' ? undefined : Number(raw);
+                                        updateSubpage(spIndex, {
+                                          grid: normalizeSubpageGrid({
+                                            ...(sp.grid || {}),
+                                            gap:
+                                              gap != null && gap >= 0 && gap <= PHOTO_GRID_GAP_MAX
+                                                ? gap
+                                                : undefined,
+                                          }),
+                                        });
+                                      }}
+                                      style={{
+                                        padding: '8px 12px',
+                                        borderRadius: '6px',
+                                        flex: 1,
+                                        fontSize: '0.9rem',
+                                      }}
+                                    />
+                                  </div>
+                                  <p className="admin-field-hint">
+                                    How the photos inside every album on this page are laid out.
+                                    Leave both empty to follow Settings &rsaquo; Grid; a single
+                                    album can still override this in gallery.yaml.
                                   </p>
                                 </div>
                               )}
