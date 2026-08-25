@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import * as Icons from './Icons';
 import SaveBar from './SaveBar';
+import ToggleCard from './fields/ToggleCard';
 // Direct import from the theme module, not from '@/lib/config': the config
 // index pulls in `fs` and cannot be bundled into a client component.
 import { DEFAULT_PRESET } from '@/lib/config/theme';
@@ -720,61 +721,29 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                 description="Chrome the visitor sees on every page."
               >
                 <div className="admin-toggle-cards-grid">
-                  <button
-                    type="button"
-                    className={`admin-toggle-card ${settings.about?.enabled !== false ? 'active' : ''}`}
-                    onClick={() => update('about.enabled', settings.about?.enabled === false)}
-                  >
-                    <div className="toggle-card-info">
-                      <span className="toggle-card-title">
-                        <Icons.IconCamera size={16} /> About Page
-                      </span>
-                      <span className="toggle-card-desc">
-                        Show a portrait, bio, and gear section on your portfolio
-                      </span>
-                    </div>
-                    <div
-                      className={`switch-toggle ${settings.about?.enabled !== false ? 'on' : ''}`}
-                    >
-                      <span className="switch-slider" />
-                    </div>
-                  </button>
+                  <ToggleCard
+                    icon={<Icons.IconCamera size={16} />}
+                    title="About Page"
+                    description="Show a portrait, bio, and gear section on your portfolio"
+                    checked={settings.about?.enabled !== false}
+                    onToggle={() => update('about.enabled', settings.about?.enabled === false)}
+                  />
 
-                  <button
-                    type="button"
-                    className={`admin-toggle-card ${settings.transitions !== false ? 'active' : ''}`}
-                    onClick={() => update('transitions', settings.transitions === false)}
-                  >
-                    <div className="toggle-card-info">
-                      <span className="toggle-card-title">
-                        <Icons.IconSparkles size={16} /> Smooth Page Transitions
-                      </span>
-                      <span className="toggle-card-desc">
-                        Enable subtle fade-in animations between page navigation
-                      </span>
-                    </div>
-                    <div className={`switch-toggle ${settings.transitions !== false ? 'on' : ''}`}>
-                      <span className="switch-slider" />
-                    </div>
-                  </button>
+                  <ToggleCard
+                    icon={<Icons.IconSparkles size={16} />}
+                    title="Smooth Page Transitions"
+                    description="Enable subtle fade-in animations between page navigation"
+                    checked={settings.transitions !== false}
+                    onToggle={() => update('transitions', settings.transitions === false)}
+                  />
 
-                  <button
-                    type="button"
-                    className={`admin-toggle-card ${settings.scrollToTop !== false ? 'active' : ''}`}
-                    onClick={() => update('scrollToTop', settings.scrollToTop === false)}
-                  >
-                    <div className="toggle-card-info">
-                      <span className="toggle-card-title">
-                        <Icons.IconArrowUp size={16} /> Scroll-to-Top Button
-                      </span>
-                      <span className="toggle-card-desc">
-                        Show a floating arrow that returns visitors to the top of long pages
-                      </span>
-                    </div>
-                    <div className={`switch-toggle ${settings.scrollToTop !== false ? 'on' : ''}`}>
-                      <span className="switch-slider" />
-                    </div>
-                  </button>
+                  <ToggleCard
+                    icon={<Icons.IconArrowUp size={16} />}
+                    title="Scroll-to-Top Button"
+                    description="Show a floating arrow that returns visitors to the top of long pages"
+                    checked={settings.scrollToTop !== false}
+                    onToggle={() => update('scrollToTop', settings.scrollToTop === false)}
+                  />
                 </div>
               </FeatureGroup>
 
@@ -866,44 +835,23 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                 description="Optional pages and interactions."
               >
                 <div className="admin-toggle-cards-grid">
-                  <button
-                    type="button"
-                    className={`admin-toggle-card ${settings.map === true ? 'active' : ''}`}
-                    onClick={() => update('map', !settings.map)}
-                  >
-                    <div className="toggle-card-info">
-                      <span className="toggle-card-title">
-                        <Icons.IconMap size={16} /> Interactive GPS Map
-                      </span>
-                      <span className="toggle-card-desc">
-                        Enable /map view showing photo locations on a world map
-                      </span>
-                    </div>
-                    <div className={`switch-toggle ${settings.map === true ? 'on' : ''}`}>
-                      <span className="switch-slider" />
-                    </div>
-                  </button>
+                  <ToggleCard
+                    icon={<Icons.IconMap size={16} />}
+                    title="Interactive GPS Map"
+                    description="Enable /map view showing photo locations on a world map"
+                    checked={settings.map === true}
+                    onToggle={() => update('map', !settings.map)}
+                  />
 
-                  <button
-                    type="button"
-                    className={`admin-toggle-card ${settings.proofing?.enabled !== false ? 'active' : ''}`}
-                    onClick={() => update('proofing.enabled', settings.proofing?.enabled === false)}
-                  >
-                    <div className="toggle-card-info">
-                      <span className="toggle-card-title">
-                        <Icons.IconHeart size={16} /> Client Proofing &amp; Favorites
-                      </span>
-                      <span className="toggle-card-desc">
-                        Allow visitors &amp; clients to heart, filter, and export favorite photo
-                        selections
-                      </span>
-                    </div>
-                    <div
-                      className={`switch-toggle ${settings.proofing?.enabled !== false ? 'on' : ''}`}
-                    >
-                      <span className="switch-slider" />
-                    </div>
-                  </button>
+                  <ToggleCard
+                    icon={<Icons.IconHeart size={16} />}
+                    title="Client Proofing & Favorites"
+                    description="Allow visitors & clients to heart, filter, and export favorite photo selections"
+                    checked={settings.proofing?.enabled !== false}
+                    onToggle={() =>
+                      update('proofing.enabled', settings.proofing?.enabled === false)
+                    }
+                  />
                 </div>
               </FeatureGroup>
 
@@ -913,23 +861,13 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                 description="Cookieless and self-hosted — nothing leaves your server."
               >
                 <div className="admin-toggle-cards-grid">
-                  <button
-                    type="button"
-                    className={`admin-toggle-card ${settings.analytics !== false ? 'active' : ''}`}
-                    onClick={() => update('analytics', settings.analytics === false)}
-                  >
-                    <div className="toggle-card-info">
-                      <span className="toggle-card-title">
-                        <Icons.IconBarChart size={16} /> Analytics Tracking
-                      </span>
-                      <span className="toggle-card-desc">
-                        Collect anonymous privacy-friendly visit statistics
-                      </span>
-                    </div>
-                    <div className={`switch-toggle ${settings.analytics !== false ? 'on' : ''}`}>
-                      <span className="switch-slider" />
-                    </div>
-                  </button>
+                  <ToggleCard
+                    icon={<Icons.IconBarChart size={16} />}
+                    title="Analytics Tracking"
+                    description="Collect anonymous privacy-friendly visit statistics"
+                    checked={settings.analytics !== false}
+                    onToggle={() => update('analytics', settings.analytics === false)}
+                  />
                 </div>
               </FeatureGroup>
 
@@ -1316,43 +1254,21 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
               </div>
 
               <div className="admin-toggle-cards-grid">
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.theme?.grain === true ? 'active' : ''}`}
-                  onClick={() => update('theme.grain', !settings.theme?.grain)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconFilm size={16} /> Film Grain Texture
-                    </span>
-                    <span className="toggle-card-desc">
-                      Adds analog noise overlay across portfolio background
-                    </span>
-                  </div>
-                  <div className={`switch-toggle ${settings.theme?.grain === true ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                <ToggleCard
+                  icon={<Icons.IconFilm size={16} />}
+                  title="Film Grain Texture"
+                  description="Adds analog noise overlay across portfolio background"
+                  checked={settings.theme?.grain === true}
+                  onToggle={() => update('theme.grain', !settings.theme?.grain)}
+                />
 
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.theme?.headerDot !== false ? 'active' : ''}`}
-                  onClick={() => update('theme.headerDot', settings.theme?.headerDot === false)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconTarget size={16} /> Header Accent Dot
-                    </span>
-                    <span className="toggle-card-desc">
-                      Displays accent dot next to active section header
-                    </span>
-                  </div>
-                  <div
-                    className={`switch-toggle ${settings.theme?.headerDot !== false ? 'on' : ''}`}
-                  >
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                <ToggleCard
+                  icon={<Icons.IconTarget size={16} />}
+                  title="Header Accent Dot"
+                  description="Displays accent dot next to active section header"
+                  checked={settings.theme?.headerDot !== false}
+                  onToggle={() => update('theme.headerDot', settings.theme?.headerDot === false)}
+                />
               </div>
             </div>
           )}
@@ -1680,23 +1596,13 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
               </div>
 
               <div className="admin-toggle-cards-grid" style={{ marginBottom: '1.25rem' }}>
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.legal?.enabled === true ? 'active' : ''}`}
-                  onClick={() => update('legal.enabled', !settings.legal?.enabled)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconFileText size={16} /> Enable Impressum Page (/impressum)
-                    </span>
-                    <span className="toggle-card-desc">
-                      Automatically generates and links /impressum in footer
-                    </span>
-                  </div>
-                  <div className={`switch-toggle ${settings.legal?.enabled === true ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                <ToggleCard
+                  icon={<Icons.IconFileText size={16} />}
+                  title="Enable Impressum Page (/impressum)"
+                  description="Automatically generates and links /impressum in footer"
+                  checked={settings.legal?.enabled === true}
+                  onToggle={() => update('legal.enabled', !settings.legal?.enabled)}
+                />
               </div>
 
               {settings.legal?.enabled && (
@@ -1874,41 +1780,21 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
               </div>
 
               <div className="admin-toggle-cards-grid">
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.seo?.noIndex === true ? 'active' : ''}`}
-                  onClick={() => update('seo.noIndex', !settings.seo?.noIndex)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconBan size={16} /> noindex (Hide from Google)
-                    </span>
-                    <span className="toggle-card-desc">
-                      Instructs search engines NOT to index this site in search results
-                    </span>
-                  </div>
-                  <div className={`switch-toggle ${settings.seo?.noIndex === true ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                <ToggleCard
+                  icon={<Icons.IconBan size={16} />}
+                  title="noindex (Hide from Google)"
+                  description="Instructs search engines NOT to index this site in search results"
+                  checked={settings.seo?.noIndex === true}
+                  onToggle={() => update('seo.noIndex', !settings.seo?.noIndex)}
+                />
 
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.seo?.noFollow === true ? 'active' : ''}`}
-                  onClick={() => update('seo.noFollow', !settings.seo?.noFollow)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconLink size={16} /> nofollow (Block Link Following)
-                    </span>
-                    <span className="toggle-card-desc">
-                      Instructs search engine crawlers not to follow outgoing links
-                    </span>
-                  </div>
-                  <div className={`switch-toggle ${settings.seo?.noFollow === true ? 'on' : ''}`}>
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                <ToggleCard
+                  icon={<Icons.IconLink size={16} />}
+                  title="nofollow (Block Link Following)"
+                  description="Instructs search engine crawlers not to follow outgoing links"
+                  checked={settings.seo?.noFollow === true}
+                  onToggle={() => update('seo.noFollow', !settings.seo?.noFollow)}
+                />
               </div>
             </div>
           )}
@@ -1954,49 +1840,25 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
               </div>
 
               <div className="admin-toggle-cards-grid">
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.protection?.disableRightClick === true ? 'active' : ''}`}
-                  onClick={() =>
+                <ToggleCard
+                  icon={<Icons.IconLock size={16} />}
+                  title="Disable Right-Click Menu"
+                  description="Prevents context menu on portfolio images to hinder unauthorized downloads"
+                  checked={settings.protection?.disableRightClick === true}
+                  onToggle={() =>
                     update('protection.disableRightClick', !settings.protection?.disableRightClick)
                   }
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconLock size={16} /> Disable Right-Click Menu
-                    </span>
-                    <span className="toggle-card-desc">
-                      Prevents context menu on portfolio images to hinder unauthorized downloads
-                    </span>
-                  </div>
-                  <div
-                    className={`switch-toggle ${settings.protection?.disableRightClick === true ? 'on' : ''}`}
-                  >
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                />
 
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.protection?.disableImageDrag === true ? 'active' : ''}`}
-                  onClick={() =>
+                <ToggleCard
+                  icon={<Icons.IconBan size={16} />}
+                  title="Disable Image Dragging"
+                  description="Prevents visitors from dragging images off the portfolio page"
+                  checked={settings.protection?.disableImageDrag === true}
+                  onToggle={() =>
                     update('protection.disableImageDrag', !settings.protection?.disableImageDrag)
                   }
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconBan size={16} /> Disable Image Dragging
-                    </span>
-                    <span className="toggle-card-desc">
-                      Prevents visitors from dragging images off the portfolio page
-                    </span>
-                  </div>
-                  <div
-                    className={`switch-toggle ${settings.protection?.disableImageDrag === true ? 'on' : ''}`}
-                  >
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                />
               </div>
 
               <div className="settings-section-divider" />
@@ -2011,25 +1873,13 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
               </div>
 
               <div className="admin-toggle-cards-grid" style={{ marginBottom: '1.25rem' }}>
-                <button
-                  type="button"
-                  className={`admin-toggle-card ${settings.watermark?.enabled === true ? 'active' : ''}`}
-                  onClick={() => update('watermark.enabled', !settings.watermark?.enabled)}
-                >
-                  <div className="toggle-card-info">
-                    <span className="toggle-card-title">
-                      <Icons.IconFrame size={16} /> Enable Watermark
-                    </span>
-                    <span className="toggle-card-desc">
-                      Overlay copyright text on portfolio image views
-                    </span>
-                  </div>
-                  <div
-                    className={`switch-toggle ${settings.watermark?.enabled === true ? 'on' : ''}`}
-                  >
-                    <span className="switch-slider" />
-                  </div>
-                </button>
+                <ToggleCard
+                  icon={<Icons.IconFrame size={16} />}
+                  title="Enable Watermark"
+                  description="Overlay copyright text on portfolio image views"
+                  checked={settings.watermark?.enabled === true}
+                  onToggle={() => update('watermark.enabled', !settings.watermark?.enabled)}
+                />
               </div>
 
               {settings.watermark?.enabled && (
