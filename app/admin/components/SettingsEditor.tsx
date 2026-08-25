@@ -103,56 +103,6 @@ const PHOTO_FRAMES = ['none', 'passepartout', 'shadow'];
 const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic', 'cover'];
 const ASPECT_RATIOS = ['1', '3/2', '2/3', '16/9', 'auto'];
 
-/** The theme picker's own metadata, with the fallback the card grid needs. */
-function themeInfo(value: string) {
-  return (
-    THEME_INFO[value] || {
-      label: value,
-      desc: '',
-      bg: '#fff',
-      tile: '#eee',
-      accent: '#333',
-      font: 'System',
-      type: 'sans' as const,
-      radius: 0,
-      frame: 'none' as const,
-      gap: 4,
-    }
-  );
-}
-
-const PRESET_OPTIONS = PRESETS.map((value) => ({
-  value,
-  label: themeInfo(value).label,
-  desc: themeInfo(value).desc,
-}));
-
-function PresetPreview({ value }: { value: string }) {
-  const i = themeInfo(value);
-  return (
-    <div className="preset-card-preview" data-frame={i.frame}>
-      <div className="mini-header">
-        <span className={`mini-specimen type-${i.type}`}>Aa</span>
-        <span className="mini-line" />
-      </div>
-      <div className="mini-grid">
-        <div className="mini-tile" />
-        <div className="mini-tile" />
-        <div className="mini-tile" />
-      </div>
-    </div>
-  );
-}
-
-function PresetSpecs({ value }: { value: string }) {
-  const i = themeInfo(value);
-  return (
-    <span className="preset-card-specs">
-      {i.font} &middot; radius {i.radius} &middot; {i.frame}
-    </span>
-  );
-}
-
 const PHOTO_FRAME_INFO: Record<string, { label: string; desc: string }> = {
   none: { label: 'None', desc: 'Flush image with crisp edges' },
   passepartout: {
@@ -468,6 +418,62 @@ const THEME_INFO: Record<
     gap: 5,
   },
 };
+
+/* The preset group sits below THEME_INFO on purpose. PRESET_OPTIONS is built
+   at module evaluation and reads it through themeInfo(); declared above, it
+   hit the temporal dead zone and the whole Settings page failed to load with
+   "Cannot access 'THEME_INFO' before initialization". tsc does not catch it
+   because the read goes through a hoisted function, and a production build
+   succeeds because the module is only evaluated in the browser (#542). */
+/** The theme picker's own metadata, with the fallback the card grid needs. */
+function themeInfo(value: string) {
+  return (
+    THEME_INFO[value] || {
+      label: value,
+      desc: '',
+      bg: '#fff',
+      tile: '#eee',
+      accent: '#333',
+      font: 'System',
+      type: 'sans' as const,
+      radius: 0,
+      frame: 'none' as const,
+      gap: 4,
+    }
+  );
+}
+
+const PRESET_OPTIONS = PRESETS.map((value) => ({
+  value,
+  label: themeInfo(value).label,
+  desc: themeInfo(value).desc,
+}));
+
+function PresetPreview({ value }: { value: string }) {
+  const i = themeInfo(value);
+  return (
+    <div className="preset-card-preview" data-frame={i.frame}>
+      <div className="mini-header">
+        <span className={`mini-specimen type-${i.type}`}>Aa</span>
+        <span className="mini-line" />
+      </div>
+      <div className="mini-grid">
+        <div className="mini-tile" />
+        <div className="mini-tile" />
+        <div className="mini-tile" />
+      </div>
+    </div>
+  );
+}
+
+function PresetSpecs({ value }: { value: string }) {
+  const i = themeInfo(value);
+  return (
+    <span className="preset-card-specs">
+      {i.font} &middot; radius {i.radius} &middot; {i.frame}
+    </span>
+  );
+}
 
 const SETTINGS_SECTIONS = [
   { id: 'general', label: 'General' },
