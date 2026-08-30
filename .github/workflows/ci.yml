@@ -9,6 +9,12 @@ on:
     # at release time.
     branches: [main, dev]
 
+# Neither job writes anything back to the repository: they check out the
+# code, build it and report through the run itself. Read is all they need,
+# and declaring it here covers every job rather than each one separately.
+permissions:
+  contents: read
+
 # Cancel in-progress runs for the same PR / branch
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
