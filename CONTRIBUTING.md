@@ -44,6 +44,7 @@ cp content/gallery.yaml.example content/gallery.yaml
 # 4. Run
 npm run dev       # http://localhost:3000
 npm run build     # production build check
+npm run doctor    # check the configuration if something looks wrong
 ```
 
 ## Before submitting a PR

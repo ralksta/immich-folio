@@ -152,6 +152,10 @@ npm run dev
 
 </details>
 
+Something not coming up? `npm run doctor` checks the configuration from the
+terminal — no running app and no admin password needed. See
+[Config Doctor](docs/deployment.md#config-doctor).
+
 ## First-Run Setup
 
 A deployment with no `gallery.yaml` and no Immich credentials serves a setup

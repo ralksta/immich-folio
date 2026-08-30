@@ -1,0 +1,486 @@
+/* Hero grid, album grid, album hero field, subpage overview and detail, section cards. */
+/* Split out of admin.css (#533). Loaded from admin.css in a fixed order —
+   later sheets override earlier ones, so the order there is the cascade. */
+
+/* ── Page Builder ──────────────────────────────────────────── */
+
+.builder-section {
+  margin-bottom: 2rem;
+}
+
+.builder-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.builder-section-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.empty-hint {
+  color: var(--admin-text-muted);
+  font-size: 0.8rem;
+  font-style: italic;
+  padding: 0.75rem;
+  border: 1px dashed var(--admin-border);
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* Hero Grid */
+.hero-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.hero-tile {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--admin-bg-elevated);
+  border: 1px solid var(--admin-border);
+  transition: border-color 0.15s;
+}
+
+.hero-tile:hover {
+  border-color: var(--admin-border-hover);
+}
+
+.hero-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-tile-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  border: none;
+  color: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.hero-tile:hover .hero-tile-remove {
+  opacity: 1;
+}
+
+.hero-tile-remove:hover {
+  background: rgba(220, 40, 40, 0.8);
+}
+
+.hero-tile-index {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Album Grid */
+.album-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.album-tile {
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.album-tile:hover {
+  border-color: var(--admin-border-hover);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.album-tile-cover {
+  position: relative;
+  aspect-ratio: 1;
+  background: var(--admin-bg-elevated);
+  overflow: hidden;
+}
+
+.album-tile-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.album-tile-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.album-tile-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.album-tile:hover .album-tile-overlay {
+  opacity: 1;
+}
+
+.album-tile-btn {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.1s;
+}
+
+.album-tile-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.album-tile-info {
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.album-tile-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.album-tile-count {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+}
+
+.album-tile-details {
+  padding: 0.75rem;
+  border-top: 1px solid var(--admin-border);
+  background: var(--admin-bg);
+}
+
+/* Album Hero Field */
+.album-hero-field {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.album-hero-preview {
+  position: relative;
+  width: 80px;
+  height: 54px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid var(--admin-border);
+}
+
+.album-hero-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.album-hero-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.album-hero-empty {
+  font-size: 0.8rem;
+  color: var(--admin-text-muted);
+  font-style: italic;
+}
+
+.album-tile-uuid {
+  margin-top: 0.5rem;
+}
+
+.album-tile-uuid code {
+  font-size: 0.7rem;
+  color: var(--admin-text-muted);
+  word-break: break-all;
+}
+
+/* Subpage Overview Grid */
+.subpage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.subpage-tile {
+  position: relative;
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    transform 0.1s;
+}
+
+.subpage-tile:hover {
+  border-color: var(--admin-border-hover);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.subpage-tile.active {
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 1px var(--admin-accent);
+}
+
+.subpage-tile-cover {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: var(--admin-bg-elevated);
+  overflow: hidden;
+}
+
+.subpage-tile-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.subpage-tile-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.subpage-tile-info {
+  padding: 0.4rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.subpage-tile-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subpage-tile-meta {
+  font-size: 0.65rem;
+  color: var(--admin-text-muted);
+}
+
+/* Subpage Expanded Detail */
+.subpage-detail {
+  background: var(--admin-bg);
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  overflow: hidden;
+  animation: slideDown 0.15s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.subpage-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--admin-bg-raised);
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.subpage-detail-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.subpage-detail-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.subpage-move-btns {
+  display: flex;
+  gap: 0;
+}
+
+.subpage-move-btns .admin-btn-icon {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.3rem;
+}
+
+.subpage-name-input {
+  flex: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--admin-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+  transition: border-color 0.15s;
+}
+
+.subpage-name-input:hover {
+  border-color: var(--admin-border);
+}
+
+.subpage-name-input:focus {
+  outline: none;
+  border-color: var(--admin-border-focus);
+  background: var(--admin-bg-input);
+}
+
+.subpage-meta {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.subpage-albums {
+  padding: 0.75rem 1rem;
+}
+
+.subpage-albums-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.subpage-sections {
+  padding: 0 1rem 0.5rem;
+}
+
+.subpage-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--admin-border);
+}
+
+/* Section Card */
+.section-card {
+  background: var(--admin-bg-input);
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.section-title-input {
+  flex: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--admin-text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+}
+
+.section-title-input:focus {
+  outline: none;
+  border-color: var(--admin-border-hover);
+  background: var(--admin-bg);
+}
+
+.section-desc-input {
+  font-size: 0.8rem !important;
+  padding: 0.4rem 0.5rem !important;
+}

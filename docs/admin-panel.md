@@ -201,3 +201,8 @@ This is useful after making external changes to config files or when Immich data
 The panel reports the health of the installation: whether Immich answers, whether `gallery.yaml` and `settings.yaml` parse, the number of cached entries, and the backup count with the timestamp of the most recent one. `settings.yaml` is optional, so its absence is not a fault — only a file that exists and cannot be parsed counts as invalid. A check that could not run (an expired session, for example) is reported as such rather than as an outage.
 
 Separately, while you are logged in, the public site shows a diagnostic banner on any album Immich returns empty — the case that otherwise looks like a broken page to you and to nobody else.
+
+The same checks are available from the terminal as `npm run doctor`, which
+needs neither a running app nor this password — see
+[Config Doctor](deployment.md#config-doctor). Use it when the site does not
+come up far enough to reach this panel.

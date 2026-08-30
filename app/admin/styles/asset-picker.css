@@ -1,0 +1,168 @@
+/* The library search used to pick hero images. */
+/* Split out of admin.css (#533). Loaded from admin.css in a fixed order —
+   later sheets override earlier ones, so the order there is the cascade. */
+
+/* ── Asset Picker (Hero) ───────────────────────────────────── */
+
+.asset-picker-modal {
+  width: 100%;
+  max-width: 720px;
+  height: 85vh;
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.asset-picker-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.asset-picker-tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.7rem 1rem;
+  background: none;
+  border: none;
+  color: var(--admin-text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-bottom: 2px solid transparent;
+}
+
+.asset-picker-tab:hover {
+  color: var(--admin-text-secondary);
+  background: var(--admin-bg-elevated);
+}
+
+.asset-picker-tab.active {
+  color: var(--admin-text);
+  border-bottom-color: var(--admin-accent);
+}
+
+.asset-picker-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-auto-rows: min-content;
+  gap: 0.5rem;
+  align-content: start;
+}
+
+.asset-picker-loading {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+}
+
+.asset-picker-loading-more {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.asset-picker-tile {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--admin-bg-elevated);
+  border: 2px solid transparent;
+  transition:
+    border-color 0.15s,
+    transform 0.1s;
+}
+
+.asset-picker-tile:hover:not(.used) {
+  border-color: var(--admin-accent);
+  transform: scale(1.03);
+}
+
+.asset-picker-tile.used {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.asset-picker-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.asset-picker-used-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--admin-accent);
+  color: #000;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.asset-picker-fav-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  display: flex;
+  font-size: 0.85rem;
+  color: var(--admin-accent);
+  /* drop-shadow, not text-shadow: the badge is an inline SVG, not a glyph. */
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+}
+
+.asset-picker-uuid-section {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--admin-border);
+  background: var(--admin-bg);
+}
+
+.asset-picker-uuid-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.asset-picker-uuid-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: var(--admin-bg-input);
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  color: var(--admin-text);
+  font-size: 0.8rem;
+  font-family: monospace;
+}
+
+.asset-picker-uuid-input:focus {
+  outline: none;
+  border-color: var(--admin-border-focus);
+}
+
+.asset-picker-uuid-error {
+  font-size: 0.7rem;
+  color: var(--admin-error);
+  margin-top: 0.3rem;
+  display: block;
+}

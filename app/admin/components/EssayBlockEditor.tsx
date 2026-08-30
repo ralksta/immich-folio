@@ -241,13 +241,20 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
             </div>
           )}
 
-          {/* 2. PARAGRAPH BLOCK */}
+          {/* 2. PARAGRAPH BLOCK
+
+              The textarea shows `html` raw, as the journal editor does. It used
+              to strip the tags for display — `<strong>` to `**`, everything else
+              to nothing — while `onChange` wrote the stripped text straight back
+              into `html`. Italics, links, anything the markdown had produced was
+              destroyed by the act of editing the paragraph, and the two editors
+              disagreed about the same file. serializeJournalMarkdown() turns the
+              HTML back into markdown on save and handles `<em>` too, so there
+              was nothing to convert here in the first place. */}
           {block.type === 'paragraph' && (
             <textarea
               rows={3}
-              value={block.html.replace(/<[^>]+>/g, (t) =>
-                t.startsWith('<strong>') ? '**' : t.startsWith('</strong>') ? '**' : '',
-              )}
+              value={block.html}
               onChange={(e) => handleUpdateBlock(idx, { ...block, html: e.target.value })}
               placeholder="Write text paragraph... (**bold**, *italic* markdown supported)"
             />

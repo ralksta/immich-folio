@@ -1,0 +1,19 @@
+/* Favicon upload in Settings > General. */
+/* Split out of admin.css (#533). Loaded from admin.css in a fixed order —
+   later sheets override earlier ones, so the order there is the cascade. */
+
+/* ── Favicon upload (Settings › General) ─────────────────────── */
+
+.favicon-field {
+  margin-top: 1rem;
+}
+
+.favicon-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.favicon-row input[type='file'] {
+  font-size: 0.8rem;
+}

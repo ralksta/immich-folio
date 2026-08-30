@@ -1,0 +1,325 @@
+/* Subpage tile badges and hover actions, the editor sheet, the two-column layout shared by the editor sheets. */
+/* Split out of admin.css (#533). Loaded from admin.css in a fixed order —
+   later sheets override earlier ones, so the order there is the cascade. */
+
+/* ── Subpage Tile Badges & Hover Actions ─────────────────────── */
+.subpage-badge-protected {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  color: #ffca28;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 202, 40, 0.3);
+  z-index: 2;
+}
+
+.subpage-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.subpage-tile:hover .subpage-hover-overlay {
+  opacity: 1;
+}
+
+.hover-action-btn {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--admin-accent, #e60012);
+  padding: 0.4rem 0.85rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.subpage-tile-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.subpage-tile-slug {
+  font-size: 0.7rem;
+  color: var(--admin-text-muted);
+  font-family: var(--font-mono, monospace);
+  background: var(--admin-bg-input);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* ── Subpage Editor Sheet (centered two-column modal) ─────────── */
+/* z-index 999 is load-bearing: the album detail modal (1000) and the
+   portalled Listbox popup (1100) must stack above this sheet. */
+.subpage-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.subpage-drawer-container {
+  width: 100%;
+  max-width: 1100px;
+  max-height: 90vh;
+  background: var(--admin-bg-card, #181818);
+  border: 1px solid var(--admin-border, #333);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  /* No fill-mode: after the entry animation the computed transform must
+     return to none, so the container never becomes a containing block for
+     fixed-position descendants (Listbox popup measurement). */
+  animation: sheetIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes sheetIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.subpage-drawer-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--admin-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--admin-bg-raised);
+}
+
+.subpage-drawer-breadcrumb {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.subpage-drawer-title {
+  margin: 0.2rem 0 0 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.subpage-drawer-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.subpage-drawer-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  flex: 1;
+  /* Required so the flex child scrolls under max-height instead of growing */
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.subpage-drawer-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--admin-border);
+  background: var(--admin-bg-raised);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ── Shared two-column layout for admin editor sheets ─────────── */
+/* Used by the subpage editor and the album detail editor so both read as the
+   same surface. Columns always live inside their sheet's single body scroller
+   — never give a column its own overflow, a nested scroller clips the
+   portalled Listbox popup (see the .album-drawer-body note). */
+.admin-sheet-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* The subpage editor is asymmetric on purpose: the left column is a settings
+   form with a natural maximum, the right one holds the album list and wants
+   every pixel it can get. */
+.admin-sheet-columns--settings-aside {
+  grid-template-columns: minmax(380px, 460px) 1fr;
+}
+
+.admin-sheet-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.admin-sheet-col--divided {
+  border-left: 1px solid var(--admin-border);
+  padding-left: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .admin-sheet-columns,
+  .admin-sheet-columns--settings-aside {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .admin-sheet-col--divided {
+    border-left: none;
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .subpage-drawer-backdrop {
+    padding: 0;
+  }
+
+  .subpage-drawer-container {
+    max-width: none;
+    max-height: none;
+    height: 100dvh;
+    border-radius: 0;
+    border: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .subpage-drawer-container,
+  .subpage-drawer-backdrop {
+    animation: none;
+  }
+}
+
+/* Breadcrumb + title stack on the left of the drawer header. */
+.subpage-drawer-title-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* One thematic group of fields inside the drawer body. */
+.subpage-drawer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+}
+
+.subpage-drawer-section > .admin-field:only-child {
+  margin-bottom: 0;
+}
+
+/* Heading + hint at the top of a drawer section. */
+.drawer-section-heading h4 {
+  margin: 0;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drawer-section-heading p {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: var(--admin-text-muted);
+}
+
+/* Published / hidden marker, replacing the traffic-light emoji. */
+/* Named apart from the header badge's .status-dot, which is a different dot. */
+.page-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+  margin-right: 2px;
+}
+
+.page-status-dot.is-on {
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+}
+
+.page-status-dot.is-off {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-with-icon > input {
+  width: 100%;
+}
+
+.input-slug-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-slug-preview {
+  position: absolute;
+  right: 12px;
+  font-size: 0.75rem;
+  font-family: var(--font-mono, monospace);
+  color: var(--admin-text-muted);
+  pointer-events: none;
+  background: var(--admin-bg-elevated);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.password-input-wrapper input {
+  padding-left: 2.25rem !important;
+}

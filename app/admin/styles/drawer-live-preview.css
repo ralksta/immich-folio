@@ -1,0 +1,89 @@
+/* The read-only Live Preview tab inside the subpage drawer. */
+/* Split out of admin.css (#533). Loaded from admin.css in a fixed order —
+   later sheets override earlier ones, so the order there is the cascade. */
+
+/* ── Drawer Live Preview ────────────────────────────────────── */
+.drawer-live-preview-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+.preview-hero-banner {
+  text-align: center;
+  padding: 1.75rem 1rem;
+  background: var(--admin-bg-elevated);
+  border-radius: 12px;
+  border: 1px dashed var(--admin-border);
+}
+
+.preview-hero-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--admin-text);
+}
+
+.preview-hero-sub {
+  font-size: 0.82rem;
+  color: var(--admin-text-muted);
+  margin: 0.35rem 0 0;
+}
+
+.preview-section-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.preview-section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+  border-bottom: 1px solid var(--admin-border);
+  padding-bottom: 0.35rem;
+}
+
+.preview-section-desc {
+  font-size: 0.78rem;
+  color: var(--admin-text-muted);
+  margin: 0;
+}
+
+.preview-albums-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.75rem;
+}
+
+.preview-album-tile {
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-album-cover {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: var(--admin-bg-elevated);
+  overflow: hidden;
+}
+
+.preview-album-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-album-title {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.4rem 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

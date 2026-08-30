@@ -7,6 +7,138 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [0.14.0] — 2026-08-30
+
+### Added
+
+- **`npm run doctor` — the config doctor in the terminal**
+  ([#521](https://github.com/ralksta/immich-folio/issues/521)). The doctor
+  shipped in v0.12.0 as a panel in `/admin`. That is the wrong place for the
+  case it is best at: a deployment that will not come up, where there is no
+  panel to open and no admin password to get past. The same checks now run from
+  a terminal — `AUTH_SECRET`, whether the YAML parses, whether Immich answers
+  the three calls Folio depends on, whether every published album still exists
+  and is shared, whether a password is still plaintext or an unusable bcrypt
+  hash, and whether `content/` can be written.
+
+  It runs in the shipped image too, which is where it matters:
+
+  ```bash
+  docker compose exec folio npm run doctor
+  ```
+
+  The exit code is the worst thing it found — `0` clean, `1` warnings, `2`
+  errors, `3` the doctor itself could not run — so it can gate a deployment
+  script. No secret is ever printed, only whether something is set.
+
+  Two findings are reported rather than judged, and say so under their own
+  **NOTES** heading instead of being counted as passed checks:
+  `TRUSTED_PROXY_HOPS`, which can only be measured against a real request, and
+  `content/` writability, which is tested as whoever typed the command — on a
+  Docker deployment that is not the user the app writes as, so the report names
+  both and points back at `docker compose exec`. An unwritable path stays a
+  plain error when the CLI does run as the owner.
+
+  No check was reimplemented: the CLI calls the same functions as the panel and
+  only gathers their inputs differently. It needs no new dependency either —
+  Node strips the types itself, which works because those checks import nothing.
+
+- **CI loads the admin panel in a real browser.** A Playwright spec walks all
+  fourteen admin routes against a production build and fails on an error
+  boundary, a missing page body, or anything thrown during hydration. It exists
+  because of [#542](https://github.com/ralksta/immich-folio/issues/542): a
+  temporal-dead-zone error at module evaluation took the whole panel down while
+  the type check, the build and the unit tests all stayed green — none of them
+  evaluates a client module in a browser, which is the only place that bug is
+  visible. The spec was checked against the bug: with it reintroduced, the run
+  names every broken route and reports the original
+  `Cannot access 'THEME_INFO' before initialization`.
+
+### Changed
+
+- **The admin panel has a form-field layer**
+  ([#533](https://github.com/ralksta/immich-folio/issues/533)). Nothing changes
+  on screen; this is about what the panel costs to change. It had grown 171% in
+  thirty days, and three files were two thirds of it. Every field was
+  hand-written markup: the toggle card existed as fourteen copies, the five card
+  pickers as five hand-rolled grids, and the grid editor as two 58-line blocks
+  differing only in which config key they wrote. A new setting cost twenty lines
+  of copied markup, and changing how a field looks meant editing it fourteen
+  times.
+
+  `ToggleCard`, `OptionGrid` and `GridOverrideFields` replace those copies; the
+  subpage and album drawers moved out of `PageBuilder.tsx`, which went from
+  2,290 lines and 46 characters of indentation to 1,153 and 22; and `admin.css`
+  — 4,855 lines in one file — became a load order over twenty sheets named
+  after what they style. The CSS class names are untouched throughout, which is
+  what kept the appearance out of it.
+
+  Two things were deliberately left undone rather than half-done: adopting or
+  deleting the custom `Listbox` (a product decision about a keyboard model, not
+  a mechanical one), and a `Field` wrapper that would generate an id and wire
+  `htmlFor` — no admin label does today, so clicking one does not focus its
+  input. Both are written down on the issue.
+
+### Fixed
+
+- **`grid.gap` moves both axes, and two presets get their spacing back**
+  ([#513](https://github.com/ralksta/immich-folio/issues/513)). The earlier fix
+  changed the hardcoded `column-gap` in `editorial`, `minimal` and `monograph`
+  into a `--grid-gap` default, but left the hardcoded `margin-bottom` sitting a
+  few lines below it in the same three files. In the masonry layout that margin
+  _is_ the row spacing — a `column-count` layout has no `row-gap` — so the
+  setting moved the columns and left the rows pinned. It now derives from
+  `--grid-gap` like everything else. `monograph` keeps its rows deliberately
+  looser than its columns, so it derives the ratio instead of the value.
+
+  The same change also declared `--grid-gap: 12px` on the base grid, which
+  meant `classic` and `studio-modern` — which asked for `var(--grid-gap, 20px)`
+  — never reached their fallback and silently rendered at 12px from v0.12.0 on.
+  Both declare their 20px outright now, as the other presets do.
+
+  Verified in a browser rather than by reading the cascade: for all seven
+  presets, an explicit gap of 50px produces 50px on both axes (60px rows for
+  `monograph`), and with no gap set each preset renders its own intended
+  default.
+
+- **The dashboard status badge's colour and words agree**
+  ([#539](https://github.com/ralksta/immich-folio/issues/539)). The badge decided
+  its colour and its label through two separately-ordered nested ternaries over
+  the same four inputs, and they disagreed in two states: with Immich
+  unreachable _and_ the config doctor warning, the colour matched the warning
+  first and stayed neutral while the words read "System Degraded"; and a refresh
+  that followed an earlier error left the badge red under "Checking...". Both
+  are now decided together, most serious first, so a condition cannot be added
+  to one and forgotten in the other.
+
+- **The journal editor warns before you close it with unsaved work**
+  ([#538](https://github.com/ralksta/immich-folio/issues/538)). It tracked
+  unsaved changes and used them to drive its save button, but registered no
+  `beforeunload` handler — so closing the tab mid-entry discarded the work
+  silently, while the same action in the page builder or the settings editor
+  asked first. Those two carried the guard as a copy each; all three now share
+  one, so a fourth editor cannot quietly be the next to forget it.
+
+- **Editing an essay paragraph no longer strips its italics and links**
+  ([#537](https://github.com/ralksta/immich-folio/issues/537)). The essay block
+  editor rendered its textarea from a stripped copy of the paragraph — it turned
+  `<strong>` into `**` and replaced every other tag, `<em>` and `<a>` included,
+  with nothing — and then wrote that stripped text straight back on the next
+  keystroke. Touching a paragraph destroyed its markup. The transform was a
+  partial re-implementation of the serializer, which converts the HTML back to
+  markdown on save and handles `<em>` correctly, so there was nothing to convert
+  in the editor at all. It now shows the value raw, as the journal editor
+  already did for the same data.
+
+- **The admin panel's switches and pickers announce their state.** The toggle
+  cards and the five card pickers — theme preset, photo frame, hero style,
+  layout, aspect ratio — showed which option was active by colour alone, with
+  no `aria-pressed`, so a screen reader read a row of buttons without saying
+  which one was on. `SettingRow` already announced itself; the cards beside it
+  did not. Fixed while giving the panel a form-field layer
+  ([#533](https://github.com/ralksta/immich-folio/issues/533)), which is what
+  made it one change instead of nineteen.
+
 ## [0.13.0] — 2026-08-25
 
 ### Added
@@ -346,6 +478,11 @@ Releases up to and including v0.9.2 are documented in the
   That is what those three presets already rendered horizontally, so the visible
   change is that their rows finally match their columns. Sites that set `gap`
   are unaffected, and `classic` and `studio-modern` keep the 12px they had.
+
+  > **Correction.** Two claims above were wrong: the row spacing did _not_
+  > follow the setting in those three presets, and `classic` and
+  > `studio-modern` did not keep what they had — they dropped from 20px to
+  > 12px. Both were fixed later; see the entry under Unreleased.
 
 - **The Immich description can be switched off**
   ([#506](https://github.com/ralksta/immich-folio/issues/506)). It was served

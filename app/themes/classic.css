@@ -72,11 +72,11 @@
 
 /* Photo grid: warm passepartout, elegant hover */
 [data-preset='classic'] .photo-grid {
-  column-gap: var(--grid-gap, 20px);
-}
-
-[data-preset='classic'] .photo-grid__item {
-  margin-bottom: var(--grid-gap, 20px);
+  /* Declared, not a var() fallback. The base .photo-grid sets --grid-gap: 12px,
+     so `var(--grid-gap, 20px)` never reached its fallback and this preset
+     silently rendered at 12px from v0.12.0 on (#513). The base rules read
+     --grid-gap for both axes, so declaring it here is all this needs. */
+  --grid-gap: 20px;
 }
 
 [data-preset='classic'] .photo-grid__item:hover img {

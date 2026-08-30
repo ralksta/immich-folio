@@ -1,0 +1,126 @@
+/* Drag handles, the preview/slug line, the danger icon button, and the shared responsive rules. */
+/* Split out of admin.css (#533). Loaded from admin.css in a fixed order —
+   later sheets override earlier ones, so the order there is the cascade. */
+
+/* ── Drag Handles ──────────────────────────────────────────── */
+
+.hero-tile-drag,
+.album-tile-drag,
+.subpage-tile-drag {
+  position: absolute;
+  z-index: 5;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  border-radius: 4px;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.15s;
+  user-select: none;
+  touch-action: none;
+}
+
+.hero-tile-drag:active,
+.album-tile-drag:active,
+.subpage-tile-drag:active {
+  cursor: grabbing;
+}
+
+.hero-tile-drag {
+  top: 6px;
+  left: 6px;
+}
+
+.album-tile-drag {
+  top: 6px;
+  left: 6px;
+}
+
+.subpage-tile-drag {
+  top: 6px;
+  left: 6px;
+}
+
+.hero-tile:hover .hero-tile-drag,
+.album-tile:hover .album-tile-drag,
+.subpage-tile:hover .subpage-tile-drag {
+  opacity: 1;
+}
+
+/* ── Preview & Slug ───────────────────────────────────────────── */
+
+.subpage-slug-preview {
+  font-size: 0.72rem;
+  color: var(--admin-text-muted);
+  font-family: monospace;
+  padding: 0.15rem 0.4rem;
+  background: var(--admin-bg);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.save-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-btn-preview {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+  text-decoration: none;
+}
+
+/* ── Danger icon button ───────────────────────────────────────── */
+
+.admin-btn-icon-danger:hover {
+  color: var(--admin-error) !important;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .admin-main {
+    padding: 1rem 1rem 6rem;
+  }
+
+  .floating-save-bar {
+    bottom: 1rem;
+    width: calc(100% - 2rem);
+    padding: 0.625rem 0.875rem;
+    gap: 0.5rem;
+  }
+
+  .admin-header {
+    padding: 0.5rem 1rem;
+  }
+
+  .admin-header h1 {
+    display: none;
+  }
+
+  .settings-layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .settings-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 0;
+  }
+
+  .settings-nav-item {
+    white-space: nowrap;
+  }
+
+  .admin-field-row {
+    grid-template-columns: 1fr;
+  }
+}
