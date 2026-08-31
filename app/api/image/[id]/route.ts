@@ -14,6 +14,22 @@ import { decodeAssetId } from '@/lib/tokens';
 import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 import { siteLockResponse } from '@/lib/auth';
+import { blankRanges, findMetadataRanges } from '@/lib/metadataStrip';
+
+/**
+ * Bumping this changes every original's ETag, so a revalidating cache fetches
+ * the stripped bytes instead of replaying a pre-fix copy. Browsers hold these
+ * URLs as `immutable` and will not revalidate at all, so a real rollout also
+ * needs IMAGE_CACHE_VERSION bumped — that changes the URL itself.
+ */
+const STRIP_VERSION = 's1';
+
+/**
+ * Originals are buffered whole so their metadata can be blanked before a single
+ * byte reaches the client. Anything larger is not worth holding in memory; those
+ * fall back to the preview rendition, which Immich generates without EXIF.
+ */
+const MAX_STRIP_BYTES = 64 * 1024 * 1024;
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // ── Rate limiting ──────────────────────────────────
@@ -65,7 +81,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   // `immutable`, so this only matters after expiry or a cache eviction, but a
   // matching ETag across two different URLs would be wrong either way.
   const cacheVersion = request.nextUrl.searchParams.get('v') ?? '';
-  const etag = `W/"${token}-${size}${cacheVersion ? `-${cacheVersion}` : ''}"`;
+  const etag = `W/"${token}-${size}-${STRIP_VERSION}${cacheVersion ? `-${cacheVersion}` : ''}"`;
   if (request.headers.get('if-none-match') === etag) {
     return new NextResponse(null, {
       status: 304,
@@ -113,6 +129,57 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     contentType = 'application/octet-stream';
   }
 
+  // ── Metadaten aus Originalen entfernen ─────────────
+  // Das Asset-Token autorisiert das Bild, nicht die Groesse: ein aus dem
+  // oeffentlichen HTML gelesenes Thumbnail-Token plus ?size=original lieferte
+  // bis hierher die unveraenderte Datei — mitsamt GPS. app/api/exif haelt
+  // Koordinaten bewusst zurueck, und /api/map quantisiert sie; dieser Pfad ging
+  // an beidem vorbei. Nur die Metadaten-Bytes werden genullt, die Bilddaten
+  // bleiben bitgenau erhalten — deshalb kostet das keine Qualitaet.
+  let body: BodyInit = result.stream;
+  // Gesetzt, sobald wir gestrippte Bytes ausliefern — der Wert ist dann die
+  // maßgebliche Content-Length.
+  let strippedLength: number | null = null;
+  if (size === 'original') {
+    const declaredLength = result.contentLength ? parseInt(result.contentLength, 10) : NaN;
+    const zuGross = Number.isFinite(declaredLength) && declaredLength > MAX_STRIP_BYTES;
+
+    const raw = zuGross ? null : new Uint8Array(await new Response(result.stream).arrayBuffer());
+    const ranges =
+      raw && raw.length <= MAX_STRIP_BYTES ? findMetadataRanges(raw, contentType) : null;
+
+    if (raw && ranges) {
+      const blanked = blankRanges(raw, ranges);
+      strippedLength = blanked.byteLength;
+      // ArrayBuffer statt Uint8Array: nur der ist ein gueltiger BodyInit. Die
+      // Zusicherung ist sicher — die Bytes stammen aus Response.arrayBuffer(),
+      // also nie aus einem SharedArrayBuffer, den ArrayBufferLike mit einschliesst.
+      body = blanked.buffer.slice(
+        blanked.byteOffset,
+        blanked.byteOffset + blanked.byteLength,
+      ) as ArrayBuffer;
+    } else {
+      // Unbekanntes Format, kaputter Container oder zu gross: lieber die
+      // Vorschau ausliefern als ein Original, dessen Metadaten wir nicht
+      // sicher finden. Stillschweigend durchreichen war genau der Fehler.
+      console.warn(
+        `[Image API] Original von ${assetId} (${contentType}) nicht strippbar — liefere Preview.`,
+      );
+      const preview = await immich.streamAsset(assetId, 'preview');
+      if (!preview) {
+        return NextResponse.json(
+          { error: 'Asset not found' },
+          { status: 404, headers: { 'Cache-Control': 'no-store' } },
+        );
+      }
+      body = preview.stream;
+      contentType = preview.contentType.toLowerCase().startsWith('image/')
+        ? preview.contentType
+        : 'image/jpeg';
+      result = { ...preview, contentLength: preview.contentLength };
+    }
+  }
+
   const headers: Record<string, string> = {
     'Content-Type': contentType,
     // Images are immutable once uploaded to Immich — cache aggressively
@@ -121,9 +188,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     'X-RateLimit-Remaining': String(remaining),
   };
 
-  if (result.contentLength) {
+  // Das Nullen ist laengentreu, der Wert bleibt also gueltig; beim
+  // Preview-Fallback stammt er vom Preview-Abruf.
+  if (strippedLength !== null) {
+    headers['Content-Length'] = String(strippedLength);
+  } else if (result.contentLength) {
     headers['Content-Length'] = result.contentLength;
   }
 
-  return new NextResponse(result.stream, { headers });
+  return new NextResponse(body, { headers });
 }
