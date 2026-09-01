@@ -63,10 +63,10 @@ export function ProofingModal() {
         className="proofing-modal-card"
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'var(--bg-surface, #1e1e1e)',
-          color: 'var(--text-primary, #ffffff)',
+          background: 'var(--bg-card)',
+          color: 'var(--text-primary)',
           borderRadius: 'var(--radius-md, 12px)',
-          border: '1px solid var(--border-color, rgba(255,255,255,0.1))',
+          border: '1px solid var(--border-subtle)',
           padding: '1.5rem',
           maxWidth: '480px',
           width: '100%',
@@ -145,9 +145,9 @@ export function ProofingModal() {
               gap: '0.5rem',
               padding: '0.75rem 1rem',
               borderRadius: 'var(--radius-sm, 6px)',
-              background: 'rgba(255,255,255,0.1)',
+              background: 'var(--bg-card-hover)',
               color: 'inherit',
-              border: '1px solid rgba(255,255,255,0.15)',
+              border: '1px solid var(--border-subtle)',
               fontWeight: 500,
               cursor: 'pointer',
             }}
@@ -174,9 +174,9 @@ export function ProofingModal() {
                 gap: '0.5rem',
                 padding: '0.75rem 1rem',
                 borderRadius: 'var(--radius-sm, 6px)',
-                background: 'rgba(255,255,255,0.1)',
+                background: 'var(--bg-card-hover)',
                 color: 'inherit',
-                border: '1px solid rgba(255,255,255,0.15)',
+                border: '1px solid var(--border-subtle)',
                 fontWeight: 500,
                 cursor: 'pointer',
               }}
