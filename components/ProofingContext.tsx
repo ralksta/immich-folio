@@ -15,7 +15,11 @@ interface ProofingContextType {
   setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   getProofingUrl: () => string;
   getFormattedList: () => string;
+  /** Selected asset tokens in album order — the payload for a ZIP download. */
+  getSelectedTokens: () => string[];
   allowMailto: boolean;
+  /** The ZIP endpoint when the album offers downloads; undefined otherwise. */
+  downloadArchiveUrl?: string;
 }
 
 const ProofingContext = createContext<ProofingContextType | null>(null);
@@ -25,11 +29,13 @@ export function ProofingProvider({
   albumTokens = [],
   albumName = 'Gallery',
   allowMailto = true,
+  downloadArchiveUrl,
 }: {
   children: React.ReactNode;
   albumTokens?: string[];
   albumName?: string;
   allowMailto?: boolean;
+  downloadArchiveUrl?: string;
 }) {
   const t = useDictionary();
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -121,6 +127,8 @@ export function ProofingProvider({
     return url.toString();
   };
 
+  const getSelectedTokens = () => albumTokens.filter((token) => favorites.has(token));
+
   const getFormattedList = () => {
     const selectedIndices: number[] = [];
     albumTokens.forEach((token, index) => {
@@ -149,7 +157,9 @@ export function ProofingProvider({
         setIsModalOpen,
         getProofingUrl,
         getFormattedList,
+        getSelectedTokens,
         allowMailto,
+        downloadArchiveUrl,
       }}
     >
       {children}

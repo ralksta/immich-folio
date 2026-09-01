@@ -81,6 +81,14 @@ const GATED: { name: string; call: () => Promise<Response> }[] = [
     name: 'GET /api/og',
     call: async () => (await import('../og/route')).GET(request('/api/og?title=x') as never),
   },
+  {
+    name: 'GET /api/download/[album]/archive',
+    call: async () =>
+      (await import('../download/[album]/archive/route')).GET(
+        request('/api/download/tok/archive') as never,
+        { params: Promise.resolve({ album: 'tok' }) } as never,
+      ),
+  },
 ];
 
 describe('public content routes behind a locked site', () => {

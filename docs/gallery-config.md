@@ -203,6 +203,7 @@ albums:
       password: 'secure-password'
       heroImage: 'asset-uuid'
       sort: filename
+      download: true
 ```
 
 | Key             | Description                                                                   |
@@ -215,6 +216,7 @@ albums:
 | `assetOrder`    | Pinned asset UUIDs for `sort: manual`                                         |
 | `grid`          | **Experimental.** Grid override for this album only                           |
 | `coverPosition` | **Experimental.** Focal point for the cover crop                              |
+| `download`      | Offer originals for download — see [Originals download](#originals-download)  |
 
 ### Per-album grid (experimental)
 
@@ -243,6 +245,29 @@ albums:
 ```
 
 Useful when the automatic centre crop cuts off a horizon or a face.
+
+### Originals download
+
+Opt in per album with `download: true`. Off everywhere by default, and opt-in
+on purpose: a public portfolio should not start handing out full-resolution
+originals because one client gallery needed to.
+
+```yaml
+albums:
+  - 'album-uuid':
+      download: true
+```
+
+Once enabled, visitors get a **Download album** link in the album header (every
+original as a ZIP), and — where [client proofing](#client-proofing) is on — a
+**Download selected (.zip)** action in the export dialog that zips just the
+favourited photos.
+
+The download route re-checks the allowlist, the `download` flag, every password
+gate on a route to the album, and that each asset really belongs to that album,
+so an edited URL cannot reach anything else. The ZIP keeps the original
+filenames (deduplicated on collision) and is streamed, so album size does not
+drive memory use.
 
 ## Password Protection
 
@@ -566,6 +591,10 @@ dialog.
 The selection is encoded into the URL as a compact bitmask and mirrored into
 `localStorage`, so **nothing is stored server-side** and a set of picks can be
 shared, bookmarked, or sent back as a plain link.
+
+When an album also opts into [originals download](#originals-download), the
+export dialog gains a **Download selected (.zip)** action, and the album header
+a **Download album** link.
 
 Configured in `settings.yaml`:
 

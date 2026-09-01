@@ -13,6 +13,8 @@ export interface AlbumEntry {
   grid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
   /** EXPERIMENTAL: focal point for the cover crop, e.g. "50% 25%" or "top" */
   coverPosition?: string;
+  /** Offer originals for download (whole album + proofing selection as a ZIP). */
+  download?: boolean;
 }
 
 export interface Section {

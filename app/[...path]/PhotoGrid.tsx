@@ -57,6 +57,11 @@ interface PhotoGridProps {
   proofing?: boolean;
   /** Offer the "send by email" button in the proofing modal. */
   allowMailto?: boolean;
+  /**
+   * The ZIP endpoint for this album, when it offers downloads. Lets the
+   * proofing modal offer a "download selected" action (#475).
+   */
+  downloadArchiveUrl?: string;
 }
 
 function PhotoGridInner({
@@ -339,7 +344,11 @@ export function PhotoGrid(props: PhotoGridProps) {
   }
 
   return (
-    <ProofingProvider albumTokens={albumTokens} allowMailto={props.allowMailto ?? true}>
+    <ProofingProvider
+      albumTokens={albumTokens}
+      allowMailto={props.allowMailto ?? true}
+      downloadArchiveUrl={props.downloadArchiveUrl}
+    >
       <PhotoGridInner {...props} />
     </ProofingProvider>
   );

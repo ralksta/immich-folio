@@ -31,6 +31,12 @@ interface AlbumDetailViewProps {
   proofing?: boolean;
   /** Offer the "send by email" button in the proofing modal. */
   allowMailto?: boolean;
+  /**
+   * The ZIP endpoint for this album, when it offers downloads (#475). Renders a
+   * "download album" link in the header and lets the proofing modal offer a
+   * "download selected" action.
+   */
+  downloadArchiveUrl?: string;
   /** Neighbouring albums in the surrounding list, for the foot navigation. */
   nav?: AlbumNavPair;
   /** JSON-LD for this album, or null when no site URL is configured (#472). */
@@ -52,6 +58,7 @@ export function AlbumDetailView({
   showGear = true,
   proofing,
   allowMailto,
+  downloadArchiveUrl,
   nav,
   structuredData,
 }: AlbumDetailViewProps) {
@@ -87,6 +94,24 @@ export function AlbumDetailView({
             </p>
           )}
           {album.description && <p className="album-header__description">{album.description}</p>}
+          {downloadArchiveUrl && (
+            <a className="album-header__download" href={downloadArchiveUrl}>
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              {t.common.downloadAlbum}
+            </a>
+          )}
         </div>
         <p className="album-header__meta">
           <span className="album-header__meta-count">{t.common.photos(images.length)}</span>
@@ -102,6 +127,7 @@ export function AlbumDetailView({
         showExifPanel={showExifPanel}
         proofing={proofing}
         allowMailto={allowMailto}
+        downloadArchiveUrl={downloadArchiveUrl}
       />
       {nav && <AlbumNav {...nav} />}
     </>

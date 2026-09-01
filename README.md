@@ -65,6 +65,7 @@ A self-hosted portfolio powered by [Immich](https://immich.app). It acts as a **
 - **Subpage on/off toggle** — take a page offline without deleting it
 - **External navigation links** _(experimental)_ — point the header at a shop, a blog, or a social profile
 - **Client proofing** — clients favorite photos and export the selection; picks are encoded in the URL, nothing is stored server-side
+- **Originals delivery** — per-album opt-in lets visitors download a whole album or their proofing selection as a ZIP of the originals
 - **Lightbox watermark** — configurable overlay on fullscreen images
 - **Privacy-friendly analytics** — cookieless view counts, no third parties, can be switched off
 - **Dynamic OG images** — auto-generated social preview images per album

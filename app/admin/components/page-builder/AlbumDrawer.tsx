@@ -100,6 +100,43 @@ export default function AlbumDrawer({
                   />
                 </div>
               </div>
+
+              <div className="admin-field">
+                <label>Downloads</label>
+                <button
+                  type="button"
+                  className={`admin-toggle-card ${album.download ? 'active' : ''}`}
+                  onClick={() => onUpdate({ download: !album.download })}
+                  aria-pressed={!!album.download}
+                  style={{
+                    padding: '10px 14px',
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div className="toggle-card-info" style={{ textAlign: 'left' }}>
+                    <span
+                      className="toggle-card-title"
+                      style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center' }}
+                    >
+                      Allow original downloads
+                    </span>
+                    <span
+                      className="toggle-card-desc"
+                      style={{ fontSize: '0.8rem', display: 'block', opacity: 0.75 }}
+                    >
+                      Visitors can download the whole album or their selected photos as a ZIP
+                    </span>
+                  </div>
+                  <div className={`switch-toggle ${album.download ? 'on' : ''}`}>
+                    <span className="switch-slider" />
+                  </div>
+                </button>
+              </div>
             </div>
 
             <div className="admin-sheet-col admin-sheet-col--divided">

@@ -81,7 +81,8 @@ function hasAlbumOptions(entry: AlbumEntry): boolean {
     (entry.sort && entry.sort !== DEFAULT_ALBUM_SORT) ||
     entry.assetOrder?.length ||
     entry.grid ||
-    entry.coverPosition,
+    entry.coverPosition ||
+    entry.download,
   );
 }
 
@@ -101,6 +102,7 @@ function parseAlbumEntries(raw: RawAlbumEntry[] | undefined): AlbumEntry[] {
       assetOrder: value.assetOrder,
       grid: value.grid,
       coverPosition: value.coverPosition,
+      download: value.download === true,
     };
   });
 }
@@ -124,6 +126,7 @@ function serializeAlbumEntries(entries: AlbumEntry[]): RawAlbumEntry[] {
     if (entry.assetOrder?.length) val.assetOrder = entry.assetOrder;
     if (entry.grid) val.grid = entry.grid;
     if (entry.coverPosition) val.coverPosition = entry.coverPosition;
+    if (entry.download) val.download = true;
     return { [entry.id]: val };
   });
 }

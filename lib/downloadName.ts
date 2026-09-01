@@ -67,3 +67,25 @@ export function contentDisposition(name: string | undefined): string {
       .join('') || 'photo';
   return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(safe)}`;
 }
+
+/**
+ * The filename carried by a `Content-Disposition` header, or null.
+ *
+ * Client-safe (no `fs`/`crypto`): the proofing modal reads this off a download
+ * response so a ZIP fetched in the browser keeps the name the server chose
+ * rather than inventing a second one. Prefers the RFC 5987 `filename*` value,
+ * which preserves non-ASCII names.
+ */
+export function filenameFromContentDisposition(header: string | null): string | null {
+  if (!header) return null;
+  const star = /filename\*=UTF-8''([^;]+)/i.exec(header);
+  if (star?.[1]) {
+    try {
+      return decodeURIComponent(star[1]);
+    } catch {
+      return star[1];
+    }
+  }
+  const plain = /filename="?([^";]+)"?/i.exec(header);
+  return plain?.[1] ?? null;
+}
