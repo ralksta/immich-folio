@@ -36,6 +36,7 @@ export const en = {
     albumNavAria: 'Album navigation',
     loadingGallery: 'Loading gallery',
     loadingPhotos: 'Loading photos',
+    downloadAlbum: 'Download album',
   },
 
   home: {
@@ -170,6 +171,9 @@ export const en = {
     copyList: 'Copy Text List (#1, #2...)',
     listCopied: 'List Copied!',
     sendEmail: '✉️ Send Email to Photographer',
+    downloadSelected: 'Download selected (.zip)',
+    downloadingSelection: 'Preparing download…',
+    downloadFailed: 'Download failed. Please try again.',
     clearSelection: 'Clear Selection',
     confirmClear: 'Clear all selected favorites?',
     listEmpty: (albumName: string) => `${albumName}: No photos selected.`,

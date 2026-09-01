@@ -23,6 +23,7 @@ import {
   assetCaption,
   assetExifSummary,
   downloadUrl,
+  archiveUrl,
   assetAspectRatio,
 } from '@/lib/urls';
 import { encodeAssetId } from '@/lib/tokens';
@@ -338,6 +339,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         showGear={config.exif.camera}
         proofing={proofingFor(subpageData?.subpage)}
         allowMailto={config.proofing.allowMailto}
+        downloadArchiveUrl={config.albumDownloads[album.id] ? archiveUrl(album.id) : undefined}
         {...heroData}
       />
     );
@@ -475,6 +477,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
           showGear={config.exif.camera}
           proofing={proofingFor(result.subpage)}
           allowMailto={config.proofing.allowMailto}
+          downloadArchiveUrl={config.albumDownloads[album.id] ? archiveUrl(album.id) : undefined}
           {...heroData}
         />
       );
@@ -564,6 +567,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       showGear={config.exif.camera}
       proofing={proofingFor()}
       allowMailto={config.proofing.allowMailto}
+      downloadArchiveUrl={config.albumDownloads[album.id] ? archiveUrl(album.id) : undefined}
       {...heroData}
     />
   );

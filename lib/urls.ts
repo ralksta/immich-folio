@@ -108,6 +108,18 @@ export function downloadUrl(albumId: string, assetId: string): string {
 }
 
 /**
+ * The endpoint that streams an album (or a selection of its assets) as a ZIP.
+ *
+ * Carries only the album: the route re-checks the allowlist, the `download`
+ * opt-in and every password gate, exactly like the single-asset download. A
+ * `GET` returns the whole album; a `POST` with `{ "assets": [<token>, …] }`
+ * returns just those assets.
+ */
+export function archiveUrl(albumId: string): string {
+  return `/api/download/${encodeAssetId(albumId)}/archive`;
+}
+
+/**
  * The Immich asset description, trimmed, for use as image alt text.
  *
  * Gated on the `caption` EXIF group rather than served unconditionally. That

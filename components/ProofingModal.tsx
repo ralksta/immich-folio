@@ -3,12 +3,14 @@
 import React, { useState } from 'react';
 import { useProofing } from './ProofingContext';
 import { IconCheck, IconCopy, IconLink } from './Icons';
+import { filenameFromContentDisposition } from '@/lib/downloadName';
 import { useDictionary } from './I18nProvider';
 
 export function ProofingModal() {
   const t = useDictionary();
   const proofing = useProofing();
   const [copiedState, setCopiedState] = useState<'none' | 'link' | 'list'>('none');
+  const [downloadState, setDownloadState] = useState<'idle' | 'downloading' | 'error'>('idle');
 
   if (!proofing || !proofing.isModalOpen) return null;
 
@@ -17,8 +19,10 @@ export function ProofingModal() {
     setIsModalOpen,
     getProofingUrl,
     getFormattedList,
+    getSelectedTokens,
     clearFavorites,
     allowMailto,
+    downloadArchiveUrl,
   } = proofing;
 
   const handleCopyLink = () => {
@@ -41,6 +45,33 @@ export function ProofingModal() {
     const subject = encodeURIComponent(t.proofing.mailSubject(favorites.size));
     const body = encodeURIComponent(t.proofing.mailBody(getFormattedList(), getProofingUrl()));
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+
+  const handleDownloadSelection = async () => {
+    if (!downloadArchiveUrl || downloadState === 'downloading') return;
+    setDownloadState('downloading');
+    try {
+      const res = await fetch(downloadArchiveUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assets: getSelectedTokens() }),
+      });
+      if (!res.ok) throw new Error(`Download failed (${res.status})`);
+      const blob = await res.blob();
+      const filename =
+        filenameFromContentDisposition(res.headers.get('content-disposition')) || 'selection.zip';
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setDownloadState('idle');
+    } catch {
+      setDownloadState('error');
+    }
   };
 
   return (
@@ -107,6 +138,49 @@ export function ProofingModal() {
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {downloadArchiveUrl && (
+            <button
+              type="button"
+              onClick={handleDownloadSelection}
+              disabled={downloadState === 'downloading' || favorites.size === 0}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1rem',
+                borderRadius: 'var(--radius-sm, 6px)',
+                background: 'var(--accent, #e60012)',
+                color: '#fff',
+                border: 'none',
+                fontWeight: 500,
+                cursor: favorites.size === 0 ? 'not-allowed' : 'pointer',
+                opacity: favorites.size === 0 ? 0.6 : 1,
+              }}
+            >
+              <svg
+                aria-hidden="true"
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              {downloadState === 'downloading'
+                ? t.proofing.downloadingSelection
+                : downloadState === 'error'
+                  ? t.proofing.downloadFailed
+                  : t.proofing.downloadSelected}
+            </button>
+          )}
+
           <button
             type="button"
             onClick={handleCopyLink}
@@ -117,9 +191,9 @@ export function ProofingModal() {
               gap: '0.5rem',
               padding: '0.75rem 1rem',
               borderRadius: 'var(--radius-sm, 6px)',
-              background: 'var(--accent, #e60012)',
-              color: '#fff',
-              border: 'none',
+              background: 'rgba(255,255,255,0.1)',
+              color: 'inherit',
+              border: '1px solid rgba(255,255,255,0.15)',
               fontWeight: 500,
               cursor: 'pointer',
             }}
