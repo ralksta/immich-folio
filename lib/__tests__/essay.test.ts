@@ -142,4 +142,45 @@ A closing paragraph with **bold** details.`;
     expect(markdown).toContain('![photo-1:fullbleed](Caption)');
     expect(markdown).toContain('![p1, p2](Pair caption)');
   });
+
+  it('keeps a markdown link in the quote attribution for rendering (#559)', () => {
+    const markdown = '> Silence was absolute. -- [BBC Archive](https://example.com/archive)';
+    const parsed = parseEssayMarkdown(markdown);
+    const quote = parsed.blocks[0];
+    expect(quote.type).toBe('quote');
+    if (quote.type !== 'quote') return;
+
+    // The attribution stays Markdown; EssayView renders it with
+    // renderInlineMarkdown, which is what turns the link into an anchor.
+    expect(quote.author).toBe('[BBC Archive](https://example.com/archive)');
+    expect(renderInlineMarkdown(quote.author!)).toContain(
+      '<a href="https://example.com/archive" target="_blank" rel="noopener noreferrer">BBC Archive</a>',
+    );
+  });
+
+  it('survives a serialize/parse round-trip without losing the attribution link', () => {
+    const markdown = '> Silence was absolute. -- [BBC Archive](https://example.com/archive)';
+
+    const once = serializeEssayMarkdown(parseEssayMarkdown(markdown));
+    expect(once).toContain('> Silence was absolute. -- [BBC Archive](https://example.com/archive)');
+
+    const reparsed = parseEssayMarkdown(once);
+    const quote = reparsed.blocks[0];
+    expect(quote.type).toBe('quote');
+    if (quote.type === 'quote') {
+      expect(quote.author).toBe('[BBC Archive](https://example.com/archive)');
+    }
+  });
+
+  it('does not turn an unsafe scheme in the attribution into a link', () => {
+    const markdown = '> Careful. -- [x](javascript:alert(1))';
+    const parsed = parseEssayMarkdown(markdown);
+    const quote = parsed.blocks[0];
+    expect(quote.type).toBe('quote');
+    if (quote.type !== 'quote') return;
+
+    const html = renderInlineMarkdown(quote.author!);
+    expect(html).not.toContain('<a');
+    expect(html).not.toContain('href');
+  });
 });

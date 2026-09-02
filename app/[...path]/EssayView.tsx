@@ -7,6 +7,7 @@ import { ProofingProvider, useProofing } from '@/components/ProofingContext';
 import { ProofingModal } from '@/components/ProofingModal';
 import { FadeIn } from '@/components/FadeIn';
 import type { ParsedEssay, EssayBlock } from '@/lib/essay';
+import { renderInlineMarkdown } from '@/lib/essay';
 import type { PhotoItem } from './PhotoGrid';
 import './essay.css';
 import { useDictionary } from '@/components/I18nProvider';
@@ -78,7 +79,15 @@ function EssayViewContent({
         return (
           <blockquote key={idx} className="essay-quote">
             <div dangerouslySetInnerHTML={{ __html: block.text }} />
-            {block.author && <span className="essay-quote__author">— {block.author}</span>}
+            {block.author && (
+              <span
+                className="essay-quote__author"
+                // The attribution keeps its Markdown and is rendered here, like
+                // the quote body, so `[link](…)` becomes an anchor (#559).
+                // renderInlineMarkdown escapes everything it does not emit.
+                dangerouslySetInnerHTML={{ __html: `— ${renderInlineMarkdown(block.author)}` }}
+              />
+            )}
           </blockquote>
         );
 
