@@ -260,33 +260,33 @@
 
 /* ── Falodu: Landscape Portfolio Palette ─────────── */
 [data-preset='falodu'] {
-  --bg-primary: #1a1916;
-  --bg-secondary: #14130f;
-  --bg-card: #201e1a;
-  --bg-card-hover: #28261f;
-  --bg-overlay: rgba(20, 19, 15, 0.96);
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-card: #111111;
+  --bg-card-hover: #1a1a1a;
+  --bg-overlay: rgba(0, 0, 0, 0.98);
 
-  --text-primary: #ece9e2;
-  --text-secondary: #a09a8c;
-  --text-muted: #6e685c;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-muted: #666666;
 
-  --border-subtle: #2c2a24;
-  --border-hover: #3c3a32;
+  --border-subtle: #1a1a1a;
+  --border-hover: #333333;
 }
 
 [data-preset='falodu'][data-theme='light'] {
-  --bg-primary: #faf9f6;
-  --bg-secondary: #f2f0ea;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f7f7;
   --bg-card: #ffffff;
-  --bg-card-hover: #f6f4ef;
-  --bg-overlay: rgba(250, 249, 246, 0.96);
+  --bg-card-hover: #fafafa;
+  --bg-overlay: rgba(255, 255, 255, 0.98);
 
-  --text-primary: #1d1c18;
-  --text-secondary: #57534a;
-  --text-muted: #7d786c;
+  --text-primary: #000000;
+  --text-secondary: #444444;
+  --text-muted: #777777;
 
-  --border-subtle: #e6e2d9;
-  --border-hover: #cbc6b9;
+  --border-subtle: #e5e5e5;
+  --border-hover: #cccccc;
 }
 
 /* ── Reset ────────────────────────────────────────── */

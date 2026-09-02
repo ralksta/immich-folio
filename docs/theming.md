@@ -15,16 +15,16 @@ you get `studio-modern`, the default.
 
 ## Built-in Presets
 
-| Preset            | Style                          | Accent       | Fonts                             | Hero        | Frame        | Grain |
-| ----------------- | ------------------------------ | ------------ | --------------------------------- | ----------- | ------------ | ----- |
-| **studio-modern** | Leica precision, grotesque     | 🔴 `#e60012` | Archivo + IBM Plex Mono           | Split       | None         | ✗     |
-| **studio**        | Leica-inspired, editorial      | 🔴 `#e60012` | Playfair Display + DM Sans        | Split       | Passepartout | ✓     |
-| **minimal**       | Swiss brutalist, high contrast | ⚫ `#000000` | Geist + IBM Plex Mono             | Fullbleed   | None         | ✗     |
-| **editorial**     | Cinematic magazine, warm tones | 🟤 `#8B2500` | Bodoni Moda + Newsreader          | Split       | Shadow       | ✗     |
-| **falodu**        | Landscape portfolio, airy      | 🟫 `#6f6a58` | Cormorant Garamond + Jost         | Fullbleed   | None         | ✗     |
-| **classic**       | Gilded gallery, warm luxury    | 🟡 `#c49a3c` | Cinzel + Crimson Pro              | Minimal     | Passepartout | ✗     |
-| **noir**          | Darkroom analog, film noir     | 🟠 `#ff6b35` | Libre Baskerville + Source Sans 3 | Fullbleed   | Passepartout | ✓     |
-| **monograph**     | Typographic, book-like         | ⬛ `#333333` | Instrument Serif + Inter          | Typographic | None         | ✗     |
+| Preset            | Style                           | Accent       | Fonts                             | Hero        | Frame        | Grain |
+| ----------------- | ------------------------------- | ------------ | --------------------------------- | ----------- | ------------ | ----- |
+| **studio-modern** | Leica precision, grotesque      | 🔴 `#e60012` | Archivo + IBM Plex Mono           | Split       | None         | ✗     |
+| **studio**        | Leica-inspired, editorial       | 🔴 `#e60012` | Playfair Display + DM Sans        | Split       | Passepartout | ✓     |
+| **minimal**       | Swiss brutalist, high contrast  | ⚫ `#000000` | Geist + IBM Plex Mono             | Fullbleed   | None         | ✗     |
+| **editorial**     | Cinematic magazine, warm tones  | 🟤 `#8B2500` | Bodoni Moda + Newsreader          | Split       | Shadow       | ✗     |
+| **falodu**        | Landscape portfolio, monochrome | ⚫ `#000000` | Cormorant Garamond                | Fullbleed   | None         | ✗     |
+| **classic**       | Gilded gallery, warm luxury     | 🟡 `#c49a3c` | Cinzel + Crimson Pro              | Minimal     | Passepartout | ✗     |
+| **noir**          | Darkroom analog, film noir      | 🟠 `#ff6b35` | Libre Baskerville + Source Sans 3 | Fullbleed   | Passepartout | ✓     |
+| **monograph**     | Typographic, book-like          | ⬛ `#333333` | Instrument Serif + Inter          | Typographic | None         | ✗     |
 
 **`studio-modern` is the default** if no theme is specified.
 
@@ -77,7 +77,7 @@ their accent, fonts and framing in both modes.
 
 **Editorial** — Cinematic magazine feel inspired by Aperture and Magnum Photos. Oversized Bodoni Moda serif titles, warm charcoal backgrounds, generous grid spacing, slow cinematic transitions with desaturation-on-idle photos, and pull-quote section labels.
 
-**Falodu** — Landscape-photography portfolio in the spirit of Squarespace's Falodu Fluid. A fullbleed hero with the name in an elegant Cormorant Garamond serif over the image, an uppercase tagline, airy masonry gutters, and a quiet warm-paper palette (sage accent). Built for letting big outdoor images breathe.
+**Falodu** — Landscape-photography portfolio in the spirit of Squarespace's Falodu Fluid. Monochrome white/black, Cormorant Garamond serif throughout (the demo's only face), a transparent header with the name as a serif wordmark, a shorter fullbleed hero, and an airy masonry grid. Built for letting big outdoor images breathe.
 
 **Classic** — Fine art gallery aesthetic with warm gold accents, Cinzel Roman capitals for headings, decorative ornamental dividers, warm passepartout frames, rounded corners, and an elegant gold header dot. Feels like a luxury exhibition catalog.
 

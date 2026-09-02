@@ -1,9 +1,10 @@
 /* ══════════════════════════════════════════════════════
    THEME: Falodu — Landscape Portfolio
-   Fullbleed hero, airy masonry, elegant serif display.
+   Monochrome, serif-only, fullbleed hero. In the spirit
+   of Squarespace's Falodu Fluid.
    ══════════════════════════════════════════════════════ */
 
-/* Header: transparent and understated, like a gallery masthead */
+/* Header: transparent, the name as a serif wordmark */
 [data-preset='falodu'] .header {
   background: transparent;
   backdrop-filter: none;
@@ -11,30 +12,48 @@
   border-bottom: 1px solid var(--border-subtle);
 }
 
-[data-preset='falodu'] .header__nav-link {
-  font-family: var(--font-sans);
-  font-size: 0.7rem;
-  font-weight: 400;
-  letter-spacing: 0.16em;
+[data-preset='falodu'] .header__wordmark {
+  display: flex;
+  align-items: center;
+  margin-right: 24px;
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--text-primary);
+  white-space: nowrap;
 }
 
-/* Hero: the photographer's name in a refined serif over the image */
+[data-preset='falodu'] .header__nav-link {
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+/* Hero: a shorter fullbleed image with a centred serif title + tagline */
+[data-preset='falodu'] .hero--fullbleed {
+  min-height: 55vh;
+}
+
 [data-preset='falodu'] .hero--fullbleed .hero__title {
   font-family: var(--font-serif);
-  font-size: clamp(3.5rem, 8vw, 6rem);
-  font-weight: 400;
+  font-size: clamp(3rem, 7vw, 5.5rem);
+  font-weight: 500;
   letter-spacing: 0.02em;
   line-height: 1;
 }
 
 [data-preset='falodu'] .hero--fullbleed .hero__subtitle {
-  font-family: var(--font-sans);
-  font-size: 0.72rem;
-  font-weight: 400;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
   font-style: normal;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Photo grid: airy gutters, images left to breathe */
@@ -59,44 +78,44 @@
 
 [data-preset='falodu'] .album-card__title {
   font-family: var(--font-serif);
-  font-weight: 400;
+  font-weight: 500;
   letter-spacing: 0.01em;
   text-transform: none;
 }
 
 [data-preset='falodu'] .album-card__count {
-  font-family: var(--font-sans);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
-/* Section labels: quiet, letterspaced */
+/* Section labels: quiet serif */
 [data-preset='falodu'] .section-label {
-  font-family: var(--font-sans);
-  font-size: 0.72rem;
-  font-weight: 400;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
   color: var(--text-muted);
 }
 
-/* Album header: serif title with an uppercase meta line */
+/* Album header: serif title with a serif meta line */
 [data-preset='falodu'] .album-header__title,
 [data-preset='falodu'] .subpage-title {
   font-family: var(--font-serif);
   font-size: clamp(2.5rem, 6vw, 4.5rem);
-  font-weight: 400;
+  font-weight: 500;
   letter-spacing: 0.01em;
   text-transform: none;
 }
 
 [data-preset='falodu'] .album-header__meta,
 [data-preset='falodu'] .subpage-subtitle {
-  font-family: var(--font-sans);
-  font-size: 0.72rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 /* Subpage grid */
@@ -112,16 +131,16 @@
 [data-preset='falodu'] .subpage-grid__item-title {
   font-family: var(--font-serif);
   font-size: 1.4rem;
-  font-weight: 400;
+  font-weight: 500;
   letter-spacing: 0.01em;
   text-transform: none;
 }
 
-/* Footer: quiet, letterspaced attribution */
+/* Footer: quiet serif attribution */
 [data-preset='falodu'] .footer__name {
-  font-family: var(--font-sans);
-  font-size: 0.72rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
   font-style: normal;
 }

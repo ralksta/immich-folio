@@ -76,8 +76,12 @@ export const THEME_PRESETS: Record<string, ThemeConfig> = {
   },
   falodu: {
     preset: 'falodu',
-    accent: '#6f6a58',
-    fonts: { heading: 'Cormorant Garamond', body: 'Jost', caption: 'Jost' },
+    accent: '#000000',
+    fonts: {
+      heading: 'Cormorant Garamond',
+      body: 'Cormorant Garamond',
+      caption: 'Cormorant Garamond',
+    },
     radius: 0,
     photoFrame: 'none',
     grain: false,
