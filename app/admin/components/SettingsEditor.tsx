@@ -97,7 +97,16 @@ interface Settings {
   about?: { enabled?: boolean };
 }
 
-const PRESETS = ['studio-modern', 'studio', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
+const PRESETS = [
+  'studio-modern',
+  'studio',
+  'minimal',
+  'editorial',
+  'falodu',
+  'classic',
+  'noir',
+  'monograph',
+];
 const LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow', 'justified'];
 const PHOTO_FRAMES = ['none', 'passepartout', 'shadow'];
 const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic', 'cover'];
@@ -380,6 +389,18 @@ const THEME_INFO: Record<
     radius: 0,
     frame: 'shadow',
     gap: 8,
+  },
+  falodu: {
+    label: 'Falodu',
+    desc: 'Fullbleed landscape portfolio: serif display, airy masonry.',
+    bg: '#faf9f6',
+    tile: '#ffffff',
+    accent: '#6f6a58',
+    font: 'Cormorant Garamond',
+    type: 'serif',
+    radius: 0,
+    frame: 'none',
+    gap: 7,
   },
   classic: {
     label: 'Classic',

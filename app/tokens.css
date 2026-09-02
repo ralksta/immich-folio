@@ -258,6 +258,37 @@
   --border-hover: #cccccc;
 }
 
+/* ── Falodu: Landscape Portfolio Palette ─────────── */
+[data-preset='falodu'] {
+  --bg-primary: #1a1916;
+  --bg-secondary: #14130f;
+  --bg-card: #201e1a;
+  --bg-card-hover: #28261f;
+  --bg-overlay: rgba(20, 19, 15, 0.96);
+
+  --text-primary: #ece9e2;
+  --text-secondary: #a09a8c;
+  --text-muted: #6e685c;
+
+  --border-subtle: #2c2a24;
+  --border-hover: #3c3a32;
+}
+
+[data-preset='falodu'][data-theme='light'] {
+  --bg-primary: #faf9f6;
+  --bg-secondary: #f2f0ea;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f6f4ef;
+  --bg-overlay: rgba(250, 249, 246, 0.96);
+
+  --text-primary: #1d1c18;
+  --text-secondary: #57534a;
+  --text-muted: #7d786c;
+
+  --border-subtle: #e6e2d9;
+  --border-hover: #cbc6b9;
+}
+
 /* ── Reset ────────────────────────────────────────── */
 *,
 *::before,

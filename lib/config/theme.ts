@@ -74,6 +74,16 @@ export const THEME_PRESETS: Record<string, ThemeConfig> = {
     headerDot: false,
     heroStyle: 'typographic',
   },
+  falodu: {
+    preset: 'falodu',
+    accent: '#6f6a58',
+    fonts: { heading: 'Cormorant Garamond', body: 'Jost', caption: 'Jost' },
+    radius: 0,
+    photoFrame: 'none',
+    grain: false,
+    headerDot: false,
+    heroStyle: 'fullbleed',
+  },
 };
 
 export const VALID_PHOTO_FRAMES = ['none', 'passepartout', 'shadow'];
