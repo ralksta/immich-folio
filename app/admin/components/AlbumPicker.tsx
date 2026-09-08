@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useScrollLock } from './useScrollLock';
+import { useModalDialog } from '@/hooks/useModalDialog';
 import { IconFolder } from './Icons';
 
 interface ImmichAlbumInfo {
@@ -37,11 +38,20 @@ export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }:
     );
   }, [albums, search]);
 
+  const cardRef = useModalDialog(onClose);
+
   return (
     <div className="picker-overlay" onClick={onClose}>
-      <div className="picker-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="picker-modal"
+        ref={cardRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="album-picker-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="picker-header">
-          <h3>Select Album</h3>
+          <h3 id="album-picker-title">Select Album</h3>
           <button className="admin-btn-icon" onClick={onClose}>
             ×
           </button>
