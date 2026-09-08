@@ -117,10 +117,11 @@
   transition: border-color 0.15s;
 }
 
-.admin-field input:focus,
-.admin-field select:focus,
-.admin-field textarea:focus {
-  outline: none;
+.admin-field input:focus-visible,
+.admin-field select:focus-visible,
+.admin-field textarea:focus-visible {
+  outline: var(--admin-focus-ring);
+  outline-offset: 1px;
   border-color: var(--admin-border-focus);
 }
 
@@ -159,7 +160,8 @@
 }
 
 .admin-listbox-trigger:focus-visible {
-  outline: none;
+  outline: var(--admin-focus-ring);
+  outline-offset: 1px;
   border-color: var(--admin-border-focus);
 }
 

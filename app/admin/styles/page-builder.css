@@ -410,8 +410,9 @@
   border-color: var(--admin-border);
 }
 
-.subpage-name-input:focus {
-  outline: none;
+.subpage-name-input:focus-visible {
+  outline: var(--admin-focus-ring);
+  outline-offset: 1px;
   border-color: var(--admin-border-focus);
   background: var(--admin-bg-input);
 }
@@ -474,8 +475,9 @@
   border-radius: 4px;
 }
 
-.section-title-input:focus {
-  outline: none;
+.section-title-input:focus-visible {
+  outline: var(--admin-focus-ring);
+  outline-offset: 1px;
   border-color: var(--admin-border-hover);
   background: var(--admin-bg);
 }

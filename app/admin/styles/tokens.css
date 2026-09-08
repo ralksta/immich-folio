@@ -15,11 +15,18 @@
   --admin-bg-input: #161616;
   --admin-border: #2e2e2e;
   --admin-border-hover: #444444;
-  --admin-border-focus: #666666;
+  --admin-border-focus: #777777;
   --admin-text: #f0f0f0;
   --admin-text-secondary: #a0a0a0;
   --admin-text-muted: #707070;
   --admin-accent: #f59e0b;
+  /* Der Fokus war allein an der Rahmenfarbe zu erkennen -- und die sprang
+     von #2e2e2e auf #666666, ein Unterschied von 2,37:1. WCAG 1.4.11
+     verlangt 3:1 gegen die Nachbarfarben. Wer mit der Tastatur durch die
+     Verwaltung geht, sah also praktisch nicht, wo er steht. Der Rahmenwert
+     ist auf 3:1 angehoben, und dazu kommt ein echter Ring: Der Akzent liegt
+     mit 8,8:1 auf dem dunklen Grund und ist nicht zu uebersehen. */
+  --admin-focus-ring: 2px solid var(--admin-accent);
   /* One height for every control in the header row. */
   --admin-control-height: 36px;
   --admin-success: #4ade80;
@@ -40,7 +47,7 @@
   --admin-bg-input: #ffffff;
   --admin-border: #e0e0e0;
   --admin-border-hover: #c0c0c0;
-  --admin-border-focus: #999999;
+  --admin-border-focus: #7f7f7f;
   --admin-text: #1a1a1a;
   --admin-text-secondary: #555555;
   --admin-text-muted: #888888;
