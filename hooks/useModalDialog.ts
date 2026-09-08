@@ -39,10 +39,15 @@ const FOCUSABLE = [
 ].join(',');
 
 function focusable(root: HTMLElement): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
-    // offsetParent is null for anything display:none — a hidden tab panel
-    // inside the dialog must not swallow the focus.
-    (el) => el.offsetParent !== null || el === document.activeElement,
+  return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) =>
+    // A hidden branch (a collapsed panel, a closed tab) must not swallow the
+    // focus. `offsetParent !== null` is the usual shorthand for this and is
+    // wrong here: it is null for anything `position: fixed`, which is exactly
+    // what these modals are made of. checkVisibility() answers the actual
+    // question; where it does not exist, counting an element as visible is
+    // the safe side — a focus trap that lists one element too many still
+    // traps.
+    typeof el.checkVisibility === 'function' ? el.checkVisibility() : true,
   );
 }
 
