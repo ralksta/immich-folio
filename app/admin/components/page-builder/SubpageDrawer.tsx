@@ -299,7 +299,7 @@ export default function SubpageDrawer({
                   </div>
                   <div className="admin-field" style={{ marginTop: '1rem' }}>
                     <label>Page Layout Style</label>
-                    <select
+                    <select aria-label="Page layout style"
                       value={sp.grid?.layout || 'masonry'}
                       onChange={(e) => {
                         const newLayout = e.target.value;

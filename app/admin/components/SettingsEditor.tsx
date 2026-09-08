@@ -944,7 +944,7 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
               </div>
               <div className="admin-field">
                 <label>Language</label>
-                <select
+                <select aria-label="Language"
                   value={settings.lang || 'en'}
                   onChange={(e) => update('lang', e.target.value)}
                 >
@@ -1207,7 +1207,7 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
 
               <div className="admin-field">
                 <label>Visitor Default Mode</label>
-                <select
+                <select aria-label="Visitor default mode"
                   value={settings.mode || 'dark'}
                   onChange={(e) => update('mode', e.target.value)}
                 >
@@ -1878,7 +1878,7 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
                   <div className="admin-field-row">
                     <div className="admin-field">
                       <label>Position</label>
-                      <select
+                      <select aria-label="Watermark position"
                         value={settings.watermark?.position || 'bottom-right'}
                         onChange={(e) => update('watermark.position', e.target.value)}
                       >
