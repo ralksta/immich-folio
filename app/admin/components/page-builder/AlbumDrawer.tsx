@@ -105,7 +105,8 @@ export default function AlbumDrawer({
             <div className="admin-sheet-col admin-sheet-col--divided">
               <div className="admin-field">
                 <label>Layout override (Experimental)</label>
-                <select aria-label="Layout override"
+                <select
+                  aria-label="Layout override"
                   value={album.grid?.layout || ''}
                   onChange={(e) => {
                     const layout = e.target.value || undefined;
