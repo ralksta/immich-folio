@@ -57,8 +57,9 @@
   font-size: 0.85rem;
 }
 
-.picker-search input:focus {
-  outline: none;
+.picker-search input:focus-visible {
+  outline: var(--admin-focus-ring);
+  outline-offset: 1px;
   border-color: var(--admin-border-focus);
 }
 

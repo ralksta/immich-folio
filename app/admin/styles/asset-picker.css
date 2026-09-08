@@ -155,8 +155,9 @@
   font-family: monospace;
 }
 
-.asset-picker-uuid-input:focus {
-  outline: none;
+.asset-picker-uuid-input:focus-visible {
+  outline: var(--admin-focus-ring);
+  outline-offset: 1px;
   border-color: var(--admin-border-focus);
 }
 

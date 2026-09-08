@@ -38,10 +38,11 @@
   border-color: var(--admin-border-hover, #444);
 }
 
-.journal-studio .admin-input:focus,
-.journal-editor-container .admin-input:focus,
-.journal-modal-card .admin-input:focus {
-  outline: none;
+.journal-studio .admin-input:focus-visible,
+.journal-editor-container .admin-input:focus-visible,
+.journal-modal-card .admin-input:focus-visible {
+  outline: var(--admin-focus-ring);
+  outline-offset: 1px;
   border-color: var(--admin-border-focus, #6366f1);
 }
 
@@ -261,7 +262,14 @@
 .journal-editor-resizer:focus-visible,
 .journal-editor-split.is-dragging .journal-editor-resizer {
   background: var(--admin-accent, #6366f1);
-  outline: none;
+}
+
+/* Der Teiler faerbte sich bei Fokus nur ein -- genau so wie beim blossen
+   Zeigen. Mit der Tastatur war also nicht zu unterscheiden, ob er den Fokus
+   hat oder die Maus nur darueber steht. */
+.journal-editor-resizer:focus-visible {
+  outline: var(--admin-focus-ring);
+  outline-offset: 2px;
 }
 
 /* Grip dots, and a widened invisible hit area so the divider is easy to grab. */
@@ -357,8 +365,9 @@
   resize: none;
 }
 
-.journal-raw-markdown-editor:focus {
-  outline: none;
+.journal-raw-markdown-editor:focus-visible {
+  outline: var(--admin-focus-ring);
+  outline-offset: 1px;
   border-color: var(--admin-accent, #6366f1);
 }
 

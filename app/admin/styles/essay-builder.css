@@ -108,13 +108,18 @@
   color: var(--admin-text, #f0f0f0) !important;
   font-size: 0.85rem !important;
   padding: 0.55rem 0.75rem !important;
-  outline: none !important;
   transition: border-color 0.15s !important;
 }
 
-.essay-block-editor input[type='text']:focus,
-.essay-block-editor textarea:focus,
-.essay-block-editor select:focus {
+/* Das `outline: none !important` stand in der Grundregel und nahm den Feldern
+   den Fokusring damit dauerhaft -- nicht nur beim Zeigen. Es ist ersatzlos
+   weg; der Ring kommt jetzt bei Fokus dazu, mit demselben !important, damit
+   er gegen die uebrigen Ausrufezeichen dieser Datei ankommt. */
+.essay-block-editor input[type='text']:focus-visible,
+.essay-block-editor textarea:focus-visible,
+.essay-block-editor select:focus-visible {
+  outline: var(--admin-focus-ring) !important;
+  outline-offset: 1px !important;
   border-color: var(--admin-border-focus, #888888) !important;
 }
 

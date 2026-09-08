@@ -105,10 +105,13 @@
   transition: all 0.15s;
 }
 
-.builder-search-input:focus {
-  outline: none;
+/* Diese Stelle machte es als einzige schon richtig -- Akzentrahmen plus
+   Schatten. Sie zieht auf denselben Ring wie die uebrigen Felder um, damit
+   der Fokus in der ganzen Verwaltung gleich aussieht. */
+.builder-search-input:focus-visible {
+  outline: var(--admin-focus-ring);
+  outline-offset: 1px;
   border-color: var(--admin-accent);
-  box-shadow: 0 0 0 1px var(--admin-accent);
   background: var(--admin-bg);
 }
 
