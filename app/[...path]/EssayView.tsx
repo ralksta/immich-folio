@@ -312,9 +312,9 @@ function EssayViewContent({
             gap: '12px',
             padding: '8px 16px',
             borderRadius: '30px',
-            background: 'var(--bg-surface, #1e1e1e)',
+            background: 'var(--bg-card, #1e1e1e)',
             color: 'var(--text-primary, #ffffff)',
-            border: '1px solid var(--border-color, rgba(255,255,255,0.15))',
+            border: '1px solid var(--border-subtle, rgba(255,255,255,0.15))',
             boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
             backdropFilter: 'blur(8px)',
           }}
