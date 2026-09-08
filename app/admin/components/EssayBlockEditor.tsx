@@ -217,7 +217,8 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
           {/* 1. HEADING BLOCK */}
           {block.type === 'heading' && (
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <select aria-label="Heading level"
+              <select
+                aria-label="Heading level"
                 value={block.level}
                 onChange={(e) =>
                   handleUpdateBlock(idx, { ...block, level: Number(e.target.value) })
