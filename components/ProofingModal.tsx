@@ -59,14 +59,21 @@ export function ProofingModal() {
         padding: '1rem',
       }}
     >
+      {/* `--bg-surface` und `--border-color` waren in keiner Datei des
+          Projekts definiert -- die Werte fielen also immer auf ihre fest
+          eingetragenen Ersatzfarben zurueck. Im hellen Thema hiess das:
+          dunkle Karte (#1e1e1e) und dazu `--text-primary`, das im hellen
+          Thema sehr wohl definiert ist und dort #1a1a18 ergibt. Dunkler Text
+          auf dunklem Grund, rund 1,05:1. Jetzt stehen dort die Marken, die
+          es wirklich gibt. */}
       <div
         className="proofing-modal-card"
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'var(--bg-surface, #1e1e1e)',
+          background: 'var(--bg-card, #1e1e1e)',
           color: 'var(--text-primary, #ffffff)',
           borderRadius: 'var(--radius-md, 12px)',
-          border: '1px solid var(--border-color, rgba(255,255,255,0.1))',
+          border: '1px solid var(--border-subtle, rgba(255,255,255,0.1))',
           padding: '1.5rem',
           maxWidth: '480px',
           width: '100%',

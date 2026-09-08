@@ -42,13 +42,19 @@
   gap: 2.5rem;
 }
 
+/* Hier standen `--surface`, `--surface-subtle` und `--border` -- drei Marken,
+   die es im Projekt nicht gibt. Die Karten nahmen deshalb immer die
+   Ersatzwerte, und die sind weisse Schleier: 3 % Weiss als Grund, 8 % Weiss
+   als Rahmen. Auf dunklem Grund sieht das richtig aus, im hellen Thema war
+   die Karte vom Seitengrund nicht zu unterscheiden und hatte keine
+   erkennbare Kante. */
 .journal-card {
   display: flex;
   flex-direction: column;
   text-decoration: none;
   color: inherit;
-  background: var(--surface, rgba(255, 255, 255, 0.03));
-  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  background: var(--bg-card, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
   border-radius: 12px;
   overflow: hidden;
   transition:
@@ -67,7 +73,7 @@
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 10;
-  background: var(--surface-subtle, rgba(255, 255, 255, 0.02));
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.02));
   overflow: hidden;
 }
 
@@ -143,7 +149,7 @@
   align-items: center;
   justify-content: space-between;
   padding-top: 1rem;
-  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
   font-size: 0.8rem;
   font-weight: 500;
 }

@@ -32,7 +32,7 @@
 }
 
 .essay-header__title {
-  font-family: var(--font-heading, serif);
+  font-family: var(--font-serif, serif);
   font-size: clamp(2.2rem, 5vw, 3.8rem);
   font-weight: 700;
   line-height: 1.15;
@@ -41,7 +41,7 @@
 }
 
 .essay-header__subtitle {
-  font-family: var(--font-body, sans-serif);
+  font-family: var(--font-sans, sans-serif);
   font-size: clamp(1.1rem, 2.5vw, 1.4rem);
   opacity: 0.8;
   line-height: 1.5;
@@ -60,7 +60,7 @@
 .essay-prose {
   max-width: var(--essay-measure);
   margin: 0 auto 2.5rem auto;
-  font-family: var(--font-body, sans-serif);
+  font-family: var(--font-sans, sans-serif);
   font-size: clamp(1.05rem, 2vw, 1.2rem);
   line-height: 1.75;
   color: var(--text-primary, rgba(255, 255, 255, 0.92));
@@ -71,7 +71,7 @@
 }
 
 .essay-heading {
-  font-family: var(--font-heading, serif);
+  font-family: var(--font-serif, serif);
   max-width: var(--essay-measure);
   margin: 3.5rem auto 1.5rem auto;
   font-weight: 600;
@@ -94,9 +94,9 @@
   margin: 3.5rem auto;
   padding: 1.5rem 2rem;
   border-left: 3px solid var(--accent, #e60012);
-  background: var(--bg-surface, rgba(255, 255, 255, 0.03));
+  background: var(--bg-card, rgba(255, 255, 255, 0.03));
   border-radius: 0 8px 8px 0;
-  font-family: var(--font-heading, serif);
+  font-family: var(--font-serif, serif);
   font-style: italic;
   font-size: clamp(1.15rem, 2.2vw, 1.35rem);
   line-height: 1.6;
@@ -142,7 +142,7 @@
   position: relative;
   width: 100%;
   overflow: hidden;
-  border-radius: var(--radius, 0px);
+  border-radius: var(--radius-md, 0px);
   max-height: 80vh;
 }
 
