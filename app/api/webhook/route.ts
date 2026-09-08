@@ -65,7 +65,9 @@ export async function POST(request: NextRequest) {
 
   let signatureValid = false;
   try {
-    signatureValid = timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expected, 'hex'));
+    if (signature.length === expected.length) {
+      signatureValid = timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expected, 'hex'));
+    }
   } catch {
     // Buffer lengths differ → invalid hex or wrong length
     signatureValid = false;
