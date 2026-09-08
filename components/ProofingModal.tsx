@@ -1,14 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useProofing } from './ProofingContext';
 import { IconCheck, IconCopy, IconLink } from './Icons';
 import { useDictionary } from './I18nProvider';
+import { useModalDialog } from '@/hooks/useModalDialog';
 
 export function ProofingModal() {
   const t = useDictionary();
   const proofing = useProofing();
   const [copiedState, setCopiedState] = useState<'none' | 'link' | 'list'>('none');
+
+  /* Vor dem fruehen `return null`: Haken duerfen nicht bedingt laufen.
+     `proofing` kann null sein, deshalb der optionale Aufruf. */
+  const istOffen = Boolean(proofing?.isModalOpen);
+  const schliessen = useCallback(() => proofing?.setIsModalOpen(false), [proofing]);
+  const cardRef = useModalDialog(schliessen, istOffen);
 
   if (!proofing || !proofing.isModalOpen) return null;
 
@@ -68,6 +75,10 @@ export function ProofingModal() {
           es wirklich gibt. */}
       <div
         className="proofing-modal-card"
+        ref={cardRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="proofing-modal-title"
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'var(--bg-card, #1e1e1e)',
@@ -88,7 +99,7 @@ export function ProofingModal() {
             marginBottom: '1rem',
           }}
         >
-          <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
+          <h3 id="proofing-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
             {t.proofing.modalTitle(favorites.size)}
           </h3>
           <button

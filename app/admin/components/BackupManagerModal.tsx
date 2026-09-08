@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { BackupItem } from '@/app/api/admin/backups/route';
 import * as Icons from './Icons';
 import { useScrollLock } from './useScrollLock';
+import { useModalDialog } from '@/hooks/useModalDialog';
 
 interface Props {
   isOpen: boolean;
@@ -51,6 +52,8 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
   }, [isOpen, fetchBackups]);
 
   useScrollLock(isOpen);
+  /* Vor dem fruehen `return null`: Haken duerfen nicht bedingt laufen. */
+  const cardRef = useModalDialog(onClose, isOpen);
 
   if (!isOpen) return null;
 
@@ -90,10 +93,17 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
 
   return (
     <div className="backup-modal-backdrop" onClick={onClose}>
-      <div className="backup-modal-container" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="backup-modal-container"
+        ref={cardRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="backup-modal-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="backup-modal-header">
           <div>
-            <h2>Backup History & Restoration</h2>
+            <h2 id="backup-modal-title">Backup History &amp; Restoration</h2>
             <p className="backup-modal-subtitle">
               Restore previous states of your configuration files with 1-click.
             </p>

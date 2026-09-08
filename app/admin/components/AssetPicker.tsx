@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useModalDialog } from '@/hooks/useModalDialog';
 import { IconCheck, IconFolder, IconImage, IconStar } from './Icons';
 import { useScrollLock } from './useScrollLock';
 
@@ -29,6 +30,7 @@ export default function AssetPicker({
   title,
 }: Props) {
   useScrollLock(true);
+  const cardRef = useModalDialog(onClose);
   const [tab, setTab] = useState<Tab>(albumId ? 'album' : 'favorites');
   const [assets, setAssets] = useState<AssetInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,9 +116,16 @@ export default function AssetPicker({
 
   return (
     <div className="picker-overlay" onClick={onClose}>
-      <div className="asset-picker-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="asset-picker-modal"
+        ref={cardRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="asset-picker-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="picker-header">
-          <h3>{title || 'Select Hero Image'}</h3>
+          <h3 id="asset-picker-title">{title || 'Select Hero Image'}</h3>
           <button className="admin-btn-icon" onClick={onClose}>
             ×
           </button>
