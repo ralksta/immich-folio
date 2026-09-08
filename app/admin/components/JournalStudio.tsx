@@ -811,7 +811,7 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
                     <div style={{ marginTop: '0.75rem' }}>
                       {block.type === 'heading' && (
                         <div className="journal-heading-row">
-                          <select
+                          <select aria-label="Heading level"
                             className="admin-input journal-level-select"
                             value={block.level}
                             onChange={(e) =>
@@ -917,7 +917,7 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
                             }}
                           >
                             <div className="journal-photo-layout-row">
-                              <select
+                              <select aria-label="Photo layout"
                                 className="admin-input"
                                 value={block.layout}
                                 onChange={(e) =>
