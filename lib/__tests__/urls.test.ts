@@ -168,6 +168,58 @@ describe('assetAspectRatio', () => {
       }),
     ).toBeUndefined();
   });
+
+  /**
+   * A portrait frame off a Sony A7 V: the sensor is read out in landscape and
+   * the quarter turn lives in the orientation flag, so the stored dimensions
+   * are the displayed ones swapped.
+   */
+  const rotated = (orientation?: string | null) => ({
+    exifInfo: {
+      make: null,
+      model: null,
+      lensModel: null,
+      focalLength: null,
+      fNumber: null,
+      exposureTime: null,
+      iso: null,
+      exifImageWidth: 7008,
+      exifImageHeight: 4672,
+      orientation,
+      latitude: null,
+      longitude: null,
+      city: null,
+      state: null,
+      country: null,
+      dateTimeOriginal: null,
+      description: null,
+    },
+  });
+
+  it.each([
+    ['6', 'rotated 90 CW'],
+    ['8', 'rotated 90 CCW'],
+    ['5', 'mirrored and rotated 90 CCW'],
+    ['7', 'mirrored and rotated 90 CW'],
+  ])('swaps width and height for orientation %s (%s)', (orientation) => {
+    expect(assetAspectRatio(rotated(orientation))).toBeCloseTo(4672 / 7008);
+  });
+
+  it.each([
+    ['1', 'upright'],
+    ['2', 'mirrored horizontally'],
+    ['3', 'rotated 180'],
+    ['4', 'mirrored vertically'],
+  ])('leaves the ratio alone for orientation %s (%s)', (orientation) => {
+    expect(assetAspectRatio(rotated(orientation))).toBeCloseTo(7008 / 4672);
+  });
+
+  it.each([
+    ['null', null],
+    ['absent', undefined],
+  ])('treats a %s orientation as upright', (_label, orientation) => {
+    expect(assetAspectRatio(rotated(orientation))).toBeCloseTo(7008 / 4672);
+  });
 });
 
 describe('assetCaption', () => {

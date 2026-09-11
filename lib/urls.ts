@@ -128,12 +128,30 @@ export function assetCaption(
 }
 
 /**
- * Compute the natural aspect ratio (width / height) from EXIF dimensions.
+ * EXIF orientations that rotate the frame a quarter turn.
+ *
+ * Most cameras expose the sensor in landscape whatever way the body is held,
+ * and record the rotation as a flag rather than rewriting the pixels. So a
+ * portrait frame arrives as 7008x4672 with orientation 6, and the browser turns
+ * it upright on display. Taking the stored dimensions at face value would call
+ * that photo landscape.
+ *
+ * 1-4 are upright or mirrored in place and leave the ratio alone; 5-8 all carry
+ * a 90 degree turn, so width and height swap.
+ */
+const ROTATED_ORIENTATIONS = new Set([5, 6, 7, 8]);
+
+/**
+ * Compute the natural aspect ratio (width / height) from EXIF dimensions,
+ * as the image is displayed rather than as it is stored.
  * Returns undefined if dimensions are not available.
  */
 export function assetAspectRatio(asset: Pick<ImmichAsset, 'exifInfo'>): number | undefined {
   const w = asset.exifInfo?.exifImageWidth;
   const h = asset.exifInfo?.exifImageHeight;
-  if (w && h && h > 0) return w / h;
-  return undefined;
+  if (!w || !h || h <= 0) return undefined;
+
+  // Immich reports the flag as a string; anything unparseable is left upright.
+  const orientation = Number(asset.exifInfo?.orientation);
+  return ROTATED_ORIENTATIONS.has(orientation) ? h / w : w / h;
 }

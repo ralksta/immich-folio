@@ -51,6 +51,13 @@ export interface ImmichExifInfo {
   iso: number | null;
   exifImageWidth: number | null;
   exifImageHeight: number | null;
+  /**
+   * EXIF orientation flag, as a numeric string ('1'..'8').
+   *
+   * Optional: Immich only fills it when the file carries the tag, and older
+   * responses omit the field entirely.
+   */
+  orientation?: string | null;
   latitude: number | null;
   longitude: number | null;
   city: string | null;
