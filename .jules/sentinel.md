@@ -1,4 +1,4 @@
-## 2024-08-11 - Unconstrained Base64URL Decoding DoS
-**Vulnerability:** The decodeAssetId function in lib/tokens.ts accepted arbitrary length tokens and passed them directly to Buffer.from(..., 'base64url'), creating a risk of massive memory allocation (memory exhaustion/CPU DoS).
-**Learning:** Functions that decode tokens from URLs (like GET /api/image/:token) must limit the input string length before passing it to Buffer.from. Otherwise, a maliciously crafted huge token can cause the Node.js process to throw RangeError (Invalid string length) or exhaust memory, despite being wrapped in a try/catch.
-**Prevention:** Always enforce a strict maximum length check on opaque URL tokens before decoding them.
+## 2024-09-15 - Prevent memory exhaustion from unbounded Buffer.from
+**Vulnerability:** Multiple functions accepted arbitrary length strings from request headers/cookies and passed them directly to Buffer.from(), creating a risk of massive memory allocation (memory exhaustion/CPU DoS).
+**Learning:** Functions that parse untrusted strings into buffers for crypto comparisons must limit the input string length before passing it to Buffer.from. Otherwise, a maliciously crafted huge string can cause the Node.js process to throw RangeError or exhaust memory, despite being wrapped in a try/catch.
+**Prevention:** Always enforce a maximum string length (e.g., 512 bytes) on user inputs (like tokens, signatures, or cookies) before parsing them with Buffer.from() or using them in timingSafeEqual.

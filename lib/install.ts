@@ -93,6 +93,7 @@ export function getSetupToken(): string {
 
 export function validateSetupToken(token: string | null): boolean {
   if (!token) return false;
+  if (token.length > 512) return false;
   const expected = generateSetupToken();
   try {
     const a = Buffer.from(token, 'utf8');

@@ -60,6 +60,9 @@ export async function POST(request: NextRequest) {
     console.warn('[Webhook] ⚠️ Missing x-immich-signature header');
     return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
   }
+  if (signature.length > 512) {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+  }
 
   const expected = createHmac('sha256', env.WEBHOOK_SECRET).update(rawBody).digest('hex');
 

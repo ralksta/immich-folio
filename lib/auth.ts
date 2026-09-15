@@ -240,6 +240,7 @@ export function isAuthenticated(
 
   const cookie = getCookie(cookieName(key, type));
   if (!cookie) return false;
+  if (cookie.length > 512) return false;
 
   // Legacy tokens (bare HMAC, no expiry) do not parse here and are rejected;
   // the visitor simply re-enters the password.
