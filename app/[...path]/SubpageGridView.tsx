@@ -55,13 +55,19 @@ function AlbumGrid({
             key={album.id}
             href={`/${slug}/${album.slug}`}
             className="subpage-grid__item"
-            style={ph?.dominantColor ? { backgroundColor: ph.dominantColor } : undefined}
             aria-label={getServerDictionary().subpage.coverAria(
               album.albumName,
               photoCount(album.assetCount),
             )}
           >
-            <span className="subpage-grid__item-media">
+            {/* The loading colour belongs to the image, not the card: presets
+                with a caption bar below the cover (studio-modern) would
+                otherwise paint the bar in the photo's dominant colour, and
+                their --text-primary caption becomes dark-on-dark in light mode. */}
+            <span
+              className="subpage-grid__item-media"
+              style={ph?.dominantColor ? { backgroundColor: ph.dominantColor } : undefined}
+            >
               {album.albumThumbnailAssetId ? (
                 <Image
                   src={imageUrl(album.albumThumbnailAssetId, 'preview')}
