@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { BackupItem } from '@/app/api/admin/backups/route';
+import type { BackupItem, BackupTarget } from '@/app/api/admin/backups/route';
 import * as Icons from './Icons';
 import { useScrollLock } from './useScrollLock';
 import { useModalDialog } from '@/hooks/useModalDialog';
@@ -12,17 +12,25 @@ interface Props {
   onRestoreSuccess: () => void;
 }
 
+const TABS: { target: BackupTarget; label: string; file: string }[] = [
+  { target: 'gallery', label: 'Gallery', file: 'gallery.yaml' },
+  { target: 'settings', label: 'Settings', file: 'settings.yaml' },
+  { target: 'about', label: 'About', file: 'about.md' },
+  { target: 'journal', label: 'Journal', file: 'journal entries' },
+];
+
+type BackupLists = Record<BackupTarget, BackupItem[]>;
+
+const EMPTY_LISTS: BackupLists = { gallery: [], settings: [], about: [], journal: [] };
+
 export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }: Props) {
-  const [activeTab, setActiveTab] = useState<'gallery' | 'settings'>('gallery');
+  const [activeTab, setActiveTab] = useState<BackupTarget>('gallery');
   const [showAllBackups, setShowAllBackups] = useState(false);
-  const [backups, setBackups] = useState<{ gallery: BackupItem[]; settings: BackupItem[] }>({
-    gallery: [],
-    settings: [],
-  });
+  const [backups, setBackups] = useState<BackupLists>(EMPTY_LISTS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [restoringFilename, setRestoringFilename] = useState<string | null>(null);
-  const [confirmFilename, setConfirmFilename] = useState<string | null>(null);
+  const [confirmItem, setConfirmItem] = useState<BackupItem | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const fetchBackups = useCallback(async () => {
@@ -34,7 +42,7 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
         throw new Error('Failed to fetch backup history');
       }
       const data = await res.json();
-      setBackups(data.backups || { gallery: [], settings: [] });
+      setBackups({ ...EMPTY_LISTS, ...data.backups });
     } catch (err: any) {
       setError(err.message || 'Error loading backups');
     } finally {
@@ -45,7 +53,7 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
   useEffect(() => {
     if (isOpen) {
       fetchBackups();
-      setConfirmFilename(null);
+      setConfirmItem(null);
       setSuccessMsg(null);
       setShowAllBackups(false);
     }
@@ -57,7 +65,8 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
 
   if (!isOpen) return null;
 
-  async function handleRestore(filename: string) {
+  async function handleRestore(item: BackupItem) {
+    const filename = item.filename;
     setRestoringFilename(filename);
     setError(null);
     setSuccessMsg(null);
@@ -66,7 +75,7 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
       const res = await fetch('/api/admin/backups', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ backupFilename: filename }),
+        body: JSON.stringify({ backupFilename: filename, target: item.target }),
       });
 
       const data = await res.json();
@@ -75,8 +84,12 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
         throw new Error(data.error || 'Failed to restore backup');
       }
 
-      setSuccessMsg(`Backup restored successfully! (${filename})`);
-      setConfirmFilename(null);
+      setSuccessMsg(
+        item.slug
+          ? `Journal entry "${item.slug}" restored.`
+          : `Backup restored successfully! (${filename})`,
+      );
+      setConfirmItem(null);
       await fetchBackups();
       onRestoreSuccess();
     } catch (err: any) {
@@ -105,7 +118,8 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
           <div>
             <h2 id="backup-modal-title">Backup History &amp; Restoration</h2>
             <p className="backup-modal-subtitle">
-              Restore previous states of your configuration files with 1-click.
+              Restore an earlier version of your pages, settings, about page or journal — including
+              deleted journal entries.
             </p>
           </div>
           <button className="backup-modal-close-btn" onClick={onClose} aria-label="Close">
@@ -115,26 +129,19 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
 
         {/* Tab Selection */}
         <div className="backup-modal-tabs">
-          <button
-            className={`backup-modal-tab ${activeTab === 'gallery' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('gallery');
-              setConfirmFilename(null);
-              setShowAllBackups(false);
-            }}
-          >
-            Gallery Backups ({backups.gallery.length})
-          </button>
-          <button
-            className={`backup-modal-tab ${activeTab === 'settings' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('settings');
-              setConfirmFilename(null);
-              setShowAllBackups(false);
-            }}
-          >
-            Settings Backups ({backups.settings.length})
-          </button>
+          {TABS.map((tab) => (
+            <button
+              key={tab.target}
+              className={`backup-modal-tab ${activeTab === tab.target ? 'active' : ''}`}
+              onClick={() => {
+                setActiveTab(tab.target);
+                setConfirmItem(null);
+                setShowAllBackups(false);
+              }}
+            >
+              {tab.label} ({backups[tab.target].length})
+            </button>
+          ))}
         </div>
 
         {/* Status Messages */}
@@ -142,25 +149,25 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
         {successMsg && <div className="backup-status-alert success">{successMsg}</div>}
 
         {/* Confirmation Modal Section */}
-        {confirmFilename && (
+        {confirmItem && (
           <div className="backup-confirm-box">
             <div className="backup-confirm-content">
               <strong>Confirm Restoration</strong>
               <p>
-                Are you sure you want to restore <code>{confirmFilename}</code>? A safety snapshot
-                of your current state will be created automatically before reverting.
+                Are you sure you want to restore <code>{confirmItem.filename}</code>? A safety
+                snapshot of your current state will be created automatically before reverting.
               </p>
               <div className="backup-confirm-actions">
                 <button
                   className="btn btn-secondary"
-                  onClick={() => setConfirmFilename(null)}
+                  onClick={() => setConfirmItem(null)}
                   disabled={!!restoringFilename}
                 >
                   Cancel
                 </button>
                 <button
                   className="btn btn-danger"
-                  onClick={() => handleRestore(confirmFilename)}
+                  onClick={() => handleRestore(confirmItem)}
                   disabled={!!restoringFilename}
                 >
                   {restoringFilename ? 'Restoring...' : 'Yes, Restore Now'}
@@ -175,7 +182,9 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
           {loading ? (
             <div className="backup-loading">Loading backups...</div>
           ) : currentList.length === 0 ? (
-            <div className="backup-empty">No backups available yet for {activeTab}.yaml</div>
+            <div className="backup-empty">
+              No backups available yet for {TABS.find((t) => t.target === activeTab)?.file}
+            </div>
           ) : (
             <div className="backup-list">
               {visibleList.map((item) => {
@@ -192,7 +201,16 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
                   <div key={item.filename} className="backup-item">
                     <div className="backup-item-info">
                       <div className="backup-item-title">
+                        {item.slug && <strong className="backup-slug">{item.slug}</strong>}
                         <span className="backup-filename">{formattedDate}</span>
+                        {item.isDeleted && (
+                          <span
+                            className="backup-badge deleted"
+                            title="Snapshot taken when the entry was deleted"
+                          >
+                            Deleted entry
+                          </span>
+                        )}
                         {item.isPreRestore && (
                           <span
                             className="backup-badge pre-restore"
@@ -208,8 +226,8 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
                     </div>
                     <button
                       className="btn btn-outline-danger btn-sm"
-                      onClick={() => setConfirmFilename(item.filename)}
-                      disabled={!!restoringFilename || confirmFilename === item.filename}
+                      onClick={() => setConfirmItem(item)}
+                      disabled={!!restoringFilename || confirmItem?.filename === item.filename}
                     >
                       Restore
                     </button>

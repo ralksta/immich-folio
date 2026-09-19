@@ -2,18 +2,24 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 import { listBackups, restoreBackup } from '@/lib/admin/yaml-service';
+import { listJournalBackups, restoreJournalBackup } from '@/lib/admin/journal-service';
 import { invalidateConfigCache } from '@/lib/config';
 import { immich } from '@/lib/immich';
 
+export type BackupTarget = 'gallery' | 'settings' | 'about' | 'journal';
+
 export interface BackupItem {
   filename: string;
-  target: 'gallery' | 'settings';
+  target: BackupTarget;
   timestamp: string | null;
   isPreRestore: boolean;
+  /** Journal backups only: the entry the backup belongs to. */
+  slug?: string;
+  /** Journal backups only: the snapshot taken when the entry was deleted. */
+  isDeleted?: boolean;
 }
 
-function parseBackupInfo(filename: string): BackupItem {
-  const target = filename.startsWith('gallery.yaml') ? 'gallery' : 'settings';
+function parseBackupInfo(filename: string, target: BackupTarget): BackupItem {
   const isPreRestore = filename.includes('pre-restore');
 
   // Extract timestamp from filename like filename.2026-05-31T17-30-00-000Z.bak
@@ -37,7 +43,7 @@ function parseBackupInfo(filename: string): BackupItem {
   };
 }
 
-/** GET: List all available backups for gallery and settings. */
+/** GET: List all available backups, grouped by the file they restore. */
 export async function GET() {
   if (!isAdminEnabled()) {
     return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
@@ -47,16 +53,26 @@ export async function GET() {
   }
 
   try {
-    const galleryRaw = await listBackups('gallery.yaml');
-    const settingsRaw = await listBackups('settings.yaml');
-
-    const gallery = galleryRaw.map(parseBackupInfo);
-    const settings = settingsRaw.map(parseBackupInfo);
+    const gallery = (await listBackups('gallery.yaml')).map((f) => parseBackupInfo(f, 'gallery'));
+    const settings = (await listBackups('settings.yaml')).map((f) =>
+      parseBackupInfo(f, 'settings'),
+    );
+    const about = (await listBackups('about.md')).map((f) => parseBackupInfo(f, 'about'));
+    // Newest first across all entries, so a just-deleted entry sits on top.
+    const journal = (await listJournalBackups())
+      .map((b) => ({
+        ...parseBackupInfo(b.filename, 'journal'),
+        slug: b.slug,
+        isDeleted: b.kind === 'deleted',
+      }))
+      .sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? ''));
 
     return NextResponse.json({
       backups: {
         gallery,
         settings,
+        about,
+        journal,
       },
     });
   } catch (err) {
@@ -76,7 +92,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { backupFilename } = body || {};
+    const { backupFilename, target } = body || {};
 
     if (!backupFilename || typeof backupFilename !== 'string') {
       return NextResponse.json({ error: 'backupFilename is required' }, { status: 400 });
@@ -95,7 +111,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid backup file extension' }, { status: 400 });
     }
 
-    await restoreBackup(backupFilename);
+    // Journal backups live in their own directory, and `<slug>.md.<ts>.bak`
+    // cannot be told apart from an about.md backup by name alone.
+    if (target === 'journal') {
+      await restoreJournalBackup(backupFilename);
+    } else {
+      await restoreBackup(backupFilename);
+    }
 
     // Invalidate caches & revalidate pages
     invalidateConfigCache();

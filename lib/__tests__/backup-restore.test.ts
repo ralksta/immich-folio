@@ -36,6 +36,8 @@ describe('restoreBackup rejects anything that is not a backup it produced', () =
     'gallery.yaml', // the live file, not a backup
     'gallery.yaml.2026-05-31T17-30-00-000Z.bak.txt',
     'evil-gallery.yaml.2026-05-31T17-30-00-000Z.bak',
+    'about.yaml.2026-05-31T17-30-00-000Z.bak',
+    'trip.md.2026-05-31T17-30-00-000Z.bak', // journal backups go through the journal service
     '',
   ];
 
@@ -64,6 +66,13 @@ describe('restoreBackup accepts the names it writes', () => {
       restoreBackup('gallery.yaml.2026-05-31T17-30-00-000Z.bak'),
     ).resolves.toBeUndefined();
     expect(fs.copyFile).toHaveBeenCalled();
+  });
+
+  it('restores an about.md backup onto content/about.md', async () => {
+    await restoreBackup('about.md.2026-05-31T17-30-00-000Z.bak');
+
+    const calls = vi.mocked(fs.copyFile).mock.calls;
+    expect(String(calls[calls.length - 1][1])).toMatch(/content\/about\.md$/);
   });
 
   it('restores a pre-restore backup', async () => {

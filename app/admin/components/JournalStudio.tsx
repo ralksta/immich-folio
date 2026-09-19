@@ -106,7 +106,12 @@ export function JournalStudio({ slug: activeSlug }: JournalStudioProps) {
   };
 
   const handleDelete = async (slug: string) => {
-    if (!confirm(`Are you sure you want to delete "${slug}"?`)) return;
+    if (
+      !confirm(
+        `Delete "${slug}"?\n\nA copy is kept and can be restored from Backups on the dashboard.`,
+      )
+    )
+      return;
 
     try {
       const res = await fetch(`/api/admin/journal/${slug}`, {

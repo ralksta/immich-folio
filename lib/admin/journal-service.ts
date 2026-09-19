@@ -17,8 +17,121 @@ import {
 
 const JOURNAL_DIR = path.join(process.cwd(), 'content', 'journal');
 const LEGACY_ESSAYS_DIR = path.join(process.cwd(), 'content', 'essays');
+const BACKUP_DIR = path.join(JOURNAL_DIR, '.backups');
 const MAX_BACKUPS = 10;
 let tmpCounter = 0;
+
+/**
+ * Names this service writes into .backups/, and the only ones it restores from.
+ *
+ * `<slug>.md.<timestamp>[.deleted|.pre-restore].bak`. `[\w-]` is exactly the
+ * isValidSlug alphabet and matches neither `/` nor `.`, so a traversal cannot
+ * match. Group 1 is the slug, group 2 the snapshot kind.
+ */
+const JOURNAL_BACKUP_NAME = /^([\w-]+)\.md\.[\w-]+\.(?:(deleted|pre-restore)\.)?bak$/;
+
+export interface JournalBackup {
+  filename: string;
+  slug: string;
+  /** `save` rotates; `deleted` and `pre-restore` snapshots are never pruned. */
+  kind: 'save' | 'deleted' | 'pre-restore';
+}
+
+/** Copy an entry into .backups/. Throws when the copy fails. */
+async function snapshotEntry(
+  filePath: string,
+  filename: string,
+  kind?: 'deleted' | 'pre-restore',
+): Promise<void> {
+  await fs.mkdir(BACKUP_DIR, { recursive: true });
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const suffix = kind ? `.${kind}` : '';
+  await fs.copyFile(filePath, path.join(BACKUP_DIR, `${filename}.${timestamp}${suffix}.bak`));
+}
+
+/**
+ * Keep the newest MAX_BACKUPS save backups of one entry.
+ *
+ * Deleted and pre-restore snapshots are left alone, as yaml-service does with
+ * its pre-restore files: ten saves of a re-created entry must not push out the
+ * only copy of the one that was deleted.
+ */
+async function pruneEntryBackups(filename: string): Promise<void> {
+  const backups = (await fs.readdir(BACKUP_DIR))
+    .filter((f) => {
+      const match = JOURNAL_BACKUP_NAME.exec(f);
+      return match !== null && `${match[1]}.md` === filename && match[2] === undefined;
+    })
+    .sort();
+  for (const old of backups.slice(0, Math.max(0, backups.length - MAX_BACKUPS))) {
+    await fs.unlink(path.join(BACKUP_DIR, old)).catch(() => {});
+  }
+}
+
+/** Every journal backup on disk, newest filename first per entry. */
+export async function listJournalBackups(): Promise<JournalBackup[]> {
+  let files: string[];
+  try {
+    files = await fs.readdir(BACKUP_DIR);
+  } catch {
+    return [];
+  }
+  return files
+    .map((filename) => {
+      const match = JOURNAL_BACKUP_NAME.exec(filename);
+      if (!match) return null;
+      const kind = (match[2] ?? 'save') as JournalBackup['kind'];
+      return { filename, slug: match[1], kind };
+    })
+    .filter((b): b is JournalBackup => b !== null)
+    .sort((a, b) => b.filename.localeCompare(a.filename));
+}
+
+/**
+ * Restore an entry from one of its backups, returning the restored slug.
+ *
+ * The entry's current state, if it has one, is snapshotted first. The restore
+ * always lands in content/journal/, which resolveJournalFilePath checks before
+ * the legacy essays/ directory.
+ */
+export async function restoreJournalBackup(backupFilename: string): Promise<string> {
+  const match = JOURNAL_BACKUP_NAME.exec(backupFilename);
+  if (!match || path.basename(backupFilename) !== backupFilename || !isValidSlug(match[1])) {
+    throw new Error(`Refusing to restore from an unrecognised backup name: "${backupFilename}"`);
+  }
+  const slug = match[1];
+  const filename = `${slug}.md`;
+  const source = containedPath(BACKUP_DIR, backupFilename);
+  const target = containedPath(JOURNAL_DIR, filename);
+  if (!source || !target) {
+    throw new Error(`Refusing to restore from an unrecognised backup name: "${backupFilename}"`);
+  }
+
+  // Read before touching anything, so a missing backup changes nothing.
+  const content = await fs.readFile(source, 'utf8');
+
+  try {
+    await fs.access(target);
+    await snapshotEntry(target, filename, 'pre-restore');
+  } catch (err) {
+    // No current file is fine — that is the deleted-entry case. A failed
+    // snapshot of an existing file is not.
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+  }
+
+  await fs.mkdir(JOURNAL_DIR, { recursive: true });
+  const tmpPath = `${target}.${process.pid}.${++tmpCounter}.tmp`;
+  try {
+    await fs.writeFile(tmpPath, content, 'utf8');
+    await fs.rename(tmpPath, target);
+  } catch (err) {
+    await fs.unlink(tmpPath).catch(() => {});
+    throw err;
+  }
+
+  console.log(`[Journal] 🔄 Restored ${filename} from ${backupFilename}`);
+  return slug;
+}
 
 /**
  * Join a filename onto a content directory, or return null if the result would
@@ -163,22 +276,8 @@ export async function writeJournalEntry(slug: string, rawMarkdown: string): Prom
   // Create rolling backup if file already exists
   try {
     await fs.access(filePath);
-    const backupDir = path.join(JOURNAL_DIR, '.backups');
-    await fs.mkdir(backupDir, { recursive: true });
-
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupName = `${filename}.${timestamp}.bak`;
-    await fs.copyFile(filePath, path.join(backupDir, backupName));
-
-    // Prune backups
-    const backups = (await fs.readdir(backupDir))
-      .filter((f) => f.startsWith(`${filename}.`) && f.endsWith('.bak'))
-      .sort();
-    if (backups.length > MAX_BACKUPS) {
-      for (const old of backups.slice(0, backups.length - MAX_BACKUPS)) {
-        await fs.unlink(path.join(backupDir, old)).catch(() => {});
-      }
-    }
+    await snapshotEntry(filePath, filename);
+    await pruneEntryBackups(filename);
   } catch {
     // New file, no backup needed
   }
@@ -196,7 +295,15 @@ export async function writeJournalEntry(slug: string, rawMarkdown: string): Prom
   console.log(`[Journal] ✅ Saved ${filename}`);
 }
 
-/** Safely delete a journal entry */
+/**
+ * Delete a journal entry, keeping a `.deleted.bak` copy the Backup Manager can
+ * restore.
+ *
+ * Saving always rotated a backup; deleting did not, so the one irreversible
+ * action in the journal was the one without a way back. The snapshot is taken
+ * first and is not optional: if it cannot be written, the delete is refused
+ * rather than carried out unprotected.
+ */
 export async function deleteJournalEntry(slug: string): Promise<boolean> {
   if (!isValidSlug(slug)) {
     throw new Error(`Invalid journal slug: "${slug}"`);
@@ -204,6 +311,13 @@ export async function deleteJournalEntry(slug: string): Promise<boolean> {
 
   const filePath = resolveJournalFilePath(slug);
   if (!filePath) return false;
+
+  try {
+    await fs.access(filePath);
+  } catch {
+    return false;
+  }
+  await snapshotEntry(filePath, `${slug}.md`, 'deleted');
 
   try {
     await fs.unlink(filePath);

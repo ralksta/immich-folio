@@ -128,7 +128,7 @@ export async function listBackups(filename: string): Promise<string[]> {
  * readable file over content/settings.yaml — which the admin GET endpoints then
  * hand straight back.
  */
-const BACKUP_FILENAME = /^(gallery|settings)\.yaml\.[\w-]+\.(pre-restore\.)?bak$/;
+const BACKUP_FILENAME = /^(gallery\.yaml|settings\.yaml|about\.md)\.[\w-]+\.(pre-restore\.)?bak$/;
 
 /** Restore a specific backup. */
 export async function restoreBackup(backupFilename: string): Promise<void> {
@@ -144,7 +144,8 @@ export async function restoreBackup(backupFilename: string): Promise<void> {
 
   // Derived from the matched group, never from a substring search on the input:
   // `includes('gallery.yaml')` would let the caller pick the destination.
-  const originalFilename = `${match[1]}.yaml`;
+  // about.md shares this directory: the about route writes its backups here.
+  const originalFilename = match[1];
   const targetPath = path.join(CONTENT_DIR, originalFilename);
 
   // Create a backup of current state first

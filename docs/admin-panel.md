@@ -153,20 +153,26 @@ View counts per page and album, read from `content/analytics.json`. No cookies, 
 
 ## Backups
 
-Every time you save, the previous file is backed up automatically:
+Every time you save, the previous file is backed up automatically. Deleting a
+journal entry keeps a copy too:
 
 ```
 content/.backups/
 ├── gallery.yaml.2026-05-29T14-30-00-000Z.bak
 ├── settings.yaml.2026-05-29T14-30-00-000Z.bak
+├── about.md.2026-05-29T14-30-00-000Z.bak
 └── ...
 content/journal/.backups/
-└── my-story.md.2026-05-29T14-30-00-000Z.bak
+├── my-story.md.2026-05-29T14-30-00-000Z.bak
+└── old-trip.md.2026-05-30T09-12-00-000Z.deleted.bak
 ```
 
 - Up to **10 backups** per file are retained (oldest are pruned)
-- The **Backup Manager** lists them and restores any one with a single click
+- The **Backup Manager** (dashboard) has a tab each for gallery, settings, about
+  and journal, and restores any backup with a single click — a deleted journal
+  entry comes back under its old slug
 - Before a restore, a `*.pre-restore.bak` snapshot is created
+- `*.deleted.bak` and `*.pre-restore.bak` snapshots are never pruned
 - All writes are **atomic** (write to temp file, then rename) — no risk of a half-written YAML
 
 ## Docker Usage
