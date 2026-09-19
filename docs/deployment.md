@@ -114,9 +114,11 @@ whether every published album ID still exists in Immich (and is shared there),
 whether any password is still stored in plaintext or as an unusable bcrypt
 hash, and whether `content/` can be written to.
 
-This is the same set of checks as the **Diagnostics** panel in `/admin`, but it
+This is the same set of checks as the **Diagnostics** page in `/admin`, but it
 needs neither a running app nor an admin password — which is the point. It is
-the tool for the case where the site will not come up at all.
+the tool for the case where the site will not come up at all. (The page adds
+an alt-text report on top, which needs the albums loaded and has no CLI
+counterpart.)
 
 It runs in the shipped image too:
 
@@ -146,7 +148,7 @@ docker compose exec folio npm run doctor
 
 The other is `TRUSTED_PROXY_HOPS`, judged against the
 `X-Forwarded-For` chain of a live request, and a CLI has none. It reports the
-configured value and says so rather than guessing — use the Diagnostics panel,
+configured value and says so rather than guessing — use the Diagnostics page,
 reached over your public URL, to have that one measured.
 
 Both are printed under **NOTES** rather than among the passed checks, since

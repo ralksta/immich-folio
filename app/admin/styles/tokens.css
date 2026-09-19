@@ -29,6 +29,10 @@
   /* One height for every control in the header row. */
   --admin-control-height: 36px;
   --admin-success: #4ade80;
+  /* Warnings get their own token rather than the accent: a preset may recolour
+     the accent (studio-modern makes it red), and a warning must not read as an
+     error because of the theme. */
+  --admin-warning: #f59e0b;
   --admin-error: #f87171;
   --admin-error-bg: #2d1111;
   --admin-error-border: #5c2020;
@@ -52,6 +56,7 @@
   --admin-text-muted: #888888;
   --admin-accent: #d97706;
   --admin-success: #16a34a;
+  --admin-warning: #b45309;
   --admin-error: #dc2626;
   --admin-error-bg: #fef2f2;
   --admin-error-border: #fecaca;

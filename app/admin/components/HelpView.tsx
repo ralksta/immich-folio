@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import DoctorModal from './DoctorModal';
+import Link from 'next/link';
 import * as Icons from './Icons';
 import { en } from '@/lib/i18n/locales/en';
 import { LIGHTBOX_SHORTCUTS, shortcutDisplayKeys } from '@/lib/lightboxShortcuts';
@@ -19,8 +18,6 @@ import { LIGHTBOX_SHORTCUTS, shortcutDisplayKeys } from '@/lib/lightboxShortcuts
  * English-only, hence `en` directly.
  */
 export default function HelpView() {
-  const [showDoctor, setShowDoctor] = useState(false);
-
   return (
     <div className="settings-panel">
       <div className="settings-section-header">
@@ -80,13 +77,11 @@ export default function HelpView() {
         </div>
 
         <div className="help-action">
-          <button type="button" className="admin-btn" onClick={() => setShowDoctor(true)}>
-            <Icons.IconShieldCheck size={14} /> Run diagnostics
-          </button>
+          <Link href="/admin/diagnostics" className="admin-btn">
+            <Icons.IconShieldCheck size={14} /> Open diagnostics
+          </Link>
         </div>
       </div>
-
-      <DoctorModal isOpen={showDoctor} onClose={() => setShowDoctor(false)} />
     </div>
   );
 }

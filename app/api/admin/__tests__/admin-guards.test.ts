@@ -83,6 +83,14 @@ const ROUTES: {
     args: () => [new NextRequest('http://localhost/api/admin/doctor')],
   },
   {
+    // Lists album titles and raw asset UUIDs.
+    name: 'GET /api/admin/alt-text',
+    path: 'alt-text',
+    load: () => import('../alt-text/route'),
+    method: 'GET',
+    args: () => [],
+  },
+  {
     name: 'GET /api/admin/assets',
     path: 'assets',
     load: () => import('../assets/route'),

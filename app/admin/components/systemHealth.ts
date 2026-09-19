@@ -1,5 +1,12 @@
 import type { DoctorLevel } from '@/lib/admin/doctor';
 
+/**
+ * Fired on `window` by the diagnostics page after each run, with the doctor's
+ * level as `detail`. The badge lives in the layout and would otherwise keep
+ * showing the level from when the admin was opened until the next full load.
+ */
+export const DOCTOR_LEVEL_EVENT = 'folio:doctor-level';
+
 /** The three tones `status-badge-btn` is styled for. */
 export type BadgeTone = 'connected' | 'disconnected' | 'unknown';
 
