@@ -46,7 +46,14 @@ async function snapshotEntry(
   await fs.mkdir(BACKUP_DIR, { recursive: true });
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const suffix = kind ? `.${kind}` : '';
-  await fs.copyFile(filePath, path.join(BACKUP_DIR, `${filename}.${timestamp}${suffix}.bak`));
+  // `filename` is always `<slug>.md` with a validated slug, but the validation
+  // lives in callers and another module; containedPath is the barrier the
+  // taint analysis can see, as for every other path in this file.
+  const backupPath = containedPath(BACKUP_DIR, `${filename}.${timestamp}${suffix}.bak`);
+  if (!backupPath) {
+    throw new Error(`Refusing to write a backup outside ${BACKUP_DIR}: "${filename}"`);
+  }
+  await fs.copyFile(filePath, backupPath);
 }
 
 /**
