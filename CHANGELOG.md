@@ -7,6 +7,179 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [Unreleased]
+
+### Security
+
+- **Full-size originals no longer carry their GPS position to anonymous
+  visitors** ([#558](https://github.com/ralksta/immich-folio/pull/558)). The
+  image proxy streamed `?size=original` straight from Immich. An asset token
+  authorises the _image_, not the size, so a thumbnail token read from the
+  public HTML plus `?size=original` returned the untouched file — GPS
+  coordinates and camera model included — to anyone. That went around two
+  deliberate protections: `/api/exif` only ever hands out city and country,
+  and `/api/map` quantises coordinates on the server.
+
+  The metadata is now overwritten with zeros rather than cut out: JPEG APP1
+  (EXIF/XMP), APP13 (IPTC) and comments, and the `Exif` and `mime` items of
+  AVIF/HEIC/HEIF containers. The pixel data stays bit-identical — re-encoding
+  would cost quality — and the file length stays constant, which keeps
+  `Content-Length` valid and every absolute offset in an AVIF `iloc` box
+  correct. The JFIF header and the ICC colour profile are kept on purpose:
+  dropping the profile would shift colours, which is a rendering change, not a
+  privacy one. A format that cannot be parsed safely falls back to the preview
+  instead of being passed through, because silently passing it through was the
+  bug. The per-album download route is unchanged — it is an explicit opt-in and
+  gated on its own. **See the upgrade notes: this needs an
+  `IMAGE_CACHE_VERSION` bump to reach browsers that already cached an
+  original.**
+
+- **Next.js 16.3.1 → 16.3.5**
+  ([#571](https://github.com/ralksta/immich-folio/pull/571),
+  [#566](https://github.com/ralksta/immich-folio/pull/566)). `npm audit`
+  reported 16.3.1 as critical (GHSA-p293-qw3h-jr36, unauthenticated RCE on
+  Windows-hosted servers). The shipped image runs on Linux and was not exposed,
+  but the move stays within the minor. A high-severity advisory for `js-yaml`,
+  which parses `gallery.yaml` at runtime, landed in the same week and is
+  resolved in the lockfile. `npm audit` is clean.
+
+### Added
+
+- **Diagnostics is a page: `/admin/diagnostics`**, with an alt-text report
+  ([#579](https://github.com/ralksta/immich-folio/pull/579)). The doctor used to
+  be a modal. It is now a page that lists the findings that want a look first,
+  groups the passed checks into connection, security and content, and gathers
+  backups and cache clearing that were spread over two other places. **Every
+  finding links to its fix** — an admin route where the fix lives in the panel,
+  a docs section where it is an environment variable or the volume — instead of
+  a severity pill that looked like a button and did nothing. A finding about a
+  single album opens the page it is published on and marks its tile.
+
+  The new **alt-text report** answers a question nothing answered before.
+  Folio's alt text is the Immich description, used only while _Photo
+  Description_ is on; a photo without one rendered with an empty `alt`,
+  silently. The report lists the published photos without a description, by
+  album, with links into Immich. It is deliberately kept out of the status
+  badge: most libraries have gaps, and a badge that never turns green stops
+  being read.
+
+- **Markdown links in journal quote attributions**
+  ([#563](https://github.com/ralksta/immich-folio/pull/563), by
+  [@lancetm714](https://github.com/lancetm714)).
+  `Quote text -- [Source](https://…)` now renders a link, like the quote body
+  and captions already did. It reuses the same renderer, so the URL scheme
+  allowlist applies unchanged.
+
+- **The Backup Manager restores journal entries and the About page, including
+  deleted journal entries**
+  ([#581](https://github.com/ralksta/immich-folio/pull/581)). Deleting a
+  journal entry was a bare file delete — the one irreversible action in the
+  journal was the one without a way back — and the Backup Manager only knew
+  `gallery.yaml` and `settings.yaml`, so the journal and About backups that
+  saves did write could not be restored from the panel at all. A delete now
+  keeps a copy first and is refused if that copy cannot be written; the manager
+  gains About and Journal tabs, and a deleted entry comes back under its old
+  slug. Deleted and pre-restore snapshots are exempt from the ten-backup
+  rotation.
+
+### Fixed
+
+- **Settings no longer discard unsaved edits when you switch sections**
+  ([#582](https://github.com/ralksta/immich-folio/pull/582)). Each settings
+  section is its own route, and the editor was rendered by the section page, so
+  it remounted on every switch: change the site title, open another section,
+  and the edit was gone — no warning, the save bar simply vanished. The editor
+  now lives in the settings layout, which stays mounted. There is one "Save
+  Changes" bar for all sections, saving `settings.yaml` and `about.md`
+  together, and the leave-page warning now covers About edits too, which it
+  never did.
+
+- **The subpage Live Preview shows the page the site renders**
+  ([#583](https://github.com/ralksta/immich-folio/pull/583)). The drawer drew
+  its own banner and tiles in admin styling and knew nothing of the theme
+  preset, the cover grid columns, the caption bar or the header kicker. It now
+  renders the public page's own markup, styled by the preset, sized by the same
+  cover-grid calculation, laid out at desktop width and scaled into the drawer.
+
+- **Portrait photos render as portrait tiles**
+  ([#565](https://github.com/ralksta/immich-folio/issues/565),
+  [#572](https://github.com/ralksta/immich-folio/pull/572), by
+  [@ImScheinox](https://github.com/ImScheinox)). Most cameras store a portrait
+  frame in landscape pixels plus an EXIF orientation flag, and Immich's API
+  reports the unrotated dimensions. The aspect ratio ignored the flag, so in
+  `masonry`, `justified` and `editorial-flow` every portrait frame got a
+  landscape tile and the masonry grid lost its stagger. Orientations 5–8 now
+  swap width and height. (The same bug was fixed again independently in #576;
+  that was reverted in #577 so the fix lands under the person who found it
+  first.)
+
+- **Text meets WCAG AA contrast in every preset**
+  ([#571](https://github.com/ralksta/immich-folio/pull/571),
+  [#580](https://github.com/ralksta/immich-folio/pull/580)). `--text-muted`,
+  which carries hero subtitles, section labels, album metadata and footer
+  links, was below 4.5:1 in all fourteen theme blocks — as low as 2.33:1 in
+  monograph. It was recomputed against both background tokens with hue and
+  saturation untouched, so the warm greys stay warm. A follow-up replaced the
+  `opacity` dimming that sat on top of those tuned tokens (footer Impressum
+  link, `/impressum` headings, the editorial hero subtitle). An axe audit across
+  all seven presets went from 129 failures to 0 in light mode.
+  `npm run audit:contrast` runs that audit against a running site.
+
+- **The admin panel works from the keyboard**
+  ([#571](https://github.com/ralksta/immich-folio/pull/571)). The focus signal
+  was a 1px border change at 2.37:1; there is now a real focus ring on
+  `:focus-visible`. The asset picker, album picker, backup manager and proofing
+  modal were mouse-only — no Escape, focus left behind, Tab walking out into
+  the page — and now share one dialog hook with focus trapping and restoration.
+  Eight admin selects gained an accessible name.
+
+- **Light mode no longer paints dark text on dark surfaces**
+  ([#562](https://github.com/ralksta/immich-folio/pull/562), by
+  [@lancetm714](https://github.com/lancetm714);
+  [#571](https://github.com/ralksta/immich-folio/pull/571)). Nine CSS tokens
+  were read but never defined, so they fell back to dark-theme defaults. The
+  proofing bar and its Share & Export modal were about 1.05:1 in light mode;
+  journal cards had no visible edge; essays fell back to the browser's generic
+  fonts instead of the theme's.
+
+- **The proofing bar floats again with page transitions on**
+  ([#560](https://github.com/ralksta/immich-folio/pull/560), by
+  [@lancetm714](https://github.com/lancetm714)). The page fade-in animated a
+  `transform`, and `animation-fill-mode: forwards` kept it applied forever. Any
+  transform — even the identity — makes an element the containing block for
+  `position: fixed` descendants, so the selection bar and its modal scrolled
+  away with the page. The fade is opacity only now.
+
+- **Album titles on `studio-modern` cover cards are readable in light mode**
+  ([#578](https://github.com/ralksta/immich-folio/pull/578)). The cover's
+  dominant colour — its loading placeholder — was set on the whole card, so
+  `studio-modern`'s caption bar took the photo's colour under dark text. It now
+  sits on the image box only.
+
+### Internal
+
+- Dependency updates: React 19.3.0, `@playwright/test` 1.63.0,
+  `actions/upload-artifact` 7
+  ([#574](https://github.com/ralksta/immich-folio/pull/574),
+  [#573](https://github.com/ralksta/immich-folio/pull/573),
+  [#567](https://github.com/ralksta/immich-folio/pull/567)). `axe-core` is a
+  direct devDependency for the contrast audit.
+
+### Upgrade notes
+
+**Bump `IMAGE_CACHE_VERSION` when you deploy this release.** Image URLs are
+served `immutable` with a one-year cache, so an original a browser already
+fetched keeps its metadata in that cache after the upgrade. Changing
+`IMAGE_CACHE_VERSION` changes every image URL and is the only thing that
+reaches those caches. If it is not set yet, set it to anything:
+
+```bash
+IMAGE_CACHE_VERSION=2
+```
+
+No configuration schema changed; there is nothing else to migrate. An original
+that already left your server cannot be recalled.
+
 ## [0.14.0] — 2026-08-30
 
 ### Added
