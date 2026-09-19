@@ -52,7 +52,7 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
   }, [isOpen, fetchBackups]);
 
   useScrollLock(isOpen);
-  /* Vor dem fruehen `return null`: Haken duerfen nicht bedingt laufen. */
+  /* Before the early `return null`: hooks must not run conditionally. */
   const cardRef = useModalDialog(onClose, isOpen);
 
   if (!isOpen) return null;

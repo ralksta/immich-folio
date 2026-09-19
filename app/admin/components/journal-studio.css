@@ -264,9 +264,9 @@
   background: var(--admin-accent, #6366f1);
 }
 
-/* Der Teiler faerbte sich bei Fokus nur ein -- genau so wie beim blossen
-   Zeigen. Mit der Tastatur war also nicht zu unterscheiden, ob er den Fokus
-   hat oder die Maus nur darueber steht. */
+/* The resizer used to change colour on focus exactly as it does on hover,
+   so from the keyboard there was no telling whether it had the focus or the
+   mouse was merely resting on it. */
 .journal-editor-resizer:focus-visible {
   outline: var(--admin-focus-ring);
   outline-offset: 2px;

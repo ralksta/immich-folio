@@ -111,10 +111,10 @@
   transition: border-color 0.15s !important;
 }
 
-/* Das `outline: none !important` stand in der Grundregel und nahm den Feldern
-   den Fokusring damit dauerhaft -- nicht nur beim Zeigen. Es ist ersatzlos
-   weg; der Ring kommt jetzt bei Fokus dazu, mit demselben !important, damit
-   er gegen die uebrigen Ausrufezeichen dieser Datei ankommt. */
+/* The base rule used to carry `outline: none !important`, which removed the
+   focus ring from these fields for good, not just on hover. It is gone; the
+   ring is added on focus instead, with the same !important so it wins against
+   the other !important declarations in this file. */
 .essay-block-editor input[type='text']:focus-visible,
 .essay-block-editor textarea:focus-visible,
 .essay-block-editor select:focus-visible {

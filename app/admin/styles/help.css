@@ -105,9 +105,9 @@
   transition: all 0.15s;
 }
 
-/* Diese Stelle machte es als einzige schon richtig -- Akzentrahmen plus
-   Schatten. Sie zieht auf denselben Ring wie die uebrigen Felder um, damit
-   der Fokus in der ganzen Verwaltung gleich aussieht. */
+/* The only field that already got this right (accent border plus shadow).
+   It moves to the same ring as every other field, so focus looks the same
+   throughout the admin panel. */
 .builder-search-input:focus-visible {
   outline: var(--admin-focus-ring);
   outline-offset: 1px;

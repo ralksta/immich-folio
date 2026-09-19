@@ -42,12 +42,11 @@
   gap: 2.5rem;
 }
 
-/* Hier standen `--surface`, `--surface-subtle` und `--border` -- drei Marken,
-   die es im Projekt nicht gibt. Die Karten nahmen deshalb immer die
-   Ersatzwerte, und die sind weisse Schleier: 3 % Weiss als Grund, 8 % Weiss
-   als Rahmen. Auf dunklem Grund sieht das richtig aus, im hellen Thema war
-   die Karte vom Seitengrund nicht zu unterscheiden und hatte keine
-   erkennbare Kante. */
+/* These rules used to read `--surface`, `--surface-subtle` and `--border`,
+   none of which exist, so the cards always took their fallbacks: white veils
+   of 3% (background) and 8% (border). Right on a dark background; in the
+   light theme the card could not be told apart from the page and had no
+   visible edge. */
 .journal-card {
   display: flex;
   flex-direction: column;

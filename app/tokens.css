@@ -1,22 +1,19 @@
 /* Fonts are loaded dynamically via layout.tsx based on theme config */
 
-/* --text-muted verfehlte in jedem Preset die 4,5:1, die WCAG AA fuer Text
-   dieser Groesse verlangt -- zwischen 2,33:1 (monograph) und 3,50:1
-   (studio-modern). Die Farbe traegt keine Beiwerk-Striche, sondern echten
-   Text: Hero-Unterzeile, Abschnittsmarken, Albumangaben und die Links im
-   Fuss, alle zwischen 0,6 und 0,9 rem. Ein Link, den man nicht lesen kann,
-   ist keine Gestaltungsfrage mehr.
+/* --text-muted missed the 4.5:1 that WCAG AA requires for text of this size
+   in every preset, ranging from 2.33:1 (monograph) to 3.50:1 (studio-modern).
+   It is not a decorative colour: it carries the hero subtitle, section
+   labels, album metadata and the footer links, all between 0.6 and 0.9 rem.
 
-   Angehoben wurde nur die Helligkeit; Farbton und Saettigung bleiben, damit
-   die warmen Graustufen von editorial, classic und noir warm bleiben und
-   sich nicht in Neutralgrau angleichen. Jeder Wert ist gegen
-   --bg-primary UND --bg-card gerechnet, der schlechtere zaehlt.
+   Only lightness was raised; hue and saturation are unchanged, so the warm
+   greys of editorial, classic and noir stay warm instead of drifting to
+   neutral. Each value is checked against --bg-primary AND --bg-card, and the
+   worse of the two counts.
 
-   Bei minimal und monograph zog das --text-muted so nah an
-   --text-secondary heran, dass die beiden Stufen nicht mehr zu
-   unterscheiden waren (#828282 gegen #888888). Dort ist --text-secondary
-   mitgewandert, sodass wieder zwei erkennbare Stufen entstehen:
-   rund 7:1 fuer secondary, rund 4,7:1 fuer muted. */
+   In minimal and monograph this pushed --text-muted so close to
+   --text-secondary that the two steps became indistinguishable (#828282 vs
+   #888888). --text-secondary moved along there, restoring two distinct
+   levels: about 7:1 for secondary, about 4.7:1 for muted. */
 
 /* ── Design Tokens (Fallback Defaults) ───────────── */
 /* These are overridden at runtime by CSS vars injected from gallery.yaml theme config. */

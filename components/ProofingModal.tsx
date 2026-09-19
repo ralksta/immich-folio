@@ -11,11 +11,11 @@ export function ProofingModal() {
   const proofing = useProofing();
   const [copiedState, setCopiedState] = useState<'none' | 'link' | 'list'>('none');
 
-  /* Vor dem fruehen `return null`: Haken duerfen nicht bedingt laufen.
-     `proofing` kann null sein, deshalb der optionale Aufruf. */
-  const istOffen = Boolean(proofing?.isModalOpen);
-  const schliessen = useCallback(() => proofing?.setIsModalOpen(false), [proofing]);
-  const cardRef = useModalDialog(schliessen, istOffen);
+  /* Before the early `return null`: hooks must not run conditionally.
+     `proofing` can be null, hence the optional calls. */
+  const isOpen = Boolean(proofing?.isModalOpen);
+  const close = useCallback(() => proofing?.setIsModalOpen(false), [proofing]);
+  const cardRef = useModalDialog(close, isOpen);
 
   if (!proofing || !proofing.isModalOpen) return null;
 
@@ -66,13 +66,12 @@ export function ProofingModal() {
         padding: '1rem',
       }}
     >
-      {/* `--bg-surface` und `--border-color` waren in keiner Datei des
-          Projekts definiert -- die Werte fielen also immer auf ihre fest
-          eingetragenen Ersatzfarben zurueck. Im hellen Thema hiess das:
-          dunkle Karte (#1e1e1e) und dazu `--text-primary`, das im hellen
-          Thema sehr wohl definiert ist und dort #1a1a18 ergibt. Dunkler Text
-          auf dunklem Grund, rund 1,05:1. Jetzt stehen dort die Marken, die
-          es wirklich gibt. */}
+      {/* This card used to read `--bg-surface` and `--border-color`, which
+          are defined nowhere, so it always fell back to the hard-coded dark
+          values. In the light theme that meant a #1e1e1e card under
+          `--text-primary`, which does exist there and resolves to #1a1a18:
+          dark text on a dark background, about 1.05:1. It now uses tokens
+          that exist. */}
       <div
         className="proofing-modal-card"
         ref={cardRef}

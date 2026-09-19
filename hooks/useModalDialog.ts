@@ -53,12 +53,20 @@ function focusable(root: HTMLElement): HTMLElement[] {
 
 export function useModalDialog(onClose: () => void, active = true) {
   const cardRef = useRef<HTMLDivElement>(null);
+  // Kept in a ref so a new `onClose` identity does not re-run the effect.
+  // Callers pass inline arrows (and ProofingContext a fresh value object on
+  // every render); re-running would bounce the focus out of the dialog and
+  // back onto its first element whenever the parent re-rendered.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     const card = cardRef.current;
     if (!active || !card) return;
 
-    const zurueck = document.activeElement as HTMLElement | null;
+    const previous = document.activeElement as HTMLElement | null;
 
     // React has already applied `autoFocus` by the time the effect runs, so
     // an existing focus inside the card is respected rather than overridden.
@@ -69,7 +77,7 @@ export function useModalDialog(onClose: () => void, active = true) {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== 'Tab' || !card) return;
@@ -99,9 +107,9 @@ export function useModalDialog(onClose: () => void, active = true) {
       document.removeEventListener('keydown', onKeyDown, true);
       // Only take the focus back if it is still inside the closing dialog.
       // Something else may legitimately have claimed it in the meantime.
-      if (zurueck && document.contains(zurueck)) zurueck.focus();
+      if (previous && document.contains(previous)) previous.focus();
     };
-  }, [onClose, active]);
+  }, [active]);
 
   return cardRef;
 }
