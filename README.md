@@ -367,7 +367,13 @@ easier to live with.
   turns a fresh install into a few clicks in the browser instead of hand-written
   config files. Also added custom favicons, so your portfolio gets its own icon
   in the browser tab, and made a gallery with no albums yet a perfectly valid
-  starting point rather than an error.
+  starting point rather than an error. In v0.15.0, made client proofing work
+  properly: the selection bar floats again with page transitions on, and it is
+  readable in light mode. Also brought links to journal quote attributions.
+- **[@ImScheinox](https://github.com/ImScheinox)** — found and fixed portrait
+  photos rendering as landscape tiles, because the grid ignored the camera's
+  EXIF orientation flag. That brought the masonry layout's stagger back for
+  anyone whose camera records portrait frames that way, which is most of them.
 - **[Jules](https://jules.google.com)** — an automated reviewer that has been
   quietly hardening the project in the background: better screen-reader support
   in the photo grid, and a series of fixes keeping the public endpoints from
