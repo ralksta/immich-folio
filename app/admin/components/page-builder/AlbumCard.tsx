@@ -15,6 +15,7 @@ export function SortableAlbumCard({
   thumbnailId,
   onRemove,
   onEdit,
+  highlighted,
 }: {
   album: AlbumEntry;
   index: number;
@@ -23,6 +24,7 @@ export function SortableAlbumCard({
   thumbnailId: string | null;
   onRemove: () => void;
   onEdit: () => void;
+  highlighted?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: `album-${album.id}-${index}`,
@@ -45,6 +47,7 @@ export function SortableAlbumCard({
         onRemove={onRemove}
         onEdit={onEdit}
         dragListeners={listeners}
+        highlighted={highlighted}
       />
     </div>
   );
@@ -58,6 +61,8 @@ interface AlbumCardProps {
   onRemove: () => void;
   onEdit: () => void;
   dragListeners?: Record<string, unknown>;
+  /** Marked briefly when a diagnostics link pointed at this album. */
+  highlighted?: boolean;
 }
 
 export default function AlbumCard({
@@ -68,13 +73,17 @@ export default function AlbumCard({
   onRemove,
   onEdit,
   dragListeners,
+  highlighted,
 }: AlbumCardProps) {
   const heroThumb = album.heroImage || thumbnailId;
   const hasPassword = !!album.password;
   const hasTitleOverride = !!album.title;
 
   return (
-    <div className={`album-tile ${hasPassword ? 'has-password' : ''}`}>
+    <div
+      className={`album-tile ${hasPassword ? 'has-password' : ''} ${highlighted ? 'album-tile--linked' : ''}`}
+      data-album-id={album.id}
+    >
       <div className="album-tile-cover">
         {dragListeners && (
           <div className="album-tile-drag" {...dragListeners} title="Drag to reorder">

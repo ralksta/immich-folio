@@ -276,14 +276,14 @@ export default function DiagnosticsView() {
    */
   const renderFix = (f: DoctorFinding) => {
     const id = f.id;
-    // A finding about exactly one album opens that album's drawer.
+    // A finding about exactly one album opens the page it is published on.
     if (f.albumIds?.length === 1) {
       return (
         <Link
           href={`/admin/pages?album=${encodeURIComponent(f.albumIds[0])}`}
           className="admin-btn admin-btn-sm"
         >
-          Open album
+          Open in Pages
         </Link>
       );
     }

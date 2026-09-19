@@ -64,6 +64,8 @@ interface SubpageDrawerProps {
   getAlbumName: (id: string) => string;
   getAlbumCount: (id: string) => number;
   getAlbumThumbnailId: (id: string) => string | null;
+  /** Album to mark, when the sheet was opened from a diagnostics link. */
+  highlightedAlbumId?: string | null;
 }
 
 /**
@@ -95,6 +97,7 @@ export default function SubpageDrawer({
   getAlbumName,
   getAlbumCount,
   getAlbumThumbnailId,
+  highlightedAlbumId,
 }: SubpageDrawerProps) {
   return (
     <div className="subpage-drawer-backdrop" onClick={() => onClose()}>
@@ -447,6 +450,7 @@ export default function SubpageDrawer({
                               name={getAlbumName(album.id)}
                               count={getAlbumCount(album.id)}
                               thumbnailId={getAlbumThumbnailId(album.id)}
+                              highlighted={album.id === highlightedAlbumId}
                               onRemove={() => removeSubpageAlbum(spIndex, aIndex)}
                               onEdit={() =>
                                 onEditAlbum({
@@ -507,6 +511,7 @@ export default function SubpageDrawer({
                               name={getAlbumName(album.id)}
                               count={getAlbumCount(album.id)}
                               thumbnailId={getAlbumThumbnailId(album.id)}
+                              highlighted={album.id === highlightedAlbumId}
                               onRemove={() => removeSectionAlbum(spIndex, secIndex, aIndex)}
                               onEdit={() =>
                                 onEditAlbum({

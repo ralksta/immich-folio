@@ -486,3 +486,9 @@
   font-size: 0.8rem !important;
   padding: 0.4rem 0.5rem !important;
 }
+
+/* The tile a diagnostics link pointed at (`/admin/pages?album=<id>`). */
+.album-tile--linked {
+  outline: 2px solid var(--admin-warning);
+  outline-offset: 3px;
+}
