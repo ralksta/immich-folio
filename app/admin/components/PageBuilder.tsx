@@ -613,6 +613,13 @@ export default function PageBuilder() {
     markDirty();
   }
 
+  /** The "03 — Collection" number the page renders: counted over enabled subpages only. */
+  function enabledPosition(index: number): number | undefined {
+    const sp = gallery.subpages[index];
+    if (!sp || sp.enabled === false) return undefined;
+    return gallery.subpages.slice(0, index).filter((s) => s.enabled !== false).length + 1;
+  }
+
   function removeSubpage(index: number) {
     if (!confirm('Remove this subpage?')) return;
     setGallery((g) => ({
@@ -966,7 +973,7 @@ export default function PageBuilder() {
             items={filteredSubpages.map(({ index }) => `subpage-${index}`)}
             strategy={horizontalListSortingStrategy}
           >
-            <div className="subpage-grid">
+            <div className="subpage-tiles">
               {filteredSubpages.map(({ sp, index }) => (
                 <SortableSubpageTile
                   key={`subpage-${index}`}
@@ -986,6 +993,7 @@ export default function PageBuilder() {
           <SubpageDrawer
             sp={gallery.subpages[expandedSubpage]}
             spIndex={expandedSubpage}
+            kickerIndex={enabledPosition(expandedSubpage)}
             immichAlbums={immichAlbums}
             sensors={sensors}
             drawerMode={drawerMode}

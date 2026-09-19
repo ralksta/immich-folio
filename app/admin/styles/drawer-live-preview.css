@@ -3,87 +3,32 @@
    later sheets override earlier ones, so the order there is the cascade. */
 
 /* ── Drawer Live Preview ────────────────────────────────────── */
-.drawer-live-preview-panel {
+/* Only the frame is admin styling. Everything inside the canvas is the public
+   page's own markup, styled by globals.css and the preset — so nothing here
+   may target the subpage-* classes. */
+.subpage-preview {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.75rem;
   padding: 0.5rem 0;
 }
 
-.preview-hero-banner {
-  text-align: center;
-  padding: 1.75rem 1rem;
-  background: var(--admin-bg-elevated);
-  border-radius: 12px;
-  border: 1px dashed var(--admin-border);
-}
-
-.preview-hero-title {
-  font-size: 1.3rem;
-  font-weight: 700;
+.subpage-preview__note {
   margin: 0;
-  color: var(--admin-text);
-}
-
-.preview-hero-sub {
-  font-size: 0.82rem;
-  color: var(--admin-text-muted);
-  margin: 0.35rem 0 0;
-}
-
-.preview-section-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.preview-section-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin: 0;
-  border-bottom: 1px solid var(--admin-border);
-  padding-bottom: 0.35rem;
-}
-
-.preview-section-desc {
-  font-size: 0.78rem;
-  color: var(--admin-text-muted);
-  margin: 0;
-}
-
-.preview-albums-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 0.75rem;
-}
-
-.preview-album-tile {
-  background: var(--admin-bg-raised);
-  border: 1px solid var(--admin-border);
-  border-radius: 8px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.preview-album-cover {
-  width: 100%;
-  aspect-ratio: 4/3;
-  background: var(--admin-bg-elevated);
-  overflow: hidden;
-}
-
-.preview-album-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.preview-album-title {
   font-size: 0.75rem;
-  font-weight: 500;
-  padding: 0.4rem 0.5rem;
-  white-space: nowrap;
+  color: var(--admin-text-muted);
+}
+
+.subpage-preview__frame {
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
   overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+/* The site's own page surface, as <body> paints it. */
+.subpage-preview__canvas {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.6;
 }

@@ -268,8 +268,10 @@
   word-break: break-all;
 }
 
-/* Subpage Overview Grid */
-.subpage-grid {
+/* Subpage Overview Grid.
+   Not `.subpage-grid`: that is the public page's cover grid, which globals.css
+   styles everywhere — and which the drawer's Live Preview renders for real. */
+.subpage-tiles {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 0.75rem;
