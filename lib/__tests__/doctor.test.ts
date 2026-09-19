@@ -110,6 +110,7 @@ describe('checkAlbumIds', () => {
     const f = checkAlbumIds(['a', 'ghost'], known);
     expect(f.level).toBe('error');
     expect(f.detail).toContain('ghost');
+    expect(f.albumIds).toEqual(['ghost']);
   });
 
   it('flags an empty gallery', () => {
@@ -132,6 +133,7 @@ describe('checkAlbumsShared', () => {
     const f = checkAlbumsShared(['a', 'b'], known);
     expect(f.level).toBe('warn');
     expect(f.detail).toContain('Private trip');
+    expect(f.albumIds).toEqual(['b']);
   });
 
   /** An older Immich may not report the flag; silence beats a false alarm. */

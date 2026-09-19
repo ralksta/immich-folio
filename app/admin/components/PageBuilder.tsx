@@ -26,6 +26,7 @@ import SaveBar from './SaveBar';
 import AlbumDrawer from './page-builder/AlbumDrawer';
 import { SortableAlbumCard } from './page-builder/AlbumCard';
 import SubpageDrawer from './page-builder/SubpageDrawer';
+import { findAlbumAddress } from './page-builder/findAlbumAddress';
 import {
   seedCoverGrid,
   type ActiveEditAlbumAddress,
@@ -341,7 +342,9 @@ export default function PageBuilder() {
 
       if (galleryRes.ok) {
         const { gallery: raw } = await galleryRes.json();
-        setGallery(parseGalleryYaml(raw));
+        const parsed = parseGalleryYaml(raw);
+        setGallery(parsed);
+        openAlbumFromLink(parsed);
       }
 
       if (albumsRes.ok) {
@@ -353,6 +356,28 @@ export default function PageBuilder() {
     } finally {
       setLoading(false);
     }
+  }
+
+  /**
+   * `?album=<id>` opens that album's drawer — the diagnostics page links here
+   * from a finding about one album. An album on a subpage opens with its
+   * subpage underneath, so closing the drawer lands where the album lives.
+   *
+   * One-shot: the parameter is dropped once read, so a reload after closing
+   * the drawer does not open it again.
+   */
+  function openAlbumFromLink(state: GalleryState) {
+    const params = new URLSearchParams(window.location.search);
+    const albumId = params.get('album');
+    if (!albumId) return;
+    params.delete('album');
+    const query = params.toString();
+    window.history.replaceState(null, '', window.location.pathname + (query ? `?${query}` : ''));
+
+    const address = findAlbumAddress(state, albumId);
+    if (!address) return;
+    if (address.subpageIndex !== undefined) setExpandedSubpage(address.subpageIndex);
+    setEditingAlbumAddress(address);
   }
 
   function parseGalleryYaml(raw: Record<string, unknown>): GalleryState {

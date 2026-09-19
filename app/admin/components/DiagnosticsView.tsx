@@ -274,7 +274,19 @@ export default function DiagnosticsView() {
    * volume, it goes to the part of the docs that explains it. A finding with
    * no entry gets no button rather than a label that looks like one.
    */
-  const renderFix = (id: string) => {
+  const renderFix = (f: DoctorFinding) => {
+    const id = f.id;
+    // A finding about exactly one album opens that album's drawer.
+    if (f.albumIds?.length === 1) {
+      return (
+        <Link
+          href={`/admin/pages?album=${encodeURIComponent(f.albumIds[0])}`}
+          className="admin-btn admin-btn-sm"
+        >
+          Open album
+        </Link>
+      );
+    }
     if (id === 'alt-text') {
       if (altText && !altText.captionsEnabled) {
         return (
@@ -318,7 +330,7 @@ export default function DiagnosticsView() {
             <span className="diag-check-detail">{f.detail}</span>
           </div>
           <div className="diag-check-side">
-            {f.level !== 'ok' && renderFix(f.id)}
+            {f.level !== 'ok' && renderFix(f)}
             {hasList && (
               <button
                 type="button"

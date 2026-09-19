@@ -19,6 +19,11 @@ export interface DoctorFinding {
   title: string;
   /** One sentence: what was observed, and what to do about it. */
   detail: string;
+  /**
+   * The Immich album IDs a finding is about, when it is about albums — so the
+   * diagnostics page can link straight to the album in the page builder.
+   */
+  albumIds?: string[];
 }
 
 /** The worst level present — what the status badge should show. */
@@ -194,6 +199,7 @@ export function checkAlbumIds(configured: string[], known: AlbumRef[]): DoctorFi
       level: 'error',
       title: `${missing.length} of ${configured.length} album IDs do not exist in Immich`,
       detail: `Those pages are silently empty. Check gallery.yaml for: ${missing.join(', ')}`,
+      albumIds: missing,
     };
   }
 
@@ -234,6 +240,7 @@ export function checkAlbumsShared(configured: string[], known: AlbumRef[]): Doct
     detail:
       'They are served to visitors regardless — the allowlist in gallery.yaml is what decides. ' +
       `Worth a look if it was unintentional: ${unshared.map((a) => a.albumName).join(', ')}`,
+    albumIds: unshared.map((a) => a.id),
   };
 }
 
