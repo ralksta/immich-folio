@@ -3,6 +3,7 @@ import {
   albumPaths,
   buildAltTextReport,
   immichWebUrl,
+  pickImmichWebUrl,
   type AltTextAssetInput,
 } from '../admin/alt-text';
 
@@ -112,5 +113,23 @@ describe('immichWebUrl', () => {
   it('drops the /api suffix Folio appends', () => {
     expect(immichWebUrl('http://immich:2283/api')).toBe('http://immich:2283');
     expect(immichWebUrl('https://photos.example.com/api/')).toBe('https://photos.example.com');
+  });
+});
+
+describe('pickImmichWebUrl', () => {
+  it("prefers Immich's external domain", () => {
+    expect(pickImmichWebUrl('https://photos.example.com/', 'http://immich:2283/api')).toEqual({
+      url: 'https://photos.example.com',
+      source: 'external-domain',
+    });
+  });
+
+  it('falls back to the API address when the domain is unset or not a URL', () => {
+    for (const domain of ['', '  ', null, undefined, 'photos.example.com']) {
+      expect(pickImmichWebUrl(domain, 'http://immich:2283/api')).toEqual({
+        url: 'http://immich:2283',
+        source: 'api-url',
+      });
+    }
   });
 });

@@ -109,9 +109,26 @@ export function albumPaths(
  * The Immich web app's address, derived from the API URL Folio talks to.
  *
  * This is the address *Folio* reaches Immich at. On a Docker network that is
- * often `http://immich:2283`, which the operator's browser cannot open — the
- * UI says so next to the links rather than pretending they always work.
+ * often `http://immich:2283`, which the operator's browser cannot open — see
+ * `pickImmichWebUrl` for the address preferred when there is one.
  */
 export function immichWebUrl(apiUrl: string): string {
   return apiUrl.replace(/\/+$/, '').replace(/\/api$/, '');
+}
+
+/**
+ * Where links into Immich should point: Immich's own *External domain*
+ * (Administration → Settings → Server) when it is set — the address Immich
+ * itself uses for share links, and so one a browser can open — else the
+ * address derived from the API URL, which may be internal.
+ */
+export function pickImmichWebUrl(
+  externalDomain: string | null | undefined,
+  apiUrl: string,
+): { url: string; source: 'external-domain' | 'api-url' } {
+  const external = externalDomain?.trim().replace(/\/+$/, '');
+  if (external && /^https?:\/\//i.test(external)) {
+    return { url: external, source: 'external-domain' };
+  }
+  return { url: immichWebUrl(apiUrl), source: 'api-url' };
 }

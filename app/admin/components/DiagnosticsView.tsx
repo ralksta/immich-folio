@@ -30,7 +30,12 @@ interface StatusData {
   update?: { current: string; latest?: string; updateAvailable?: boolean };
 }
 
-type AltTextData = AltTextReport & { unreadable: number; immichUrl: string };
+type AltTextData = AltTextReport & {
+  unreadable: number;
+  immichUrl: string;
+  /** `external-domain` is Immich's own public address; `api-url` may be internal. */
+  immichUrlSource: 'external-domain' | 'api-url';
+};
 
 /** Which group a doctor check belongs to. An unknown id lands in Content. */
 const GROUPS: { id: string; title: string; checks: string[] }[] = [
@@ -261,9 +266,18 @@ export default function DiagnosticsView() {
       })}
 
       <p className="diag-note">
-        Add the description in Immich, then press Reload in the top bar. Photos open in Immich at{' '}
-        <code>{report.immichUrl}</code> — the address Folio reaches it at. If your browser cannot
-        open that, search Immich for the file name instead.
+        Add the description in Immich, then press Reload in the top bar.{' '}
+        {report.immichUrlSource === 'external-domain' ? (
+          <>
+            Photos open at <code>{report.immichUrl}</code>, Immich&rsquo;s external domain.
+          </>
+        ) : (
+          <>
+            Photos open at <code>{report.immichUrl}</code> — the address Folio reaches Immich at,
+            which your browser may not be able to open. Set <strong>External domain</strong> in
+            Immich (Administration → Settings → Server) and the links use that instead.
+          </>
+        )}
       </p>
     </div>
   );

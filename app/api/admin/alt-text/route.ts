@@ -5,9 +5,27 @@ import { immich } from '@/lib/immich';
 import {
   albumPaths,
   buildAltTextReport,
-  immichWebUrl,
+  pickImmichWebUrl,
   type AltTextAlbumInput,
 } from '@/lib/admin/alt-text';
+
+/**
+ * Immich's *External domain* setting, or null when unset or unreadable. A
+ * failure here must not cost the report — the links just fall back.
+ */
+async function immichExternalDomain(apiUrl: string, apiKey: string, timeoutMs: number) {
+  try {
+    const res = await fetch(`${apiUrl}/server/config`, {
+      headers: { 'x-api-key': apiKey, Accept: 'application/json' },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { externalDomain?: string };
+    return body.externalDomain ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Alt-text coverage of every published album, for the diagnostics page.
@@ -33,9 +51,11 @@ export async function GET() {
   const inputs: AltTextAlbumInput[] = [];
   let unreadable = 0;
 
-  const albums = await Promise.all(
-    config.albums.map((id) => immich.getAlbum(id).catch(() => undefined)),
-  );
+  const [albums, externalDomain] = await Promise.all([
+    Promise.all(config.albums.map((id) => immich.getAlbum(id).catch(() => undefined))),
+    immichExternalDomain(config.immich.apiUrl, config.immich.apiKey, config.immichTimeoutMs),
+  ]);
+  const immichLink = pickImmichWebUrl(externalDomain, config.immich.apiUrl);
   albums.forEach((album, i) => {
     if (!album) {
       // null is "Immich says it does not exist" — the doctor's album-ids check
@@ -55,7 +75,8 @@ export async function GET() {
     {
       ...buildAltTextReport(inputs, config.exif.caption),
       unreadable,
-      immichUrl: immichWebUrl(config.immich.apiUrl),
+      immichUrl: immichLink.url,
+      immichUrlSource: immichLink.source,
     },
     { headers: { 'Cache-Control': 'no-store' } },
   );
