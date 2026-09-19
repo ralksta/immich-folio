@@ -140,6 +140,40 @@ describe('assetAspectRatio', () => {
     expect(result).toBe(1.5);
   });
 
+  // Sony ILCE-7M5 values from #565: portrait stored as landscape + a rotation flag.
+  const sensor = (orientation: string | null | undefined) => ({
+    exifInfo: {
+      make: null,
+      model: null,
+      lensModel: null,
+      focalLength: null,
+      fNumber: null,
+      exposureTime: null,
+      iso: null,
+      exifImageWidth: 7008,
+      exifImageHeight: 4672,
+      orientation,
+      latitude: null,
+      longitude: null,
+      city: null,
+      state: null,
+      country: null,
+      dateTimeOriginal: null,
+      description: null,
+    },
+  });
+
+  it.each(['5', '6', '7', '8'])('swaps width and height for orientation %s', (o) => {
+    expect(assetAspectRatio(sensor(o))).toBeCloseTo(4672 / 7008);
+  });
+
+  it.each(['1', '2', '3', '4', null, undefined])(
+    'keeps the stored ratio for orientation %s',
+    (o) => {
+      expect(assetAspectRatio(sensor(o))).toBeCloseTo(7008 / 4672);
+    },
+  );
+
   it('returns undefined when dimensions are missing', () => {
     expect(assetAspectRatio({ exifInfo: undefined })).toBeUndefined();
   });

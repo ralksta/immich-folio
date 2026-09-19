@@ -127,13 +127,22 @@ export function assetCaption(
   return asset.exifInfo?.description?.trim() || undefined;
 }
 
+/** EXIF orientations 5–8 all include a 90° turn, so width and height swap on display. */
+const ROTATED_ORIENTATIONS = new Set(['5', '6', '7', '8']);
+
 /**
- * Compute the natural aspect ratio (width / height) from EXIF dimensions.
+ * Compute the displayed aspect ratio (width / height) from EXIF dimensions.
  * Returns undefined if dimensions are not available.
+ *
+ * The EXIF dimensions are the unrotated sensor data: most cameras store a
+ * portrait shot as landscape pixels plus an orientation flag, which the browser
+ * applies when it draws the image. Ignoring the flag gave every such portrait a
+ * landscape tile (#565). A missing orientation is treated as upright.
  */
 export function assetAspectRatio(asset: Pick<ImmichAsset, 'exifInfo'>): number | undefined {
   const w = asset.exifInfo?.exifImageWidth;
   const h = asset.exifInfo?.exifImageHeight;
-  if (w && h && h > 0) return w / h;
-  return undefined;
+  if (!w || !h || h <= 0) return undefined;
+  const orientation = asset.exifInfo?.orientation;
+  return orientation && ROTATED_ORIENTATIONS.has(orientation) ? h / w : w / h;
 }

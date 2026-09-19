@@ -51,6 +51,12 @@ export interface ImmichExifInfo {
   iso: number | null;
   exifImageWidth: number | null;
   exifImageHeight: number | null;
+  /**
+   * EXIF orientation as Immich reports it: a string, "1"–"8". The dimensions
+   * above are the stored sensor data, *before* this rotation is applied.
+   * Optional because not every Immich response carries it.
+   */
+  orientation?: string | null;
   latitude: number | null;
   longitude: number | null;
   city: string | null;
