@@ -85,7 +85,7 @@
 }
 
 .diag-vital-meta a {
-  color: var(--admin-accent);
+  color: var(--admin-warning);
 }
 
 /* ── Check groups ── */
