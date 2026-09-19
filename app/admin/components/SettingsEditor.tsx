@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import * as Icons from './Icons';
 import SaveBar from './SaveBar';
@@ -486,11 +486,6 @@ const SETTINGS_SECTIONS = [
   { id: 'about', label: 'About' },
 ];
 
-interface SettingsEditorProps {
-  /** Sub-section to show, taken from the /admin/settings/[section] route. */
-  section?: string;
-}
-
 /**
  * One labelled block of related switches.
  *
@@ -576,8 +571,11 @@ function SettingRow({
   );
 }
 
-export default function SettingsEditor({ section }: SettingsEditorProps) {
+export default function SettingsEditor() {
   const router = useRouter();
+  // Read here rather than passed in: the editor is mounted by the settings
+  // layout, which does not receive the child route's params.
+  const section = useParams<{ section?: string }>()?.section;
   // An unknown section in the URL falls back to General instead of an empty panel.
   const activeSection = SETTINGS_SECTIONS.some((sec) => sec.id === section)
     ? (section as string)
@@ -609,6 +607,7 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
   }>({});
   const [aboutBody, setAboutBody] = useState('');
   const [aboutLoading, setAboutLoading] = useState(false);
+  const [aboutLoaded, setAboutLoaded] = useState(false);
   const [aboutSaving, setAboutSaving] = useState(false);
   const [aboutDirty, setAboutDirty] = useState(false);
   const [aboutMessage, setAboutMessage] = useState('');
@@ -636,10 +635,12 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
     }
   }, [settings.theme?.preset, settings.theme?.accent]);
 
-  // The About panel has its own route, so load its content when that section opens
+  // Loaded the first time the About section opens, and only then: the editor
+  // stays mounted across sections, so reloading on every visit would overwrite
+  // unsaved About edits with the file on disk.
   useEffect(() => {
-    if (activeSection === 'about') loadAboutContent();
-  }, [activeSection]);
+    if (activeSection === 'about' && !aboutLoaded) loadAboutContent();
+  }, [activeSection, aboutLoaded]);
 
   const toggleMode = (mode: 'dark' | 'light') => {
     setCurrentMode(mode);
@@ -651,25 +652,9 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
 
   // ── Keyboard shortcut: ⌘+S / Ctrl+S ─────────────────────────
   const handleSaveRef = useCallback(() => {
-    if (activeSection === 'about') {
-      if (aboutDirty && !aboutSaving) saveAboutContent();
-      return;
-    }
-    if (dirty && !saving) {
-      handleSave();
-    }
+    saveAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    dirty,
-    saving,
-    settings,
-    activeSection,
-    aboutDirty,
-    aboutSaving,
-    aboutMeta,
-    aboutBody,
-    aboutGearText,
-  ]);
+  }, [dirty, saving, settings, aboutDirty, aboutSaving, aboutMeta, aboutBody, aboutGearText]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -682,7 +667,7 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleSaveRef]);
 
-  useUnsavedGuard(dirty);
+  useUnsavedGuard(dirty || aboutDirty);
 
   async function loadSettings() {
     setLoading(true);
@@ -785,6 +770,7 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
         setAboutMeta(data.meta || {});
         setAboutBody(data.body || '');
         setAboutGearText(data.meta?.gear?.join('\n') || '');
+        setAboutLoaded(true);
       }
     } catch (err) {
       console.error('Failed to load about content:', err);
@@ -832,6 +818,16 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
     }
   }
 
+  /**
+   * Save whatever is unsaved, in either file. The owner edits one set of
+   * settings; that About lives in about.md and the rest in settings.yaml is
+   * not theirs to keep track of.
+   */
+  function saveAll() {
+    if (dirty && !saving) handleSave();
+    if (aboutDirty && !aboutSaving) saveAboutContent();
+  }
+
   function updateAboutMeta(key: string, value: unknown) {
     setAboutMeta((m) => ({ ...m, [key]: value }));
     setAboutDirty(true);
@@ -874,26 +870,21 @@ export default function SettingsEditor({ section }: SettingsEditorProps) {
       'exif.caption': !anyMetadata,
     });
 
+  // An error from either save wins over the other's success.
+  const saveBarMessage =
+    [saveMessage, aboutMessage].find((m) => m.startsWith('Error')) || saveMessage || aboutMessage;
+
   return (
     <div className="settings-editor">
-      {/* The About panel edits about.md, not settings.yaml, so it drives the bar itself. */}
-      {activeSection === 'about' ? (
-        <SaveBar
-          dirty={aboutDirty}
-          saving={aboutSaving}
-          saveMessage={aboutMessage}
-          onSave={saveAboutContent}
-          label="Save About"
-        />
-      ) : (
-        <SaveBar
-          dirty={dirty}
-          saving={saving}
-          saveMessage={saveMessage}
-          onSave={handleSave}
-          label="Save Settings"
-        />
-      )}
+      {/* One bar for both files, on every section: an About edit stays visible
+          from Theme, and a settings edit from About. */}
+      <SaveBar
+        dirty={dirty || aboutDirty}
+        saving={saving || aboutSaving}
+        saveMessage={saveBarMessage}
+        onSave={saveAll}
+        label="Save Changes"
+      />
 
       <p className="settings-live-sync-note">
         <Icons.IconRefresh size={13} /> Live Sync (No Docker restart required)

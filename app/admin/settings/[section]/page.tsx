@@ -1,10 +1,7 @@
-import SettingsEditor from '../../components/SettingsEditor';
-
-export default async function AdminSettingsSectionPage({
-  params,
-}: {
-  params: Promise<{ section: string }>;
-}) {
-  const { section } = await params;
-  return <SettingsEditor section={section} />;
+/**
+ * The editor is rendered by the layout and reads the section from the URL
+ * itself; this route only has to exist.
+ */
+export default function AdminSettingsSectionPage() {
+  return null;
 }
