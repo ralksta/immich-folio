@@ -17,7 +17,9 @@
   font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  opacity: 0.6;
+  /* Colour tokens rather than opacity: they are tuned for 4.5:1 per theme,
+     an opacity on top of them is not. */
+  color: var(--text-muted);
 }
 .subpage-content {
   max-width: 600px;
@@ -29,7 +31,7 @@
 .legal-section__title {
   font-size: 1.2rem;
   margin-bottom: 0.5rem;
-  opacity: 0.8;
+  color: var(--text-secondary);
 }
 .legal-section__text {
   line-height: 1.6;
@@ -40,5 +42,5 @@
 .legal-source {
   margin-top: 4rem;
   font-size: 0.85rem;
-  opacity: 0.6;
+  color: var(--text-muted);
 }

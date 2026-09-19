@@ -1539,13 +1539,14 @@
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  /* --text-muted is already the quietest colour that clears 4.5:1; an extra
+     opacity on top halved that to about 2:1 in every light preset. */
   color: var(--text-muted);
-  opacity: 0.5;
-  transition: opacity var(--transition-fast);
+  transition: color var(--transition-fast);
 }
 
 .footer__legal-link:hover {
-  opacity: 1;
+  color: var(--text-primary);
 }
 
 .footer__links {
