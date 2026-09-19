@@ -42,6 +42,25 @@ const GROUPS: { id: string; title: string; checks: string[] }[] = [
 const LEVEL_LABEL: Record<DoctorLevel, string> = { ok: 'OK', warn: 'Check', error: 'Problem' };
 const LEVEL_RANK: Record<DoctorLevel, number> = { error: 0, warn: 1, ok: 2 };
 
+const DOCS = 'https://github.com/ralksta/immich-folio/blob/main';
+
+/** Where each doctor finding is fixed. Admin paths are in-app links. */
+const FIXES: Record<string, { label: string; href: string }> = {
+  'auth-secret': {
+    label: 'How to set it',
+    href: `${DOCS}/README.md#environment-variables-envlocal`,
+  },
+  'proxy-hops': { label: 'How to set it', href: `${DOCS}/docs/gallery-config.md#trusted-proxies` },
+  passwords: { label: 'Open settings', href: '/admin/settings/security' },
+  'album-ids': { label: 'Open pages', href: '/admin/pages' },
+  'albums-shared': { label: 'Open pages', href: '/admin/pages' },
+  'content-writable': { label: 'How to fix', href: `${DOCS}/docs/admin-panel.md#docker-usage` },
+  'immich-api': {
+    label: 'API key permissions',
+    href: `${DOCS}/README.md#immich-api-key-permissions`,
+  },
+};
+
 /** Photos shown per album before the "+n more" tile. */
 const PREVIEW_COUNT = 12;
 
@@ -91,7 +110,7 @@ export default function DiagnosticsView() {
   const [copied, setCopied] = useState(false);
   const [showBackups, setShowBackups] = useState(false);
   const [clearing, setClearing] = useState(false);
-  const [altTextOpen, setAltTextOpen] = useState(true);
+  const [altTextOpen, setAltTextOpen] = useState(false);
   const [expandedAlbums, setExpandedAlbums] = useState<Set<string>>(new Set());
 
   const fetchStatus = useCallback(async () => {
@@ -249,6 +268,41 @@ export default function DiagnosticsView() {
     </div>
   );
 
+  /**
+   * The way to the fix, for a finding that wants one. Where the fix lives in
+   * the admin the button goes there; where it is an environment variable or a
+   * volume, it goes to the part of the docs that explains it. A finding with
+   * no entry gets no button rather than a label that looks like one.
+   */
+  const renderFix = (id: string) => {
+    if (id === 'alt-text') {
+      if (altText && !altText.captionsEnabled) {
+        return (
+          <Link href="/admin/settings/general" className="admin-btn admin-btn-sm">
+            Open settings
+          </Link>
+        );
+      }
+      return null; // The photo list toggle is rendered separately.
+    }
+    const fix = FIXES[id];
+    if (!fix) return null;
+    return fix.href.startsWith('/') ? (
+      <Link href={fix.href} className="admin-btn admin-btn-sm">
+        {fix.label}
+      </Link>
+    ) : (
+      <a
+        href={fix.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="admin-btn admin-btn-sm"
+      >
+        {fix.label} ↗
+      </a>
+    );
+  };
+
   const renderFinding = (f: DoctorFinding) => {
     const isAltText = f.id === 'alt-text' && altText && altText.captionsEnabled;
     const hasList = isAltText && altText.albums.length > 0;
@@ -257,18 +311,14 @@ export default function DiagnosticsView() {
         <div className="diag-check-row">
           <span className="diag-dot" aria-hidden="true" />
           <div className="diag-check-body">
-            <span className="diag-check-title">{f.title}</span>
+            <span className="diag-check-title">
+              {f.level !== 'ok' && <span className="sr-only">{LEVEL_LABEL[f.level]}: </span>}
+              {f.title}
+            </span>
             <span className="diag-check-detail">{f.detail}</span>
           </div>
           <div className="diag-check-side">
-            {f.level !== 'ok' && (
-              <span className={`diag-pill diag-pill--${f.level}`}>{LEVEL_LABEL[f.level]}</span>
-            )}
-            {f.id === 'alt-text' && altText && !altText.captionsEnabled && (
-              <Link href="/admin/settings/general" className="admin-btn admin-btn-sm">
-                Open settings
-              </Link>
-            )}
+            {f.level !== 'ok' && renderFix(f.id)}
             {hasList && (
               <button
                 type="button"
