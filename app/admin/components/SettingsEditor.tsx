@@ -898,6 +898,7 @@ export default function SettingsEditor() {
               key={sec.id}
               href={`/admin/settings/${sec.id}`}
               className={`settings-nav-item ${activeSection === sec.id ? 'active' : ''}`}
+              aria-current={activeSection === sec.id ? 'page' : undefined}
             >
               {sec.label}
             </Link>

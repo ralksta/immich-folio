@@ -6,8 +6,8 @@
 
 import type { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
-import Link from 'next/link';
 import './globals.css';
+import { NavLink } from '@/components/NavLink';
 import { SubpageNav } from '@/components/SubpageNav';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ScrollToTop } from '@/components/ScrollToTop';
@@ -175,20 +175,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <span className="header__wordmark" aria-hidden="true">
                     {config.siteTitle}
                   </span>
-                  <Link href="/" className="header__nav-link">
-                    {t.nav.home}
-                  </Link>
+                  <NavLink href="/">{t.nav.home}</NavLink>
                   <SubpageNav />
-                  {config.aboutEnabled && (
-                    <Link href="/about" className="header__nav-link">
-                      {t.nav.about}
-                    </Link>
-                  )}
-                  {config.map && (
-                    <Link href="/map" className="header__nav-link">
-                      {t.nav.map}
-                    </Link>
-                  )}
+                  {config.aboutEnabled && <NavLink href="/about">{t.nav.about}</NavLink>}
+                  {config.map && <NavLink href="/map">{t.nav.map}</NavLink>}
                   <ThemeToggle />
                 </nav>
               </header>
