@@ -27,6 +27,7 @@ import AlbumDrawer from './page-builder/AlbumDrawer';
 import { SortableAlbumCard } from './page-builder/AlbumCard';
 import SubpageDrawer from './page-builder/SubpageDrawer';
 import { findAlbumAddress } from './page-builder/findAlbumAddress';
+import { parseAlbumEntries, serializeAlbumEntries } from './page-builder/albumEntries';
 import {
   seedCoverGrid,
   type ActiveEditAlbumAddress,
@@ -40,8 +41,6 @@ import {
 } from './page-builder/types';
 import { useScrollLock } from './useScrollLock';
 import { useUnsavedGuard } from './useUnsavedGuard';
-import { DEFAULT_ALBUM_SORT, isAlbumSortMode } from '@/lib/albumSort';
-import { type AlbumEntryObject } from '@/lib/config/schema';
 import {
   IconCamera,
   IconFolder,
@@ -60,73 +59,6 @@ interface GalleryState {
   hero: string[];
   albums: AlbumEntry[];
   subpages: Subpage[];
-}
-
-// ── Helpers ────────────────────────────────────────────────────
-
-type RawAlbumEntry = string | Record<string, string | AlbumEntryObject>;
-
-/**
- * Whether an entry carries anything beyond its ID.
- *
- * Both collapse rules below depend on this, and they are the reason every new
- * per-album option has to be listed here: an entry that looks "empty" is
- * serialized back to a bare UUID string, so a field missing from this check is
- * silently dropped on the next save.
- */
-function hasAlbumOptions(entry: AlbumEntry): boolean {
-  return Boolean(
-    entry.description ||
-    entry.password ||
-    entry.heroImage ||
-    (entry.sort && entry.sort !== DEFAULT_ALBUM_SORT) ||
-    entry.assetOrder?.length ||
-    entry.grid ||
-    entry.coverPosition,
-  );
-}
-
-function parseAlbumEntries(raw: RawAlbumEntry[] | undefined): AlbumEntry[] {
-  if (!raw) return [];
-  return raw.map((entry) => {
-    if (typeof entry === 'string') return { id: entry };
-    const [id, value] = Object.entries(entry)[0];
-    if (typeof value === 'string') return { id, title: value };
-    return {
-      id,
-      title: value.title,
-      description: value.description,
-      password: value.password,
-      heroImage: value.heroImage,
-      sort: isAlbumSortMode(value.sort) ? value.sort : undefined,
-      assetOrder: value.assetOrder,
-      grid: value.grid,
-      coverPosition: value.coverPosition,
-    };
-  });
-}
-
-function serializeAlbumEntries(entries: AlbumEntry[]): RawAlbumEntry[] {
-  return entries.map((entry) => {
-    const extras = hasAlbumOptions(entry);
-    if (!entry.title && !extras) return entry.id;
-    if (entry.title && !extras) return { [entry.id]: entry.title };
-
-    const val: AlbumEntryObject = {};
-    // Only when set: a sort-only entry would otherwise be written with an empty
-    // title, which deriveGallery ignores but which still lands in the YAML.
-    if (entry.title) val.title = entry.title;
-    if (entry.description) val.description = entry.description;
-    if (entry.password) val.password = entry.password;
-    if (entry.heroImage) val.heroImage = entry.heroImage;
-    if (entry.sort && entry.sort !== DEFAULT_ALBUM_SORT) val.sort = entry.sort;
-    // Persisted regardless of the mode, so manual → newest → manual does not
-    // throw away a hand-curated order.
-    if (entry.assetOrder?.length) val.assetOrder = entry.assetOrder;
-    if (entry.grid) val.grid = entry.grid;
-    if (entry.coverPosition) val.coverPosition = entry.coverPosition;
-    return { [entry.id]: val };
-  });
 }
 
 // ── Sortable Hero Tile ─────────────────────────────────────────
@@ -424,6 +356,7 @@ export default function PageBuilder() {
         password: sp.password as string | undefined,
         enabled: sp.enabled !== false,
         hidden: sp.hidden === true,
+        location: sp.location as string | undefined,
         essayText: sp.essayText as string | undefined,
         essayFile: sp.essayFile as string | undefined,
         albums: parseAlbumEntries(sp.albums as Array<string | Record<string, string>> | undefined),
@@ -451,6 +384,7 @@ export default function PageBuilder() {
           password: sp.password as string | undefined,
           enabled: sp.enabled !== false,
           hidden: sp.hidden === true,
+          location: sp.location as string | undefined,
           essayText: sp.essayText as string | undefined,
           essayFile: sp.essayFile as string | undefined,
           albums: parseAlbumEntries(
@@ -497,6 +431,7 @@ export default function PageBuilder() {
         if (sp.essayFile) entry.essayFile = sp.essayFile;
         if (sp.grid) entry.grid = sp.grid;
         if (sp.coverGrid) entry.coverGrid = sp.coverGrid;
+        if (sp.location) entry.location = sp.location;
 
         if (sp.sections && sp.sections.length > 0) {
           entry.sections = sp.sections.map((sec) => {

@@ -13,6 +13,17 @@ export interface AlbumEntry {
   grid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
   /** EXPERIMENTAL: focal point for the cover crop, e.g. "50% 25%" or "top" */
   coverPosition?: string;
+  /**
+   * Map precision for this album: `exact`, `city`, `country` or `hidden` (#469).
+   *
+   * Carried verbatim rather than narrowed. The builder has no UI for it yet, so
+   * its only job is to hand back exactly what it was given — including a value
+   * this version does not recognise, which deriveGallery() is the right place
+   * to reject.
+   */
+  location?: string;
+  /** Whether visitors may download the originals from this album (#475). */
+  download?: boolean;
 }
 
 export interface Section {
@@ -37,6 +48,8 @@ export interface Subpage {
   grid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
   /** The album-cover tiles on this page only (#523). */
   coverGrid?: { columns?: number; gap?: number; aspectRatio?: string; layout?: string };
+  /** Map precision for every album here that does not set its own (#469). */
+  location?: string;
 }
 
 /**
