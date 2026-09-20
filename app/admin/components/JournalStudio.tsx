@@ -435,23 +435,33 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
     title: string;
   } | null>(null);
 
+  /** Set when the entry could not be fetched; blocks saving over it. */
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   // Load entry
   useEffect(() => {
     async function load() {
       setLoading(true);
+      setLoadError(null);
       try {
         const res = await fetch(`/api/admin/journal/${slug}`);
-        if (res.ok) {
-          const data = await res.json();
-          const md = data.entry.rawMarkdown;
-          setRawMarkdown(md);
-          setParsed(parseJournalMarkdown(md));
-          setDirty(false);
-        } else {
-          alert('Failed to load journal entry');
+        if (!res.ok) {
+          throw new Error(
+            res.status === 401
+              ? 'Your session has expired. Sign in again to continue.'
+              : `The server answered ${res.status}.`,
+          );
         }
-      } catch {
-        alert('Error loading journal entry');
+        const data = await res.json();
+        const md = data.entry.rawMarkdown;
+        setRawMarkdown(md);
+        setParsed(parseJournalMarkdown(md));
+        setDirty(false);
+      } catch (err) {
+        console.error('Failed to load journal entry:', err);
+        // An empty editor saved over the entry replaces it with nothing, so
+        // this blocks the save rather than only reporting it.
+        setLoadError(err instanceof Error ? err.message : 'The entry could not be loaded.');
       } finally {
         setLoading(false);
       }
@@ -504,6 +514,9 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
 
   // Save
   const handleSave = async () => {
+    // The editor is not rendered in this state, but Cmd+S still reaches here.
+    if (loadError) return;
+
     setSaving(true);
     try {
       const res = await fetch(`/api/admin/journal/${slug}`, {
@@ -632,6 +645,25 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
     return (
       <div style={{ padding: '4rem', textAlign: 'center', opacity: 0.6 }}>
         Opening Journal Studio...
+      </div>
+    );
+  }
+
+  /**
+   * Replaces the editor rather than sitting above it: an empty editor saved
+   * over the entry would replace the text with nothing.
+   */
+  if (loadError) {
+    return (
+      <div className="admin-error" role="alert">
+        <strong>This entry could not be loaded.</strong> {loadError}
+        <p>
+          Nothing has been changed. Saving stays disabled until it loads, so an empty editor cannot
+          overwrite the entry.
+        </p>
+        <button className="admin-btn admin-btn-secondary" onClick={onBack}>
+          Back to entries
+        </button>
       </div>
     );
   }

@@ -269,6 +269,12 @@ export default function PageBuilder() {
   const [gallery, setGallery] = useState<GalleryState>({ hero: [], albums: [], subpages: [] });
   const [immichAlbums, setImmichAlbums] = useState<ImmichAlbumInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  /**
+   * Set when gallery.yaml could not be fetched. It blocks saving: the builder
+   * writes the whole file from its own state, so saving an empty builder
+   * publishes an empty gallery.
+   */
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
@@ -356,25 +362,35 @@ export default function PageBuilder() {
 
   async function loadData() {
     setLoading(true);
+    setLoadError(null);
     try {
       const [galleryRes, albumsRes] = await Promise.all([
         fetch('/api/admin/gallery'),
         fetch('/api/admin/albums'),
       ]);
 
-      if (galleryRes.ok) {
-        const { gallery: raw } = await galleryRes.json();
-        const parsed = parseGalleryYaml(raw);
-        setGallery(parsed);
-        openAlbumFromLink(parsed);
+      if (!galleryRes.ok) {
+        throw new Error(
+          galleryRes.status === 401
+            ? 'Your session has expired. Sign in again to continue.'
+            : `The server answered ${galleryRes.status}.`,
+        );
       }
 
+      const { gallery: raw } = await galleryRes.json();
+      const parsed = parseGalleryYaml(raw);
+      setGallery(parsed);
+      openAlbumFromLink(parsed);
+
+      // A failed album list is survivable — it only empties the picker, and
+      // saving with it empty changes nothing in gallery.yaml.
       if (albumsRes.ok) {
         const { albums } = await albumsRes.json();
         setImmichAlbums(albums);
       }
     } catch (err) {
       console.error('Failed to load admin data:', err);
+      setLoadError(err instanceof Error ? err.message : 'The page structure could not be loaded.');
     } finally {
       setLoading(false);
     }
@@ -474,6 +490,9 @@ export default function PageBuilder() {
 
   // ── Save ──────────────────────────────────────────────────────
   async function handleSave() {
+    // Not reachable from the UI in this state, but Cmd+S still gets here.
+    if (loadError) return;
+
     setSaving(true);
     setSaveMessage('');
 
@@ -809,6 +828,26 @@ export default function PageBuilder() {
     return (
       <div className="admin-loading">
         <div className="admin-spinner" />
+      </div>
+    );
+  }
+
+  /**
+   * Replaces the builder rather than sitting above it. An empty builder looks
+   * exactly like a site with no pages yet, and saving it used to publish an
+   * empty gallery.yaml over a working one.
+   */
+  if (loadError) {
+    return (
+      <div className="admin-error" role="alert">
+        <strong>The page structure could not be loaded.</strong> {loadError}
+        <p>
+          Nothing has been changed. Saving stays disabled until it loads, so an empty builder cannot
+          overwrite your gallery.
+        </p>
+        <button className="admin-btn admin-btn-secondary" onClick={loadData}>
+          Try again
+        </button>
       </div>
     );
   }
