@@ -752,7 +752,13 @@ export default function SettingsEditor() {
         setTimeout(() => setSaveMessage(''), 5000);
       } else {
         const err = await res.json();
-        setSaveMessage(`Error: ${err.error}`);
+        // A rejected save names the fields that caused it. Listing them beats
+        // "could not be saved" over a form with forty inputs; putting the
+        // message next to each input is the job of #600.
+        const fields: string[] = Array.isArray(err.fields)
+          ? err.fields.map((f: { field?: string }) => f.field || 'settings')
+          : [];
+        setSaveMessage(`Error: ${err.error}${fields.length ? ` — ${fields.join(', ')}` : ''}`);
       }
     } catch {
       setSaveMessage('Error: Failed to save');
