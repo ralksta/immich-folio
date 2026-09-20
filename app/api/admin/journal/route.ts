@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
+import { withAdmin } from '@/lib/admin/withAdmin';
 import { sanitizeSlug, isValidSlug, type JournalFrontmatter } from '@/lib/journal';
 import {
   listJournalEntries,
@@ -7,14 +7,7 @@ import {
   readJournalEntry,
 } from '@/lib/admin/journal-service';
 
-export async function GET() {
-  if (!isAdminEnabled()) {
-    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
-  }
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withAdmin(async () => {
   try {
     const entries = await listJournalEntries();
     return NextResponse.json({ entries });
@@ -22,16 +15,9 @@ export async function GET() {
     console.error('[Admin API] Failed to list journal entries:', err);
     return NextResponse.json({ error: 'Failed to list journal entries' }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: Request) {
-  if (!isAdminEnabled()) {
-    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
-  }
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const POST = withAdmin(async (request: Request) => {
   try {
     const body = await request.json();
     const rawTitle = typeof body.title === 'string' ? body.title.trim() : 'Untitled';
@@ -73,4 +59,4 @@ export async function POST(request: Request) {
     console.error('[Admin API] Failed to create journal entry:', err);
     return NextResponse.json({ error: 'Failed to create journal entry' }, { status: 500 });
   }
-}
+});

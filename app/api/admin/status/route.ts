@@ -1,19 +1,12 @@
 import { NextResponse } from 'next/server';
-import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
+import { withAdmin } from '@/lib/admin/withAdmin';
 import { immich } from '@/lib/immich';
 import { getConfig } from '@/lib/config';
 import { cache } from '@/lib/cache';
 import { listBackups, readGalleryYaml, readSettingsYaml } from '@/lib/admin/yaml-service';
 import { getUpdateStatus } from '@/lib/updateCheck';
 
-export async function GET() {
-  if (!isAdminEnabled()) {
-    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
-  }
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withAdmin(async () => {
   // 1. Immich Connection Status
   let immichOk = false;
   try {
@@ -96,4 +89,4 @@ export async function GET() {
     },
     update,
   });
-}
+});

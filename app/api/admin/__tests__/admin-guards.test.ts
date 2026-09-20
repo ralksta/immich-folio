@@ -266,3 +266,62 @@ describe('admin route guards', () => {
     expect(uncovered, `Admin routes with no guard test: ${uncovered.join(', ')}`).toEqual([]);
   });
 });
+
+/**
+ * The table above proves each route refuses an unauthenticated caller. This
+ * proves they all refuse it the *same way* — by going through withAdmin()
+ * rather than by carrying their own copy of the check, which is how the two
+ * refusals drifted apart in the first place.
+ */
+describe('admin routes are wrapped in withAdmin', () => {
+  const read = async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const adminDir = path.join(process.cwd(), 'app/api/admin');
+
+    const files: { rel: string; src: string }[] = [];
+    const walk = (dir: string) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (entry.name === '__tests__') continue;
+          walk(full);
+        } else if (entry.name === 'route.ts') {
+          const rel = path.relative(adminDir, full).replace(/\\/g, '/');
+          // The login endpoint must stay reachable without a session.
+          if (rel.startsWith('auth/')) continue;
+          files.push({ rel, src: fs.readFileSync(full, 'utf8') });
+        }
+      }
+    };
+    walk(adminDir);
+    return files;
+  };
+
+  it('exports no handler outside the wrapper', async () => {
+    const offenders: string[] = [];
+    for (const { rel, src } of await read()) {
+      const bare = src.match(/export\s+(?:async\s+)?function\s+(GET|PUT|POST|DELETE|PATCH)\b/g);
+      if (bare) offenders.push(`${rel}: ${bare.join(', ')}`);
+    }
+
+    expect(
+      offenders,
+      `Admin route handlers not wrapped in withAdmin():\n${offenders.join('\n')}`,
+    ).toEqual([]);
+  });
+
+  it('never re-implements the guard by hand', async () => {
+    const offenders: string[] = [];
+    for (const { rel, src } of await read()) {
+      if (src.includes('isAdminEnabled') || src.includes('isAdminAuthenticated')) {
+        offenders.push(rel);
+      }
+    }
+
+    expect(
+      offenders,
+      `These call the auth helpers directly instead of using withAdmin():\n${offenders.join('\n')}`,
+    ).toEqual([]);
+  });
+});

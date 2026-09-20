@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
+import { withAdmin } from '@/lib/admin/withAdmin';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 
 const CONTENT_DIR = path.resolve(process.cwd(), 'content');
 const DEST = 'favicon.svg';
@@ -26,14 +26,7 @@ async function writeFavicon(content: Buffer | string): Promise<void> {
   }
 }
 
-export async function PUT(request: Request) {
-  if (!isAdminEnabled()) {
-    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
-  }
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const PUT = withAdmin(async (request: Request) => {
   let body: FormData;
   try {
     body = await request.formData();
@@ -88,17 +81,10 @@ export async function PUT(request: Request) {
 
   await writeFavicon(svg);
   return NextResponse.json({ success: true, message: 'Favicon updated.' });
-}
+});
 
 /** Clean up stale favicon files left by a previous upload of a different format. */
-export async function DELETE() {
-  if (!isAdminEnabled()) {
-    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
-  }
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const DELETE = withAdmin(async () => {
   try {
     await fs.unlink(path.join(CONTENT_DIR, DEST));
     return NextResponse.json({
@@ -108,4 +94,4 @@ export async function DELETE() {
   } catch {
     return NextResponse.json({ error: 'No custom favicon to remove' }, { status: 404 });
   }
-}
+});
