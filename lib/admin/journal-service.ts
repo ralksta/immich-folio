@@ -6,6 +6,7 @@
 import fs from 'fs/promises';
 import nodeFs from 'fs';
 import path from 'path';
+import { atomicWrite } from '../atomicWrite';
 import {
   parseJournalMarkdown,
   calculateReadingTime,
@@ -19,7 +20,6 @@ const JOURNAL_DIR = path.join(process.cwd(), 'content', 'journal');
 const LEGACY_ESSAYS_DIR = path.join(process.cwd(), 'content', 'essays');
 const BACKUP_DIR = path.join(JOURNAL_DIR, '.backups');
 const MAX_BACKUPS = 10;
-let tmpCounter = 0;
 
 /**
  * Names this service writes into .backups/, and the only ones it restores from.
@@ -127,14 +127,7 @@ export async function restoreJournalBackup(backupFilename: string): Promise<stri
   }
 
   await fs.mkdir(JOURNAL_DIR, { recursive: true });
-  const tmpPath = `${target}.${process.pid}.${++tmpCounter}.tmp`;
-  try {
-    await fs.writeFile(tmpPath, content, 'utf8');
-    await fs.rename(tmpPath, target);
-  } catch (err) {
-    await fs.unlink(tmpPath).catch(() => {});
-    throw err;
-  }
+  await atomicWrite(target, content);
 
   console.log(`[Journal] 🔄 Restored ${filename} from ${backupFilename}`);
   return slug;
@@ -289,15 +282,7 @@ export async function writeJournalEntry(slug: string, rawMarkdown: string): Prom
     // New file, no backup needed
   }
 
-  // Atomic write via unique temp file
-  const tmpPath = `${filePath}.${process.pid}.${++tmpCounter}.tmp`;
-  try {
-    await fs.writeFile(tmpPath, rawMarkdown, 'utf8');
-    await fs.rename(tmpPath, filePath);
-  } catch (err) {
-    await fs.unlink(tmpPath).catch(() => {});
-    throw err;
-  }
+  await atomicWrite(filePath, rawMarkdown);
 
   console.log(`[Journal] ✅ Saved ${filename}`);
 }

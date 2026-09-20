@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { atomicWrite } from '@/lib/atomicWrite';
 import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 
 const CONTENT_DIR = path.resolve(process.cwd(), 'content');
@@ -16,14 +17,7 @@ const MAX_SIZE = 512 * 1024; // 512 kB
 async function writeFavicon(content: Buffer | string): Promise<void> {
   await fs.mkdir(CONTENT_DIR, { recursive: true });
   const dest = path.join(CONTENT_DIR, DEST);
-  const tmpPath = `${dest}.${process.pid}.${Date.now()}.tmp`;
-  try {
-    await fs.writeFile(tmpPath, content);
-    await fs.rename(tmpPath, dest);
-  } catch (err) {
-    await fs.unlink(tmpPath).catch(() => {});
-    throw err;
-  }
+  await atomicWrite(dest, content);
 }
 
 export async function PUT(request: Request) {
