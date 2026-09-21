@@ -126,18 +126,25 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes — JSON/binary responses, no document CSP needed;
-     *   the public ones enforce the site gate themselves)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     * Match all request paths except for:
+     * - /api and everything under it (API routes — JSON/binary responses, no
+     *   document CSP needed; the public ones enforce the site gate themselves)
+     * - /_next/static/… (static files)
+     * - /_next/image (image optimization files)
+     * - /favicon.ico, /sitemap.xml, /robots.txt (metadata files)
+     *
+     * Every alternative ends on a boundary, and the dots are escaped. The
+     * pattern in the Next.js docs does neither, so it also excludes anything
+     * that merely starts with one of these names — an album slugged
+     * "apia-samoa" would never reach proxy(), and with it neither the site
+     * gate nor the CSP. lib/__tests__/proxy.test.ts compiles this pattern the
+     * way Next does and holds it to a list of paths.
      *
      * /admin is NOT excluded: it is the highest-privilege surface in the app
      * and previously ran with no enforced CSP at all.
      *
      * Prefetches are no longer excluded here — see the note in proxy().
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+    '/((?!api(?:/|$)|_next/static/|_next/image(?:/|$)|favicon\\.ico$|sitemap\\.xml$|robots\\.txt$).*)',
   ],
 };

@@ -13,6 +13,7 @@ vi.mock('@/lib/auth', () => ({
 }));
 
 import { isSiteUnlocked } from '@/lib/auth';
+import { tryToParsePath } from 'next/dist/lib/try-to-parse-path';
 import { proxy, config } from '@/proxy';
 
 const mockUnlocked = isSiteUnlocked as unknown as ReturnType<typeof vi.fn>;
@@ -86,6 +87,53 @@ describe('proxy', () => {
     expect(source).toContain('api');
     expect(source).toContain('_next/static');
     expect(source).not.toContain('admin');
+  });
+
+  /**
+   * Reading the pattern is not enough: whether a path reaches proxy() is
+   * decided by the regex Next compiles from it, so that is what gets tested.
+   * A path the matcher skips gets no site gate and no CSP.
+   */
+  describe('matcher, compiled the way Next compiles it', () => {
+    const compiled = tryToParsePath(config.matcher[0]);
+    const reaches = (pathname: string) => new RegExp(compiled.regexStr!).test(pathname);
+
+    it('compiles', () => {
+      expect(compiled.error).toBeUndefined();
+      expect(compiled.regexStr).toBeTruthy();
+    });
+
+    it.each(['/', '/journal', '/japan/kyoto', '/admin', '/admin/pages', '/gate', '/install'])(
+      'runs on %s',
+      (pathname) => expect(reaches(pathname)).toBe(true),
+    );
+
+    it.each([
+      '/api',
+      '/api/image/v2:abc',
+      '/_next/static/chunks/main.js',
+      '/_next/image',
+      '/favicon.ico',
+      '/sitemap.xml',
+      '/robots.txt',
+    ])('skips %s', (pathname) => expect(reaches(pathname)).toBe(false));
+
+    // An exclusion is a whole segment or a whole filename, never a prefix: a
+    // page whose slug happens to start with one must still be gated.
+    it.each([
+      '/apia-samoa',
+      '/apiary',
+      '/api-docs',
+      '/_next/staticfoo',
+      '/_next/imagery',
+      '/sitemapXxml',
+      '/robots1txt',
+      '/faviconXico',
+      '/robots.txt.bak',
+      '/sitemap.xml/extra',
+    ])('runs on %s, which only looks like an exclusion', (pathname) =>
+      expect(reaches(pathname)).toBe(true),
+    );
   });
 
   /**
