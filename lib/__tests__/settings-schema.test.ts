@@ -103,6 +103,15 @@ describe('validateSettings — rejects what breaks the site', () => {
     expect(found[0].field).toBe('navLinks.1');
   });
 
+  it('rejects a radius written with its unit', () => {
+    // #633: `radius: 8px` reaches CSS as `8pxpx`. The value itself belongs to
+    // the resolver, but a string where a number belongs is a type error, and
+    // that half is caught here for anything saved from the panel.
+    const found = errors({ theme: { radius: '8px' } });
+
+    expect(found.map((e) => e.field)).toContain('theme.radius');
+  });
+
   it('rejects a list where a record belongs', () => {
     expect(ok({ legal: ['Ralf', 'Berlin'] })).toBe(false);
   });

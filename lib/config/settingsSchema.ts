@@ -12,13 +12,21 @@
  * array where a record belongs, a number where a switch belongs — those are the
  * shapes that make a resolver throw, and they are what this rejects.
  *
- * Value narrowing stays where it already lives. `resolveColorMode` falls back
- * to `dark` for anything it does not know, `resolveWatermarkOpacity` accepts
- * both a fraction and a percentage because a documented workaround produced the
- * latter (#508), and the album sort and location resolvers throw with a message
- * naming the offending value. Repeating those rules here would mean two places
- * to keep in step, and a stricter one would reject configurations that work
- * today.
+ * Value narrowing belongs in the resolvers, because they are the only place
+ * that also sees hand-edited YAML — this check only ever sees what the panel
+ * sends. Several already do it: `resolveColorMode` falls back to `dark` for
+ * anything it does not know, `resolveWatermarkOpacity` accepts both a fraction
+ * and a percentage because a documented workaround produced the latter (#508),
+ * and the album sort and location resolvers throw with a message naming the
+ * offending value. Repeating those rules here would mean two places to keep in
+ * step, and a stricter one would reject configurations that work today.
+ *
+ * Not all of them do yet. `grid.columns` and `theme.radius` reach CSS without
+ * being narrowed (#633): `columns: -1` produces an invalid `repeat()` and
+ * collapses the grid, and `radius: "8px"` yields `8pxpx`. The type half of the
+ * second is caught here — a string where a number belongs — but only for a save
+ * from the panel. The value half, and hand-edited YAML, are #633's to fix in the
+ * resolvers, which is where this comment says they belong.
  *
  * **Unknown keys pass through.** There is no `schemaVersion` and no migration
  * code, so configurations older and newer than this build are both in the wild.
