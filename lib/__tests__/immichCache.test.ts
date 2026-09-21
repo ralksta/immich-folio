@@ -5,7 +5,7 @@ const { getStale, set } = vi.hoisted(() => ({ getStale: vi.fn(), set: vi.fn() })
 
 vi.mock('../cache', () => ({ cache: { getStale, set } }));
 
-import { cacheSet, staleOrThrow } from '../immichCache';
+import { MISSING, cacheSet, staleOrMissing, staleOrThrow } from '../immichCache';
 import { ImmichUnavailableError } from '../immichTransport';
 
 /**
@@ -53,6 +53,48 @@ describe('staleOrThrow', () => {
     staleOrThrow('albums', new ImmichUnavailableError('502'), 'album list');
 
     expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('album list'));
+  });
+});
+
+describe('the MISSING sentinel (#626)', () => {
+  it('is never cast into real data by staleOrThrow', () => {
+    // The sentinel handed back as an album is a truthy object with no fields;
+    // every `if (!album)` guard passes and the page answers 500. For a key
+    // that should only ever hold data, meeting it means nothing is usable.
+    getStale.mockReturnValue(MISSING);
+
+    expect(() => staleOrThrow('albums', new ImmichUnavailableError('502'), 'albums')).toThrow(
+      ImmichUnavailableError,
+    );
+  });
+
+  it('comes back from staleOrMissing as null — the last authoritative answer', () => {
+    getStale.mockReturnValue(MISSING);
+
+    expect(staleOrMissing('asset-x', new ImmichUnavailableError('502'), 'asset x')).toBeNull();
+  });
+
+  it('lets staleOrMissing still serve real stale data', () => {
+    getStale.mockReturnValue({ id: 'asset-x' });
+
+    expect(staleOrMissing('asset-x', new ImmichUnavailableError('502'), 'asset x')).toEqual({
+      id: 'asset-x',
+    });
+  });
+
+  it('lets staleOrMissing throw when nothing is cached', () => {
+    getStale.mockReturnValue(null);
+
+    expect(() => staleOrMissing('asset-x', new ImmichUnavailableError('502'), 'asset x')).toThrow(
+      ImmichUnavailableError,
+    );
+  });
+
+  it('keeps staleOrMissing from answering a non-outage error', () => {
+    getStale.mockReturnValue(MISSING);
+
+    expect(() => staleOrMissing('asset-x', new TypeError('bug'), 'asset x')).toThrow(TypeError);
+    expect(getStale).not.toHaveBeenCalled();
   });
 });
 

@@ -775,4 +775,44 @@ describe('stale fallback when Immich is unavailable', () => {
     mockFetch.mockRejectedValue(new Error('ECONNREFUSED'));
     await expect(immich.getAlbum('not-allowed')).resolves.toBeNull();
   });
+
+  // #626: a cached 404 used to come back from the stale fallback as the MISSING
+  // sentinel itself — a truthy object with no fields. Every `if (!asset)` guard
+  // passed on it and the page answered 500 for the length of the outage.
+  const notFound = {
+    ok: false,
+    status: 404,
+    statusText: 'Not Found',
+    headers: { get: () => 'application/json' },
+  };
+
+  it('answers a stale "missing" asset with null during an outage', async () => {
+    mockFetch.mockResolvedValue(notFound);
+    await expect(immich.getAssetInfo('deleted-hero')).resolves.toBeNull();
+
+    vi.useFakeTimers();
+    vi.advanceTimersByTime(60_001); // past cacheTtl, inside the stale window
+    mockFetch.mockRejectedValue(new Error('ECONNREFUSED'));
+
+    const result = await immich.getAssetInfo('deleted-hero');
+    vi.useRealTimers();
+
+    // toBeNull, not toBeFalsy: the bug was a truthy object, so the precise
+    // assertion is the one that would have failed.
+    expect(result).toBeNull();
+  });
+
+  it('answers a stale "missing" album with null during an outage', async () => {
+    mockFetch.mockResolvedValue(notFound);
+    await expect(immich.getAlbum('album-1')).resolves.toBeNull();
+
+    vi.useFakeTimers();
+    vi.advanceTimersByTime(60_001);
+    mockFetch.mockRejectedValue(new Error('ECONNREFUSED'));
+
+    const result = await immich.getAlbum('album-1');
+    vi.useRealTimers();
+
+    expect(result).toBeNull();
+  });
 });

@@ -15,7 +15,13 @@ import { getConfig, albumSlug, normalizeSlug, type SubpageConfig } from './confi
 import { cache } from './cache';
 import { compareByCaptureTime, sortAlbumAssets, DEFAULT_ALBUM_SORT } from './albumSort';
 import { ImmichUnavailableError, isTimeout, requestJson } from './immichTransport';
-import { cacheSet as cacheSetWithStale, staleOrThrow as serveStaleOrThrow } from './immichCache';
+import {
+  MISSING,
+  type Missing,
+  cacheSet as cacheSetWithStale,
+  staleOrThrow as serveStaleOrThrow,
+  staleOrMissing as serveStaleOrMissing,
+} from './immichCache';
 
 // Part of this module's public surface since before the split; six call sites
 // import it from here.
@@ -79,24 +85,6 @@ export interface ImmichExifInfo {
 
 export type ImageSize = 'thumbnail' | 'preview' | 'original';
 
-/**
- * Cache sentinel for "Immich answered, and the resource does not exist".
- *
- * The cache cannot tell a miss from a stored null — both read back as null — so
- * absence is recorded as a distinct object identity instead.
- *
- * Only definitive 404/410 answers are stored. An outage throws
- * `ImmichUnavailableError` and is never cached: pinning one would keep the
- * gallery broken long after Immich recovered.
- *
- * Stored under the normal `cacheTtl` rather than a shorter negative TTL. A 404
- * from Immich is as authoritative as a 200, and both invalidation paths
- * (the Immich webhook and the admin panel's save/reload) clear it immediately —
- * so a corrected asset ID takes effect at once rather than waiting out a TTL.
- */
-const MISSING = Object.freeze({ __immichMissing: true });
-type Missing = typeof MISSING;
-
 /** Enriched subpage with album metadata (for rendering cards). */
 export interface SubpageSummary {
   name: string;
@@ -153,6 +141,11 @@ class ImmichClient {
   /** See ./immichCache — the policy lives there, testable on its own. */
   private staleOrThrow<T>(cacheKey: string, error: unknown, label: string): T {
     return serveStaleOrThrow<T>(cacheKey, error, label);
+  }
+
+  /** For keys that may hold MISSING — a single album or asset. See ./immichCache. */
+  private staleOrMissing<T>(cacheKey: string, error: unknown, label: string): T | null {
+    return serveStaleOrMissing<T>(cacheKey, error, label);
   }
 
   /**
@@ -598,7 +591,7 @@ class ImmichClient {
           this.fetchAlbumAssets(albumId),
         ]);
         if (!album) {
-          cache.set(cacheKey, MISSING, this.config.cacheTtl);
+          this.cacheSet(cacheKey, MISSING);
           return null;
         }
 
@@ -633,7 +626,7 @@ class ImmichClient {
         this.cacheSet(cacheKey, album);
         return album;
       } catch (error) {
-        return this.staleOrThrow<ImmichAlbum>(cacheKey, error, `album ${albumId}`);
+        return this.staleOrMissing<ImmichAlbum>(cacheKey, error, `album ${albumId}`);
       } finally {
         this.pendingAlbumPromises.delete(albumId);
       }
@@ -699,14 +692,14 @@ class ImmichClient {
           // The homepage looks up every gallery.yaml hero ID on each render
           // (app/page.tsx), and those pages are force-dynamic — so a hero photo
           // deleted from Immich otherwise costs an upstream 404 every time.
-          cache.set(cacheKey, MISSING, this.config.cacheTtl);
+          this.cacheSet(cacheKey, MISSING);
           return null;
         }
 
         this.cacheSet(cacheKey, asset);
         return asset;
       } catch (error) {
-        return this.staleOrThrow<ImmichAsset>(cacheKey, error, `asset ${assetId}`);
+        return this.staleOrMissing<ImmichAsset>(cacheKey, error, `asset ${assetId}`);
       } finally {
         this.pendingAssetPromises.delete(assetId);
       }
