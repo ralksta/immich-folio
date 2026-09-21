@@ -43,6 +43,7 @@ import {
   authenticate,
   isAuthenticated,
   isAlbumReachable,
+  withoutLockedAlbums,
   findSubpageBySlug,
 } from '@/lib/auth';
 
@@ -256,5 +257,32 @@ describe('isAlbumReachable', () => {
     const subpage = await cookieFor('private', 'secret123');
     const album = await cookieFor(OWN_PASSWORD, 'albumpass', 'album');
     expect(isAlbumReachable(OWN_PASSWORD, (n) => subpage(n) ?? album(n))).toBe(true);
+  });
+});
+
+/**
+ * The essay layout puts the photographs of several albums on one page and
+ * never passes through an album's own gate, so it has to leave out the ones
+ * that are still locked.
+ */
+describe('withoutLockedAlbums', () => {
+  const OPEN = { id: '00000000-0000-0000-0000-000000000002' };
+  const LOCKED = { id: '00000000-0000-0000-0000-000000000005' };
+
+  it('keeps an album that has no password of its own', () => {
+    expect(withoutLockedAlbums([OPEN], () => undefined)).toEqual([OPEN]);
+  });
+
+  it('leaves out an album whose password has not been given', () => {
+    expect(withoutLockedAlbums([OPEN, LOCKED], () => undefined)).toEqual([OPEN]);
+  });
+
+  it('brings it back once it has been unlocked, in the original order', async () => {
+    const header = (await authenticate(LOCKED.id, 'albumpass', 'album'))!;
+    const [name, rest] = header.split('=');
+    const token = rest.split(';')[0];
+    const getCookie = (asked: string) => (asked === name ? token : undefined);
+
+    expect(withoutLockedAlbums([LOCKED, OPEN], getCookie)).toEqual([LOCKED, OPEN]);
   });
 });

@@ -34,7 +34,7 @@ import {
   resolveProofing,
   type GridConfig,
 } from '@/lib/config';
-import { isProtected, isAuthenticated } from '@/lib/auth';
+import { isProtected, isAuthenticated, withoutLockedAlbums } from '@/lib/auth';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import PasswordGate from '@/components/PasswordGate';
 import { AdminDiagnosticBanner } from '@/components/AdminDiagnosticBanner';
@@ -382,9 +382,13 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
           ? loadEssayFromFile(result.subpage.essayFile)
           : null;
 
-      // Fetch assets from all subpage albums
+      // Fetch assets from the subpage's albums. An essay has no per-album
+      // gate to pass through, so an album with its own password stays out
+      // until it has been unlocked.
+      const cookieStore = await cookies();
+      const openAlbums = withoutLockedAlbums(albums, (name) => cookieStore.get(name)?.value);
       const allAlbums = await Promise.all(
-        albums.map((a) => immich.getAlbumBySlug(a.slug, slug, forceFresh)),
+        openAlbums.map((a) => immich.getAlbumBySlug(a.slug, slug, forceFresh)),
       );
       const allAssets = allAlbums.flatMap((a) => (a ? a.assets : []));
       const images = toPhotoItems(
@@ -400,7 +404,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
             title: result.subpage.title || result.subpage.name,
             subtitle: result.subpage.subtitle,
           },
-          blocks: albums.flatMap((a) => [
+          blocks: openAlbums.flatMap((a) => [
             { type: 'heading' as const, level: 2, text: a.albumName },
             ...a.assets.map((asset) => ({
               type: 'photo' as const,

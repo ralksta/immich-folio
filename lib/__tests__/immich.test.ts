@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { immich, ImmichUnavailableError } from '../immich';
 import * as config from '../config';
 import { cache } from '../cache';
@@ -8,6 +8,8 @@ import type { AlbumSortMode } from '../albumSort';
 // able to change it between calls without rebuilding the whole mock.
 const albumSortModes: Record<string, AlbumSortMode> = {};
 const albumManualOrders: Record<string, string[]> = {};
+// Same for the subpages: the route tests below add one and take it away again.
+const subpages: { slug: string; albumIds: string[]; enabled?: boolean }[] = [];
 
 // Mock the config by wrapping it in a factory
 vi.mock('../config', async () => {
@@ -18,8 +20,10 @@ vi.mock('../config', async () => {
       immich: { apiUrl: 'http://immich.test/api', apiKey: 'test-key' },
       authSecret: 'test-auth-secret-32-chars-long-min',
       albums: ['album-1', 'album-2'],
-      standaloneAlbums: ['album-2', 'album-1'],
-      subpages: [],
+      standaloneAlbums: ['album-2', 'album-1'].filter(
+        (id) => !subpages.some((sp) => sp.albumIds.includes(id)),
+      ),
+      subpages,
       albumOverrides: { 'album-1': 'Override Name' },
       albumDescriptions: {},
       albumSortModes,
@@ -435,6 +439,66 @@ describe('ImmichClient', () => {
 
       const album = await immich.getAlbumBySlug('album-2');
       expect(album?.id).toBe('album-2');
+    });
+  });
+
+  /**
+   * config.albums is the union of standalone and subpage albums. A slug has to
+   * be looked up among the albums of the route it arrived on, or a top-level
+   * URL answers for an album whose only route is a subpage — past that
+   * subpage's password.
+   */
+  describe('getAlbumBySlug() searches the route, not the allowlist', () => {
+    beforeEach(() => {
+      const json = (body: unknown) => ({
+        ok: true,
+        headers: { get: () => 'application/json' },
+        json: async () => body,
+      });
+      mockFetch.mockImplementation(async (url: string) => {
+        if (url.includes('/search/metadata')) {
+          return json({ assets: { items: [], nextPage: null, total: 0 } });
+        }
+        const one = /\/albums\/(album-[12])/.exec(url);
+        if (one) {
+          const albumName = one[1] === 'album-1' ? 'Client Preview' : 'Open Work';
+          return json({ id: one[1], albumName, assetCount: 0, assets: [], order: 'desc' });
+        }
+        return json([
+          { id: 'album-1', albumName: 'Client Preview', assetCount: 0 },
+          { id: 'album-2', albumName: 'Open Work', assetCount: 0 },
+        ]);
+      });
+    });
+
+    afterEach(() => {
+      subpages.length = 0;
+    });
+
+    it('finds a standalone album at the top level', async () => {
+      const album = await immich.getAlbumBySlug('open-work');
+      expect(album?.id).toBe('album-2');
+    });
+
+    it('does not find a subpage album at the top level', async () => {
+      subpages.push({ slug: 'handover', albumIds: ['album-1'] });
+
+      // album-1 carries the 'Override Name' override, so that is its slug.
+      expect(await immich.getAlbumBySlug('override-name')).toBeNull();
+      expect((await immich.getAlbumBySlug('override-name', 'handover'))?.id).toBe('album-1');
+    });
+
+    it('does not find anything through a disabled subpage', async () => {
+      subpages.push({ slug: 'handover', albumIds: ['album-1'], enabled: false });
+
+      expect(await immich.getAlbumBySlug('override-name', 'handover')).toBeNull();
+      expect(await immich.getAlbumBySlug('override-name')).toBeNull();
+    });
+
+    it('does not find a standalone album through a subpage that does not list it', async () => {
+      subpages.push({ slug: 'handover', albumIds: ['album-1'] });
+
+      expect(await immich.getAlbumBySlug('open-work', 'handover')).toBeNull();
     });
   });
 

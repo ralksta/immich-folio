@@ -723,7 +723,12 @@ class ImmichClient {
 
   /**
    * Find an album by its URL slug.
-   * If subpageSlug is provided, only search within that subpage's albums.
+   *
+   * The search set follows the route, never the whole allowlist: with a
+   * subpageSlug it is that subpage's albums, without one it is the standalone
+   * albums. `config.albums` is the union of both, so searching it for a
+   * top-level slug would answer for an album whose only route is a subpage —
+   * past that subpage's password, and past `enabled: false`.
    */
   async getAlbumBySlug(
     slug: string,
@@ -732,14 +737,18 @@ class ImmichClient {
   ): Promise<ImmichAlbum | null> {
     const albums = await this.getAlbums(forceFresh);
 
-    let searchSet = albums;
+    let routeIds: Set<string>;
     if (subpageSlug) {
       const wantedSubpage = normalizeSlug(subpageSlug);
-      const subpage = this.config.subpages.find((sp) => sp.slug === wantedSubpage);
+      const subpage = this.config.subpages.find(
+        (sp) => sp.slug === wantedSubpage && sp.enabled !== false,
+      );
       if (!subpage) return null;
-      const subpageIds = new Set(subpage.albumIds);
-      searchSet = albums.filter((a) => subpageIds.has(a.id));
+      routeIds = new Set(subpage.albumIds);
+    } else {
+      routeIds = new Set(this.config.standaloneAlbums);
     }
+    const searchSet = albums.filter((a) => routeIds.has(a.id));
 
     const wanted = normalizeSlug(slug);
     const match = searchSet.find((a) => a.slug === wanted);

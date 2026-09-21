@@ -127,6 +127,22 @@ export function isAlbumReachable(
 }
 
 /**
+ * The albums this visitor may see the photographs of: every album without a
+ * password of its own, plus the ones already unlocked.
+ *
+ * For views that gather photographs from several albums onto one page — the
+ * essay layout — where there is no single album to put a password form in
+ * front of. A locked album is left out rather than gating the whole page: the
+ * visitor unlocks it at its own URL and finds it here afterwards.
+ */
+export function withoutLockedAlbums<T extends { id: string }>(
+  albums: T[],
+  getCookie: (name: string) => string | undefined,
+): T[] {
+  return albums.filter((a) => isAuthenticated(a.id, getCookie, 'album'));
+}
+
+/**
  * Find the SubpageConfig for a given slug.
  */
 export function findSubpageBySlug(slug: string): SubpageConfig | undefined {
