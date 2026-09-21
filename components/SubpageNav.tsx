@@ -3,7 +3,7 @@
  * for all subpages and standalone albums in the header.
  */
 
-import Link from 'next/link';
+import { NavLink } from './NavLink';
 import { immich } from '@/lib/immich';
 import { getConfig } from '@/lib/config';
 import { listJournalEntries } from '@/lib/admin/journal-service';
@@ -25,19 +25,15 @@ export async function SubpageNav() {
   return (
     <>
       {subpages.map((sp) => (
-        <Link key={sp.slug} href={`/${sp.slug}`} className="header__nav-link">
+        <NavLink key={sp.slug} href={`/${sp.slug}`}>
           {sp.name}
-        </Link>
+        </NavLink>
       ))}
-      {hasPublicJournal && (
-        <Link href="/journal" className="header__nav-link">
-          {t.nav.journal}
-        </Link>
-      )}
+      {hasPublicJournal && <NavLink href="/journal">{t.nav.journal}</NavLink>}
       {standaloneAlbums.map((album) => (
-        <Link key={album.id} href={`/${album.slug}`} className="header__nav-link">
+        <NavLink key={album.id} href={`/${album.slug}`}>
           {album.albumName}
-        </Link>
+        </NavLink>
       ))}
       {navLinks.map((link) => (
         <a

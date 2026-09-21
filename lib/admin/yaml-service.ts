@@ -6,13 +6,11 @@
 import fs from 'fs/promises';
 import path from 'path';
 import yaml from 'js-yaml';
+import { atomicWrite } from '../atomicWrite';
 import type { GalleryYaml, SettingsYaml } from '../config/schema';
 
 const CONTENT_DIR = path.join(process.cwd(), 'content');
 const MAX_BACKUPS = 10; // Keep last 10 backups per file
-
-/** Disambiguates temp files within one process; the pid covers across them. */
-let tmpCounter = 0;
 
 /** Read gallery.yaml and return parsed content. */
 export async function readGalleryYaml(): Promise<GalleryYaml | null> {
@@ -74,23 +72,7 @@ async function writeYamlFile(filename: string, data: unknown): Promise<void> {
       sortKeys: false,
     });
 
-  // Atomic write: write to a *unique* temp file, then rename.
-  //
-  // The rename is what makes this atomic; the temp filename is what did not.
-  // With a constant `${filePath}.tmp`, two saves of the same file in flight at
-  // once shared it — the second writeFile could interleave with the first's
-  // rename, leaving one save's bytes published under the other's, or a
-  // truncated mix. A double-clicked Save in the page builder is enough.
-  const tmpPath = `${filePath}.${process.pid}.${++tmpCounter}.tmp`;
-  try {
-    await fs.writeFile(tmpPath, content, 'utf8');
-    await fs.rename(tmpPath, filePath);
-  } catch (err) {
-    // Do not leave litter in content/ behind a failed save. Cleanup failure is
-    // not worth masking the real error with.
-    await fs.unlink(tmpPath).catch(() => {});
-    throw err;
-  }
+  await atomicWrite(filePath, content);
 
   console.log(`[Admin] ✅ Saved ${filename}`);
 }
@@ -153,6 +135,9 @@ export async function restoreBackup(backupFilename: string): Promise<void> {
   const preRestoreBackup = `${originalFilename}.${timestamp}.pre-restore.bak`;
   try {
     await fs.copyFile(targetPath, path.join(backupDir, preRestoreBackup));
+    // Bound them here rather than waiting for the next save: restoring twice in
+    // a row is exactly when these pile up, and a save may be a long way off.
+    await pruneBackups(backupDir, originalFilename);
   } catch {
     // Original might not exist
   }
@@ -161,18 +146,34 @@ export async function restoreBackup(backupFilename: string): Promise<void> {
   console.log(`[Admin] 🔄 Restored ${originalFilename} from ${backupFilename}`);
 }
 
-/** Remove old backups, keeping only MAX_BACKUPS most recent. */
+/**
+ * Remove old backups, keeping the newest MAX_BACKUPS of each kind.
+ *
+ * The two kinds are counted separately on purpose: ten ordinary saves must not
+ * push out the snapshot taken just before a restore, which is the only way back
+ * from one. That is why pre-restore files were exempt from pruning.
+ *
+ * Exempting them entirely was the bug, though. listBackups() returns them and
+ * the modal lists them, so every restore added a row that was never removed
+ * until the useful backups were off the end of the list. A cap of their own
+ * keeps the undo without letting it crowd out everything else.
+ */
 async function pruneBackups(backupDir: string, filename: string): Promise<void> {
   try {
     const files = await fs.readdir(backupDir);
-    const relevant = files
-      .filter((f) => f.startsWith(filename) && !f.includes('pre-restore'))
-      .sort();
 
-    if (relevant.length > MAX_BACKUPS) {
-      const toDelete = relevant.slice(0, relevant.length - MAX_BACKUPS);
-      for (const f of toDelete) {
-        await fs.unlink(path.join(backupDir, f));
+    const saves: string[] = [];
+    const preRestores: string[] = [];
+    for (const f of files.filter((f) => f.startsWith(filename))) {
+      (f.includes('pre-restore') ? preRestores : saves).push(f);
+    }
+
+    // The timestamp is fixed-width and lexically ordered, so sorting by name
+    // sorts by age.
+    for (const group of [saves, preRestores]) {
+      group.sort();
+      for (const old of group.slice(0, Math.max(0, group.length - MAX_BACKUPS))) {
+        await fs.unlink(path.join(backupDir, old));
       }
     }
   } catch {

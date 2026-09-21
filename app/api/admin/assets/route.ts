@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
+import { withAdmin } from '@/lib/admin/withAdmin';
 import { getConfig } from '@/lib/config';
 
 interface ImmichSearchResult {
@@ -22,14 +22,7 @@ interface ImmichSearchResult {
 }
 
 /** GET: Search/browse assets from Immich for hero image selection. */
-export async function GET(request: NextRequest) {
-  if (!isAdminEnabled()) {
-    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
-  }
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withAdmin(async (request: NextRequest) => {
   const config = getConfig();
   // Credentials, not `needsSetup`: this route is how the operator picks the
   // albums that gallery.yaml is built from, so refusing to run until that file
@@ -87,4 +80,4 @@ export async function GET(request: NextRequest) {
     console.error('[Admin] Failed to fetch assets from Immich:', err);
     return NextResponse.json({ error: 'Failed to connect to Immich' }, { status: 502 });
   }
-}
+});

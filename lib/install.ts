@@ -21,6 +21,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import yaml from 'js-yaml';
+import { atomicWrite } from './atomicWrite';
 import { env } from './env';
 import { generateScryptHash } from './password';
 import type { GalleryYaml, SettingsYaml } from './config/schema';
@@ -221,18 +222,6 @@ export interface InstallInput {
   /** Asset IDs for the home page carousel, usually the covers of `albums`. */
   hero?: string[];
   adminPassword?: string;
-}
-
-/** Write a file atomically: unique temp file, then rename. */
-async function atomicWrite(filePath: string, content: string): Promise<void> {
-  const tmpPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
-  try {
-    await fs.promises.writeFile(tmpPath, content, 'utf8');
-    await fs.promises.rename(tmpPath, filePath);
-  } catch (err) {
-    await fs.promises.unlink(tmpPath).catch(() => {});
-    throw err;
-  }
 }
 
 /**

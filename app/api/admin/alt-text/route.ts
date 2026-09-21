@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
+import { withAdmin } from '@/lib/admin/withAdmin';
 import { getConfig } from '@/lib/config';
 import { immich } from '@/lib/immich';
 import {
@@ -34,14 +34,7 @@ async function immichExternalDomain(apiUrl: string, apiKey: string, timeoutMs: n
  * public site: a check right after browsing the gallery costs no Immich calls.
  * An album that fails to load is counted, not fatal — the rest still report.
  */
-export async function GET() {
-  if (!isAdminEnabled()) {
-    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
-  }
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withAdmin(async () => {
   const config = getConfig();
   if (config.needsCredentials) {
     return NextResponse.json({ error: 'Not configured' }, { status: 503 });
@@ -80,4 +73,4 @@ export async function GET() {
     },
     { headers: { 'Cache-Control': 'no-store' } },
   );
-}
+});

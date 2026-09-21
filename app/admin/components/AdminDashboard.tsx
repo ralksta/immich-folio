@@ -141,15 +141,19 @@ export default function AdminDashboard({ onLogout, children }: Props) {
         <div className="admin-header-left">
           <h1>Immich Folio</h1>
           <nav className="admin-tabs">
-            {TABS.map((t) => (
-              <Link
-                key={t.href}
-                href={t.href}
-                className={`admin-tab ${t.match.test(pathname) ? 'active' : ''}`}
-              >
-                {t.label}
-              </Link>
-            ))}
+            {TABS.map((t) => {
+              const active = t.match.test(pathname);
+              return (
+                <Link
+                  key={t.href}
+                  href={t.href}
+                  className={`admin-tab ${active ? 'active' : ''}`}
+                  aria-current={active ? 'page' : undefined}
+                >
+                  {t.label}
+                </Link>
+              );
+            })}
           </nav>
         </div>
         <div className="admin-header-right">
