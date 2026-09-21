@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
+import { withAdmin } from '@/lib/admin/withAdmin';
 import { isValidSlug, sanitizeSlug, parseJournalMarkdown } from '@/lib/journal';
 import {
   readJournalEntry,
@@ -11,14 +11,7 @@ interface RouteContext {
   params: Promise<{ slug: string }>;
 }
 
-export async function GET(request: Request, context: RouteContext) {
-  if (!isAdminEnabled()) {
-    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
-  }
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withAdmin(async (request: Request, context: RouteContext) => {
   const { slug } = await context.params;
   if (!isValidSlug(slug)) {
     return NextResponse.json({ error: 'Invalid slug' }, { status: 400 });
@@ -34,16 +27,9 @@ export async function GET(request: Request, context: RouteContext) {
     console.error(`[Admin API] Failed to get journal entry "${slug}":`, err);
     return NextResponse.json({ error: 'Failed to read journal entry' }, { status: 500 });
   }
-}
+});
 
-export async function PUT(request: Request, context: RouteContext) {
-  if (!isAdminEnabled()) {
-    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
-  }
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const PUT = withAdmin(async (request: Request, context: RouteContext) => {
   const { slug } = await context.params;
   if (!isValidSlug(slug)) {
     return NextResponse.json({ error: 'Invalid slug' }, { status: 400 });
@@ -85,16 +71,9 @@ export async function PUT(request: Request, context: RouteContext) {
     console.error(`[Admin API] Failed to update journal entry "${slug}":`, err);
     return NextResponse.json({ error: 'Failed to update journal entry' }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(request: Request, context: RouteContext) {
-  if (!isAdminEnabled()) {
-    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
-  }
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const DELETE = withAdmin(async (request: Request, context: RouteContext) => {
   const { slug } = await context.params;
   if (!isValidSlug(slug)) {
     return NextResponse.json({ error: 'Invalid slug' }, { status: 400 });
@@ -110,4 +89,4 @@ export async function DELETE(request: Request, context: RouteContext) {
     console.error(`[Admin API] Failed to delete journal entry "${slug}":`, err);
     return NextResponse.json({ error: 'Failed to delete journal entry' }, { status: 500 });
   }
-}
+});

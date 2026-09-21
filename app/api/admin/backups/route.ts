@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
+import { withAdmin } from '@/lib/admin/withAdmin';
 import { revalidatePath } from 'next/cache';
-import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 import { listBackups, restoreBackup } from '@/lib/admin/yaml-service';
 import { listJournalBackups, restoreJournalBackup } from '@/lib/admin/journal-service';
 import { invalidateConfigCache } from '@/lib/config';
@@ -44,14 +44,7 @@ function parseBackupInfo(filename: string, target: BackupTarget): BackupItem {
 }
 
 /** GET: List all available backups, grouped by the file they restore. */
-export async function GET() {
-  if (!isAdminEnabled()) {
-    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
-  }
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withAdmin(async () => {
   try {
     const gallery = (await listBackups('gallery.yaml')).map((f) => parseBackupInfo(f, 'gallery'));
     const settings = (await listBackups('settings.yaml')).map((f) =>
@@ -79,17 +72,10 @@ export async function GET() {
     console.error('[Admin API] Error listing backups:', err);
     return NextResponse.json({ error: 'Failed to list backups' }, { status: 500 });
   }
-}
+});
 
 /** POST: Restore a specific backup file. */
-export async function POST(req: Request) {
-  if (!isAdminEnabled()) {
-    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
-  }
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const POST = withAdmin(async (req: Request) => {
   try {
     const body = await req.json();
     const { backupFilename, target } = body || {};
@@ -132,4 +118,4 @@ export async function POST(req: Request) {
     console.error('[Admin API] Error restoring backup:', err);
     return NextResponse.json({ error: 'Failed to restore backup' }, { status: 500 });
   }
-}
+});

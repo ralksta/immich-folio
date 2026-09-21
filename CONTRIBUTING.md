@@ -55,6 +55,26 @@ npx vitest run     # all tests must pass
 npm run build      # build must succeed
 ```
 
+## Tests
+
+Tests live in `__tests__/` next to the code they cover, and run in Node by
+default — most of what is worth testing is plain logic.
+
+A test that needs a DOM opts in per file, with this as its very first line:
+
+```tsx
+// @vitest-environment jsdom
+```
+
+Then render with `@testing-library/react` and call `cleanup` in `afterEach`.
+See `app/admin/__tests__/SaveBar.test.tsx` for a worked example.
+
+**Prefer extracting the logic over rendering it.** A pure function moved into
+`lib/` — or into a sibling module, as `page-builder/albumEntries.ts` was — is
+cheaper to test and stays tested when the markup around it changes. Reach for a
+component test when the behaviour *is* the rendering: a state that hides a form,
+a control that must stay disabled, a keyboard shortcut.
+
 ## Code style
 
 - **TypeScript** — strict mode, no `any` without justification

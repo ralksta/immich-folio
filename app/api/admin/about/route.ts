@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
+import { withAdmin } from '@/lib/admin/withAdmin';
 import { revalidatePath } from 'next/cache';
 import { promises as fs } from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 import { atomicWrite } from '@/lib/atomicWrite';
-import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 
 const CONTENT_DIR = path.resolve(process.cwd(), 'content');
 const FILENAME = 'about.md';
@@ -22,14 +22,7 @@ interface AboutBody {
   body?: string;
 }
 
-export async function GET() {
-  if (!isAdminEnabled()) {
-    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
-  }
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withAdmin(async () => {
   const filePath = path.join(CONTENT_DIR, FILENAME);
   let meta: AboutMeta = {};
   let body = '';
@@ -50,16 +43,9 @@ export async function GET() {
   }
 
   return NextResponse.json({ meta, body });
-}
+});
 
-export async function PUT(request: Request) {
-  if (!isAdminEnabled()) {
-    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
-  }
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const PUT = withAdmin(async (request: Request) => {
   const data = (await request.json().catch(() => null)) as AboutBody | null;
   if (!data) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
@@ -103,4 +89,4 @@ export async function PUT(request: Request) {
   revalidatePath('/about', 'layout');
 
   return NextResponse.json({ success: true, message: 'About page saved.' });
-}
+});
