@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withAdmin } from '@/lib/admin/withAdmin';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { isAdminAuthenticated, isAdminEnabled } from '@/lib/admin/auth';
 import { getConfig } from '@/lib/config';
 import { env } from '@/lib/env';
 import { listJournalEntries } from '@/lib/admin/journal-service';
@@ -28,14 +28,7 @@ import {
  * rather than failing the whole report, because a broken install is exactly
  * when this route needs to answer.
  */
-export async function GET(request: NextRequest) {
-  if (!isAdminEnabled()) {
-    return NextResponse.json({ error: 'Admin not enabled' }, { status: 403 });
-  }
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withAdmin(async (request: NextRequest) => {
   const config = getConfig();
   const findings: DoctorFinding[] = [];
 
@@ -144,4 +137,4 @@ export async function GET(request: NextRequest) {
     { level: worstLevel(findings), findings },
     { headers: { 'Cache-Control': 'no-store' } },
   );
-}
+});

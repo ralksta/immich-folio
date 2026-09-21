@@ -5,11 +5,27 @@
  *
  * API key never leaves the server — all client-facing image
  * requests go through our proxy route.
+ *
+ * What this file is about is *what* Folio asks Immich for: albums, subpages,
+ * assets, EXIF. How the asking happens lives in ./immichTransport, and when a
+ * cached answer may still be served in ./immichCache (#610).
  */
 
 import { getConfig, albumSlug, normalizeSlug, type SubpageConfig } from './config';
 import { cache } from './cache';
 import { compareByCaptureTime, sortAlbumAssets, DEFAULT_ALBUM_SORT } from './albumSort';
+import { ImmichUnavailableError, isTimeout, requestJson } from './immichTransport';
+import {
+  MISSING,
+  type Missing,
+  cacheSet as cacheSetWithStale,
+  staleOrThrow as serveStaleOrThrow,
+  staleOrMissing as serveStaleOrMissing,
+} from './immichCache';
+
+// Part of this module's public surface since before the split; six call sites
+// import it from here.
+export { ImmichUnavailableError };
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -69,53 +85,6 @@ export interface ImmichExifInfo {
 
 export type ImageSize = 'thumbnail' | 'preview' | 'original';
 
-/**
- * Thrown when Immich could not answer: transport failure, an error status, or
- * a non-JSON body where JSON was requested.
- *
- * This is deliberately distinct from a `null` return, which means Immich *did*
- * answer and said the resource does not exist. Conflating the two made every
- * album URL render a hard 404 while Immich was down — including albums that
- * exist — because the page calls `notFound()` on a null album. Only 404/410
- * are treated as "gone"; everything else is an outage and must surface as one.
- */
-/**
- * Cache sentinel for "Immich answered, and the resource does not exist".
- *
- * The cache cannot tell a miss from a stored null — both read back as null — so
- * absence is recorded as a distinct object identity instead.
- *
- * Only definitive 404/410 answers are stored. An outage throws
- * `ImmichUnavailableError` and is never cached: pinning one would keep the
- * gallery broken long after Immich recovered.
- *
- * Stored under the normal `cacheTtl` rather than a shorter negative TTL. A 404
- * from Immich is as authoritative as a 200, and both invalidation paths
- * (the Immich webhook and the admin panel's save/reload) clear it immediately —
- * so a corrected asset ID takes effect at once rather than waiting out a TTL.
- */
-const MISSING = Object.freeze({ __immichMissing: true });
-type Missing = typeof MISSING;
-
-/**
- * `AbortSignal.timeout()` rejects with a `TimeoutError`; an explicit
- * `controller.abort()` rejects with an `AbortError`. Both mean we gave up
- * waiting, and both arrive as a plain DOMException.
- */
-function isTimeout(error: unknown): boolean {
-  return error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
-}
-
-export class ImmichUnavailableError extends Error {
-  readonly status?: number;
-
-  constructor(message: string, status?: number) {
-    super(message);
-    this.name = 'ImmichUnavailableError';
-    this.status = status;
-  }
-}
-
 /** Enriched subpage with album metadata (for rendering cards). */
 export interface SubpageSummary {
   name: string;
@@ -166,93 +135,39 @@ class ImmichClient {
 
   /** Cache write that carries the configured stale window. */
   private cacheSet<T>(key: string, data: T): void {
-    cache.set(key, data, this.config.cacheTtl, this.config.staleMaxAge);
+    cacheSetWithStale(key, data, this.config.cacheTtl, this.config.staleMaxAge);
+  }
+
+  /** See ./immichCache — the policy lives there, testable on its own. */
+  private staleOrThrow<T>(cacheKey: string, error: unknown, label: string): T {
+    return serveStaleOrThrow<T>(cacheKey, error, label);
+  }
+
+  /** For keys that may hold MISSING — a single album or asset. See ./immichCache. */
+  private staleOrMissing<T>(cacheKey: string, error: unknown, label: string): T | null {
+    return serveStaleOrMissing<T>(cacheKey, error, label);
   }
 
   /**
-   * Last resort when Immich is unavailable: hand back the most recent known
-   * good answer rather than failing the page. Only successes ever reach the
-   * cache, so this cannot resurrect an outage — and past staleMaxAge the entry
-   * is gone and the error propagates as before.
+   * One JSON request to Immich, with the credentials check in front of it.
+   *
+   * The request itself lives in ./immichTransport; what belongs here is the
+   * decision not to make one at all, which is a question about this
+   * deployment rather than about HTTP.
    */
-  private staleOrThrow<T>(cacheKey: string, error: unknown, label: string): T {
-    if (error instanceof ImmichUnavailableError) {
-      const stale = cache.getStale<T>(cacheKey);
-      if (stale !== null) {
-        console.warn(`[Immich] ⚠️ Upstream unavailable — serving stale ${label}`);
-        return stale;
-      }
-    }
-    throw error;
-  }
-
   private async request<T>(endpoint: string, body?: unknown): Promise<T | null> {
     if (!this.hasCredentials) {
       this.warnNoCredentials(endpoint);
       return null;
     }
 
-    const url = `${this.config.immich.apiUrl}${endpoint}`;
-
-    let res: Response;
-    try {
-      res = await fetch(url, {
-        method: body === undefined ? 'GET' : 'POST',
-        headers: {
-          'x-api-key': this.config.immich.apiKey,
-          Accept: 'application/json',
-          ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
-        },
-        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-        // JSON payloads are small, so one budget can cover the whole exchange.
-        // Without it the only ceiling is undici's default, measured in minutes.
-        signal: AbortSignal.timeout(this.config.immichTimeoutMs),
-      });
-    } catch (error) {
-      console.error(`[Immich] Failed to reach ${url}:`, error);
-      throw new ImmichUnavailableError(
-        isTimeout(error)
-          ? `Immich did not respond within ${this.config.immichTimeoutMs}ms for ${endpoint}`
-          : `Cannot reach Immich for ${endpoint}`,
-      );
-    }
-
-    if (!res.ok) {
-      console.error(`[Immich] ${res.status} ${res.statusText} for ${endpoint}`);
-      // Only "gone" means gone. A 5xx, a rate limit, or a rejected API key all
-      // mean Immich cannot serve us right now — rendering those as a missing
-      // album would tell visitors and crawlers the content no longer exists.
-      if (res.status !== 404 && res.status !== 410) {
-        throw new ImmichUnavailableError(
-          `Immich returned ${res.status} ${res.statusText} for ${endpoint}`,
-          res.status,
-        );
-      }
-      return null;
-    }
-
-    const contentType = res.headers.get('Content-Type') || '';
-    if (!contentType.includes('application/json')) {
-      // We always send Accept: application/json. Anything else is a gateway or
-      // proxy error page, not a valid answer about the resource.
-      throw new ImmichUnavailableError(
-        `Immich returned non-JSON (${contentType || 'no Content-Type'}) for ${endpoint}`,
-      );
-    }
-
-    try {
-      return (await res.json()) as T;
-    } catch (error) {
-      // The timeout also covers the body read, so an abort can surface here.
-      if (isTimeout(error)) {
-        console.error(`[Immich] Timed out reading ${url}`);
-        throw new ImmichUnavailableError(
-          `Immich did not respond within ${this.config.immichTimeoutMs}ms for ${endpoint}`,
-        );
-      }
-      console.error(`[Immich] Malformed JSON from ${url}:`, error);
-      throw new ImmichUnavailableError(`Immich returned malformed JSON for ${endpoint}`);
-    }
+    return requestJson<T>({
+      apiUrl: this.config.immich.apiUrl,
+      apiKey: this.config.immich.apiKey,
+      timeoutMs: this.config.immichTimeoutMs,
+      endpoint,
+      body,
+    });
   }
 
   /**
@@ -676,7 +591,7 @@ class ImmichClient {
           this.fetchAlbumAssets(albumId),
         ]);
         if (!album) {
-          cache.set(cacheKey, MISSING, this.config.cacheTtl);
+          this.cacheSet(cacheKey, MISSING);
           return null;
         }
 
@@ -711,7 +626,7 @@ class ImmichClient {
         this.cacheSet(cacheKey, album);
         return album;
       } catch (error) {
-        return this.staleOrThrow<ImmichAlbum>(cacheKey, error, `album ${albumId}`);
+        return this.staleOrMissing<ImmichAlbum>(cacheKey, error, `album ${albumId}`);
       } finally {
         this.pendingAlbumPromises.delete(albumId);
       }
@@ -777,14 +692,14 @@ class ImmichClient {
           // The homepage looks up every gallery.yaml hero ID on each render
           // (app/page.tsx), and those pages are force-dynamic — so a hero photo
           // deleted from Immich otherwise costs an upstream 404 every time.
-          cache.set(cacheKey, MISSING, this.config.cacheTtl);
+          this.cacheSet(cacheKey, MISSING);
           return null;
         }
 
         this.cacheSet(cacheKey, asset);
         return asset;
       } catch (error) {
-        return this.staleOrThrow<ImmichAsset>(cacheKey, error, `asset ${assetId}`);
+        return this.staleOrMissing<ImmichAsset>(cacheKey, error, `asset ${assetId}`);
       } finally {
         this.pendingAssetPromises.delete(assetId);
       }
