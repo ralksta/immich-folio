@@ -293,6 +293,24 @@ export async function writeJournalEntry(slug: string, rawMarkdown: string): Prom
 
   await atomicWrite(filePath, rawMarkdown);
 
+  // An entry that started in content/essays/ now has a copy in both
+  // directories; resolveJournalFilePath would keep favouring this new one,
+  // but deleteJournalEntry used to only ever see one path at a time and could
+  // leave the legacy copy behind to resurface on the next listing (#631).
+  // Retiring it here, once the new content is safely on disk, means delete
+  // never has to reconcile two files for one slug.
+  const legacyPath = containedPath(LEGACY_ESSAYS_DIR, filename);
+  if (legacyPath) {
+    try {
+      await fs.access(legacyPath);
+      await snapshotEntry(legacyPath, filename);
+      await fs.unlink(legacyPath);
+      console.log(`[Journal] 🧹 Retired legacy copy of ${filename} in content/essays/`);
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+    }
+  }
+
   console.log(`[Journal] ✅ Saved ${filename}`);
 }
 
@@ -310,22 +328,33 @@ export async function deleteJournalEntry(slug: string): Promise<boolean> {
     throw new Error(`Invalid journal slug: "${slug}"`);
   }
 
-  const filePath = resolveJournalFilePath(slug);
-  if (!filePath) return false;
+  const filename = `${slug}.md`;
+  const primaryPath = containedPath(JOURNAL_DIR, filename);
+  const legacyPath = containedPath(LEGACY_ESSAYS_DIR, filename);
+  if (!primaryPath || !legacyPath) return false;
 
-  try {
-    await fs.access(filePath);
-  } catch {
-    return false;
+  // Check both directories, not just whichever resolveJournalFilePath would
+  // pick: an entry that was saved once while still in content/essays/ used to
+  // leave a copy there, which listJournalEntries would bring back as soon as
+  // the content/journal/ copy was deleted (#631). writeJournalEntry now
+  // retires the legacy copy on every save, but a legacy entry that was never
+  // edited still lives there alone, so both paths must be checked here too.
+  let deletedAny = false;
+  for (const filePath of [primaryPath, legacyPath]) {
+    try {
+      await fs.access(filePath);
+    } catch {
+      continue;
+    }
+    await snapshotEntry(filePath, filename, 'deleted');
+    try {
+      await fs.unlink(filePath);
+      deletedAny = true;
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+    }
   }
-  await snapshotEntry(filePath, `${slug}.md`, 'deleted');
 
-  try {
-    await fs.unlink(filePath);
-    console.log(`[Journal] 🗑️ Deleted ${slug}.md`);
-    return true;
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return false;
-    throw err;
-  }
+  if (deletedAny) console.log(`[Journal] 🗑️ Deleted ${filename}`);
+  return deletedAny;
 }
