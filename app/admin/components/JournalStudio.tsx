@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { JournalEntrySummary, ParsedJournal, JournalBlock } from '@/lib/journal';
 import { parseJournalMarkdown, serializeJournalMarkdown, sanitizeSlug } from '@/lib/journal';
+import { JOURNAL_TEMPLATES } from '@/lib/journalTemplates';
 import {
   IconFileText,
   IconSparkles,
@@ -47,6 +48,8 @@ export function JournalStudio({ slug: activeSlug }: JournalStudioProps) {
   const [newTitle, setNewTitle] = useState('');
   const [newSlug, setNewSlug] = useState('');
   const [creating, setCreating] = useState(false);
+  /** null = start blank, matching the previous (only) behavior. */
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
 
   const fetchEntries = useCallback(async () => {
     setLoading(true);
@@ -77,12 +80,28 @@ export function JournalStudio({ slug: activeSlug }: JournalStudioProps) {
     setCreating(true);
     try {
       const slug = sanitizeSlug(newSlug || newTitle);
+      const template = selectedTemplateId
+        ? JOURNAL_TEMPLATES.find((t) => t.id === selectedTemplateId)
+        : undefined;
+      const content = template
+        ? serializeJournalMarkdown({
+            frontmatter: {
+              title: newTitle.trim(),
+              date: new Date().toISOString().slice(0, 10),
+              draft: true,
+            },
+            blocks: template.blocks,
+            referencedAssetIds: [],
+          })
+        : undefined;
+
       const res = await fetch('/api/admin/journal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: newTitle.trim(),
           slug,
+          ...(content ? { content } : {}),
         }),
       });
 
@@ -91,6 +110,7 @@ export function JournalStudio({ slug: activeSlug }: JournalStudioProps) {
         setShowCreateModal(false);
         setNewTitle('');
         setNewSlug('');
+        setSelectedTemplateId(null);
         await fetchEntries();
         if (data.entry?.slug) {
           router.push(`/admin/journal/${data.entry.slug}`);
@@ -307,11 +327,48 @@ export function JournalStudio({ slug: activeSlug }: JournalStudioProps) {
                 </span>
               </div>
 
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.85rem',
+                    marginBottom: '6px',
+                    opacity: 0.8,
+                  }}
+                >
+                  Start from
+                </label>
+                <div className="journal-template-grid">
+                  <button
+                    type="button"
+                    className={`journal-template-card${selectedTemplateId === null ? ' is-selected' : ''}`}
+                    onClick={() => setSelectedTemplateId(null)}
+                  >
+                    <span className="journal-template-card-name">Blank</span>
+                    <span className="journal-template-card-desc">Start with an empty editor.</span>
+                  </button>
+                  {JOURNAL_TEMPLATES.map((template) => (
+                    <button
+                      key={template.id}
+                      type="button"
+                      className={`journal-template-card${selectedTemplateId === template.id ? ' is-selected' : ''}`}
+                      onClick={() => setSelectedTemplateId(template.id)}
+                    >
+                      <span className="journal-template-card-name">{template.name}</span>
+                      <span className="journal-template-card-desc">{template.description}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                 <button
                   type="button"
                   className="admin-btn admin-btn-secondary"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setSelectedTemplateId(null);
+                  }}
                 >
                   Cancel
                 </button>

@@ -334,7 +334,12 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
     }
 
     // 3. Image syntax: ![assetId:layout](Caption) or ![assetId1, assetId2](Caption)
-    const imgMatch = chunk.match(/^!\[([^\]]+)\]\(([^)]*)\)$/);
+    //
+    // The bracket group allows zero characters (`*`, not `+`) so a template's
+    // unfilled placeholder — `assetId: ''`, serialized as `![](Caption)` or
+    // `![:wide](Caption)` — still parses back into a `photo` block instead of
+    // silently degrading into a text paragraph on the next load.
+    const imgMatch = chunk.match(/^!\[([^\]]*)\]\(([^)]*)\)$/);
     if (imgMatch) {
       const rawTarget = imgMatch[1].trim();
       const caption = imgMatch[2].trim() ? renderInlineMarkdown(imgMatch[2].trim()) : undefined;
@@ -345,8 +350,9 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
         if (parts.length >= 2) {
           const id1 = parts[0];
           const id2 = parts[1];
-          referencedAssetIds.add(id1);
-          referencedAssetIds.add(id2);
+          // Same placeholder rule as single photos below: '' is unfilled.
+          if (id1) referencedAssetIds.add(id1);
+          if (id2) referencedAssetIds.add(id2);
           blocks.push({
             type: 'photo-pair',
             assetIds: [id1, id2],
@@ -368,7 +374,11 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
         else if (normLayout === 'wide') layout = 'wide';
       }
 
-      referencedAssetIds.add(assetId);
+      // An empty assetId is a placeholder (see the regex comment above), not a
+      // reference to resolve — adding '' here would make the studio probe
+      // `/api/admin/thumbnail/` and the published page look up a nonexistent
+      // asset.
+      if (assetId) referencedAssetIds.add(assetId);
       blocks.push({
         type: 'photo',
         assetId,

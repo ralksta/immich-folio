@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseJournalMarkdown, serializeJournalMarkdown } from '../journal';
+import type { JournalBlock } from '../journal';
 
 /**
  * serializeJournalMarkdown must be the exact inverse of the inline renderer
@@ -88,5 +89,44 @@ describe('journal round trip (#628)', () => {
     expect(twice).toBe(once);
     expect(once).toContain('[Immich](https://immich.app)');
     expect(once).toContain("Anna's photos");
+  });
+
+  it('round-trips an unfilled photo placeholder as a photo block, not text (#template placeholders)', () => {
+    for (const layout of ['contained', 'wide', 'fullbleed'] as const) {
+      const block: JournalBlock = { type: 'photo', assetId: '', caption: 'Pick a photo', layout };
+      const serialized = serializeJournalMarkdown({
+        frontmatter: {},
+        blocks: [block],
+        referencedAssetIds: [],
+      });
+      const parsed = parseJournalMarkdown(serialized);
+      expect(parsed.blocks).toEqual([block]);
+      expect(parsed.referencedAssetIds).toEqual([]);
+    }
+  });
+
+  it('round-trips an unfilled photo-pair placeholder without referencing empty ids', () => {
+    const block: JournalBlock = { type: 'photo-pair', assetIds: ['', ''], caption: 'Two to pick' };
+    const serialized = serializeJournalMarkdown({
+      frontmatter: {},
+      blocks: [block],
+      referencedAssetIds: [],
+    });
+    const parsed = parseJournalMarkdown(serialized);
+    expect(parsed.blocks).toEqual([block]);
+    expect(parsed.referencedAssetIds).toEqual([]);
+  });
+
+  it('keeps a filled id in a half-filled pair as the only reference', () => {
+    const block: JournalBlock = {
+      type: 'photo-pair',
+      assetIds: ['abc123', ''],
+      caption: undefined,
+    };
+    const parsed = parseJournalMarkdown(
+      serializeJournalMarkdown({ frontmatter: {}, blocks: [block], referencedAssetIds: [] }),
+    );
+    expect(parsed.blocks).toEqual([block]);
+    expect(parsed.referencedAssetIds).toEqual(['abc123']);
   });
 });

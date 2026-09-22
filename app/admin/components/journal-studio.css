@@ -395,6 +395,53 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
+/* ── Template picker (Create modal) ──────────────────────────────── */
+
+.journal-template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.journal-template-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  background: var(--admin-bg-input, #161616);
+  /* <button> does not inherit color or font from its parent — without these
+     the cards render in the UA default, black on the dark admin surface. */
+  color: var(--admin-text, #f0f0f0);
+  font: inherit;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.journal-template-card:hover {
+  border-color: var(--admin-border-hover, #444);
+}
+
+.journal-template-card.is-selected {
+  border-color: var(--admin-accent, #6366f1);
+}
+
+.journal-template-card-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.journal-template-card-desc {
+  font-size: 0.75rem;
+  opacity: 0.65;
+}
+
 /* ── Card meta & status ───────────────────────────────────────────── */
 
 .journal-admin-card-meta span {
