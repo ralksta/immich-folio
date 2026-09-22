@@ -1,22 +1,13 @@
 'use client';
 
 /**
- * MapView — client component that initializes Leaflet, fetches /api/map,
- * and renders location-level markers with themed popups.
+ * MapView — fetches /api/map and renders its location-level markers with
+ * themed popups through LeafletMap, which owns the Leaflet setup.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDictionary } from './I18nProvider';
-
-/** Escapes special HTML characters to prevent XSS in Leaflet popup templates. */
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+import { LeafletMap, escapeHtml, type LeafletMarker } from './LeafletMap';
 
 interface MapLocationPublic {
   city: string;
@@ -30,21 +21,14 @@ interface MapLocationPublic {
 
 export function MapView() {
   const t = useDictionary();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<unknown>(null);
+  const [locations, setLocations] = useState<MapLocationPublic[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function init() {
-      // Dynamically import Leaflet (client-only)
-      const L = (await import('leaflet')).default;
-
-      if (cancelled || !containerRef.current || mapRef.current) return;
-
-      // Fetch map data
+    async function load() {
       const res = await fetch('/api/map');
       if (!res.ok) {
         let detail = '';
@@ -54,48 +38,32 @@ export function MapView() {
           /* ignore */
         }
         console.error('[Map] API error', res.status, detail);
-        setError(t.map.loadFailed(res.status));
-        setLoading(false);
+        if (!cancelled) {
+          setError(t.map.loadFailed(res.status));
+          setLoading(false);
+        }
         return;
       }
-      const locations: MapLocationPublic[] = await res.json();
+      const data: MapLocationPublic[] = await res.json();
+      if (!cancelled) setLocations(data);
+    }
 
-      if (cancelled) return;
-
-      // Initialize map
-      const map = L.map(containerRef.current, {
-        zoomControl: true,
-        attributionControl: true,
-      });
-      mapRef.current = map;
-
-      // Dark-themed tiles (CartoDB Dark Matter)
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 19,
-      }).addTo(map);
-
-      if (locations.length === 0) {
-        // No geotagged photos — show world view
-        map.setView([20, 0], 2);
+    load().catch((err) => {
+      console.error('[Map] Init error:', err);
+      if (!cancelled) {
+        setError(t.map.initFailed);
         setLoading(false);
-        return;
       }
+    });
 
-      // Create markers with custom HTML icons
-      const markers: L.Marker[] = [];
+    return () => {
+      cancelled = true;
+    };
+  }, [t]);
 
-      for (const loc of locations) {
-        const icon = L.divIcon({
-          className: '',
-          html: `<div class="map-marker">${loc.photoCount}</div>`,
-          iconSize: [32, 32],
-          iconAnchor: [16, 16],
-          popupAnchor: [0, -20],
-        });
-
+  const markers = useMemo<LeafletMarker[]>(
+    () =>
+      (locations ?? []).map((loc) => {
         const albumLinks = loc.albums
           .map(
             (a) =>
@@ -111,7 +79,11 @@ export function MapView() {
         const heading = loc.city || loc.country;
         const subheading = loc.city ? loc.country : '';
 
-        const popupHtml = `
+        return {
+          lat: loc.lat,
+          lng: loc.lng,
+          html: `<div class="map-marker">${loc.photoCount}</div>`,
+          popupHtml: `
           <div class="map-popup">
             <img src="${escapeHtml(loc.coverUrl)}" alt="${escapeHtml(heading)}" class="map-popup__cover" loading="lazy" />
             <div class="map-popup__body">
@@ -121,43 +93,11 @@ export function MapView() {
               <div class="map-popup__albums">${albumLinks}</div>
             </div>
           </div>
-        `;
-
-        const marker = L.marker([loc.lat, loc.lng], { icon })
-          .addTo(map)
-          .bindPopup(popupHtml, { maxWidth: 260, minWidth: 200 });
-
-        markers.push(marker);
-      }
-
-      // Fit bounds to show all markers
-      if (markers.length > 0) {
-        const group = L.featureGroup(markers);
-        map.fitBounds(group.getBounds().pad(0.15));
-      }
-
-      // Force Leaflet to recalculate tile grid
-      setTimeout(() => map.invalidateSize(), 100);
-
-      setLoading(false);
-    }
-
-    init().catch((err) => {
-      console.error('[Map] Init error:', err);
-      if (!cancelled) {
-        setError(t.map.initFailed);
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-      if (mapRef.current) {
-        (mapRef.current as L.Map).remove();
-        mapRef.current = null;
-      }
-    };
-  }, [t]);
+        `,
+        };
+      }),
+    [locations, t],
+  );
 
   if (error) {
     return (
@@ -213,7 +153,18 @@ export function MapView() {
           `}</style>
         </div>
       )}
-      <div ref={containerRef} className="map-container" />
+      {locations ? (
+        <LeafletMap
+          markers={markers}
+          onReady={() => setLoading(false)}
+          onError={() => {
+            setError(t.map.initFailed);
+            setLoading(false);
+          }}
+        />
+      ) : (
+        <div className="map-container" />
+      )}
     </div>
   );
 }

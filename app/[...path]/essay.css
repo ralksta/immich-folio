@@ -201,6 +201,22 @@
   }
 }
 
+/* Map: the entry's geotagged photos as pins, a story-sized Leaflet map. */
+.essay-map {
+  width: 100%;
+  height: 420px;
+  border-radius: var(--radius-sm, 0);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.15));
+  background: var(--bg-secondary, #222);
+}
+
+@media (max-width: 640px) {
+  .essay-map {
+    height: 300px;
+  }
+}
+
 /* Facts: a short definition list in the text column — distance, venue, date. */
 .essay-facts {
   display: grid;

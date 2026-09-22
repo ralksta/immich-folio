@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import type { Metadata } from 'next';
 import { readJournalEntry, listJournalEntries } from '@/lib/admin/journal-service';
-import { mapBlockAssetIds, type ParsedJournal } from '@/lib/journal';
+import { collectAssetIds, mapBlockAssetIds, type ParsedJournal } from '@/lib/journal';
+import { entryMapPins } from '@/lib/journalMap';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import { isAuthenticated } from '@/lib/auth';
 import { journalNeighbours } from '@/lib/journalNav';
@@ -191,6 +192,14 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
   const tokenByAssetId = new Map(rawAssets.map((a) => [a.id, encodeAssetId(a.id)]));
   const toToken = (assetId: string) => tokenByAssetId.get(assetId) ?? '';
 
+  // A map block's pins are computed here, from the photos fetched above and
+  // under each photo's `location:` precision, and only when the site
+  // publishes a map at all. With the map switched off the block is dropped
+  // before it can reach the client.
+  const hasMapBlock = blocks.some((b) => b.type === 'map');
+  const mapPins =
+    hasMapBlock && config.map ? await entryMapPins(rawAssets, collectAssetIds(blocks)) : null;
+
   const essayForClient: ParsedJournal = {
     // Named fields, not a spread of `frontmatter`: EssayView reads only
     // title, subtitle, coverAssetId, author and date, but a spread put the
@@ -203,7 +212,10 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
       date: frontmatter.date,
       coverAssetId: frontmatter.coverAssetId ? toToken(frontmatter.coverAssetId) : undefined,
     },
-    blocks: blocks.map((block) => mapBlockAssetIds(block, toToken)),
+    blocks: blocks.flatMap((block) => {
+      if (block.type === 'map') return mapPins ? [{ ...block, pins: mapPins }] : [];
+      return [mapBlockAssetIds(block, toToken)];
+    }),
     referencedAssetIds: rawAssets.map((a) => encodeAssetId(a.id)),
   };
 

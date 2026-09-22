@@ -1,4 +1,5 @@
 import { JournalStudio } from '../../components/JournalStudio';
+import { getConfig } from '@/lib/config';
 
 export default async function AdminJournalEntryPage({
   params,
@@ -6,5 +7,5 @@ export default async function AdminJournalEntryPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  return <JournalStudio slug={slug} />;
+  return <JournalStudio slug={slug} mapEnabled={getConfig().map} />;
 }

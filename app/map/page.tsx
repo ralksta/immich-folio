@@ -33,14 +33,7 @@ export default function MapPage() {
 
   return (
     <>
-      {/* Leaflet CSS from CDN */}
-      {}
-      <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-        crossOrigin=""
-      />
+      {/* Leaflet's stylesheet comes with the LeafletMap component. */}
       <div className="map-page">
         <div className="map-page__header">
           <div className="map-page__header-main">

@@ -20,6 +20,7 @@ import {
   IconArrowLeftRight,
   IconGrid,
   IconColumns,
+  IconMap,
   IconPlus,
   IconX,
 } from './Icons';
@@ -123,6 +124,9 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
           ],
         };
         break;
+      case 'map':
+        newBlock = { type: 'map', caption: '' };
+        break;
     }
 
     updateBlocks([...essay.blocks, newBlock]);
@@ -182,6 +186,13 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
           onClick={() => handleAddBlock('photo-grid')}
         >
           <IconGrid size={13} /> + Photo Grid
+        </button>
+        <button
+          type="button"
+          className="admin-btn admin-btn-xs"
+          onClick={() => handleAddBlock('map')}
+        >
+          <IconMap size={13} /> + Map
         </button>
       </div>
 
@@ -732,6 +743,23 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
               >
                 <IconPlus size={12} /> Add fact
               </button>
+            </div>
+          )}
+          {/* 8. MAP BLOCK */}
+          {block.type === 'map' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <input
+                type="text"
+                value={block.caption || ''}
+                onChange={(e) =>
+                  handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
+                }
+                placeholder="Caption, e.g. Busan → Seoul (optional)"
+              />
+              <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-secondary)' }}>
+                Pins are the geotagged photos of this page&apos;s albums, joined by a line. Renders
+                only while the map is enabled in Settings; album location precision applies.
+              </span>
             </div>
           )}
         </div>

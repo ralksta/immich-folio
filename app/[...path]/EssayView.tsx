@@ -6,6 +6,7 @@ import { Lightbox, type LightboxWatermark } from '@/components/Lightbox';
 import { ProofingProvider, useProofing } from '@/components/ProofingContext';
 import { ProofingModal } from '@/components/ProofingModal';
 import { FadeIn } from '@/components/FadeIn';
+import { LeafletMap, escapeHtml } from '@/components/LeafletMap';
 import type { ParsedEssay, EssayBlock } from '@/lib/essay';
 import { renderInlineMarkdown } from '@/lib/essay';
 import type { PhotoItem } from './PhotoGrid';
@@ -319,6 +320,40 @@ function EssayViewContent({
             </dl>
           </FadeIn>
         );
+
+      case 'map': {
+        // Pins are attached by the server page, already quantised; with none
+        // (no geotagged photos, or the map switched off) there is no map.
+        const pins = block.pins ?? [];
+        if (pins.length === 0) return null;
+        return (
+          <FadeIn key={idx}>
+            <figure className="essay-figure essay-figure--wide">
+              <LeafletMap
+                className="essay-map"
+                fitMaxZoom={13}
+                line
+                markers={pins.map((pin, i) => ({
+                  lat: pin.lat,
+                  lng: pin.lng,
+                  html: `<div class="map-marker">${i + 1}</div>`,
+                  ...(pin.label
+                    ? {
+                        popupHtml: `<div class="map-popup"><div class="map-popup__body"><h3 class="map-popup__city">${escapeHtml(pin.label)}</h3></div></div>`,
+                      }
+                    : {}),
+                }))}
+              />
+              {block.caption && (
+                <figcaption
+                  className="essay-figcaption"
+                  dangerouslySetInnerHTML={{ __html: block.caption }}
+                />
+              )}
+            </figure>
+          </FadeIn>
+        );
+      }
 
       default:
         return null;

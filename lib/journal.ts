@@ -21,7 +21,19 @@ export type JournalBlock =
   | { type: 'photo'; assetId: string; caption?: string; layout: 'fullbleed' | 'wide' | 'contained' }
   | { type: 'photo-pair'; assetIds: [string, string]; caption?: string }
   | { type: 'photo-grid'; assetIds: string[]; caption?: string }
-  | { type: 'facts'; items: Array<{ label: string; value: string }> };
+  | { type: 'facts'; items: Array<{ label: string; value: string }> }
+  | { type: 'map'; caption?: string; pins?: MapPin[] };
+
+/**
+ * A position on a journal map. Never authored and never serialized: the
+ * server derives pins from the entry's own geotagged photos at render time
+ * (lib/journalMap.ts), already quantised to the album's `location:` setting.
+ */
+export interface MapPin {
+  lat: number;
+  lng: number;
+  label?: string;
+}
 
 export interface ParsedJournal {
   frontmatter: JournalFrontmatter;
@@ -334,7 +346,16 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
     .filter(Boolean);
 
   for (const chunk of chunks) {
-    // 0. Facts: a `::facts` line, then `Label: Value` lines in the same chunk.
+    // 0a. Map: `::map` with an optional caption on the same line. Pins are
+    //     not in the file — see MapPin.
+    const mapMatch = chunk.match(/^::map(?:[ \t]+(\S.*))?$/m);
+    if (mapMatch && chunk.startsWith('::map')) {
+      const caption = mapMatch[1]?.trim();
+      blocks.push({ type: 'map', caption: caption ? renderInlineMarkdown(caption) : undefined });
+      continue;
+    }
+
+    // 0b. Facts: a `::facts` line, then `Label: Value` lines in the same chunk.
     //    `::` because `![facts]` would read as a legacy photo reference and `#`
     //    and `>` are taken; no paragraph starts that way. The first colon
     //    splits, so `Time: 08:30` keeps its value. Lines without one, or with
@@ -518,6 +539,13 @@ export function serializeJournalMarkdown(journal: ParsedJournal): string {
           ? inlineHtmlToMarkdown(block.caption.replace(/[\r\n]+/g, ' '))
           : '';
         lines.push(`![${block.assetIds.join(', ')}](${caption})`);
+        break;
+      }
+      case 'map': {
+        const caption = block.caption
+          ? inlineHtmlToMarkdown(block.caption.replace(/[\r\n]+/g, ' ')).trim()
+          : '';
+        lines.push(caption ? `::map ${caption}` : '::map');
         break;
       }
       case 'facts': {

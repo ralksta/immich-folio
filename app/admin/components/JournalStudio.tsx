@@ -30,6 +30,7 @@ import {
   IconCheck,
   IconGrid,
   IconColumns,
+  IconMap,
   IconX,
 } from './Icons';
 import AssetPicker from './AssetPicker';
@@ -43,9 +44,11 @@ import './journal-studio.css';
 interface JournalStudioProps {
   /** Entry to open, taken from the /admin/journal/[slug] route. */
   slug?: string;
+  /** `config.map`, passed by the server route: a map block renders only when the site has a map. */
+  mapEnabled?: boolean;
 }
 
-export function JournalStudio({ slug: activeSlug }: JournalStudioProps) {
+export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioProps) {
   const router = useRouter();
   const [entries, setEntries] = useState<JournalEntrySummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -158,7 +161,13 @@ export function JournalStudio({ slug: activeSlug }: JournalStudioProps) {
   };
 
   if (activeSlug) {
-    return <JournalEditor slug={activeSlug} onBack={() => router.push('/admin/journal')} />;
+    return (
+      <JournalEditor
+        slug={activeSlug}
+        mapEnabled={mapEnabled}
+        onBack={() => router.push('/admin/journal')}
+      />
+    );
   }
 
   return (
@@ -400,6 +409,7 @@ export function JournalStudio({ slug: activeSlug }: JournalStudioProps) {
 
 interface JournalEditorProps {
   slug: string;
+  mapEnabled?: boolean;
   onBack: () => void;
 }
 
@@ -421,7 +431,7 @@ const SPLIT_MIN = 25;
 const SPLIT_MAX = 70;
 const SPLIT_DEFAULT = 46;
 
-function JournalEditor({ slug, onBack }: JournalEditorProps) {
+function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -677,6 +687,9 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
           ],
         };
         break;
+      case 'map':
+        newBlock = { type: 'map', caption: '' };
+        break;
     }
     handleBlocksChange([...parsed.blocks, newBlock]);
   };
@@ -891,6 +904,13 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
                   onClick={() => handleAddBlock('photo-grid')}
                 >
                   <IconGrid size={13} /> + Photo Grid
+                </button>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-xs"
+                  onClick={() => handleAddBlock('map')}
+                >
+                  <IconMap size={13} /> + Map
                 </button>
               </div>
 
@@ -1288,6 +1308,31 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
                               <IconPlus size={12} /> Add fact
                             </button>
                           </div>
+                        </div>
+                      )}
+
+                      {block.type === 'map' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {mapEnabled === false && (
+                            <p className="journal-block-warning">
+                              The map is switched off in Settings → General. This block will not
+                              render until it is enabled.
+                            </p>
+                          )}
+                          <input
+                            type="text"
+                            className="admin-input"
+                            placeholder="Caption, e.g. Busan → Seoul (optional)"
+                            value={block.caption || ''}
+                            onChange={(e) =>
+                              handleUpdateBlock(idx, { ...block, caption: e.target.value })
+                            }
+                          />
+                          <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
+                            Pins are this entry&apos;s geotagged photos in order, joined by a line.
+                            They are computed when the page renders, so the preview here stays
+                            empty; each album&apos;s location precision applies.
+                          </span>
                         </div>
                       )}
                     </div>

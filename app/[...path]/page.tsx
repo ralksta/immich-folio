@@ -45,7 +45,9 @@ import { albumStructuredData } from '@/lib/structuredData';
 import { absoluteUrl } from '@/lib/siteUrl';
 import { SubpageGridView } from './SubpageGridView';
 import { EssayView } from './EssayView';
-import { parseEssayMarkdown } from '@/lib/essay';
+import { parseEssayMarkdown, type EssayBlock } from '@/lib/essay';
+import { pinsForEntry } from '@/lib/journalMap';
+import { strictestPrecision, type LocationPrecision } from '@/lib/mapPrecision';
 import { loadEssayFromFile } from '@/lib/admin/journal-service';
 import { getServerDictionary } from '@/lib/i18n/server';
 
@@ -458,6 +460,34 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
             })),
           ]),
           referencedAssetIds: [],
+        };
+      }
+
+      // Map blocks: pins from the subpage's own albums, each album's
+      // `location:` precision applied (an asset in two albums takes the
+      // stricter). Dropped entirely when the site has no map.
+      if (essayParsed.blocks.some((b) => b.type === 'map')) {
+        const precisionByAsset = new Map<string, LocationPrecision>();
+        for (const album of allAlbums) {
+          if (!album) continue;
+          const level = config.albumLocationPrecision[album.id] ?? 'exact';
+          for (const asset of album.assets) {
+            const prev = precisionByAsset.get(asset.id);
+            precisionByAsset.set(asset.id, prev ? strictestPrecision([prev, level]) : level);
+          }
+        }
+        const pins = config.map
+          ? pinsForEntry(
+              allAssets,
+              allAssets.map((a) => a.id),
+              (id) => precisionByAsset.get(id) ?? 'exact',
+            )
+          : null;
+        essayParsed = {
+          ...essayParsed,
+          blocks: essayParsed.blocks.flatMap((b): EssayBlock[] =>
+            b.type !== 'map' ? [b] : pins ? [{ ...b, pins }] : [],
+          ),
         };
       }
 
