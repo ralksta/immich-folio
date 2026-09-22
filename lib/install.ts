@@ -224,6 +224,12 @@ export interface InstallInput {
   adminPassword?: string;
 }
 
+/** Which of the two config files completeInstall actually wrote. */
+export interface CompleteInstallResult {
+  galleryWritten: boolean;
+  settingsWritten: boolean;
+}
+
 /**
  * Persist everything the install wizard collected.
  *
@@ -231,7 +237,7 @@ export interface InstallInput {
  * the owner can fill in later via /admin), settings.yaml, and install.json.
  * Runs before caches are invalidated, so the caller owns that step.
  */
-export async function completeInstall(input: InstallInput): Promise<void> {
+export async function completeInstall(input: InstallInput): Promise<CompleteInstallResult> {
   const dir = installContentDir();
   await fs.promises.mkdir(dir, { recursive: true });
 
@@ -269,12 +275,23 @@ export async function completeInstall(input: InstallInput): Promise<void> {
   const galleryPath = path.join(dir, 'gallery.yaml');
   const settingsPath = path.join(dir, 'settings.yaml');
 
-  await atomicWrite(galleryPath, header('Gallery Structure') + yaml.dump(gallery, dumpOptions));
+  // Only create gallery.yaml if it does not already exist yet, same as
+  // settings.yaml below. isInstalled() is false whenever Immich credentials
+  // fail to resolve — a bad IMMICH_API_URL, a corrupt install.json — whether
+  // or not gallery.yaml exists, so re-running the wizard after that is not
+  // evidence gallery.yaml needs replacing. Every subpage, section, password,
+  // assetOrder and per-album override a site has accumulated used to be
+  // overwritten unconditionally with this two-key skeleton (#627).
+  const galleryWritten = !fs.existsSync(galleryPath);
+  if (galleryWritten) {
+    await atomicWrite(galleryPath, header('Gallery Structure') + yaml.dump(gallery, dumpOptions));
+  }
 
   // Only create settings.yaml if it does not already exist — a deployment that
   // brings its own customised settings.yaml (but is missing gallery.yaml) must
   // not have it silently replaced with the three-key skeleton the wizard writes.
-  if (!fs.existsSync(settingsPath)) {
+  const settingsWritten = !fs.existsSync(settingsPath);
+  if (settingsWritten) {
     await atomicWrite(settingsPath, header('Site Settings') + yaml.dump(settings, dumpOptions));
   }
   await atomicWrite(path.join(dir, INSTALL_FILENAME), `${JSON.stringify(data, null, 2)}\n`);
@@ -296,4 +313,6 @@ export async function completeInstall(input: InstallInput): Promise<void> {
   // Drop the in-process cache so the next isInstalled()/getInstallCredentials()
   // call reads the freshly written file.
   cachedInstallFile = null;
+
+  return { galleryWritten, settingsWritten };
 }
