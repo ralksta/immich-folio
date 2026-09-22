@@ -19,6 +19,8 @@ export const de: Dictionary = {
     map: 'Karte',
     journal: 'Journal',
     skipToContent: 'Zum Inhalt springen',
+    openMenu: 'Menü öffnen',
+    closeMenu: 'Menü schließen',
   },
 
   common: {

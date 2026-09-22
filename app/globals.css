@@ -103,6 +103,26 @@
   border-bottom-color: var(--text-primary);
 }
 
+/* The links (Home, subpages, standalone albums, About, Map) live inside
+   MobileNav's wrapper, but `display: contents` erases the wrapper's own box
+   above the mobile breakpoint — the links become direct flex items of
+   `.header__nav`, so desktop keeps the exact layout it always had. */
+.header__nav-links {
+  display: contents;
+}
+
+/* Hidden above the mobile breakpoint — MobileNav renders it unconditionally,
+   but only the CSS decides when it is reachable, same as `.header__wordmark`. */
+.header__menu-btn {
+  display: none;
+}
+
+.header__menu-btn svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
 /* ── Main Content ─────────────────────────────────── */
 .main {
   max-width: var(--max-width);
@@ -1916,6 +1936,67 @@
 
   .main {
     padding: 32px 20px 80px;
+  }
+
+  /* A proper menu replaces the horizontal scroll below this width — see
+     `.header__nav-links` / `.header__menu-btn` above and MobileNav (#590). */
+  .header__menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    padding: 8px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  .header__nav-links {
+    display: none;
+  }
+
+  /* `.header` is the nearest positioned ancestor (it's `position: fixed`),
+     so `top: 100%` sits the panel right under it regardless of the actual
+     header height, which differs by preset (plain padding vs. studio-modern's
+     fixed `--header-height`). `left: 50%` + `width: 100vw` + negative margin
+     breaks the panel out to the full viewport width regardless of `.header`'s
+     own horizontal padding, which also differs by preset (`--sm-gutter` for
+     studio-modern vs. a fixed 24px elsewhere). */
+  .header__nav-links[data-open='true'] {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: 100vw;
+    margin-left: -50vw;
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+    background: rgba(26, 26, 26, 0.98);
+    border-bottom: 1px solid var(--border-subtle);
+    z-index: 101;
+  }
+
+  [data-theme='light'] .header__nav-links[data-open='true'] {
+    background: rgba(245, 245, 240, 0.98);
+  }
+
+  .header__nav-links[data-open='true'] .header__nav-link,
+  .header__nav-links[data-open='true'] .header__nav-link--external {
+    width: 100%;
+    padding: 16px 24px;
+    font-size: 0.75rem;
+  }
+
+  /* Covers the full viewport, including the area behind the header — the
+     header's own `z-index: 100` keeps it crisp above the dim, so this does
+     not need to know the header's height either. */
+  .header__nav-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 99;
   }
 
   .header__nav-link {

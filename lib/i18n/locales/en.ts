@@ -19,6 +19,8 @@ export const en = {
     map: 'Map',
     journal: 'Journal',
     skipToContent: 'Skip to content',
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu',
   },
 
   common: {
