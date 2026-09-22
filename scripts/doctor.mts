@@ -523,7 +523,7 @@ function reportProxyHops(env: EnvLike): CliFinding {
   };
 }
 
-async function gatherFindings(cwd: string, env: EnvLike): Promise<CliFinding[]> {
+export async function gatherFindings(cwd: string, env: EnvLike): Promise<CliFinding[]> {
   const contentDir = env.INSTALL_CONTENT_DIR || path.join(cwd, 'content');
   const findings: CliFinding[] = [];
   const credentials = resolveCredentials(contentDir, env);
@@ -652,12 +652,20 @@ async function gatherFindings(cwd: string, env: EnvLike): Promise<CliFinding[]> 
     }
 
     findings.push(checkImmichCalls(calls));
+
+    // Whenever albums are configured, run the check even if Immich answered
+    // with an empty list — an API key regenerated under a different account,
+    // say. `if (albums.length)` used to skip this entirely, so a `200 []`
+    // response passed every connection check and reported nothing about
+    // albums at all, while every album page was silently empty (#629).
+    // checkAlbumIds treats every configured ID as missing when none resolve.
+    if (configuredAlbums.length) {
+      findings.push(checkAlbumIds(configuredAlbums, albums));
+      findings.push(checkAlbumsShared(configuredAlbums, albums));
+    }
   }
 
-  if (albums.length) {
-    findings.push(checkAlbumIds(configuredAlbums, albums));
-    findings.push(checkAlbumsShared(configuredAlbums, albums));
-  } else if (galleryExists && !gallery.error && !configuredAlbums.length) {
+  if (!configuredAlbums.length && galleryExists && !gallery.error) {
     findings.push({
       id: 'album-ids',
       level: 'warn',

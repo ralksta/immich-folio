@@ -63,6 +63,7 @@ export function InstallWizard({ initialApiUrl, setupToken }: Props) {
   const [installing, setInstalling] = useState(false);
   const [installError, setInstallError] = useState('');
   const [done, setDone] = useState(false);
+  const [galleryKept, setGalleryKept] = useState(false);
 
   const selectedCount = Object.values(selected).filter(Boolean).length;
 
@@ -131,6 +132,10 @@ export function InstallWizard({ initialApiUrl, setupToken }: Props) {
         setInstallError(data.error || 'Install failed');
         return;
       }
+      // The wizard never overwrites a gallery.yaml that was already there
+      // (#627) — worth surfacing, since the album picks and site settings
+      // above did not end up in the file that was just kept.
+      setGalleryKept(data.galleryWritten === false);
       setDone(true);
     } catch {
       setInstallError('Could not reach the install service');
@@ -148,6 +153,12 @@ export function InstallWizard({ initialApiUrl, setupToken }: Props) {
               <span className="install-card__kicker">Immich Folio</span>
               <h1>Install complete</h1>
               <p>Your portfolio is ready. Add or rearrange albums any time from the admin panel.</p>
+              {galleryKept && (
+                <p className="install-notice">
+                  A gallery.yaml already existed in content/, so it was left untouched — the albums
+                  picked above were not written. Use the admin panel to change it.
+                </p>
+              )}
             </div>
             {/* install-body carries the card's padding — every other step
                 renders inside it, and skipping it here left the buttons

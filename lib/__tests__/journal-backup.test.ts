@@ -14,12 +14,14 @@ import { mkdtemp, mkdir, readdir, readFile, rm, writeFile } from 'fs/promises';
 let root: string;
 let journalDir: string;
 let backupDir: string;
+let essaysDir: string;
 let service: typeof import('../admin/journal-service');
 
 beforeEach(async () => {
   root = await mkdtemp(path.join(os.tmpdir(), 'folio-journal-'));
   journalDir = path.join(root, 'content', 'journal');
   backupDir = path.join(journalDir, '.backups');
+  essaysDir = path.join(root, 'content', 'essays');
   await mkdir(journalDir, { recursive: true });
   vi.spyOn(process, 'cwd').mockReturnValue(root);
   vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -59,6 +61,40 @@ describe('deleteJournalEntry', () => {
 
     await expect(service.deleteJournalEntry('trip')).rejects.toThrow();
     await expect(readdir(journalDir)).resolves.toContain('trip.md');
+  });
+});
+
+describe('legacy content/essays/ entries (#631)', () => {
+  it('retires the legacy copy once a legacy entry is edited', async () => {
+    await mkdir(essaysDir, { recursive: true });
+    await writeFile(path.join(essaysDir, 'trip.md'), entry('Old'));
+
+    await service.writeJournalEntry('trip', entry('New'));
+
+    await expect(readdir(essaysDir)).resolves.not.toContain('trip.md');
+    await expect(readFile(path.join(journalDir, 'trip.md'), 'utf8')).resolves.toBe(entry('New'));
+  });
+
+  it('does not resurrect a legacy entry after it is edited then deleted', async () => {
+    await mkdir(essaysDir, { recursive: true });
+    await writeFile(path.join(essaysDir, 'trip.md'), entry('Old'));
+
+    await service.writeJournalEntry('trip', entry('New'));
+    await expect(service.deleteJournalEntry('trip')).resolves.toBe(true);
+
+    const entries = await service.listJournalEntries();
+    expect(entries.map((e) => e.slug)).not.toContain('trip');
+  });
+
+  it('deletes a legacy entry that was never edited, from content/essays/', async () => {
+    await mkdir(essaysDir, { recursive: true });
+    await writeFile(path.join(essaysDir, 'trip.md'), entry('Legacy'));
+
+    await expect(service.deleteJournalEntry('trip')).resolves.toBe(true);
+
+    await expect(readdir(essaysDir)).resolves.not.toContain('trip.md');
+    const entries = await service.listJournalEntries();
+    expect(entries.map((e) => e.slug)).not.toContain('trip');
   });
 });
 

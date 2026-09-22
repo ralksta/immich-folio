@@ -46,6 +46,17 @@
   line-height: 1.5;
 }
 
+/* Existing gallery.yaml kept as-is rather than replaced (#627) — worth more
+   than the muted paragraph color the completion message above it uses. */
+.install-card__header p.install-notice {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--admin-border);
+  border-left: 3px solid var(--admin-accent);
+  border-radius: 6px;
+  color: var(--admin-text);
+}
+
 /* ── Step indicator ──────────────────────────────────────────── */
 
 .install-steps {

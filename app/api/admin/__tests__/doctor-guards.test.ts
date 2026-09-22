@@ -101,6 +101,64 @@ describe('GET /api/admin/doctor', () => {
 });
 
 /**
+ * `if (albums.length)` used to skip the album check entirely when Immich
+ * answered with an empty list — an API key regenerated under a different
+ * account, say — so every connection check passed while every album page was
+ * silently empty (#629).
+ */
+describe('GET /api/admin/doctor — album checks', () => {
+  const ALBUM_ID = '11111111-1111-1111-1111-111111111111';
+
+  function withCredentialsAndAlbums(albums: string[]) {
+    getConfigMock.mockReturnValueOnce({
+      ...baseConfig,
+      needsCredentials: false,
+      albums,
+      immich: { apiUrl: 'https://immich.example', apiKey: 'key' },
+    });
+  }
+
+  it('reports every configured album as missing when Immich returns an empty list', async () => {
+    withCredentialsAndAlbums([ALBUM_ID]);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/albums')) return { ok: true, json: async () => [] } as Response;
+        return { ok: true, json: async () => ({}) } as Response;
+      }),
+    );
+
+    const body = await (await GET(req())).json();
+    const albumFinding = body.findings.find((f: { id: string }) => f.id === 'album-ids');
+
+    expect(albumFinding?.level).toBe('error');
+    expect(albumFinding?.title).toContain('1 of 1');
+
+    vi.unstubAllGlobals();
+  });
+
+  it('does not reject a non-array album response outright', async () => {
+    withCredentialsAndAlbums([ALBUM_ID]);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/albums')) return { ok: true, json: async () => ({}) } as Response;
+        return { ok: true, json: async () => ({}) } as Response;
+      }),
+    );
+
+    const body = await (await GET(req())).json();
+    const albumFinding = body.findings.find((f: { id: string }) => f.id === 'album-ids');
+
+    // A non-array body is treated the same as an empty list, not left uncast
+    // and unchecked.
+    expect(albumFinding?.level).toBe('error');
+
+    vi.unstubAllGlobals();
+  });
+});
+
+/**
  * Two albums that slugify to the same URL leave the second unreachable and
  * its settings resolved from the first (#632).
  */

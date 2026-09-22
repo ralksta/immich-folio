@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
   const hero = albums.length ? await fetchAlbumCovers(apiBase, apiKey, albums) : [];
 
   try {
-    await completeInstall({
+    const { galleryWritten, settingsWritten } = await completeInstall({
       hero,
       apiUrl,
       apiKey,
@@ -115,7 +115,11 @@ export async function POST(request: NextRequest) {
     immich.invalidateAll();
     revalidatePath('/', 'layout');
 
-    return NextResponse.json({ success: true });
+    // completeInstall never overwrites a gallery.yaml or settings.yaml that
+    // was already there (#627) — worth telling the operator when that's what
+    // just happened, since it means the wizard they walked through did less
+    // than it looked like.
+    return NextResponse.json({ success: true, galleryWritten, settingsWritten });
   } catch (err) {
     console.error('[Install] Failed to write configuration files:', err);
     return NextResponse.json({ error: 'Failed to write configuration files' }, { status: 500 });

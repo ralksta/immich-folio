@@ -202,6 +202,68 @@ describe('completeInstall', () => {
 
     expect(isInstalled()).toBe(true);
   });
+
+  /**
+   * isInstalled() is false whenever Immich credentials fail to resolve,
+   * whether or not gallery.yaml exists — a bad IMMICH_API_URL or a corrupt
+   * install.json is enough. Re-running the wizard after that used to replace
+   * every subpage, section, password, assetOrder and per-album override with
+   * a two-key skeleton (#627).
+   */
+  it('does not overwrite an existing gallery.yaml', async () => {
+    const { completeInstall } = await loadInstall();
+    const galleryPath = path.join(dir, 'gallery.yaml');
+    const existing = 'albums:\n  - existing-album\nsubpages:\n  - slug: trips\n';
+    fs.writeFileSync(galleryPath, existing);
+
+    const result = await completeInstall({
+      apiUrl: 'https://immich.example',
+      apiKey: 'api-key-123',
+      albums: [ALBUM_ID],
+    });
+
+    expect(result.galleryWritten).toBe(false);
+    expect(fs.readFileSync(galleryPath, 'utf8')).toBe(existing);
+  });
+
+  it('does not overwrite an existing settings.yaml', async () => {
+    const { completeInstall } = await loadInstall();
+    const settingsPath = path.join(dir, 'settings.yaml');
+    const existing = 'title: "Existing Site"\n';
+    fs.writeFileSync(settingsPath, existing);
+
+    const result = await completeInstall({
+      apiUrl: 'https://immich.example',
+      apiKey: 'api-key-123',
+      siteTitle: 'New Title',
+    });
+
+    expect(result.settingsWritten).toBe(false);
+    expect(fs.readFileSync(settingsPath, 'utf8')).toBe(existing);
+  });
+
+  it('writes both files on a genuinely fresh install and reports it', async () => {
+    const { completeInstall } = await loadInstall();
+
+    const result = await completeInstall({
+      apiUrl: 'https://immich.example',
+      apiKey: 'api-key-123',
+    });
+
+    expect(result).toEqual({ galleryWritten: true, settingsWritten: true });
+  });
+
+  it('still writes fresh credentials into install.json when gallery.yaml is kept', async () => {
+    const { completeInstall, getInstallCredentials } = await loadInstall();
+    fs.writeFileSync(path.join(dir, 'gallery.yaml'), 'albums: []\n');
+
+    await completeInstall({
+      apiUrl: 'https://immich.example',
+      apiKey: 'fresh-key',
+    });
+
+    expect(getInstallCredentials().apiKey).toBe('fresh-key');
+  });
 });
 
 describe('normalizeApiBase', () => {
