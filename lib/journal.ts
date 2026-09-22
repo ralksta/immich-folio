@@ -117,9 +117,14 @@ export function renderInlineMarkdown(text: string): string {
   // then renders as `*<em>bold </em>and italic<em> here</em>*`. The input is
   // Markdown written by an authenticated admin, never visitor input, so the
   // worst case is an author slowing down their own page.
-  html = html.replace(/(\*\*|__)(.*?)\1/g, '<strong>$2</strong>');
-  // Italic: *text* or _text_
-  html = html.replace(/(\*|_)(.*?)\1/g, '<em>$2</em>');
+  // `**bold**` works anywhere; `__bold__` only outside a word, matching
+  // CommonMark's intraword rule for `_` — otherwise `my_file_name` round-trips
+  // through `<em>` and comes back with asterisks in the middle of a word.
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/(?<![\w])__(.*?)__(?![\w])/g, '<strong>$1</strong>');
+  // Italic: *text* or _text_, same intraword rule for `_`.
+  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  html = html.replace(/(?<![\w])_(.*?)_(?![\w])/g, '<em>$1</em>');
   // Links: [label](url)
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, url) => {
     const trimmed = url.trim();
@@ -127,6 +132,82 @@ export function renderInlineMarkdown(text: string): string {
     return `<a href="${trimmed}" target="_blank" rel="noopener noreferrer">${label}</a>`;
   });
   return html;
+}
+
+/**
+ * Inverse of renderInlineMarkdown: walks the `<strong>`/`<em>`/`<a href>` tags
+ * it produces (and only those — anything else is dropped, keeping its
+ * content, matching what the previous flat regex did for unknown tags) back
+ * into their Markdown source, recursing so a link around bold text, or bold
+ * text around a link, both come back correctly. Entities are decoded once at
+ * the end, since every text run and the `href` value are the only places
+ * they appear — the markdown syntax this function adds is never itself
+ * entity-escaped.
+ */
+function inlineHtmlToMarkdownRaw(html: string): string {
+  let out = '';
+  let i = 0;
+  while (i < html.length) {
+    if (html[i] !== '<') {
+      out += html[i];
+      i++;
+      continue;
+    }
+
+    const openMatch = /^<(\w+)([^>]*)>/.exec(html.slice(i));
+    if (!openMatch) {
+      out += html[i];
+      i++;
+      continue;
+    }
+    const [full, tagName, attrs] = openMatch;
+
+    // Find this tag's matching close, tracking nested opens of the same tag.
+    const closeTag = `</${tagName}>`;
+    let depth = 1;
+    let scan = i + full.length;
+    let closeAt = -1;
+    while (scan < html.length) {
+      const nextClose = html.indexOf(closeTag, scan);
+      if (nextClose === -1) break;
+      const nextOpen = html.indexOf(`<${tagName}`, scan);
+      if (nextOpen !== -1 && nextOpen < nextClose) {
+        depth++;
+        scan = nextOpen + 1;
+      } else {
+        depth--;
+        scan = nextClose + closeTag.length;
+        if (depth === 0) {
+          closeAt = nextClose;
+          break;
+        }
+      }
+    }
+
+    if (closeAt === -1) {
+      // Unmatched tag: not something this renderer produces, pass it through
+      // as literal text rather than losing it.
+      out += html[i];
+      i++;
+      continue;
+    }
+
+    const innerMd = inlineHtmlToMarkdownRaw(html.slice(i + full.length, closeAt));
+    if (tagName === 'strong' || tagName === 'b') out += `**${innerMd}**`;
+    else if (tagName === 'em' || tagName === 'i') out += `*${innerMd}*`;
+    else if (tagName === 'a') {
+      const href = /\shref="([^"]*)"/.exec(attrs)?.[1] ?? '';
+      out += `[${innerMd}](${href})`;
+    } else {
+      out += innerMd;
+    }
+    i = closeAt + closeTag.length;
+  }
+  return out;
+}
+
+export function inlineHtmlToMarkdown(html: string): string {
+  return decodeHtmlEntities(inlineHtmlToMarkdownRaw(html));
 }
 
 const isWhitespace = (char: string) => char.trim() === '';
@@ -346,32 +427,27 @@ export function serializeJournalMarkdown(journal: ParsedJournal): string {
         break;
       }
       case 'paragraph': {
-        const text = block.html.replace(/<[^>]+>/g, (tag) => {
-          if (tag.startsWith('<strong>') || tag.startsWith('<b>')) return '**';
-          if (tag.startsWith('</strong>') || tag.startsWith('</b>')) return '**';
-          if (tag.startsWith('<em>') || tag.startsWith('<i>')) return '*';
-          if (tag.startsWith('</em>') || tag.startsWith('</i>')) return '*';
-          return '';
-        });
-        lines.push(decodeHtmlEntities(text));
+        lines.push(inlineHtmlToMarkdown(block.html));
         break;
       }
       case 'quote': {
         const authorSuffix = block.author ? ` -- ${block.author}` : '';
-        const text = decodeHtmlEntities(block.text.replace(/[\r\n]+/g, ' '));
+        const text = inlineHtmlToMarkdown(block.text.replace(/[\r\n]+/g, ' '));
         lines.push(`> ${text}${authorSuffix}`);
         break;
       }
       case 'photo': {
         const layoutSuffix = block.layout !== 'contained' ? `:${block.layout}` : '';
         const caption = block.caption
-          ? decodeHtmlEntities(block.caption.replace(/[\r\n]+/g, ' '))
+          ? inlineHtmlToMarkdown(block.caption.replace(/[\r\n]+/g, ' '))
           : '';
         lines.push(`![${block.assetId}${layoutSuffix}](${caption})`);
         break;
       }
       case 'photo-pair': {
-        const caption = block.caption ? block.caption.replace(/[\r\n]+/g, ' ') : '';
+        const caption = block.caption
+          ? inlineHtmlToMarkdown(block.caption.replace(/[\r\n]+/g, ' '))
+          : '';
         lines.push(`![${block.assetIds[0]}, ${block.assetIds[1]}](${caption})`);
         break;
       }
