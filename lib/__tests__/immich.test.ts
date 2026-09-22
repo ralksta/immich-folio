@@ -871,6 +871,62 @@ describe('stale fallback when Immich is unavailable', () => {
     await expect(immich.getAlbums()).rejects.toThrow(ImmichUnavailableError);
   });
 
+  /**
+   * getAlbums(true) used to delete the cache entry before attempting the
+   * fetch. A request with forceFresh that then failed left every later
+   * visitor — not just the one who asked for a refresh — with nothing to
+   * fall back to, for as long as the outage lasted (GHSA-w293-x8pc-j4cv).
+   */
+  it('forceFresh does not delete the entry a failed refresh could have fallen back to', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: async () => [
+        {
+          id: 'album-1',
+          albumName: 'Original',
+          description: '',
+          albumThumbnailAssetId: null,
+          assetCount: 1,
+          assets: [],
+          createdAt: '',
+          updatedAt: '',
+          order: 'desc',
+        },
+      ],
+    });
+    expect(await immich.getAlbums()).toHaveLength(1);
+
+    mockFetch.mockRejectedValue(new Error('ECONNREFUSED'));
+    const refreshed = await immich.getAlbums(true);
+
+    expect(refreshed).toHaveLength(1);
+    expect(refreshed[0].id).toBe('album-1');
+  });
+
+  it('getAlbum(id, true) has the same guarantee as getAlbums(true)', async () => {
+    // GET /albums/:id and POST /search/metadata run concurrently (Promise.all
+    // in loadAlbum), so they must be routed by URL rather than queued in call
+    // order — same pattern as the getAlbum() describe block below.
+    mockFetch.mockImplementation(async (url: string) => ({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: async () =>
+        url.includes('/search/metadata')
+          ? { assets: { items: [], nextPage: null, total: 0 } }
+          : { id: 'album-1', albumName: 'Original', assetCount: 0, assets: [], order: 'desc' },
+    }));
+    expect(await immich.getAlbum('album-1')).not.toBeNull();
+
+    mockFetch.mockImplementation(async () => {
+      throw new Error('ECONNREFUSED');
+    });
+    const refreshed = await immich.getAlbum('album-1', true);
+
+    expect(refreshed).not.toBeNull();
+    expect(refreshed?.id).toBe('album-1');
+  });
+
   it('does not swallow a definitive 404 as an outage', async () => {
     // A missing album must keep reporting missing, not fall back to stale data.
     mockFetch.mockResolvedValue({

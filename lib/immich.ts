@@ -325,9 +325,12 @@ class ImmichClient {
    */
   async getAlbums(forceFresh = false): Promise<ImmichAlbum[]> {
     const cacheKey = 'albums-list';
-    if (forceFresh) {
-      cache.delete(cacheKey);
-    } else {
+    // forceFresh only skips the read below; it must not delete the entry
+    // outright. Deleting first meant a request that then failed left every
+    // later visitor with nothing to fall back to — staleOrThrow() below reads
+    // from the same key, so the old entry has to survive until cacheSet()
+    // overwrites it on success.
+    if (!forceFresh) {
       const cached = cache.get<ImmichAlbum[]>(cacheKey);
       if (cached) return cached;
     }
@@ -577,9 +580,10 @@ class ImmichClient {
     }
 
     const cacheKey = `album-${albumId}`;
-    if (forceFresh) {
-      cache.delete(cacheKey);
-    } else {
+    // See getAlbums(): forceFresh skips the cached read, it does not delete
+    // the entry, so a fetch that then fails still has something to fall back
+    // to via staleOrThrow() below.
+    if (!forceFresh) {
       const cached = cache.get<ImmichAlbum | Missing>(cacheKey);
       if (cached) return cached === MISSING ? null : (cached as ImmichAlbum);
     }

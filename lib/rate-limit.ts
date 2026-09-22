@@ -1,7 +1,16 @@
 /**
- * In-memory sliding-window rate limiter.
+ * In-memory rate limiter, weighted two-bucket sliding window.
  * Tracks request counts per IP per minute bucket.
  * Auto-evicts expired entries to prevent memory leaks.
+ *
+ * A single fixed-window count opens a boundary: a window closing sets
+ * `expiresAt` once and never advances it, so a burst timed around the
+ * boundary passes twice the configured limit (10 admin password attempts in
+ * one second instead of 5 per minute, say). This carries the previous
+ * window's count forward, weighted by how much of it is still "within" the
+ * last 60 seconds, so a burst can never exceed roughly `maxRpm` regardless of
+ * where in the window it lands — an approximation of a true sliding log,
+ * cheap enough to keep as an in-memory Map.
  *
  * ⚠️ NOTE: This is an in-memory store. In a multi-node or serverless
  * environment (Vercel, AWS Lambda, Docker Swarm), each instance will
@@ -133,8 +142,12 @@ export function retryAfterSeconds(resetAt: number): number {
 }
 
 interface RateLimitEntry {
+  /** Epoch ms the *current* window started. */
+  windowStart: number;
+  /** Requests counted in the current window. */
   count: number;
-  expiresAt: number;
+  /** Requests counted in the window immediately before this one. */
+  prevCount: number;
 }
 
 const store = new Map<string, RateLimitEntry>();
@@ -145,14 +158,31 @@ const MAX_STORE_ENTRIES = 10_000;
 // Evict expired entries periodically (every 60s)
 let lastCleanup = Date.now();
 const CLEANUP_INTERVAL = 60_000;
+const WINDOW_MS = 60_000;
 
 function cleanup() {
   const now = Date.now();
   if (now - lastCleanup < CLEANUP_INTERVAL) return;
   lastCleanup = now;
+  // An entry is dead once both its windows have fully elapsed — the previous
+  // one no longer contributes any weight to the estimate either.
   for (const [key, entry] of store) {
-    if (now > entry.expiresAt) store.delete(key);
+    if (now - entry.windowStart >= 2 * WINDOW_MS) store.delete(key);
   }
+}
+
+/**
+ * The weighted estimate of requests within the trailing WINDOW_MS: every
+ * request in the current window, plus the previous window's count scaled by
+ * how much of it still overlaps the last WINDOW_MS. At the instant a window
+ * opens the overlap is total (weight 1); by the time it closes, none (weight
+ * 0) — linear in between, which is what makes a boundary-timed burst cost
+ * the same as one anywhere else in the window.
+ */
+function estimate(entry: RateLimitEntry, now: number): number {
+  const elapsed = now - entry.windowStart;
+  const weight = Math.max(0, (WINDOW_MS - elapsed) / WINDOW_MS);
+  return entry.prevCount * weight + entry.count;
 }
 
 /**
@@ -168,13 +198,11 @@ export function checkRateLimit(
   cleanup();
 
   const now = Date.now();
-  const windowMs = 60_000;
   const key = `rl:${ip}`;
 
-  const entry = store.get(key);
+  let entry = store.get(key);
 
-  // New window or expired
-  if (!entry || now > entry.expiresAt) {
+  if (!entry) {
     if (store.size >= MAX_STORE_ENTRIES) {
       // Store is full. Evict the oldest entry to prevent cache flooding
       // DOS attacks, which could otherwise block all legitimate users.
@@ -183,16 +211,33 @@ export function checkRateLimit(
         store.delete(oldestKey);
       }
     }
-    const resetAt = now + windowMs;
-    store.set(key, { count: 1, expiresAt: resetAt });
-    return { success: true, remaining: maxRpm - 1, resetAt };
+    entry = { windowStart: now, count: 0, prevCount: 0 };
+    store.set(key, entry);
+  } else {
+    const elapsed = now - entry.windowStart;
+    if (elapsed >= 2 * WINDOW_MS) {
+      // Both windows have fully elapsed: nothing carries forward.
+      entry.windowStart = now;
+      entry.count = 0;
+      entry.prevCount = 0;
+    } else if (elapsed >= WINDOW_MS) {
+      // Roll one window forward — anchored to the window boundary, not to
+      // `now`, so a burst of requests each advancing the window slightly
+      // cannot slowly drift `resetAt` later than a real minute.
+      entry.windowStart += WINDOW_MS;
+      entry.prevCount = entry.count;
+      entry.count = 0;
+    }
   }
 
-  // Within window
+  const resetAt = entry.windowStart + WINDOW_MS;
+  const current = estimate(entry, now);
+
+  if (current >= maxRpm) {
+    return { success: false, remaining: 0, resetAt };
+  }
+
   entry.count++;
-  if (entry.count > maxRpm) {
-    return { success: false, remaining: 0, resetAt: entry.expiresAt };
-  }
-
-  return { success: true, remaining: maxRpm - entry.count, resetAt: entry.expiresAt };
+  const remaining = Math.max(0, Math.floor(maxRpm - estimate(entry, now)));
+  return { success: true, remaining, resetAt };
 }

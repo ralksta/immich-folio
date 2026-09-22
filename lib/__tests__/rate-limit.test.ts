@@ -252,3 +252,77 @@ describe('checkRateLimit', () => {
     expect(result.remaining).toBe(4);
   });
 });
+
+/**
+ * The previous limiter reset its whole budget the moment `expiresAt` (set
+ * when the window opened, never advanced) passed. A burst timed around that
+ * boundary — most of one window, then most of the next — passed roughly
+ * double the documented limit. 10 admin password attempts landed in one
+ * second instead of 5 per minute.
+ */
+describe('checkRateLimit is a sliding window, not a fixed one', () => {
+  let testIp: string;
+  let counter = 0;
+
+  beforeEach(() => {
+    counter++;
+    testIp = `sliding-ip-${counter}-${Date.now()}`;
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  it('does not grant a fresh budget the instant a window rolls over', () => {
+    const maxRpm = 10;
+    for (let i = 0; i < maxRpm; i++) checkRateLimit(testIp, maxRpm);
+    expect(checkRateLimit(testIp, maxRpm).success).toBe(false);
+
+    // Exactly one window later: a fixed window resets to a full fresh
+    // budget here. The previous window's requests still fully overlap the
+    // trailing 60s at this exact instant, so this must still be refused.
+    vi.advanceTimersByTime(60_000);
+    expect(checkRateLimit(testIp, maxRpm).success).toBe(false);
+  });
+
+  it('never lets a boundary-timed burst clear roughly double the limit', () => {
+    const maxRpm = 10;
+    // Spend the whole budget right at the end of the first window.
+    vi.advanceTimersByTime(59_000);
+    for (let i = 0; i < maxRpm; i++) checkRateLimit(testIp, maxRpm);
+
+    // Cross into the next window and try to spend the whole budget again,
+    // one request per second — a fixed window allows every one of these.
+    let allowedInSecondWindow = 0;
+    for (let i = 0; i < maxRpm; i++) {
+      vi.advanceTimersByTime(1000);
+      if (checkRateLimit(testIp, maxRpm).success) allowedInSecondWindow++;
+    }
+
+    // A tolerant bound, not an exact one: the point is "nowhere near double",
+    // not pinning the estimator's exact rounding.
+    expect(allowedInSecondWindow).toBeLessThan(maxRpm);
+  });
+
+  it('fully forgets a client after two windows of inactivity', () => {
+    const maxRpm = 3;
+    for (let i = 0; i < maxRpm; i++) checkRateLimit(testIp, maxRpm);
+    expect(checkRateLimit(testIp, maxRpm).success).toBe(false);
+
+    vi.advanceTimersByTime(2 * 60_000 + 1);
+    const result = checkRateLimit(testIp, maxRpm);
+    expect(result.success).toBe(true);
+    expect(result.remaining).toBe(maxRpm - 1);
+  });
+
+  it('lets the budget recover gradually as the old window ages out', () => {
+    const maxRpm = 10;
+    for (let i = 0; i < maxRpm; i++) checkRateLimit(testIp, maxRpm);
+    expect(checkRateLimit(testIp, maxRpm).success).toBe(false);
+
+    // Halfway through the next window, roughly half of the previous burst has
+    // aged out of the trailing 60s — some budget should have come back.
+    vi.advanceTimersByTime(90_000);
+    const result = checkRateLimit(testIp, maxRpm);
+    expect(result.success).toBe(true);
+  });
+});

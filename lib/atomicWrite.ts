@@ -25,11 +25,27 @@ let tmpCounter = 0;
  * replaces variously said `'utf8'`, `'utf-8'` or nothing at all.
  *
  * Creating the directory is the caller's business; this only writes the file.
+ *
+ * `mode`, when given, is applied to the temp file before the rename — not
+ * `chmod`ed on the final path afterwards. A file holding a secret (an API
+ * key, an auth secret) that is written world-readable and only tightened a
+ * moment later is briefly the wrong permission on disk, and briefly is all a
+ * reader running at the wrong instant needs. `rename` keeps whatever mode the
+ * source had, so creating the temp file with the right one from the start
+ * means the secret is never world-readable at all.
  */
-export async function atomicWrite(filePath: string, content: string | Buffer): Promise<void> {
+export async function atomicWrite(
+  filePath: string,
+  content: string | Buffer,
+  options?: { mode?: number },
+): Promise<void> {
   const tmpPath = `${filePath}.${process.pid}.${++tmpCounter}.tmp`;
   try {
-    await fs.writeFile(tmpPath, content);
+    await fs.writeFile(
+      tmpPath,
+      content,
+      options?.mode !== undefined ? { mode: options.mode } : undefined,
+    );
     await fs.rename(tmpPath, filePath);
   } catch (err) {
     // Do not leave litter behind a failed save. Cleanup failure is not worth

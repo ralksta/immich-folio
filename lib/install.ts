@@ -306,12 +306,13 @@ export async function completeInstall(input: InstallInput): Promise<CompleteInst
   if (settingsWritten) {
     await atomicWrite(settingsPath, header('Site Settings') + yaml.dump(settings, dumpOptions));
   }
-  await atomicWrite(path.join(dir, INSTALL_FILENAME), `${JSON.stringify(data, null, 2)}\n`);
-  try {
-    await fs.promises.chmod(path.join(dir, INSTALL_FILENAME), 0o600);
-  } catch {
-    // chmod is a no-op on Windows; on Linux it prevents world-readable secrets.
-  }
+  // Written 0600 from the start, like the setup token below — not created
+  // world-readable and tightened afterwards, which briefly left the API key
+  // and auth secret readable by anyone on the box (GHSA-w293-x8pc-j4cv).
+  // `mode` is a no-op on Windows, same as the chmod it replaces was.
+  await atomicWrite(path.join(dir, INSTALL_FILENAME), `${JSON.stringify(data, null, 2)}\n`, {
+    mode: 0o600,
+  });
 
   // The token exists to gate a setup that has not happened yet. Leaving it on
   // disk would keep a valid credential lying around for a door that is now

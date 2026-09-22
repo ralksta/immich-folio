@@ -250,7 +250,13 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
   const { path: rawPath } = await params;
   const path = rawPath?.map(normalizeSlug);
   const sParams = (await searchParams) || {};
-  const forceFresh = sParams.fresh === '1' || sParams.preview === 'true';
+  // ?fresh=1 / ?preview=true forces a cache-bypassing Immich refetch — cheap
+  // to trigger, and every subpage request fans out into an album-list fetch
+  // plus paged metadata search calls per album. Gated to admins so it cannot
+  // be used to force-refresh (or, before the immich.ts fix alongside this,
+  // to empty) the shared cache from an unauthenticated request.
+  const forceFresh =
+    (sParams.fresh === '1' || sParams.preview === 'true') && (await isAdminAuthenticated());
 
   const config = getConfig();
 
