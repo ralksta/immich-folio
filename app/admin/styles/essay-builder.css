@@ -87,6 +87,45 @@
 }
 
 /* The card's own hover state is enough of a highlight; the chip stays quiet. */
+/* Drag handle and the card while it is carried (SortableBlocks.tsx). */
+.essay-block-card-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.essay-block-grip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--admin-text-muted);
+  cursor: grab;
+  touch-action: none;
+}
+
+.essay-block-grip:hover,
+.essay-block-grip:focus-visible {
+  color: var(--admin-text);
+  background: var(--admin-bg-elevated, rgba(255, 255, 255, 0.06));
+  outline: none;
+}
+
+.essay-block-grip:active,
+.essay-block-card.is-dragging .essay-block-grip {
+  cursor: grabbing;
+}
+
+.essay-block-card.is-dragging {
+  position: relative;
+  z-index: 2;
+  opacity: 0.85;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
 .essay-block-card:hover .essay-block-badge {
   border-color: var(--admin-border-hover);
   color: var(--admin-text);

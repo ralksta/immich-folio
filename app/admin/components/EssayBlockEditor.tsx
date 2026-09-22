@@ -10,12 +10,13 @@ import {
   type EssayBlock,
   type MapItem,
 } from '@/lib/essay';
+import { arrayMove } from '@dnd-kit/sortable';
+import { SortableBlockList, SortableBlockCard } from './SortableBlocks';
 import {
   IconCamera,
   IconChevronUp,
   IconChevronDown,
   IconTrash,
-  IconGripVertical,
   IconQuote,
   IconFileText,
   IconSparkles,
@@ -74,6 +75,10 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
     const [moved] = newBlocks.splice(index, 1);
     newBlocks.splice(targetIdx, 0, moved);
     updateBlocks(newBlocks);
+  };
+
+  const handleReorderBlock = (from: number, to: number) => {
+    updateBlocks(arrayMove(essay.blocks, from, to));
   };
 
   const handleDeleteBlock = (index: number) => {
@@ -216,80 +221,75 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
       )}
 
       {/* Render Blocks */}
-      {essay.blocks.map((block, idx) => (
-        <div key={idx} className="essay-block-card">
-          {/* Card Header */}
-          <div className="essay-block-card-header">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <IconGripVertical
-                size={14}
-                style={{ color: 'var(--admin-text-muted)', cursor: 'grab' }}
-              />
-              <BlockBadge type={block.type} index={idx + 1} />
-            </div>
+      <SortableBlockList count={essay.blocks.length} onReorder={handleReorderBlock}>
+        {essay.blocks.map((block, idx) => (
+          <SortableBlockCard
+            key={idx}
+            index={idx}
+            badge={<BlockBadge type={block.type} index={idx + 1} />}
+            actions={
+              <div className="essay-block-actions">
+                <button
+                  type="button"
+                  className="admin-btn-icon"
+                  onClick={() => handleMoveBlock(idx, 'up')}
+                  disabled={idx === 0}
+                  title="Move Up"
+                >
+                  <IconChevronUp size={15} />
+                </button>
+                <button
+                  type="button"
+                  className="admin-btn-icon"
+                  onClick={() => handleMoveBlock(idx, 'down')}
+                  disabled={idx === essay.blocks.length - 1}
+                  title="Move Down"
+                >
+                  <IconChevronDown size={15} />
+                </button>
+                <button
+                  type="button"
+                  className="admin-btn-icon"
+                  onClick={() => handleDeleteBlock(idx)}
+                  title="Delete Block"
+                  style={{ color: 'var(--admin-error)' }}
+                >
+                  <IconTrash size={15} />
+                </button>
+              </div>
+            }
+          >
+            {/* Block Form Fields */}
 
-            <div className="essay-block-actions">
-              <button
-                type="button"
-                className="admin-btn-icon"
-                onClick={() => handleMoveBlock(idx, 'up')}
-                disabled={idx === 0}
-                title="Move Up"
-              >
-                <IconChevronUp size={15} />
-              </button>
-              <button
-                type="button"
-                className="admin-btn-icon"
-                onClick={() => handleMoveBlock(idx, 'down')}
-                disabled={idx === essay.blocks.length - 1}
-                title="Move Down"
-              >
-                <IconChevronDown size={15} />
-              </button>
-              <button
-                type="button"
-                className="admin-btn-icon"
-                onClick={() => handleDeleteBlock(idx)}
-                title="Delete Block"
-                style={{ color: 'var(--admin-error)' }}
-              >
-                <IconTrash size={15} />
-              </button>
-            </div>
-          </div>
+            {/* 1. HEADING BLOCK */}
+            {block.type === 'heading' && (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <select
+                  aria-label="Heading level"
+                  value={block.level}
+                  onChange={(e) =>
+                    handleUpdateBlock(idx, { ...block, level: Number(e.target.value) })
+                  }
+                  style={{ width: '70px' }}
+                >
+                  <option value={1}>H1</option>
+                  <option value={2}>H2</option>
+                  <option value={3}>H3</option>
+                </select>
+                <input
+                  type="text"
+                  value={block.text}
+                  onChange={(e) => handleUpdateBlock(idx, { ...block, text: e.target.value })}
+                  placeholder="Section heading..."
+                  style={{
+                    flex: 1,
+                    fontWeight: block.level === 1 ? 700 : block.level === 2 ? 600 : 500,
+                  }}
+                />
+              </div>
+            )}
 
-          {/* Block Form Fields */}
-
-          {/* 1. HEADING BLOCK */}
-          {block.type === 'heading' && (
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <select
-                aria-label="Heading level"
-                value={block.level}
-                onChange={(e) =>
-                  handleUpdateBlock(idx, { ...block, level: Number(e.target.value) })
-                }
-                style={{ width: '70px' }}
-              >
-                <option value={1}>H1</option>
-                <option value={2}>H2</option>
-                <option value={3}>H3</option>
-              </select>
-              <input
-                type="text"
-                value={block.text}
-                onChange={(e) => handleUpdateBlock(idx, { ...block, text: e.target.value })}
-                placeholder="Section heading..."
-                style={{
-                  flex: 1,
-                  fontWeight: block.level === 1 ? 700 : block.level === 2 ? 600 : 500,
-                }}
-              />
-            </div>
-          )}
-
-          {/* 2. PARAGRAPH BLOCK
+            {/* 2. PARAGRAPH BLOCK
 
               The textarea shows `html` raw, as the journal editor does. It used
               to strip the tags for display — `<strong>` to `**`, everything else
@@ -299,197 +299,135 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
               disagreed about the same file. serializeJournalMarkdown() turns the
               HTML back into markdown on save and handles `<em>` too, so there
               was nothing to convert here in the first place. */}
-          {block.type === 'paragraph' && (
-            <textarea
-              rows={3}
-              value={block.html}
-              onChange={(e) => handleUpdateBlock(idx, { ...block, html: e.target.value })}
-              placeholder="Write text paragraph... (**bold**, *italic* markdown supported)"
-            />
-          )}
-
-          {/* 3. PULLQUOTE BLOCK */}
-          {block.type === 'quote' && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                borderLeft: '3px solid var(--admin-accent)',
-                paddingLeft: '10px',
-              }}
-            >
+            {block.type === 'paragraph' && (
               <textarea
-                rows={2}
-                value={block.text}
-                onChange={(e) => handleUpdateBlock(idx, { ...block, text: e.target.value })}
-                placeholder="Quote text..."
-                style={{ fontStyle: 'italic', fontFamily: 'serif', fontSize: '1rem' }}
+                rows={3}
+                value={block.html}
+                onChange={(e) => handleUpdateBlock(idx, { ...block, html: e.target.value })}
+                placeholder="Write text paragraph... (**bold**, *italic* markdown supported)"
               />
-              <input
-                type="text"
-                value={block.author || ''}
-                onChange={(e) =>
-                  handleUpdateBlock(idx, { ...block, author: e.target.value || undefined })
-                }
-                placeholder="— Author / Attribution (optional)"
-              />
-            </div>
-          )}
+            )}
 
-          {/* 4. PHOTO BLOCK */}
-          {block.type === 'photo' && (
-            <div className="essay-photo-card">
-              <div className="essay-photo-preview-container">
-                {block.assetId ? (
-                  <img
-                    src={`/api/admin/thumbnail/${block.assetId}`}
-                    alt=""
-                    className="essay-photo-thumbnail"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <div className="essay-photo-empty">
-                    <IconCamera size={20} />
-                    <span>No Photo</span>
-                  </div>
-                )}
-
-                <div className="essay-photo-meta">
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    {onSelectPhoto && (
-                      <button
-                        type="button"
-                        className="admin-btn admin-btn-sm admin-btn-primary"
-                        onClick={() =>
-                          onSelectPhoto((pickedId) =>
-                            handleUpdateBlock(idx, { ...block, assetId: pickedId }),
-                          )
-                        }
-                      >
-                        <IconCamera size={14} />
-                        {block.assetId ? 'Change Photo' : 'Select Photo'}
-                      </button>
-                    )}
-
-                    <div className="essay-pill-selector">
-                      <button
-                        type="button"
-                        className={`essay-pill-btn ${block.layout === 'contained' ? 'active' : ''}`}
-                        onClick={() => handleUpdateBlock(idx, { ...block, layout: 'contained' })}
-                      >
-                        Contained (68ch)
-                      </button>
-                      <button
-                        type="button"
-                        className={`essay-pill-btn ${block.layout === 'wide' ? 'active' : ''}`}
-                        onClick={() => handleUpdateBlock(idx, { ...block, layout: 'wide' })}
-                      >
-                        Wide (1100px)
-                      </button>
-                      <button
-                        type="button"
-                        className={`essay-pill-btn ${block.layout === 'fullbleed' ? 'active' : ''}`}
-                        onClick={() => handleUpdateBlock(idx, { ...block, layout: 'fullbleed' })}
-                      >
-                        Fullbleed (100vw)
-                      </button>
-                    </div>
-                  </div>
-
-                  <input
-                    type="text"
-                    value={block.assetId}
-                    onChange={(e) => handleUpdateBlock(idx, { ...block, assetId: e.target.value })}
-                    placeholder="Immich Asset UUID..."
-                    style={{ fontSize: '0.75rem', color: 'var(--admin-text-secondary)' }}
-                  />
-                </div>
+            {/* 3. PULLQUOTE BLOCK */}
+            {block.type === 'quote' && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  borderLeft: '3px solid var(--admin-accent)',
+                  paddingLeft: '10px',
+                }}
+              >
+                <textarea
+                  rows={2}
+                  value={block.text}
+                  onChange={(e) => handleUpdateBlock(idx, { ...block, text: e.target.value })}
+                  placeholder="Quote text..."
+                  style={{ fontStyle: 'italic', fontFamily: 'serif', fontSize: '1rem' }}
+                />
+                <input
+                  type="text"
+                  value={block.author || ''}
+                  onChange={(e) =>
+                    handleUpdateBlock(idx, { ...block, author: e.target.value || undefined })
+                  }
+                  placeholder="— Author / Attribution (optional)"
+                />
               </div>
+            )}
 
-              <input
-                type="text"
-                value={block.caption || ''}
-                onChange={(e) =>
-                  handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
-                }
-                placeholder="Photo caption (optional)"
-              />
-            </div>
-          )}
+            {/* 4. PHOTO BLOCK */}
+            {block.type === 'photo' && (
+              <div className="essay-photo-card">
+                <div className="essay-photo-preview-container">
+                  {block.assetId ? (
+                    <img
+                      src={`/api/admin/thumbnail/${block.assetId}`}
+                      alt=""
+                      className="essay-photo-thumbnail"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="essay-photo-empty">
+                      <IconCamera size={20} />
+                      <span>No Photo</span>
+                    </div>
+                  )}
 
-          {/* 5. PHOTO-PAIR BLOCK */}
-          {block.type === 'photo-pair' && (
-            <div className="essay-photo-card">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                {/* Photo 1 */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <span
-                    style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: 'var(--admin-text-secondary)',
-                    }}
-                  >
-                    Photo 1
-                  </span>
-                  <div className="essay-photo-preview-container">
-                    {block.assetIds[0] ? (
-                      <img
-                        src={`/api/admin/thumbnail/${block.assetIds[0]}`}
-                        alt=""
-                        className="essay-photo-thumbnail"
-                        style={{ width: '80px', height: '60px' }}
-                      />
-                    ) : (
-                      <div className="essay-photo-empty" style={{ width: '80px', height: '60px' }}>
-                        <IconCamera size={16} />
-                      </div>
-                    )}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div className="essay-photo-meta">
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                       {onSelectPhoto && (
                         <button
                           type="button"
-                          className="admin-btn admin-btn-xs"
+                          className="admin-btn admin-btn-sm admin-btn-primary"
                           onClick={() =>
                             onSelectPhoto((pickedId) =>
-                              handleUpdateBlock(idx, {
-                                ...block,
-                                assetIds: [pickedId, block.assetIds[1]],
-                              }),
+                              handleUpdateBlock(idx, { ...block, assetId: pickedId }),
                             )
                           }
                         >
-                          <IconCamera size={12} /> Select Photo 1
+                          <IconCamera size={14} />
+                          {block.assetId ? 'Change Photo' : 'Select Photo'}
                         </button>
                       )}
-                      <input
-                        type="text"
-                        value={block.assetIds[0]}
-                        onChange={(e) =>
-                          handleUpdateBlock(idx, {
-                            ...block,
-                            assetIds: [e.target.value, block.assetIds[1]],
-                          })
-                        }
-                        placeholder="UUID 1..."
-                        style={{ fontSize: '0.75rem' }}
-                      />
+
+                      <div className="essay-pill-selector">
+                        <button
+                          type="button"
+                          className={`essay-pill-btn ${block.layout === 'contained' ? 'active' : ''}`}
+                          onClick={() => handleUpdateBlock(idx, { ...block, layout: 'contained' })}
+                        >
+                          Contained (68ch)
+                        </button>
+                        <button
+                          type="button"
+                          className={`essay-pill-btn ${block.layout === 'wide' ? 'active' : ''}`}
+                          onClick={() => handleUpdateBlock(idx, { ...block, layout: 'wide' })}
+                        >
+                          Wide (1100px)
+                        </button>
+                        <button
+                          type="button"
+                          className={`essay-pill-btn ${block.layout === 'fullbleed' ? 'active' : ''}`}
+                          onClick={() => handleUpdateBlock(idx, { ...block, layout: 'fullbleed' })}
+                        >
+                          Fullbleed (100vw)
+                        </button>
+                      </div>
                     </div>
+
+                    <input
+                      type="text"
+                      value={block.assetId}
+                      onChange={(e) =>
+                        handleUpdateBlock(idx, { ...block, assetId: e.target.value })
+                      }
+                      placeholder="Immich Asset UUID..."
+                      style={{ fontSize: '0.75rem', color: 'var(--admin-text-secondary)' }}
+                    />
                   </div>
                 </div>
 
-                {/* Photo 2 */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
+                <input
+                  type="text"
+                  value={block.caption || ''}
+                  onChange={(e) =>
+                    handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
+                  }
+                  placeholder="Photo caption (optional)"
+                />
+              </div>
+            )}
+
+            {/* 5. PHOTO-PAIR BLOCK */}
+            {block.type === 'photo-pair' && (
+              <div className="essay-photo-card">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  {/* Photo 1 */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <span
                       style={{
                         fontSize: '0.75rem',
@@ -497,129 +435,12 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                         color: 'var(--admin-text-secondary)',
                       }}
                     >
-                      Photo 2
+                      Photo 1
                     </span>
-                    <button
-                      type="button"
-                      className="admin-btn-icon"
-                      title="Swap Photo 1 & Photo 2"
-                      onClick={() =>
-                        handleUpdateBlock(idx, {
-                          ...block,
-                          assetIds: [block.assetIds[1], block.assetIds[0]],
-                        })
-                      }
-                    >
-                      <IconArrowLeftRight size={14} />
-                    </button>
-                  </div>
-
-                  <div className="essay-photo-preview-container">
-                    {block.assetIds[1] ? (
-                      <img
-                        src={`/api/admin/thumbnail/${block.assetIds[1]}`}
-                        alt=""
-                        className="essay-photo-thumbnail"
-                        style={{ width: '80px', height: '60px' }}
-                      />
-                    ) : (
-                      <div className="essay-photo-empty" style={{ width: '80px', height: '60px' }}>
-                        <IconCamera size={16} />
-                      </div>
-                    )}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      {onSelectPhoto && (
-                        <button
-                          type="button"
-                          className="admin-btn admin-btn-xs"
-                          onClick={() =>
-                            onSelectPhoto((pickedId) =>
-                              handleUpdateBlock(idx, {
-                                ...block,
-                                assetIds: [block.assetIds[0], pickedId],
-                              }),
-                            )
-                          }
-                        >
-                          <IconCamera size={12} /> Select Photo 2
-                        </button>
-                      )}
-                      <input
-                        type="text"
-                        value={block.assetIds[1]}
-                        onChange={(e) =>
-                          handleUpdateBlock(idx, {
-                            ...block,
-                            assetIds: [block.assetIds[0], e.target.value],
-                          })
-                        }
-                        placeholder="UUID 2..."
-                        style={{ fontSize: '0.75rem' }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <input
-                type="text"
-                value={block.caption || ''}
-                onChange={(e) =>
-                  handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
-                }
-                placeholder="Side-by-side caption (optional)"
-              />
-            </div>
-          )}
-
-          {/* 6. PHOTO-GRID BLOCK */}
-          {block.type === 'photo-grid' && (
-            <div className="essay-photo-card">
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
-                  gap: '1rem',
-                }}
-              >
-                {block.assetIds.map((assetId, pIdx) => (
-                  <div key={pIdx} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          color: 'var(--admin-text-secondary)',
-                        }}
-                      >
-                        Photo {pIdx + 1}
-                      </span>
-                      {block.assetIds.length > 3 && (
-                        <button
-                          type="button"
-                          className="admin-btn-icon"
-                          title="Remove photo"
-                          onClick={() =>
-                            handleUpdateBlock(idx, {
-                              ...block,
-                              assetIds: block.assetIds.filter((_, i) => i !== pIdx),
-                            })
-                          }
-                        >
-                          <IconX size={13} />
-                        </button>
-                      )}
-                    </div>
                     <div className="essay-photo-preview-container">
-                      {assetId ? (
+                      {block.assetIds[0] ? (
                         <img
-                          src={`/api/admin/thumbnail/${assetId}`}
+                          src={`/api/admin/thumbnail/${block.assetIds[0]}`}
                           alt=""
                           className="essay-photo-thumbnail"
                           style={{ width: '80px', height: '60px' }}
@@ -640,369 +461,576 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                             type="button"
                             className="admin-btn admin-btn-xs"
                             onClick={() =>
-                              onSelectPhoto((pickedId) => {
-                                const ids = [...block.assetIds];
-                                ids[pIdx] = pickedId;
-                                handleUpdateBlock(idx, { ...block, assetIds: ids });
-                              })
+                              onSelectPhoto((pickedId) =>
+                                handleUpdateBlock(idx, {
+                                  ...block,
+                                  assetIds: [pickedId, block.assetIds[1]],
+                                }),
+                              )
                             }
                           >
-                            <IconCamera size={12} /> Select
+                            <IconCamera size={12} /> Select Photo 1
                           </button>
                         )}
                         <input
                           type="text"
-                          value={assetId}
-                          onChange={(e) => {
-                            const ids = [...block.assetIds];
-                            ids[pIdx] = e.target.value;
-                            handleUpdateBlock(idx, { ...block, assetIds: ids });
-                          }}
-                          placeholder={`UUID ${pIdx + 1}...`}
+                          value={block.assetIds[0]}
+                          onChange={(e) =>
+                            handleUpdateBlock(idx, {
+                              ...block,
+                              assetIds: [e.target.value, block.assetIds[1]],
+                            })
+                          }
+                          placeholder="UUID 1..."
                           style={{ fontSize: '0.75rem' }}
                         />
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
 
-              <button
-                type="button"
-                className="admin-btn admin-btn-xs"
-                style={{ alignSelf: 'flex-start' }}
-                onClick={() =>
-                  handleUpdateBlock(idx, { ...block, assetIds: [...block.assetIds, ''] })
-                }
-              >
-                <IconPlus size={12} /> Add photo
-              </button>
+                  {/* Photo 2 */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          color: 'var(--admin-text-secondary)',
+                        }}
+                      >
+                        Photo 2
+                      </span>
+                      <button
+                        type="button"
+                        className="admin-btn-icon"
+                        title="Swap Photo 1 & Photo 2"
+                        onClick={() =>
+                          handleUpdateBlock(idx, {
+                            ...block,
+                            assetIds: [block.assetIds[1], block.assetIds[0]],
+                          })
+                        }
+                      >
+                        <IconArrowLeftRight size={14} />
+                      </button>
+                    </div>
 
-              <input
-                type="text"
-                value={block.caption || ''}
-                onChange={(e) =>
-                  handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
-                }
-                placeholder="Grid caption (optional)"
-              />
-            </div>
-          )}
-          {/* 7. FACTS BLOCK */}
-          {block.type === 'facts' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {block.items.map((item, fIdx) => (
-                <div
-                  key={fIdx}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 2fr auto',
-                    gap: '8px',
-                    alignItems: 'center',
-                  }}
-                >
-                  <input
-                    type="text"
-                    value={item.label}
-                    placeholder="Label, e.g. Distance"
-                    onChange={(e) =>
-                      handleUpdateBlock(idx, {
-                        ...block,
-                        items: block.items.map((it, i) =>
-                          i === fIdx ? { ...it, label: e.target.value } : it,
-                        ),
-                      })
-                    }
-                  />
-                  <input
-                    type="text"
-                    value={item.value}
-                    placeholder="Value, e.g. 21 km"
-                    onChange={(e) =>
-                      handleUpdateBlock(idx, {
-                        ...block,
-                        items: block.items.map((it, i) =>
-                          i === fIdx ? { ...it, value: e.target.value } : it,
-                        ),
-                      })
-                    }
-                  />
-                  <button
-                    type="button"
-                    className="admin-btn-icon"
-                    title="Remove fact"
-                    disabled={block.items.length <= 1}
-                    onClick={() =>
-                      handleUpdateBlock(idx, {
-                        ...block,
-                        items: block.items.filter((_, i) => i !== fIdx),
-                      })
-                    }
-                  >
-                    <IconX size={13} />
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                className="admin-btn admin-btn-xs"
-                style={{ alignSelf: 'flex-start' }}
-                onClick={() =>
-                  handleUpdateBlock(idx, {
-                    ...block,
-                    items: [...block.items, { label: '', value: '' }],
-                  })
-                }
-              >
-                <IconPlus size={12} /> Add fact
-              </button>
-            </div>
-          )}
-          {/* 9. ALBUM BLOCK */}
-          {block.type === 'album' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <input
-                type="text"
-                value={block.albumId}
-                placeholder="Immich album UUID (the album picker in Pages shows ids)"
-                style={{ fontSize: '0.75rem' }}
-                onChange={(e) => handleUpdateBlock(idx, { ...block, albumId: e.target.value })}
-              />
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <input
-                  type="number"
-                  min={1}
-                  placeholder="Count (all)"
-                  aria-label="Count"
-                  style={{ flex: '1 1 100px' }}
-                  value={block.count ?? ''}
-                  onChange={(e) =>
-                    handleUpdateBlock(idx, {
-                      ...block,
-                      count: e.target.value ? Number(e.target.value) : undefined,
-                    })
-                  }
-                />
-                <input
-                  type="number"
-                  min={0}
-                  placeholder="Skip (0)"
-                  aria-label="Skip"
-                  style={{ flex: '1 1 100px' }}
-                  value={block.skip ?? ''}
-                  onChange={(e) =>
-                    handleUpdateBlock(idx, {
-                      ...block,
-                      skip: e.target.value ? Number(e.target.value) : undefined,
-                    })
-                  }
-                />
-                <select
-                  aria-label="Layout"
-                  style={{ flex: '1 1 140px' }}
-                  value={block.layout}
-                  onChange={(e) =>
-                    handleUpdateBlock(idx, {
-                      ...block,
-                      layout: e.target.value as 'grid' | 'pairs' | 'wide',
-                    })
-                  }
-                >
-                  <option value="grid">Grid (rows of three)</option>
-                  <option value="pairs">Pairs (rows of two)</option>
-                  <option value="wide">Wide (one per row)</option>
-                </select>
-              </div>
-              <input
-                type="text"
-                value={block.caption || ''}
-                placeholder="Caption for the set (optional)"
-                onChange={(e) =>
-                  handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
-                }
-              />
-              <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-secondary)' }}>
-                Expanded into photo blocks when the page renders — the album&apos;s order, a manual
-                gallery order first. Leave count empty for the whole album.
-              </span>
-            </div>
-          )}
-
-          {/* 8. MAP BLOCK */}
-          {block.type === 'map' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <input
-                type="text"
-                value={block.caption || ''}
-                onChange={(e) =>
-                  handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
-                }
-                placeholder="Caption, e.g. Busan → Seoul (optional)"
-              />
-
-              {block.items.map((item, mIdx) => {
-                const setItem = (next: MapItem) =>
-                  handleUpdateBlock(idx, {
-                    ...block,
-                    items: block.items.map((it, i) => (i === mIdx ? next : it)),
-                  });
-                return (
-                  <div
-                    key={mIdx}
-                    style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}
-                  >
-                    <span style={{ fontSize: '0.7rem', color: 'var(--admin-text-secondary)' }}>
-                      {mIdx + 1}
-                    </span>
-                    {item.kind === 'point' && (
-                      <>
-                        <input
-                          type="text"
-                          value={item.label ?? ''}
-                          placeholder="Label (optional)"
-                          style={{ flex: '1 1 140px' }}
-                          onChange={(e) => setItem({ ...item, label: e.target.value || undefined })}
+                    <div className="essay-photo-preview-container">
+                      {block.assetIds[1] ? (
+                        <img
+                          src={`/api/admin/thumbnail/${block.assetIds[1]}`}
+                          alt=""
+                          className="essay-photo-thumbnail"
+                          style={{ width: '80px', height: '60px' }}
                         />
-                        <input
-                          type="number"
-                          step="any"
-                          aria-label="Latitude"
-                          placeholder="Lat"
-                          style={{ flex: '0 1 110px' }}
-                          value={Number.isFinite(item.lat) ? item.lat : ''}
-                          onChange={(e) => setItem({ ...item, lat: parseFloat(e.target.value) })}
-                        />
-                        <input
-                          type="number"
-                          step="any"
-                          aria-label="Longitude"
-                          placeholder="Lng"
-                          style={{ flex: '0 1 110px' }}
-                          value={Number.isFinite(item.lng) ? item.lng : ''}
-                          onChange={(e) => setItem({ ...item, lng: parseFloat(e.target.value) })}
-                        />
-                      </>
-                    )}
-                    {item.kind === 'photo' && (
-                      <>
+                      ) : (
+                        <div
+                          className="essay-photo-empty"
+                          style={{ width: '80px', height: '60px' }}
+                        >
+                          <IconCamera size={16} />
+                        </div>
+                      )}
+                      <div
+                        style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}
+                      >
                         {onSelectPhoto && (
                           <button
                             type="button"
                             className="admin-btn admin-btn-xs"
                             onClick={() =>
                               onSelectPhoto((pickedId) =>
-                                setItem({ kind: 'photo', assetId: pickedId }),
+                                handleUpdateBlock(idx, {
+                                  ...block,
+                                  assetIds: [block.assetIds[0], pickedId],
+                                }),
                               )
                             }
                           >
-                            <IconCamera size={12} /> {item.assetId ? 'Change' : 'Select'}
+                            <IconCamera size={12} /> Select Photo 2
                           </button>
                         )}
                         <input
                           type="text"
-                          value={item.assetId}
-                          placeholder="Photo UUID..."
-                          style={{ flex: '1 1 200px', fontSize: '0.75rem' }}
-                          onChange={(e) => setItem({ kind: 'photo', assetId: e.target.value })}
+                          value={block.assetIds[1]}
+                          onChange={(e) =>
+                            handleUpdateBlock(idx, {
+                              ...block,
+                              assetIds: [block.assetIds[0], e.target.value],
+                            })
+                          }
+                          placeholder="UUID 2..."
+                          style={{ fontSize: '0.75rem' }}
                         />
-                      </>
-                    )}
-                    {item.kind === 'all-photos' && (
-                      <span style={{ flex: 1, fontSize: '0.8rem' }}>
-                        All geotagged photos of this page&apos;s albums, in order
-                      </span>
-                    )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <input
+                  type="text"
+                  value={block.caption || ''}
+                  onChange={(e) =>
+                    handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
+                  }
+                  placeholder="Side-by-side caption (optional)"
+                />
+              </div>
+            )}
+
+            {/* 6. PHOTO-GRID BLOCK */}
+            {block.type === 'photo-grid' && (
+              <div className="essay-photo-card">
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
+                    gap: '1rem',
+                  }}
+                >
+                  {block.assetIds.map((assetId, pIdx) => (
+                    <div
+                      key={pIdx}
+                      style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            color: 'var(--admin-text-secondary)',
+                          }}
+                        >
+                          Photo {pIdx + 1}
+                        </span>
+                        {block.assetIds.length > 3 && (
+                          <button
+                            type="button"
+                            className="admin-btn-icon"
+                            title="Remove photo"
+                            onClick={() =>
+                              handleUpdateBlock(idx, {
+                                ...block,
+                                assetIds: block.assetIds.filter((_, i) => i !== pIdx),
+                              })
+                            }
+                          >
+                            <IconX size={13} />
+                          </button>
+                        )}
+                      </div>
+                      <div className="essay-photo-preview-container">
+                        {assetId ? (
+                          <img
+                            src={`/api/admin/thumbnail/${assetId}`}
+                            alt=""
+                            className="essay-photo-thumbnail"
+                            style={{ width: '80px', height: '60px' }}
+                          />
+                        ) : (
+                          <div
+                            className="essay-photo-empty"
+                            style={{ width: '80px', height: '60px' }}
+                          >
+                            <IconCamera size={16} />
+                          </div>
+                        )}
+                        <div
+                          style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}
+                        >
+                          {onSelectPhoto && (
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn-xs"
+                              onClick={() =>
+                                onSelectPhoto((pickedId) => {
+                                  const ids = [...block.assetIds];
+                                  ids[pIdx] = pickedId;
+                                  handleUpdateBlock(idx, { ...block, assetIds: ids });
+                                })
+                              }
+                            >
+                              <IconCamera size={12} /> Select
+                            </button>
+                          )}
+                          <input
+                            type="text"
+                            value={assetId}
+                            onChange={(e) => {
+                              const ids = [...block.assetIds];
+                              ids[pIdx] = e.target.value;
+                              handleUpdateBlock(idx, { ...block, assetIds: ids });
+                            }}
+                            placeholder={`UUID ${pIdx + 1}...`}
+                            style={{ fontSize: '0.75rem' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-xs"
+                  style={{ alignSelf: 'flex-start' }}
+                  onClick={() =>
+                    handleUpdateBlock(idx, { ...block, assetIds: [...block.assetIds, ''] })
+                  }
+                >
+                  <IconPlus size={12} /> Add photo
+                </button>
+
+                <input
+                  type="text"
+                  value={block.caption || ''}
+                  onChange={(e) =>
+                    handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
+                  }
+                  placeholder="Grid caption (optional)"
+                />
+              </div>
+            )}
+            {/* 7. FACTS BLOCK */}
+            {block.type === 'facts' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {block.items.map((item, fIdx) => (
+                  <div
+                    key={fIdx}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 2fr auto',
+                      gap: '8px',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <input
+                      type="text"
+                      value={item.label}
+                      placeholder="Label, e.g. Distance"
+                      onChange={(e) =>
+                        handleUpdateBlock(idx, {
+                          ...block,
+                          items: block.items.map((it, i) =>
+                            i === fIdx ? { ...it, label: e.target.value } : it,
+                          ),
+                        })
+                      }
+                    />
+                    <input
+                      type="text"
+                      value={item.value}
+                      placeholder="Value, e.g. 21 km"
+                      onChange={(e) =>
+                        handleUpdateBlock(idx, {
+                          ...block,
+                          items: block.items.map((it, i) =>
+                            i === fIdx ? { ...it, value: e.target.value } : it,
+                          ),
+                        })
+                      }
+                    />
                     <button
                       type="button"
                       className="admin-btn-icon"
-                      title="Remove pin"
+                      title="Remove fact"
+                      disabled={block.items.length <= 1}
                       onClick={() =>
                         handleUpdateBlock(idx, {
                           ...block,
-                          items: block.items.filter((_, i) => i !== mIdx),
+                          items: block.items.filter((_, i) => i !== fIdx),
                         })
                       }
                     >
                       <IconX size={13} />
                     </button>
                   </div>
-                );
-              })}
-
-              {block.items.some(
-                (it) => it.kind === 'point' && !isValidCoordinate(it.lat, it.lng),
-              ) && (
-                <p className="empty-hint" style={{ color: 'var(--admin-warning)' }}>
-                  A point needs a latitude within ±90 and a longitude within ±180; points without
-                  valid coordinates are not saved.
-                </p>
-              )}
-
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                ))}
                 <button
                   type="button"
                   className="admin-btn admin-btn-xs"
+                  style={{ alignSelf: 'flex-start' }}
                   onClick={() =>
                     handleUpdateBlock(idx, {
                       ...block,
-                      items: [...block.items, { kind: 'point', lat: Number.NaN, lng: Number.NaN }],
+                      items: [...block.items, { label: '', value: '' }],
                     })
                   }
                 >
-                  <IconPlus size={12} /> Point
+                  <IconPlus size={12} /> Add fact
                 </button>
-                <button
-                  type="button"
-                  className="admin-btn admin-btn-xs"
-                  onClick={() =>
-                    handleUpdateBlock(idx, {
-                      ...block,
-                      items: [...block.items, { kind: 'photo', assetId: '' }],
-                    })
-                  }
-                >
-                  <IconCamera size={12} /> Photo pin
-                </button>
-                <button
-                  type="button"
-                  className="admin-btn admin-btn-xs"
-                  disabled={block.items.some((it) => it.kind === 'all-photos')}
-                  onClick={() =>
-                    handleUpdateBlock(idx, {
-                      ...block,
-                      items: [...block.items, { kind: 'all-photos' }],
-                    })
-                  }
-                >
-                  <IconMap size={12} /> All geotagged photos
-                </button>
-                <label
-                  style={{
-                    marginLeft: 'auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '0.8rem',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={block.line}
-                    onChange={(e) => handleUpdateBlock(idx, { ...block, line: e.target.checked })}
-                  />
-                  Connect pins with a line
-                </label>
               </div>
+            )}
+            {/* 9. ALBUM BLOCK */}
+            {block.type === 'album' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <input
+                  type="text"
+                  value={block.albumId}
+                  placeholder="Immich album UUID (the album picker in Pages shows ids)"
+                  style={{ fontSize: '0.75rem' }}
+                  onChange={(e) => handleUpdateBlock(idx, { ...block, albumId: e.target.value })}
+                />
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <input
+                    type="number"
+                    min={1}
+                    placeholder="Count (all)"
+                    aria-label="Count"
+                    style={{ flex: '1 1 100px' }}
+                    value={block.count ?? ''}
+                    onChange={(e) =>
+                      handleUpdateBlock(idx, {
+                        ...block,
+                        count: e.target.value ? Number(e.target.value) : undefined,
+                      })
+                    }
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    placeholder="Skip (0)"
+                    aria-label="Skip"
+                    style={{ flex: '1 1 100px' }}
+                    value={block.skip ?? ''}
+                    onChange={(e) =>
+                      handleUpdateBlock(idx, {
+                        ...block,
+                        skip: e.target.value ? Number(e.target.value) : undefined,
+                      })
+                    }
+                  />
+                  <select
+                    aria-label="Layout"
+                    style={{ flex: '1 1 140px' }}
+                    value={block.layout}
+                    onChange={(e) =>
+                      handleUpdateBlock(idx, {
+                        ...block,
+                        layout: e.target.value as 'grid' | 'pairs' | 'wide',
+                      })
+                    }
+                  >
+                    <option value="grid">Grid (rows of three)</option>
+                    <option value="pairs">Pairs (rows of two)</option>
+                    <option value="wide">Wide (one per row)</option>
+                  </select>
+                </div>
+                <input
+                  type="text"
+                  value={block.caption || ''}
+                  placeholder="Caption for the set (optional)"
+                  onChange={(e) =>
+                    handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
+                  }
+                />
+                <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-secondary)' }}>
+                  Expanded into photo blocks when the page renders — the album&apos;s order, a
+                  manual gallery order first. Leave count empty for the whole album.
+                </span>
+              </div>
+            )}
 
-              <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-secondary)' }}>
-                Typed points are published as typed. Photo pins are placed from the photo&apos;s GPS
-                on the live page, under the album&apos;s location precision. Renders only while the
-                map is enabled in Settings.
-              </span>
-            </div>
-          )}
-        </div>
-      ))}
+            {/* 8. MAP BLOCK */}
+            {block.type === 'map' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <input
+                  type="text"
+                  value={block.caption || ''}
+                  onChange={(e) =>
+                    handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
+                  }
+                  placeholder="Caption, e.g. Busan → Seoul (optional)"
+                />
+
+                {block.items.map((item, mIdx) => {
+                  const setItem = (next: MapItem) =>
+                    handleUpdateBlock(idx, {
+                      ...block,
+                      items: block.items.map((it, i) => (i === mIdx ? next : it)),
+                    });
+                  return (
+                    <div
+                      key={mIdx}
+                      style={{
+                        display: 'flex',
+                        gap: '6px',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.7rem', color: 'var(--admin-text-secondary)' }}>
+                        {mIdx + 1}
+                      </span>
+                      {item.kind === 'point' && (
+                        <>
+                          <input
+                            type="text"
+                            value={item.label ?? ''}
+                            placeholder="Label (optional)"
+                            style={{ flex: '1 1 140px' }}
+                            onChange={(e) =>
+                              setItem({ ...item, label: e.target.value || undefined })
+                            }
+                          />
+                          <input
+                            type="number"
+                            step="any"
+                            aria-label="Latitude"
+                            placeholder="Lat"
+                            style={{ flex: '0 1 110px' }}
+                            value={Number.isFinite(item.lat) ? item.lat : ''}
+                            onChange={(e) => setItem({ ...item, lat: parseFloat(e.target.value) })}
+                          />
+                          <input
+                            type="number"
+                            step="any"
+                            aria-label="Longitude"
+                            placeholder="Lng"
+                            style={{ flex: '0 1 110px' }}
+                            value={Number.isFinite(item.lng) ? item.lng : ''}
+                            onChange={(e) => setItem({ ...item, lng: parseFloat(e.target.value) })}
+                          />
+                        </>
+                      )}
+                      {item.kind === 'photo' && (
+                        <>
+                          {onSelectPhoto && (
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn-xs"
+                              onClick={() =>
+                                onSelectPhoto((pickedId) =>
+                                  setItem({ kind: 'photo', assetId: pickedId }),
+                                )
+                              }
+                            >
+                              <IconCamera size={12} /> {item.assetId ? 'Change' : 'Select'}
+                            </button>
+                          )}
+                          <input
+                            type="text"
+                            value={item.assetId}
+                            placeholder="Photo UUID..."
+                            style={{ flex: '1 1 200px', fontSize: '0.75rem' }}
+                            onChange={(e) => setItem({ kind: 'photo', assetId: e.target.value })}
+                          />
+                        </>
+                      )}
+                      {item.kind === 'all-photos' && (
+                        <span style={{ flex: 1, fontSize: '0.8rem' }}>
+                          All geotagged photos of this page&apos;s albums, in order
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        className="admin-btn-icon"
+                        title="Remove pin"
+                        onClick={() =>
+                          handleUpdateBlock(idx, {
+                            ...block,
+                            items: block.items.filter((_, i) => i !== mIdx),
+                          })
+                        }
+                      >
+                        <IconX size={13} />
+                      </button>
+                    </div>
+                  );
+                })}
+
+                {block.items.some(
+                  (it) => it.kind === 'point' && !isValidCoordinate(it.lat, it.lng),
+                ) && (
+                  <p className="empty-hint" style={{ color: 'var(--admin-warning)' }}>
+                    A point needs a latitude within ±90 and a longitude within ±180; points without
+                    valid coordinates are not saved.
+                  </p>
+                )}
+
+                <div
+                  style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}
+                >
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-xs"
+                    onClick={() =>
+                      handleUpdateBlock(idx, {
+                        ...block,
+                        items: [
+                          ...block.items,
+                          { kind: 'point', lat: Number.NaN, lng: Number.NaN },
+                        ],
+                      })
+                    }
+                  >
+                    <IconPlus size={12} /> Point
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-xs"
+                    onClick={() =>
+                      handleUpdateBlock(idx, {
+                        ...block,
+                        items: [...block.items, { kind: 'photo', assetId: '' }],
+                      })
+                    }
+                  >
+                    <IconCamera size={12} /> Photo pin
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-xs"
+                    disabled={block.items.some((it) => it.kind === 'all-photos')}
+                    onClick={() =>
+                      handleUpdateBlock(idx, {
+                        ...block,
+                        items: [...block.items, { kind: 'all-photos' }],
+                      })
+                    }
+                  >
+                    <IconMap size={12} /> All geotagged photos
+                  </button>
+                  <label
+                    style={{
+                      marginLeft: 'auto',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '0.8rem',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={block.line}
+                      onChange={(e) => handleUpdateBlock(idx, { ...block, line: e.target.checked })}
+                    />
+                    Connect pins with a line
+                  </label>
+                </div>
+
+                <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-secondary)' }}>
+                  Typed points are published as typed. Photo pins are placed from the photo&apos;s
+                  GPS on the live page, under the album&apos;s location precision. Renders only
+                  while the map is enabled in Settings.
+                </span>
+              </div>
+            )}
+          </SortableBlockCard>
+        ))}
+      </SortableBlockList>
     </div>
   );
 }
