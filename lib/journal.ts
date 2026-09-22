@@ -19,7 +19,8 @@ export type JournalBlock =
   | { type: 'paragraph'; html: string }
   | { type: 'quote'; text: string; author?: string }
   | { type: 'photo'; assetId: string; caption?: string; layout: 'fullbleed' | 'wide' | 'contained' }
-  | { type: 'photo-pair'; assetIds: [string, string]; caption?: string };
+  | { type: 'photo-pair'; assetIds: [string, string]; caption?: string }
+  | { type: 'photo-grid'; assetIds: string[]; caption?: string };
 
 export interface ParsedJournal {
   frontmatter: JournalFrontmatter;
@@ -37,7 +38,7 @@ export function collectAssetIds(blocks: readonly JournalBlock[]): string[] {
   for (const block of blocks) {
     if (block.type === 'photo') {
       if (block.assetId) ids.add(block.assetId);
-    } else if (block.type === 'photo-pair') {
+    } else if (block.type === 'photo-pair' || block.type === 'photo-grid') {
       for (const id of block.assetIds) if (id) ids.add(id);
     }
   }
@@ -55,6 +56,8 @@ export function mapBlockAssetIds(block: JournalBlock, fn: (id: string) => string
       return { ...block, assetId: fn(block.assetId) };
     case 'photo-pair':
       return { ...block, assetIds: [fn(block.assetIds[0]), fn(block.assetIds[1])] };
+    case 'photo-grid':
+      return { ...block, assetIds: block.assetIds.map(fn) };
     default:
       return block;
   }
@@ -361,7 +364,8 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
       continue;
     }
 
-    // 3. Image syntax: ![assetId:layout](Caption) or ![assetId1, assetId2](Caption)
+    // 3. Image syntax: ![assetId:layout](Caption), ![id1, id2](Caption) for a
+    //    pair, ![id1, id2, id3, …](Caption) for a grid
     //
     // The bracket group allows zero characters (`*`, not `+`) so a template's
     // unfilled placeholder — `assetId: ''`, serialized as `![](Caption)` or
@@ -372,10 +376,15 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
       const rawTarget = imgMatch[1].trim();
       const caption = imgMatch[2].trim() ? renderInlineMarkdown(imgMatch[2].trim()) : undefined;
 
-      // Side-by-side pair: ![asset1, asset2](Caption)
+      // Two ids are a side-by-side pair, three or more a grid. The pair used
+      // to take the first two of any count and drop the rest on the next save.
       if (rawTarget.includes(',')) {
         const parts = rawTarget.split(',').map((s) => s.trim());
-        if (parts.length >= 2) {
+        if (parts.length >= 3) {
+          blocks.push({ type: 'photo-grid', assetIds: parts, caption });
+          continue;
+        }
+        if (parts.length === 2) {
           blocks.push({
             type: 'photo-pair',
             assetIds: [parts[0], parts[1]],
@@ -481,6 +490,13 @@ export function serializeJournalMarkdown(journal: ParsedJournal): string {
           ? inlineHtmlToMarkdown(block.caption.replace(/[\r\n]+/g, ' '))
           : '';
         lines.push(`![${block.assetIds[0]}, ${block.assetIds[1]}](${caption})`);
+        break;
+      }
+      case 'photo-grid': {
+        const caption = block.caption
+          ? inlineHtmlToMarkdown(block.caption.replace(/[\r\n]+/g, ' '))
+          : '';
+        lines.push(`![${block.assetIds.join(', ')}](${caption})`);
         break;
       }
     }

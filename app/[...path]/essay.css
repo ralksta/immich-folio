@@ -200,3 +200,33 @@
     flex: none;
   }
 }
+
+/* Grid: rows of up to three, each row justified exactly like a pair. */
+.essay-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: var(--essay-wide);
+  margin: 3.5rem auto;
+}
+
+.essay-grid-row {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.essay-grid-row > .essay-image-wrapper {
+  flex-basis: 0;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .essay-grid-row {
+    flex-direction: column;
+  }
+
+  .essay-grid-row > .essay-image-wrapper {
+    flex: none;
+  }
+}

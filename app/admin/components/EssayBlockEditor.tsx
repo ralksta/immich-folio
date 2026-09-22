@@ -18,6 +18,9 @@ import {
   IconFileText,
   IconSparkles,
   IconArrowLeftRight,
+  IconGrid,
+  IconPlus,
+  IconX,
 } from './Icons';
 import { BlockBadge } from './BlockBadge';
 
@@ -107,6 +110,9 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
           caption: '',
         };
         break;
+      case 'photo-grid':
+        newBlock = { type: 'photo-grid', assetIds: ['', '', ''], caption: '' };
+        break;
     }
 
     updateBlocks([...essay.blocks, newBlock]);
@@ -152,6 +158,13 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
           onClick={() => handleAddBlock('photo-pair')}
         >
           <IconCamera size={13} /> + 2-Photo Pair
+        </button>
+        <button
+          type="button"
+          className="admin-btn admin-btn-xs admin-btn-primary"
+          onClick={() => handleAddBlock('photo-grid')}
+        >
+          <IconGrid size={13} /> + Photo Grid
         </button>
       </div>
 
@@ -514,6 +527,123 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
                 }
                 placeholder="Side-by-side caption (optional)"
+              />
+            </div>
+          )}
+
+          {/* 6. PHOTO-GRID BLOCK */}
+          {block.type === 'photo-grid' && (
+            <div className="essay-photo-card">
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
+                  gap: '1rem',
+                }}
+              >
+                {block.assetIds.map((assetId, pIdx) => (
+                  <div key={pIdx} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          color: 'var(--admin-text-secondary)',
+                        }}
+                      >
+                        Photo {pIdx + 1}
+                      </span>
+                      {block.assetIds.length > 3 && (
+                        <button
+                          type="button"
+                          className="admin-btn-icon"
+                          title="Remove photo"
+                          onClick={() =>
+                            handleUpdateBlock(idx, {
+                              ...block,
+                              assetIds: block.assetIds.filter((_, i) => i !== pIdx),
+                            })
+                          }
+                        >
+                          <IconX size={13} />
+                        </button>
+                      )}
+                    </div>
+                    <div className="essay-photo-preview-container">
+                      {assetId ? (
+                        <img
+                          src={`/api/admin/thumbnail/${assetId}`}
+                          alt=""
+                          className="essay-photo-thumbnail"
+                          style={{ width: '80px', height: '60px' }}
+                        />
+                      ) : (
+                        <div
+                          className="essay-photo-empty"
+                          style={{ width: '80px', height: '60px' }}
+                        >
+                          <IconCamera size={16} />
+                        </div>
+                      )}
+                      <div
+                        style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}
+                      >
+                        {onSelectPhoto && (
+                          <button
+                            type="button"
+                            className="admin-btn admin-btn-xs"
+                            onClick={() =>
+                              onSelectPhoto((pickedId) => {
+                                const ids = [...block.assetIds];
+                                ids[pIdx] = pickedId;
+                                handleUpdateBlock(idx, { ...block, assetIds: ids });
+                              })
+                            }
+                          >
+                            <IconCamera size={12} /> Select
+                          </button>
+                        )}
+                        <input
+                          type="text"
+                          value={assetId}
+                          onChange={(e) => {
+                            const ids = [...block.assetIds];
+                            ids[pIdx] = e.target.value;
+                            handleUpdateBlock(idx, { ...block, assetIds: ids });
+                          }}
+                          placeholder={`UUID ${pIdx + 1}...`}
+                          style={{ fontSize: '0.75rem' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                className="admin-btn admin-btn-xs"
+                style={{ alignSelf: 'flex-start' }}
+                onClick={() =>
+                  handleUpdateBlock(idx, { ...block, assetIds: [...block.assetIds, ''] })
+                }
+              >
+                <IconPlus size={12} /> Add photo
+              </button>
+
+              <input
+                type="text"
+                value={block.caption || ''}
+                onChange={(e) =>
+                  handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
+                }
+                placeholder="Grid caption (optional)"
               />
             </div>
           )}

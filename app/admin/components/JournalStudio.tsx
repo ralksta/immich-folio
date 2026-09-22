@@ -28,6 +28,8 @@ import {
   IconCalendar,
   IconLock,
   IconCheck,
+  IconGrid,
+  IconX,
 } from './Icons';
 import AssetPicker from './AssetPicker';
 import { BlockBadge } from './BlockBadge';
@@ -662,6 +664,9 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
       case 'photo-pair':
         newBlock = { type: 'photo-pair', assetIds: ['', ''], caption: '' };
         break;
+      case 'photo-grid':
+        newBlock = { type: 'photo-grid', assetIds: ['', '', ''], caption: '' };
+        break;
     }
     handleBlocksChange([...parsed.blocks, newBlock]);
   };
@@ -862,6 +867,13 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
                   onClick={() => handleAddBlock('photo-pair')}
                 >
                   <IconArrowLeftRight size={13} /> + 2-Photo Pair
+                </button>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-xs admin-btn-primary"
+                  onClick={() => handleAddBlock('photo-grid')}
+                >
+                  <IconGrid size={13} /> + Photo Grid
                 </button>
               </div>
 
@@ -1109,6 +1121,86 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
                             type="text"
                             className="admin-input"
                             placeholder="Shared caption for pair (optional)"
+                            value={block.caption || ''}
+                            onChange={(e) =>
+                              handleUpdateBlock(idx, { ...block, caption: e.target.value })
+                            }
+                          />
+                        </div>
+                      )}
+
+                      {block.type === 'photo-grid' && block.assetIds.some(isLegacyAssetRef) && (
+                        <p className="journal-block-warning">
+                          References &quot;{block.assetIds.filter(isLegacyAssetRef).join('", "')}
+                          &quot; are legacy album positions, not photos. They will not appear on the
+                          published page — pick photos below.
+                        </p>
+                      )}
+
+                      {block.type === 'photo-grid' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div className="journal-grid-tiles">
+                            {block.assetIds.map((assetId, pIdx) => (
+                              <div key={pIdx} className="journal-grid-tile">
+                                <div
+                                  className="journal-grid-tile-pick"
+                                  onClick={() =>
+                                    setAssetPickerTarget({
+                                      title: `Select Photo #${pIdx + 1} for Grid`,
+                                      onSelect: (id) => {
+                                        const newIds = [...block.assetIds];
+                                        newIds[pIdx] = id;
+                                        handleUpdateBlock(idx, { ...block, assetIds: newIds });
+                                      },
+                                    })
+                                  }
+                                >
+                                  {assetId ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={`/api/admin/thumbnail/${assetId}`} alt="Thumb" />
+                                  ) : (
+                                    <span>+ Pick #{pIdx + 1}</span>
+                                  )}
+                                </div>
+                                {block.assetIds.length > 3 && (
+                                  <button
+                                    type="button"
+                                    className="admin-btn admin-btn-xs journal-grid-tile-remove"
+                                    aria-label={`Remove photo #${pIdx + 1}`}
+                                    onClick={() =>
+                                      handleUpdateBlock(idx, {
+                                        ...block,
+                                        assetIds: block.assetIds.filter((_, i) => i !== pIdx),
+                                      })
+                                    }
+                                  >
+                                    <IconX size={11} />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn-xs"
+                              onClick={() =>
+                                handleUpdateBlock(idx, {
+                                  ...block,
+                                  assetIds: [...block.assetIds, ''],
+                                })
+                              }
+                            >
+                              <IconPlus size={12} /> Add photo
+                            </button>
+                            <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
+                              Three or more photos, laid out in rows of three.
+                            </span>
+                          </div>
+                          <input
+                            type="text"
+                            className="admin-input"
+                            placeholder="Shared caption for grid (optional)"
                             value={block.caption || ''}
                             onChange={(e) =>
                               handleUpdateBlock(idx, { ...block, caption: e.target.value })

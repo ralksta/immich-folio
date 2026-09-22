@@ -59,6 +59,77 @@ function EssayViewContent({
     ? assetMap.get(essay.frontmatter.coverAssetId)
     : undefined;
 
+  /**
+   * One photo tile of a pair or a grid: sized by its real ratio (see
+   * .essay-pair-grid), opens the lightbox, carries the proofing heart. The pair
+   * used to spell this out a second time next to the photo case; a third copy
+   * for the grid is where that stops.
+   */
+  const renderTile = ({ item, index }: { item: PhotoItem; index: number }, key: number) => {
+    const isFav = proofing ? proofing.isFavorite(item.id) : false;
+    return (
+      <div
+        key={key}
+        className="essay-image-wrapper photo-grid__item"
+        onClick={() => setLightboxIndex(index)}
+        style={{
+          ...(item.dominantColor ? { backgroundColor: item.dominantColor } : {}),
+          flexGrow: item.aspectRatio ?? 1.5,
+          aspectRatio: `${item.aspectRatio ?? 1.5}`,
+        }}
+      >
+        <Image
+          src={item.previewUrl || item.thumbUrl}
+          alt=""
+          fill
+          sizes="(max-width: 640px) 100vw, 550px"
+          loading="lazy"
+          {...(item.blurDataURL
+            ? { placeholder: 'blur' as const, blurDataURL: item.blurDataURL }
+            : {})}
+        />
+        {proofing && (
+          <button
+            type="button"
+            className="photo-grid__fav-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              proofing.toggleFavorite(item.id);
+            }}
+            aria-label={isFav ? t.proofing.removeFavorite : t.proofing.addFavorite}
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              zIndex: 5,
+              width: '44px',
+              height: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: isFav ? '#ff4d4f' : 'rgba(255,255,255,0.85)',
+              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))',
+            }}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="24"
+              height="24"
+              fill={isFav ? 'currentColor' : 'none'}
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+          </button>
+        )}
+      </div>
+    );
+  };
+
   const renderBlock = (block: EssayBlock, idx: number) => {
     switch (block.type) {
       case 'heading': {
@@ -183,72 +254,42 @@ function EssayViewContent({
         return (
           <FadeIn key={idx}>
             <div className="essay-figure essay-figure--wide">
-              <div className="essay-pair-grid">
-                {[res1, res2].map(({ item, index }, pIdx) => {
-                  const isFav = proofing ? proofing.isFavorite(item.id) : false;
-                  return (
-                    <div
-                      key={pIdx}
-                      className="essay-image-wrapper photo-grid__item"
-                      onClick={() => setLightboxIndex(index)}
-                      style={{
-                        ...(item.dominantColor ? { backgroundColor: item.dominantColor } : {}),
-                        // Width proportional to the ratio — see .essay-pair-grid.
-                        flexGrow: item.aspectRatio ?? 1.5,
-                        aspectRatio: `${item.aspectRatio ?? 1.5}`,
-                      }}
-                    >
-                      <Image
-                        src={item.previewUrl || item.thumbUrl}
-                        alt=""
-                        fill
-                        sizes="(max-width: 640px) 100vw, 550px"
-                        loading="lazy"
-                        {...(item.blurDataURL
-                          ? { placeholder: 'blur' as const, blurDataURL: item.blurDataURL }
-                          : {})}
-                      />
-                      {proofing && (
-                        <button
-                          type="button"
-                          className="photo-grid__fav-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            proofing.toggleFavorite(item.id);
-                          }}
-                          aria-label={isFav ? t.proofing.removeFavorite : t.proofing.addFavorite}
-                          style={{
-                            position: 'absolute',
-                            top: '12px',
-                            right: '12px',
-                            zIndex: 5,
-                            width: '44px',
-                            height: '44px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: isFav ? '#ff4d4f' : 'rgba(255,255,255,0.85)',
-                            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))',
-                          }}
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            width="24"
-                            height="24"
-                            fill={isFav ? 'currentColor' : 'none'}
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+              <div className="essay-pair-grid">{[res1, res2].map(renderTile)}</div>
+              {block.caption && (
+                <figcaption
+                  className="essay-figcaption"
+                  dangerouslySetInnerHTML={{ __html: block.caption }}
+                />
+              )}
+            </div>
+          </FadeIn>
+        );
+      }
+
+      case 'photo-grid': {
+        // Unresolved ids drop out individually; a grid with fewer than two
+        // photos left is not a grid any more and renders as nothing, like a
+        // pair with a missing half.
+        const resolved = block.assetIds.flatMap((id) => {
+          const r = assetMap.get(id);
+          return r ? [r] : [];
+        });
+        if (resolved.length < 2) return null;
+
+        // Rows of three, each justified like a pair: one shared height, widths
+        // from the real ratios, nothing cropped.
+        const rows: (typeof resolved)[] = [];
+        for (let i = 0; i < resolved.length; i += 3) rows.push(resolved.slice(i, i + 3));
+
+        return (
+          <FadeIn key={idx}>
+            <div className="essay-figure essay-figure--wide">
+              <div className="essay-grid">
+                {rows.map((row, rIdx) => (
+                  <div key={rIdx} className="essay-grid-row">
+                    {row.map(renderTile)}
+                  </div>
+                ))}
               </div>
               {block.caption && (
                 <figcaption

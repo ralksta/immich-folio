@@ -442,6 +442,45 @@
   opacity: 0.65;
 }
 
+/* ── Photo grid block (editor tiles) ─────────────────────────────── */
+
+.journal-grid-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.journal-grid-tile {
+  position: relative;
+}
+
+.journal-grid-tile-pick {
+  height: 80px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.journal-grid-tile-pick img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.journal-grid-tile-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 2px 5px;
+}
+
 /* ── Card meta & status ───────────────────────────────────────────── */
 
 .journal-admin-card-meta span {
