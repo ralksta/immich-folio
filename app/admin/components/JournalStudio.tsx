@@ -26,6 +26,7 @@ import {
 import AssetPicker from './AssetPicker';
 import { BlockBadge } from './BlockBadge';
 import { useUnsavedGuard } from './useUnsavedGuard';
+import { reportIfSessionExpired } from './sessionExpiry';
 import { EssayView } from '@/app/[...path]/EssayView';
 import type { PhotoItem } from '@/app/[...path]/PhotoGrid';
 import './journal-studio.css';
@@ -529,7 +530,7 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
 
       if (res.ok) {
         setDirty(false);
-      } else {
+      } else if (!reportIfSessionExpired(res)) {
         const data = await res.json();
         alert(data.error || 'Failed to save');
       }

@@ -41,6 +41,7 @@ import {
 } from './page-builder/types';
 import { useScrollLock } from './useScrollLock';
 import { useUnsavedGuard } from './useUnsavedGuard';
+import { reportIfSessionExpired } from './sessionExpiry';
 import {
   IconCamera,
   IconFolder,
@@ -484,7 +485,7 @@ export default function PageBuilder() {
         setDirty(false);
         setSaveMessage(data.message || 'Saved successfully!');
         setTimeout(() => setSaveMessage(''), 5000);
-      } else {
+      } else if (!reportIfSessionExpired(res)) {
         const err = await res.json();
         setSaveMessage(`Error: ${err.error}`);
       }

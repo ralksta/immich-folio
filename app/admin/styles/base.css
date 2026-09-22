@@ -298,3 +298,15 @@
   font-size: 0.8rem;
   margin-bottom: 0.75rem;
 }
+
+/* Neutral, not an error: "your session expired" is expected behaviour after
+   24 hours, not a mistake the operator made (#596). */
+.admin-notice {
+  background: var(--admin-bg-raised);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text-secondary);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  margin-bottom: 0.75rem;
+}

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import BackupManagerModal from './BackupManagerModal';
 import type { DoctorLevel } from '@/lib/admin/doctor';
 import { DOCTOR_LEVEL_EVENT, systemHealth } from './systemHealth';
+import { reportIfSessionExpired } from './sessionExpiry';
 import * as Icons from './Icons';
 
 interface Props {
@@ -47,7 +48,15 @@ export default function AdminDashboard({ onLogout, children }: Props) {
   async function handleReload() {
     setSaving(true);
     try {
-      await fetch('/api/admin/reload', { method: 'POST' });
+      const res = await fetch('/api/admin/reload', { method: 'POST' });
+      // A 401 or a 500 used to be indistinguishable from success here — the
+      // result was never checked at all (#596).
+      if (!res.ok) {
+        if (!reportIfSessionExpired(res)) {
+          alert(`Reload failed (HTTP ${res.status}).`);
+        }
+        return;
+      }
       // Refresh status after reload
       await fetchStatus();
     } finally {

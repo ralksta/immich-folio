@@ -4,9 +4,11 @@ import { useState } from 'react';
 
 interface Props {
   onSuccess: () => void;
+  /** Shown above the form, e.g. "Your session expired. Sign in again." (#596) */
+  notice?: string;
 }
 
-export default function AdminLogin({ onSuccess }: Props) {
+export default function AdminLogin({ onSuccess, notice }: Props) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,6 +45,8 @@ export default function AdminLogin({ onSuccess }: Props) {
           <h1>Immich Folio</h1>
           <p>Admin Panel</p>
         </div>
+
+        {notice && <div className="admin-notice">{notice}</div>}
 
         <div className="admin-field">
           <label htmlFor="admin-password">Password</label>

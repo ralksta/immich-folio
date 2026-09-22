@@ -6,6 +6,7 @@ import Link from 'next/link';
 import * as Icons from './Icons';
 import SaveBar from './SaveBar';
 import { useUnsavedGuard } from './useUnsavedGuard';
+import { reportIfSessionExpired } from './sessionExpiry';
 import ToggleCard from './fields/ToggleCard';
 import OptionGrid, { toOptions } from './fields/OptionGrid';
 // Direct import from the theme module, not from '@/lib/config': the config
@@ -682,7 +683,11 @@ export default function SettingsEditor() {
       const res = await fetch('/api/admin/settings');
       if (!res.ok) {
         // 401 is the common one: the session lasts 24h and nothing re-checks
-        // it, so a tab left open overnight lands here.
+        // it, so a tab left open overnight lands here. reportIfSessionExpired
+        // also drops the whole panel back to the login screen (#596); the
+        // thrown message below still covers the brief moment before that
+        // re-render happens, and any other non-ok status.
+        reportIfSessionExpired(res);
         throw new Error(
           res.status === 401
             ? 'Your session has expired. Sign in again to continue.'
@@ -768,7 +773,7 @@ export default function SettingsEditor() {
         setSaveMessage(data.message || 'Saved!');
         router.refresh();
         setTimeout(() => setSaveMessage(''), 5000);
-      } else {
+      } else if (!reportIfSessionExpired(res)) {
         const err = await res.json();
         // A rejected save names the fields that caused it. Listing them beats
         // "could not be saved" over a form with forty inputs; putting the

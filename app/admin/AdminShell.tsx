@@ -3,6 +3,7 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
+import { SESSION_EXPIRED_EVENT } from './components/sessionExpiry';
 import './admin.css';
 
 /**
@@ -13,6 +14,13 @@ import './admin.css';
 export default function AdminShell({ children }: { children: ReactNode }) {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [enabled, setEnabled] = useState(true);
+  // Sessions last 24 hours (lib/admin/auth.ts), but nothing re-checked
+  // authentication after the mount-time check below — leave a tab open
+  // overnight and every admin request answered 401 while the UI still looked
+  // signed in (#596). SESSION_EXPIRED_EVENT is raised by the fetch call sites
+  // that noticed; this is what turns that into dropping back to the login
+  // screen with an explanation instead of each of them failing quietly.
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
     async function checkAuth() {
@@ -26,6 +34,15 @@ export default function AdminShell({ children }: { children: ReactNode }) {
       }
     }
     checkAuth();
+  }, []);
+
+  useEffect(() => {
+    function onSessionExpired() {
+      setAuthenticated(false);
+      setSessionExpired(true);
+    }
+    window.addEventListener(SESSION_EXPIRED_EVENT, onSessionExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onSessionExpired);
   }, []);
 
   if (authenticated === null) {
@@ -51,7 +68,15 @@ export default function AdminShell({ children }: { children: ReactNode }) {
   }
 
   if (!authenticated) {
-    return <AdminLogin onSuccess={() => setAuthenticated(true)} />;
+    return (
+      <AdminLogin
+        notice={sessionExpired ? 'Your session expired. Sign in again.' : undefined}
+        onSuccess={() => {
+          setSessionExpired(false);
+          setAuthenticated(true);
+        }}
+      />
+    );
   }
 
   return <AdminDashboard onLogout={() => setAuthenticated(false)}>{children}</AdminDashboard>;
