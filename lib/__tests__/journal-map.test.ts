@@ -59,15 +59,33 @@ const asset = (
 describe('pinsForEntry', () => {
   const exact = (): LocationPrecision => 'exact';
 
-  it('keeps exact positions with a city, country label, in authoring order', () => {
+  it('labels exact pins with city and country, in authoring order', () => {
     const pins = pinsForEntry(
       [asset('a', 35.1796, 129.0756), asset('b', 37.5665, 126.978, 'Seoul')],
       ['b', 'a'],
       exact,
     );
-    expect(pins).toEqual([
-      { lat: 37.5665, lng: 126.978, label: 'Seoul, South Korea' },
-      { lat: 35.1796, lng: 129.0756, label: 'Busan, South Korea' },
+    expect(pins.map((p) => p.label)).toEqual(['Seoul, South Korea', 'Busan, South Korea']);
+  });
+
+  it('snaps exact pins to the 1 km grid — one photo is not the map page mean', () => {
+    const pins = pinsForEntry(
+      [asset('a', 52.510044, 13.467244, 'Berlin', 'Germany')],
+      ['a'],
+      exact,
+    );
+    expect(pins).toEqual([{ lat: 52.51, lng: 13.47, label: 'Berlin, Germany' }]);
+  });
+
+  it('keeps distinct 1 km cells apart', () => {
+    const pins = pinsForEntry(
+      [asset('a', 52.510044, 13.467244), asset('b', 52.402119, 13.043056, 'Potsdam')],
+      ['a', 'b'],
+      exact,
+    );
+    expect(pins.map((p) => [p.lat, p.lng])).toEqual([
+      [52.51, 13.47],
+      [52.4, 13.04],
     ]);
   });
 

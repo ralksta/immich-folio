@@ -66,6 +66,11 @@ export function quantiseCoordinate(value: number, level: LocationPrecision): num
   if (level === 'hidden') return 0;
   const { step, decimals } = GRID[level];
   if (step === 0) return value;
+  return snapToGrid(value, step, decimals);
+}
+
+/** Round to a fixed grid of `step` degrees; `decimals` trims the float tail. */
+export function snapToGrid(value: number, step: number, decimals: number): number {
   return Number((Math.round(value / step) * step).toFixed(decimals));
 }
 

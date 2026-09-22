@@ -33,7 +33,15 @@ export default function MapPage() {
 
   return (
     <>
-      {/* Leaflet's stylesheet comes with the LeafletMap component. */}
+      {/* LeafletMap emits this too, but only once /api/map has answered; on
+          this page the stylesheet should be in the server HTML so the tiles
+          never render before their CSS. Same href — the browser loads it once. */}
+      <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossOrigin=""
+      />
       <div className="map-page">
         <div className="map-page__header">
           <div className="map-page__header-main">

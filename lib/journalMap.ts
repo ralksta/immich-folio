@@ -12,10 +12,19 @@
 
 import type { ImmichAsset } from './immich';
 import type { MapPin } from './journal';
-import { applyPrecision, placeLabel, type LocationPrecision } from './mapPrecision';
+import { applyPrecision, placeLabel, snapToGrid, type LocationPrecision } from './mapPrecision';
 import { assetLocationPrecision } from './assetLocation';
 
 type GeoAsset = Pick<ImmichAsset, 'id' | 'exifInfo'>;
+
+/**
+ * `exact` on the map page means the mean of an album's photos in a city —
+ * never a single photo's coordinates. A journal pin is one photo, so `exact`
+ * here is snapped to a 0.01° grid (~1 km): a hike or a trip stays a route,
+ * a house does not become a marker. Decided 2026-09-22.
+ */
+const EXACT_STEP = 0.01;
+const EXACT_DECIMALS = 2;
 
 /**
  * Pure: assets, the authoring order of their ids, and a precision per id.
@@ -42,8 +51,15 @@ export function pinsForEntry(
     const level = precisionOf(id);
     if (level === 'hidden' || level === 'country') continue;
 
-    const pos = applyPrecision({ lat: exif.latitude, lng: exif.longitude }, level);
-    if (!pos) continue;
+    const quantised = applyPrecision({ lat: exif.latitude, lng: exif.longitude }, level);
+    if (!quantised) continue;
+    const pos =
+      level === 'exact'
+        ? {
+            lat: snapToGrid(quantised.lat, EXACT_STEP, EXACT_DECIMALS),
+            lng: snapToGrid(quantised.lng, EXACT_STEP, EXACT_DECIMALS),
+          }
+        : quantised;
 
     const key = `${pos.lat},${pos.lng}`;
     if (seen.has(key)) continue;
