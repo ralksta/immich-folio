@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import { type JournalEntrySummary } from '@/lib/journal';
 import { listJournalEntries } from '@/lib/admin/journal-service';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
+import { isAuthenticated } from '@/lib/auth';
 import { immich } from '@/lib/immich';
 import { imageUrl, assetPlaceholder } from '@/lib/urls';
 import { BackLink } from '@/components/BackLink';
@@ -29,10 +31,19 @@ export default async function JournalIndexPage() {
   const isAuthedAdmin = await isAdminAuthenticated();
   const allEntries = await listJournalEntries();
 
-  // Non-admins only see published entries
+  // Non-admins only see published entries, and only a password-protected one
+  // once they have actually unlocked it — the card otherwise names it, shows
+  // its cover and quotes its excerpt to every visitor regardless of the
+  // password on its body (GHSA-fvgv-97g3-wjr7).
+  const cookieStore = isAuthedAdmin ? null : await cookies();
+  const getCookie = (name: string) => cookieStore?.get(name)?.value;
   const visibleEntries = isAuthedAdmin
     ? allEntries
-    : allEntries.filter((e) => !e.frontmatter.draft);
+    : allEntries.filter((e) => {
+        if (e.frontmatter.draft) return false;
+        if (!e.frontmatter.password) return true;
+        return isAuthenticated(e.slug, getCookie, 'journal');
+      });
 
   // Fetch cover image placeholders and URLs
   const enrichedEntries: EnrichedJournalEntry[] = await Promise.all(

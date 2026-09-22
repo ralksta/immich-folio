@@ -36,12 +36,30 @@ export async function generateMetadata({ params }: JournalDetailPageProps): Prom
   if (!entry) return { title: t.journal.notFound };
 
   const { frontmatter } = entry.parsed;
-  const title = frontmatter.title || slug;
-  const description = frontmatter.subtitle || t.journal.entryDescription;
 
-  const ogImages = frontmatter.coverAssetId
-    ? [{ url: imageUrl(frontmatter.coverAssetId, 'preview') }]
-    : [];
+  // generateMetadata runs unconditionally, ahead of the page body's own
+  // draft/password gate below — without this check a draft's or a locked
+  // entry's real title, subtitle and cover image reached the <head> of a
+  // 200 response no authentication was ever asked for (GHSA-fvgv-97g3-wjr7).
+  const isAuthedAdmin = await isAdminAuthenticated();
+  const blocked =
+    (frontmatter.draft && !isAuthedAdmin) ||
+    (!!frontmatter.password &&
+      !isJournalAuthenticated(
+        slug,
+        frontmatter.password,
+        (await cookies()).get(`lb_auth_journal_${slug}`)?.value,
+      ));
+
+  const title = blocked ? t.journal.title : frontmatter.title || slug;
+  const description = blocked
+    ? t.journal.description
+    : frontmatter.subtitle || t.journal.entryDescription;
+
+  const ogImages =
+    !blocked && frontmatter.coverAssetId
+      ? [{ url: imageUrl(frontmatter.coverAssetId, 'preview') }]
+      : [];
 
   return {
     title,
@@ -151,8 +169,15 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
   const toToken = (assetId: string) => tokenByAssetId.get(assetId) ?? '';
 
   const essayForClient: ParsedJournal = {
+    // Named fields, not a spread of `frontmatter`: EssayView reads only
+    // title, subtitle, coverAssetId, author and date, but a spread put the
+    // stored password — plaintext or a scrypt hash — into every visitor's
+    // RSC payload the moment they unlocked the entry once (GHSA-fvgv-97g3-wjr7).
     frontmatter: {
-      ...frontmatter,
+      title: frontmatter.title,
+      subtitle: frontmatter.subtitle,
+      author: frontmatter.author,
+      date: frontmatter.date,
       coverAssetId: frontmatter.coverAssetId ? toToken(frontmatter.coverAssetId) : undefined,
     },
     blocks: blocks.map((block) => {

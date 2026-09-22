@@ -56,6 +56,20 @@ interface PathPageProps {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+/**
+ * Whether `key` is password-protected and this request has not unlocked it.
+ * generateMetadata runs unconditionally — unlike the page body, nothing
+ * downstream of it stops a real title, photo count or cover image from
+ * reaching an unauthenticated `<head>` unless this is checked first
+ * (GHSA-fvgv-97g3-wjr7).
+ */
+async function isLocked(key: string, type: 'subpage' | 'album'): Promise<boolean> {
+  if (!isProtected(key, type)) return false;
+  const cookieStore = await cookies();
+  const getCookie = (name: string) => cookieStore.get(name)?.value;
+  return !isAuthenticated(key, getCookie, type);
+}
+
 export async function generateMetadata({ params, searchParams }: PathPageProps): Promise<Metadata> {
   // Next hands catch-all segments over percent-encoded, so a non-ASCII slug
   // ("/家族相册") would never match a stored one. Decode once, here, and every
@@ -78,26 +92,27 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
   let subtitle = '';
   let description: string | undefined = undefined;
   if (path.length === 1 && immich.isSubpageSlug(slug)) {
+    const subpageLocked = await isLocked(slug, 'subpage');
     const result = await immich.getSubpageAlbums(slug);
     if (result) {
-      if (result.subpage.subtitle) {
+      if (!subpageLocked && result.subpage.subtitle) {
         description = result.subpage.subtitle;
       }
       if (result.albums.length === 1) {
         const album = await immich.getAlbumBySlug(result.albums[0].slug, slug);
-        if (album) {
+        if (album && !subpageLocked && !(await isLocked(album.id, 'album'))) {
           title = album.albumName;
           const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
           subtitle = `${count} photo${count === 1 ? '' : 's'}`;
           if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
         }
-      } else {
+      } else if (!subpageLocked) {
         title = result.subpage.title || result.subpage.name;
       }
     }
   } else if (path.length === 2) {
     const album = await immich.getAlbumBySlug(path[1], slug);
-    if (album) {
+    if (album && !(await isLocked(slug, 'subpage')) && !(await isLocked(album.id, 'album'))) {
       title = album.albumName;
       const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
       subtitle = `${count} photo${count === 1 ? '' : 's'}`;
@@ -105,7 +120,7 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
     }
   } else {
     const album = await immich.getAlbumBySlug(slug);
-    if (album) {
+    if (album && !(await isLocked(album.id, 'album'))) {
       title = album.albumName;
       const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
       subtitle = `${count} photo${count === 1 ? '' : 's'}`;
