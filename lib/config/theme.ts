@@ -96,6 +96,33 @@ export const VALID_LAYOUTS = [
   'justified', // EXPERIMENTAL: row-based layout with equal heights
 ];
 
+/**
+ * Corner radius reaches CSS as `${radius}px` (app/layout.tsx: `--radius-sm`)
+ * and `${radius * 1.5}px` (`--radius-md`), so a value that is not actually a
+ * number — `radius: "8px"` in hand-edited YAML, say — does not fail loudly,
+ * it becomes `8pxpx` and `NaNpx` (#633). photoFrame and heroStyle, on either
+ * side of this field, are already checked against an allowlist; this is the
+ * same treatment for the one numeric scalar in ThemeConfig.
+ */
+const THEME_RADIUS_MAX = 64; // Presets top out at 16; generous but not unbounded.
+function resolveRadius(raw: unknown, fallback: number): number {
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) return fallback;
+  return Math.min(THEME_RADIUS_MAX, Math.max(0, raw));
+}
+
+/** `--accent` and `--accent-dim` (app/layout.tsx) take this verbatim. */
+function resolveAccent(raw: unknown, fallback: string): string {
+  return typeof raw === 'string' && raw.trim() ? raw : fallback;
+}
+
+/** `String(theme.grain)`/`String(theme.headerDot)` become a `data-*` attribute
+ * either way, but a non-boolean is a sign the value was never meant for this
+ * field at all — a typo'd key one level up, say — so it falls back rather
+ * than being coerced into something that reads as intentional. */
+function resolveThemeBoolean(raw: unknown, fallback: boolean): boolean {
+  return typeof raw === 'boolean' ? raw : fallback;
+}
+
 export function resolveTheme(raw?: SettingsYaml['theme']): ThemeConfig {
   if (!raw) return { ...THEME_PRESETS[DEFAULT_PRESET] };
 
@@ -119,18 +146,18 @@ export function resolveTheme(raw?: SettingsYaml['theme']): ThemeConfig {
 
   return {
     preset: baseName,
-    accent: raw.accent ?? base.accent,
+    accent: resolveAccent(raw.accent, base.accent),
     fonts: {
       heading: raw.fonts?.heading ?? base.fonts.heading,
       body: raw.fonts?.body ?? base.fonts.body,
       caption: raw.fonts?.caption ?? base.fonts.caption,
     },
-    radius: raw.radius ?? base.radius,
+    radius: resolveRadius(raw.radius, base.radius),
     photoFrame: VALID_PHOTO_FRAMES.includes(raw.photoFrame ?? '')
       ? (raw.photoFrame as ThemeConfig['photoFrame'])
       : base.photoFrame,
-    grain: raw.grain ?? base.grain,
-    headerDot: raw.headerDot ?? base.headerDot,
+    grain: resolveThemeBoolean(raw.grain, base.grain),
+    headerDot: resolveThemeBoolean(raw.headerDot, base.headerDot),
     heroStyle: VALID_HERO_STYLES.includes(raw.heroStyle ?? '')
       ? (raw.heroStyle as ThemeConfig['heroStyle'])
       : base.heroStyle,

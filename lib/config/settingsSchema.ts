@@ -21,12 +21,13 @@
  * offending value. Repeating those rules here would mean two places to keep in
  * step, and a stricter one would reject configurations that work today.
  *
- * Not all of them do yet. `grid.columns` and `theme.radius` reach CSS without
- * being narrowed (#633): `columns: -1` produces an invalid `repeat()` and
- * collapses the grid, and `radius: "8px"` yields `8pxpx`. The type half of the
- * second is caught here — a string where a number belongs — but only for a save
- * from the panel. The value half, and hand-edited YAML, are #633's to fix in the
- * resolvers, which is where this comment says they belong.
+ * `grid.columns` and `theme.radius` got the same treatment in #633: the
+ * site-wide and per-subpage/album grid derivation (`lib/config/index.ts`)
+ * clamps `columns` and `gap` to the bounds the admin inputs already share,
+ * and `resolveTheme` (`lib/config/theme.ts`) coerces `radius`, `accent`,
+ * `grain` and `headerDot` the same way `resolveColorMode` does — falling back
+ * to the preset's own value for anything that is not the right type, which
+ * covers hand-edited YAML as well as a save from this panel.
  *
  * **Unknown keys pass through.** There is no `schemaVersion` and no migration
  * code, so configurations older and newer than this build are both in the wild.

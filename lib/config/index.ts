@@ -13,6 +13,10 @@ import {
   findAlbumSlugCollisions,
   resolveExifDisplay,
   resolveColorMode,
+  clamp,
+  PHOTO_GRID_COLUMNS_MIN,
+  PHOTO_GRID_COLUMNS_MAX,
+  PHOTO_GRID_GAP_MAX,
   AppConfig,
   AlbumEntryObject,
   SubpageConfig,
@@ -66,11 +70,22 @@ interface RawGridOverrides {
   layout?: string;
 }
 
-/** Converts raw YAML grid overrides into a typed partial GridConfig. */
+/**
+ * Converts raw YAML grid overrides into a typed partial GridConfig.
+ *
+ * `columns` and `gap` are clamped here, not left for the renderer: a subpage
+ * or album override reaches `--grid-columns` unclamped (app/[...path]/page.tsx),
+ * so `columns: -1` produced an invalid `repeat(-1, 1fr)` and collapsed the
+ * whole grid to one column with no error anywhere (#633). The cover grid had
+ * this already (buildCoverGridVars); this is the same treatment for the photo
+ * grid it was missing from.
+ */
 function parseGridOverrides(raw: RawGridOverrides): Partial<GridConfig> {
   return {
-    ...(raw.columns != null ? { columns: raw.columns } : {}),
-    ...(raw.gap != null ? { gap: raw.gap } : {}),
+    ...(raw.columns != null
+      ? { columns: clamp(raw.columns, PHOTO_GRID_COLUMNS_MIN, PHOTO_GRID_COLUMNS_MAX) }
+      : {}),
+    ...(raw.gap != null ? { gap: clamp(raw.gap, 0, PHOTO_GRID_GAP_MAX) } : {}),
     ...(raw.aspectRatio != null ? { aspectRatio: raw.aspectRatio } : {}),
     ...(raw.layout != null
       ? {
@@ -631,8 +646,11 @@ export function getConfig(): AppConfig {
     exifOnHover: settings.exifOnHover !== false,
     exif: resolveExifDisplay(settings.exif, settings.exifOnHover),
     grid: {
-      columns: settings.grid?.columns ?? 3,
-      gap: settings.grid?.gap ?? 12,
+      columns:
+        settings.grid?.columns != null
+          ? clamp(settings.grid.columns, PHOTO_GRID_COLUMNS_MIN, PHOTO_GRID_COLUMNS_MAX)
+          : 3,
+      gap: settings.grid?.gap != null ? clamp(settings.grid.gap, 0, PHOTO_GRID_GAP_MAX) : 12,
       aspectRatio: settings.grid?.aspectRatio ?? '1',
       layout: (VALID_LAYOUTS.includes(settings.grid?.layout ?? '')
         ? settings.grid!.layout

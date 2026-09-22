@@ -159,10 +159,19 @@ export function buildCoverGridVars(
   return vars;
 }
 
-function clamp(value: number, min: number, max: number): number {
+/**
+ * `unknown` rather than `number`: this also guards the site-wide and
+ * per-subpage/album grid columns and gap (lib/config/index.ts), which a
+ * hand-edited gallery.yaml or settings.yaml can hand a string, `null`, or
+ * anything else. `typeof value !== 'number'` catches those before
+ * `Number.isFinite` gets a chance to — it would otherwise coerce nothing and
+ * just report `false` for a non-number, which happens to be what we want here
+ * too, but checking the type first makes that not an accident.
+ */
+export function clamp(value: unknown, min: number, max: number): number {
   // NaN from a malformed YAML value would survive Math.min/Math.max, and
   // `repeat(NaN, 1fr)` is an invalid declaration that drops the whole rule.
-  if (!Number.isFinite(value)) return min;
+  if (typeof value !== 'number' || !Number.isFinite(value)) return min;
   return Math.min(max, Math.max(min, Math.round(value)));
 }
 
