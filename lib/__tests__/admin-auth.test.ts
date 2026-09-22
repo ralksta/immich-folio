@@ -54,6 +54,19 @@ function forgeToken(signingKey: Buffer, payload: object): string {
   return `${data}.${sig}`;
 }
 
+/**
+ * The production derivation (lib/admin/auth.ts's getSigningKey()), so a
+ * forged token is rejected only for the reason each test names — the `exp`
+ * or `role` check — rather than failing the HMAC compare first with a stale
+ * key. SHA-256 of `admin:${secret}:${password}` was that key before the
+ * session key moved to scrypt; verifyAdminToken has rejected it ever since,
+ * so a token forged that way never reached the checks below the signature
+ * compare at all (#637).
+ */
+function signingKey(secret: string, password: string): Buffer {
+  return crypto.scryptSync(password, `folio-admin-session:${secret}`, 32);
+}
+
 beforeEach(() => {
   process.env.__TEST_AUTH_SECRET = AUTH_SECRET;
   process.env.__TEST_ADMIN_PASSWORD = ADMIN_PASSWORD;
@@ -135,20 +148,14 @@ describe('admin session tokens', () => {
 
   it('rejects an expired token', async () => {
     const { verifyAdminToken } = await loadAuth();
-    const key = crypto
-      .createHash('sha256')
-      .update(`admin:${AUTH_SECRET}:${ADMIN_PASSWORD}`)
-      .digest();
+    const key = signingKey(AUTH_SECRET, ADMIN_PASSWORD);
     const expired = forgeToken(key, { role: 'admin', iat: 0, exp: Date.now() - 1000 });
     expect(verifyAdminToken(expired)).toBe(false);
   });
 
   it('rejects a validly signed token whose role is not admin', async () => {
     const { verifyAdminToken } = await loadAuth();
-    const key = crypto
-      .createHash('sha256')
-      .update(`admin:${AUTH_SECRET}:${ADMIN_PASSWORD}`)
-      .digest();
+    const key = signingKey(AUTH_SECRET, ADMIN_PASSWORD);
     const wrongRole = forgeToken(key, { role: 'viewer', iat: 0, exp: Date.now() + 60_000 });
     expect(verifyAdminToken(wrongRole)).toBe(false);
   });
