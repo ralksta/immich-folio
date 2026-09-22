@@ -683,7 +683,12 @@ export default function PageBuilder() {
   }
 
   // ── Album Removal ────────────────────────────────────────────
+  // Confirmed like removeSubpage: an album entry carries its grid overrides,
+  // cover asset and manual assetOrder with it, there is no undo stack in the
+  // builder, and the only escape from an accidental click used to be
+  // reloading the page — which discards every other unsaved edit too (#597).
   function removeStandaloneAlbum(index: number) {
+    if (!confirm('Remove this album from the gallery?')) return;
     setGallery((g) => ({
       ...g,
       albums: g.albums.filter((_, i) => i !== index),
@@ -692,6 +697,7 @@ export default function PageBuilder() {
   }
 
   function removeSubpageAlbum(subpageIndex: number, albumIndex: number) {
+    if (!confirm('Remove this album from the subpage?')) return;
     setGallery((g) => {
       const subpages = [...g.subpages];
       const sp = { ...subpages[subpageIndex] };
@@ -703,6 +709,7 @@ export default function PageBuilder() {
   }
 
   function removeSectionAlbum(subpageIndex: number, sectionIndex: number, albumIndex: number) {
+    if (!confirm('Remove this album from the section?')) return;
     setGallery((g) => {
       const subpages = [...g.subpages];
       const sp = { ...subpages[subpageIndex] };
@@ -719,6 +726,7 @@ export default function PageBuilder() {
 
   // ── Hero Management ──────────────────────────────────────────
   function removeHero(index: number) {
+    if (!confirm('Remove this photo from the home page hero?')) return;
     setGallery((g) => ({
       ...g,
       hero: g.hero.filter((_, i) => i !== index),
