@@ -13,8 +13,10 @@ Photos are referenced by their Immich asset id, and those ids are specific to
 your server, so this template ships without any. Add them in the studio via
 Add Block → Photo, where the picker fills the id in for you. Written by hand it
 is `![<asset-id>:fullbleed](Caption)` for a single photo — `:wide` or no suffix
-give the narrower widths — and `![<asset-id>, <asset-id>](Caption)` for a
-side-by-side pair.
+give the narrower widths — `![<asset-id>, <asset-id>](Caption)` for a
+side-by-side pair, and three or more ids for a grid. A `::facts` paragraph of
+`Label: Value` lines renders as a definition list, and a `::map Caption` line
+puts the entry's geotagged photos on a map (see docs/journal.md).
 
 # Into the Wilderness
 

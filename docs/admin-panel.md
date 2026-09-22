@@ -95,7 +95,7 @@ Subpages, albums and sections are reordered in place; the order in the panel is 
 
 The **Journal Studio** — a split-screen editor with the blocks on the left and a live preview of the real page on the right, separated by a divider you can drag with mouse, keyboard or touch.
 
-Blocks are added from a menu (heading, text, quote, photo, photo pair), reordered, and deleted; each carries a type chip so long entries stay scannable. Photos are inserted through the asset picker, which fills in the Immich asset UUID for you. The frontmatter — cover image, title, subtitle, author, date, draft flag, password — is edited as form fields.
+Blocks are added from a menu (heading, text, quote, facts, photo, photo pair, photo grid, map), reordered, and deleted; each carries a type chip so long entries stay scannable. Photos are inserted through the asset picker, which fills in the Immich asset UUID for you. A new entry can start from a template — Wedding, Hiking, Travel, Birthday, Portrait Session, Behind the Scenes, Pets, New Series — chosen in the create dialog; the blocks arrive with placeholder text and empty photo tiles to fill. The frontmatter — cover image, title, subtitle, author, date, draft flag, password — is edited as form fields.
 
 Saving writes plain Markdown to `content/journal/<slug>.md`, which can equally be edited by hand.
 

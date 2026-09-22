@@ -137,8 +137,52 @@ real aspect ratios rather than forced equal:
 ![asset-uuid-left, asset-uuid-right](Optional caption)
 ```
 
+Three or more render as a grid — rows of up to three, each row justified like
+a pair (one shared height, widths from the real ratios, nothing cropped),
+stacked on phones:
+
+```markdown
+![uuid-1, uuid-2, uuid-3, uuid-4](Optional caption)
+```
+
 Photos in an entry open in the same lightbox as the rest of the site, with
 keyboard and swipe navigation.
+
+### Facts
+
+A `::facts` line followed by `Label: Value` lines in the same paragraph
+renders as a compact definition list — distance and elevation for a hike,
+date and venue for a wedding:
+
+```markdown
+::facts
+Distance: 21 km
+Elevation: 1,240 m
+Start: 08:30
+```
+
+The first colon splits label from value, so a time keeps its `:`. Values take
+the same inline markdown as text. Lines without a colon are ignored.
+
+### Map
+
+A `::map` line, with an optional caption after it, places the entry's own
+geotagged photos on a map as numbered pins in the order they appear in the
+entry, joined by a line:
+
+```markdown
+::map Busan → Seoul
+```
+
+There is nothing else to author: pins come from the EXIF of the photos in the
+entry and are computed when the page renders, which is why the Studio's
+preview shows the block empty. The block renders only while `map: true` is
+set in `settings.yaml`, and it honours each album's `location:` setting the
+way the map page does — `hidden` and `country` add no pin, `city` snaps to
+the same 5 km grid. Where an album allows exact positions, a journal pin is
+still snapped to a 1 km grid: the map page shows the mean of an album's
+photos in a city, never a single photo, and a story map should not be the
+first surface that places one photo at its doorstep.
 
 <p align="center">
   <img src="screenshots/journal-entry.png" width="98%" alt="A rendered journal entry with heading, body text, a fullbleed photo and a quote" />
@@ -147,7 +191,10 @@ keyboard and swipe navigation.
 
 > [!TIP]
 > Writing asset UUIDs by hand is tedious. In the [Journal Studio](#journal-studio),
-> **Add Block → Photo** opens the asset picker and fills the UUID in for you.
+> **Add Block → Photo**, **2-Photo Pair** and **Photo Grid** open the asset
+> picker and fill the UUIDs in for you; **Facts** and **Map** have their own
+> small forms. New entries can also start from a template — Wedding, Hiking,
+> Travel and the others — instead of an empty editor.
 
 ## Drafts
 

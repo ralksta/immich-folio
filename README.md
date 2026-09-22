@@ -60,7 +60,7 @@ A self-hosted portfolio powered by [Immich](https://immich.app). It acts as a **
 - **YAML gallery config** — all gallery structure defined in a single `content/gallery.yaml` file
 - **Markdown about page** — `content/about.md` with frontmatter for portrait, name, location, and gear list, editable from the admin panel
 - **Journal** — photo essays and travel stories at `/journal`, with drafts, per-entry passwords, cover images and reading times
-- **Photo Essay mode** — long-form storytelling pages alternating text with fullbleed and paired image layouts
+- **Photo Essay mode** — long-form storytelling pages alternating text with fullbleed, paired and grid image layouts, facts lists and a map of the entry's geotagged photos
 - **Unlisted subpages** _(experimental)_ — reachable by direct link, absent from the navigation
 - **Subpage on/off toggle** — take a page offline without deleting it
 - **External navigation links** _(experimental)_ — point the header at a shop, a blog, or a social profile
@@ -245,7 +245,7 @@ All gallery structure — hero images, albums, subpages, grid layout, footer —
 
 ### Journal & Photo Essays
 
-Long-form storytelling with fullbleed photos, side-by-side pairs, quotes and captions — as a standalone `/journal` section, or as a single essay on one subpage.
+Long-form storytelling with fullbleed photos, side-by-side pairs and grids, quotes, facts lists, a map of the entry's own geotagged photos and captions — as a standalone `/journal` section, or as a single essay on one subpage. New entries can start from a template.
 
 → **[Journal & Photo Essays Guide](docs/journal.md)**
 

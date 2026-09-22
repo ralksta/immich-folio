@@ -25,9 +25,16 @@ describe('journal templates', () => {
     it(`"${template.id}" never flags a placeholder as a legacy asset reference`, () => {
       for (const block of template.blocks) {
         if (block.type === 'photo') expect(block.assetId).toBe('');
-        if (block.type === 'photo-pair') {
-          expect(block.assetIds[0]).toBe('');
-          expect(block.assetIds[1]).toBe('');
+        if (block.type === 'photo-pair' || block.type === 'photo-grid') {
+          for (const id of block.assetIds) expect(id).toBe('');
+        }
+        // A facts row with an empty side is dropped on save; a template must
+        // not ship rows that vanish on first load.
+        if (block.type === 'facts') {
+          for (const item of block.items) {
+            expect(item.label).not.toBe('');
+            expect(item.value).not.toBe('');
+          }
         }
       }
     });
