@@ -16,10 +16,11 @@ interface Props {
 }
 
 const TABS = [
-  { label: 'Pages', href: '/admin/pages', match: /^\/admin(\/pages)?$/ },
+  { label: 'Pages', href: '/admin/pages', match: /^\/admin\/pages$/ },
   { label: 'Journal', href: '/admin/journal', match: /^\/admin\/journal/ },
   { label: 'Settings', href: '/admin/settings', match: /^\/admin\/settings/ },
   { label: 'Analytics', href: '/admin/analytics', match: /^\/admin\/analytics/ },
+  { label: 'Diagnostics', href: '/admin/diagnostics', match: /^\/admin\/diagnostics/ },
   { label: 'Help', href: '/admin/help', match: /^\/admin\/help/ },
 ];
 
@@ -259,24 +260,6 @@ export default function AdminDashboard({ onLogout, children }: Props) {
                         <span className="status-val">{status?.update?.current ?? '—'}</span>
                       )}
                     </div>
-                  </div>
-                  <div className="status-dropdown-footer">
-                    <Link
-                      href="/admin/diagnostics"
-                      className="admin-btn admin-btn-sm"
-                      onClick={() => setShowStatus(false)}
-                    >
-                      <Icons.IconShieldCheck size={14} /> Diagnostics
-                    </Link>
-                    <button
-                      className="admin-btn admin-btn-sm"
-                      onClick={() => {
-                        setShowStatus(false);
-                        setShowBackupModal(true);
-                      }}
-                    >
-                      <Icons.IconArchive size={14} /> Manage Backups
-                    </button>
                   </div>
                 </div>
               </>

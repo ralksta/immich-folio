@@ -473,15 +473,6 @@ h3 .svg-icon {
   border-bottom: 1px solid var(--admin-border);
 }
 
-/* ── Status Dropdown Footer ── */
-.status-dropdown-footer {
-  padding: 0.5rem 0.85rem;
-  background: var(--admin-bg-elevated);
-  border-top: 1px solid var(--admin-border);
-  display: flex;
-  justify-content: flex-end;
-}
-
 .admin-btn-sm {
   padding: 0.35rem 0.65rem !important;
   font-size: 0.75rem !important;

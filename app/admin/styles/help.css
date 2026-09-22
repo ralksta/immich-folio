@@ -60,10 +60,6 @@
   font-size: 0.78rem;
 }
 
-.help-action {
-  padding: 12px 4px 4px;
-}
-
 @media (max-width: 600px) {
   .help-shortcuts-row {
     grid-template-columns: 1fr;

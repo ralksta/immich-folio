@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import * as Icons from './Icons';
 import { en } from '@/lib/i18n/locales/en';
 import { LIGHTBOX_SHORTCUTS, shortcutDisplayKeys } from '@/lib/lightboxShortcuts';
@@ -70,16 +69,10 @@ export default function HelpView() {
           </span>
           <span className="settings-group-desc">
             Checks the things that fail silently — a wrong proxy hop count, a deleted album ID, a
-            plaintext password, an album Immich does not consider shared. It also sits behind the
-            status badge in the top bar, which is where it belongs when the question is whether
-            anything needs attention right now.
+            plaintext password, an album Immich does not consider shared. Open it from the{' '}
+            <strong>Diagnostics</strong> tab in the top bar; the status badge next to it still gives
+            a quick read on whether anything needs attention right now.
           </span>
-        </div>
-
-        <div className="help-action">
-          <Link href="/admin/diagnostics" className="admin-btn">
-            <Icons.IconShieldCheck size={14} /> Open diagnostics
-          </Link>
         </div>
       </div>
     </div>

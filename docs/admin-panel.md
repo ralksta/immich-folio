@@ -34,12 +34,14 @@ The [setup wizard](../README.md#first-run-setup) can set the password instead, s
 
 Each area has its own URL, so a section can be bookmarked and the browser's back button works as expected:
 
-| Tab           | URL                | Writes to                                   |
-| ------------- | ------------------ | ------------------------------------------- |
-| **Pages**     | `/admin/pages`     | `content/gallery.yaml`                      |
-| **Journal**   | `/admin/journal`   | `content/journal/<slug>.md`                 |
-| **Settings**  | `/admin/settings`  | `content/settings.yaml`, `content/about.md` |
-| **Analytics** | `/admin/analytics` | nothing — read-only                         |
+| Tab             | URL                  | Writes to                                   |
+| --------------- | -------------------- | ------------------------------------------- |
+| **Pages**       | `/admin/pages`       | `content/gallery.yaml`                      |
+| **Journal**     | `/admin/journal`     | `content/journal/<slug>.md`                 |
+| **Settings**    | `/admin/settings`    | `content/settings.yaml`, `content/about.md` |
+| **Analytics**   | `/admin/analytics`   | nothing — read-only                         |
+| **Diagnostics** | `/admin/diagnostics` | nothing — read-only                         |
+| **Help**        | `/admin/help`        | nothing — reference only                    |
 
 Unsaved changes raise a save bar pinned to the bottom of the viewport, so the Save button is reachable without scrolling back up. Saving applies immediately — no server restart.
 
@@ -206,7 +208,7 @@ This is useful after making external changes to config files or when Immich data
 
 The status badge in the header opens a short summary: whether Immich answers, whether `gallery.yaml` and `settings.yaml` parse, the number of cached entries, and the backup count with the timestamp of the most recent one. `settings.yaml` is optional, so its absence is not a fault — only a file that exists and cannot be parsed counts as invalid. A check that could not run (an expired session, for example) is reported as such rather than as an outage.
 
-Its **Diagnostics** button leads to the full page at `/admin/diagnostics`. Anything that wants a look is listed first; the checks that passed follow, grouped into connection, security and content. Each finding that wants a look links to where it is fixed — a finding about one album opens the subpage it is published on (or, for a standalone album, the album itself). The page also manages backups and clears the cache, and **Copy report** puts the findings on the clipboard as Markdown, ready for a GitHub issue.
+The **Diagnostics** tab in the top bar leads to the full page at `/admin/diagnostics`. Anything that wants a look is listed first; the checks that passed follow, grouped into connection, security and content. Each finding that wants a look links to where it is fixed — a finding about one album opens the subpage it is published on (or, for a standalone album, the album itself). The page also manages backups and clears the cache, and **Copy report** puts the findings on the clipboard as Markdown, ready for a GitHub issue.
 
 It also reports **alt text**. Folio has no alt-text field of its own: the Immich description of a photo becomes its alt text, as long as **Photo Description** is switched on under Settings → General. The page counts the published photos that have no description and lists them by album, each linking to the photo in Immich. Add the description there and press **Reload**. The links use Immich's own **External domain** (Administration → Settings → Server in Immich) when it is set. Otherwise they fall back to the address Folio reaches Immich at, which is often an internal Docker name your browser cannot open. Missing alt text does not colour the status badge — most libraries have some, and a badge that is never green stops being read.
 
