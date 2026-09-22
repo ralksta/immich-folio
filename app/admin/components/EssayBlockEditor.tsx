@@ -23,6 +23,7 @@ import {
   IconGrid,
   IconColumns,
   IconMap,
+  IconFolder,
   IconPlus,
   IconX,
 } from './Icons';
@@ -129,6 +130,9 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
       case 'map':
         newBlock = { type: 'map', caption: '', line: true, items: [] };
         break;
+      case 'album':
+        newBlock = { type: 'album', albumId: '', layout: 'grid' };
+        break;
     }
 
     updateBlocks([...essay.blocks, newBlock]);
@@ -188,6 +192,13 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
           onClick={() => handleAddBlock('photo-grid')}
         >
           <IconGrid size={13} /> + Photo Grid
+        </button>
+        <button
+          type="button"
+          className="admin-btn admin-btn-xs admin-btn-primary"
+          onClick={() => handleAddBlock('album')}
+        >
+          <IconFolder size={13} /> + Album
         </button>
         <button
           type="button"
@@ -747,6 +758,76 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
               </button>
             </div>
           )}
+          {/* 9. ALBUM BLOCK */}
+          {block.type === 'album' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <input
+                type="text"
+                value={block.albumId}
+                placeholder="Immich album UUID (the album picker in Pages shows ids)"
+                style={{ fontSize: '0.75rem' }}
+                onChange={(e) => handleUpdateBlock(idx, { ...block, albumId: e.target.value })}
+              />
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <input
+                  type="number"
+                  min={1}
+                  placeholder="Count (all)"
+                  aria-label="Count"
+                  style={{ flex: '1 1 100px' }}
+                  value={block.count ?? ''}
+                  onChange={(e) =>
+                    handleUpdateBlock(idx, {
+                      ...block,
+                      count: e.target.value ? Number(e.target.value) : undefined,
+                    })
+                  }
+                />
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="Skip (0)"
+                  aria-label="Skip"
+                  style={{ flex: '1 1 100px' }}
+                  value={block.skip ?? ''}
+                  onChange={(e) =>
+                    handleUpdateBlock(idx, {
+                      ...block,
+                      skip: e.target.value ? Number(e.target.value) : undefined,
+                    })
+                  }
+                />
+                <select
+                  aria-label="Layout"
+                  style={{ flex: '1 1 140px' }}
+                  value={block.layout}
+                  onChange={(e) =>
+                    handleUpdateBlock(idx, {
+                      ...block,
+                      layout: e.target.value as 'grid' | 'pairs' | 'wide',
+                    })
+                  }
+                >
+                  <option value="grid">Grid (rows of three)</option>
+                  <option value="pairs">Pairs (rows of two)</option>
+                  <option value="wide">Wide (one per row)</option>
+                </select>
+              </div>
+              <input
+                type="text"
+                value={block.caption || ''}
+                placeholder="Caption for the set (optional)"
+                onChange={(e) =>
+                  handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
+                }
+              />
+              <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-secondary)' }}>
+                Expanded into photo blocks when the page renders — the album&apos;s order, a manual
+                gallery order first. Leave count empty for the whole album.
+              </span>
+            </div>
+          )}
+
           {/* 8. MAP BLOCK */}
           {block.type === 'map' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

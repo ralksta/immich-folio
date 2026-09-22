@@ -205,6 +205,33 @@ The block renders only while `map: true` is set in `settings.yaml`, typed
 points included — that setting also means "no map tiles from CartoDB for my
 visitors".
 
+### Album
+
+"The first twelve of the Seoul album", without picking each photo:
+
+```markdown
+::album 371336b4-eb59-409c-b24e-a613f81ede5a
+count: 12
+skip: 0
+layout: grid
+caption: Twelve from Seoul
+```
+
+| Line           | Meaning                                                                         |
+| -------------- | ------------------------------------------------------------------------------- |
+| `::album <id>` | The Immich album id — the Studio's album picker fills it in.                    |
+| `count: N`     | How many photos. Default: the whole album.                                      |
+| `skip: N`      | Offset, so two blocks can split one album. Default 0.                           |
+| `layout: …`    | `grid` (rows of three, default), `pairs` (rows of two) or `wide` (one per row). |
+| `caption: …`   | One caption under the set.                                                      |
+
+The block is expanded into ordinary photo blocks when the page renders, so
+the lightbox and everything else work as for hand-picked photos. Photos come
+in the album's order; if the gallery pins a manual `assetOrder` for that
+album, those come first. The album need not be published in `gallery.yaml` —
+an entry may already show any single photo by id, and the author's pick is
+the gate for a whole album just the same.
+
 <p align="center">
   <img src="screenshots/journal-entry.png" width="98%" alt="A rendered journal entry with heading, body text, a fullbleed photo and a quote" />
 </p>

@@ -65,6 +65,14 @@ const map = (caption?: string): JournalBlock => ({
   items: [{ kind: 'all-photos' }],
 });
 
+// An album block with no album yet: the studio shows "Pick album".
+const album = (caption?: string): JournalBlock => ({
+  type: 'album',
+  albumId: '',
+  layout: 'grid',
+  ...(caption ? { caption } : {}),
+});
+
 const heading = (text: string, level = 2): JournalBlock => ({ type: 'heading', level, text });
 
 const paragraph = (text: string): JournalBlock => ({ type: 'paragraph', html: text });
@@ -124,10 +132,10 @@ export const JOURNAL_TEMPLATES: JournalTemplate[] = [
   {
     id: 'birthday',
     name: 'Birthday / Family',
-    description: 'Almost no text — a grid of moments and one full-bleed frame.',
+    description: 'Almost no text — the whole album as a grid and one full-bleed frame.',
     blocks: [
       paragraph('[One personal sentence about the day.]'),
-      grid(6),
+      album('[The day, as it happened.]'),
       photo('fullbleed', '[The one moment worth a full-bleed frame.]'),
     ],
   },

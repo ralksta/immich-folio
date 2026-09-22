@@ -10,6 +10,7 @@ import {
   type ParsedJournal,
 } from '@/lib/journal';
 import { entryMapPins } from '@/lib/journalMap';
+import { expandAlbumBlocks } from '@/lib/journalAlbum';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import { isAuthenticated } from '@/lib/auth';
 import { journalNeighbours } from '@/lib/journalNav';
@@ -121,7 +122,7 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
     notFound();
   }
 
-  const { frontmatter, blocks, referencedAssetIds } = entry.parsed;
+  const { frontmatter, blocks: authoredBlocks, referencedAssetIds } = entry.parsed;
   const isAuthedAdmin = await isAdminAuthenticated();
 
   // If draft, only visible to authenticated admin
@@ -171,14 +172,45 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
     }
   });
 
-  const rawAssets = (await Promise.all(assetPromises)).filter((a): a is ImmichAsset => a !== null);
+  const fetchedAssets = (await Promise.all(assetPromises)).filter(
+    (a): a is ImmichAsset => a !== null,
+  );
+
+  // Album blocks become photo blocks here. The raw fetch bypasses the album
+  // allowlist on purpose: an entry may already show any single photo by id,
+  // and the author's pick is the gate for a whole album just the same. An
+  // album Immich cannot deliver drops its block rather than the page.
+  const albumAssetsById = new Map<string, ImmichAsset[]>();
+  for (const block of authoredBlocks) {
+    if (block.type !== 'album' || !block.albumId || albumAssetsById.has(block.albumId)) continue;
+    try {
+      albumAssetsById.set(block.albumId, await immich.getAlbumAssetsRaw(block.albumId));
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn(`[journal] ${slug}: album ${block.albumId} could not be loaded:`, error);
+    }
+  }
+  const { blocks } = expandAlbumBlocks(
+    authoredBlocks,
+    (albumId) => albumAssetsById.get(albumId),
+    config.albumManualOrders,
+  );
+  const knownIds = new Set(fetchedAssets.map((a) => a.id));
+  const rawAssets = [...fetchedAssets];
+  for (const list of albumAssetsById.values()) {
+    for (const asset of list) {
+      if (knownIds.has(asset.id)) continue;
+      knownIds.add(asset.id);
+      rawAssets.push(asset);
+    }
+  }
 
   // EssayView drops photo blocks it cannot resolve, which is right for visitors
   // but leaves no trace of *why* a photo vanished. Legacy positional references
   // ("1", "2") are the usual cause: they only resolved against a subpage album,
   // and a standalone journal entry has none.
-  if (rawAssets.length < referencedAssetIds.length) {
-    const resolved = new Set(rawAssets.map((a) => a.id));
+  if (fetchedAssets.length < referencedAssetIds.length) {
+    const resolved = new Set(fetchedAssets.map((a) => a.id));
     const missing = referencedAssetIds.filter((id) => !resolved.has(id));
     // eslint-disable-next-line no-console
     console.warn(

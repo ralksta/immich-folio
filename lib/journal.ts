@@ -22,7 +22,22 @@ export type JournalBlock =
   | { type: 'photo-pair'; assetIds: [string, string]; caption?: string }
   | { type: 'photo-grid'; assetIds: string[]; caption?: string }
   | { type: 'facts'; items: Array<{ label: string; value: string }> }
-  | { type: 'map'; caption?: string; line: boolean; items: MapItem[]; pins?: MapPin[] };
+  | { type: 'map'; caption?: string; line: boolean; items: MapItem[]; pins?: MapPin[] }
+  | {
+      /**
+       * "x photos from an album". Expanded on the server into photo blocks
+       * (lib/journalAlbum.ts) before the page renders, so the client never
+       * sees this type; the studio expands it through the admin assets route.
+       */
+      type: 'album';
+      albumId: string;
+      count?: number;
+      skip?: number;
+      layout: AlbumBlockLayout;
+      caption?: string;
+    };
+
+export type AlbumBlockLayout = 'grid' | 'pairs' | 'wide';
 
 /**
  * What an author puts on a journal map, in the order the line is drawn.
@@ -442,6 +457,37 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
       continue;
     }
 
+    // 0c. Album: `::album <id>` with `count:`, `skip:`, `layout:` and
+    //     `caption:` lines. An empty id is the studio's unfilled placeholder.
+    const [albumFirst, ...albumRest] = chunk.split('\n');
+    const albumMatch = albumFirst.match(/^::album(?:[ \t]+(\S+))?[ \t]*$/);
+    if (albumMatch) {
+      let count: number | undefined;
+      let skip: number | undefined;
+      let layout: AlbumBlockLayout = 'grid';
+      let caption: string | undefined;
+      for (const raw of albumRest) {
+        const colon = raw.indexOf(':');
+        if (colon === -1) continue;
+        const key = raw.slice(0, colon).trim().toLowerCase();
+        const value = raw.slice(colon + 1).trim();
+        if (key === 'count' && /^\d+$/.test(value)) count = Number(value);
+        else if (key === 'skip' && /^\d+$/.test(value)) skip = Number(value);
+        else if (key === 'layout' && (value === 'grid' || value === 'pairs' || value === 'wide'))
+          layout = value;
+        else if (key === 'caption' && value) caption = renderInlineMarkdown(value);
+      }
+      blocks.push({
+        type: 'album',
+        albumId: albumMatch[1] ?? '',
+        ...(count !== undefined ? { count } : {}),
+        ...(skip ? { skip } : {}),
+        layout,
+        ...(caption ? { caption } : {}),
+      });
+      continue;
+    }
+
     // 1. Headings (# H1, ## H2, ### H3)
     // `[ \t]+` rather than `\s+`: next to `(.+)` the two overlap, and the
     // engine has to try every split of the whitespace run before failing.
@@ -623,6 +669,17 @@ export function serializeJournalMarkdown(journal: ParsedJournal): string {
           }
         }
         if (!block.line) lines.push('line: off');
+        break;
+      }
+      case 'album': {
+        lines.push(block.albumId ? `::album ${block.albumId}` : '::album');
+        if (block.count !== undefined) lines.push(`count: ${block.count}`);
+        if (block.skip) lines.push(`skip: ${block.skip}`);
+        if (block.layout !== 'grid') lines.push(`layout: ${block.layout}`);
+        if (block.caption) {
+          const caption = inlineHtmlToMarkdown(block.caption.replace(/[\r\n]+/g, ' ')).trim();
+          if (caption) lines.push(`caption: ${caption}`);
+        }
         break;
       }
       case 'facts': {

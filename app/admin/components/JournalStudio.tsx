@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import type { JournalEntrySummary, ParsedJournal, JournalBlock, MapItem } from '@/lib/journal';
 import {
@@ -32,9 +32,12 @@ import {
   IconGrid,
   IconColumns,
   IconMap,
+  IconFolder,
   IconX,
 } from './Icons';
 import AssetPicker from './AssetPicker';
+import AlbumPicker from './AlbumPicker';
+import { expandAlbumBlocks, type AlbumAssetRef } from '@/lib/journalAlbum';
 import { BlockBadge } from './BlockBadge';
 import { useUnsavedGuard } from './useUnsavedGuard';
 import { reportIfSessionExpired } from './sessionExpiry';
@@ -624,6 +627,67 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
   }, [handleSave]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /*
+   * Album blocks are expanded for the preview the way the page expands them,
+   * from the admin assets route; until an album has loaded its block simply
+   * does not render. The picker's album list is fetched on first use.
+   */
+  const [albumAssets, setAlbumAssets] = useState<Record<string, AlbumAssetRef[]>>({});
+  const albumRequested = useRef(new Set<string>());
+  const [albumList, setAlbumList] = useState<Parameters<typeof AlbumPicker>[0]['albums'] | null>(
+    null,
+  );
+  const [albumPickerTarget, setAlbumPickerTarget] = useState<((albumId: string) => void) | null>(
+    null,
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    for (const block of parsed.blocks) {
+      if (block.type !== 'album' || !block.albumId || albumRequested.current.has(block.albumId))
+        continue;
+      const albumId = block.albumId;
+      albumRequested.current.add(albumId);
+      fetch(`/api/admin/albums/${albumId}/assets?types=all`)
+        .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+        .then((data: { assets: AlbumAssetRef[] }) => {
+          if (!cancelled) setAlbumAssets((prev) => ({ ...prev, [albumId]: data.assets }));
+        })
+        .catch(() => {
+          // Let a retry happen after a save or a re-pick.
+          albumRequested.current.delete(albumId);
+        });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [parsed.blocks]);
+
+  const openAlbumPicker = (onSelect: (albumId: string) => void) => {
+    setAlbumPickerTarget(() => onSelect);
+    if (albumList === null) {
+      fetch('/api/admin/albums')
+        .then((res) => res.json())
+        .then((data) => setAlbumList(data.albums ?? []))
+        .catch(() => setAlbumList([]));
+    }
+  };
+
+  const previewBlocks = useMemo(
+    () => expandAlbumBlocks(parsed.blocks, (id) => albumAssets[id]).blocks,
+    [parsed.blocks, albumAssets],
+  );
+  const previewIds = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...(parsed.frontmatter.coverAssetId ? [parsed.frontmatter.coverAssetId] : []),
+          ...collectAssetIds(previewBlocks),
+        ]),
+      ),
+    [previewBlocks, parsed.frontmatter.coverAssetId],
+  );
+
+  /*
    * The preview used to hard-code 3:2 for every photo, so the studio showed a
    * cropped, uniform grid while the published page laid the photos out by their
    * real proportions. There is no admin endpoint that reports asset dimensions,
@@ -633,7 +697,7 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
 
   useEffect(() => {
     let cancelled = false;
-    for (const id of parsed.referencedAssetIds) {
+    for (const id of previewIds) {
       if (!id || measuredRef.current.has(id)) continue;
       measuredRef.current.add(id);
 
@@ -655,7 +719,7 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
     return () => {
       cancelled = true;
     };
-  }, [parsed.referencedAssetIds]);
+  }, [previewIds]);
 
   // Block manipulation
   const handleAddBlock = (type: JournalBlock['type']) => {
@@ -691,6 +755,9 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
       case 'map':
         newBlock = { type: 'map', caption: '', line: true, items: [] };
         break;
+      case 'album':
+        newBlock = { type: 'album', albumId: '', layout: 'grid' };
+        break;
     }
     handleBlocksChange([...parsed.blocks, newBlock]);
   };
@@ -715,7 +782,7 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
   };
 
   // Mock PhotoItems for preview
-  const previewAssets: PhotoItem[] = parsed.referencedAssetIds.map((id) => ({
+  const previewAssets: PhotoItem[] = previewIds.map((id) => ({
     id,
     type: 'image',
     thumbUrl: `/api/admin/thumbnail/${id}`,
@@ -905,6 +972,13 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
                   onClick={() => handleAddBlock('photo-grid')}
                 >
                   <IconGrid size={13} /> + Photo Grid
+                </button>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-xs admin-btn-primary"
+                  onClick={() => handleAddBlock('album')}
+                >
+                  <IconFolder size={13} /> + Album
                 </button>
                 <button
                   type="button"
@@ -1312,6 +1386,102 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
                         </div>
                       )}
 
+                      {block.type === 'album' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div className="journal-album-row">
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn-xs admin-btn-primary"
+                              onClick={() =>
+                                openAlbumPicker((albumId) =>
+                                  handleUpdateBlock(idx, { ...block, albumId }),
+                                )
+                              }
+                            >
+                              <IconFolder size={12} />{' '}
+                              {block.albumId
+                                ? (albumList?.find((a) => a.id === block.albumId)?.albumName ??
+                                  'Change album')
+                                : 'Pick album'}
+                            </button>
+                            {block.albumId && (
+                              <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
+                                {albumAssets[block.albumId]
+                                  ? `${albumAssets[block.albumId].length} photos in album`
+                                  : 'loading…'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="journal-album-row">
+                            <label className="journal-album-field">
+                              Count
+                              <input
+                                type="number"
+                                min={1}
+                                className="admin-input"
+                                placeholder="all"
+                                value={block.count ?? ''}
+                                onChange={(e) =>
+                                  handleUpdateBlock(idx, {
+                                    ...block,
+                                    count: e.target.value ? Number(e.target.value) : undefined,
+                                  })
+                                }
+                              />
+                            </label>
+                            <label className="journal-album-field">
+                              Skip
+                              <input
+                                type="number"
+                                min={0}
+                                className="admin-input"
+                                placeholder="0"
+                                value={block.skip ?? ''}
+                                onChange={(e) =>
+                                  handleUpdateBlock(idx, {
+                                    ...block,
+                                    skip: e.target.value ? Number(e.target.value) : undefined,
+                                  })
+                                }
+                              />
+                            </label>
+                            <label className="journal-album-field">
+                              Layout
+                              <select
+                                className="admin-input"
+                                value={block.layout}
+                                onChange={(e) =>
+                                  handleUpdateBlock(idx, {
+                                    ...block,
+                                    layout: e.target.value as 'grid' | 'pairs' | 'wide',
+                                  })
+                                }
+                              >
+                                <option value="grid">Grid (rows of three)</option>
+                                <option value="pairs">Pairs (rows of two)</option>
+                                <option value="wide">Wide (one per row)</option>
+                              </select>
+                            </label>
+                          </div>
+                          <input
+                            type="text"
+                            className="admin-input"
+                            placeholder="Caption for the set (optional)"
+                            value={block.caption || ''}
+                            onChange={(e) =>
+                              handleUpdateBlock(idx, {
+                                ...block,
+                                caption: e.target.value || undefined,
+                              })
+                            }
+                          />
+                          <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
+                            Photos follow the album&apos;s order (a manual order in the gallery
+                            comes first). Count and skip pick a slice; leave count empty for all.
+                          </span>
+                        </div>
+                      )}
+
                       {block.type === 'map' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           {mapEnabled === false && (
@@ -1578,7 +1748,7 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
 
           <div className={`journal-preview-frame ${viewport}`}>
             <EssayView
-              essay={parsed}
+              essay={{ ...parsed, blocks: previewBlocks }}
               assets={previewAssets}
               title={parsed.frontmatter.title}
               subtitle={parsed.frontmatter.subtitle}
@@ -1757,6 +1927,19 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Album Picker Modal */}
+      {albumPickerTarget && albumList !== null && (
+        <AlbumPicker
+          albums={albumList}
+          usedAlbumIds={new Set()}
+          onSelect={(albumId) => {
+            albumPickerTarget(albumId);
+            setAlbumPickerTarget(null);
+          }}
+          onClose={() => setAlbumPickerTarget(null)}
+        />
       )}
 
       {/* Asset Picker Modal */}

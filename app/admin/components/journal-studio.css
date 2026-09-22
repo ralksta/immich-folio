@@ -490,6 +490,29 @@
   align-items: center;
 }
 
+/* ── Album block (editor) ────────────────────────────────────────── */
+
+.journal-album-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.journal-album-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.7rem;
+  opacity: 0.85;
+  flex: 1 1 120px;
+  min-width: 0;
+}
+
+.journal-album-field .admin-input {
+  width: 100%;
+}
+
 /* ── Map block (editor pin rows) ─────────────────────────────────── */
 
 .journal-map-row {

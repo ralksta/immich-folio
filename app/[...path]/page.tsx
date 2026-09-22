@@ -47,6 +47,8 @@ import { SubpageGridView } from './SubpageGridView';
 import { EssayView } from './EssayView';
 import { parseEssayMarkdown, type EssayBlock } from '@/lib/essay';
 import { pinsForEntry } from '@/lib/journalMap';
+import { expandAlbumBlocks } from '@/lib/journalAlbum';
+import { mapBlockAssetIds } from '@/lib/journal';
 import { strictestPrecision, type LocationPrecision } from '@/lib/mapPrecision';
 import { loadEssayFromFile } from '@/lib/admin/journal-service';
 import { getServerDictionary } from '@/lib/i18n/server';
@@ -437,6 +439,43 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         openAlbums.map((a) => immich.getAlbumBySlug(a.slug, slug, forceFresh)),
       );
       const allAssets = allAlbums.flatMap((a) => (a ? a.assets : []));
+
+      // Album blocks in an essay file: expand them the way the journal page
+      // does, from a raw fetch, and add those photos to the page's assets.
+      // Their ids are encoded here because this path hands EssayView tokens.
+      if (essayParsed?.blocks.some((b) => b.type === 'album')) {
+        const byAlbum = new Map<string, typeof allAssets>();
+        for (const b of essayParsed.blocks) {
+          if (b.type !== 'album' || !b.albumId || byAlbum.has(b.albumId)) continue;
+          try {
+            byAlbum.set(b.albumId, await immich.getAlbumAssetsRaw(b.albumId));
+          } catch (error) {
+            // eslint-disable-next-line no-console
+            console.warn(`[essay] ${slug}: album ${b.albumId} could not be loaded:`, error);
+          }
+        }
+        const expanded = expandAlbumBlocks(
+          essayParsed.blocks,
+          (id) => byAlbum.get(id),
+          config.albumManualOrders,
+        );
+        const albumIds = new Set(expanded.albumAssetIds);
+        const known = new Set(allAssets.map((a) => a.id));
+        for (const list of byAlbum.values()) {
+          for (const asset of list) {
+            if (!albumIds.has(asset.id) || known.has(asset.id)) continue;
+            known.add(asset.id);
+            allAssets.push(asset);
+          }
+        }
+        essayParsed = {
+          ...essayParsed,
+          blocks: expanded.blocks.map((b) =>
+            mapBlockAssetIds(b, (id) => (albumIds.has(id) ? encodeAssetId(id) : id)),
+          ),
+        };
+      }
+
       const images = toPhotoItems(
         allAssets,
         config.exif.onHover && config.exif.camera,
