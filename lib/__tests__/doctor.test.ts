@@ -94,6 +94,19 @@ describe('checkProxyHops', () => {
   it('accepts one configured hop against one corroborated entry', () => {
     expect(checkProxyHops(1, 1, true).level).toBe('ok');
   });
+
+  /**
+   * Cloudflare (1 hop) in front of nginx (1 more, 2 total) with the value set
+   * to 1 used to report "matches the observed chain" — the client IP was
+   * actually read from the Cloudflare edge address, so every visitor behind
+   * that PoP shared one rate-limit bucket (#629).
+   */
+  it('warns, not passes, when fewer hops are configured than arrived', () => {
+    const f = checkProxyHops(1, 2, true);
+    expect(f.level).toBe('warn');
+    expect(f.title).toContain('1');
+    expect(f.title).toContain('2');
+  });
 });
 
 describe('checkAlbumIds', () => {

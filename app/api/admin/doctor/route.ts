@@ -80,18 +80,25 @@ export const GET = withAdmin(async (request: NextRequest) => {
 
     if (albumRes) {
       try {
-        albums = (await albumRes.json()) as AlbumRef[];
+        const parsed: unknown = await albumRes.json();
+        if (Array.isArray(parsed)) albums = parsed as AlbumRef[];
       } catch {
         // A malformed body is already reflected by the call above.
       }
     }
 
     findings.push(checkImmichCalls(calls));
-  }
 
-  if (albums.length) {
-    findings.push(checkAlbumIds(config.albums, albums));
-    findings.push(checkAlbumsShared(config.albums, albums));
+    // Whenever albums are configured, run the check even if Immich answered
+    // with an empty list — an API key regenerated under a different account,
+    // say. `if (albums.length)` used to skip this entirely, so a `200 []`
+    // response passed every connection check and reported nothing about
+    // albums at all, while every album page was silently empty (#629).
+    // checkAlbumIds treats every configured ID as missing when none resolve.
+    if (config.albums.length) {
+      findings.push(checkAlbumIds(config.albums, albums));
+      findings.push(checkAlbumsShared(config.albums, albums));
+    }
   }
 
   // ── Passwords: every place one can be configured ─────────────────────

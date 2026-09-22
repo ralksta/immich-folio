@@ -147,6 +147,24 @@ export function checkProxyHops(
     };
   }
 
+  // configuredHops is between 0 and provenHops (both handled above), so the
+  // position read is still inside the chain rather than at its start: every
+  // request is read from a proxy's own address, not the client behind it.
+  // Cloudflare (1 hop) in front of nginx (1 more, 2 total) with the value set
+  // to 1 reads the Cloudflare edge address, and every visitor behind that
+  // edge shares one rate-limit bucket — this used to report "matches the
+  // observed chain".
+  if (configuredHops < provenHops) {
+    return {
+      id: 'proxy-hops',
+      level: 'warn',
+      title: `TRUSTED_PROXY_HOPS is ${configuredHops}, but a chain of ${provenHops} proxy hops was seen`,
+      detail:
+        'The client IP is read from a position still inside the proxy chain, not the real client — ' +
+        `every visitor behind that hop can share one rate-limit bucket. ${provenHops} is what this request suggests.`,
+    };
+  }
+
   return {
     id: 'proxy-hops',
     level: 'ok',

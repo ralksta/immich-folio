@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -14,6 +14,7 @@ import {
   findUnwritable,
   formatReport,
   frontmatterPassword,
+  gatherFindings,
   reportWritable,
   loadDotEnv,
   resolveCredentials,
@@ -423,5 +424,69 @@ describe('shouldUseColor', () => {
   it('honours FORCE_COLOR when the output is piped', () => {
     expect(shouldUseColor({ FORCE_COLOR: '1' }, false)).toBe(true);
     expect(shouldUseColor({ FORCE_COLOR: '0' }, false)).toBe(false);
+  });
+});
+
+/**
+ * `if (albums.length)` used to skip the album check entirely when Immich
+ * answered with an empty list — an API key regenerated under a different
+ * account, say — so every connection check passed while every album page
+ * was silently empty (#629). gatherFindings is the whole pipeline; these
+ * cover it end to end rather than just the pure checkAlbumIds function.
+ */
+describe('gatherFindings — album checks (#629)', () => {
+  const ALBUM_ID = '11111111-1111-1111-1111-111111111111';
+
+  function envFor(dir: string): EnvLike {
+    return {
+      INSTALL_CONTENT_DIR: dir,
+      IMMICH_API_URL: 'https://immich.example',
+      IMMICH_API_KEY: 'key',
+      AUTH_SECRET: 'x'.repeat(32),
+    };
+  }
+
+  function stubEmptyAlbumsFetch() {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.includes('/albums')) {
+        return { ok: true, json: async () => [] } as Response;
+      }
+      return { ok: true, json: async () => ({}) } as Response;
+    });
+    vi.stubGlobal('fetch', fetchMock);
+  }
+
+  it('reports every configured album as missing when Immich returns an empty list', async () => {
+    const dir = tmpdir();
+    try {
+      fs.writeFileSync(path.join(dir, 'gallery.yaml'), `albums:\n  - ${ALBUM_ID}\n`);
+      stubEmptyAlbumsFetch();
+
+      const findings = await gatherFindings(dir, envFor(dir));
+      const albumFinding = findings.find((f) => f.id === 'album-ids');
+
+      expect(albumFinding?.level).toBe('error');
+      expect(albumFinding?.title).toContain('1 of 1');
+    } finally {
+      vi.unstubAllGlobals();
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('still warns "no albums configured" when none are configured at all', async () => {
+    const dir = tmpdir();
+    try {
+      fs.writeFileSync(path.join(dir, 'gallery.yaml'), 'albums: []\n');
+      stubEmptyAlbumsFetch();
+
+      const findings = await gatherFindings(dir, envFor(dir));
+      const albumFinding = findings.find((f) => f.id === 'album-ids');
+
+      expect(albumFinding?.level).toBe('warn');
+      expect(albumFinding?.title).toContain('No albums configured');
+    } finally {
+      vi.unstubAllGlobals();
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
