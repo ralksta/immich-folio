@@ -302,6 +302,24 @@ function EssayViewContent({
         );
       }
 
+      case 'facts':
+        if (block.items.length === 0) return null;
+        return (
+          <FadeIn key={idx}>
+            <dl className="essay-facts">
+              {block.items.map((item, i) => (
+                <div key={i} className="essay-facts__item">
+                  <dt className="essay-facts__label">{item.label}</dt>
+                  <dd
+                    className="essay-facts__value"
+                    dangerouslySetInnerHTML={{ __html: item.value }}
+                  />
+                </div>
+              ))}
+            </dl>
+          </FadeIn>
+        );
+
       default:
         return null;
     }

@@ -8,6 +8,7 @@ import {
   IconCamera,
   IconArrowLeftRight,
   IconGrid,
+  IconColumns,
 } from './Icons';
 
 type BlockType = JournalBlock['type'];
@@ -27,6 +28,7 @@ const BLOCK_META: Record<BlockType, { label: string; Icon: typeof IconFileText }
   photo: { label: 'Photo', Icon: IconCamera },
   'photo-pair': { label: 'Photo Pair', Icon: IconArrowLeftRight },
   'photo-grid': { label: 'Photo Grid', Icon: IconGrid },
+  facts: { label: 'Facts', Icon: IconColumns },
 };
 
 interface BlockBadgeProps {

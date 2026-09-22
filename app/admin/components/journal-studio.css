@@ -481,6 +481,15 @@
   padding: 2px 5px;
 }
 
+/* ── Facts block (editor rows) ───────────────────────────────────── */
+
+.journal-facts-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
 /* ── Card meta & status ───────────────────────────────────────────── */
 
 .journal-admin-card-meta span {

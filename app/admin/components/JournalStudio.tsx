@@ -29,6 +29,7 @@ import {
   IconLock,
   IconCheck,
   IconGrid,
+  IconColumns,
   IconX,
 } from './Icons';
 import AssetPicker from './AssetPicker';
@@ -667,6 +668,15 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
       case 'photo-grid':
         newBlock = { type: 'photo-grid', assetIds: ['', '', ''], caption: '' };
         break;
+      case 'facts':
+        newBlock = {
+          type: 'facts',
+          items: [
+            { label: '', value: '' },
+            { label: '', value: '' },
+          ],
+        };
+        break;
     }
     handleBlocksChange([...parsed.blocks, newBlock]);
   };
@@ -852,6 +862,13 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
                   onClick={() => handleAddBlock('quote')}
                 >
                   <IconQuote size={13} /> + Quote
+                </button>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-xs"
+                  onClick={() => handleAddBlock('facts')}
+                >
+                  <IconColumns size={13} /> + Facts
                 </button>
                 <div className="essay-toolbar-divider" />
                 <button
@@ -1206,6 +1223,71 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
                               handleUpdateBlock(idx, { ...block, caption: e.target.value })
                             }
                           />
+                        </div>
+                      )}
+
+                      {block.type === 'facts' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {block.items.map((item, fIdx) => (
+                            <div key={fIdx} className="journal-facts-row">
+                              <input
+                                type="text"
+                                className="admin-input"
+                                placeholder="Label, e.g. Distance"
+                                value={item.label}
+                                onChange={(e) =>
+                                  handleUpdateBlock(idx, {
+                                    ...block,
+                                    items: block.items.map((it, i) =>
+                                      i === fIdx ? { ...it, label: e.target.value } : it,
+                                    ),
+                                  })
+                                }
+                              />
+                              <input
+                                type="text"
+                                className="admin-input"
+                                placeholder="Value, e.g. 21 km"
+                                value={item.value}
+                                onChange={(e) =>
+                                  handleUpdateBlock(idx, {
+                                    ...block,
+                                    items: block.items.map((it, i) =>
+                                      i === fIdx ? { ...it, value: e.target.value } : it,
+                                    ),
+                                  })
+                                }
+                              />
+                              <button
+                                type="button"
+                                className="admin-btn admin-btn-xs"
+                                aria-label={`Remove fact #${fIdx + 1}`}
+                                disabled={block.items.length <= 1}
+                                onClick={() =>
+                                  handleUpdateBlock(idx, {
+                                    ...block,
+                                    items: block.items.filter((_, i) => i !== fIdx),
+                                  })
+                                }
+                              >
+                                <IconX size={11} />
+                              </button>
+                            </div>
+                          ))}
+                          <div>
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn-xs"
+                              onClick={() =>
+                                handleUpdateBlock(idx, {
+                                  ...block,
+                                  items: [...block.items, { label: '', value: '' }],
+                                })
+                              }
+                            >
+                              <IconPlus size={12} /> Add fact
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>

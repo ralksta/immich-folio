@@ -201,6 +201,44 @@
   }
 }
 
+/* Facts: a short definition list in the text column — distance, venue, date. */
+.essay-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 2rem;
+  max-width: var(--essay-contained, 680px);
+  margin: 2.5rem auto;
+  padding: 1.25rem 0;
+  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+}
+
+.essay-facts__item {
+  margin: 0;
+}
+
+.essay-facts__label {
+  font-family: var(--font-caption);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.essay-facts__value {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+@media (max-width: 640px) {
+  .essay-facts {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Grid: rows of up to three, each row justified exactly like a pair. */
 .essay-grid {
   display: flex;

@@ -19,6 +19,7 @@ import {
   IconSparkles,
   IconArrowLeftRight,
   IconGrid,
+  IconColumns,
   IconPlus,
   IconX,
 } from './Icons';
@@ -113,6 +114,15 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
       case 'photo-grid':
         newBlock = { type: 'photo-grid', assetIds: ['', '', ''], caption: '' };
         break;
+      case 'facts':
+        newBlock = {
+          type: 'facts',
+          items: [
+            { label: '', value: '' },
+            { label: '', value: '' },
+          ],
+        };
+        break;
     }
 
     updateBlocks([...essay.blocks, newBlock]);
@@ -143,6 +153,13 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
           onClick={() => handleAddBlock('quote')}
         >
           <IconQuote size={13} /> + Pullquote
+        </button>
+        <button
+          type="button"
+          className="admin-btn admin-btn-xs"
+          onClick={() => handleAddBlock('facts')}
+        >
+          <IconColumns size={13} /> + Facts
         </button>
         <div className="essay-toolbar-divider" />
         <button
@@ -645,6 +662,76 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                 }
                 placeholder="Grid caption (optional)"
               />
+            </div>
+          )}
+          {/* 7. FACTS BLOCK */}
+          {block.type === 'facts' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {block.items.map((item, fIdx) => (
+                <div
+                  key={fIdx}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 2fr auto',
+                    gap: '8px',
+                    alignItems: 'center',
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={item.label}
+                    placeholder="Label, e.g. Distance"
+                    onChange={(e) =>
+                      handleUpdateBlock(idx, {
+                        ...block,
+                        items: block.items.map((it, i) =>
+                          i === fIdx ? { ...it, label: e.target.value } : it,
+                        ),
+                      })
+                    }
+                  />
+                  <input
+                    type="text"
+                    value={item.value}
+                    placeholder="Value, e.g. 21 km"
+                    onChange={(e) =>
+                      handleUpdateBlock(idx, {
+                        ...block,
+                        items: block.items.map((it, i) =>
+                          i === fIdx ? { ...it, value: e.target.value } : it,
+                        ),
+                      })
+                    }
+                  />
+                  <button
+                    type="button"
+                    className="admin-btn-icon"
+                    title="Remove fact"
+                    disabled={block.items.length <= 1}
+                    onClick={() =>
+                      handleUpdateBlock(idx, {
+                        ...block,
+                        items: block.items.filter((_, i) => i !== fIdx),
+                      })
+                    }
+                  >
+                    <IconX size={13} />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="admin-btn admin-btn-xs"
+                style={{ alignSelf: 'flex-start' }}
+                onClick={() =>
+                  handleUpdateBlock(idx, {
+                    ...block,
+                    items: [...block.items, { label: '', value: '' }],
+                  })
+                }
+              >
+                <IconPlus size={12} /> Add fact
+              </button>
             </div>
           )}
         </div>

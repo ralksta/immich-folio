@@ -20,7 +20,8 @@ export type JournalBlock =
   | { type: 'quote'; text: string; author?: string }
   | { type: 'photo'; assetId: string; caption?: string; layout: 'fullbleed' | 'wide' | 'contained' }
   | { type: 'photo-pair'; assetIds: [string, string]; caption?: string }
-  | { type: 'photo-grid'; assetIds: string[]; caption?: string };
+  | { type: 'photo-grid'; assetIds: string[]; caption?: string }
+  | { type: 'facts'; items: Array<{ label: string; value: string }> };
 
 export interface ParsedJournal {
   frontmatter: JournalFrontmatter;
@@ -333,6 +334,26 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
     .filter(Boolean);
 
   for (const chunk of chunks) {
+    // 0. Facts: a `::facts` line, then `Label: Value` lines in the same chunk.
+    //    `::` because `![facts]` would read as a legacy photo reference and `#`
+    //    and `>` are taken; no paragraph starts that way. The first colon
+    //    splits, so `Time: 08:30` keeps its value. Lines without one, or with
+    //    an empty side, are ignored.
+    if (chunk.startsWith('::facts')) {
+      const items = chunk
+        .split('\n')
+        .slice(1)
+        .flatMap((line) => {
+          const colon = line.indexOf(':');
+          if (colon === -1) return [];
+          const label = line.slice(0, colon).trim();
+          const value = line.slice(colon + 1).trim();
+          return label && value ? [{ label, value: renderInlineMarkdown(value) }] : [];
+        });
+      blocks.push({ type: 'facts', items });
+      continue;
+    }
+
     // 1. Headings (# H1, ## H2, ### H3)
     // `[ \t]+` rather than `\s+`: next to `(.+)` the two overlap, and the
     // engine has to try every split of the whitespace run before failing.
@@ -499,6 +520,17 @@ export function serializeJournalMarkdown(journal: ParsedJournal): string {
         lines.push(`![${block.assetIds.join(', ')}](${caption})`);
         break;
       }
+      case 'facts': {
+        lines.push('::facts');
+        for (const item of block.items) {
+          const label = item.label.trim();
+          const value = inlineHtmlToMarkdown(item.value)
+            .replace(/[\r\n]+/g, ' ')
+            .trim();
+          if (label && value) lines.push(`${label}: ${value}`);
+        }
+        break;
+      }
     }
     lines.push('');
   }
@@ -508,7 +540,11 @@ export function serializeJournalMarkdown(journal: ParsedJournal): string {
 
 /** Calculate approximate word count and reading time */
 export function calculateReadingTime(text: string): { words: number; minutes: number } {
-  const plainText = text.replace(/<[^>]+>/g, ' ').replace(/!\[.*?\]\(.*?\)/g, ' ');
+  const plainText = text
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/!\[.*?\]\(.*?\)/g, ' ')
+    // Directive lines (`::facts`, `::map …`) are structure, not reading.
+    .replace(/^::\w+.*$/gm, ' ');
   const words = plainText.trim().split(/\s+/).filter(Boolean).length;
   const minutes = Math.max(1, Math.round(words / 200));
   return { words, minutes };
