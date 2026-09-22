@@ -22,7 +22,24 @@ export type JournalBlock =
   | { type: 'photo-pair'; assetIds: [string, string]; caption?: string }
   | { type: 'photo-grid'; assetIds: string[]; caption?: string }
   | { type: 'facts'; items: Array<{ label: string; value: string }> }
-  | { type: 'map'; caption?: string; pins?: MapPin[] };
+  | { type: 'map'; caption?: string; line: boolean; items: MapItem[]; pins?: MapPin[] };
+
+/**
+ * What an author puts on a journal map, in the order the line is drawn.
+ * A typed point is published as typed. A photo item is placed by its EXIF
+ * position under the album's `location:` precision; `all-photos` expands to
+ * every geotagged photo of the entry not already listed.
+ */
+export type MapItem =
+  | { kind: 'point'; label?: string; lat: number; lng: number }
+  | { kind: 'photo'; assetId: string }
+  | { kind: 'all-photos' };
+
+export function isValidCoordinate(lat: number, lng: number): boolean {
+  return (
+    Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+  );
+}
 
 /**
  * A position on a journal map. Never authored and never serialized: the
@@ -53,6 +70,9 @@ export function collectAssetIds(blocks: readonly JournalBlock[]): string[] {
       if (block.assetId) ids.add(block.assetId);
     } else if (block.type === 'photo-pair' || block.type === 'photo-grid') {
       for (const id of block.assetIds) if (id) ids.add(id);
+    } else if (block.type === 'map') {
+      for (const item of block.items)
+        if (item.kind === 'photo' && item.assetId) ids.add(item.assetId);
     }
   }
   return Array.from(ids);
@@ -71,6 +91,13 @@ export function mapBlockAssetIds(block: JournalBlock, fn: (id: string) => string
       return { ...block, assetIds: [fn(block.assetIds[0]), fn(block.assetIds[1])] };
     case 'photo-grid':
       return { ...block, assetIds: block.assetIds.map(fn) };
+    case 'map':
+      return {
+        ...block,
+        items: block.items.map((item) =>
+          item.kind === 'photo' ? { ...item, assetId: fn(item.assetId) } : item,
+        ),
+      };
     default:
       return block;
   }
@@ -346,12 +373,52 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
     .filter(Boolean);
 
   for (const chunk of chunks) {
-    // 0a. Map: `::map` with an optional caption on the same line. Pins are
-    //     not in the file — see MapPin.
-    const mapMatch = chunk.match(/^::map(?:[ \t]+(\S.*))?$/m);
-    if (mapMatch && chunk.startsWith('::map')) {
+    // 0a. Map: `::map Caption`, then one line per pin in drawing order —
+    //     `Label: lat, lng` or `lat, lng` for a typed point, `photo: <id>` for
+    //     a photo placed by its GPS, `photos: all` for every geotagged photo
+    //     of the entry, `line: off` to drop the connecting line. Pins are
+    //     never in the file — see MapPin. Malformed lines are ignored.
+    const [mapFirst, ...mapRest] = chunk.split('\n');
+    const mapMatch = mapFirst.match(/^::map(?:[ \t]+(\S.*))?[ \t]*$/);
+    if (mapMatch) {
       const caption = mapMatch[1]?.trim();
-      blocks.push({ type: 'map', caption: caption ? renderInlineMarkdown(caption) : undefined });
+      const items: MapItem[] = [];
+      let line = true;
+      const coords = (s: string) => {
+        const m = s.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+        if (!m) return null;
+        const lat = Number(m[1]);
+        const lng = Number(m[2]);
+        return isValidCoordinate(lat, lng) ? { lat, lng } : null;
+      };
+      for (const raw of mapRest) {
+        const text = raw.trim();
+        if (!text) continue;
+        const colon = text.indexOf(':');
+        const key = colon === -1 ? '' : text.slice(0, colon).trim();
+        const value = colon === -1 ? text : text.slice(colon + 1).trim();
+        const lowerKey = key.toLowerCase();
+        if (lowerKey === 'line') {
+          line = !['off', 'false', 'no', '0'].includes(value.toLowerCase());
+        } else if (lowerKey === 'photos') {
+          if (value.toLowerCase() === 'all') items.push({ kind: 'all-photos' });
+        } else if (lowerKey === 'photo') {
+          for (const id of value.split(',')) {
+            const assetId = id.trim();
+            if (assetId) items.push({ kind: 'photo', assetId });
+          }
+        } else {
+          const pos = coords(value);
+          if (pos)
+            items.push(key ? { kind: 'point', label: key, ...pos } : { kind: 'point', ...pos });
+        }
+      }
+      blocks.push({
+        type: 'map',
+        caption: caption ? renderInlineMarkdown(caption) : undefined,
+        line,
+        items,
+      });
       continue;
     }
 
@@ -546,6 +613,16 @@ export function serializeJournalMarkdown(journal: ParsedJournal): string {
           ? inlineHtmlToMarkdown(block.caption.replace(/[\r\n]+/g, ' ')).trim()
           : '';
         lines.push(caption ? `::map ${caption}` : '::map');
+        for (const item of block.items) {
+          if (item.kind === 'all-photos') lines.push('photos: all');
+          else if (item.kind === 'photo') {
+            if (item.assetId) lines.push(`photo: ${item.assetId}`);
+          } else if (isValidCoordinate(item.lat, item.lng)) {
+            const label = item.label?.replace(/[\r\n]+/g, ' ').trim();
+            lines.push(label ? `${label}: ${item.lat}, ${item.lng}` : `${item.lat}, ${item.lng}`);
+          }
+        }
+        if (!block.line) lines.push('line: off');
         break;
       }
       case 'facts': {

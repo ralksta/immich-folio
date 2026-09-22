@@ -166,23 +166,44 @@ the same inline markdown as text. Lines without a colon are ignored.
 
 ### Map
 
-A `::map` line, with an optional caption after it, places the entry's own
-geotagged photos on a map as numbered pins in the order they appear in the
-entry, joined by a line:
+A `::map` line, with an optional caption after it, starts a map. The lines
+after it say what is on it — numbered pins in the order written, joined by
+a line:
 
 ```markdown
 ::map Busan → Seoul
+Busan harbour: 35.098, 129.036
+photo: 8f1c0e2a-…
+photos: all
+Seoul: 37.566, 126.978
+line: off
 ```
 
-There is nothing else to author: pins come from the EXIF of the photos in the
-entry and are computed when the page renders, which is why the Studio's
-preview shows the block empty. The block renders only while `map: true` is
-set in `settings.yaml`, and it honours each album's `location:` setting the
-way the map page does — `hidden` and `country` add no pin, `city` snaps to
-the same 5 km grid. Where an album allows exact positions, a journal pin is
-still snapped to a 1 km grid: the map page shows the mean of an album's
+| Line              | Puts on the map                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| `Label: lat, lng` | A point with a label, exactly where you typed it.                                                 |
+| `lat, lng`        | A point without a label.                                                                          |
+| `photo: <uuid>`   | One of the entry's photos, placed by its GPS. Several ids may follow, comma-separated.            |
+| `photos: all`     | Every geotagged photo in the entry, in the order they appear — skipping ids already listed above. |
+| `line: off`       | No connecting line. The default draws one when there are two or more pins.                        |
+
+A map with no lines renders nothing. `photo`, `photos` and `line` are reserved
+as labels; a coordinate pair that does not parse, or lies outside ±90 / ±180,
+is ignored (the Studio warns before you save).
+
+Typed points are published as typed — they are your content. Photo pins are
+derived from EXIF, so they follow each album's `location:` setting the way
+the map page does: `hidden` and `country` add no pin, `city` snaps to the
+same 5 km grid, and where an album allows exact positions a journal pin is
+still snapped to a 1 km grid — the map page shows the mean of an album's
 photos in a city, never a single photo, and a story map should not be the
-first surface that places one photo at its doorstep.
+first surface that places one photo at its doorstep. Photo pins are computed
+when the page renders; the Studio's preview shows typed points right away and
+leaves photo pins for the live page.
+
+The block renders only while `map: true` is set in `settings.yaml`, typed
+points included — that setting also means "no map tiles from CartoDB for my
+visitors".
 
 <p align="center">
   <img src="screenshots/journal-entry.png" width="98%" alt="A rendered journal entry with heading, body text, a fullbleed photo and a quote" />

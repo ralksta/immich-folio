@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import type { JournalEntrySummary, ParsedJournal, JournalBlock } from '@/lib/journal';
+import type { JournalEntrySummary, ParsedJournal, JournalBlock, MapItem } from '@/lib/journal';
 import {
   parseJournalMarkdown,
   serializeJournalMarkdown,
   sanitizeSlug,
   collectAssetIds,
+  isValidCoordinate,
 } from '@/lib/journal';
 import { JOURNAL_TEMPLATES } from '@/lib/journalTemplates';
 import {
@@ -688,7 +689,7 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
         };
         break;
       case 'map':
-        newBlock = { type: 'map', caption: '' };
+        newBlock = { type: 'map', caption: '', line: true, items: [] };
         break;
     }
     handleBlocksChange([...parsed.blocks, newBlock]);
@@ -1328,10 +1329,198 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
                               handleUpdateBlock(idx, { ...block, caption: e.target.value })
                             }
                           />
+
+                          {block.items.map((item, mIdx) => {
+                            const setItem = (next: MapItem) =>
+                              handleUpdateBlock(idx, {
+                                ...block,
+                                items: block.items.map((it, i) => (i === mIdx ? next : it)),
+                              });
+                            const move = (dir: -1 | 1) => {
+                              const items = [...block.items];
+                              const target = mIdx + dir;
+                              if (target < 0 || target >= items.length) return;
+                              [items[mIdx], items[target]] = [items[target], items[mIdx]];
+                              handleUpdateBlock(idx, { ...block, items });
+                            };
+                            return (
+                              <div key={mIdx} className="journal-map-row">
+                                <span className="journal-map-index">{mIdx + 1}</span>
+                                {item.kind === 'point' && (
+                                  <>
+                                    <input
+                                      type="text"
+                                      className="admin-input"
+                                      placeholder="Label (optional)"
+                                      value={item.label ?? ''}
+                                      onChange={(e) =>
+                                        setItem({ ...item, label: e.target.value || undefined })
+                                      }
+                                    />
+                                    <input
+                                      type="number"
+                                      step="any"
+                                      className="admin-input journal-map-coord"
+                                      placeholder="Lat"
+                                      aria-label="Latitude"
+                                      value={Number.isFinite(item.lat) ? item.lat : ''}
+                                      onChange={(e) =>
+                                        setItem({ ...item, lat: parseFloat(e.target.value) })
+                                      }
+                                    />
+                                    <input
+                                      type="number"
+                                      step="any"
+                                      className="admin-input journal-map-coord"
+                                      placeholder="Lng"
+                                      aria-label="Longitude"
+                                      value={Number.isFinite(item.lng) ? item.lng : ''}
+                                      onChange={(e) =>
+                                        setItem({ ...item, lng: parseFloat(e.target.value) })
+                                      }
+                                    />
+                                  </>
+                                )}
+                                {item.kind === 'photo' && (
+                                  <div
+                                    className="journal-map-photo"
+                                    onClick={() =>
+                                      setAssetPickerTarget({
+                                        title: 'Select a photo to place on the map',
+                                        onSelect: (id) => setItem({ kind: 'photo', assetId: id }),
+                                      })
+                                    }
+                                  >
+                                    {item.assetId ? (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img
+                                        src={`/api/admin/thumbnail/${item.assetId}`}
+                                        alt="Thumb"
+                                      />
+                                    ) : (
+                                      <span>+ Pick photo</span>
+                                    )}
+                                  </div>
+                                )}
+                                {item.kind === 'all-photos' && (
+                                  <span className="journal-map-all">
+                                    All geotagged photos of this entry, in order
+                                  </span>
+                                )}
+                                <div className="essay-block-actions">
+                                  <button
+                                    type="button"
+                                    className="admin-btn admin-btn-xs"
+                                    disabled={mIdx === 0}
+                                    aria-label="Move pin up"
+                                    onClick={() => move(-1)}
+                                  >
+                                    <IconChevronUp size={12} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="admin-btn admin-btn-xs"
+                                    disabled={mIdx === block.items.length - 1}
+                                    aria-label="Move pin down"
+                                    onClick={() => move(1)}
+                                  >
+                                    <IconChevronDown size={12} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="admin-btn admin-btn-xs admin-btn-danger"
+                                    aria-label="Remove pin"
+                                    onClick={() =>
+                                      handleUpdateBlock(idx, {
+                                        ...block,
+                                        items: block.items.filter((_, i) => i !== mIdx),
+                                      })
+                                    }
+                                  >
+                                    <IconX size={11} />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {block.items.some(
+                            (it) => it.kind === 'point' && !isValidCoordinate(it.lat, it.lng),
+                          ) && (
+                            <p className="journal-block-warning">
+                              A point needs a latitude within ±90 and a longitude within ±180.
+                              Points without valid coordinates are not saved.
+                            </p>
+                          )}
+
+                          <div
+                            style={{
+                              display: 'flex',
+                              gap: '8px',
+                              flexWrap: 'wrap',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn-xs"
+                              onClick={() =>
+                                handleUpdateBlock(idx, {
+                                  ...block,
+                                  items: [
+                                    ...block.items,
+                                    { kind: 'point', lat: Number.NaN, lng: Number.NaN },
+                                  ],
+                                })
+                              }
+                            >
+                              <IconPlus size={12} /> Point
+                            </button>
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn-xs"
+                              onClick={() =>
+                                setAssetPickerTarget({
+                                  title: 'Select a photo to place on the map',
+                                  onSelect: (id) =>
+                                    handleUpdateBlock(idx, {
+                                      ...block,
+                                      items: [...block.items, { kind: 'photo', assetId: id }],
+                                    }),
+                                })
+                              }
+                            >
+                              <IconCamera size={12} /> Photo pin
+                            </button>
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn-xs"
+                              disabled={block.items.some((it) => it.kind === 'all-photos')}
+                              onClick={() =>
+                                handleUpdateBlock(idx, {
+                                  ...block,
+                                  items: [...block.items, { kind: 'all-photos' }],
+                                })
+                              }
+                            >
+                              <IconMap size={12} /> All geotagged photos
+                            </button>
+                            <label className="journal-map-line-toggle">
+                              <input
+                                type="checkbox"
+                                checked={block.line}
+                                onChange={(e) =>
+                                  handleUpdateBlock(idx, { ...block, line: e.target.checked })
+                                }
+                              />
+                              Connect pins with a line
+                            </label>
+                          </div>
+
                           <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
-                            Pins are this entry&apos;s geotagged photos in order, joined by a line.
-                            They are computed when the page renders, so the preview here stays
-                            empty; each album&apos;s location precision applies.
+                            Typed points show in the preview right away. Photo pins are placed on
+                            the live page from the photo&apos;s GPS, under the album&apos;s location
+                            precision.
                           </span>
                         </div>
                       )}

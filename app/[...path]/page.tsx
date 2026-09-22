@@ -476,18 +476,16 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
             precisionByAsset.set(asset.id, prev ? strictestPrecision([prev, level]) : level);
           }
         }
-        const pins = config.map
-          ? pinsForEntry(
-              allAssets,
-              allAssets.map((a) => a.id),
-              (id) => precisionByAsset.get(id) ?? 'exact',
-            )
-          : null;
+        const precisionOf = (id: string) => precisionByAsset.get(id) ?? 'exact';
+        const allIds = allAssets.map((a) => a.id);
         essayParsed = {
           ...essayParsed,
-          blocks: essayParsed.blocks.flatMap((b): EssayBlock[] =>
-            b.type !== 'map' ? [b] : pins ? [{ ...b, pins }] : [],
-          ),
+          blocks: essayParsed.blocks.flatMap((b): EssayBlock[] => {
+            if (b.type !== 'map') return [b];
+            if (!config.map) return [];
+            const pins = pinsForEntry(b.items, allAssets, allIds, precisionOf);
+            return [{ type: 'map', caption: b.caption, line: b.line, items: [], pins }];
+          }),
         };
       }
 

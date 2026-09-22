@@ -5,8 +5,10 @@ import {
   parseEssayMarkdown,
   serializeEssayMarkdown,
   collectAssetIds,
+  isValidCoordinate,
   type ParsedEssay,
   type EssayBlock,
+  type MapItem,
 } from '@/lib/essay';
 import {
   IconCamera,
@@ -125,7 +127,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
         };
         break;
       case 'map':
-        newBlock = { type: 'map', caption: '' };
+        newBlock = { type: 'map', caption: '', line: true, items: [] };
         break;
     }
 
@@ -756,9 +758,165 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                 }
                 placeholder="Caption, e.g. Busan → Seoul (optional)"
               />
+
+              {block.items.map((item, mIdx) => {
+                const setItem = (next: MapItem) =>
+                  handleUpdateBlock(idx, {
+                    ...block,
+                    items: block.items.map((it, i) => (i === mIdx ? next : it)),
+                  });
+                return (
+                  <div
+                    key={mIdx}
+                    style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}
+                  >
+                    <span style={{ fontSize: '0.7rem', color: 'var(--admin-text-secondary)' }}>
+                      {mIdx + 1}
+                    </span>
+                    {item.kind === 'point' && (
+                      <>
+                        <input
+                          type="text"
+                          value={item.label ?? ''}
+                          placeholder="Label (optional)"
+                          style={{ flex: '1 1 140px' }}
+                          onChange={(e) => setItem({ ...item, label: e.target.value || undefined })}
+                        />
+                        <input
+                          type="number"
+                          step="any"
+                          aria-label="Latitude"
+                          placeholder="Lat"
+                          style={{ flex: '0 1 110px' }}
+                          value={Number.isFinite(item.lat) ? item.lat : ''}
+                          onChange={(e) => setItem({ ...item, lat: parseFloat(e.target.value) })}
+                        />
+                        <input
+                          type="number"
+                          step="any"
+                          aria-label="Longitude"
+                          placeholder="Lng"
+                          style={{ flex: '0 1 110px' }}
+                          value={Number.isFinite(item.lng) ? item.lng : ''}
+                          onChange={(e) => setItem({ ...item, lng: parseFloat(e.target.value) })}
+                        />
+                      </>
+                    )}
+                    {item.kind === 'photo' && (
+                      <>
+                        {onSelectPhoto && (
+                          <button
+                            type="button"
+                            className="admin-btn admin-btn-xs"
+                            onClick={() =>
+                              onSelectPhoto((pickedId) =>
+                                setItem({ kind: 'photo', assetId: pickedId }),
+                              )
+                            }
+                          >
+                            <IconCamera size={12} /> {item.assetId ? 'Change' : 'Select'}
+                          </button>
+                        )}
+                        <input
+                          type="text"
+                          value={item.assetId}
+                          placeholder="Photo UUID..."
+                          style={{ flex: '1 1 200px', fontSize: '0.75rem' }}
+                          onChange={(e) => setItem({ kind: 'photo', assetId: e.target.value })}
+                        />
+                      </>
+                    )}
+                    {item.kind === 'all-photos' && (
+                      <span style={{ flex: 1, fontSize: '0.8rem' }}>
+                        All geotagged photos of this page&apos;s albums, in order
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className="admin-btn-icon"
+                      title="Remove pin"
+                      onClick={() =>
+                        handleUpdateBlock(idx, {
+                          ...block,
+                          items: block.items.filter((_, i) => i !== mIdx),
+                        })
+                      }
+                    >
+                      <IconX size={13} />
+                    </button>
+                  </div>
+                );
+              })}
+
+              {block.items.some(
+                (it) => it.kind === 'point' && !isValidCoordinate(it.lat, it.lng),
+              ) && (
+                <p className="empty-hint" style={{ color: 'var(--admin-warning)' }}>
+                  A point needs a latitude within ±90 and a longitude within ±180; points without
+                  valid coordinates are not saved.
+                </p>
+              )}
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-xs"
+                  onClick={() =>
+                    handleUpdateBlock(idx, {
+                      ...block,
+                      items: [...block.items, { kind: 'point', lat: Number.NaN, lng: Number.NaN }],
+                    })
+                  }
+                >
+                  <IconPlus size={12} /> Point
+                </button>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-xs"
+                  onClick={() =>
+                    handleUpdateBlock(idx, {
+                      ...block,
+                      items: [...block.items, { kind: 'photo', assetId: '' }],
+                    })
+                  }
+                >
+                  <IconCamera size={12} /> Photo pin
+                </button>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-xs"
+                  disabled={block.items.some((it) => it.kind === 'all-photos')}
+                  onClick={() =>
+                    handleUpdateBlock(idx, {
+                      ...block,
+                      items: [...block.items, { kind: 'all-photos' }],
+                    })
+                  }
+                >
+                  <IconMap size={12} /> All geotagged photos
+                </button>
+                <label
+                  style={{
+                    marginLeft: 'auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '0.8rem',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={block.line}
+                    onChange={(e) => handleUpdateBlock(idx, { ...block, line: e.target.checked })}
+                  />
+                  Connect pins with a line
+                </label>
+              </div>
+
               <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-secondary)' }}>
-                Pins are the geotagged photos of this page&apos;s albums, joined by a line. Renders
-                only while the map is enabled in Settings; album location precision applies.
+                Typed points are published as typed. Photo pins are placed from the photo&apos;s GPS
+                on the live page, under the album&apos;s location precision. Renders only while the
+                map is enabled in Settings.
               </span>
             </div>
           )}

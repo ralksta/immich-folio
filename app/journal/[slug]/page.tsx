@@ -2,7 +2,13 @@ import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import type { Metadata } from 'next';
 import { readJournalEntry, listJournalEntries } from '@/lib/admin/journal-service';
-import { collectAssetIds, mapBlockAssetIds, type ParsedJournal } from '@/lib/journal';
+import {
+  collectAssetIds,
+  mapBlockAssetIds,
+  type JournalBlock,
+  type MapPin,
+  type ParsedJournal,
+} from '@/lib/journal';
 import { entryMapPins } from '@/lib/journalMap';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import { isAuthenticated } from '@/lib/auth';
@@ -195,10 +201,24 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
   // A map block's pins are computed here, from the photos fetched above and
   // under each photo's `location:` precision, and only when the site
   // publishes a map at all. With the map switched off the block is dropped
-  // before it can reach the client.
-  const hasMapBlock = blocks.some((b) => b.type === 'map');
-  const mapPins =
-    hasMapBlock && config.map ? await entryMapPins(rawAssets, collectAssetIds(blocks)) : null;
+  // before it can reach the client; with it on, the client gets pins only —
+  // never the items, which carry raw asset ids.
+  const entryPhotoIds = collectAssetIds(blocks.filter((b) => b.type !== 'map'));
+  const pinsByBlock = new Map<JournalBlock, MapPin[]>();
+  if (config.map) {
+    for (const block of blocks) {
+      if (block.type === 'map') {
+        pinsByBlock.set(block, await entryMapPins(block.items, rawAssets, entryPhotoIds));
+      }
+    }
+  }
+
+  // Photos that only anchor a map pin are fetched for their EXIF but are not
+  // part of the story, so they stay out of the lightbox sequence.
+  const shownAssetIds = new Set([
+    ...entryPhotoIds,
+    ...(frontmatter.coverAssetId ? [frontmatter.coverAssetId] : []),
+  ]);
 
   const essayForClient: ParsedJournal = {
     // Named fields, not a spread of `frontmatter`: EssayView reads only
@@ -212,15 +232,20 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
       date: frontmatter.date,
       coverAssetId: frontmatter.coverAssetId ? toToken(frontmatter.coverAssetId) : undefined,
     },
-    blocks: blocks.flatMap((block) => {
-      if (block.type === 'map') return mapPins ? [{ ...block, pins: mapPins }] : [];
+    blocks: blocks.flatMap((block): JournalBlock[] => {
+      if (block.type === 'map') {
+        const pins = pinsByBlock.get(block);
+        return pins
+          ? [{ type: 'map', caption: block.caption, line: block.line, items: [], pins }]
+          : [];
+      }
       return [mapBlockAssetIds(block, toToken)];
     }),
     referencedAssetIds: rawAssets.map((a) => encodeAssetId(a.id)),
   };
 
   const images: PhotoItem[] = rawAssets
-    .filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO')
+    .filter((a) => shownAssetIds.has(a.id) && (a.type === 'IMAGE' || a.type === 'VIDEO'))
     .map((a) => {
       const ph = assetPlaceholder(a);
       const exif =

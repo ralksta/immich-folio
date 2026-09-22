@@ -15,8 +15,10 @@ Add Block → Photo, where the picker fills the id in for you. Written by hand i
 is `![<asset-id>:fullbleed](Caption)` for a single photo — `:wide` or no suffix
 give the narrower widths — `![<asset-id>, <asset-id>](Caption)` for a
 side-by-side pair, and three or more ids for a grid. A `::facts` paragraph of
-`Label: Value` lines renders as a definition list, and a `::map Caption` line
-puts the entry's geotagged photos on a map (see docs/journal.md).
+`Label: Value` lines renders as a definition list, and a `::map Caption`
+paragraph draws a map from the lines under it — `Label: lat, lng` for a
+point, `photo: <asset-id>` for a photo, `photos: all` for every geotagged
+photo of the entry (see docs/journal.md).
 
 # Into the Wilderness
 

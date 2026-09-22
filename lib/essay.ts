@@ -7,6 +7,8 @@ export {
   type JournalFrontmatter as EssayFrontmatter,
   type JournalBlock as EssayBlock,
   type ParsedJournal as ParsedEssay,
+  type MapItem,
+  isValidCoordinate,
   sanitizeHtml,
   renderInlineMarkdown,
   parseFrontmatter,

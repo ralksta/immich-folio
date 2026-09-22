@@ -322,9 +322,21 @@ function EssayViewContent({
         );
 
       case 'map': {
-        // Pins are attached by the server page, already quantised; with none
-        // (no geotagged photos, or the map switched off) there is no map.
-        const pins = block.pins ?? [];
+        // The server page attaches `pins` (typed points as typed, photo pins
+        // quantised). Without them — the studio preview — the typed points
+        // still show, so an author sees the map take shape while writing;
+        // photo pins appear on the live page. No pins at all: no map.
+        const pins =
+          block.pins ??
+          block.items.flatMap((item) =>
+            item.kind === 'point'
+              ? [
+                  item.label
+                    ? { lat: item.lat, lng: item.lng, label: item.label }
+                    : { lat: item.lat, lng: item.lng },
+                ]
+              : [],
+          );
         if (pins.length === 0) return null;
         return (
           <FadeIn key={idx}>
@@ -332,7 +344,7 @@ function EssayViewContent({
               <LeafletMap
                 className="essay-map"
                 fitMaxZoom={13}
-                line
+                line={block.line}
                 markers={pins.map((pin, i) => ({
                   lat: pin.lat,
                   lng: pin.lng,

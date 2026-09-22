@@ -56,7 +56,14 @@ const facts = (...rows: Array<[label: string, placeholder: string]>): JournalBlo
   items: rows.map(([label, value]) => ({ label, value })),
 });
 
-const map = (caption?: string): JournalBlock => ({ type: 'map', caption: caption || undefined });
+// Templates opt into "every geotagged photo of the entry"; named stops are
+// added in the studio, where a typed point is a label and two numbers.
+const map = (caption?: string): JournalBlock => ({
+  type: 'map',
+  caption: caption || undefined,
+  line: true,
+  items: [{ kind: 'all-photos' }],
+});
 
 const heading = (text: string, level = 2): JournalBlock => ({ type: 'heading', level, text });
 
