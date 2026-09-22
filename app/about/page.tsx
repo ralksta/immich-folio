@@ -13,6 +13,7 @@ import { immich } from '@/lib/immich';
 import { getConfig } from '@/lib/config';
 import { getServerDictionary } from '@/lib/i18n/server';
 import { notFound } from 'next/navigation';
+import { BackLink } from '@/components/BackLink';
 import './about.css';
 
 export const dynamic = 'force-dynamic';
@@ -104,6 +105,7 @@ export default async function AboutPage() {
 
       {/* ── Text ─────────────────────────────────────── */}
       <div className="about__text-col">
+        <BackLink href="/" label={t.common.backToGallery} />
         <p className="about__kicker" aria-hidden="true">
           {t.about.kicker}
         </p>

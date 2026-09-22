@@ -34,6 +34,11 @@ export const de: Dictionary = {
     prevAlbumAria: (name: string) => `Vorheriges Album: ${name}`,
     nextAlbumAria: (name: string) => `Nächstes Album: ${name}`,
     albumNavAria: 'Albumnavigation',
+    prevEntry: 'Vorheriger Beitrag',
+    nextEntry: 'Nächster Beitrag',
+    prevEntryAria: (title: string) => `Vorheriger Beitrag: ${title}`,
+    nextEntryAria: (title: string) => `Nächster Beitrag: ${title}`,
+    entryNavAria: 'Journal-Navigation',
     loadingGallery: 'Galerie wird geladen',
     loadingPhotos: 'Fotos werden geladen',
   },
@@ -91,6 +96,8 @@ export const de: Dictionary = {
     collectionKicker: (index: string) => `${index} — Sammlung`,
     sectionsNav: 'Abschnitte',
     coverAria: (albumName: string, count: string) => `${albumName}, ${count}`,
+    nextSubpage: 'Weiter',
+    nextSubpageAria: (name: string) => `Weiter: ${name}`,
   },
 
   journal: {

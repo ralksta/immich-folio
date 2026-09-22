@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import type { Metadata } from 'next';
-import { readJournalEntry } from '@/lib/admin/journal-service';
+import { readJournalEntry, listJournalEntries } from '@/lib/admin/journal-service';
 import type { ParsedJournal } from '@/lib/journal';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
+import { isAuthenticated } from '@/lib/auth';
+import { journalNeighbours } from '@/lib/journalNav';
 import { getConfig } from '@/lib/config';
 import { immich } from '@/lib/immich';
 import {
@@ -16,6 +18,7 @@ import {
 } from '@/lib/urls';
 import { encodeAssetId } from '@/lib/tokens';
 import { EssayView } from '@/app/[...path]/EssayView';
+import { JournalNav } from '@/components/JournalNav';
 import type { PhotoItem } from '@/app/[...path]/PhotoGrid';
 import type { ImmichAsset } from '@/lib/immich';
 import PasswordGate from '@/components/PasswordGate';
@@ -129,6 +132,26 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
     }
   }
 
+  // Prev/next through the other entries a visitor may actually see (#591) —
+  // mirrors AlbumNav's rule (#483) of drawing neighbours from the surrounding
+  // list rather than a separate order of its own. A draft or a
+  // password-protected entry the visitor has not unlocked must not appear
+  // here even by name, the same rule the index and this entry's own gate
+  // already enforce (GHSA-fvgv-97g3-wjr7).
+  const journalCookies = await cookies();
+  const allEntries = await listJournalEntries();
+  const visibleEntries = isAuthedAdmin
+    ? allEntries
+    : allEntries.filter((e) => {
+        if (e.frontmatter.draft) return false;
+        if (!e.frontmatter.password) return true;
+        return isAuthenticated(e.slug, (name) => journalCookies.get(name)?.value, 'journal');
+      });
+  const nav = journalNeighbours(
+    visibleEntries.map((e) => ({ slug: e.slug, title: e.frontmatter.title || e.slug })),
+    slug,
+  );
+
   const config = getConfig();
 
   // Fetch all referenced assets from Immich
@@ -230,6 +253,7 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
         subtitle={frontmatter.subtitle}
         watermark={config.watermark}
       />
+      <JournalNav {...nav} />
     </div>
   );
 }

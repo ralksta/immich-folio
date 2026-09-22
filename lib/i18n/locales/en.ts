@@ -34,6 +34,11 @@ export const en = {
     prevAlbumAria: (name: string) => `Previous album: ${name}`,
     nextAlbumAria: (name: string) => `Next album: ${name}`,
     albumNavAria: 'Album navigation',
+    prevEntry: 'Previous entry',
+    nextEntry: 'Next entry',
+    prevEntryAria: (title: string) => `Previous entry: ${title}`,
+    nextEntryAria: (title: string) => `Next entry: ${title}`,
+    entryNavAria: 'Journal entry navigation',
     loadingGallery: 'Loading gallery',
     loadingPhotos: 'Loading photos',
   },
@@ -91,6 +96,8 @@ export const en = {
     collectionKicker: (index: string) => `${index} — Collection`,
     sectionsNav: 'Sections',
     coverAria: (albumName: string, count: string) => `${albumName}, ${count}`,
+    nextSubpage: 'Next',
+    nextSubpageAria: (name: string) => `Next: ${name}`,
   },
 
   journal: {

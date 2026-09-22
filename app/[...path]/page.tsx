@@ -554,6 +554,15 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
     const enabledSubpages = config.subpages.filter((sp) => sp.enabled !== false);
     const subpageIndex = enabledSubpages.findIndex((sp) => sp.slug === slug);
 
+    // The subpage that follows this one in the same list the nav/homepage
+    // build from — hidden and disabled subpages are already excluded there,
+    // so "next" never points somewhere the visitor could not otherwise reach
+    // (#591).
+    const navSubpages = await immich.getSubpages(forceFresh);
+    const navIndex = navSubpages.findIndex((sp) => sp.slug === slug);
+    const nextSubpage =
+      navIndex >= 0 && navIndex < navSubpages.length - 1 ? navSubpages[navIndex + 1] : undefined;
+
     return (
       <SubpageGridView
         slug={slug}
@@ -564,6 +573,9 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         sections={result.subpage.sections}
         gridStyle={buildCoverGridStyle(result.subpage.coverGrid)}
         {...(subpageIndex >= 0 ? { index: subpageIndex + 1 } : {})}
+        {...(nextSubpage
+          ? { nextSubpage: { slug: nextSubpage.slug, name: nextSubpage.name } }
+          : {})}
       />
     );
   }

@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { imageUrl } from '@/lib/urls';
 import { SubpageSectionConfig } from '@/lib/config';
 import { getServerDictionary } from '@/lib/i18n/server';
+import { BackLink } from '@/components/BackLink';
 
 interface SubpageAlbum {
   id: string;
@@ -30,6 +31,8 @@ interface SubpageGridViewProps {
   index?: number;
   /** `--subpage-columns` / `--subpage-gap` from the resolved grid config. */
   gridStyle?: React.CSSProperties;
+  /** The subpage that follows this one in the nav/homepage order, if any (#591). */
+  nextSubpage?: { slug: string; name: string };
 }
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
@@ -120,6 +123,7 @@ export function SubpageGridView({
   sections,
   index,
   gridStyle,
+  nextSubpage,
 }: SubpageGridViewProps) {
   // Build lookup maps once
   const albumMap = new Map(albums.map((a) => [a.id, a]));
@@ -131,22 +135,23 @@ export function SubpageGridView({
 
   return (
     <div className="subpage-container">
-      {(title || subtitle) && (
-        <header className="subpage-header">
-          <div className="subpage-header__main">
-            {index !== undefined && (
-              <p className="subpage-header__kicker" aria-hidden="true">
-                {t.subpage.collectionKicker(pad2(index))}
-              </p>
-            )}
-            {title && <h1 className="subpage-title">{title}</h1>}
-            {subtitle && <p className="subpage-subtitle">{subtitle}</p>}
-          </div>
+      <header className="subpage-header">
+        <div className="subpage-header__main">
+          <BackLink href="/" label={t.common.backToGallery} />
+          {index !== undefined && (
+            <p className="subpage-header__kicker" aria-hidden="true">
+              {t.subpage.collectionKicker(pad2(index))}
+            </p>
+          )}
+          {title && <h1 className="subpage-title">{title}</h1>}
+          {subtitle && <p className="subpage-subtitle">{subtitle}</p>}
+        </div>
+        {(title || subtitle) && (
           <p className="subpage-header__meta" aria-hidden="true">
             {t.common.albums(albums.length)} · {photoCount(totalPhotos)}
           </p>
-        </header>
-      )}
+        )}
+      </header>
 
       {/* Typographic Table of Contents */}
       {hasSections && (
@@ -193,6 +198,35 @@ export function SubpageGridView({
           slug={slug}
           gridStyle={gridStyle}
         />
+      )}
+
+      {/* Onward navigation to the next subpage in nav order (#591) — a subpage
+          grid otherwise dead-ends into the browser's back button. */}
+      {nextSubpage && (
+        <nav className="album-nav" aria-label={t.subpage.nextSubpageAria(nextSubpage.name)}>
+          <span aria-hidden="true" />
+          <Link
+            href={`/${nextSubpage.slug}`}
+            className="album-nav__link album-nav__link--next"
+            aria-label={t.subpage.nextSubpageAria(nextSubpage.name)}
+          >
+            <span className="album-nav__text">
+              <span className="album-nav__kicker">{t.subpage.nextSubpage}</span>
+              <span className="album-nav__name">{nextSubpage.name}</span>
+            </span>
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </Link>
+        </nav>
       )}
     </div>
   );
