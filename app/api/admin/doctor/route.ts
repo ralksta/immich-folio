@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAdmin } from '@/lib/admin/withAdmin';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { getConfig } from '@/lib/config';
+import { getConfig, slugify } from '@/lib/config';
 import { env } from '@/lib/env';
 import { listJournalEntries } from '@/lib/admin/journal-service';
 import {
   checkAlbumIds,
+  checkAlbumSlugCollisions,
   checkAlbumsShared,
   checkAuthSecret,
   checkImmichCalls,
@@ -17,6 +18,7 @@ import {
   PROXY_MARKER_HEADERS,
   worstLevel,
   type AlbumRef,
+  type AlbumSlugGroup,
   type DoctorFinding,
   type PasswordRef,
 } from '@/lib/admin/doctor';
@@ -92,6 +94,16 @@ export const GET = withAdmin(async (request: NextRequest) => {
   if (albums.length) {
     findings.push(checkAlbumIds(config.albums, albums));
     findings.push(checkAlbumsShared(config.albums, albums));
+
+    // deriveGallery already rejects a slug collision between two albums that
+    // both have a title override; this is the other half, using the album's
+    // resolved name (override, or otherwise whatever Immich calls it), which
+    // is only known once Immich has answered (#632).
+    const slugGroups: AlbumSlugGroup[] = [
+      { context: 'gallery.yaml albums', albumIds: config.standaloneAlbums },
+      ...config.subpages.map((sp) => ({ context: `subpage "${sp.name}"`, albumIds: sp.albumIds })),
+    ];
+    findings.push(checkAlbumSlugCollisions(slugGroups, config.albumOverrides, albums, slugify));
   }
 
   // ── Passwords: every place one can be configured ─────────────────────

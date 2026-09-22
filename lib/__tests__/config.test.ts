@@ -15,6 +15,7 @@ vi.mock('@/lib/env', () => ({
 import {
   slugify,
   albumSlug,
+  findAlbumSlugCollisions,
   normalizeSlug,
   buildSubpageGrid,
   sanitizeNavLinks,
@@ -122,6 +123,55 @@ describe('albumSlug', () => {
   it('falls back to the album id when the name slugifies to nothing', () => {
     expect(albumSlug('🎉', 'abc-123')).toBe('abc-123');
     expect(albumSlug('', 'abc-123')).toBe('abc-123');
+  });
+});
+
+describe('findAlbumSlugCollisions', () => {
+  it('groups albums whose names slugify alike', () => {
+    const collisions = findAlbumSlugCollisions([
+      { id: 'a', name: 'Japan Trip' },
+      { id: 'b', name: 'Japan-Trip' },
+      { id: 'c', name: 'Iceland' },
+    ]);
+    expect(collisions).toEqual([
+      {
+        slug: 'japan-trip',
+        albums: [
+          { id: 'a', name: 'Japan Trip' },
+          { id: 'b', name: 'Japan-Trip' },
+        ],
+      },
+    ]);
+  });
+
+  it('reports nothing when every slug is distinct', () => {
+    expect(
+      findAlbumSlugCollisions([
+        { id: 'a', name: 'Japan Trip' },
+        { id: 'b', name: 'Iceland' },
+      ]),
+    ).toEqual([]);
+  });
+
+  // albumSlug() falls back to the id for these, which is unique by
+  // construction — two emoji-only albums do not actually collide.
+  it('does not flag two names that both slugify to nothing', () => {
+    expect(
+      findAlbumSlugCollisions([
+        { id: 'a', name: '🎉' },
+        { id: 'b', name: '🎊' },
+      ]),
+    ).toEqual([]);
+  });
+
+  it('groups three or more colliding names together', () => {
+    const collisions = findAlbumSlugCollisions([
+      { id: 'a', name: 'Trip' },
+      { id: 'b', name: 'TRIP' },
+      { id: 'c', name: 'trip' },
+    ]);
+    expect(collisions).toHaveLength(1);
+    expect(collisions[0].albums).toHaveLength(3);
   });
 });
 

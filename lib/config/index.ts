@@ -10,6 +10,7 @@ import { ALBUM_SORT_MODES, isAlbumSortMode, type AlbumSortMode } from '../albumS
 import { LOCATION_PRECISIONS, isLocationPrecision, type LocationPrecision } from '../mapPrecision';
 import {
   slugify,
+  findAlbumSlugCollisions,
   resolveExifDisplay,
   resolveColorMode,
   AppConfig,
@@ -418,10 +419,53 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
 
   const subpageAlbumIds = new Set(subpages.flatMap((sp) => sp.albumIds));
   const allAlbumIds = [...new Set([...standaloneAlbumIds, ...subpageAlbumIds])];
+  const standaloneAlbums = standaloneAlbumIds.filter((id) => !subpageAlbumIds.has(id));
+
+  // Every consumer that resolves a slug takes the first match — getAlbumBySlug,
+  // the sitemap, findPassword — so two subpages that slugify alike leave the
+  // second unreachable and its password / albums resolved from the first
+  // (#632). slugify() folds diacritics and punctuation, so distinct names
+  // collide easily: "Portfolio 2024" and "Portfolio-2024" both become
+  // "portfolio-2024".
+  const subpagesBySlug = new Map<string, string[]>();
+  for (const sp of subpages) {
+    const names = subpagesBySlug.get(sp.slug) ?? [];
+    names.push(sp.name);
+    subpagesBySlug.set(sp.slug, names);
+  }
+  for (const [slug, names] of subpagesBySlug) {
+    if (names.length > 1) {
+      throw new Error(
+        `Subpages ${names.map((n) => `"${n}"`).join(' and ')} all produce the slug "${slug}". ` +
+          `Rename one so their URLs do not collide.`,
+      );
+    }
+  }
+
+  // Same rule applies to albums that share a route (standalone albums among
+  // themselves, or one subpage's albums including its sections). Only a title
+  // override is known here without asking Immich — an album that keeps its
+  // Immich name can still collide, which is what the doctor's equivalent
+  // check, run against the live album list, is for.
+  const checkAlbumOverrideCollisions = (context: string, ids: string[]) => {
+    const named = ids
+      .map((id) => ({ id, name: albumOverrides[id] }))
+      .filter((a): a is { id: string; name: string } => !!a.name);
+    for (const { slug, albums } of findAlbumSlugCollisions(named)) {
+      throw new Error(
+        `${context}: albums titled ${albums.map((a) => `"${a.name}"`).join(' and ')} all produce ` +
+          `the slug "${slug}". Give one a different title override.`,
+      );
+    }
+  };
+  checkAlbumOverrideCollisions('gallery.yaml albums', standaloneAlbums);
+  for (const sp of subpages) {
+    checkAlbumOverrideCollisions(`subpage "${sp.name}"`, sp.albumIds);
+  }
 
   return {
     albums: allAlbumIds,
-    standaloneAlbums: standaloneAlbumIds.filter((id) => !subpageAlbumIds.has(id)),
+    standaloneAlbums,
     subpages,
     albumOverrides,
     albumDescriptions,

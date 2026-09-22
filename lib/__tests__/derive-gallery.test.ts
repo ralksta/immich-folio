@@ -252,3 +252,73 @@ describe('deriveGallery accepts valid structures', () => {
     expect(result.subpages[1].enabled).toBe(false);
   });
 });
+
+/**
+ * `slugify` folds diacritics and punctuation, so distinct names collide
+ * easily — "Portfolio 2024" and "Portfolio-2024" both become
+ * "portfolio-2024". Every consumer that resolves a slug takes the first
+ * match, so the second entry was silently unreachable and its settings
+ * resolved from the first (#632).
+ */
+describe('deriveGallery rejects colliding slugs', () => {
+  it('rejects two subpages that slugify alike, naming both', () => {
+    expect(() =>
+      deriveGallery({
+        subpages: [
+          { name: 'Portfolio 2024', albums: [A] },
+          { name: 'Portfolio-2024', albums: [B] },
+        ],
+      } as unknown as GalleryYaml),
+    ).toThrow(/"Portfolio 2024".*"Portfolio-2024"|"Portfolio-2024".*"Portfolio 2024"/);
+  });
+
+  it('accepts subpages whose slugs are genuinely distinct', () => {
+    expect(() =>
+      deriveGallery({
+        subpages: [
+          { name: 'Portfolio 2024', albums: [A] },
+          { name: 'Portfolio 2025', albums: [B] },
+        ],
+      } as unknown as GalleryYaml),
+    ).not.toThrow();
+  });
+
+  it('rejects two standalone albums whose title overrides slugify alike', () => {
+    expect(() =>
+      deriveGallery({
+        albums: [{ [A]: { title: 'Japan Trip' } }, { [B]: { title: 'Japan-Trip' } }],
+      } as unknown as GalleryYaml),
+    ).toThrow(/"Japan Trip".*"Japan-Trip"|"Japan-Trip".*"Japan Trip"/);
+  });
+
+  it('rejects two album overrides within the same subpage that slugify alike', () => {
+    expect(() =>
+      deriveGallery({
+        subpages: [
+          {
+            name: 'Trips',
+            albums: [{ [A]: { title: 'Japan Trip' } }, { [B]: { title: 'Japan-Trip' } }],
+          },
+        ],
+      } as unknown as GalleryYaml),
+    ).toThrow(/subpage "Trips"/);
+  });
+
+  it('does not flag the same collision across two different subpages', () => {
+    // Different URL prefixes — /trips-a/japan-trip and /trips-b/japan-trip do
+    // not collide with each other, only within one subpage's own route.
+    expect(() =>
+      deriveGallery({
+        subpages: [
+          { name: 'Trips A', albums: [{ [A]: { title: 'Japan Trip' } }] },
+          { name: 'Trips B', albums: [{ [B]: { title: 'Japan Trip' } }] },
+        ],
+      } as unknown as GalleryYaml),
+    ).not.toThrow();
+  });
+
+  it('does not flag an album with no title override against another with no override', () => {
+    // Neither album's real name is known without Immich — left to the doctor.
+    expect(() => deriveGallery({ albums: [A, B] } as unknown as GalleryYaml)).not.toThrow();
+  });
+});

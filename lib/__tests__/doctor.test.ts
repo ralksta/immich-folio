@@ -4,12 +4,21 @@ import {
   checkProxyHops,
   countForwardedHops,
   checkAlbumIds,
+  checkAlbumSlugCollisions,
   checkAlbumsShared,
   checkPasswords,
   checkWritable,
   checkImmichCalls,
   worstLevel,
 } from '../admin/doctor';
+
+/** A stand-in for lib/config/schema.ts's slugify(), good enough to test the
+ * grouping logic without doctor.ts importing anything (see its own comment). */
+const testSlug = (name: string) =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 
 describe('checkAuthSecret', () => {
   it('accepts a long secret', () => {
@@ -139,6 +148,71 @@ describe('checkAlbumsShared', () => {
   /** An older Immich may not report the flag; silence beats a false alarm. */
   it('says nothing when the flag is absent', () => {
     expect(checkAlbumsShared(['x'], [{ id: 'x', albumName: 'Unknown' }]).level).toBe('ok');
+  });
+});
+
+describe('checkAlbumSlugCollisions', () => {
+  const known = [
+    { id: 'a', albumName: 'Japan Trip' },
+    { id: 'b', albumName: 'Japan-Trip' },
+    { id: 'c', albumName: 'Iceland' },
+  ];
+
+  it('is quiet when nothing collides', () => {
+    const f = checkAlbumSlugCollisions(
+      [{ context: 'gallery.yaml albums', albumIds: ['a', 'c'] }],
+      {},
+      known,
+      testSlug,
+    );
+    expect(f.level).toBe('ok');
+  });
+
+  it('flags two albums in the same group whose Immich names slugify alike', () => {
+    const f = checkAlbumSlugCollisions(
+      [{ context: 'gallery.yaml albums', albumIds: ['a', 'b'] }],
+      {},
+      known,
+      testSlug,
+    );
+    expect(f.level).toBe('error');
+    expect(f.detail).toContain('Japan Trip');
+    expect(f.detail).toContain('Japan-Trip');
+    expect(f.albumIds).toEqual(['a', 'b']);
+  });
+
+  it('does not flag the same collision across two different groups', () => {
+    // /trips-a/japan-trip and /trips-b/japan-trip are different URLs.
+    const f = checkAlbumSlugCollisions(
+      [
+        { context: 'subpage "Trips A"', albumIds: ['a'] },
+        { context: 'subpage "Trips B"', albumIds: ['b'] },
+      ],
+      {},
+      known,
+      testSlug,
+    );
+    expect(f.level).toBe('ok');
+  });
+
+  it('prefers a title override over the Immich name', () => {
+    const f = checkAlbumSlugCollisions(
+      [{ context: 'gallery.yaml albums', albumIds: ['a', 'c'] }],
+      { c: 'Japan Trip' }, // overrides "Iceland" — now collides with "a"
+      known,
+      testSlug,
+    );
+    expect(f.level).toBe('error');
+  });
+
+  it('says nothing about an id Immich does not know and has no override', () => {
+    const f = checkAlbumSlugCollisions(
+      [{ context: 'gallery.yaml albums', albumIds: ['a', 'ghost'] }],
+      {},
+      known,
+      testSlug,
+    );
+    expect(f.level).toBe('ok');
   });
 });
 

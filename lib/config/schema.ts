@@ -540,6 +540,36 @@ export function albumSlug(name: string, id: string): string {
 }
 
 /**
+ * Groups of albums whose slug collides, among a set that will all be
+ * reachable under one URL prefix — the standalone albums, or one subpage's
+ * albums (top-level and sectioned together, since they share a route).
+ *
+ * Every consumer that resolves a slug — getAlbumBySlug, the sitemap, the page
+ * builder — takes the first match, so an unflagged collision makes the second
+ * album unreachable and has its settings (password, sort, grid…) resolved
+ * from the first instead (#632).
+ *
+ * An empty slug (a name with no letters or digits at all) is excluded:
+ * albumSlug() falls back to the album id for that case, which is unique by
+ * construction, so it can never actually collide.
+ */
+export function findAlbumSlugCollisions(
+  albums: Array<{ id: string; name: string }>,
+): Array<{ slug: string; albums: Array<{ id: string; name: string }> }> {
+  const bySlug = new Map<string, Array<{ id: string; name: string }>>();
+  for (const album of albums) {
+    const slug = slugify(album.name);
+    if (!slug) continue;
+    const group = bySlug.get(slug) ?? [];
+    group.push(album);
+    bySlug.set(slug, group);
+  }
+  return Array.from(bySlug.entries())
+    .filter(([, group]) => group.length > 1)
+    .map(([slug, group]) => ({ slug, albums: group }));
+}
+
+/**
  * Normalize a slug that came in from a URL before comparing it to a stored one.
  *
  * Two things can differ even when the slug is "the same":

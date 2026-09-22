@@ -14,18 +14,28 @@ vi.mock('@/lib/admin/auth', () => ({
   COOKIE_NAME: 'folio_admin_session',
 }));
 
+const baseConfig = {
+  needsCredentials: true,
+  trustedProxyHops: 0,
+  authSecret: 'x'.repeat(64),
+  albums: [] as string[],
+  standaloneAlbums: [] as string[],
+  albumOverrides: {} as Record<string, string>,
+  subpages: [] as Array<{ name: string; albumIds: string[] }>,
+  albumPasswords: {},
+  sitePassword: '',
+  immich: { apiUrl: '', apiKey: '' },
+  immichTimeoutMs: 1000,
+};
+const getConfigMock = vi.fn(() => baseConfig);
+
 vi.mock('@/lib/config', () => ({
-  getConfig: () => ({
-    needsCredentials: true,
-    trustedProxyHops: 0,
-    authSecret: 'x'.repeat(64),
-    albums: [],
-    subpages: [],
-    albumPasswords: {},
-    sitePassword: '',
-    immich: { apiUrl: '', apiKey: '' },
-    immichTimeoutMs: 1000,
-  }),
+  getConfig: () => getConfigMock(),
+  slugify: (name: string) =>
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, ''),
 }));
 
 vi.mock('@/lib/env', () => ({ env: { AUTH_SECRET: 'x'.repeat(64) } }));
@@ -87,5 +97,63 @@ describe('GET /api/admin/doctor', () => {
     ).json();
     const proxy = body.findings.find((f: { id: string }) => f.id === 'proxy-hops');
     expect(proxy.level).toBe('warn');
+  });
+});
+
+/**
+ * Two albums that slugify to the same URL leave the second unreachable and
+ * its settings resolved from the first (#632).
+ */
+describe('GET /api/admin/doctor — album slug collisions', () => {
+  const knownAlbums = [
+    { id: 'a', albumName: 'Japan Trip' },
+    { id: 'b', albumName: 'Japan-Trip' },
+  ];
+
+  function withCredentialsAndAlbums(config: Partial<typeof baseConfig>) {
+    getConfigMock.mockReturnValueOnce({
+      ...baseConfig,
+      needsCredentials: false,
+      immich: { apiUrl: 'https://immich.example', apiKey: 'key' },
+      ...config,
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/albums')) return { ok: true, json: async () => knownAlbums } as Response;
+        return { ok: true, json: async () => ({}) } as Response;
+      }),
+    );
+  }
+
+  it('flags two standalone albums whose Immich names slugify alike', async () => {
+    withCredentialsAndAlbums({ albums: ['a', 'b'], standaloneAlbums: ['a', 'b'] });
+
+    const body = await (await GET(req())).json();
+    const finding = body.findings.find((f: { id: string }) => f.id === 'album-slugs');
+
+    expect(finding?.level).toBe('error');
+    expect(finding?.detail).toContain('Japan Trip');
+    expect(finding?.detail).toContain('Japan-Trip');
+
+    vi.unstubAllGlobals();
+  });
+
+  it('is quiet when the same names live in different subpages', async () => {
+    withCredentialsAndAlbums({
+      albums: ['a', 'b'],
+      standaloneAlbums: [],
+      subpages: [
+        { name: 'Trips A', albumIds: ['a'] },
+        { name: 'Trips B', albumIds: ['b'] },
+      ],
+    });
+
+    const body = await (await GET(req())).json();
+    const finding = body.findings.find((f: { id: string }) => f.id === 'album-slugs');
+
+    expect(finding?.level).toBe('ok');
+
+    vi.unstubAllGlobals();
   });
 });
