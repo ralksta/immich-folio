@@ -38,6 +38,19 @@ function smaller(a: ImageSize, b: ImageSize): ImageSize {
  * Previously `?size=` won unconditionally, which made this function unreachable
  * for any URL the app generates, since lib/urls.ts always writes `?size=`.
  */
+/**
+ * Ceiling this function will ever return, regardless of what the client asks
+ * for. `/api/image` treats the opaque token as the whole capability check —
+ * holding one means you saw the page it was rendered on — which is right for
+ * a preview but not for the un-downsampled file. Only `/api/download`
+ * verifies the album allowlist, `download: true` and every password gate
+ * before handing out an original; nothing this route does replaces that.
+ * `?size=original` or a large enough `?w=` alone used to reach `original`
+ * unopposed, since the pairwise `smaller()` check below only ever ran when
+ * *both* parameters were present.
+ */
+const MAX_SIZE: ImageSize = 'preview';
+
 export function resolveImageSize(sizeParam: string | null, widthParam: string | null): ImageSize {
   const explicit =
     sizeParam && VALID_SIZES.includes(sizeParam as ImageSize) ? (sizeParam as ImageSize) : null;
@@ -45,6 +58,7 @@ export function resolveImageSize(sizeParam: string | null, widthParam: string | 
   const w = widthParam ? parseInt(widthParam, 10) : NaN;
   const fromWidth = !isNaN(w) && w > 0 ? widthToSize(w) : null;
 
-  if (explicit && fromWidth) return smaller(explicit, fromWidth);
-  return explicit ?? fromWidth ?? 'preview';
+  const resolved =
+    explicit && fromWidth ? smaller(explicit, fromWidth) : (explicit ?? fromWidth ?? 'preview');
+  return smaller(resolved, MAX_SIZE);
 }

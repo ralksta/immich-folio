@@ -15,14 +15,14 @@ describe('resolveImageSize', () => {
     expect(resolveImageSize(null, null)).toBe('preview');
   });
 
-  it('honours an explicit size on its own', () => {
+  it('honours an explicit size on its own, up to the preview ceiling', () => {
     expect(resolveImageSize('thumbnail', null)).toBe('thumbnail');
-    expect(resolveImageSize('original', null)).toBe('original');
+    expect(resolveImageSize('preview', null)).toBe('preview');
   });
 
   it('falls back to the width-derived tier when no size is given', () => {
     expect(resolveImageSize(null, '128')).toBe('thumbnail');
-    expect(resolveImageSize(null, '3840')).toBe('original');
+    expect(resolveImageSize(null, '1000')).toBe('preview');
   });
 
   it('ignores an unrecognised size rather than trusting it', () => {
@@ -55,6 +55,35 @@ describe('resolveImageSize', () => {
       // lib/urls.ts writes ?size=preview; next/image's smallest vw-based
       // deviceSize is 640. This combination must stay on preview.
       expect(resolveImageSize('preview', '640')).toBe('preview');
+    });
+  });
+
+  /**
+   * `/api/image` treats the opaque token as the whole capability check —
+   * holding one means you saw the page it was rendered on. That is right for
+   * a preview, not for the un-downsampled original: only `/api/download`
+   * verifies the album allowlist, `download: true` and every password gate.
+   * `?size=original` or a large `?w=` alone used to reach `original`
+   * unopposed, since the smaller()-of-both-parameters check only ran when
+   * both were present (GHSA-36m4-p39x-9wx8).
+   */
+  describe('never returns original, regardless of what is asked for', () => {
+    it('caps an explicit ?size=original to preview', () => {
+      expect(resolveImageSize('original', null)).toBe('preview');
+    });
+
+    it('caps a large ?w= alone to preview', () => {
+      expect(resolveImageSize(null, '3840')).toBe('preview');
+      expect(resolveImageSize(null, '1920')).toBe('preview');
+    });
+
+    it('caps the combination of size=original and a large width', () => {
+      expect(resolveImageSize('original', '3840')).toBe('preview');
+    });
+
+    it('still narrows to thumbnail when the width says so', () => {
+      // The cap is a ceiling, not a floor — a small width may still win.
+      expect(resolveImageSize('original', '128')).toBe('thumbnail');
     });
   });
 });
