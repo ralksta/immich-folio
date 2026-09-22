@@ -131,19 +131,20 @@ export function Lightbox({
   /**
    * The deep link to the photo on screen.
    *
-   * Built from the current index rather than read back from `location.hash`,
-   * so it does not depend on the grid's hash-sync effect having run yet. The
-   * `#photo-N` form is the permalink the grid already writes and restores;
-   * this only supplies the affordance to copy it (#478).
+   * Built from `current.id` — the asset's own stable token, the same one the
+   * grid already carries on every `PhotoItem` — rather than read back from
+   * `location.search`, so it does not depend on the grid's query-sync effect
+   * having run yet. This only supplies the affordance to copy it (#478); the
+   * `?photo=<assetId>` form itself is what the grid writes and restores.
    *
-   * The link is positional, as `gallery.yaml.example` documents: reordering an
-   * album moves where a shared link lands. That is a property of the existing
-   * permalink, not of the button.
+   * Addressed by the photo, not a position: reordering the album, or
+   * deleting a different photo, no longer repoints an already-shared link
+   * (#588).
    */
   const permalink = useCallback(() => {
-    if (typeof window === 'undefined') return '';
-    return buildPhotoPermalink(window.location, currentIndex);
-  }, [currentIndex]);
+    if (typeof window === 'undefined' || !current) return '';
+    return buildPhotoPermalink(window.location, current.id);
+  }, [current]);
 
   const handleCopyLink = useCallback(() => {
     const url = permalink();

@@ -2,8 +2,11 @@
  * PhotoGrid — client component wrapping the masonry grid and lightbox.
  * Handles image click → lightbox open, keyboard nav, and EXIF fetching.
  *
- * Deep-link support: syncs lightbox index with the URL hash (#photo-N).
- * Sharing a link with a hash opens the lightbox to that photo directly.
+ * Deep-link support: syncs the lightbox with `?photo=<assetId>`, a stable
+ * per-photo id rather than a position, so reordering or deleting other
+ * photos in the album does not repoint an already-shared link (#588). A
+ * legacy `#photo-N` hash is still read on the initial load — those links
+ * have been shared for months — but the grid never writes that form again.
  */
 
 'use client';
@@ -15,7 +18,7 @@ import { FadeIn } from '@/components/FadeIn';
 import { ProofingProvider, useProofing } from '@/components/ProofingContext';
 import { ProofingModal } from '@/components/ProofingModal';
 import { useDictionary } from '@/components/I18nProvider';
-import { parsePhotoHash, buildPhotoHash } from '@/lib/photoHash';
+import { parsePhotoHash, parsePhotoQuery, buildPhotoQuery } from '@/lib/photoHash';
 
 export interface PhotoItem {
   id: string;
@@ -77,49 +80,73 @@ function PhotoGridInner({
     return assets;
   }, [assets, proofing]);
 
-  // ── Initial hash check (Client-only to avoid hydration mismatch) ──
+  // ── Initial deep-link check (client-only to avoid hydration mismatch) ──
+  // ?photo=<assetId> wins when present; #photo-N is read only as a fallback,
+  // for a link shared before this format existed.
   useEffect(() => {
+    const token = parsePhotoQuery(window.location.search);
+    const byToken = token ? displayedAssets.findIndex((a) => a.id === token) : -1;
+    if (byToken >= 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLightboxIndex(byToken);
+      return;
+    }
     const idx = parsePhotoHash(window.location.hash);
     if (idx !== null && idx < displayedAssets.length) {
-      // state from URL hash on mount only
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLightboxIndex(idx);
     }
-  }, [displayedAssets.length]);
+  }, [displayedAssets]);
 
-  // ── Sync URL hash when lightbox state changes ─────────────────
+  // ── Sync the URL's `photo` param when the lightbox state changes ──
   useEffect(() => {
-    if (lightboxIndex !== null && lightboxIndex < displayedAssets.length) {
-      const hash = buildPhotoHash(lightboxIndex);
-      if (window.location.hash !== hash) {
-        window.history.replaceState(null, '', hash);
-      }
+    const assetId =
+      lightboxIndex !== null && lightboxIndex < displayedAssets.length
+        ? displayedAssets[lightboxIndex].id
+        : null;
+    if (assetId === null) return;
+    const query = buildPhotoQuery(window.location.search, assetId);
+    // Building the full URL (not just the search string) drops any leftover
+    // #photo-N hash from a legacy link this page was opened with.
+    const url = window.location.pathname + query;
+    if (window.location.pathname + window.location.search !== url || window.location.hash) {
+      window.history.replaceState(null, '', url);
     }
-  }, [lightboxIndex, displayedAssets.length]);
+  }, [lightboxIndex, displayedAssets]);
 
-  // ── Listen for browser back/forward (hash change) ─────────────
+  // ── Listen for browser back/forward ────────────────────────────
   useEffect(() => {
-    const handleHashChange = () => {
-      const idx = parsePhotoHash(window.location.hash);
-      if (idx !== null && idx < displayedAssets.length) {
-        setLightboxIndex(idx);
-      } else {
-        setLightboxIndex(null);
-      }
+    const handlePopState = () => {
+      const token = parsePhotoQuery(window.location.search);
+      const byToken = token ? displayedAssets.findIndex((a) => a.id === token) : -1;
+      setLightboxIndex(byToken >= 0 ? byToken : null);
     };
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [displayedAssets.length]);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [displayedAssets]);
 
-  const openLightbox = useCallback((index: number) => {
-    setLightboxIndex(index);
-    window.history.pushState(null, '', buildPhotoHash(index));
-  }, []);
+  const openLightbox = useCallback(
+    (index: number) => {
+      setLightboxIndex(index);
+      const asset = displayedAssets[index];
+      if (asset) {
+        window.history.pushState(
+          null,
+          '',
+          window.location.pathname + buildPhotoQuery(window.location.search, asset.id),
+        );
+      }
+    },
+    [displayedAssets],
+  );
 
   const closeLightbox = useCallback(() => {
     setLightboxIndex(null);
-    window.history.pushState(null, '', window.location.pathname + window.location.search);
+    window.history.pushState(
+      null,
+      '',
+      window.location.pathname + buildPhotoQuery(window.location.search, null),
+    );
   }, []);
 
   const goNext = useCallback(() => {

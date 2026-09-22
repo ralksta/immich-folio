@@ -25,7 +25,7 @@ import {
   downloadUrl,
   assetAspectRatio,
 } from '@/lib/urls';
-import { encodeAssetId } from '@/lib/tokens';
+import { encodeAssetId, decodeAssetId } from '@/lib/tokens';
 import {
   buildCoverGridVars,
   getConfig,
@@ -56,13 +56,22 @@ interface PathPageProps {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export async function generateMetadata({ params }: PathPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: PathPageProps): Promise<Metadata> {
   // Next hands catch-all segments over percent-encoded, so a non-ASCII slug
   // ("/家族相册") would never match a stored one. Decode once, here, and every
   // comparison downstream works on the same form (#522).
   const { path: rawPath } = await params;
   const path = rawPath?.map(normalizeSlug);
   if (!path || path.length === 0) return {};
+
+  // A shared photo link's whole point is that it reaches the server — unlike
+  // the #photo-N hash it replaces, a `photo` query param is visible here, so
+  // a link-preview bot can render the photo itself rather than the album's
+  // generic card (#588).
+  const sp = (await searchParams) || {};
+  const photoToken = typeof sp.photo === 'string' ? sp.photo : undefined;
+  const photoAssetId = photoToken ? decodeAssetId(photoToken) : null;
+  let photoAsset: ImmichAsset | undefined;
 
   const slug = path[0];
   let title = slug;
@@ -80,6 +89,7 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
           title = album.albumName;
           const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
           subtitle = `${count} photo${count === 1 ? '' : 's'}`;
+          if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
         }
       } else {
         title = result.subpage.title || result.subpage.name;
@@ -91,6 +101,7 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
       title = album.albumName;
       const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
       subtitle = `${count} photo${count === 1 ? '' : 's'}`;
+      if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
     }
   } else {
     const album = await immich.getAlbumBySlug(slug);
@@ -98,24 +109,34 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
       title = album.albumName;
       const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
       subtitle = `${count} photo${count === 1 ? '' : 's'}`;
+      if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
     }
   }
 
-  const ogUrl = `/api/og?title=${encodeURIComponent(title)}${subtitle ? `&subtitle=${encodeURIComponent(subtitle)}` : ''}`;
+  // The title stays the album's — it's still the context a reader wants —
+  // but the description prefers the photo's own caption, and the image is
+  // the photo itself rather than the generated text card.
+  const ogDescription =
+    photoAsset?.exifInfo?.description?.trim() ||
+    description ||
+    (subtitle ? `${title} — ${subtitle}` : undefined);
+  const ogImage = photoAsset
+    ? imageUrl(photoAsset.id, 'preview')
+    : `/api/og?title=${encodeURIComponent(title)}${subtitle ? `&subtitle=${encodeURIComponent(subtitle)}` : ''}`;
 
   return {
     title,
-    description: description || (subtitle ? `${title} — ${subtitle}` : undefined),
+    description: ogDescription,
     openGraph: {
       title,
-      description: description || (subtitle ? `${title} — ${subtitle}` : undefined),
-      images: [ogUrl],
+      description: ogDescription,
+      images: [ogImage],
     },
     twitter: {
       card: 'summary_large_image',
       title,
-      description: description || (subtitle ? `${title} — ${subtitle}` : undefined),
-      images: [ogUrl],
+      description: ogDescription,
+      images: [ogImage],
     },
   };
 }
