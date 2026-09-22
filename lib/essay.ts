@@ -12,4 +12,6 @@ export {
   parseFrontmatter,
   parseJournalMarkdown as parseEssayMarkdown,
   serializeJournalMarkdown as serializeEssayMarkdown,
+  collectAssetIds,
+  mapBlockAssetIds,
 } from './journal';

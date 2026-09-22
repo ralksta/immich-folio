@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import {
   parseEssayMarkdown,
   serializeEssayMarkdown,
+  collectAssetIds,
   type ParsedEssay,
   type EssayBlock,
 } from '@/lib/essay';
@@ -47,15 +48,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
       const updatedEssay: ParsedEssay = {
         ...essay,
         blocks: newBlocks,
-        referencedAssetIds: Array.from(
-          new Set(
-            newBlocks.flatMap((b) => {
-              if (b.type === 'photo') return [b.assetId];
-              if (b.type === 'photo-pair') return b.assetIds;
-              return [];
-            }),
-          ),
-        ),
+        referencedAssetIds: collectAssetIds(newBlocks),
       };
 
       setEssay(updatedEssay);

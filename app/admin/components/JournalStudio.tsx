@@ -3,7 +3,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { JournalEntrySummary, ParsedJournal, JournalBlock } from '@/lib/journal';
-import { parseJournalMarkdown, serializeJournalMarkdown, sanitizeSlug } from '@/lib/journal';
+import {
+  parseJournalMarkdown,
+  serializeJournalMarkdown,
+  sanitizeSlug,
+  collectAssetIds,
+} from '@/lib/journal';
 import { JOURNAL_TEMPLATES } from '@/lib/journalTemplates';
 import {
   IconFileText,
@@ -539,15 +544,7 @@ function JournalEditor({ slug, onBack }: JournalEditorProps) {
     const updated: ParsedJournal = {
       ...parsed,
       blocks: newBlocks,
-      referencedAssetIds: Array.from(
-        new Set(
-          newBlocks.flatMap((b) => {
-            if (b.type === 'photo') return [b.assetId];
-            if (b.type === 'photo-pair') return b.assetIds;
-            return [];
-          }),
-        ),
-      ),
+      referencedAssetIds: collectAssetIds(newBlocks),
     };
     const serialized = serializeJournalMarkdown(updated);
     setParsed(updated);

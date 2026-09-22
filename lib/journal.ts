@@ -27,6 +27,39 @@ export interface ParsedJournal {
   referencedAssetIds: string[];
 }
 
+/**
+ * Every asset id a block refers to, in block order, without duplicates.
+ * An empty id is an unfilled placeholder (the block editor's "+ Pick" tile),
+ * not a reference — it is skipped so nothing probes or renders it.
+ */
+export function collectAssetIds(blocks: readonly JournalBlock[]): string[] {
+  const ids = new Set<string>();
+  for (const block of blocks) {
+    if (block.type === 'photo') {
+      if (block.assetId) ids.add(block.assetId);
+    } else if (block.type === 'photo-pair') {
+      for (const id of block.assetIds) if (id) ids.add(id);
+    }
+  }
+  return Array.from(ids);
+}
+
+/**
+ * The same block with every asset id passed through `fn` — the one place that
+ * knows which block types carry ids, so the page that swaps raw UUIDs for
+ * tokens does not grow a branch per type.
+ */
+export function mapBlockAssetIds(block: JournalBlock, fn: (id: string) => string): JournalBlock {
+  switch (block.type) {
+    case 'photo':
+      return { ...block, assetId: fn(block.assetId) };
+    case 'photo-pair':
+      return { ...block, assetIds: [fn(block.assetIds[0]), fn(block.assetIds[1])] };
+    default:
+      return block;
+  }
+}
+
 export interface JournalEntrySummary {
   slug: string;
   filename: string;
@@ -289,11 +322,6 @@ export function parseFrontmatter(content: string): {
 export function parseJournalMarkdown(rawContent: string): ParsedJournal {
   const { frontmatter, body } = parseFrontmatter(rawContent);
   const blocks: JournalBlock[] = [];
-  const referencedAssetIds = new Set<string>();
-
-  if (frontmatter.coverAssetId) {
-    referencedAssetIds.add(frontmatter.coverAssetId);
-  }
 
   // Split body into paragraph chunks separated by blank lines
   const chunks = body
@@ -348,14 +376,9 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
       if (rawTarget.includes(',')) {
         const parts = rawTarget.split(',').map((s) => s.trim());
         if (parts.length >= 2) {
-          const id1 = parts[0];
-          const id2 = parts[1];
-          // Same placeholder rule as single photos below: '' is unfilled.
-          if (id1) referencedAssetIds.add(id1);
-          if (id2) referencedAssetIds.add(id2);
           blocks.push({
             type: 'photo-pair',
-            assetIds: [id1, id2],
+            assetIds: [parts[0], parts[1]],
             caption,
           });
           continue;
@@ -374,11 +397,6 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
         else if (normLayout === 'wide') layout = 'wide';
       }
 
-      // An empty assetId is a placeholder (see the regex comment above), not a
-      // reference to resolve — adding '' here would make the studio probe
-      // `/api/admin/thumbnail/` and the published page look up a nonexistent
-      // asset.
-      if (assetId) referencedAssetIds.add(assetId);
       blocks.push({
         type: 'photo',
         assetId,
@@ -395,11 +413,15 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
     });
   }
 
-  return {
-    frontmatter,
-    blocks,
-    referencedAssetIds: Array.from(referencedAssetIds),
-  };
+  // The cover comes first, as before; collectAssetIds() skips '' placeholders.
+  const referencedAssetIds = Array.from(
+    new Set([
+      ...(frontmatter.coverAssetId ? [frontmatter.coverAssetId] : []),
+      ...collectAssetIds(blocks),
+    ]),
+  );
+
+  return { frontmatter, blocks, referencedAssetIds };
 }
 
 /** Converts a ParsedJournal structure back into clean Markdown syntax */

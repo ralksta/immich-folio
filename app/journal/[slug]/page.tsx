@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import type { Metadata } from 'next';
 import { readJournalEntry, listJournalEntries } from '@/lib/admin/journal-service';
-import type { ParsedJournal } from '@/lib/journal';
+import { mapBlockAssetIds, type ParsedJournal } from '@/lib/journal';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import { isAuthenticated } from '@/lib/auth';
 import { journalNeighbours } from '@/lib/journalNav';
@@ -203,18 +203,7 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
       date: frontmatter.date,
       coverAssetId: frontmatter.coverAssetId ? toToken(frontmatter.coverAssetId) : undefined,
     },
-    blocks: blocks.map((block) => {
-      if (block.type === 'photo') {
-        return { ...block, assetId: toToken(block.assetId) };
-      }
-      if (block.type === 'photo-pair') {
-        return {
-          ...block,
-          assetIds: [toToken(block.assetIds[0]), toToken(block.assetIds[1])] as [string, string],
-        };
-      }
-      return block;
-    }),
+    blocks: blocks.map((block) => mapBlockAssetIds(block, toToken)),
     referencedAssetIds: rawAssets.map((a) => encodeAssetId(a.id)),
   };
 
