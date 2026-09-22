@@ -7,6 +7,324 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [Unreleased]
+
+### Security
+
+- **The image proxy no longer serves un-downsampled originals**
+  ([#653](https://github.com/ralksta/immich-folio/pull/653),
+  [GHSA-36m4-p39x-9wx8](https://github.com/ralksta/immich-folio/security/advisories/GHSA-36m4-p39x-9wx8)).
+  `resolveImageSize()` could resolve to the original tier from a single
+  request parameter. `/api/image` treats the opaque asset token as its whole
+  capability check — holding one means you saw the page it was rendered on,
+  which is the right bar for a preview but not for the un-downsampled file.
+  `resolveImageSize()` now caps its result at `preview` regardless of what
+  `?size=` or `?w=` ask for; a small width still narrows to `thumbnail` as
+  before. Originals remain available only through `/api/download`, which
+  verifies the album allowlist, the album's `download: true` opt-in, and
+  every password gate on the way. **See the upgrade notes: this needs an
+  `IMAGE_CACHE_VERSION` bump to reach browsers that already cached an
+  original under the old response.**
+
+- **Password-protected journal entries and albums no longer leak outside
+  their own gate**
+  ([#654](https://github.com/ralksta/immich-folio/pull/654),
+  [GHSA-fvgv-97g3-wjr7](https://github.com/ralksta/immich-folio/security/advisories/GHSA-fvgv-97g3-wjr7)).
+  A journal entry's `password:` only ever gated the body of
+  `/journal/<slug>`. Three other surfaces handed out its content regardless,
+  and the same class of bug reached album and subpage metadata: the public
+  journal index listed a protected entry's title, subtitle, cover image and
+  excerpt to everyone; `generateMetadata` for a journal entry, album or
+  subpage ran ahead of the page's own gate, so a locked page's real title,
+  photo count and cover image reached `<head>` of a 200 response nobody had
+  authenticated for — including a shared `?photo=` link's Open Graph image,
+  which named the exact photo; and the journal detail page spread an entry's
+  whole frontmatter into the essay renderer's props, so the stored password
+  (plaintext or a scrypt hash) rode along in the RSC payload of anyone who
+  had unlocked the entry once. All three now run the same
+  `isProtected`/`isAuthenticated` checks the page body already used.
+
+- **Every route to an album now enforces its subpage's and its own
+  password**
+  ([#638](https://github.com/ralksta/immich-folio/pull/638),
+  [GHSA-g85g-xcqc-f59h](https://github.com/ralksta/immich-folio/security/advisories/GHSA-g85g-xcqc-f59h),
+  [GHSA-jhmx-5j9c-qg42](https://github.com/ralksta/immich-folio/security/advisories/GHSA-jhmx-5j9c-qg42)).
+  Two related fixes from the v0.16.0 audit. `getAlbumBySlug()` now searches
+  only the albums reachable from the route the slug arrived on — standalone
+  albums for a top-level slug, a subpage's own albums otherwise, nothing for
+  a disabled subpage — so an album listed only inside a subpage no longer
+  answers at the bare `/<album-slug>`, bypassing that subpage's gate.
+  Separately, every exclusion in the proxy's route matcher now ends on a
+  segment boundary, closing a gap where a path merely _starting with_ an
+  excluded name skipped the site password and CSP entirely.
+
+- **Hardening: cache-bypass, analytics, rate limiting, file permissions**
+  ([#655](https://github.com/ralksta/immich-folio/pull/655),
+  [GHSA-w293-x8pc-j4cv](https://github.com/ralksta/immich-folio/security/advisories/GHSA-w293-x8pc-j4cv)).
+  Four lower-severity findings from the same audit:
+  - The unauthenticated `?fresh=1`/`?preview=true` cache-bypass flags are now
+    gated to `isAdminAuthenticated()`, and a forced refresh no longer evicts
+    the existing cache entry before the refetch succeeds — a request timed
+    during an Immich outage could otherwise wipe out the stale fallback that
+    was keeping the page up for everyone else.
+  - `POST /api/analytics/track` gained a rate limit (60 rpm per IP), a cap on
+    distinct page keys tracked per day, and writes through the same atomic
+    writer as everything else — it previously used a plain `fs.writeFile`
+    with an unbounded, request-supplied key space.
+  - The rate limiter was a fixed window, not the sliding window it
+    documented: a burst timed around the window boundary could clear close
+    to double the configured limit. It is now a weighted two-bucket window,
+    shared by every rate-limited route.
+  - `install.json`, which holds the Immich API key and `authSecret`, was
+    briefly world-readable between being written and a follow-up `chmod`.
+    `atomicWrite` now accepts a file mode applied before the rename, so the
+    file is never created with the wrong permissions.
+
+- **Journal backup paths hardened against a CodeQL path-injection alert**
+  ([#586](https://github.com/ralksta/immich-folio/pull/586)). Not
+  exploitable — the slug reaching `snapshotEntry` had already passed
+  `isValidSlug` or the anchored backup-name pattern in every caller — but
+  CodeQL could not follow that validation across modules. The backup path
+  is now built through the same `containedPath()` guard every other path in
+  the file already used, so a path that would escape `.backups/` throws
+  instead of being trusted.
+
+### Added
+
+- **Diagnostics is a tab in the admin header, and its duplicate entry
+  points are gone**
+  ([#621](https://github.com/ralksta/immich-folio/pull/621),
+  [#656](https://github.com/ralksta/immich-folio/pull/656)). `/admin` and
+  `/admin/pages` used to render the same page builder under two addresses;
+  `/admin` now redirects to the one the Pages tab actually links to.
+  Diagnostics, a real page since v0.15.0, was reachable only from the
+  status dropdown and the Help page — it is now a tab of its own, and the
+  now-redundant Backups/Diagnostics buttons in the status dropdown are
+  gone (Backups keeps its header button).
+
+- **Journal entries get previous/next navigation, subpages get a "next
+  subpage" link, and both — plus `/about` — get a way back**
+  ([#658](https://github.com/ralksta/immich-folio/pull/658)). At the end of
+  a journal entry, at the bottom of a subpage's album grid, and on the About
+  page, there was previously no way onward or back except the browser's own
+  button. Journal prev/next mirrors the existing album navigation: neighbours
+  come from the same publication-order list the journal index renders, with
+  no wrap-around, and a draft or a password-protected entry the visitor
+  hasn't unlocked never appears here even by name. The "next subpage" link
+  follows the same order the header navigation and homepage already use, so
+  it never points somewhere hidden or disabled.
+
+- **A proper mobile menu for the public header**
+  ([#659](https://github.com/ralksta/immich-folio/pull/659)). The header
+  used to be one flat row that scrolled sideways on narrow viewports with
+  the scrollbar hidden — nothing indicated that more sections existed
+  off-screen, so the site appeared to have fewer than it does. Below a new
+  640px breakpoint, a hamburger button opens the same links (never
+  duplicated in the markup) as a full-width vertical panel; above it, the
+  layout is pixel-identical to before.
+
+- **`settings.yaml` is validated before it is written**
+  ([#623](https://github.com/ralksta/immich-folio/pull/623)).
+  `PUT /api/admin/settings` used to cast the request body and write it
+  straight through — the only admin save path with no shape check at all,
+  and one that is read by every public page. A zod schema now checks
+  structure (a scalar where a section belongs, a list where a record
+  belongs), while value narrowing stays where the resolvers already do it,
+  since only they also see hand-edited YAML.
+
+### Fixed
+
+- **Config values reach the page they render on, no longer silently
+  discarded**
+  ([#645](https://github.com/ralksta/immich-folio/pull/645),
+  [#618](https://github.com/ralksta/immich-folio/pull/618)). The admin
+  panel rewrites `gallery.yaml`/`settings.yaml` wholesale on every save, so
+  a field the panel doesn't know about isn't merely ignored — it's deleted.
+  This hit an album's `location` precision and `download` opt-in (any
+  unrelated save in the panel silently reset both to their defaults) and,
+  separately, unclamped `grid.columns`/`theme.radius` values that could
+  reach CSS as an invalid `repeat()` or a concatenated `8pxpx`.
+
+- **The Immich client no longer serves a cached "not found" as real data
+  during an outage**
+  ([#624](https://github.com/ralksta/immich-folio/pull/624)). Splitting
+  transport and cache-policy concerns out of the 835-line client surfaced a
+  real bug in the process: once a definitive-404 cache entry's TTL passed
+  during an Immich outage, it came back as a truthy sentinel object with no
+  fields, every `if (!asset)` guard passed on it, and the page answered 500
+  for the length of the outage instead of falling back to the last known
+  album. A stale "missing" now resolves to `null` — the answer every caller
+  already handled — while every other stale-cache path still throws and
+  lets the outage propagate correctly.
+
+- **A never-checked expired admin session no longer fails silently**
+  ([#650](https://github.com/ralksta/immich-folio/pull/650)). Admin
+  sessions last 24 hours, but nothing re-checked one after the initial page
+  load — a tab left open overnight looked logged in while every save quietly
+  answered 401. A 401 from any admin save or reload now drops back to the
+  login screen with a notice instead of a confusing generic error or, for
+  the reload button, no feedback at all.
+
+- **Saving no longer overwrites a configuration that failed to load**
+  ([#619](https://github.com/ralksta/immich-folio/pull/619)). Each admin
+  editor holds the whole file in memory and writes all of it back — so a
+  load that quietly failed left an empty form indistinguishable from a
+  freshly-configured site, and saving replaced the real file with that
+  emptiness. A failed load now replaces the form with a notice and refuses
+  to save, including against the keyboard shortcut, until a fresh load
+  succeeds.
+
+- **Removing an album, hero image or section entry now asks first**
+  ([#649](https://github.com/ralksta/immich-folio/pull/649)). Removing a
+  subpage already asked for confirmation; removing an album — which also
+  discards its grid overrides, cover asset and manual photo order — did
+  not, with no undo besides reloading the page and losing every other
+  unsaved edit.
+
+- **The active nav link actually shows which page you're on**
+  ([#620](https://github.com/ralksta/immich-folio/pull/620)). The
+  `.active` styling and its underline existed in the CSS since the header
+  was written, but nothing ever applied the class, and `aria-current` was
+  missing outright. Both the public header and the admin panel's own tabs
+  now derive and announce the active section.
+
+- **Pre-restore backups no longer crowd out ordinary ones**
+  ([#617](https://github.com/ralksta/immich-folio/pull/617)). Pre-restore
+  snapshots were exempt from the ten-backup cap entirely, so after a dozen
+  restores the backup manager showed almost nothing else. Each kind is now
+  counted and capped separately, and pruning also runs on restore rather
+  than waiting for the next save.
+
+- **A failed backup now aborts the save instead of continuing without
+  one**
+  ([#641](https://github.com/ralksta/immich-folio/pull/641)). Restoring a
+  backup used a plain `fs.copyFile`, which truncates the live file before
+  writing, and its own pre-restore safety copy swallowed every error as "the
+  file probably doesn't exist yet." On a full content volume this could
+  truncate `gallery.yaml` to zero bytes with no snapshot to recover from.
+  Restores now write through the same atomic (temp-file-plus-rename)
+  primitive as every other save, and only `ENOENT` is treated as "nothing to
+  back up" — any other failure aborts before the live file is touched. The
+  same swallow-everything shape existed in the ordinary save path for
+  `gallery.yaml`, `settings.yaml`, journal entries and `about.md`, and got
+  the same fix.
+
+- **Editing a journal entry that came from the legacy `essays/` folder no
+  longer resurrects its old version**
+  ([#639](https://github.com/ralksta/immich-folio/pull/639)). Saving always
+  wrote to `content/journal/`, but a legacy entry kept its original copy in
+  `content/essays/` too, and deleting only ever removed the new copy — so a
+  "deleted" entry reappeared with its pre-edit text and frontmatter on the
+  next request. Saving a legacy-origin entry now retires its old copy, and
+  deletion checks both locations directly.
+
+- **The journal serializer no longer mangles what it just parsed**
+  ([#640](https://github.com/ralksta/immich-folio/pull/640)). Re-saving an
+  entry — including a bare frontmatter edit, which re-serializes the whole
+  document — dropped every link in a paragraph, left literal HTML tags in
+  quotes and photo captions, doubled HTML-entity-encoded apostrophes in
+  photo-pair captions, and turned `my_photo_2024.jpg` into
+  `my*photo*2024.jpg`. The serializer now walks the exact markup the
+  renderer produces instead of stripping tags with a flat regex, and
+  emphasis markers now require CommonMark's non-word boundary on both
+  sides.
+
+- **The setup wizard no longer overwrites an existing `gallery.yaml`**
+  ([#642](https://github.com/ralksta/immich-folio/pull/642)). The wizard
+  already protected `settings.yaml` from being silently replaced, five
+  lines above the identical unconditional overwrite of `gallery.yaml` — and
+  unlike the admin panel's own writes, this path kept no backup. A site
+  could reach the wizard again through a resolvable-but-wrong Immich URL or
+  a corrupted `install.json`, at which point every subpage, password and
+  per-album override was gone with nothing recoverable on disk. Both files
+  now get the same "keep if it already exists" treatment; the wizard tells
+  the operator when that happened.
+
+- **`npm run doctor` no longer passes two broken deployments**
+  ([#643](https://github.com/ralksta/immich-folio/pull/643)). A
+  `TRUSTED_PROXY_HOPS` value lower than the observed proxy chain (but above
+  zero) fell through to the "matches the observed chain" success case
+  instead of warning. Separately, the album-configuration check only ran
+  when Immich's response was non-empty — so an API key pointed at the wrong
+  Immich account, answering `200 []`, passed every check while every
+  configured album page was actually empty.
+
+- **Two subpages, or two albums on the same page, can no longer share a
+  slug silently**
+  ([#644](https://github.com/ralksta/immich-folio/pull/644)). Subpage and
+  album slugs are derived from their names with no uniqueness check, and
+  `slugify` folds diacritics and punctuation readily enough that distinct
+  names collide (`Portfolio 2024` and `Portfolio-2024` both become
+  `portfolio-2024`). The second entry became unreachable, and its password
+  and other settings silently resolved from the first. Colliding subpage
+  names, and colliding album title overrides on the same page, are now
+  rejected at save time with both names in the error; a collision that only
+  becomes visible once Immich's own album names are known surfaces as a new
+  diagnostics finding instead.
+
+- **A trailing slash on the Immich URL no longer breaks every request
+  after setup**
+  ([#646](https://github.com/ralksta/immich-folio/pull/646)). The install
+  wizard's connection test normalised the URL before pinging it, but stored
+  the raw input — so `https://immich.example.com/api/` passed the wizard
+  and then sent every later request to a doubled `/api/api/` path. The
+  stored value is now normalised the same way at both write and read time,
+  so an `install.json` written before this fix heals without re-running the
+  wizard.
+
+- **Coordinates of exactly 0 no longer vanish from the map, and error
+  responses no longer leak sockets**
+  ([#647](https://github.com/ralksta/immich-folio/pull/647)). The map's
+  coordinate check used plain falsiness, so a photo on the equator or the
+  prime meridian was treated as having no location at all. Separately,
+  several Immich-facing error paths never read or cancelled the upstream
+  response body before returning — under a sustained upstream fault this
+  slowly exhausts the connection pool.
+
+- **A shared photo link survives reordering or deleting other photos in
+  the album**
+  ([#651](https://github.com/ralksta/immich-folio/pull/651)). The lightbox
+  addressed a photo by its position in the album (`#photo-N`); reordering or
+  deleting a photo silently repointed every previously shared link at a
+  different image. Links now address the photo by its stable asset id via
+  `?photo=<token>`, which also means a shared link's Open Graph preview can
+  show the actual photo instead of a generic card. Links shared before this
+  change keep working — the old `#photo-N` format is still read as a
+  fallback.
+
+### Internal
+
+- **One `withAdmin()` wrapper instead of the same guard copied into 24
+  route handlers**
+  ([#615](https://github.com/ralksta/immich-folio/pull/615)). The
+  enabled-check-plus-auth-check pattern was hand-copied across 16 admin
+  route files; a new route protected by nobody used to be a diff that
+  looked completely ordinary. A structural test now rejects any admin
+  handler exported outside the wrapper.
+- **One atomic-write primitive instead of six independently-drifted
+  copies**
+  ([#616](https://github.com/ralksta/immich-folio/pull/616)). The
+  temp-file-then-rename pattern existed six times across the admin, journal,
+  install and favicon code, each with its own (and by now different) temp
+  filename scheme.
+- **Component testing is set up**
+  ([#622](https://github.com/ralksta/immich-folio/pull/622)). `jsdom` and
+  `@testing-library/react` land as dev dependencies, opt-in per file via a
+  `// @vitest-environment jsdom` pragma; extracting logic out of a
+  component is still preferred over rendering it wherever that's possible.
+
+### Upgrade notes
+
+**Bump `IMAGE_CACHE_VERSION` when you deploy this release**, the same
+variable v0.15.0 introduced. Image URLs are served `immutable` with a
+one-year cache; a browser (or an edge cache) that already has an `original`
+response cached under a still-valid image URL keeps serving that original
+after the upgrade unless the URL itself changes. Increment the value if it
+is already set; set it to anything if it is not.
+
+No configuration schema changed beyond what `settings.yaml` validation
+already accepts; there is nothing else to migrate.
+
 ## [0.15.0] — 2026-09-19
 
 ### Security
