@@ -75,7 +75,10 @@ export async function getMapData(): Promise<MapLocation[]> {
 
         for (const asset of album.assets) {
           const exif = asset.exifInfo;
-          if (!exif?.latitude || !exif?.longitude || !exif?.city || !exif?.country) continue;
+          // A falsiness check here would drop a coordinate of exactly 0 — the
+          // equator or the prime meridian — as if it were absent (#635).
+          if (exif?.latitude == null || exif?.longitude == null || !exif?.city || !exif?.country)
+            continue;
 
           const key = `${exif.city}|${exif.country}`;
           let byAlbum = buckets.get(key);

@@ -89,6 +89,11 @@ export async function requestJson<T>({
 
   if (!res.ok) {
     console.error(`[Immich] ${res.status} ${res.statusText} for ${endpoint}`);
+    // Neither branch below reads the body. Under undici an unconsumed body
+    // keeps its socket out of the pool until GC finalises it, so a proxy
+    // answering every request with an error accumulates orphaned sockets for
+    // as long as the fault lasts (#635).
+    await res.body?.cancel();
     if (res.status !== 404 && res.status !== 410) {
       throw new ImmichUnavailableError(
         `Immich returned ${res.status} ${res.statusText} for ${endpoint}`,
@@ -101,7 +106,9 @@ export async function requestJson<T>({
   const contentType = res.headers.get('Content-Type') || '';
   if (!contentType.includes('application/json')) {
     // We always send Accept: application/json. Anything else is a gateway or
-    // proxy error page, not a valid answer about the resource.
+    // proxy error page, not a valid answer about the resource — and, same as
+    // above, a body neither read here (#635).
+    await res.body?.cancel();
     throw new ImmichUnavailableError(
       `Immich returned non-JSON (${contentType || 'no Content-Type'}) for ${endpoint}`,
     );

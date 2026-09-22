@@ -271,6 +271,53 @@ describe('ImmichClient', () => {
       const result = await immich.streamVideo('asset-1', 'bytes=0-1023');
       expect(result?.status).toBe(206);
     });
+
+    /**
+     * Neither error branch reads the body. Under undici an unconsumed one
+     * keeps its socket out of the pool until GC finalises it, so a proxy
+     * answering every request with an error accumulates orphaned sockets for
+     * as long as the fault lasts (#635).
+     */
+    const streamResWithBody = (status: number) => {
+      const cancel = vi.fn();
+      return {
+        res: {
+          ok: status >= 200 && status < 300,
+          status,
+          body: { cancel },
+          headers: { get: () => null },
+        },
+        cancel,
+      };
+    };
+
+    it('streamAsset cancels the body on the "gone" path', async () => {
+      const { res, cancel } = streamResWithBody(404);
+      mockFetch.mockResolvedValueOnce(res);
+      await expect(immich.streamAsset('asset-1')).resolves.toBeNull();
+      expect(cancel).toHaveBeenCalledOnce();
+    });
+
+    it('streamAsset cancels the body on the "outage" path', async () => {
+      const { res, cancel } = streamResWithBody(500);
+      mockFetch.mockResolvedValueOnce(res);
+      await expect(immich.streamAsset('asset-1')).rejects.toBeInstanceOf(ImmichUnavailableError);
+      expect(cancel).toHaveBeenCalledOnce();
+    });
+
+    it('streamVideo cancels the body on the "gone" path', async () => {
+      const { res, cancel } = streamResWithBody(404);
+      mockFetch.mockResolvedValueOnce(res);
+      await expect(immich.streamVideo('asset-1')).resolves.toBeNull();
+      expect(cancel).toHaveBeenCalledOnce();
+    });
+
+    it('streamVideo cancels the body on the "outage" path', async () => {
+      const { res, cancel } = streamResWithBody(502);
+      mockFetch.mockResolvedValueOnce(res);
+      await expect(immich.streamVideo('asset-1')).rejects.toBeInstanceOf(ImmichUnavailableError);
+      expect(cancel).toHaveBeenCalledOnce();
+    });
   });
 
   // Measured before the fix: 5 sequential lookups of a missing asset produced 5

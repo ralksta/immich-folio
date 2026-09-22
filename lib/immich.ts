@@ -208,6 +208,9 @@ class ImmichClient {
 
       if (!res.ok && res.status !== 206) {
         console.error(`[Immich] Failed to stream video ${assetId}: ${res.status}`);
+        // Neither branch below reads the body — an unconsumed one keeps its
+        // socket out of undici's pool until GC finalises it (#635).
+        await res.body?.cancel();
         if (res.status !== 404 && res.status !== 410) {
           throw new ImmichUnavailableError(
             `Immich returned ${res.status} streaming video ${assetId}`,
@@ -277,6 +280,9 @@ class ImmichClient {
 
       if (!res.ok) {
         console.error(`[Immich] Failed to stream ${assetId}: ${res.status}`);
+        // Neither branch below reads the body — an unconsumed one keeps its
+        // socket out of undici's pool until GC finalises it (#635).
+        await res.body?.cancel();
         if (res.status !== 404 && res.status !== 410) {
           throw new ImmichUnavailableError(
             `Immich returned ${res.status} streaming asset ${assetId}`,

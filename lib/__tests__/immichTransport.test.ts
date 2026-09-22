@@ -95,6 +95,54 @@ describe('requestJson', () => {
     await expect(requestJson(opts)).rejects.toMatchObject({ status: 503 });
   });
 
+  /**
+   * Neither the "gone" nor the "outage" branch reads the body. Under undici
+   * an unconsumed one keeps its socket out of the pool until GC finalises it,
+   * so a proxy answering every request with an error accumulates orphaned
+   * sockets for as long as the fault lasts (#635).
+   */
+  it('cancels the body on the "gone" path (404/410)', async () => {
+    for (const status of [404, 410]) {
+      const res = new Response('', { status });
+      const cancelSpy = vi.spyOn(res.body!, 'cancel');
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => res),
+      );
+
+      await requestJson(opts);
+
+      expect(cancelSpy).toHaveBeenCalledOnce();
+    }
+  });
+
+  it('cancels the body on the "outage" path (5xx)', async () => {
+    const res = new Response('', { status: 503, statusText: 'Unavailable' });
+    const cancelSpy = vi.spyOn(res.body!, 'cancel');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => res),
+    );
+
+    await expect(requestJson(opts)).rejects.toBeInstanceOf(ImmichUnavailableError);
+    expect(cancelSpy).toHaveBeenCalledOnce();
+  });
+
+  it('cancels the body when the content type is not JSON', async () => {
+    const res = new Response('<html>502 Bad Gateway</html>', {
+      status: 200,
+      headers: { 'Content-Type': 'text/html' },
+    });
+    const cancelSpy = vi.spyOn(res.body!, 'cancel');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => res),
+    );
+
+    await expect(requestJson(opts)).rejects.toThrow(/non-JSON/);
+    expect(cancelSpy).toHaveBeenCalledOnce();
+  });
+
   it('refuses a non-JSON body', async () => {
     // We always send Accept: application/json, so an HTML body is a gateway
     // error page, not an answer about the resource.
