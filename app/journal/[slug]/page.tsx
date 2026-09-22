@@ -63,6 +63,9 @@ function isJournalAuthenticated(
   if (!storedPassword) return true;
   if (!cookieVal) return false;
 
+  // 🛡️ SECURITY: Enforce maximum token length to prevent memory exhaustion DoS
+  if (cookieVal.length > 512) return false;
+
   const sep = cookieVal.indexOf('.');
   if (sep === -1) return false;
 

@@ -2,3 +2,7 @@
 **Vulnerability:** The decodeAssetId function in lib/tokens.ts accepted arbitrary length tokens and passed them directly to Buffer.from(..., 'base64url'), creating a risk of massive memory allocation (memory exhaustion/CPU DoS).
 **Learning:** Functions that decode tokens from URLs (like GET /api/image/:token) must limit the input string length before passing it to Buffer.from. Otherwise, a maliciously crafted huge token can cause the Node.js process to throw RangeError (Invalid string length) or exhaust memory, despite being wrapped in a try/catch.
 **Prevention:** Always enforce a strict maximum length check on opaque URL tokens before decoding them.
+## 2024-09-22 - Enforce Maximum Length Limits on Auth Payloads Before Crypto Operations
+**Vulnerability:** Found unconstrained token and signature inputs parsed from requests (e.g. cookies or headers) that are converted directly to Buffers and passed into `crypto.timingSafeEqual`. An attacker providing an excessively long string can cause immediate memory exhaustion (DoS) during the buffer allocation or induce high CPU load during the timing-safe comparison.
+**Learning:** Even when wrapped in try/catch blocks, unbounded inputs processed by Node.js cryptographic or buffer functions remain a vector for Denial of Service attacks because of the large underlying memory allocation.
+**Prevention:** Always enforce a strict maximum string length check on inputs (like session tokens, webhooks signatures, and auth cookies) immediately after extracting them from the request and before processing them further.

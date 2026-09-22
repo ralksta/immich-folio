@@ -61,6 +61,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
   }
 
+  // 🛡️ SECURITY: Enforce maximum signature length to prevent memory exhaustion DoS
+  if (signature.length > 128) {
+    console.warn('[Webhook] ⚠️ Signature too long');
+    return NextResponse.json({ error: 'Invalid signature length' }, { status: 401 });
+  }
+
   const expected = createHmac('sha256', env.WEBHOOK_SECRET).update(rawBody).digest('hex');
 
   let signatureValid = false;
