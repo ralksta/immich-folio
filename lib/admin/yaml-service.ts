@@ -41,9 +41,21 @@ async function writeYamlFile(filename: string, data: unknown): Promise<void> {
   // Ensure content directory exists
   await fs.mkdir(CONTENT_DIR, { recursive: true });
 
-  // Create backup if file exists
+  // "No file yet" and "the backup could not be written" used to share one
+  // catch, so a `.backups/` a save couldn't write to (owned by root after a
+  // first start as root, say) looked exactly like a brand-new file: the save
+  // went ahead with no snapshot taken (#630). Only ENOENT means there is
+  // nothing to back up; anything else aborts the save before it overwrites
+  // the live file.
+  let fileExists = true;
   try {
     await fs.access(filePath);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+    fileExists = false;
+  }
+
+  if (fileExists) {
     const backupDir = path.join(CONTENT_DIR, '.backups');
     await fs.mkdir(backupDir, { recursive: true });
 
@@ -53,8 +65,6 @@ async function writeYamlFile(filename: string, data: unknown): Promise<void> {
 
     // Prune old backups
     await pruneBackups(backupDir, filename);
-  } catch {
-    // File doesn't exist yet, no backup needed
   }
 
   // Generate YAML content with header comment
@@ -130,7 +140,16 @@ export async function restoreBackup(backupFilename: string): Promise<void> {
   const originalFilename = match[1];
   const targetPath = path.join(CONTENT_DIR, originalFilename);
 
-  // Create a backup of current state first
+  // Read before touching anything, so a missing or unreadable backup changes
+  // nothing on disk.
+  const content = await fs.readFile(backupPath);
+
+  // Create a backup of current state first. A failed safety copy aborts the
+  // restore rather than being swallowed: `fs.copyFile` below would otherwise
+  // truncate `targetPath` before writing it, so on a full disk or a container
+  // killed mid-copy the live file could be lost with no snapshot to fall back
+  // on (#630). Only ENOENT — there is no current file to snapshot, which is
+  // the normal case for a deleted entry — is not an abort.
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const preRestoreBackup = `${originalFilename}.${timestamp}.pre-restore.bak`;
   try {
@@ -138,11 +157,15 @@ export async function restoreBackup(backupFilename: string): Promise<void> {
     // Bound them here rather than waiting for the next save: restoring twice in
     // a row is exactly when these pile up, and a save may be a long way off.
     await pruneBackups(backupDir, originalFilename);
-  } catch {
-    // Original might not exist
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
   }
 
-  await fs.copyFile(backupPath, targetPath);
+  // atomicWrite rather than fs.copyFile: a copy truncates the destination
+  // before writing, so a failure partway through (full disk, killed
+  // container) leaves targetPath empty. Temp-file-then-rename means the old
+  // content stays in place until the new content is fully on disk.
+  await atomicWrite(targetPath, content);
   console.log(`[Admin] 🔄 Restored ${originalFilename} from ${backupFilename}`);
 }
 

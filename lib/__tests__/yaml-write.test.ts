@@ -80,3 +80,36 @@ describe('writeYamlFile temp file handling', () => {
     expect(fs.unlink).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * "No file yet" and "the backup could not be written" used to share one
+ * catch, so a `.backups/` this save couldn't write to looked exactly like a
+ * brand-new file and the save went ahead with no snapshot (#630).
+ */
+describe('writeYamlFile backup failure', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('still saves a brand-new file with no backup', async () => {
+    await expect(writeGalleryYaml(gallery)).resolves.toBeUndefined();
+    expect(fs.copyFile).not.toHaveBeenCalled();
+  });
+
+  it('aborts the save when the file exists but the backup copy fails', async () => {
+    vi.mocked(fs.access).mockResolvedValueOnce(undefined);
+    vi.mocked(fs.copyFile).mockRejectedValueOnce(
+      Object.assign(new Error('EACCES'), { code: 'EACCES' }),
+    );
+
+    await expect(writeGalleryYaml(gallery)).rejects.toThrow('EACCES');
+    expect(fs.writeFile).not.toHaveBeenCalled();
+  });
+
+  it('aborts when checking whether the file exists fails for a reason other than ENOENT', async () => {
+    vi.mocked(fs.access).mockRejectedValueOnce(
+      Object.assign(new Error('EACCES'), { code: 'EACCES' }),
+    );
+
+    await expect(writeGalleryYaml(gallery)).rejects.toThrow('EACCES');
+    expect(fs.writeFile).not.toHaveBeenCalled();
+  });
+});

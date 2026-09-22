@@ -61,17 +61,22 @@ describe('restoreBackup rejects anything that is not a backup it produced', () =
 describe('restoreBackup accepts the names it writes', () => {
   beforeEach(() => vi.clearAllMocks());
 
+  // The restore itself goes through atomicWrite (writeFile the temp file,
+  // then rename it onto the target) rather than fs.copyFile, so a failure
+  // partway through cannot truncate the live file (#630). fs.copyFile is
+  // still used, but only for the pre-restore safety snapshot.
   it('restores a normal backup', async () => {
     await expect(
       restoreBackup('gallery.yaml.2026-05-31T17-30-00-000Z.bak'),
     ).resolves.toBeUndefined();
-    expect(fs.copyFile).toHaveBeenCalled();
+    expect(fs.copyFile).toHaveBeenCalled(); // pre-restore snapshot
+    expect(fs.rename).toHaveBeenCalled(); // atomic restore write
   });
 
   it('restores an about.md backup onto content/about.md', async () => {
     await restoreBackup('about.md.2026-05-31T17-30-00-000Z.bak');
 
-    const calls = vi.mocked(fs.copyFile).mock.calls;
+    const calls = vi.mocked(fs.rename).mock.calls;
     expect(String(calls[calls.length - 1][1])).toMatch(/content\/about\.md$/);
   });
 
@@ -84,8 +89,38 @@ describe('restoreBackup accepts the names it writes', () => {
   it('derives the destination from the matched name, not a substring search', async () => {
     await restoreBackup('settings.yaml.2026-05-31T17-30-00-000Z.bak');
 
-    // Last copyFile is backup → target; the first is the pre-restore snapshot.
-    const calls = vi.mocked(fs.copyFile).mock.calls;
+    const calls = vi.mocked(fs.rename).mock.calls;
     expect(String(calls[calls.length - 1][1])).toMatch(/content\/settings\.yaml$/);
+  });
+
+  it('reads the backup before touching the pre-restore snapshot or the live file', async () => {
+    await restoreBackup('gallery.yaml.2026-05-31T17-30-00-000Z.bak');
+
+    const readOrder = vi.mocked(fs.readFile).mock.invocationCallOrder[0];
+    const copyOrder = vi.mocked(fs.copyFile).mock.invocationCallOrder[0];
+    expect(readOrder).toBeLessThan(copyOrder);
+  });
+
+  it('aborts without touching the live file when the safety snapshot fails for a reason other than ENOENT', async () => {
+    vi.mocked(fs.copyFile).mockRejectedValueOnce(
+      Object.assign(new Error('EACCES'), { code: 'EACCES' }),
+    );
+
+    await expect(restoreBackup('gallery.yaml.2026-05-31T17-30-00-000Z.bak')).rejects.toThrow(
+      'EACCES',
+    );
+    expect(fs.writeFile).not.toHaveBeenCalled();
+    expect(fs.rename).not.toHaveBeenCalled();
+  });
+
+  it('proceeds when the safety snapshot fails only because there is no current file yet', async () => {
+    vi.mocked(fs.copyFile).mockRejectedValueOnce(
+      Object.assign(new Error('ENOENT'), { code: 'ENOENT' }),
+    );
+
+    await expect(
+      restoreBackup('gallery.yaml.2026-05-31T17-30-00-000Z.bak'),
+    ).resolves.toBeUndefined();
+    expect(fs.rename).toHaveBeenCalled();
   });
 });

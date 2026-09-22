@@ -62,6 +62,22 @@ describe('deleteJournalEntry', () => {
   });
 });
 
+describe('writeJournalEntry backup failure (#630)', () => {
+  it('still saves a brand-new entry with no backup', async () => {
+    await expect(service.writeJournalEntry('trip', entry('New'))).resolves.toBeUndefined();
+    await expect(readdir(backupDir).catch(() => [])).resolves.toEqual([]);
+  });
+
+  it('aborts the save when the entry exists but the backup cannot be written', async () => {
+    await writeFile(path.join(journalDir, 'trip.md'), entry('Old'));
+    // A file where the backup directory should be makes mkdir and copy fail.
+    await writeFile(backupDir, 'not a directory');
+
+    await expect(service.writeJournalEntry('trip', entry('New'))).rejects.toThrow();
+    await expect(readFile(path.join(journalDir, 'trip.md'), 'utf8')).resolves.toBe(entry('Old'));
+  });
+});
+
 describe('restoreJournalBackup', () => {
   it('brings a deleted entry back under its slug', async () => {
     await writeFile(path.join(journalDir, 'trip.md'), entry('Trip'));

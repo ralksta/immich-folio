@@ -273,13 +273,22 @@ export async function writeJournalEntry(slug: string, rawMarkdown: string): Prom
     throw new Error(`Invalid journal slug: "${slug}"`);
   }
 
-  // Create rolling backup if file already exists
+  // "No file yet" and "the backup could not be written" used to share one
+  // catch, so a `.backups/` a save couldn't write to looked exactly like a
+  // brand-new entry: the save went ahead with no snapshot taken (#630). Only
+  // ENOENT means there is nothing to back up; anything else aborts the save
+  // before it overwrites the live file.
+  let fileExists = true;
   try {
     await fs.access(filePath);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+    fileExists = false;
+  }
+
+  if (fileExists) {
     await snapshotEntry(filePath, filename);
     await pruneEntryBackups(filename);
-  } catch {
-    // New file, no backup needed
   }
 
   await atomicWrite(filePath, rawMarkdown);

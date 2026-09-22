@@ -64,10 +64,22 @@ export const PUT = withAdmin(async (request: Request) => {
   const content = `---\n${frontmatter}\n---\n\n${data.body ?? ''}\n`;
 
   const filePath = path.join(CONTENT_DIR, FILENAME);
+  await fs.mkdir(CONTENT_DIR, { recursive: true });
 
-  // ── Backup existing file ────────────────────────────────────
+  // "No file yet" and "the backup could not be written" used to share one
+  // catch, so a `.backups/` this save couldn't write to looked exactly like a
+  // brand-new file: the save went ahead with no snapshot taken (#630). Only
+  // ENOENT means there is nothing to back up; anything else aborts the save
+  // before it overwrites the live file.
+  let fileExists = true;
   try {
     await fs.access(filePath);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException & { code?: string }).code !== 'ENOENT') throw err;
+    fileExists = false;
+  }
+
+  if (fileExists) {
     const backupDir = path.join(CONTENT_DIR, '.backups');
     await fs.mkdir(backupDir, { recursive: true });
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -79,9 +91,6 @@ export const PUT = withAdmin(async (request: Request) => {
     while (aboutBackups.length > MAX_BACKUPS) {
       await fs.unlink(path.join(backupDir, aboutBackups.shift()!));
     }
-  } catch {
-    // File doesn't exist yet — no backup needed, but make sure the dir exists
-    await fs.mkdir(CONTENT_DIR, { recursive: true });
   }
 
   await atomicWrite(filePath, content);
