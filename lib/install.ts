@@ -22,7 +22,7 @@ import path from 'path';
 import crypto from 'crypto';
 import yaml from 'js-yaml';
 import { atomicWrite } from './atomicWrite';
-import { env } from './env';
+import { env, normalizeApiUrl } from './env';
 import { generateScryptHash } from './password';
 import type { GalleryYaml, SettingsYaml } from './config/schema';
 import { DEFAULT_PRESET } from './config/theme';
@@ -165,8 +165,13 @@ function readInstallFile(): InstallFileData {
  */
 export function getInstallCredentials(): InstallCredentials {
   const file = readInstallFile();
+  const apiUrl = env.IMMICH_API_URL || file.apiUrl || '';
   return {
-    apiUrl: env.IMMICH_API_URL || file.apiUrl || '',
+    // Normalised on every read, not only when completeInstall writes it, so
+    // an install.json written before this fix heals without re-running the
+    // wizard. env.ts already normalises IMMICH_API_URL, so this is a no-op
+    // for that source and only does real work for file.apiUrl (#634).
+    apiUrl: apiUrl ? normalizeApiUrl(apiUrl) || apiUrl : '',
     apiKey: env.IMMICH_API_KEY || file.apiKey || '',
     authSecret: env.AUTH_SECRET || file.authSecret || '',
     adminPassword: env.ADMIN_PASSWORD || file.adminPassword || '',
@@ -256,8 +261,15 @@ export async function completeInstall(input: InstallInput): Promise<CompleteInst
     theme: { preset: input.theme || DEFAULT_PRESET },
   };
 
+  // Stored normalised, not raw: the route verifies the connection against
+  // normalizeApiBase(apiUrl), which strips a trailing slash, but this used
+  // to write input.apiUrl.trim() unchanged, so "https://host/api/" passed
+  // the ping and then every request after install went to
+  // ".../api//api/albums" and 404ed (#634).
+  const normalizedApiUrl = normalizeApiUrl(input.apiUrl.trim()) || input.apiUrl.trim();
+
   const data: InstallFileData = {
-    apiUrl: input.apiUrl.trim(),
+    apiUrl: normalizedApiUrl,
     apiKey: input.apiKey.trim(),
     authSecret: crypto.randomBytes(32).toString('hex'),
     // Hashed, not stored as typed: the API key and the site secret have to be

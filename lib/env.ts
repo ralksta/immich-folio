@@ -25,13 +25,32 @@ export interface Env {
   SITE_URL?: string;
 }
 
+/**
+ * Strip a trailing slash (or several) from a URL, after confirming it parses
+ * at all. Deliberately not `/api`-aware, unlike install.ts's
+ * normalizeApiBase(): this is the "base URL, no /api" shape getConfig()
+ * expects (it appends /api itself unless the value already ends with one),
+ * and it's what the install wizard's URL field pre-fills from — appending
+ * /api here would mean re-opening the wizard shows a path nobody typed.
+ *
+ * Exported so lib/install.ts can apply the same normalisation to
+ * content/install.json's apiUrl, which used to skip it entirely: a trailing
+ * slash there produced IMMICH_API_URL//api and every request 404ed (#634).
+ */
+export function normalizeApiUrl(raw: string): string {
+  try {
+    return new URL(raw).toString().replace(/\/+$/, '');
+  } catch {
+    return '';
+  }
+}
+
 function parseEnv(): Env {
   const urlRaw = process.env.IMMICH_API_URL;
   let apiUrl = '';
   if (urlRaw) {
-    try {
-      apiUrl = new URL(urlRaw).toString().replace(/\/+$/, '');
-    } catch {
+    apiUrl = normalizeApiUrl(urlRaw);
+    if (!apiUrl) {
       console.warn('⚠️ IMMICH_API_URL is invalid, falling back to empty string for setup.');
     }
   }

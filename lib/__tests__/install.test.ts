@@ -23,6 +23,15 @@ vi.mock('@/lib/env', () => ({
       return process.env.INSTALL_CONTENT_DIR || '';
     },
   },
+  // Real implementation, not a stub: install.ts's own normalisation tests
+  // (#634) rely on this actually stripping trailing slashes.
+  normalizeApiUrl: (raw: string) => {
+    try {
+      return new URL(raw).toString().replace(/\/+$/, '');
+    } catch {
+      return '';
+    }
+  },
 }));
 
 /** Import fresh so the module-level install-file cache cannot leak between cases. */
@@ -103,6 +112,45 @@ describe('getInstallCredentials', () => {
       adminPassword: '',
     });
   });
+
+  /**
+   * The environment path already strips a trailing slash (lib/env.ts); the
+   * file path used to store content/install.json's apiUrl completely
+   * unnormalised. `https://host/api/` then reached getConfig() as
+   * `.../api/`, which does not `endsWith('/api')`, so it became
+   * `.../api//api` and every request 404ed (#634). Normalising on every read
+   * means an install.json written before this fix heals without re-running
+   * the wizard.
+   */
+  describe('heals an unnormalised URL already on disk (#634)', () => {
+    it.each([
+      ['trailing slash, no /api', 'https://file-immich:2283/', 'https://file-immich:2283'],
+      [
+        'trailing slash, with /api',
+        'https://file-immich:2283/api/',
+        'https://file-immich:2283/api',
+      ],
+      ['no trailing slash, already clean', 'https://file-immich:2283', 'https://file-immich:2283'],
+    ])('file path: %s', async (_name, stored, expected) => {
+      const { getInstallCredentials } = await loadInstall();
+      fs.writeFileSync(
+        path.join(dir, 'install.json'),
+        JSON.stringify({ apiUrl: stored, apiKey: 'file-key' }),
+      );
+
+      expect(getInstallCredentials().apiUrl).toBe(expected);
+    });
+
+    it.each([
+      ['trailing slash, no /api', 'https://env-immich:2283/', 'https://env-immich:2283'],
+      ['trailing slash, with /api', 'https://env-immich:2283/api/', 'https://env-immich:2283/api'],
+    ])('env path: %s', async (_name, envValue, expected) => {
+      const { getInstallCredentials } = await loadInstall();
+      process.env.__T_INSTALL_URL = envValue;
+
+      expect(getInstallCredentials().apiUrl).toBe(expected);
+    });
+  });
 });
 
 describe('isInstalled', () => {
@@ -166,6 +214,23 @@ describe('completeInstall', () => {
 
     // The generated secret resolves through getInstallCredentials.
     expect(getInstallCredentials().authSecret).toBe(creds.authSecret);
+  });
+
+  /**
+   * The route verifies the connection against normalizeApiBase(apiUrl),
+   * which strips a trailing slash, but this used to write input.apiUrl.trim()
+   * unchanged — so a URL that passed the ping test was stored as typed and
+   * every request afterwards 404ed (#634).
+   */
+  it.each([
+    ['trailing slash, no /api', 'https://immich.example/', 'https://immich.example'],
+    ['trailing slash, with /api', 'https://immich.example/api/', 'https://immich.example/api'],
+  ])('normalises the stored apiUrl: %s', async (_name, typed, expected) => {
+    const { completeInstall } = await loadInstall();
+    await completeInstall({ apiUrl: typed, apiKey: 'api-key-123' });
+
+    const creds = JSON.parse(fs.readFileSync(path.join(dir, 'install.json'), 'utf8'));
+    expect(creds.apiUrl).toBe(expected);
   });
 
   it('writes an empty albums list when no albums are selected', async () => {

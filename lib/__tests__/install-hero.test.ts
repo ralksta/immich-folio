@@ -12,6 +12,13 @@ vi.mock('@/lib/env', () => ({
       return process.env.INSTALL_CONTENT_DIR;
     },
   },
+  normalizeApiUrl: (raw: string) => {
+    try {
+      return new URL(raw).toString().replace(/\/+$/, '');
+    } catch {
+      return '';
+    }
+  },
 }));
 
 let dir: string;

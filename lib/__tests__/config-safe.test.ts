@@ -11,6 +11,7 @@ vi.mock('@/lib/env', () => ({
     RATE_LIMIT_RPM: 120,
     TRUSTED_PROXY_HOPS: 0,
   },
+  normalizeApiUrl: (raw: string) => raw.replace(/\/+$/, ''),
 }));
 
 vi.mock('@/lib/secret', () => ({

@@ -10,6 +10,7 @@ vi.mock('@/lib/env', () => ({
     CACHE_TTL: 300,
     RATE_LIMIT_RPM: 120,
   },
+  normalizeApiUrl: (raw: string) => raw.replace(/\/+$/, ''),
 }));
 
 vi.mock('@/lib/secret', () => ({
