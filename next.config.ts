@@ -18,8 +18,23 @@ const securityHeaders = [
   { key: 'X-DNS-Prefetch-Control', value: 'off' },
 ];
 
+/**
+ * Dev only: Next 16 answers 403 for every /_next dev asset requested from a
+ * hostname other than localhost, which kills hydration when the dev server is
+ * opened over the LAN. `ALLOWED_DEV_ORIGINS` in `.env.local` lists the extra
+ * hostnames, comma-separated — hostname only, scheme and port are ignored.
+ * Read here rather than through `lib/env.ts`, which validates the app's
+ * runtime settings and would demand AUTH_SECRET just to start `next dev`;
+ * Next loads `.env.local` before it evaluates this file.
+ */
+const allowedDevOrigins = (process.env.ALLOWED_DEV_ORIGINS ?? '')
+  .split(',')
+  .map((host) => host.trim())
+  .filter(Boolean);
+
 const nextConfig: NextConfig = {
   output: 'standalone',
+  allowedDevOrigins,
   images: {
     loader: 'custom',
     loaderFile: './lib/immichLoader.ts',
