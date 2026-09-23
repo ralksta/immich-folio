@@ -72,7 +72,7 @@ See `app/admin/__tests__/SaveBar.test.tsx` for a worked example.
 **Prefer extracting the logic over rendering it.** A pure function moved into
 `lib/` — or into a sibling module, as `page-builder/albumEntries.ts` was — is
 cheaper to test and stays tested when the markup around it changes. Reach for a
-component test when the behaviour *is* the rendering: a state that hides a form,
+component test when the behaviour _is_ the rendering: a state that hides a form,
 a control that must stay disabled, a keyboard shortcut.
 
 ## Code style

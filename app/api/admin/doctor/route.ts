@@ -107,7 +107,10 @@ export const GET = withAdmin(async (request: NextRequest) => {
       // it), which is only known once Immich has answered (#632).
       const slugGroups: AlbumSlugGroup[] = [
         { context: 'gallery.yaml albums', albumIds: config.standaloneAlbums },
-        ...config.subpages.map((sp) => ({ context: `subpage "${sp.name}"`, albumIds: sp.albumIds })),
+        ...config.subpages.map((sp) => ({
+          context: `subpage "${sp.name}"`,
+          albumIds: sp.albumIds,
+        })),
       ];
       findings.push(checkAlbumSlugCollisions(slugGroups, config.albumOverrides, albums, slugify));
     }

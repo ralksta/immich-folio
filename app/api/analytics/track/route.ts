@@ -82,7 +82,10 @@ export async function POST(req: NextRequest) {
         { error: 'Too many requests' },
         {
           status: 429,
-          headers: { 'Retry-After': String(retryAfterSeconds(resetAt)), 'Cache-Control': 'no-store' },
+          headers: {
+            'Retry-After': String(retryAfterSeconds(resetAt)),
+            'Cache-Control': 'no-store',
+          },
         },
       );
     }
@@ -111,7 +114,10 @@ export async function POST(req: NextRequest) {
 
       // An already-tracked path may still increment past the cap; only a
       // brand-new key is refused once the day is full.
-      if (dayObj.pages[pagePath] !== undefined || Object.keys(dayObj.pages).length < MAX_PAGES_PER_DAY) {
+      if (
+        dayObj.pages[pagePath] !== undefined ||
+        Object.keys(dayObj.pages).length < MAX_PAGES_PER_DAY
+      ) {
         dayObj.pages[pagePath] = (dayObj.pages[pagePath] || 0) + 1;
       }
 
