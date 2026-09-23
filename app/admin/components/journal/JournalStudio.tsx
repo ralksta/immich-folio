@@ -16,6 +16,7 @@ import {
 } from '../Icons';
 import './journal-studio.css';
 import { JournalEditor } from './JournalEditor';
+import { useContentRestored } from '../contentRestored';
 
 interface JournalStudioProps {
   /** Entry to open, taken from the /admin/journal/[slug] route. */
@@ -59,6 +60,11 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
   useEffect(() => {
     fetchEntries();
   }, [fetchEntries]);
+
+  // A restored entry may be one that was deleted, or have a new title.
+  useContentRestored(({ target }) => {
+    if (target === 'journal') fetchEntries();
+  });
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

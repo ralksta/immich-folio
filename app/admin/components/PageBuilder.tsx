@@ -22,6 +22,7 @@ import { CSS } from '@dnd-kit/utilities';
 import AlbumPicker from './AlbumPicker';
 import AssetPicker from './AssetPicker';
 import AssetOrderEditor from './AssetOrderEditor';
+import { useContentRestored } from './contentRestored';
 import SaveBar from './SaveBar';
 import AlbumDrawer from './page-builder/AlbumDrawer';
 import { SortableAlbumCard } from './page-builder/AlbumCard';
@@ -242,6 +243,11 @@ export default function PageBuilder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // A restored gallery.yaml replaces what this editor loaded.
+  useContentRestored(({ target }) => {
+    if (target === 'gallery') loadData();
+  });
+
   // ── Keyboard shortcut: ⌘+S / Ctrl+S ─────────────────────────
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -322,7 +328,9 @@ export default function PageBuilder() {
       serverState.current = parsed;
       const restored = draft.load(JSON.stringify(parsed));
       setGallery(restored ?? parsed);
-      if (restored) setDirty(true);
+      // Not merely "set when restored": on a reload after a backup restore the
+      // editor may have been dirty, and now shows the server state.
+      setDirty(restored !== null);
       openAlbumFromLink(restored ?? parsed);
 
       // A failed album list is survivable — it only empties the picker, and
@@ -660,13 +668,14 @@ export default function PageBuilder() {
     return gallery.subpages.slice(0, index).filter((s) => s.enabled !== false).length + 1;
   }
 
-  function removeSubpage(index: number) {
-    if (!confirm('Remove this subpage?')) return;
+  function removeSubpage(index: number): boolean {
+    if (!confirm('Remove this subpage?')) return false;
     setGallery((g) => ({
       ...g,
       subpages: g.subpages.filter((_, i) => i !== index),
     }));
     markDirty();
+    return true;
   }
 
   function updateSubpage(index: number, updates: Partial<Subpage>) {
@@ -719,17 +728,18 @@ export default function PageBuilder() {
   // cover asset and manual assetOrder with it, there is no undo stack in the
   // builder, and the only escape from an accidental click used to be
   // reloading the page — which discards every other unsaved edit too (#597).
-  function removeStandaloneAlbum(index: number) {
-    if (!confirm('Remove this album from the gallery?')) return;
+  function removeStandaloneAlbum(index: number): boolean {
+    if (!confirm('Remove this album from the gallery?')) return false;
     setGallery((g) => ({
       ...g,
       albums: g.albums.filter((_, i) => i !== index),
     }));
     markDirty();
+    return true;
   }
 
-  function removeSubpageAlbum(subpageIndex: number, albumIndex: number) {
-    if (!confirm('Remove this album from the subpage?')) return;
+  function removeSubpageAlbum(subpageIndex: number, albumIndex: number): boolean {
+    if (!confirm('Remove this album from the subpage?')) return false;
     setGallery((g) => {
       const subpages = [...g.subpages];
       const sp = { ...subpages[subpageIndex] };
@@ -738,10 +748,15 @@ export default function PageBuilder() {
       return { ...g, subpages };
     });
     markDirty();
+    return true;
   }
 
-  function removeSectionAlbum(subpageIndex: number, sectionIndex: number, albumIndex: number) {
-    if (!confirm('Remove this album from the section?')) return;
+  function removeSectionAlbum(
+    subpageIndex: number,
+    sectionIndex: number,
+    albumIndex: number,
+  ): boolean {
+    if (!confirm('Remove this album from the section?')) return false;
     setGallery((g) => {
       const subpages = [...g.subpages];
       const sp = { ...subpages[subpageIndex] };
@@ -754,6 +769,7 @@ export default function PageBuilder() {
       return { ...g, subpages };
     });
     markDirty();
+    return true;
   }
 
   // ── Hero Management ──────────────────────────────────────────
@@ -1170,7 +1186,7 @@ export default function PageBuilder() {
         markDirty();
       };
       onRemove = () => {
-        removeStandaloneAlbum(addr.albumIndex);
+        if (removeStandaloneAlbum(addr.albumIndex)) setEditingAlbumAddress(null);
       };
     } else if (addr.type === 'subpage') {
       const sp = gallery.subpages[addr.subpageIndex!];
@@ -1193,7 +1209,7 @@ export default function PageBuilder() {
         markDirty();
       };
       onRemove = () => {
-        removeSubpageAlbum(addr.subpageIndex!, addr.albumIndex);
+        if (removeSubpageAlbum(addr.subpageIndex!, addr.albumIndex)) setEditingAlbumAddress(null);
       };
     } else {
       const sp = gallery.subpages[addr.subpageIndex!];
@@ -1222,7 +1238,11 @@ export default function PageBuilder() {
         markDirty();
       };
       onRemove = () => {
-        removeSectionAlbum(addr.subpageIndex!, addr.sectionIndex!, addr.albumIndex);
+        // Close after removing: the drawer is addressed by index, and would
+        // otherwise show whichever album slid into this slot.
+        if (removeSectionAlbum(addr.subpageIndex!, addr.sectionIndex!, addr.albumIndex)) {
+          setEditingAlbumAddress(null);
+        }
       };
     }
 

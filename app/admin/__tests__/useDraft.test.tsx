@@ -70,6 +70,25 @@ describe('useDraft', () => {
     expect(second.result.current.status).toBe('restored');
   });
 
+  it('keeps a held-back draft while the editor shows the server state', () => {
+    const first = mount();
+    act(() => void first.result.current.load('server-v1'));
+    first.rerender({ value: 'my edit', dirty: true });
+    first.unmount();
+
+    // The editor applies the server state after a conflict and is not dirty.
+    // That render used to clear the draft "Restore my changes" then reads.
+    const second = mount();
+    act(() => void second.result.current.load('server-v2'));
+    second.rerender({ value: 'server v2', dirty: false });
+
+    let taken: string | null = null;
+    act(() => {
+      taken = second.result.current.takeConflicting();
+    });
+    expect(taken).toBe('my edit');
+  });
+
   it('forgets the draft once saved, and bases new edits on the saved state', () => {
     const first = mount();
     act(() => void first.result.current.load('server-v1'));

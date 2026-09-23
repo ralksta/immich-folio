@@ -30,6 +30,7 @@ import { useUnsavedGuard } from '../useUnsavedGuard';
 import { useDraft } from '../useDraft';
 import DraftNotice from '../DraftNotice';
 import { reportIfSessionExpired } from '../sessionExpiry';
+import { useContentRestored } from '../contentRestored';
 import './journal-studio.css';
 import { BlockFields, type AssetPickTarget } from './BlockFields';
 import { StorySettingsModal } from './StorySettingsModal';
@@ -82,6 +83,12 @@ export function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) 
   const loadDraft = draft.load;
   const serverMarkdown = useRef('');
 
+  // Bumped when this entry is restored from a backup, to load it again.
+  const [reloadKey, setReloadKey] = useState(0);
+  useContentRestored(({ target, slug: restored }) => {
+    if (target === 'journal' && restored === slug) setReloadKey((k) => k + 1);
+  });
+
   // Load entry
   useEffect(() => {
     async function load() {
@@ -113,7 +120,7 @@ export function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) 
       }
     }
     load();
-  }, [slug, loadDraft]);
+  }, [slug, loadDraft, reloadKey]);
 
   // Update markdown and sync blocks
   const handleMarkdownChange = (newMd: string) => {
@@ -154,6 +161,9 @@ export function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) 
   const handleSave = async () => {
     // The editor is not rendered in this state, but Cmd+S still reaches here.
     if (loadError) return;
+    // Nothing to save: every save rotates a backup, so repeated Cmd+S on an
+    // unchanged entry pushed real history out of the ten kept per file.
+    if (!dirty || saving) return;
 
     setSaving(true);
     try {
@@ -375,7 +385,7 @@ export function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) 
             type="button"
             className="admin-btn admin-btn-sm admin-btn-primary"
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || !dirty}
           >
             {saving ? (
               'Saving...'
