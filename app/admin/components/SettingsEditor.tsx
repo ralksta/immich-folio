@@ -6,6 +6,9 @@ import Link from 'next/link';
 import * as Icons from './Icons';
 import SaveBar from './SaveBar';
 import { useUnsavedGuard } from './useUnsavedGuard';
+import { useDraft, readDraft } from './useDraft';
+import DraftNotice from './DraftNotice';
+import { useContentRestored } from './contentRestored';
 import { reportIfSessionExpired } from './sessionExpiry';
 import ToggleCard from './fields/ToggleCard';
 import OptionGrid, { toOptions } from './fields/OptionGrid';
@@ -572,6 +575,27 @@ function SettingRow({
   );
 }
 
+/** The About editor's state, as kept in a draft. */
+interface AboutDraft {
+  meta: { portrait?: string; name?: string; location?: string; gear?: string[] };
+  body: string;
+  gearText: string;
+}
+
+/**
+ * What a draft of the About page is compared against: the file's content, not
+ * the textarea's. `gearText` is derived from `meta.gear` and would make a
+ * trailing newline read as a change on disk.
+ */
+function aboutFingerprint(about: AboutDraft): string {
+  const { gear: _gear, ...meta } = about.meta;
+  const gear = about.gearText
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return JSON.stringify({ meta, gear, body: about.body });
+}
+
 export default function SettingsEditor() {
   const router = useRouter();
   // Read here rather than passed in: the editor is mounted by the settings
@@ -620,8 +644,30 @@ export default function SettingsEditor() {
   const [aboutMessage, setAboutMessage] = useState('');
   const [aboutGearText, setAboutGearText] = useState('');
 
+  // Unsaved edits survive a tab switch, Reload or Logout the way the page
+  // builder's and the journal's do (#592) — useUnsavedGuard only covers
+  // leaving the browser.
+  const [serverSettings, setServerSettings] = useState<Settings>({});
+  const settingsDraft = useDraft<Settings>('settings', settings, dirty);
+  const [serverAbout, setServerAbout] = useState<AboutDraft | null>(null);
+  const aboutDraft = useDraft<AboutDraft>(
+    'about',
+    { meta: aboutMeta, body: aboutBody, gearText: aboutGearText },
+    aboutDirty,
+  );
+
+  // A restored settings.yaml or about.md replaces what this editor loaded.
+  useContentRestored(({ target }) => {
+    if (target === 'settings') loadSettings();
+    if (target === 'about' && aboutLoaded) loadAboutContent();
+  });
+
   useEffect(() => {
     loadSettings();
+    // About loads lazily, on first visit to its section. A kept About draft
+    // loads it now, so the save bar owns up to those edits from any section.
+    // (On the About section itself the effect below loads it.)
+    if (activeSection !== 'about' && readDraft('about')) loadAboutContent();
     if (typeof window !== 'undefined') {
       const mode =
         (document.documentElement.getAttribute('data-theme') as 'dark' | 'light') || 'dark';
@@ -695,7 +741,11 @@ export default function SettingsEditor() {
         );
       }
       const { settings: data, siteUrl } = await res.json();
-      setSettings(data || {});
+      const loaded: Settings = data || {};
+      setServerSettings(loaded);
+      const restored = settingsDraft.load(JSON.stringify(loaded));
+      setSettings(restored ?? loaded);
+      setDirty(restored !== null);
       setSiteUrlInfo(siteUrl ?? null);
     } catch (err) {
       console.error('Failed to load settings:', err);
@@ -769,6 +819,8 @@ export default function SettingsEditor() {
 
       if (res.ok) {
         const data = await res.json();
+        setServerSettings(cleaned);
+        settingsDraft.saved(JSON.stringify(cleaned));
         setDirty(false);
         setSaveMessage(data.message || 'Saved!');
         router.refresh();
@@ -803,9 +855,15 @@ export default function SettingsEditor() {
         );
       }
       const data = await res.json();
-      setAboutMeta(data.meta || {});
-      setAboutBody(data.body || '');
-      setAboutGearText(data.meta?.gear?.join('\n') || '');
+      const loaded: AboutDraft = {
+        meta: data.meta || {},
+        body: data.body || '',
+        gearText: data.meta?.gear?.join('\n') || '',
+      };
+      setServerAbout(loaded);
+      const restored = aboutDraft.load(aboutFingerprint(loaded));
+      applyAbout(restored ?? loaded);
+      setAboutDirty(restored !== null);
       setAboutLoaded(true);
     } catch (err) {
       console.error('Failed to load about content:', err);
@@ -846,6 +904,9 @@ export default function SettingsEditor() {
       });
       if (res.ok) {
         const data = await res.json();
+        const saved: AboutDraft = { meta: cleanedMeta, body: aboutBody, gearText: aboutGearText };
+        setServerAbout(saved);
+        aboutDraft.saved(aboutFingerprint(saved));
         setAboutDirty(false);
         setAboutMessage(data.message || 'Saved!');
         setTimeout(() => setAboutMessage(''), 4000);
@@ -868,6 +929,40 @@ export default function SettingsEditor() {
   function saveAll() {
     if (dirty && !saving) handleSave();
     if (aboutDirty && !aboutSaving) saveAboutContent();
+  }
+
+  function applyAbout(value: AboutDraft) {
+    setAboutMeta(value.meta);
+    setAboutBody(value.body);
+    setAboutGearText(value.gearText);
+  }
+
+  function discardSettingsDraft() {
+    settingsDraft.discard();
+    setSettings(serverSettings);
+    setDirty(false);
+    setSaveMessage('');
+  }
+
+  function restoreSettingsDraft() {
+    const value = settingsDraft.takeConflicting();
+    if (!value) return;
+    setSettings(value);
+    setDirty(true);
+  }
+
+  function discardAboutDraft() {
+    aboutDraft.discard();
+    if (serverAbout) applyAbout(serverAbout);
+    setAboutDirty(false);
+    setAboutMessage('');
+  }
+
+  function restoreAboutDraft() {
+    const value = aboutDraft.takeConflicting();
+    if (!value) return;
+    applyAbout(value);
+    setAboutDirty(true);
   }
 
   function updateAboutMeta(key: string, value: unknown) {
@@ -946,6 +1041,21 @@ export default function SettingsEditor() {
         saveMessage={saveBarMessage}
         onSave={saveAll}
         label="Save Changes"
+      />
+
+      <DraftNotice
+        status={settingsDraft.status}
+        subject="settings"
+        onDiscard={discardSettingsDraft}
+        onRestore={restoreSettingsDraft}
+        onDismiss={settingsDraft.dismiss}
+      />
+      <DraftNotice
+        status={aboutDraft.status}
+        subject="About page"
+        onDiscard={discardAboutDraft}
+        onRestore={restoreAboutDraft}
+        onDismiss={aboutDraft.dismiss}
       />
 
       <p className="settings-live-sync-note">

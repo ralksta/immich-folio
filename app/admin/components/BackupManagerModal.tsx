@@ -5,6 +5,7 @@ import type { BackupItem, BackupTarget } from '@/app/api/admin/backups/route';
 import * as Icons from './Icons';
 import { useScrollLock } from './useScrollLock';
 import { useModalDialog } from '@/hooks/useModalDialog';
+import { reportContentRestored } from './contentRestored';
 
 interface Props {
   isOpen: boolean;
@@ -90,6 +91,8 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
           : `Backup restored successfully! (${filename})`,
       );
       setConfirmItem(null);
+      // Open editors still hold the pre-restore state; they reload on this.
+      reportContentRestored({ target: item.target, slug: item.slug });
       await fetchBackups();
       onRestoreSuccess();
     } catch (err: any) {

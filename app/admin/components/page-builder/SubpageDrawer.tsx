@@ -53,7 +53,8 @@ interface SubpageDrawerProps {
   onDrawerModeChange: (mode: 'edit' | 'preview') => void;
   onClose: () => void;
   updateSubpage: (index: number, updates: Partial<Subpage>) => void;
-  removeSubpage: (index: number) => void;
+  /** Asks first; true when the subpage was actually removed. */
+  removeSubpage: (index: number) => boolean;
   addSection: (subpageIndex: number) => void;
   removeSection: (subpageIndex: number, sectionIndex: number) => void;
   updateSection: (subpageIndex: number, sectionIndex: number, updates: Partial<Section>) => void;
@@ -569,8 +570,8 @@ export default function SubpageDrawer({
           <button
             className="admin-btn admin-btn-danger admin-btn-sm"
             onClick={() => {
-              removeSubpage(spIndex);
-              onClose();
+              // Only a confirmed delete closes the drawer; cancelling keeps it.
+              if (removeSubpage(spIndex)) onClose();
             }}
           >
             <IconTrash size={14} /> Delete Subpage
