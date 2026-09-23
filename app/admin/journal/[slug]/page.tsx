@@ -1,4 +1,4 @@
-import { JournalStudio } from '../../components/JournalStudio';
+import { JournalStudio } from '../../components/journal/JournalStudio';
 import { getConfig } from '@/lib/config';
 
 export default async function AdminJournalEntryPage({
