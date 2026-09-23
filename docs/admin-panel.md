@@ -39,6 +39,7 @@ Each area has its own URL, so a section can be bookmarked and the browser's back
 | **Pages**       | `/admin/pages`       | `content/gallery.yaml`                      |
 | **Journal**     | `/admin/journal`     | `content/journal/<slug>.md`                 |
 | **Settings**    | `/admin/settings`    | `content/settings.yaml`, `content/about.md` |
+| **Proofing**    | `/admin/proofing`    | `content/proofing.json`                     |
 | **Analytics**   | `/admin/analytics`   | nothing — read-only                         |
 | **Diagnostics** | `/admin/diagnostics` | nothing — read-only                         |
 | **Help**        | `/admin/help`        | nothing — reference only                    |
@@ -121,6 +122,14 @@ Theme presets, grid layouts, photo frames, hero styles and the Google search sni
 ### Favicon
 
 **General → Favicon** accepts an SVG, PNG, ICO or JPEG. It is stored in the writable `content/` volume and served through `/api/favicon` under a policy that stops an uploaded SVG from executing script. **Reset** restores the bundled default.
+
+## Proofing
+
+Private client links: pick a client name and any Immich album — published or
+not — and optionally an expiry date and download rights. Each card shows the
+link's state (open, submitted, expired), what the client picked, and the export
+buttons. See [Client Proofing Links](gallery-config.md#client-proofing-links)
+for how the client side works.
 
 ## Analytics
 

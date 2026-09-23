@@ -14,18 +14,8 @@ import { cookies } from 'next/headers';
 import type { Metadata } from 'next';
 import { immich, type ImmichAsset } from '@/lib/immich';
 import { notFound } from 'next/navigation';
-import type { PhotoItem } from './PhotoGrid';
-import {
-  imageUrl,
-  exifUrl,
-  videoUrl,
-  assetPlaceholder,
-  assetCaption,
-  assetExifSummary,
-  downloadUrl,
-  archiveUrl,
-  assetAspectRatio,
-} from '@/lib/urls';
+import { toPhotoItems } from './photoItems';
+import { imageUrl, assetPlaceholder, archiveUrl } from '@/lib/urls';
 import { encodeAssetId, decodeAssetId } from '@/lib/tokens';
 import {
   buildCoverGridVars,
@@ -159,44 +149,6 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
       images: [ogImage],
     },
   };
-}
-
-/** Map Immich assets to PhotoItem props for the grid/lightbox. */
-/**
- * `showExif` covers the hover overlay only, and that overlay carries camera,
- * lens and focal length — so it follows the `camera` group, not the panel.
- *
- * `showCaption` follows the `caption` group and decides whether the Immich
- * description becomes alt text; see `assetCaption`.
- */
-function toPhotoItems(
-  assets: ImmichAsset[],
-  showExif: boolean,
-  showCaption: boolean,
-  /** The album offering downloads, or undefined when it does not. */
-  downloadAlbumId?: string,
-): PhotoItem[] {
-  return assets
-    .filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO')
-    .map((a) => {
-      const ph = assetPlaceholder(a);
-      const exif = showExif && a.type === 'IMAGE' ? assetExifSummary(a) : undefined;
-      const caption = assetCaption(a, showCaption);
-      const isVideo = a.type === 'VIDEO';
-      return {
-        id: encodeAssetId(a.id),
-        type: isVideo ? 'video' : 'image',
-        thumbUrl: imageUrl(a.id, 'preview'),
-        previewUrl: imageUrl(a.id, 'preview'),
-        ...(isVideo ? { videoUrl: videoUrl(a.id) } : {}),
-        exifUrl: exifUrl(a.id),
-        ...(ph ? { blurDataURL: ph.blurDataURL, dominantColor: ph.dominantColor } : {}),
-        ...(exif ?? {}),
-        ...(caption ? { caption } : {}),
-        ...(downloadAlbumId ? { downloadUrl: downloadUrl(downloadAlbumId, a.id) } : {}),
-        aspectRatio: assetAspectRatio(a),
-      };
-    });
 }
 
 /**

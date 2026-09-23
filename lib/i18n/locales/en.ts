@@ -72,6 +72,7 @@ export const en = {
     rateLimited: 'Too many download requests. Please wait a moment and try again.',
     immichUnavailable: 'The photo library is unavailable right now. Please try again shortly.',
     back: 'Back to the gallery',
+    limitReached: 'The download limit for this link has been reached.',
   },
 
   theme: {
@@ -206,6 +207,31 @@ export const en = {
     mailSubject: (n: number) => `Photo Selection (${n} items)`,
     mailBody: (list: string, url: string) =>
       `Hello,\n\nHere is my photo selection:\n\n${list}\n\nShare Link: ${url}\n\nBest regards,`,
+  },
+
+  /** Client proofing links (/proof/<token>). */
+  proofSession: {
+    greeting: (name: string) => `Selection for ${name}`,
+    intro:
+      'Tap the heart on the photos you want. Your selection is saved as you go — you can come back with this link at any time.',
+    saving: 'Saving…',
+    saved: 'Selection saved',
+    saveFailed: 'Your selection could not be saved. Check your connection and try again.',
+    review: 'Review & submit',
+    modalTitle: (n: number) => `Your selection (${n})`,
+    empty: 'No photos selected yet.',
+    submit: 'Submit selection',
+    submitting: 'Submitting…',
+    confirmSubmit: (n: number) =>
+      `Submit ${plural(n, 'photo', 'photos')}? The selection cannot be changed afterwards.`,
+    submitted: 'Thank you — your selection has been submitted.',
+    locked: 'This selection has been submitted and can no longer be changed.',
+    validUntil: (date: string) => `This link is valid until ${date}.`,
+    expiredTitle: 'This link has expired',
+    expiredText: 'Please ask your photographer for a new link.',
+    downloadSelection: 'Download selection (.zip)',
+    downloadAll: 'Download all photos (.zip)',
+    downloadsLeft: (n: number) => `${plural(n, 'download', 'downloads')} left`,
   },
 
   legal: {

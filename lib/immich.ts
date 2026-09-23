@@ -571,10 +571,28 @@ class ImmichClient {
     return album ? this.withSort(album) : null;
   }
 
+  /**
+   * An album for a client proofing link, whether or not it is published.
+   *
+   * Client galleries are usually not part of the public portfolio, so the
+   * allowlist cannot be the gate here. The proofing session is: callers reach
+   * this only after resolving a valid, unexpired session token, and pass that
+   * session's own album ID — never one taken from the request.
+   */
+  async getProofingAlbum(albumId: string): Promise<ImmichAlbum | null> {
+    const album = await this.loadAlbum(albumId, false, true);
+    return album ? this.withSort(album) : null;
+  }
+
   /** The cached load. Always yields the canonical Immich order; see withSort(). */
-  private async loadAlbum(albumId: string, forceFresh: boolean): Promise<ImmichAlbum | null> {
+  private async loadAlbum(
+    albumId: string,
+    forceFresh: boolean,
+    /** Only for getProofingAlbum(); see there. */
+    bypassAllowlist = false,
+  ): Promise<ImmichAlbum | null> {
     // Security: only serve configured albums
-    if (!this.config.albums.includes(albumId)) {
+    if (!bypassAllowlist && !this.config.albums.includes(albumId)) {
       console.warn(`[Immich] Album ${albumId} is not in LIGHTBOX_ALBUMS`);
       return null;
     }
