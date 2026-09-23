@@ -7,7 +7,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { immich, type ImmichAsset } from '@/lib/immich';
-import { getConfig } from '@/lib/config';
+import { getConfig, type ExifDisplayConfig } from '@/lib/config';
+import { assetLocationPrecision } from '@/lib/assetLocation';
+import { placeLabel } from '@/lib/mapPrecision';
 import { imageUrl, assetPlaceholder } from '@/lib/urls';
 import { HeroCarousel } from '@/components/HeroCarousel';
 import { FadeIn } from '@/components/FadeIn';
@@ -46,16 +48,26 @@ function heroNavEntries(subpages: HeroSubpage[], albums: HeroAlbum[], t: Diction
 /**
  * Camera line for the hero chip: "Q3 · 28MM · ƒ/5.6 · 1/250 · ISO 200".
  * Returns undefined when the asset carries no usable EXIF.
+ *
+ * Honours the same `exif:` groups as the lightbox panel (`/api/exif`), and the
+ * city passes the album's `location:` precision too — the chip is the most
+ * visible EXIF on the site and must not publish what the owner switched off.
  */
-function heroExifLine(asset: ImmichAsset): string | undefined {
+async function heroExifLine(
+  asset: ImmichAsset,
+  show: ExifDisplayConfig,
+): Promise<string | undefined> {
   const e = asset.exifInfo;
   if (!e) return undefined;
+  const city = show.location
+    ? placeLabel(await assetLocationPrecision(asset.id), { city: e.city ?? '', country: '' }).city
+    : '';
   const parts = [
-    e.city || e.model || undefined,
-    e.focalLength ? `${Math.round(e.focalLength)}mm` : undefined,
-    e.fNumber ? `ƒ/${e.fNumber}` : undefined,
-    e.exposureTime ? `${e.exposureTime}s` : undefined,
-    e.iso ? `ISO ${e.iso}` : undefined,
+    city || (show.camera ? e.model : undefined) || undefined,
+    show.camera && e.focalLength ? `${Math.round(e.focalLength)}mm` : undefined,
+    show.settings && e.fNumber ? `ƒ/${e.fNumber}` : undefined,
+    show.settings && e.exposureTime ? `${e.exposureTime}s` : undefined,
+    show.settings && e.iso ? `ISO ${e.iso}` : undefined,
   ].filter(Boolean);
   return parts.length > 0 ? parts.join(' · ') : undefined;
 }
@@ -129,7 +141,7 @@ export default async function HomePage() {
     config.heroImages.map(async (id) => {
       const asset = await immich.getAssetInfo(id);
       const ph = asset ? assetPlaceholder(asset) : null;
-      const exif = asset ? heroExifLine(asset) : undefined;
+      const exif = asset ? await heroExifLine(asset, config.exif) : undefined;
       return {
         src: imageUrl(id, 'preview'),
         ...(ph ? { blurDataURL: ph.blurDataURL } : {}),

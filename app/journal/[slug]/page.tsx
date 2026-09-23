@@ -18,6 +18,7 @@ import { getConfig } from '@/lib/config';
 import { immich } from '@/lib/immich';
 import {
   imageUrl,
+  videoUrl,
   exifUrl,
   assetPlaceholder,
   assetAspectRatio,
@@ -291,6 +292,7 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
         type: isVideo ? 'video' : 'image',
         thumbUrl: imageUrl(a.id, 'preview'),
         previewUrl: imageUrl(a.id, 'preview'),
+        ...(isVideo ? { videoUrl: videoUrl(a.id) } : {}),
         exifUrl: exifUrl(a.id),
         ...(ph ? { blurDataURL: ph.blurDataURL, dominantColor: ph.dominantColor } : {}),
         ...(exif ?? {}),

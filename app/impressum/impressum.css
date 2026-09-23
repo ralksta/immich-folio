@@ -1,18 +1,18 @@
-.subpage-container {
+.legal-page {
   padding: 4rem 2rem;
   min-height: 80vh;
 }
-.subpage-header {
+.legal-header {
   margin-bottom: 4rem;
   text-align: center;
 }
-.subpage-title {
+.legal-title {
   font-family: var(--font-serif);
   font-size: clamp(2.5rem, 8vw, 4rem);
   font-weight: 400;
   margin-bottom: 1rem;
 }
-.subpage-subtitle {
+.legal-subtitle {
   font-family: var(--font-caption);
   font-size: 1rem;
   text-transform: uppercase;
@@ -21,7 +21,7 @@
      an opacity on top of them is not. */
   color: var(--text-muted);
 }
-.subpage-content {
+.legal-content {
   max-width: 600px;
   margin: 0 auto;
 }
