@@ -15,8 +15,9 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Lightbox, type LightboxWatermark } from '@/components/Lightbox';
 import { FadeIn } from '@/components/FadeIn';
-import { ProofingProvider, useProofing } from '@/components/ProofingContext';
+import { ProofingProvider, useProofing, type ProofSessionInit } from '@/components/ProofingContext';
 import { ProofingModal } from '@/components/ProofingModal';
+import { ProofSessionControls } from '@/components/ProofSessionControls';
 import { useDictionary } from '@/components/I18nProvider';
 import { parsePhotoHash, parsePhotoQuery, buildPhotoQuery } from '@/lib/photoHash';
 
@@ -71,6 +72,11 @@ interface PhotoGridProps {
    * selection made in one album leaks into the next.
    */
   albumName?: string;
+  /**
+   * A client proofing link's session (/proof/<token>). Turns proofing on and
+   * keeps the selection on the server instead of in the browser.
+   */
+  proofSession?: ProofSessionInit;
 }
 
 function PhotoGridInner({
@@ -291,7 +297,7 @@ function PhotoGridInner({
         {gridItems}
       </div>
 
-      {proofing && proofing.favorites.size > 0 && (
+      {proofing && !proofing.session && proofing.favorites.size > 0 && (
         <div
           className="proofing-sticky-bar"
           style={{
@@ -349,7 +355,8 @@ function PhotoGridInner({
         </div>
       )}
 
-      {proofing && <ProofingModal />}
+      {proofing && !proofing.session && <ProofingModal />}
+      {proofing?.session && <ProofSessionControls />}
 
       {lightboxIndex !== null && (
         <Lightbox
@@ -372,7 +379,7 @@ export function PhotoGrid(props: PhotoGridProps) {
   // Without the provider useProofing() returns null, and every proofing control
   // (hearts in the grid and in the lightbox, selection bar, modal) drops out on
   // its own.
-  if (!props.proofing) {
+  if (!props.proofing && !props.proofSession) {
     return <PhotoGridInner {...props} />;
   }
 
@@ -382,6 +389,7 @@ export function PhotoGrid(props: PhotoGridProps) {
       albumName={props.albumName}
       allowMailto={props.allowMailto ?? true}
       downloadArchiveUrl={props.downloadArchiveUrl}
+      session={props.proofSession}
     >
       <PhotoGridInner {...props} />
     </ProofingProvider>

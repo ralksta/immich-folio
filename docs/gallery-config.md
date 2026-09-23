@@ -35,6 +35,7 @@ cp content/settings.yaml.example content/settings.yaml
 - [Site Behaviour](#site-behaviour)
 - [Navigation Links](#navigation-links)
 - [Client Proofing](#client-proofing)
+- [Client Proofing Links](#client-proofing-links)
 - [Image Protection & Watermark](#image-protection--watermark)
 - [SEO](#seo)
 - [Footer](#footer)
@@ -637,6 +638,59 @@ album reached without a subpage follows `proofing.enabled`.
 > so an essay (`layout: essay`, `essayFile`, `essayText`) shows the proofing
 > controls only when its subpage sets `proofing: true` **explicitly** — the
 > global default does not reach into essays. Journal entries never show them.
+
+## Client Proofing Links
+
+The proofing above is anonymous: picks live in the visitor's browser and come
+back to you as a link or an email, if they come back at all. A **client
+proofing link** is the handover version. Create one per client in
+**Admin → Proofing**:
+
+- **Client** — a name for your overview and the greeting on the page.
+- **Album** — any Immich album. It does not have to be in `gallery.yaml`; the
+  link itself is what grants access to it.
+- **Valid until** — optional. From the day after, the link shows "This link has
+  expired" and every action on it is refused.
+- **Downloads** — none, the client's selection as a ZIP, or the whole album as
+  a ZIP, with an optional limit on how many ZIPs the link may start.
+
+The client opens `https://your-site/proof/<token>` and hearts photos as usual.
+Every change is **saved on the server** within a second, so they can stop and
+come back later, from another device too. **Submit selection** locks it and
+notifies you. Until then, you can watch the picks come in under
+**Admin → Proofing**. **Reopen for changes** unlocks a submitted selection.
+
+**Export.** Each link offers:
+
+- **Copy file names (Lightroom)** — the selected file names without extension,
+  comma-separated. Pasted into Lightroom's or Capture One's filename filter,
+  `IMG_0412` finds the RAW as well as the JPEG the client saw.
+- **CSV** — position in the album, file name and capture time.
+- **TXT** — full file names, one per line.
+
+**Notification.** Set `PROOFING_WEBHOOK_URL` and every first submit POSTs JSON
+to it. The body carries `content` (Discord), `text` (Slack, Mattermost),
+`title` and `message` (Gotify) and a structured `proofing` object (n8n, Home
+Assistant, your own script), so most receivers work without an adapter. With
+`SITE_URL` set, the message links straight to the selection in the admin panel.
+A failing webhook never fails the client's submit.
+
+```env
+PROOFING_WEBHOOK_URL=https://discord.com/api/webhooks/…
+```
+
+**Security notes.**
+
+- The token in the link is the only credential: 192 random bits, never shown
+  in the admin panel's own URLs. Treat the link like a password; delete it in
+  the admin panel to revoke it at once.
+- Links are stored in `content/proofing.json` (mode `0600`), next to
+  `analytics.json`, and are not part of the YAML backups.
+- A site-wide password still applies: on a locked site, the client needs it
+  too.
+- Proofing pages are `noindex`, left out of the sitemap, and send no
+  `Referer`.
+- A subpage slugged `proof` would be hidden behind this route.
 
 ## Image Protection & Watermark
 

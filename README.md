@@ -65,6 +65,7 @@ A self-hosted portfolio powered by [Immich](https://immich.app). It acts as a **
 - **Subpage on/off toggle** — take a page offline without deleting it
 - **External navigation links** _(experimental)_ — point the header at a shop, a blog, or a social profile
 - **Client proofing** — clients favorite photos and export the selection; picks are encoded in the URL, nothing is stored server-side
+- **Client proofing links** — a private link per client and album, picks saved server-side, a submit that locks the selection and pings you via webhook, expiry dates, download limits, and a Lightroom-ready export of the chosen file names ([guide](docs/gallery-config.md#client-proofing-links))
 - **Originals delivery** — per-album opt-in lets visitors download a whole album or their proofing selection as a ZIP of the originals
 - **Lightbox watermark** — configurable overlay on fullscreen images
 - **Six interface languages** — English, German, French, Spanish, Italian and Dutch for everything visitors see
@@ -222,6 +223,7 @@ TRUSTED_PROXY_HOPS=1                   # reverse proxies in front, default: 0
 ADMIN_PASSWORD=your-secure-password   # enables /admin panel
 WEBHOOK_SECRET=long-random-string     # enables POST /api/webhook cache invalidation
 CDN_URL=https://cdn.example.com       # serve photos and videos through a pull CDN
+PROOFING_WEBHOOK_URL=https://…         # notify on submitted client proofing selections
 ```
 
 > Login and setup endpoints have their own, much lower limits that `RATE_LIMIT_RPM` does not raise — see [Rate Limiting](docs/gallery-config.md#rate-limiting).

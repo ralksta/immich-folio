@@ -81,6 +81,7 @@ content/.backups/
 # gets its own .backups/ — the top-level pattern above does not reach it.
 content/**/.backups/
 content/analytics.json
+content/proofing.json
 content/*.screenshot-bak
 # Credentials written by the /install wizard (never committed)
 content/install.json

@@ -22,7 +22,7 @@ const ROUTES: {
   name: string;
   path: string;
   load: () => Promise<Record<string, unknown>>;
-  method: 'GET' | 'PUT' | 'POST' | 'DELETE';
+  method: 'GET' | 'PUT' | 'POST' | 'PATCH' | 'DELETE';
   args: () => unknown[];
 }[] = [
   {
@@ -208,6 +208,62 @@ const ROUTES: {
     args: () => [
       new Request('http://localhost/api/admin/journal/test-slug', { method: 'DELETE' }),
       { params: Promise.resolve({ slug: 'test-slug' }) },
+    ],
+  },
+  {
+    name: 'GET /api/admin/proofing',
+    path: 'proofing',
+    load: () => import('../proofing/route'),
+    method: 'GET',
+    args: () => [new Request('http://localhost/api/admin/proofing')],
+  },
+  {
+    name: 'POST /api/admin/proofing',
+    path: 'proofing',
+    load: () => import('../proofing/route'),
+    method: 'POST',
+    args: () => [
+      new Request('http://localhost/api/admin/proofing', { method: 'POST', body: '{}' }),
+    ],
+  },
+  {
+    name: 'GET /api/admin/proofing/[id]',
+    path: 'proofing/[id]',
+    load: () => import('../proofing/[id]/route'),
+    method: 'GET',
+    args: () => [
+      new Request('http://localhost/api/admin/proofing/abc'),
+      { params: Promise.resolve({ id: 'abc' }) },
+    ],
+  },
+  {
+    name: 'PATCH /api/admin/proofing/[id]',
+    path: 'proofing/[id]',
+    load: () => import('../proofing/[id]/route'),
+    method: 'PATCH',
+    args: () => [
+      new Request('http://localhost/api/admin/proofing/abc', { method: 'PATCH', body: '{}' }),
+      { params: Promise.resolve({ id: 'abc' }) },
+    ],
+  },
+  {
+    name: 'DELETE /api/admin/proofing/[id]',
+    path: 'proofing/[id]',
+    load: () => import('../proofing/[id]/route'),
+    method: 'DELETE',
+    args: () => [
+      new Request('http://localhost/api/admin/proofing/abc', { method: 'DELETE' }),
+      { params: Promise.resolve({ id: 'abc' }) },
+    ],
+  },
+  {
+    name: 'GET /api/admin/proofing/[id]/export',
+    path: 'proofing/[id]/export',
+    load: () => import('../proofing/[id]/export/route'),
+    method: 'GET',
+    args: () => [
+      new Request('http://localhost/api/admin/proofing/abc/export'),
+      { params: Promise.resolve({ id: 'abc' }) },
     ],
   },
 ];

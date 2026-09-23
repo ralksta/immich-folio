@@ -19,6 +19,7 @@ const TABS = [
   { label: 'Pages', href: '/admin/pages', match: /^\/admin\/pages$/ },
   { label: 'Journal', href: '/admin/journal', match: /^\/admin\/journal/ },
   { label: 'Settings', href: '/admin/settings', match: /^\/admin\/settings/ },
+  { label: 'Proofing', href: '/admin/proofing', match: /^\/admin\/proofing/ },
   { label: 'Analytics', href: '/admin/analytics', match: /^\/admin\/analytics/ },
   { label: 'Diagnostics', href: '/admin/diagnostics', match: /^\/admin\/diagnostics/ },
   { label: 'Help', href: '/admin/help', match: /^\/admin\/help/ },
