@@ -186,13 +186,36 @@ export function isProtected(key: string, type: ProtectedType = 'subpage'): boole
 }
 
 /**
+ * Whether the visitor reached us over HTTPS — decides the `Secure` cookie flag.
+ *
+ * This used to be `NODE_ENV === 'production'`, which is always true in the
+ * Docker image. A browser silently drops a `Secure` cookie set over plain HTTP,
+ * so a deployment at `http://host:7211` accepted the password and then answered
+ * every following request with 401 (#664).
+ *
+ * `X-Forwarded-Proto` is trusted without `TRUSTED_PROXY_HOPS`: a visitor who
+ * forges it only changes the flag on their own cookie, in their own browser.
+ * A proxy that omits it costs an HTTPS site the flag, which the HSTS header on
+ * every page makes close to moot — the browser never asks over HTTP again.
+ */
+export function isHttpsRequest(request: Request): boolean {
+  const forwarded = request.headers.get('x-forwarded-proto');
+  if (forwarded) return forwarded.split(',')[0].trim().toLowerCase() === 'https';
+  return new URL(request.url).protocol === 'https:';
+}
+
+/**
  * Validate a password attempt and return a Set-Cookie header value on success.
  * Returns null if the password is wrong.
+ *
+ * `secure` comes from `isHttpsRequest()`; it defaults to on so that a caller
+ * which forgets it errs towards the stricter cookie.
  */
 export async function authenticate(
   key: string,
   password: string,
   type: ProtectedType = 'subpage',
+  secure = true,
 ): Promise<string | null> {
   const storedPassword = findPassword(key, type);
   if (!storedPassword) return null;
@@ -237,9 +260,9 @@ export async function authenticate(
 
   const maxAge = TOKEN_EXPIRY_HOURS * 60 * 60;
   const token = authToken(tokenKey(key, type), storedPassword, Date.now() + maxAge * 1000);
-  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  const secureFlag = secure ? '; Secure' : '';
 
-  return `${cookieName(key, type)}=${token}; HttpOnly; Path=/; Max-Age=${maxAge}; SameSite=Strict${secure}`;
+  return `${cookieName(key, type)}=${token}; HttpOnly; Path=/; Max-Age=${maxAge}; SameSite=Strict${secureFlag}`;
 }
 
 /**

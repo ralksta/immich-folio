@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, isProtected, type ProtectedType } from '@/lib/auth';
+import { authenticate, isHttpsRequest, isProtected, type ProtectedType } from '@/lib/auth';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 
 /** Tight limit for auth attempts — 10 per minute per IP. */
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const setCookie = await authenticate(slug, password, type);
+    const setCookie = await authenticate(slug, password, type, isHttpsRequest(request));
     if (!setCookie) {
       return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
     }

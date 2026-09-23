@@ -45,6 +45,7 @@ import {
   isAlbumReachable,
   withoutLockedAlbums,
   findSubpageBySlug,
+  isHttpsRequest,
 } from '@/lib/auth';
 
 describe('findSubpageBySlug', () => {
@@ -284,5 +285,42 @@ describe('withoutLockedAlbums', () => {
     const getCookie = (asked: string) => (asked === name ? token : undefined);
 
     expect(withoutLockedAlbums([LOCKED, OPEN], getCookie)).toEqual([LOCKED, OPEN]);
+  });
+});
+
+/**
+ * The `Secure` flag follows the request, not NODE_ENV (#664): the Docker image
+ * always runs in production, and a browser drops a `Secure` cookie set over
+ * plain HTTP — the password was accepted and every next request answered 401.
+ */
+describe('isHttpsRequest', () => {
+  const req = (url: string, proto?: string) =>
+    new Request(url, { headers: proto ? { 'x-forwarded-proto': proto } : {} });
+
+  it('reads the scheme of a direct request', () => {
+    expect(isHttpsRequest(req('https://folio.example/api/auth'))).toBe(true);
+    expect(isHttpsRequest(req('http://192.168.1.10:7211/api/auth'))).toBe(false);
+  });
+
+  it('prefers the scheme a reverse proxy reports', () => {
+    expect(isHttpsRequest(req('http://folio:3000/api/auth', 'https'))).toBe(true);
+    expect(isHttpsRequest(req('http://folio:3000/api/auth', 'HTTPS'))).toBe(true);
+    expect(isHttpsRequest(req('https://folio.example/api/auth', 'http'))).toBe(false);
+  });
+
+  it('takes the first entry of a chained header', () => {
+    expect(isHttpsRequest(req('http://folio:3000/api/auth', 'https, http'))).toBe(true);
+  });
+});
+
+describe('authenticate — Secure flag', () => {
+  it('marks the cookie Secure by default', async () => {
+    expect(await authenticate('private', 'secret123')).toMatch(/; Secure$/);
+  });
+
+  it('leaves Secure off for a plain-HTTP visitor', async () => {
+    const cookie = await authenticate('private', 'secret123', 'subpage', false);
+    expect(cookie).toContain('lb_auth_private=');
+    expect(cookie).not.toContain('Secure');
   });
 });

@@ -192,3 +192,11 @@ photos.example.com {
 > limits on the password endpoints. See
 > [Trusted Proxies](gallery-config.md#trusted-proxies) for the setting and a
 > matching nginx config.
+
+Login cookies (admin session and gallery passwords) are marked `Secure` when the
+request arrived over HTTPS, which the app learns from `X-Forwarded-Proto`. Caddy
+and Traefik send it on their own; nginx needs the
+`proxy_set_header X-Forwarded-Proto $scheme;` line from the config linked above.
+Opening the app over plain HTTP, e.g. `http://server:7211` on a home network,
+works too: the cookies are then set without `Secure`, since a browser would
+discard them otherwise.
