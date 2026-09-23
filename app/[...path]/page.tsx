@@ -379,7 +379,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         layout={resolveLayout(mergeAlbumGrid(album.id, spGrid))}
         gridStyle={buildGridStyle(mergeAlbumGrid(album.id, spGrid))}
         backLinkHref={`/${subpageSlug}`}
-        backLinkLabel={`Back to ${subpageName}`}
+        backLinkLabel={getServerDictionary().common.backTo(subpageName)}
         watermark={config.watermark}
         showExifPanel={hasExifPanelContent(config.exif)}
         showGear={config.exif.camera}
