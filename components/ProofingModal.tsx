@@ -196,6 +196,8 @@ export function ProofingModal() {
             </button>
           )}
 
+          {/* The primary action is the download when there is one; otherwise
+              copying the link stays the accent button it always was. */}
           <button
             type="button"
             onClick={handleCopyLink}
@@ -206,9 +208,13 @@ export function ProofingModal() {
               gap: '0.5rem',
               padding: '0.75rem 1rem',
               borderRadius: 'var(--radius-sm, 6px)',
-              background: 'rgba(255,255,255,0.1)',
-              color: 'inherit',
-              border: '1px solid rgba(255,255,255,0.15)',
+              ...(downloadArchiveUrl
+                ? {
+                    background: 'rgba(255,255,255,0.1)',
+                    color: 'inherit',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                  }
+                : { background: 'var(--accent, #e60012)', color: '#fff', border: 'none' }),
               fontWeight: 500,
               cursor: 'pointer',
             }}

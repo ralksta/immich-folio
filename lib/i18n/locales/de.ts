@@ -62,6 +62,15 @@ export const de: Dictionary = {
     reference: (digest: string) => `Referenz: ${digest}`,
   },
 
+  download: {
+    unavailableTitle: 'Download nicht möglich',
+    notAvailable: 'Dieser Download ist nicht verfügbar.',
+    rateLimited: 'Zu viele Download-Anfragen. Bitte einen Moment warten und erneut versuchen.',
+    immichUnavailable:
+      'Die Fotobibliothek ist gerade nicht erreichbar. Bitte gleich noch einmal versuchen.',
+    back: 'Zurück zur Galerie',
+  },
+
   theme: {
     switchToLight: 'Zum hellen Modus wechseln',
     switchToDark: 'Zum dunklen Modus wechseln',

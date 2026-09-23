@@ -62,6 +62,15 @@ export const en = {
     reference: (digest: string) => `Reference: ${digest}`,
   },
 
+  /** The page the ZIP route answers a browser with when it refuses. */
+  download: {
+    unavailableTitle: 'Download unavailable',
+    notAvailable: 'This download is not available.',
+    rateLimited: 'Too many download requests. Please wait a moment and try again.',
+    immichUnavailable: 'The photo library is unavailable right now. Please try again shortly.',
+    back: 'Back to the gallery',
+  },
+
   theme: {
     switchToLight: 'Switch to light mode',
     switchToDark: 'Switch to dark mode',

@@ -26,6 +26,8 @@ import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 import { isAlbumReachable, siteLockResponse } from '@/lib/auth';
 import { contentDisposition, safeDownloadName } from '@/lib/downloadName';
+import { getDictionary } from '@/lib/i18n';
+import { getLocale, getServerDictionary } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,32 +76,56 @@ function escapeHtml(value: string): string {
  * `{"error":"Too many requests"}` on a rate limit, which is the likely failure
  * (5 rpm, and the ZIP shows nothing until the first byte, so people click
  * again). Browsers get a page with a way back; callers asking for JSON keep it.
+ *
+ * The page speaks the site's language; the JSON stays English, like every other
+ * API error.
  */
 function refusal(
   request: NextRequest,
   status: number,
-  message: string,
+  reason: RefusalReason,
   retryAfter?: number,
 ): NextResponse {
   const headers: Record<string, string> = { 'Cache-Control': 'no-store' };
   if (retryAfter) headers['Retry-After'] = String(retryAfter);
 
   if (!(request.headers.get('accept') ?? '').includes('text/html')) {
-    return NextResponse.json({ error: message }, { status, headers });
+    return NextResponse.json({ error: getDictionary('en').download[reason] }, { status, headers });
   }
 
+  const t = getServerDictionary().download;
   headers['Content-Type'] = 'text/html; charset=utf-8';
   return new NextResponse(
-    '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
+    `<!doctype html><html lang="${getLocale()}"><head><meta charset="utf-8">` +
       '<meta name="viewport" content="width=device-width, initial-scale=1">' +
-      '<title>Download unavailable</title></head>' +
+      `<title>${escapeHtml(t.unavailableTitle)}</title></head>` +
       '<body style="font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 1.5rem;line-height:1.6">' +
-      '<h1 style="font-size:1.25rem">Download unavailable</h1>' +
-      `<p>${escapeHtml(message)}</p>` +
-      '<p><a href="/">Back to the gallery</a></p>' +
+      `<h1 style="font-size:1.25rem">${escapeHtml(t.unavailableTitle)}</h1>` +
+      `<p>${escapeHtml(t[reason])}</p>` +
+      `<p><a href="${escapeHtml(backHref(request))}">${escapeHtml(t.back)}</a></p>` +
       '</body></html>',
     { status, headers },
   );
+}
+
+type RefusalReason = 'notAvailable' | 'rateLimited' | 'immichUnavailable';
+
+/**
+ * Where the refusal page's link leads: the page the download was started from,
+ * so a visitor lands back on the album rather than the home page. Only a
+ * same-origin `Referer` is followed — anything else would turn this page into an
+ * open redirect with our name on it.
+ */
+function backHref(request: NextRequest): string {
+  const referer = request.headers.get('referer');
+  if (!referer) return '/';
+  try {
+    const url = new URL(referer);
+    if (url.origin !== request.nextUrl.origin) return '/';
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return '/';
+  }
 }
 
 /**
@@ -130,6 +156,10 @@ function uniqueEntryName(raw: string | undefined, used: Set<string>): string {
  * `entry` event holds the loop until the previous file has finished, so only
  * one original is ever in flight. `close` resolves too, so an aborted download
  * stops the loop rather than hanging on a file nothing will read.
+ *
+ * On `close` and `error` the source is destroyed as well. archiver does not do
+ * that for a queued or half-read entry, and the upstream body would otherwise
+ * hold its socket out of undici's pool until GC finalises it (#635).
  */
 function appendEntry(archive: archiver.Archiver, source: Readable, name: string): Promise<void> {
   return new Promise<void>((resolve, reject) => {
@@ -147,10 +177,12 @@ function appendEntry(archive: archiver.Archiver, source: Readable, name: string)
     // file nothing will read.
     const onClose = () => {
       cleanup();
+      source.destroy();
       resolve();
     };
     const onError = (error: Error) => {
       cleanup();
+      source.destroy();
       reject(error);
     };
     archive.once('entry', onEntry);
@@ -178,12 +210,7 @@ async function resolveAlbum(
   const rl = checkRateLimit(`archive:${ip}`, ARCHIVE_RPM);
   if (!rl.success) {
     return {
-      error: refusal(
-        request,
-        429,
-        'Too many download requests. Please wait a moment and try again.',
-        retryAfterSeconds(rl.resetAt),
-      ),
+      error: refusal(request, 429, 'rateLimited', retryAfterSeconds(rl.resetAt)),
     };
   }
 
@@ -191,19 +218,17 @@ async function resolveAlbum(
   if (locked) return { error: locked };
 
   const albumId = decodeAssetId(params.album);
-  if (!albumId) return { error: refusal(request, 404, 'This download is not available.') };
+  if (!albumId) return { error: refusal(request, 404, 'notAvailable') };
 
   const config = getConfig();
-  if (!config.albums.includes(albumId))
-    return { error: refusal(request, 404, 'This download is not available.') };
-  if (!config.albumDownloads[albumId])
-    return { error: refusal(request, 404, 'This download is not available.') };
+  if (!config.albums.includes(albumId)) return { error: refusal(request, 404, 'notAvailable') };
+  if (!config.albumDownloads[albumId]) return { error: refusal(request, 404, 'notAvailable') };
 
   // Every gate on every route to the album — see the single-asset route.
   const cookieStore = await cookies();
   const getCookie = (name: string) => cookieStore.get(name)?.value;
   if (!isAlbumReachable(albumId, getCookie)) {
-    return { error: refusal(request, 404, 'This download is not available.') };
+    return { error: refusal(request, 404, 'notAvailable') };
   }
 
   let album;
@@ -212,17 +237,12 @@ async function resolveAlbum(
   } catch (error) {
     if (error instanceof ImmichUnavailableError) {
       return {
-        error: refusal(
-          request,
-          503,
-          'Immich is currently unavailable. Please try again shortly.',
-          30,
-        ),
+        error: refusal(request, 503, 'immichUnavailable', 30),
       };
     }
     throw error;
   }
-  if (!album) return { error: refusal(request, 404, 'This download is not available.') };
+  if (!album) return { error: refusal(request, 404, 'notAvailable') };
 
   const assets = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO');
   return { albumName: album.albumName, assets };
@@ -238,6 +258,8 @@ async function resolveAlbum(
 function streamArchive(albumName: string, assets: ImmichAsset[]): NextResponse {
   const archive = archiver('zip', { store: true });
   archive.on('error', (err) => {
+    // A visitor cancelling the download is not a failure worth a log line.
+    if (err.name === 'AbortError') return;
     console.error(`[Download] Archive stream failed:`, err);
   });
 
@@ -252,8 +274,12 @@ function streamArchive(albumName: string, assets: ImmichAsset[]): NextResponse {
         // The visitor left (or the archive failed): stop pulling originals.
         if (archive.destroyed) break;
         const result = await immich.streamAsset(asset.id, 'original');
-        if (archive.destroyed) break;
         if (!result) continue;
+        if (archive.destroyed) {
+          // Left while the headers were on their way: release the body unread.
+          await result.stream.cancel();
+          break;
+        }
         const nodeStream = Readable.fromWeb(
           result.stream as unknown as import('node:stream/web').ReadableStream,
         );
@@ -363,7 +389,7 @@ export async function POST(
 
   const tokens = await readSelectedTokens(request);
   if (!tokens || tokens.length === 0) {
-    return refusal(request, 404, 'This download is not available.');
+    return refusal(request, 404, 'notAvailable');
   }
 
   // Every token must decode to an asset that really belongs to the album; a
@@ -378,18 +404,18 @@ export async function POST(
   const selected: ImmichAsset[] = [];
   for (const token of tokens) {
     if (selected.length >= MAX_SELECTION_ASSETS) {
-      return refusal(request, 404, 'This download is not available.');
+      return refusal(request, 404, 'notAvailable');
     }
     const assetId = decodeAssetId(token);
-    if (!assetId) return refusal(request, 404, 'This download is not available.');
+    if (!assetId) return refusal(request, 404, 'notAvailable');
     if (seen.has(assetId)) continue;
     const asset = byId.get(assetId);
-    if (!asset) return refusal(request, 404, 'This download is not available.');
+    if (!asset) return refusal(request, 404, 'notAvailable');
     seen.add(assetId);
     selected.push(asset);
   }
   if (selected.length === 0) {
-    return refusal(request, 404, 'This download is not available.');
+    return refusal(request, 404, 'notAvailable');
   }
 
   return streamArchive(resolved.albumName, selected);

@@ -9,7 +9,7 @@ import { NextRequest } from 'next/server';
  * belongs to the album it names.
  */
 
-vi.mock('@/lib/config', () => ({ getConfig: vi.fn() }));
+vi.mock('@/lib/config', () => ({ getConfig: vi.fn(), getConfigOrNull: vi.fn() }));
 vi.mock('@/lib/tokens', () => ({ decodeAssetId: vi.fn() }));
 vi.mock('@/lib/immich', () => ({
   immich: { getAlbum: vi.fn(), streamAsset: vi.fn() },
@@ -29,11 +29,12 @@ vi.mock('next/headers', () => ({
 }));
 
 import { GET, POST } from '../route';
-import { getConfig } from '@/lib/config';
+import { getConfig, getConfigOrNull } from '@/lib/config';
 import { decodeAssetId } from '@/lib/tokens';
 import { immich } from '@/lib/immich';
 
 const mockConfig = getConfig as unknown as ReturnType<typeof vi.fn>;
+const mockConfigOrNull = getConfigOrNull as unknown as ReturnType<typeof vi.fn>;
 const mockDecode = decodeAssetId as unknown as ReturnType<typeof vi.fn>;
 const mockGetAlbum = immich.getAlbum as unknown as ReturnType<typeof vi.fn>;
 const mockStream = immich.streamAsset as unknown as ReturnType<typeof vi.fn>;
@@ -99,15 +100,19 @@ function formReq(tokens: string[]) {
   });
 }
 
-const browsesHtml = () =>
+const browsesHtml = (referer?: string) =>
   new NextRequest('http://localhost/api/download/album-token/archive', {
-    headers: { Accept: 'text/html,application/xhtml+xml' },
+    headers: {
+      Accept: 'text/html,application/xhtml+xml',
+      ...(referer ? { Referer: referer } : {}),
+    },
   });
 
 beforeEach(() => {
   vi.clearAllMocks();
   decodeMap();
   mockConfig.mockReturnValue(optedIn());
+  mockConfigOrNull.mockReturnValue(null);
   mockGetAlbum.mockResolvedValue(ALBUM);
   // A fresh stream per call — a real Immich fetch never hands back the same
   // body twice, and a shared web stream would be locked by the first consumer.
@@ -240,10 +245,69 @@ describe('refusals', () => {
     expect(res.headers.get('content-type')).toContain('text/html');
   });
 
+  it("speaks the site's language", async () => {
+    mockConfig.mockReturnValue({ albums: ['album-uuid'], albumDownloads: {} });
+    mockConfigOrNull.mockReturnValue({ lang: 'de' });
+    const html = await (await GET(browsesHtml(), params)).text();
+    expect(html).toContain('<html lang="de">');
+    expect(html).toContain('Download nicht möglich');
+    expect(html).toContain('Zurück zur Galerie');
+  });
+
+  it('links back to the page the download started from', async () => {
+    mockConfig.mockReturnValue({ albums: ['album-uuid'], albumDownloads: {} });
+    const html = await (
+      await GET(browsesHtml('http://localhost/deutschland/kloster-chorin?fav=abc'), params)
+    ).text();
+    expect(html).toContain('href="/deutschland/kloster-chorin?fav=abc"');
+  });
+
+  it('does not follow a foreign referer', async () => {
+    mockConfig.mockReturnValue({ albums: ['album-uuid'], albumDownloads: {} });
+    const html = await (await GET(browsesHtml('https://evil.example/phish'), params)).text();
+    expect(html).toContain('href="/"');
+    expect(html).not.toContain('evil.example');
+  });
+
   it('keeps JSON for an API caller', async () => {
     mockConfig.mockReturnValue({ albums: ['album-uuid'], albumDownloads: {} });
     const res = await GET(getReq(), params);
     expect(res.status).toBe(404);
     expect(res.headers.get('content-type')).toContain('application/json');
+  });
+});
+
+/**
+ * An original that is still arriving when the visitor gives up must be let go:
+ * the loop stopping is not enough, because the upstream body keeps its socket
+ * out of undici's pool until something cancels it (#635).
+ */
+describe('abort', () => {
+  /** An original that sends one chunk and then never finishes. */
+  function stallingStream(onCancel: () => void) {
+    return {
+      stream: new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('first-chunk'));
+        },
+        cancel: onCancel,
+      }),
+      contentType: 'image/jpeg',
+      contentLength: null,
+    };
+  }
+
+  it('cancels the original in flight when the download is aborted', async () => {
+    const cancelled = vi.fn();
+    mockStream.mockImplementation(() => Promise.resolve(stallingStream(cancelled)));
+
+    const res = await GET(getReq(), params);
+    const reader = res.body!.getReader();
+    await reader.read(); // the entry is under way
+    await reader.cancel();
+
+    await vi.waitFor(() => expect(cancelled).toHaveBeenCalled());
+    // The loop stopped rather than moving on to the next original.
+    expect(mockStream).toHaveBeenCalledTimes(1);
   });
 });
