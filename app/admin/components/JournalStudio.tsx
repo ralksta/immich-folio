@@ -42,6 +42,8 @@ import { arrayMove } from '@dnd-kit/sortable';
 import { expandAlbumBlocks, type AlbumAssetRef } from '@/lib/journalAlbum';
 import { BlockBadge } from './BlockBadge';
 import { useUnsavedGuard } from './useUnsavedGuard';
+import { useDraft } from './useDraft';
+import DraftNotice from './DraftNotice';
 import { reportIfSessionExpired } from './sessionExpiry';
 import { EssayView } from '@/app/[...path]/EssayView';
 import type { PhotoItem } from '@/app/[...path]/PhotoGrid';
@@ -520,6 +522,13 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
   /** Set when the entry could not be fetched; blocks saving over it. */
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  // Unsaved edits survive leaving the editor — the entry list, a tab link,
+  // back, Reload (#592). The markdown is the whole entry; blocks and
+  // frontmatter are parsed from it. `serverMarkdown` is what a discard restores.
+  const draft = useDraft<string>(`journal-${slug}`, rawMarkdown, dirty);
+  const loadDraft = draft.load;
+  const serverMarkdown = useRef('');
+
   // Load entry
   useEffect(() => {
     async function load() {
@@ -535,10 +544,12 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
           );
         }
         const data = await res.json();
-        const md = data.entry.rawMarkdown;
-        setRawMarkdown(md);
-        setParsed(parseJournalMarkdown(md));
-        setDirty(false);
+        const md: string = data.entry.rawMarkdown;
+        serverMarkdown.current = md;
+        const restored = loadDraft(md);
+        setRawMarkdown(restored ?? md);
+        setParsed(parseJournalMarkdown(restored ?? md));
+        setDirty(restored !== null);
       } catch (err) {
         console.error('Failed to load journal entry:', err);
         // An empty editor saved over the entry replaces it with nothing, so
@@ -549,7 +560,7 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
       }
     }
     load();
-  }, [slug]);
+  }, [slug, loadDraft]);
 
   // Update markdown and sync blocks
   const handleMarkdownChange = (newMd: string) => {
@@ -602,6 +613,8 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
       });
 
       if (res.ok) {
+        serverMarkdown.current = rawMarkdown;
+        draft.saved(rawMarkdown);
         setDirty(false);
       } else if (!reportIfSessionExpired(res)) {
         const data = await res.json();
@@ -615,6 +628,21 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
   };
 
   useUnsavedGuard(dirty);
+
+  const discardDraft = () => {
+    draft.discard();
+    setRawMarkdown(serverMarkdown.current);
+    setParsed(parseJournalMarkdown(serverMarkdown.current));
+    setDirty(false);
+  };
+
+  const restoreConflictingDraft = () => {
+    const value = draft.takeConflicting();
+    if (value === null) return;
+    setRawMarkdown(value);
+    setParsed(parseJournalMarkdown(value));
+    setDirty(true);
+  };
 
   // Keyboard shortcut: Cmd+S / Ctrl+S
   useEffect(() => {
@@ -908,6 +936,14 @@ function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
           </button>
         </div>
       </div>
+
+      <DraftNotice
+        status={draft.status}
+        subject="entry"
+        onDiscard={discardDraft}
+        onRestore={restoreConflictingDraft}
+        onDismiss={draft.dismiss}
+      />
 
       {/* Split Screen */}
       <div

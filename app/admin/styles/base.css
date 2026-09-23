@@ -310,3 +310,18 @@
   font-size: 0.8rem;
   margin-bottom: 0.75rem;
 }
+
+/* Restored or held-back editor drafts (#592): text, then its two actions. */
+.draft-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.draft-notice-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -41,6 +41,8 @@ import {
 } from './page-builder/types';
 import { useScrollLock } from './useScrollLock';
 import { useUnsavedGuard } from './useUnsavedGuard';
+import { useDraft } from './useDraft';
+import DraftNotice from './DraftNotice';
 import { reportIfSessionExpired } from './sessionExpiry';
 import {
   IconCamera,
@@ -273,6 +275,11 @@ export default function PageBuilder() {
 
   useUnsavedGuard(dirty);
 
+  // Unsaved edits survive leaving the builder — a tab link, back, Reload,
+  // Logout (#592). `serverState` is what a discard goes back to.
+  const draft = useDraft<GalleryState>('page-builder', gallery, dirty);
+  const serverState = useRef<GalleryState | null>(null);
+
   // A subpage opened from a `?album=` link can hold dozens of albums: bring the
   // linked one into view, and let the mark fade after a moment. The mark itself
   // is a prop on the tile — a class added to the DOM here would be wiped by the
@@ -312,8 +319,11 @@ export default function PageBuilder() {
 
       const { gallery: raw } = await galleryRes.json();
       const parsed = parseGalleryYaml(raw);
-      setGallery(parsed);
-      openAlbumFromLink(parsed);
+      serverState.current = parsed;
+      const restored = draft.load(JSON.stringify(parsed));
+      setGallery(restored ?? parsed);
+      if (restored) setDirty(true);
+      openAlbumFromLink(restored ?? parsed);
 
       // A failed album list is survivable — it only empties the picker, and
       // saving with it empty changes nothing in gallery.yaml.
@@ -418,6 +428,20 @@ export default function PageBuilder() {
     return { hero, albums, subpages };
   }
 
+  function discardDraft() {
+    draft.discard();
+    if (serverState.current) setGallery(serverState.current);
+    setDirty(false);
+    setSaveMessage('');
+  }
+
+  function restoreConflictingDraft() {
+    const value = draft.takeConflicting();
+    if (!value) return;
+    setGallery(value);
+    setDirty(true);
+  }
+
   const markDirty = useCallback(() => {
     setDirty(true);
     setSaveMessage('');
@@ -482,6 +506,13 @@ export default function PageBuilder() {
 
       if (res.ok) {
         const data = await res.json();
+        // Fingerprint what the next load will see, the way it will see it: the
+        // file is exactly `yamlData`, read back through the same parser. The
+        // editor's own state can differ in shape (an `undefined` here, a
+        // default there) and would make every later draft look outdated.
+        const asLoaded = parseGalleryYaml(JSON.parse(JSON.stringify(yamlData)));
+        serverState.current = asLoaded;
+        draft.saved(JSON.stringify(asLoaded));
         setDirty(false);
         setSaveMessage(data.message || 'Saved successfully!');
         setTimeout(() => setSaveMessage(''), 5000);
@@ -848,6 +879,14 @@ export default function PageBuilder() {
         onSave={handleSave}
         label="Save Changes"
         showPreview
+      />
+
+      <DraftNotice
+        status={draft.status}
+        subject="page structure"
+        onDiscard={discardDraft}
+        onRestore={restoreConflictingDraft}
+        onDismiss={draft.dismiss}
       />
 
       {/* Search Bar */}
