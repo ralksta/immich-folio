@@ -27,6 +27,9 @@ export const en = {
     backTo: (label: string) => `Back to ${label}`,
     backToGallery: 'Back to Gallery',
     backToJournal: 'Back to Journal',
+    /** Footer contact links, read out by screen readers. */
+    email: 'Email',
+    website: 'Website',
     home: 'Home',
     photos: (n: number) => plural(n, 'photo', 'photos'),
     albums: (n: number) => plural(n, 'album', 'albums'),
@@ -128,6 +131,8 @@ export const en = {
 
   lightbox: {
     viewer: 'Image viewer',
+    /** A grid tile, which opens the viewer on that photo. */
+    openPhoto: (n: number) => `View photo ${n}`,
     close: 'Close',
     closeTitle: 'Close (Esc)',
     previous: 'Previous photo',

@@ -59,7 +59,7 @@ export function Footer() {
             </a>
           )}
           {footer?.email && (
-            <a href={`mailto:${footer.email}`} className="footer__link" aria-label="Email">
+            <a href={`mailto:${footer.email}`} className="footer__link" aria-label={t.common.email}>
               <svg
                 aria-hidden="true"
                 width="16"
@@ -82,7 +82,7 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               className="footer__link"
-              aria-label="Website"
+              aria-label={t.common.website}
             >
               <svg
                 aria-hidden="true"

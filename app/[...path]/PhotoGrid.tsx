@@ -204,7 +204,7 @@ function PhotoGridInner({
             }}
             role="button"
             tabIndex={0}
-            aria-label={`View photo ${index + 1}`}
+            aria-label={t.lightbox.openPhoto(index + 1)}
             aria-haspopup="dialog"
             style={{
               ...(asset.dominantColor ? { backgroundColor: asset.dominantColor } : {}),

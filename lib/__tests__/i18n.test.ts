@@ -90,6 +90,7 @@ describe('dictionary parity', () => {
       'lightbox.iso',
       'lightbox.copyLinkShort',
       'lightbox.downloadShort',
+      'common.website',
       'subpage.coverAria',
     ]);
 

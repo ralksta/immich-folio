@@ -27,6 +27,8 @@ export const de: Dictionary = {
     backTo: (label: string) => `Zurück zu ${label}`,
     backToGallery: 'Zurück zur Galerie',
     backToJournal: 'Zurück zum Journal',
+    email: 'E-Mail',
+    website: 'Website',
     home: 'Start',
     photos: (n: number) => plural(n, 'Foto', 'Fotos'),
     albums: (n: number) => plural(n, 'Album', 'Alben'),
@@ -128,6 +130,7 @@ export const de: Dictionary = {
 
   lightbox: {
     viewer: 'Bildansicht',
+    openPhoto: (n: number) => `Foto ${n} ansehen`,
     close: 'Schließen',
     closeTitle: 'Schließen (Esc)',
     previous: 'Vorheriges Foto',
