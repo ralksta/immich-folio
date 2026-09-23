@@ -11,7 +11,8 @@ import ToggleCard from './fields/ToggleCard';
 import OptionGrid, { toOptions } from './fields/OptionGrid';
 // Direct import from the theme module, not from '@/lib/config': the config
 // index pulls in `fs` and cannot be bundled into a client component.
-import { DEFAULT_PRESET } from '@/lib/config/theme';
+import { DEFAULT_PRESET, resolveTheme } from '@/lib/config/theme';
+import type { SettingsYaml } from '@/lib/config/schema';
 import {
   PHOTO_GRID_COLUMNS_MAX,
   PHOTO_GRID_COLUMNS_MIN,
@@ -572,6 +573,18 @@ function SettingRow({
   );
 }
 
+/**
+ * The theme as the site resolves it. A preset name the form does not know (a
+ * hand-edited typo) falls back to the default instead of taking the panel down.
+ */
+function effectiveTheme(raw: Settings['theme']) {
+  try {
+    return resolveTheme(raw as SettingsYaml['theme']);
+  } catch {
+    return resolveTheme(undefined);
+  }
+}
+
 export default function SettingsEditor() {
   const router = useRouter();
   // Read here rather than passed in: the editor is mounted by the settings
@@ -908,6 +921,10 @@ export default function SettingsEditor() {
   // visitor actually sees — including a config that only ever set the older
   // `exifOnHover`.
   const exif = resolveExifDisplay(settings.exif, settings.exifOnHover);
+
+  // Same idea for the theme: an unset field shows the preset's own value, not
+  // a fallback of this form's — Classic used to read "split hero, no frame".
+  const theme = effectiveTheme(settings.theme);
 
   // The master switch has no key of its own and needs none: "off" is all four
   // groups off, a state the site already acts on — with nothing left to show,
@@ -1355,9 +1372,7 @@ export default function SettingsEditor() {
                       { hex: '#ffffff', name: 'Monochrome White' },
                       { hex: '#000000', name: 'Obsidian Black' },
                     ].map((swatch) => {
-                      const isSelected =
-                        (settings.theme?.accent || '#e60012').toLowerCase() ===
-                        swatch.hex.toLowerCase();
+                      const isSelected = theme.accent.toLowerCase() === swatch.hex.toLowerCase();
                       return (
                         <button
                           key={swatch.hex}
@@ -1373,14 +1388,14 @@ export default function SettingsEditor() {
                   <div className="color-field">
                     <input
                       type="color"
-                      value={settings.theme?.accent || '#e60012'}
+                      value={theme.accent}
                       onChange={(e) => update('theme.accent', e.target.value)}
                     />
                     <input
                       type="text"
                       value={settings.theme?.accent || ''}
                       onChange={(e) => update('theme.accent', e.target.value)}
-                      placeholder="#e60012"
+                      placeholder={theme.accent}
                     />
                   </div>
                 </div>
@@ -1400,7 +1415,7 @@ export default function SettingsEditor() {
               <OptionGrid
                 label="Photo Frame"
                 options={PHOTO_FRAME_OPTIONS}
-                value={settings.theme?.photoFrame || 'none'}
+                value={theme.photoFrame}
                 onSelect={(v) => update('theme.photoFrame', v)}
                 cardClassName="frame-card"
                 renderPreview={(o) => <PhotoFramePreview value={o.value} />}
@@ -1409,7 +1424,7 @@ export default function SettingsEditor() {
               <OptionGrid
                 label="Hero Style"
                 options={HERO_STYLE_OPTIONS}
-                value={settings.theme?.heroStyle || 'split'}
+                value={theme.heroStyle}
                 onSelect={(v) => update('theme.heroStyle', v)}
                 cardClassName="hero-card"
                 renderPreview={(o) => <HeroStylePreview value={o.value} />}
@@ -1431,16 +1446,16 @@ export default function SettingsEditor() {
                   icon={<Icons.IconFilm size={16} />}
                   title="Film Grain Texture"
                   description="Adds analog noise overlay across portfolio background"
-                  checked={settings.theme?.grain === true}
-                  onToggle={() => update('theme.grain', !settings.theme?.grain)}
+                  checked={theme.grain}
+                  onToggle={() => update('theme.grain', !theme.grain)}
                 />
 
                 <ToggleCard
                   icon={<Icons.IconTarget size={16} />}
                   title="Header Accent Dot"
                   description="Displays accent dot next to active section header"
-                  checked={settings.theme?.headerDot !== false}
-                  onToggle={() => update('theme.headerDot', settings.theme?.headerDot === false)}
+                  checked={theme.headerDot}
+                  onToggle={() => update('theme.headerDot', !theme.headerDot)}
                 />
               </div>
             </div>

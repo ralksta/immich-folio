@@ -86,6 +86,14 @@ export interface LegalConfig {
 export interface ThemeConfig {
   preset: string;
   accent: string;
+  /**
+   * The accent for one colour mode, where a preset's single `accent` fails
+   * contrast against that mode's background (Minimal's black on its black dark
+   * mode, say). Only presets set these, and resolveTheme keeps them only while
+   * the owner uses the preset's own accent. See accentForMode().
+   */
+  accentDark?: string;
+  accentLight?: string;
   fonts: { heading: string; body: string; caption: string };
   radius: number;
   photoFrame: 'none' | 'passepartout' | 'shadow';

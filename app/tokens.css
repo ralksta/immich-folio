@@ -31,8 +31,11 @@
   --border-subtle: #2a2a28;
   --border-hover: #3a3a38;
 
-  --accent: #e60012;
-  --accent-dim: rgba(230, 0, 18, 0.12);
+  /* The layout sets --accent-dark/--accent-light (and --on-accent-*) from the
+     theme; the fallbacks only cover a page rendered without it. */
+  --accent: var(--accent-dark, #e60012);
+  --accent-dim: color-mix(in srgb, var(--accent) 12%, transparent);
+  --on-accent: var(--on-accent-dark, #ffffff);
 
   --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
@@ -65,8 +68,9 @@
   --border-subtle: #ddddd8;
   --border-hover: #c5c5c0;
 
-  --accent: #c8000f;
-  --accent-dim: rgba(200, 0, 15, 0.08);
+  --accent: var(--accent-light, #c8000f);
+  --accent-dim: color-mix(in srgb, var(--accent) 12%, transparent);
+  --on-accent: var(--on-accent-light, #ffffff);
 }
 
 /* ── Studio Modern: Leica Precision Palette ──────── */

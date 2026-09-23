@@ -1645,7 +1645,7 @@
 .empty-state__button {
   padding: 12px 24px;
   background: var(--accent);
-  color: var(--bg-primary);
+  color: var(--on-accent);
   border: none;
   border-radius: var(--radius-md);
   font-family: var(--font-sans);

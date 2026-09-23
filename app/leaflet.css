@@ -93,7 +93,7 @@
   height: 32px;
   border-radius: 50%;
   background: var(--accent, #e60012);
-  color: #fff;
+  color: var(--on-accent, #fff);
   font-family: var(--font-caption);
   font-size: 0.6875rem;
   font-weight: 700;
