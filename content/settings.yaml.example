@@ -6,7 +6,7 @@
 title: "My Portfolio"
 subtitle: "A visual journal"
 
-# Interface language of the visitor-facing site: "en" or "de".
+# Interface language of the visitor-facing site: "en", "de", "fr", "es", "it" or "nl".
 # Any other value still sets <html lang> and date formatting, but the
 # interface stays English. The admin panel is always English.
 lang: "en"

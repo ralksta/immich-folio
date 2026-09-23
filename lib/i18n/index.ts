@@ -9,15 +9,19 @@
  * This module is **client-safe** (no `fs`). Server components read the language
  * from the config via `lib/i18n/server.ts`; client components take the resolved
  * locale from `components/I18nProvider.tsx` and look the dictionary up here.
- * Both dictionaries are small enough that shipping them together beats a
+ * The dictionaries are small enough that shipping them together beats a
  * dynamic import.
  */
 
 import { en } from './locales/en';
 import { de } from './locales/de';
+import { fr } from './locales/fr';
+import { es } from './locales/es';
+import { it } from './locales/it';
+import { nl } from './locales/nl';
 
 /** Locales with a dictionary. Anything else falls back to English. */
-export const SUPPORTED_LOCALES = ['en', 'de'] as const;
+export const SUPPORTED_LOCALES = ['en', 'de', 'fr', 'es', 'it', 'nl'] as const;
 
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
@@ -26,14 +30,14 @@ export const DEFAULT_LOCALE: Locale = 'en';
 /** The shape every dictionary must implement — English is the reference. */
 export type Dictionary = typeof en;
 
-const DICTIONARIES: Record<Locale, Dictionary> = { en, de };
+const DICTIONARIES: Record<Locale, Dictionary> = { en, de, fr, es, it, nl };
 
 /**
  * Map a `settings.yaml: lang` value onto a locale we have strings for.
  *
  * Region subtags are accepted (`de-AT` → `de`), unknown languages fall back to
- * English. The raw value still reaches `<html lang>` — a French deployment gets
- * `lang="fr"` for screen readers and an English UI, which beats claiming to be
+ * English. The raw value still reaches `<html lang>` — a Japanese deployment gets
+ * `lang="ja"` for screen readers and an English UI, which beats claiming to be
  * English.
  */
 export function resolveLocale(lang?: string | null): Locale {

@@ -1007,6 +1007,8 @@ export default function SettingsEditor() {
                   <option value="de">Deutsch (DE)</option>
                   <option value="fr">Français (FR)</option>
                   <option value="es">Español (ES)</option>
+                  <option value="it">Italiano (IT)</option>
+                  <option value="nl">Nederlands (NL)</option>
                   <option value="ja">日本語 (JA)</option>
                 </select>
                 <p className="admin-field-hint">

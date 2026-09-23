@@ -533,18 +533,25 @@ lightbox, the password gate, the proofing dialog, the legal notice, error pages
 | ----- | ----------------- |
 | `en`  | English (default) |
 | `de`  | German            |
+| `fr`  | French            |
+| `es`  | Spanish           |
+| `it`  | Italian           |
+| `nl`  | Dutch             |
 
-Any other value (`fr`, `ja`, …) still reaches `<html lang>` and
+Region subtags are accepted and dropped for the interface (`fr-CA` → French,
+`nl-BE` → Dutch), while the full value still reaches `<html lang>`.
+
+Any other value (`ja`, `pt`, …) still reaches `<html lang>` and
 `toLocaleDateString`, but the interface stays English: there is no dictionary
 for it yet. That is deliberate — claiming `lang="en"` on a French site would be
 worse for screen readers than an English interface on a page correctly marked
-as French.
+as Japanese.
 
 Two things stay in one language by design:
 
 - **The admin panel** is always English, whatever `lang` says.
 - **`/impressum`** keeps its German headings when `lang: de` and the § 5 TMG
-  citation in both, because that is what the statute names. Under `lang: en`
+  citation in every language, because that is what the statute names. Under `lang: en`
   the footer link reads "Legal Notice" rather than "Impressum" — the page is
   optional (`legal.enabled`), and an unexplained German word in the footer of
   an English site is what drove this out of the backlog.
@@ -553,7 +560,12 @@ Adding a language means adding one file under `lib/i18n/locales/` and listing
 it in `SUPPORTED_LOCALES` (`lib/i18n/index.ts`). The dictionary is typed
 against the English one, so a missing key fails the type-check rather than
 falling back silently, and `lib/__tests__/i18n.test.ts` additionally catches
-keys that were copied over but never translated.
+keys that were copied over but never translated. Words a language genuinely
+shares with English (`ISO`, `Info`, French "photos") go into that locale's
+allowance list in the same test, which in turn fails if an entry stops being
+identical. Add the language to the **Language** select in
+`app/admin/components/SettingsEditor.tsx` so it can be picked from the admin
+panel.
 
 ### Analytics
 
