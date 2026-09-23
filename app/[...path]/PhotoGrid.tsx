@@ -318,7 +318,7 @@ function PhotoGridInner({
               background: proofing.isFilterActive
                 ? 'var(--accent, #e60012)'
                 : 'var(--bg-card-hover)',
-              color: proofing.isFilterActive ? '#fff' : 'var(--text-primary)',
+              color: proofing.isFilterActive ? 'var(--on-accent, #fff)' : 'var(--text-primary)',
               border: 'none',
               padding: '6px 14px',
               borderRadius: '20px',

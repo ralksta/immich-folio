@@ -181,7 +181,7 @@ export function ProofingModal() {
                 padding: '0.75rem 1rem',
                 borderRadius: 'var(--radius-sm, 6px)',
                 background: 'var(--accent, #e60012)',
-                color: '#fff',
+                color: 'var(--on-accent, #fff)',
                 border: 'none',
                 fontWeight: 500,
                 cursor: selectedCount === 0 ? 'not-allowed' : 'pointer',

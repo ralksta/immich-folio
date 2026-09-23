@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { resolveTheme, THEME_PRESETS, DEFAULT_PRESET } from '@/lib/config/theme';
+import {
+  resolveTheme,
+  accentForMode,
+  onAccent,
+  THEME_PRESETS,
+  DEFAULT_PRESET,
+} from '@/lib/config/theme';
 
 /**
  * `radius` reaches CSS as `${radius}px` and `${radius * 1.5}px` (app/layout.tsx),
@@ -43,6 +49,41 @@ describe('resolveTheme scalar coercion (#633)', () => {
 
   it('keeps a legitimate accent override', () => {
     expect(resolveTheme({ accent: '#123456' }).accent).toBe('#123456');
+  });
+
+  it('normalises a 3-digit accent to the #rrggbb every consumer survives', () => {
+    expect(resolveTheme({ accent: '#f00' }).accent).toBe('#ff0000');
+    expect(resolveTheme({ accent: '#FFF' }).accent).toBe('#ffffff');
+  });
+
+  it('normalises an 8-digit accent by dropping the alpha', () => {
+    expect(resolveTheme({ accent: '#e6001280' }).accent).toBe('#e60012');
+  });
+
+  it('trims surrounding whitespace from an accent', () => {
+    expect(resolveTheme({ accent: '  #e60012  ' }).accent).toBe('#e60012');
+  });
+
+  it('falls back to the preset accent for a hex literal without the #', () => {
+    // The nastiest input: defined, so var() substitutes it and any accent-
+    // backed background becomes transparent instead of taking its fallback.
+    expect(resolveTheme({ accent: 'e60012' }).accent).toBe(base.accent);
+  });
+
+  it('falls back to the preset accent for a 5-digit hex', () => {
+    expect(resolveTheme({ accent: '#12345' }).accent).toBe(base.accent);
+  });
+
+  it('falls back to the preset accent for named and functional colours', () => {
+    // They would render, but onAccent() reads only hex and would answer white.
+    expect(resolveTheme({ accent: 'red' }).accent).toBe(base.accent);
+    expect(resolveTheme({ accent: 'rgb(230 0 18)' }).accent).toBe(base.accent);
+  });
+
+  it('gives a white accent dark button text, the proofing ZIP button included', () => {
+    // #ffffff on the light theme rendered Download selected white-on-white.
+    const theme = resolveTheme({ accent: '#FFF' });
+    expect(onAccent(accentForMode(theme, 'light'))).toBe('#000000');
   });
 
   it('falls back to the preset grain/headerDot when not a boolean', () => {
