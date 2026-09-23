@@ -370,7 +370,10 @@ easier to live with.
   in the browser tab, and made a gallery with no albums yet a perfectly valid
   starting point rather than an error. In v0.15.0, made client proofing work
   properly: the selection bar floats again with page transitions on, and it is
-  readable in light mode. Also brought links to journal quote attributions.
+  readable in light mode. Also brought links to journal quote attributions. In
+  v0.17.0, built the ZIP download: a whole album, or just the photos a client
+  picked, as one archive of the originals — streamed, so even a large shoot
+  arrives complete.
 - **[@ImScheinox](https://github.com/ImScheinox)** — found and fixed portrait
   photos rendering as landscape tiles, because the grid ignored the camera's
   EXIF orientation flag. That brought the masonry layout's stagger back for

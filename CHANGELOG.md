@@ -7,6 +7,119 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [Unreleased]
+
+### Added
+
+- **Download an album, or a proofing selection, as a ZIP of the originals**
+  ([#561](https://github.com/ralksta/immich-folio/pull/561),
+  [#665](https://github.com/ralksta/immich-folio/pull/665)) — contributed by
+  [@lancetm714](https://github.com/lancetm714). An album with
+  `download: true` — now also a switch in the admin album editor, _Allow
+  original downloads_ — shows a _Download album_ link in its header, and the
+  proofing dialog gains _Download selected (.zip)_. The archive streams one
+  original at a time, uncompressed, so memory stays flat however large the
+  album is, and a cancelled download stops pulling from Immich. The route
+  re-checks everything the single-file download does — the allowlist, the
+  `download` opt-in, every password gate on the way to the album — and a
+  selection may name only assets of that album, each once, at most 1,000.
+  Downloads are limited to five a minute per visitor; a refusal answers a
+  browser with a short page in the site's language that links back to the
+  album, instead of raw JSON.
+
+- **Journal entries can start from a template**
+  ([#662](https://github.com/ralksta/immich-folio/pull/662)). Besides a blank
+  entry, the _New Journal Entry_ dialog offers eight structures: Wedding,
+  Hiking / Outdoor, Travel, Birthday / Family, Portrait Session, Behind the
+  Scenes, Pets and New Series.
+
+- **Four new journal blocks, and drag-and-drop ordering**
+  ([#663](https://github.com/ralksta/immich-folio/pull/663)):
+  - **Photo grid** — three or more photos in rows of three, at their real
+    proportions. A third photo used to be dropped silently on the next save.
+  - **Facts** — label/value pairs, rendered as a definition list.
+  - **Map** — the pins the author lists: typed coordinates, a photo placed by
+    its GPS, or every geotagged photo of the entry, optionally joined by a
+    line. Photo pins follow the album's location precision, and `exact` is
+    rounded to a 1 km grid. Only the pins reach the browser, never asset ids.
+  - **Album** — a slice of an album (`count`, `skip`, laid out as a grid, in
+    pairs or one per row), expanded into ordinary photos before rendering.
+
+  The Journal Studio and the page builder's essay editor both get the new
+  blocks, and every block card can be dragged by its grip; the arrow buttons
+  stay for the keyboard. The templates use the new blocks.
+
+### Fixed
+
+- **Admin login and gallery passwords work over plain HTTP**
+  ([#666](https://github.com/ralksta/immich-folio/pull/666), reported in
+  [#664](https://github.com/ralksta/immich-folio/issues/664) by
+  [@majandres](https://github.com/majandres)). Login cookies were marked
+  `Secure` whenever the app ran in production mode, which the Docker image
+  always does, and a browser silently drops a `Secure` cookie set over
+  `http://`. An instance opened at `http://host:7211` accepted the password
+  and answered every following request with 401. The flag now follows the
+  request: HTTPS, or `X-Forwarded-Proto: https` from a reverse proxy.
+
+- **Unsaved edits in the page builder and the journal editor survive leaving
+  the page** ([#668](https://github.com/ralksta/immich-folio/pull/668)).
+  Switching admin tabs, pressing back, reloading or logging out used to
+  discard them without a word. Each editor now keeps a draft for the browser
+  tab and restores it on return, with a notice and a _Discard changes_
+  button. If the file was saved elsewhere in the meantime, the draft is held
+  back and the editor asks before restoring it over the newer version.
+
+- **Favourites are kept per album**
+  ([#561](https://github.com/ralksta/immich-folio/pull/561)). Every album
+  shared one selection, so hearts set in one album showed up in the next.
+  See the upgrade notes.
+
+- **The proofing dialog's copy buttons work without a clipboard**
+  ([#672](https://github.com/ralksta/immich-folio/pull/672)). Browsers offer
+  the clipboard only on HTTPS, so on a site reached over plain HTTP _Copy
+  shareable link_ and _Copy text list_ did nothing. They now show the link or
+  the list, selected, in a field to copy by hand — as the image viewer
+  already did for its photo link.
+
+- **English leftovers on translated sites**
+  ([#673](https://github.com/ralksta/immich-folio/pull/673),
+  [#674](https://github.com/ralksta/immich-folio/pull/674)): the back link of
+  an album inside a subpage read "Back to …", and screen readers heard
+  English labels on photo tiles and footer links.
+
+### Internal
+
+- **The journal editor is split up**
+  ([#669](https://github.com/ralksta/immich-folio/pull/669),
+  [#670](https://github.com/ralksta/immich-folio/pull/670)). The 2,000-line
+  `JournalStudio.tsx` is now the entry list and an editor of about 600
+  lines, with the block forms, story settings, live preview, split pane and
+  block operations in files of their own and the extracted logic under test.
+  Screenshots before and after are pixel-identical.
+- **`next dev` over the LAN**
+  ([#671](https://github.com/ralksta/immich-folio/pull/671)): the hostnames
+  allowed to load dev assets come from `ALLOWED_DEV_ORIGINS` in `.env.local`
+  instead of the config file.
+- Prettier 3.9.8 ([#625](https://github.com/ralksta/immich-folio/pull/625),
+  [#667](https://github.com/ralksta/immich-folio/pull/667)).
+
+### Upgrade notes
+
+**Visitors' favourites from before this release are not carried over.** They
+were stored under one key shared by every album; each album now has its own,
+and the old key is no longer read. A selection in progress has to be made
+again. A shared proofing link still restores the selection it carries.
+
+**Behind a reverse proxy, make sure it sends `X-Forwarded-Proto`**, so login
+cookies stay `Secure` on HTTPS. Caddy and Traefik send it on their own; nginx
+needs `proxy_set_header X-Forwarded-Proto $scheme;`, as in the documented
+config. Plain-HTTP setups need nothing — logins simply work now.
+
+**Running from source:** run `npm install` after pulling — the ZIP download
+adds the `archiver` dependency. Docker images include it.
+
+No `IMAGE_CACHE_VERSION` bump is needed this time.
+
 ## [0.16.0] — 2026-09-22
 
 ### Security
