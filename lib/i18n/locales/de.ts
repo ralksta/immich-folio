@@ -188,6 +188,8 @@ export const de: Dictionary = {
     linkCopied: 'Link kopiert!',
     copyList: 'Textliste kopieren (#1, #2...)',
     listCopied: 'Liste kopiert!',
+    copyManualLink: 'Diesen Link kopieren',
+    copyManualList: 'Diese Liste kopieren',
     sendEmail: '✉️ E-Mail an den Fotografen',
     downloadSelected: 'Auswahl herunterladen (.zip)',
     clearSelection: 'Auswahl löschen',

@@ -10,6 +10,13 @@ export function ProofingModal() {
   const t = useDictionary();
   const proofing = useProofing();
   const [copiedState, setCopiedState] = useState<'none' | 'link' | 'list'>('none');
+  /**
+   * What to show for copying by hand. `navigator.clipboard` only exists in a
+   * secure context, and a self-hosted portfolio reached over plain http on a
+   * LAN is not one — the buttons used to throw and appear to do nothing. The
+   * lightbox's permalink falls back the same way.
+   */
+  const [manualCopy, setManualCopy] = useState<'link' | 'list' | null>(null);
 
   /* Before the early `return null`: hooks must not run conditionally.
      `proofing` can be null, hence the optional calls. */
@@ -36,21 +43,25 @@ export function ProofingModal() {
   // a button that would post an empty selection and 404.
   const selectedCount = getSelectedTokens().length;
 
-  const handleCopyLink = () => {
-    const url = getProofingUrl();
-    navigator.clipboard.writeText(url).then(() => {
-      setCopiedState('link');
-      setTimeout(() => setCopiedState('none'), 2000);
-    });
+  /** Copy to the clipboard, or show the text to copy by hand where it is unavailable. */
+  const copy = (kind: 'link' | 'list', text: string) => {
+    if (!navigator.clipboard) {
+      setManualCopy(kind);
+      return;
+    }
+    navigator.clipboard.writeText(text).then(
+      () => {
+        setManualCopy(null);
+        setCopiedState(kind);
+        setTimeout(() => setCopiedState('none'), 2000);
+      },
+      () => setManualCopy(kind),
+    );
   };
 
-  const handleCopyList = () => {
-    const list = getFormattedList();
-    navigator.clipboard.writeText(list).then(() => {
-      setCopiedState('list');
-      setTimeout(() => setCopiedState('none'), 2000);
-    });
-  };
+  const handleCopyLink = () => copy('link', getProofingUrl());
+
+  const handleCopyList = () => copy('list', getFormattedList());
 
   const handleMailto = () => {
     const subject = encodeURIComponent(t.proofing.mailSubject(favorites.size));
@@ -257,6 +268,33 @@ export function ProofingModal() {
               </>
             )}
           </button>
+
+          {manualCopy && (
+            <div role="status" style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <label htmlFor="proofing-manual-copy" style={{ fontSize: '0.85rem', opacity: 0.8 }}>
+                {manualCopy === 'link' ? t.proofing.copyManualLink : t.proofing.copyManualList}
+              </label>
+              <textarea
+                id="proofing-manual-copy"
+                readOnly
+                autoFocus
+                rows={manualCopy === 'link' ? 2 : 4}
+                value={manualCopy === 'link' ? getProofingUrl() : getFormattedList()}
+                onFocus={(e) => e.currentTarget.select()}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  borderRadius: 'var(--radius-sm, 6px)',
+                  background: 'var(--bg-card-hover)',
+                  color: 'inherit',
+                  border: '1px solid var(--border-subtle)',
+                  font: 'inherit',
+                  fontSize: '0.85rem',
+                  resize: 'vertical',
+                }}
+              />
+            </div>
+          )}
 
           {allowMailto && (
             <button

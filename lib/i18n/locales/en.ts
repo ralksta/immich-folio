@@ -188,6 +188,9 @@ export const en = {
     linkCopied: 'Link Copied!',
     copyList: 'Copy Text List (#1, #2...)',
     listCopied: 'List Copied!',
+    /** Shown when the browser offers no clipboard (plain http) — copy by hand. */
+    copyManualLink: 'Copy this link',
+    copyManualList: 'Copy this list',
     sendEmail: '✉️ Send Email to Photographer',
     downloadSelected: 'Download selected (.zip)',
     clearSelection: 'Clear Selection',
