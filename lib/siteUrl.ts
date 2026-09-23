@@ -71,8 +71,12 @@ export function resolveSiteUrl(
  * Returns null without a site URL: a relative link in a sitemap is invalid and
  * a relative link in a feed points at the reader, so there is nothing sensible
  * to fall back to.
+ *
+ * A path that is already an absolute http(s) URL — an image URL in CDN mode
+ * (lib/cdn.ts) — is returned as it is, site URL or not.
  */
 export function absoluteUrl(siteUrl: string | null, path: string): string | null {
+  if (/^https?:\/\//i.test(path)) return path;
   if (!siteUrl) return null;
   const raw = path.startsWith('/') ? path : `/${path}`;
   const suffix = raw === '/' ? '/' : raw.replace(/\/+$/, '');

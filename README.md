@@ -67,6 +67,7 @@ A self-hosted portfolio powered by [Immich](https://immich.app). It acts as a **
 - **Client proofing** — clients favorite photos and export the selection; picks are encoded in the URL, nothing is stored server-side
 - **Originals delivery** — per-album opt-in lets visitors download a whole album or their proofing selection as a ZIP of the originals
 - **Lightbox watermark** — configurable overlay on fullscreen images
+- **Six interface languages** — English, German, French, Spanish, Italian and Dutch for everything visitors see
 - **Privacy-friendly analytics** — cookieless view counts, no third parties, can be switched off
 - **Dynamic OG images** — auto-generated social preview images per album
 
@@ -114,6 +115,7 @@ A self-hosted portfolio powered by [Immich](https://immich.app). It acts as a **
 
 - Health check endpoint at `GET /api/health`
 - In-memory caching with configurable TTL
+- Optional CDN mode — photos and videos served through a pull CDN, so repeat views never reach your server ([Deployment Guide](docs/deployment.md#cdn-mode))
 - Standalone Docker image — multi-stage, non-root, ~150 MB
 - Dependencies kept current via Dependabot (npm + GitHub Actions, weekly)
 
@@ -219,6 +221,7 @@ AUTH_SECRET=long-random-string        # required in production
 TRUSTED_PROXY_HOPS=1                   # reverse proxies in front, default: 0
 ADMIN_PASSWORD=your-secure-password   # enables /admin panel
 WEBHOOK_SECRET=long-random-string     # enables POST /api/webhook cache invalidation
+CDN_URL=https://cdn.example.com       # serve photos and videos through a pull CDN
 ```
 
 > Login and setup endpoints have their own, much lower limits that `RATE_LIMIT_RPM` does not raise — see [Rate Limiting](docs/gallery-config.md#rate-limiting).

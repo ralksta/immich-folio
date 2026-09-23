@@ -10,6 +10,7 @@ import {
   checkAlbumSlugCollisions,
   checkAlbumsShared,
   checkAuthSecret,
+  checkCdn,
   checkImmichCalls,
   checkPasswords,
   checkProxyHops,
@@ -43,6 +44,9 @@ export const GET = withAdmin(async (request: NextRequest) => {
       PROXY_MARKER_HEADERS.some((h) => !!request.headers.get(h)),
     ),
   );
+
+  const cdn = checkCdn(env.CDN_URL, !!config.sitePassword, config.trustedProxyHops);
+  if (cdn) findings.push(cdn);
 
   // ── Immich: the three calls Folio actually depends on ────────────────
   const calls: Array<{ endpoint: string; ok: boolean }> = [];

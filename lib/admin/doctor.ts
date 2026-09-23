@@ -173,6 +173,53 @@ export function checkProxyHops(
   };
 }
 
+/**
+ * CDN mode (lib/cdn.ts). Only reported when `CDN_URL` is set.
+ *
+ * Two ways it quietly goes wrong. A site password keeps the photos on this
+ * host on purpose, which reads as "the CDN does nothing". And with
+ * `TRUSTED_PROXY_HOPS=0`, every cache miss is rate-limited by the CDN edge's
+ * IP instead of the visitor's: a handful of edges share one bucket, and a busy
+ * page can push one of them into 429s that then show up as missing photos.
+ */
+export function checkCdn(
+  cdnUrl: string | undefined,
+  sitePasswordSet: boolean,
+  trustedProxyHops: number,
+): DoctorFinding | null {
+  if (!cdnUrl) return null;
+
+  if (sitePasswordSet) {
+    return {
+      id: 'cdn',
+      level: 'warn',
+      title: 'CDN_URL is set, but photos are served from this server',
+      detail:
+        'The site is password-protected, and a CDN would hand cached photos to anyone with a ' +
+        'link, so CDN mode stays off. Remove the site password or unset CDN_URL.',
+    };
+  }
+
+  if (trustedProxyHops === 0) {
+    return {
+      id: 'cdn',
+      level: 'warn',
+      title: 'CDN mode is on, but TRUSTED_PROXY_HOPS is 0',
+      detail:
+        `Photos are served through ${cdnUrl}, and without TRUSTED_PROXY_HOPS the rate limiter ` +
+        'counts the CDN edge instead of the visitor. Set it to the number of proxies in front of ' +
+        'the app, the CDN included.',
+    };
+  }
+
+  return {
+    id: 'cdn',
+    level: 'ok',
+    title: 'CDN mode is on',
+    detail: `Photos and videos are served through ${cdnUrl}.`,
+  };
+}
+
 /** Headers a reverse proxy sets and Next never synthesises. */
 export const PROXY_MARKER_HEADERS = ['x-real-ip', 'forwarded', 'via'];
 

@@ -5,6 +5,7 @@
 
 import { encodeAssetId } from './tokens';
 import { env } from './env';
+import { cdnBase } from './cdn';
 import { thumbHashToBlurDataUrl, thumbHashToDominantHex } from './thumbhash';
 import type { ImmichAsset } from './immich';
 
@@ -22,13 +23,14 @@ import type { ImmichAsset } from './immich';
 const cacheBuster = env.IMAGE_CACHE_VERSION ? `&v=${env.IMAGE_CACHE_VERSION}` : '';
 
 /**
- * Generate a public image proxy URL for an asset.
+ * Generate a public image proxy URL for an asset. Absolute, on the CDN, when
+ * CDN mode is on (lib/cdn.ts); relative otherwise.
  */
 export function imageUrl(
   assetId: string,
   size: 'thumbnail' | 'preview' | 'original' = 'preview',
 ): string {
-  return `/api/image/${encodeAssetId(assetId)}?size=${size}${cacheBuster}`;
+  return `${cdnBase()}/api/image/${encodeAssetId(assetId)}?size=${size}${cacheBuster}`;
 }
 
 /**
@@ -39,12 +41,13 @@ export function exifUrl(assetId: string): string {
 }
 
 /**
- * Generate a public video proxy URL for an asset.
+ * Generate a public video proxy URL for an asset — on the CDN in CDN mode,
+ * like imageUrl().
  */
 export function videoUrl(assetId: string): string {
   // No `size` here, so the buster is the only query parameter.
   const v = cacheBuster ? `?${cacheBuster.slice(1)}` : '';
-  return `/api/video/${encodeAssetId(assetId)}${v}`;
+  return `${cdnBase()}/api/video/${encodeAssetId(assetId)}${v}`;
 }
 
 /**

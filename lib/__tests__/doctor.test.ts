@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  checkCdn,
   checkAuthSecret,
   checkProxyHops,
   countForwardedHops,
@@ -303,5 +304,29 @@ describe('worstLevel', () => {
         { id: 'b', level: 'error', title: '', detail: '' },
       ]),
     ).toBe('error');
+  });
+});
+
+describe('checkCdn', () => {
+  it('stays silent without CDN_URL', () => {
+    expect(checkCdn(undefined, false, 1)).toBeNull();
+  });
+
+  it('warns that a site password keeps photos off the CDN', () => {
+    const finding = checkCdn('https://cdn.example.net', true, 1)!;
+    expect(finding.level).toBe('warn');
+    expect(finding.detail).toMatch(/password/);
+  });
+
+  it('warns when the rate limiter would count CDN edges', () => {
+    const finding = checkCdn('https://cdn.example.net', false, 0)!;
+    expect(finding.level).toBe('warn');
+    expect(finding.title).toMatch(/TRUSTED_PROXY_HOPS/);
+  });
+
+  it('reports ok with a proxy chain configured', () => {
+    const finding = checkCdn('https://cdn.example.net', false, 2)!;
+    expect(finding.level).toBe('ok');
+    expect(finding.detail).toContain('https://cdn.example.net');
   });
 });

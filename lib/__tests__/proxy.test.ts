@@ -12,11 +12,17 @@ vi.mock('@/lib/auth', () => ({
   isSiteUnlocked: vi.fn(() => true),
 }));
 
+vi.mock('@/lib/cdn', () => ({
+  cdnOrigin: vi.fn(() => null),
+}));
+
 import { isSiteUnlocked } from '@/lib/auth';
+import { cdnOrigin } from '@/lib/cdn';
 import { tryToParsePath } from 'next/dist/lib/try-to-parse-path';
 import { proxy, config } from '@/proxy';
 
 const mockUnlocked = isSiteUnlocked as unknown as ReturnType<typeof vi.fn>;
+const mockCdnOrigin = cdnOrigin as unknown as ReturnType<typeof vi.fn>;
 
 // Next.js 16 renamed the "middleware" file convention to "proxy": the file must
 // be proxy.ts and must export proxy(), not middleware(). A silent regression here
@@ -27,6 +33,28 @@ describe('proxy', () => {
 
   beforeEach(() => {
     mockUnlocked.mockReturnValue(true);
+    mockCdnOrigin.mockReturnValue(null);
+  });
+
+  describe('CDN mode', () => {
+    it('leaves the policy untouched without a CDN', () => {
+      const csp = run().headers.get('Content-Security-Policy')!;
+      expect(csp).not.toContain('media-src');
+    });
+
+    it('allows the CDN origin for images and video', () => {
+      mockCdnOrigin.mockReturnValue('https://cdn.example.net');
+      const csp = run().headers.get('Content-Security-Policy')!;
+      const directive = (name: string) =>
+        csp
+          .split(';')
+          .map((d) => d.trim())
+          .find((d) => d.startsWith(`${name} `));
+      expect(directive('img-src')).toContain('https://cdn.example.net');
+      expect(directive('media-src')).toBe("media-src 'self' https://cdn.example.net");
+      // Scripts never come from the CDN.
+      expect(directive('script-src')).not.toContain('cdn.example.net');
+    });
   });
 
   it('is exported under the name Next.js 16 expects', () => {

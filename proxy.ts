@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { isSiteUnlocked } from '@/lib/auth';
 import { isAdminPath } from '@/lib/admin/paths';
 import { isInstallPath } from '@/lib/install';
+import { cdnOrigin } from '@/lib/cdn';
 
 /** Where a locked-out visitor is rewritten to. */
 const GATE_PATH = '/gate';
@@ -83,6 +84,10 @@ export function proxy(request: NextRequest) {
 
   const isDev = process.env.NODE_ENV === 'development';
 
+  // CDN mode (lib/cdn.ts) serves photos and videos from another origin. Media
+  // has no directive of its own otherwise and falls back to default-src.
+  const cdn = cdnOrigin();
+
   // Define CSP directives
   const cspDirectives = [
     "default-src 'self'",
@@ -95,7 +100,8 @@ export function proxy(request: NextRequest) {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org https://unpkg.com",
+    `img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org https://unpkg.com${cdn ? ` ${cdn}` : ''}`,
+    ...(cdn ? [`media-src 'self' ${cdn}`] : []),
     "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",

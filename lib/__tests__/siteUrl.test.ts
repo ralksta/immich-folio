@@ -82,6 +82,12 @@ describe('resolveSiteUrl', () => {
 });
 
 describe('absoluteUrl', () => {
+  it('passes an already absolute URL through — a photo on the CDN', () => {
+    const cdn = 'https://cdn.example.net/api/image/v2:abc?size=preview';
+    expect(absoluteUrl('https://folio.example', cdn)).toBe(cdn);
+    expect(absoluteUrl(null, cdn)).toBe(cdn);
+  });
+
   it('joins a path', () => {
     expect(absoluteUrl('https://folio.example', '/travel')).toBe('https://folio.example/travel');
   });
