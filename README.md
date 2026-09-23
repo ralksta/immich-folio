@@ -59,8 +59,8 @@ A self-hosted portfolio powered by [Immich](https://immich.app). It acts as a **
 - **Auto-generated slugs** — URL slugs derived from album names automatically
 - **YAML gallery config** — all gallery structure defined in a single `content/gallery.yaml` file
 - **Markdown about page** — `content/about.md` with frontmatter for portrait, name, location, and gear list, editable from the admin panel
-- **Journal** — photo essays and travel stories at `/journal`, with drafts, per-entry passwords, cover images and reading times
-- **Photo Essay mode** — long-form storytelling pages alternating text with fullbleed, paired and grid image layouts, facts lists and a map of the entry's geotagged photos
+- **Journal** — photo essays and travel stories at `/journal`, with drafts, per-entry passwords, cover images and reading times; new entries can start from a template (wedding, hiking, travel, …)
+- **Photo Essay mode** — long-form storytelling pages alternating text with fullbleed, paired and grid image layouts, facts lists, a slice of an album, and a map with the pins you choose — typed places, or photos placed by their GPS
 - **Unlisted subpages** _(experimental)_ — reachable by direct link, absent from the navigation
 - **Subpage on/off toggle** — take a page offline without deleting it
 - **External navigation links** _(experimental)_ — point the header at a shop, a blog, or a social profile
@@ -87,8 +87,10 @@ A self-hosted portfolio powered by [Immich](https://immich.app). It acts as a **
 - **Album picker** — browse all shared Immich albums with search, see photo counts, and add them with one click
 - **Settings editor** — configure theme, grid layout, footer, legal/impressum, SEO, image protection and the about page from a visual UI
 - **Visual previews everywhere** — grid layout, theme, photo frame, hero style and the Google search snippet are picked from preview cards instead of text fields
-- **Journal Studio** — split-screen block editor with a live preview of the real page
+- **Journal Studio** — split-screen block editor with a live preview of the real page; start from a template, drag blocks into order
 - **Essay block editor** — assemble photo essays block by block without touching Markdown
+- **Unsaved edits survive** — leave the page builder or the journal editor mid-edit, and your changes are waiting when you come back
+- **Diagnostics** — a page that checks the Immich connection, config and security settings, and links every finding to its fix
 - **Photo order editor** — drag & drop a hand-picked opening sequence for any album
 - **Favicon upload** — give the site its own icon in the browser tab
 - **Backup manager** — every save is backed up automatically; restore any of them with one click
@@ -334,17 +336,15 @@ own password, separate from any album passwords, and writes straight to
 
 ## What's New
 
-v0.11.0 — a first-run wizard, a journal, and a set of experimental portfolio
-features:
+v0.17.0 — originals as a ZIP, and a richer journal:
 
-- **First-run setup wizard at `/install`** — configure a fresh deployment from the browser instead of writing config files → [First-Run Setup](#first-run-setup)
-- **Journal** — photo essays and travel stories at `/journal`, with a split-screen block editor, drafts, per-entry passwords and cover images → [Journal guide](docs/journal.md)
-- **About page editor** — portrait, name, location, gear and bio edited in the admin panel, plus a toggle to take the page offline
-- **Custom favicon upload** — SVG, PNG, ICO or JPEG, stored in the content volume
-- **Experimental portfolio features** — justified grid layout, `cover` hero splash screen, unlisted subpages, per-album grid overrides, cover focal points, external navigation links
-- **Admin panel** — every area has its own URL, a floating save bar, and a drag & drop photo-order editor
+- **Download originals as a ZIP** — a whole album, or just the photos a client picked in proofing, as one archive of the originals. Opt-in per album; contributed by [@lancetm714](https://github.com/lancetm714)
+- **Journal templates** — start a new entry from eight structures, from a wedding to a hiking trip
+- **New journal blocks** — photo grids, facts lists, a map with the pins you choose, and a slice of an album; reorder blocks by dragging → [Journal guide](docs/journal.md)
+- **Unsaved admin edits survive navigation** — switching tabs or reloading no longer throws your changes away
+- **Plain-HTTP installs** — admin login and gallery passwords now work at `http://host:7211`
 
-No migration and no configuration change are required to upgrade.
+**Upgrade note:** visitors' proofing favourites from before v0.17.0 are not carried over. Nothing else to migrate.
 
 Security fixes ship in normal releases, so **running the latest release is the
 recommended baseline**.
