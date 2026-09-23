@@ -71,6 +71,7 @@ export const nl: Dictionary = {
     immichUnavailable:
       'De fotobibliotheek is op dit moment niet bereikbaar. Probeer het zo opnieuw.',
     back: 'Terug naar de galerij',
+    limitReached: 'Het downloadlimiet voor deze link is bereikt.',
   },
 
   theme: {
@@ -204,6 +205,31 @@ export const nl: Dictionary = {
     mailSubject: (n: number) => `Fotoselectie (${n})`,
     mailBody: (list: string, url: string) =>
       `Hallo,\n\nHier is mijn fotoselectie:\n\n${list}\n\nDeellink: ${url}\n\nMet vriendelijke groet,`,
+  },
+
+  proofSession: {
+    greeting: (name: string) => `Selectie voor ${name}`,
+    intro:
+      'Tik op het hartje bij de foto’s die je wilt. Je selectie wordt meteen opgeslagen — je kunt met deze link altijd terugkomen.',
+    saving: 'Opslaan…',
+    saved: 'Selectie opgeslagen',
+    saveFailed:
+      'Je selectie kon niet worden opgeslagen. Controleer je verbinding en probeer het opnieuw.',
+    review: 'Bekijken & versturen',
+    modalTitle: (n: number) => `Jouw selectie (${n})`,
+    empty: 'Nog geen foto’s geselecteerd.',
+    submit: 'Selectie versturen',
+    submitting: 'Versturen…',
+    confirmSubmit: (n: number) =>
+      `${plural(n, 'foto', 'foto’s')} versturen? Daarna kun je de selectie niet meer wijzigen.`,
+    submitted: 'Bedankt — je selectie is verstuurd.',
+    locked: 'Deze selectie is verstuurd en kan niet meer worden gewijzigd.',
+    validUntil: (date: string) => `Deze link is geldig tot ${date}.`,
+    expiredTitle: 'Deze link is verlopen',
+    expiredText: 'Vraag je fotograaf om een nieuwe link.',
+    downloadSelection: 'Selectie downloaden (.zip)',
+    downloadAll: 'Alle foto’s downloaden (.zip)',
+    downloadsLeft: (n: number) => `Nog ${plural(n, 'download', 'downloads')}`,
   },
 
   legal: {

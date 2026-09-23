@@ -69,6 +69,12 @@ const NAV: {
         badge: 'messages',
       },
       {
+        label: 'Proofing',
+        href: '/admin/proofing',
+        match: /^\/admin\/proofing/,
+        icon: <Icons.IconHeart size={16} />,
+      },
+      {
         label: 'Analytics',
         href: '/admin/analytics',
         match: /^\/admin\/analytics/,
