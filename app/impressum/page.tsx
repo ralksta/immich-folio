@@ -28,14 +28,14 @@ export default function ImpressumPage() {
   }
 
   return (
-    <div className="subpage-container">
-      <header className="subpage-header">
-        <BackLink href="/" label={t.common.home} />
-        <h1 className="subpage-title">{t.legal.title}</h1>
-        <p className="subpage-subtitle">{t.legal.subtitle}</p>
+    <div className="legal-page">
+      <header className="legal-header">
+        <BackLink href="/" label={t.common.backToGallery} />
+        <h1 className="legal-title">{t.legal.title}</h1>
+        <p className="legal-subtitle">{t.legal.subtitle}</p>
       </header>
 
-      <main className="subpage-content">
+      <div className="legal-content">
         <section className="legal-section">
           <h2 className="legal-section__title">{t.legal.address}</h2>
           <p className="legal-section__text">
@@ -97,7 +97,7 @@ export default function ImpressumPage() {
         <section className="legal-source">
           <p>{t.legal.source}</p>
         </section>
-      </main>
+      </div>
     </div>
   );
 }

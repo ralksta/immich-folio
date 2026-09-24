@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 export function SetupScreen() {
   return (
@@ -46,17 +47,17 @@ export function SetupScreen() {
           }}
         >
           <p style={{ marginBottom: '1rem' }}>
-            The quickest way is the setup wizard at <code>/install</code>. It is gated by a one-time
-            token printed to the server log at startup (<code>docker logs</code>) — append it as{' '}
-            <code>?token=…</code>.
+            The quickest way is the setup wizard at <Link href="/install">/install</Link>. It is
+            gated by a one-time token printed to the server log at startup (<code>docker logs</code>
+            ) — append it as <code>?token=…</code>.
           </p>
           <p style={{ marginBottom: '1rem' }}>
             Or configure it by hand, in your repository or mounted <code>content/</code> volume:
           </p>
           <ol style={{ margin: 0, paddingLeft: '1.25rem' }}>
             <li style={{ marginBottom: '0.5rem' }}>
-              Copy <code>.env.example</code> to <code>.env.local</code> and fill in your Immich API
-              URL and Key
+              Copy <code>.env.local.example</code> to <code>.env.local</code> and fill in your
+              Immich API URL and Key
             </li>
             <li style={{ marginBottom: '0.5rem' }}>
               Copy <code>settings.yaml.example</code> to <code>settings.yaml</code>
