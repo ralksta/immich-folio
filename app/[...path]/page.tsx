@@ -45,12 +45,12 @@ import { albumStructuredData } from '@/lib/structuredData';
 import { absoluteUrl } from '@/lib/siteUrl';
 import { SubpageGridView } from './SubpageGridView';
 import { EssayView } from './EssayView';
-import { parseEssayMarkdown, type EssayBlock } from '@/lib/essay';
+import { parseEssayMarkdown, type EssayBlock, type ParsedEssay } from '@/lib/essay';
 import { pinsForEntry } from '@/lib/journalMap';
 import { expandAlbumBlocks } from '@/lib/journalAlbum';
 import { mapBlockAssetIds } from '@/lib/journal';
 import { strictestPrecision, type LocationPrecision } from '@/lib/mapPrecision';
-import { loadEssayFromFile } from '@/lib/admin/journal-service';
+import { resolveEssayFile, generatedEssayCaption } from '@/lib/essaySource';
 import { getServerDictionary } from '@/lib/i18n/server';
 
 // Render at request time — requires live Immich connection
@@ -424,16 +424,25 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       !!result.subpage.essayText;
 
     if (isEssay) {
-      let essayParsed = result.subpage.essayText
-        ? parseEssayMarkdown(result.subpage.essayText)
-        : result.subpage.essayFile
-          ? loadEssayFromFile(result.subpage.essayFile)
-          : null;
+      const cookieStore = await cookies();
+      let essayParsed: ParsedEssay | null = null;
+      if (result.subpage.essayText) {
+        essayParsed = parseEssayMarkdown(result.subpage.essayText);
+      } else if (result.subpage.essayFile) {
+        // A borrowed journal entry keeps its own draft flag and password.
+        const file = resolveEssayFile(result.subpage.essayFile, {
+          isAdmin: await isAdminAuthenticated(),
+          getCookie: (name) => cookieStore.get(name)?.value,
+        });
+        if (file.status === 'locked') {
+          return <PasswordGate slug={result.subpage.essayFile} title={file.title} type="journal" />;
+        }
+        if (file.status === 'open') essayParsed = file.parsed;
+      }
 
       // Fetch assets from the subpage's albums. An essay has no per-album
       // gate to pass through, so an album with its own password stays out
       // until it has been unlocked.
-      const cookieStore = await cookies();
       const openAlbums = withoutLockedAlbums(albums, (name) => cookieStore.get(name)?.value);
       const allAlbums = await Promise.all(
         openAlbums.map((a) => immich.getAlbumBySlug(a.slug, slug, forceFresh)),
@@ -494,7 +503,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
             ...a.assets.map((asset) => ({
               type: 'photo' as const,
               assetId: encodeAssetId(asset.id),
-              caption: asset.exifInfo?.description || undefined,
+              caption: generatedEssayCaption(asset, config.exif.caption),
               layout: 'contained' as const,
             })),
           ]),
