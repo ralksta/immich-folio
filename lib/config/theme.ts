@@ -115,9 +115,33 @@ function resolveRadius(raw: unknown, fallback: number): number {
   return Math.min(THEME_RADIUS_MAX, Math.max(0, raw));
 }
 
-/** `--accent` and `--accent-dim` (app/layout.tsx) take this verbatim. */
+/**
+ * The one form of `--accent` every consumer survives: a `#rrggbb` hex.
+ * A value that is not a colour at all is worse than it looks —
+ * `background: var(--accent, #e60012)` does not fall back, because the
+ * variable is *defined*; the declaration becomes invalid at computed-value
+ * time and the background comes out transparent, leaving the button text on
+ * the surface below. Named and functional colours (`red`, `rgb(230 0 18)`)
+ * would render, but `onAccent()` only reads hex and would answer white for
+ * them whatever their lightness. Parsing arbitrary CSS colour syntax
+ * server-side is a dependency this does not need: hex is what the admin's
+ * picker writes and what every preset uses, so everything else falls back to
+ * the preset, the same treatment `resolveRadius` gives `radius`.
+ */
+const ACCENT_HEX = /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+
+/** Trim, case-fold and widen to `#rrggbb`; refuse anything that is not hex. */
 function resolveAccent(raw: unknown, fallback: string): string {
-  return typeof raw === 'string' && raw.trim() ? raw : fallback;
+  if (typeof raw !== 'string') return fallback;
+  const value = raw.trim();
+  if (!ACCENT_HEX.test(value)) return fallback;
+  const hex = value.slice(1).toLowerCase();
+  if (hex.length === 3) {
+    return `#${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}`;
+  }
+  // 8-digit keeps the hue and drops the alpha — an accent a visitor can read
+  // is worth more than the translucency the 12%-dim variants approximate anyway.
+  return `#${hex.slice(0, 6)}`;
 }
 
 /** The accent a colour mode renders with (`--accent-dark` / `--accent-light`). */
