@@ -253,6 +253,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
             <form onSubmit={handleCreate}>
               <div style={{ marginBottom: '1rem' }}>
                 <label
+                  htmlFor="journal-new-title"
                   style={{
                     display: 'block',
                     fontSize: '0.85rem',
@@ -263,6 +264,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                   Title
                 </label>
                 <input
+                  id="journal-new-title"
                   type="text"
                   className="admin-input"
                   placeholder="e.g. Expedition Nordkap"
@@ -280,6 +282,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
 
               <div style={{ marginBottom: '1.5rem' }}>
                 <label
+                  htmlFor="journal-new-url-slug"
                   style={{
                     display: 'block',
                     fontSize: '0.85rem',
@@ -290,6 +293,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                   URL Slug
                 </label>
                 <input
+                  id="journal-new-url-slug"
                   type="text"
                   className="admin-input"
                   placeholder="e.g. expedition-nordkap"

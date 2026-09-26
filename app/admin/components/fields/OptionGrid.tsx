@@ -1,6 +1,6 @@
 'use client';
 
-import type { CSSProperties, ReactNode } from 'react';
+import { useId, type CSSProperties, type ReactNode } from 'react';
 
 export type CardOption = { value: string; label: string; desc: string };
 
@@ -55,10 +55,14 @@ export default function OptionGrid({
   renderSpecs?: (option: CardOption) => ReactNode;
   cardStyle?: (option: CardOption) => CSSProperties | undefined;
 }) {
+  // A group of buttons, not one control, so it is named as a group (#694 §4).
+  const labelId = useId();
   return (
     <div className="admin-field">
-      <label>{label}</label>
-      <div className="preset-card-grid">
+      <span className="admin-field-label" id={labelId}>
+        {label}
+      </span>
+      <div className="preset-card-grid" role="group" aria-labelledby={labelId}>
         {options.map((option) => {
           const isActive = value === option.value;
           return (

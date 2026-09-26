@@ -58,24 +58,27 @@ export default function GeneralSection({ settings, update, updateMany }: Section
       </div>
 
       <div className="admin-field">
-        <label>Site Title</label>
+        <label htmlFor="general-site-title">Site Title</label>
         <input
+          id="general-site-title"
           value={settings.title || ''}
           onChange={(e) => update('title', e.target.value)}
           placeholder="My Portfolio"
         />
       </div>
       <div className="admin-field">
-        <label>Subtitle</label>
+        <label htmlFor="general-subtitle">Subtitle</label>
         <input
+          id="general-subtitle"
           value={settings.subtitle || ''}
           onChange={(e) => update('subtitle', e.target.value)}
           placeholder="A visual journal"
         />
       </div>
       <div className="admin-field">
-        <label>Language</label>
+        <label htmlFor="general-language">Language</label>
         <select
+          id="general-language"
           aria-label="Language"
           value={settings.lang || 'en'}
           onChange={(e) => update('lang', e.target.value)}
@@ -261,7 +264,7 @@ export default function GeneralSection({ settings, update, updateMany }: Section
       </FeatureGroup>
 
       <div className="admin-field favicon-field">
-        <label>Favicon</label>
+        <span className="admin-field-label">Favicon</span>
         <div className="favicon-row">
           <input
             type="file"

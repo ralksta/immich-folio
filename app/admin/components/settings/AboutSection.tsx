@@ -157,32 +157,36 @@ export default function AboutSection({ about }: { about: AboutEditor }) {
       ) : (
         <>
           <div className="admin-field">
-            <label>Portrait Asset ID</label>
+            <label htmlFor="about-portrait-asset-id">Portrait Asset ID</label>
             <input
+              id="about-portrait-asset-id"
               value={about.meta.portrait || ''}
               onChange={(e) => about.updateMeta('portrait', e.target.value)}
               placeholder="Immich asset UUID for the portrait photo"
             />
           </div>
           <div className="admin-field">
-            <label>Name</label>
+            <label htmlFor="about-name">Name</label>
             <input
+              id="about-name"
               value={about.meta.name || ''}
               onChange={(e) => about.updateMeta('name', e.target.value)}
               placeholder="Your name"
             />
           </div>
           <div className="admin-field">
-            <label>Location</label>
+            <label htmlFor="about-location">Location</label>
             <input
+              id="about-location"
               value={about.meta.location || ''}
               onChange={(e) => about.updateMeta('location', e.target.value)}
               placeholder="City, Country"
             />
           </div>
           <div className="admin-field">
-            <label>Gear (one per line)</label>
+            <label htmlFor="about-gear">Gear (one per line)</label>
             <textarea
+              id="about-gear"
               value={about.gearText}
               onChange={(e) => about.setGearText(e.target.value)}
               placeholder={`Leica Q3\nSummilux 35mm f/1.4`}
@@ -190,8 +194,9 @@ export default function AboutSection({ about }: { about: AboutEditor }) {
             />
           </div>
           <div className="admin-field">
-            <label>Biography (Markdown)</label>
+            <label htmlFor="about-biography">Biography (Markdown)</label>
             <textarea
+              id="about-biography"
               value={about.body}
               onChange={(e) => about.setBody(e.target.value)}
               placeholder="Photographer based in..."

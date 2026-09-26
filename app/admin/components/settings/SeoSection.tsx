@@ -46,8 +46,9 @@ export default function SeoSection({
       </div>
 
       <div className="admin-field">
-        <label>Site URL</label>
+        <label htmlFor="seo-site-url">Site URL</label>
         <input
+          id="seo-site-url"
           value={settings.url || ''}
           onChange={(e) => update('url', e.target.value)}
           placeholder="https://folio.example"
@@ -68,8 +69,9 @@ export default function SeoSection({
       </div>
 
       <div className="admin-field">
-        <label>SEO Meta Title</label>
+        <label htmlFor="seo-meta-title">SEO Meta Title</label>
         <input
+          id="seo-meta-title"
           value={settings.seo?.title || ''}
           onChange={(e) => update('seo.title', e.target.value)}
           placeholder="Overrides default site title for Google search results"
@@ -77,8 +79,9 @@ export default function SeoSection({
       </div>
 
       <div className="admin-field">
-        <label>Subpage Title Template</label>
+        <label htmlFor="seo-subpage-title-template">Subpage Title Template</label>
         <input
+          id="seo-subpage-title-template"
           value={settings.seo?.titleTemplate || ''}
           onChange={(e) => update('seo.titleTemplate', e.target.value)}
           placeholder={`%s | ${settings.seo?.title || settings.title || 'My Portfolio'}`}
@@ -95,8 +98,9 @@ export default function SeoSection({
       </div>
 
       <div className="admin-field">
-        <label>SEO Meta Description</label>
+        <label htmlFor="seo-meta-description">SEO Meta Description</label>
         <textarea
+          id="seo-meta-description"
           value={settings.seo?.description || ''}
           onChange={(e) => update('seo.description', e.target.value)}
           placeholder="A curated selection of photography work..."

@@ -48,8 +48,9 @@ export default function LegalSection({ settings, update }: SectionProps) {
       {settings.legal?.enabled && (
         <>
           <div className="admin-field">
-            <label>Heading</label>
+            <label htmlFor="legal-heading">Heading</label>
             <input
+              id="legal-heading"
               value={settings.legal?.heading || ''}
               onChange={(e) => update('legal.heading', e.target.value)}
               placeholder="Angaben gemäß § 5 DDG"
@@ -61,16 +62,18 @@ export default function LegalSection({ settings, update }: SectionProps) {
           </div>
           <div className="admin-field-row">
             <div className="admin-field">
-              <label>Full Name / Business Name</label>
+              <label htmlFor="legal-full-name-business-name">Full Name / Business Name</label>
               <input
+                id="legal-full-name-business-name"
                 value={settings.legal?.name || ''}
                 onChange={(e) => update('legal.name', e.target.value)}
                 placeholder="Max Mustermann"
               />
             </div>
             <div className="admin-field">
-              <label>Street Address</label>
+              <label htmlFor="legal-street-address">Street Address</label>
               <input
+                id="legal-street-address"
                 value={settings.legal?.address || ''}
                 onChange={(e) => update('legal.address', e.target.value)}
                 placeholder="Musterstraße 1"
@@ -79,16 +82,18 @@ export default function LegalSection({ settings, update }: SectionProps) {
           </div>
           <div className="admin-field-row">
             <div className="admin-field">
-              <label>ZIP &amp; City</label>
+              <label htmlFor="legal-zip-city">ZIP &amp; City</label>
               <input
+                id="legal-zip-city"
                 value={settings.legal?.zipCity || ''}
                 onChange={(e) => update('legal.zipCity', e.target.value)}
                 placeholder="12345 Berlin"
               />
             </div>
             <div className="admin-field">
-              <label>Country</label>
+              <label htmlFor="legal-country">Country</label>
               <input
+                id="legal-country"
                 value={settings.legal?.country || ''}
                 onChange={(e) => update('legal.country', e.target.value)}
                 placeholder="Germany"
@@ -97,16 +102,18 @@ export default function LegalSection({ settings, update }: SectionProps) {
           </div>
           <div className="admin-field-row">
             <div className="admin-field">
-              <label>Legal Email</label>
+              <label htmlFor="legal-email">Legal Email</label>
               <input
+                id="legal-email"
                 value={settings.legal?.email || ''}
                 onChange={(e) => update('legal.email', e.target.value)}
                 placeholder="legal@example.com"
               />
             </div>
             <div className="admin-field">
-              <label>Phone Number</label>
+              <label htmlFor="legal-phone-number">Phone Number</label>
               <input
+                id="legal-phone-number"
                 value={settings.legal?.phone || ''}
                 onChange={(e) => update('legal.phone', e.target.value)}
                 placeholder="+49 123 456789"
@@ -135,8 +142,9 @@ export default function LegalSection({ settings, update }: SectionProps) {
               )}
             </div>
             <div className="admin-field">
-              <label>Contact Link Text</label>
+              <label htmlFor="legal-contact-link-text">Contact Link Text</label>
               <input
+                id="legal-contact-link-text"
                 value={settings.legal?.contactLabel || ''}
                 onChange={(e) => update('legal.contactLabel', e.target.value)}
                 placeholder="Contact form"
@@ -145,16 +153,18 @@ export default function LegalSection({ settings, update }: SectionProps) {
           </div>
           <div className="admin-field-row">
             <div className="admin-field">
-              <label>VAT ID</label>
+              <label htmlFor="legal-vat-id">VAT ID</label>
               <input
+                id="legal-vat-id"
                 value={settings.legal?.vatId || ''}
                 onChange={(e) => update('legal.vatId', e.target.value)}
                 placeholder="DE123456789"
               />
             </div>
             <div className="admin-field">
-              <label>Tax Number</label>
+              <label htmlFor="legal-tax-number">Tax Number</label>
               <input
+                id="legal-tax-number"
                 value={settings.legal?.taxId || ''}
                 onChange={(e) => update('legal.taxId', e.target.value)}
                 placeholder="12/345/67890"
@@ -162,8 +172,9 @@ export default function LegalSection({ settings, update }: SectionProps) {
             </div>
           </div>
           <div className="admin-field">
-            <label>Additional Disclosures</label>
+            <label htmlFor="legal-additional-disclosures">Additional Disclosures</label>
             <textarea
+              id="legal-additional-disclosures"
               value={settings.legal?.extraInfo || ''}
               onChange={(e) => update('legal.extraInfo', e.target.value)}
               placeholder="Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV..."

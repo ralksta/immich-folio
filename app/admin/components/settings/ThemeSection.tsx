@@ -299,8 +299,9 @@ export default function ThemeSection({ settings, update }: SectionProps) {
       </div>
 
       <div className="admin-field">
-        <label>Visitor Default Mode</label>
+        <label htmlFor="theme-visitor-default-mode">Visitor Default Mode</label>
         <select
+          id="theme-visitor-default-mode"
           aria-label="Visitor default mode"
           value={settings.mode || 'dark'}
           onChange={(e) => update('mode', e.target.value)}
@@ -337,7 +338,7 @@ export default function ThemeSection({ settings, update }: SectionProps) {
       />
 
       <div className="admin-field">
-        <label>Color Mode</label>
+        <span className="admin-field-label">Color Mode</span>
         <p
           style={{
             fontSize: '0.78rem',
@@ -407,10 +408,12 @@ export default function ThemeSection({ settings, update }: SectionProps) {
           <div className="color-field">
             <input
               type="color"
+              aria-label="Accent colour"
               value={theme.accent}
               onChange={(e) => update('theme.accent', e.target.value)}
             />
             <input
+              aria-label="Accent colour (hex)"
               type="text"
               value={settings.theme?.accent || ''}
               onChange={(e) => update('theme.accent', e.target.value)}

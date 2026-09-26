@@ -153,9 +153,10 @@ export default function SubpageDrawer({
               <div className="admin-sheet-col">
                 <div className="subpage-drawer-section">
                   <div className="admin-field">
-                    <label>Page Name (URL Identifier)</label>
+                    <label htmlFor="subpage-name">Page Name (URL Identifier)</label>
                     <div className="input-slug-wrapper">
                       <input
+                        id="subpage-name"
                         className="subpage-name-input"
                         value={sp.name}
                         onChange={(e) => updateSubpage(spIndex, { name: e.target.value })}
@@ -170,8 +171,9 @@ export default function SubpageDrawer({
                 <div className="subpage-drawer-section">
                   <div className="admin-field-row">
                     <div className="admin-field">
-                      <label>Display Title (optional)</label>
+                      <label htmlFor="subpage-display-title">Display Title (optional)</label>
                       <input
+                        id="subpage-display-title"
                         value={sp.title || ''}
                         onChange={(e) =>
                           updateSubpage(spIndex, { title: e.target.value || undefined })
@@ -180,8 +182,9 @@ export default function SubpageDrawer({
                       />
                     </div>
                     <div className="admin-field">
-                      <label>Subtitle</label>
+                      <label htmlFor="subpage-subtitle">Subtitle</label>
                       <input
+                        id="subpage-subtitle"
                         value={sp.subtitle || ''}
                         onChange={(e) =>
                           updateSubpage(spIndex, {
@@ -193,7 +196,7 @@ export default function SubpageDrawer({
                     </div>
                   </div>
                   <div className="admin-field" style={{ marginTop: '1rem' }}>
-                    <label>Visibility &amp; Access</label>
+                    <span className="admin-field-label">Visibility &amp; Access</span>
                     {/*
                             One field, three states — enabled/hidden are two YAML flags,
                             but for the owner it is a single question: how visible is
@@ -297,8 +300,9 @@ export default function SubpageDrawer({
                     </div>
                   </div>
                   <div className="admin-field" style={{ marginTop: '1rem' }}>
-                    <label>Page Layout Style</label>
+                    <label htmlFor="subpage-page-layout-style">Page Layout Style</label>
                     <select
+                      id="subpage-page-layout-style"
                       aria-label="Page layout style"
                       value={sp.grid?.layout || 'masonry'}
                       onChange={(e) => {
@@ -478,6 +482,7 @@ export default function SubpageDrawer({
                               })
                             }
                             placeholder="Section title"
+                            aria-label="Section title"
                           />
                           <button
                             className="admin-btn-icon"
@@ -496,6 +501,7 @@ export default function SubpageDrawer({
                               })
                             }
                             placeholder="Section description (optional)"
+                            aria-label="Section description"
                             className="section-desc-input"
                           />
                         </div>
