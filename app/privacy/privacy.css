@@ -1,0 +1,43 @@
+.privacy-page {
+  padding: 4rem 2rem;
+  min-height: 80vh;
+}
+.privacy-page__header {
+  margin-bottom: 3rem;
+  text-align: center;
+}
+.privacy-page__title {
+  font-family: var(--font-serif);
+  font-size: clamp(2.2rem, 7vw, 3.5rem);
+  font-weight: 400;
+}
+.privacy-page__content {
+  max-width: 680px;
+  margin: 0 auto;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+.privacy-page__content h2 {
+  margin: 2.5rem 0 0.75rem;
+  font-size: 1.3rem;
+  color: var(--text-primary);
+}
+.privacy-page__content h3 {
+  margin: 1.75rem 0 0.5rem;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+.privacy-page__content p,
+.privacy-page__content ul,
+.privacy-page__content ol {
+  margin: 0 0 1rem;
+}
+.privacy-page__content ul,
+.privacy-page__content ol {
+  padding-left: 1.4rem;
+}
+/* tokens.css strips link underlines site-wide; in running text they are needed. */
+.privacy-page__content a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

@@ -111,7 +111,7 @@ Eight sections, each at its own URL (`/admin/settings/theme`, …):
 | **Theme**                 | Preset, colour mode, accent, photo frame, hero style, grain, header dot                                                             |
 | **Grid**                  | Layout algorithm, columns, gap, aspect ratio                                                                                        |
 | **Footer**                | Name, Instagram, email, website, and the header navigation links                                                                    |
-| **Legal**                 | Impressum toggle and all legal fields, the contact form and its notification                                                        |
+| **Legal**                 | Impressum toggle and all legal fields, the contact form and its notification, the privacy policy                                    |
 | **SEO**                   | Meta title, subpage title template, description, noindex, nofollow                                                                  |
 | **Security & Protection** | Right-click and image-drag deterrents, lightbox watermark (text, position, opacity)                                                 |
 | **About**                 | Portrait asset, name, location, gear list, and the biography — written to `content/about.md`                                        |
@@ -125,6 +125,14 @@ Theme presets, grid layouts, photo frames, hero styles and the Google search sni
 ## Analytics
 
 View counts per page and album, read from `content/analytics.json`. No cookies, no third party, nothing leaving your server. Switch the collection off entirely in **Settings → General**; the tracking endpoint then refuses to record.
+
+## Privacy Policy
+
+**Settings → Legal → Privacy Policy** edits `content/privacy.md`, shown at `/privacy` and linked in the footer once it has text. It is Markdown: `##` headings, `-` lists, `**bold**` and links.
+
+Folio writes no legal text for you. Next to the editor it lists **what this site processes**, read off your configuration: where photos and fonts come from, whether the map, visitor statistics, the contact form, password cookies or a CDN are in use, and which of them involve a third party. **Insert headings** adds the section headings that list implies, and nothing else. Earlier versions are kept under **Backups**, like the About page.
+
+Diagnostics warns while the Impressum is on and there is no privacy policy.
 
 ## Messages
 

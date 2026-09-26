@@ -559,6 +559,35 @@ export function checkContact(
 }
 
 /**
+ * A site that needs an Impressum almost always needs a privacy policy too
+ * (Art. 13 GDPR). Returns null while there is neither an Impressum nor a
+ * policy, so a site that has chosen to have no legal pages is not nagged.
+ */
+export function checkPrivacy(p: {
+  legalEnabled: boolean;
+  privacyEnabled: boolean;
+  hasText: boolean;
+}): DoctorFinding | null {
+  if (p.privacyEnabled && p.hasText) {
+    return {
+      id: 'privacy',
+      level: 'ok',
+      title: 'The privacy policy is published',
+      detail: 'Shown at /privacy and linked in the footer.',
+    };
+  }
+  if (!p.legalEnabled) return null;
+  return {
+    id: 'privacy',
+    level: 'warn',
+    title: 'There is no privacy policy',
+    detail: p.hasText
+      ? 'The text exists but the privacy page is switched off, so /privacy answers 404.'
+      : 'The Impressum is on but /privacy has no text. Settings → Legal lists what this site processes, as a starting point.',
+  };
+}
+
+/**
  * The whole content directory must be writable: the wizard, the admin panel,
  * the journal, favicon upload, analytics and backup rotation all write there.
  */

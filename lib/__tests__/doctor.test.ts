@@ -12,6 +12,7 @@ import {
   checkImmichCalls,
   checkContact,
   checkLegal,
+  checkPrivacy,
   worstLevel,
 } from '../admin/doctor';
 
@@ -418,5 +419,28 @@ describe('checkContact', () => {
   it('is satisfied by the settings value or by CONTACT_NOTIFY_URL', () => {
     expect(checkContact({ enabled: true, notifyUrl: 'https://ntfy.sh/t' })?.level).toBe('ok');
     expect(checkContact({ enabled: true }, 'https://ntfy.sh/t')?.level).toBe('ok');
+  });
+});
+
+describe('checkPrivacy', () => {
+  it('stays quiet on a site with no legal pages at all', () => {
+    expect(checkPrivacy({ legalEnabled: false, privacyEnabled: true, hasText: false })).toBeNull();
+  });
+
+  it('warns when the Impressum is on and there is no policy', () => {
+    const f = checkPrivacy({ legalEnabled: true, privacyEnabled: true, hasText: false })!;
+    expect(f.level).toBe('warn');
+    expect(f.detail).toContain('no text');
+  });
+
+  it('warns when the text exists but the page is switched off', () => {
+    const f = checkPrivacy({ legalEnabled: true, privacyEnabled: false, hasText: true })!;
+    expect(f.detail).toContain('switched off');
+  });
+
+  it('is satisfied by a published policy', () => {
+    expect(checkPrivacy({ legalEnabled: true, privacyEnabled: true, hasText: true })?.level).toBe(
+      'ok',
+    );
   });
 });

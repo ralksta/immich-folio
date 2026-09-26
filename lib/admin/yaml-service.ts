@@ -120,7 +120,8 @@ export async function listBackups(filename: string): Promise<string[]> {
  * readable file over content/settings.yaml — which the admin GET endpoints then
  * hand straight back.
  */
-const BACKUP_FILENAME = /^(gallery\.yaml|settings\.yaml|about\.md)\.[\w-]+\.(pre-restore\.)?bak$/;
+const BACKUP_FILENAME =
+  /^(gallery\.yaml|settings\.yaml|about\.md|privacy\.md)\.[\w-]+\.(pre-restore\.)?bak$/;
 
 /** Restore a specific backup. */
 export async function restoreBackup(backupFilename: string): Promise<void> {

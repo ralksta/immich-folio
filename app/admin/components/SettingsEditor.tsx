@@ -25,6 +25,7 @@ import {
 } from '@/lib/config/schema';
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
 import PasswordField from './fields/PasswordField';
+import PrivacyEditor from './PrivacyEditor';
 
 interface Settings {
   title?: string;
@@ -68,6 +69,7 @@ interface Settings {
   /** EXPERIMENTAL: external links appended to the header navigation */
   navLinks?: Array<{ label?: string; url?: string }>;
   contact?: { enabled?: boolean; notifyUrl?: string; retentionDays?: number };
+  privacy?: { enabled?: boolean };
   legal?: {
     enabled?: boolean;
     heading?: string;
@@ -1877,6 +1879,20 @@ export default function SettingsEditor() {
                   </div>
                 </div>
               )}
+
+              <div className="settings-section-divider" />
+
+              <div className="admin-toggle-cards-grid" style={{ marginBottom: '1.25rem' }}>
+                <ToggleCard
+                  icon={<Icons.IconShieldCheck size={16} />}
+                  title="Privacy Policy (/privacy)"
+                  description="Shown and linked in the footer once the text below is saved"
+                  checked={settings.privacy?.enabled !== false}
+                  onToggle={() => update('privacy.enabled', settings.privacy?.enabled === false)}
+                />
+              </div>
+
+              <PrivacyEditor />
             </div>
           )}
 

@@ -149,6 +149,20 @@ const ROUTES: {
     args: () => [new NextRequest('http://localhost/api/admin/messages?id=x', { method: 'DELETE' })],
   },
   {
+    name: 'GET /api/admin/privacy',
+    path: 'privacy',
+    load: () => import('../privacy/route'),
+    method: 'GET',
+    args: () => [],
+  },
+  {
+    name: 'PUT /api/admin/privacy',
+    path: 'privacy',
+    load: () => import('../privacy/route'),
+    method: 'PUT',
+    args: () => [new Request('http://localhost/api/admin/privacy', { method: 'PUT', body: '{}' })],
+  },
+  {
     name: 'GET /api/admin/backups',
     path: 'backups',
     load: () => import('../backups/route'),

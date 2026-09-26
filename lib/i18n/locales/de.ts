@@ -237,4 +237,9 @@ export const de: Dictionary = {
     privacy: (days: number) =>
       `Deine Nachricht wird auf dem eigenen Server dieser Seite gespeichert, nur für die Antwort verwendet und nach ${days} ${days === 1 ? 'Tag' : 'Tagen'} gelöscht.`,
   },
+
+  privacy: {
+    navLabel: 'Datenschutz',
+    title: 'Datenschutzerklärung',
+  },
 };

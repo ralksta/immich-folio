@@ -698,6 +698,11 @@ channel such as a contact form, which case law accepts in place of a phone
 number; it takes http(s) URLs only and is dropped with a warning otherwise.
 `heading` replaces the "Angaben gemäß § 5 DDG" line, e.g. for § 5 ECG in Austria.
 
+A privacy policy is written in the admin panel and stored in
+`content/privacy.md`; `/privacy` shows it and the footer links it once the file
+has text. `privacy: { enabled: false }` hides it without deleting the file. See
+[Privacy Policy](admin-panel.md#privacy-policy).
+
 A `contact:` block with `enabled: true` adds a contact form at `/contact` and
 links it in the footer. Messages stay on the server (`content/messages/`) and
 are read in the admin panel; see [Messages](admin-panel.md#messages). While the

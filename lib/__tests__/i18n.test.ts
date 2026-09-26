@@ -123,7 +123,11 @@ const TRANSLATIONS: [string, Dictionary, string[]][] = [
     ],
   ],
   ['es', es, ['lightbox.downloadShort', 'lightbox.info']],
-  ['it', itIT, ['nav.home', 'common.home', 'lightbox.info', 'lightbox.copyLinkShort']],
+  [
+    'it',
+    itIT,
+    ['nav.home', 'common.home', 'lightbox.info', 'lightbox.copyLinkShort', 'privacy.navLabel'],
+  ],
   [
     'nl',
     nl,
@@ -138,6 +142,7 @@ const TRANSLATIONS: [string, Dictionary, string[]][] = [
       'legal.contact',
       'contact.navLabel',
       'contact.title',
+      'privacy.navLabel',
     ],
   ],
 ];

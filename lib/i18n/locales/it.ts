@@ -237,4 +237,9 @@ export const it: Dictionary = {
     privacy: (days: number) =>
       `Il tuo messaggio viene salvato sul server di questo sito, usato solo per risponderti e cancellato dopo ${days} ${days === 1 ? 'giorno' : 'giorni'}.`,
   },
+
+  privacy: {
+    navLabel: 'Privacy',
+    title: 'Informativa sulla privacy',
+  },
 };

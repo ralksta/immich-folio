@@ -17,12 +17,19 @@ const TABS: { target: BackupTarget; label: string; file: string }[] = [
   { target: 'gallery', label: 'Gallery', file: 'gallery.yaml' },
   { target: 'settings', label: 'Settings', file: 'settings.yaml' },
   { target: 'about', label: 'About', file: 'about.md' },
+  { target: 'privacy', label: 'Privacy', file: 'privacy.md' },
   { target: 'journal', label: 'Journal', file: 'journal entries' },
 ];
 
 type BackupLists = Record<BackupTarget, BackupItem[]>;
 
-const EMPTY_LISTS: BackupLists = { gallery: [], settings: [], about: [], journal: [] };
+const EMPTY_LISTS: BackupLists = {
+  gallery: [],
+  settings: [],
+  about: [],
+  privacy: [],
+  journal: [],
+};
 
 export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }: Props) {
   const [activeTab, setActiveTab] = useState<BackupTarget>('gallery');

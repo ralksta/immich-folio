@@ -237,4 +237,9 @@ export const es: Dictionary = {
     privacy: (days: number) =>
       `Tu mensaje se guarda en el propio servidor de este sitio, solo se usa para responderte y se borra después de ${days} ${days === 1 ? 'día' : 'días'}.`,
   },
+
+  privacy: {
+    navLabel: 'Privacidad',
+    title: 'Política de privacidad',
+  },
 };
