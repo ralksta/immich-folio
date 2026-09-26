@@ -98,11 +98,11 @@ export function proxy(request: NextRequest) {
     // In development mode, Next.js / React dev tools require 'unsafe-eval' for Fast Refresh
     // and stack trace reconstruction. Omitted in production.
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    `img-src 'self' data: blob: https://tile.openstreetmap.org https://unpkg.com${cdn ? ` ${cdn}` : ''}`,
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self'",
+    `img-src 'self' data: blob: https://tile.openstreetmap.org${cdn ? ` ${cdn}` : ''}`,
     ...(cdn ? [`media-src 'self' ${cdn}`] : []),
-    "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
+    "connect-src 'self'",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",

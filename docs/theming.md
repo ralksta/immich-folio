@@ -111,11 +111,15 @@ The brand color used for hover effects, navigation highlights, the header dot, a
 
 ### `fonts`
 
-Google Fonts names. Fonts are loaded automatically — just use the name as it appears on [fonts.google.com](https://fonts.google.com). Three font slots:
+Google Fonts names, as they appear on [fonts.google.com](https://fonts.google.com). Three font slots:
 
 - **heading** — album titles, hero title, section labels
 - **body** — navigation, descriptions, UI text
 - **caption** — EXIF metadata, photo captions
+
+Visitors never contact Google. The server fetches the stylesheet and the font files on first use, keeps them in `content/.fonts/` and serves them from your own domain through `/api/fonts`. Loading Google Fonts straight from Google sends every visitor's IP address there without consent, which a German court ruled unlawful in 2022.
+
+The server therefore needs outbound HTTPS to `fonts.googleapis.com` and `fonts.gstatic.com` the first time a font is used. Once cached, the fonts keep working without it. If Google cannot be reached before that, the page falls back to the system fonts until it can.
 
 ### `radius`
 

@@ -142,4 +142,24 @@ describe('routes that must stay open', () => {
     );
     expect(res.status).toBe(200);
   });
+
+  // The password gate is set in the theme's fonts; locking them would render
+  // the gate itself in fallback fonts. Three public font names give nothing away.
+  it('GET /api/fonts/css answers a locked site', async () => {
+    config.sitePassword = 'letmein';
+    const res = await (
+      await import('../fonts/css/route')
+    ).GET(request('/api/fonts/css?family=Inter%3Ax') as never);
+    expect(res.status).not.toBe(401);
+  });
+
+  it('GET /api/fonts/file/[name] answers a locked site', async () => {
+    config.sitePassword = 'letmein';
+    const res = await (
+      await import('../fonts/file/[name]/route')
+    ).GET(request('/api/fonts/file/x.woff2') as never, {
+      params: Promise.resolve({ name: 'x.woff2' }),
+    });
+    expect(res.status).not.toBe(401);
+  });
 });
