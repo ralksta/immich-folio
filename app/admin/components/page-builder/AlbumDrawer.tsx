@@ -5,6 +5,7 @@ import { IconCamera, IconCopy, IconGripVertical, IconImage, IconTrash, IconX } f
 import { Listbox } from '../Listbox';
 import { SORT_OPTIONS } from './sortOptions';
 import type { AlbumEntry, HeroPickerTarget, OrderEditorTarget } from './types';
+import PasswordField from '../fields/PasswordField';
 
 interface AlbumDrawerProps {
   album: AlbumEntry;
@@ -91,14 +92,11 @@ export default function AlbumDrawer({
 
               <div className="admin-field">
                 <label>Password protection</label>
-                <div className="input-with-icon">
-                  <input
-                    type="password"
-                    value={album.password || ''}
-                    onChange={(e) => onUpdate({ password: e.target.value || undefined })}
-                    placeholder="Leave empty for public access"
-                  />
-                </div>
+                <PasswordField
+                  value={album.password}
+                  onChange={(password) => onUpdate({ password })}
+                  label="Album password"
+                />
               </div>
 
               <div className="admin-field">

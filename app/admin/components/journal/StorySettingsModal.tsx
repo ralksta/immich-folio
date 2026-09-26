@@ -2,6 +2,7 @@
 
 import type { ParsedJournal } from '@/lib/journal';
 import type { AssetPickTarget } from './BlockFields';
+import PasswordField from '../fields/PasswordField';
 
 type Frontmatter = ParsedJournal['frontmatter'];
 
@@ -155,12 +156,10 @@ export function StorySettingsModal({
             >
               Password Protection (Optional)
             </label>
-            <input
-              type="password"
-              className="admin-input"
-              value={frontmatter.password || ''}
-              placeholder="Leave empty for public access"
-              onChange={(e) => onChange({ password: e.target.value })}
+            <PasswordField
+              value={frontmatter.password || undefined}
+              onChange={(password) => onChange({ password: password ?? '' })}
+              label="Entry password"
             />
           </div>
 

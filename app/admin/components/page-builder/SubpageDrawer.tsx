@@ -15,7 +15,6 @@ import {
   IconBook,
   IconEyeOff,
   IconGlobe,
-  IconLock,
   IconPencil,
   IconSearch,
   IconTrash,
@@ -23,6 +22,7 @@ import {
 } from '../Icons';
 import AlbumCard, { SortableAlbumCard } from './AlbumCard';
 import SubpagePreview from './SubpagePreview';
+import PasswordField from '../fields/PasswordField';
 import {
   normalizeSubpageGrid,
   type ActiveEditAlbumAddress,
@@ -286,19 +286,12 @@ export default function SubpageDrawer({
                     {/* Password lives in the same group: it is the access half
                               of "who gets to see this page". Applies to Published and
                               Unlisted; a Disabled page 404s before the gate. */}
-                    <div className="password-input-wrapper" style={{ marginTop: '6px' }}>
-                      <span className="password-icon">
-                        <IconLock size={12} />
-                      </span>
-                      <input
-                        type="password"
-                        value={sp.password || ''}
-                        onChange={(e) =>
-                          updateSubpage(spIndex, {
-                            password: e.target.value || undefined,
-                          })
-                        }
+                    <div style={{ marginTop: '6px' }}>
+                      <PasswordField
+                        value={sp.password}
+                        onChange={(password) => updateSubpage(spIndex, { password })}
                         placeholder="Password protection (optional) — leave empty for public access"
+                        label="Page password"
                         disabled={sp.enabled === false}
                       />
                     </div>

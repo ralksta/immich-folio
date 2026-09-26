@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withAdmin } from '@/lib/admin/withAdmin';
 import { isValidSlug, sanitizeSlug, parseJournalMarkdown } from '@/lib/journal';
+import { hashFrontmatterPassword } from '@/lib/admin/passwordHashing';
 import {
   readJournalEntry,
   writeJournalEntry,
@@ -59,10 +60,18 @@ export const PUT = withAdmin(async (request: Request, context: RouteContext) => 
       if (existing) {
         return NextResponse.json({ error: 'Target slug already exists' }, { status: 409 });
       }
-      await writeJournalEntry(targetSlug, rawMarkdown);
+    }
+
+    // The entry's password is stored hashed (#690). The file as it is now
+    // supplies the hash to keep when the password did not change.
+    const current = await readJournalEntry(slug);
+    const markdown = await hashFrontmatterPassword(rawMarkdown, current?.rawMarkdown ?? null);
+
+    if (targetSlug !== slug) {
+      await writeJournalEntry(targetSlug, markdown);
       await deleteJournalEntry(slug);
     } else {
-      await writeJournalEntry(slug, rawMarkdown);
+      await writeJournalEntry(slug, markdown);
     }
 
     const updated = await readJournalEntry(targetSlug);

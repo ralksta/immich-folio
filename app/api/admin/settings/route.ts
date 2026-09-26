@@ -5,6 +5,9 @@ import { readSettingsYaml, writeSettingsYaml } from '@/lib/admin/yaml-service';
 import { invalidateConfigCache, getConfigOrNull } from '@/lib/config';
 import { immich } from '@/lib/immich';
 import { validateSettings } from '@/lib/config/settingsSchema';
+import { hashPasswordKeys } from '@/lib/admin/passwordHashing';
+
+const SITE_PASSWORD_KEY = new Set(['sitePassword']);
 import type { SettingsYaml } from '@/lib/config/schema';
 
 /** GET: Read current settings.yaml config. */
@@ -42,9 +45,13 @@ export const PUT = withAdmin(async (request: Request) => {
     );
   }
 
-  const settings = body.settings as SettingsYaml;
-
   try {
+    // Only the top-level site password: settings.yaml has no other password.
+    const settings = await hashPasswordKeys(
+      body.settings as SettingsYaml,
+      SITE_PASSWORD_KEY,
+      await readSettingsYaml().catch(() => null),
+    );
     await writeSettingsYaml(settings);
     invalidateConfigCache();
     immich.invalidateAll();
@@ -52,6 +59,8 @@ export const PUT = withAdmin(async (request: Request) => {
     return NextResponse.json({
       success: true,
       message: 'Saved successfully. Backup of previous version created.',
+      // The stored site password, hashed, so the field can read "Protected".
+      sitePassword: settings.sitePassword,
     });
   } catch (err) {
     console.error('[Admin] Failed to write settings.yaml:', err);

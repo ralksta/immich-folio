@@ -323,3 +323,53 @@
 .password-input-wrapper input {
   padding-left: 2.25rem !important;
 }
+
+/* ── PasswordField (#690) ──────────────────────────────────────── */
+
+.password-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.password-field--set {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.password-field__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-right: auto;
+  font-size: 0.85rem;
+  color: var(--admin-text);
+}
+
+.password-field .password-input-wrapper input {
+  padding-right: 2.5rem !important;
+}
+
+.password-field__reveal {
+  position: absolute;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--admin-text-muted);
+  cursor: pointer;
+}
+
+.password-field__reveal:hover {
+  color: var(--admin-text);
+}
+
+.password-field__cancel {
+  align-self: flex-start;
+}

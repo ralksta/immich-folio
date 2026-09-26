@@ -24,6 +24,7 @@ import {
   resolveWatermarkOpacity,
 } from '@/lib/config/schema';
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
+import PasswordField from './fields/PasswordField';
 
 interface Settings {
   title?: string;
@@ -796,6 +797,10 @@ export default function SettingsEditor() {
 
       if (res.ok) {
         const data = await res.json();
+        // The site password is stored hashed (#690); show that, not the typed text.
+        if (typeof data.sitePassword === 'string') {
+          setSettings((s) => ({ ...s, sitePassword: data.sitePassword }));
+        }
         setDirty(false);
         setSaveMessage(data.message || 'Saved!');
         router.refresh();
@@ -2005,18 +2010,16 @@ export default function SettingsEditor() {
 
               <div className="admin-field">
                 <label>Site Password</label>
-                <input
-                  type="text"
-                  value={settings.sitePassword || ''}
-                  onChange={(e) => update('sitePassword', e.target.value)}
+                <PasswordField
+                  value={settings.sitePassword}
+                  onChange={(password) => update('sitePassword', password ?? '')}
                   placeholder="Leave empty for a public site"
-                  autoComplete="off"
+                  label="Site password"
                 />
                 <p className="admin-field-hint">
-                  Stored in <code>settings.yaml</code>. Log in once and the server log prints a{' '}
-                  <code>scrypt:…</code> hash to paste back here instead of the plaintext. The{' '}
-                  <code>SITE_PASSWORD</code> environment variable overrides this field. The admin
-                  panel keeps its own password and is never behind this gate.
+                  Stored as a <code>scrypt:…</code> hash in <code>settings.yaml</code>, never as
+                  typed. The <code>SITE_PASSWORD</code> environment variable overrides this field.
+                  The admin panel keeps its own password and is never behind this gate.
                 </p>
               </div>
 

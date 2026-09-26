@@ -416,7 +416,8 @@ export function checkPasswords(passwords: PasswordRef[]): DoctorFinding {
       level: 'warn',
       title: `${plaintext.length} password${plaintext.length === 1 ? ' is' : 's are'} stored in plaintext`,
       detail:
-        'Anyone who reads the file reads the password. Log in once and replace it with the ' +
+        'Anyone who reads the file reads the password. Saving the page, entry or setting once ' +
+        'in the admin panel stores it hashed; for a hand-edited file, log in once and paste the ' +
         `scrypt: hash printed to the server log: ${plaintext.map((p) => p.label).join(', ')}`,
     };
   }

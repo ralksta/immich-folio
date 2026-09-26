@@ -75,3 +75,23 @@ describe('PUT /api/admin/settings', () => {
     expect(writeSettingsYaml).toHaveBeenCalledOnce();
   });
 });
+
+/** The panel sends the site password as typed; the file must not keep it that way (#690). */
+describe('PUT /api/admin/settings — site password', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('writes the site password as an scrypt hash', async () => {
+    const res = await put({ title: 'Folio', sitePassword: 'letmein' });
+    expect(res.status).toBe(200);
+
+    const written = vi.mocked(writeSettingsYaml).mock.calls[0][0] as { sitePassword: string };
+    expect(written.sitePassword).toMatch(/^scrypt:/);
+    expect(JSON.stringify(written)).not.toContain('letmein');
+  });
+
+  it('leaves an open site open', async () => {
+    await put({ title: 'Folio', sitePassword: '' });
+    const written = vi.mocked(writeSettingsYaml).mock.calls[0][0] as { sitePassword: string };
+    expect(written.sitePassword).toBe('');
+  });
+});

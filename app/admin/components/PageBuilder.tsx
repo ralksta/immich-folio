@@ -507,12 +507,19 @@ export default function PageBuilder() {
       if (res.ok) {
         const data = await res.json();
         // Fingerprint what the next load will see, the way it will see it: the
-        // file is exactly `yamlData`, read back through the same parser. The
-        // editor's own state can differ in shape (an `undefined` here, a
-        // default there) and would make every later draft look outdated.
-        const asLoaded = parseGalleryYaml(JSON.parse(JSON.stringify(yamlData)));
+        // file as written, read back through the same parser. The editor's own
+        // state can differ in shape (an `undefined` here, a default there) and
+        // would make every later draft look outdated.
+        //
+        // "As written" is the server's copy, not `yamlData`: passwords are
+        // hashed on the way to disk (#690). Fingerprinting the plaintext would
+        // make the next draft look like a conflicting edit from elsewhere.
+        const written = (data.gallery ?? yamlData) as Record<string, unknown>;
+        const asLoaded = parseGalleryYaml(JSON.parse(JSON.stringify(written)));
         serverState.current = asLoaded;
         draft.saved(JSON.stringify(asLoaded));
+        // Show the hashes, so a new password reads "Protected" right away.
+        if (JSON.stringify(written) !== JSON.stringify(yamlData)) setGallery(asLoaded);
         setDirty(false);
         setSaveMessage(data.message || 'Saved successfully!');
         setTimeout(() => setSaveMessage(''), 5000);
