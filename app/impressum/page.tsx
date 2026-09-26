@@ -11,6 +11,8 @@ import { getServerDictionary } from '@/lib/i18n/server';
 import './impressum.css';
 
 export function generateMetadata(): Metadata {
+  // No title for a page that is switched off: it renders the 404 page.
+  if (!getConfig().legal.enabled) return {};
   return {
     title: getServerDictionary().legal.title,
     robots: { index: false, follow: true }, // Usually no need to index legal pages

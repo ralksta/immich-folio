@@ -1,5 +1,9 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getConfigOrNull } from '@/lib/config';
+import { isValidSlug } from '@/lib/journal';
 import { isSiteUnlocked } from '@/lib/auth';
 import { isAdminPath } from '@/lib/admin/paths';
 import { isInstallPath } from '@/lib/install';
@@ -55,6 +59,40 @@ function siteGate(request: NextRequest): NextResponse | null {
   // Rewrite, not redirect: the URL the visitor asked for stays in the address
   // bar, so unlocking lands them where they were going.
   return NextResponse.rewrite(new URL(GATE_PATH, request.url));
+}
+
+/**
+ * Pages that are known not to exist before anything renders.
+ *
+ * app/loading.tsx makes every page stream, and a streamed response has sent
+ * its 200 before the page gets to call notFound(). Next then marks the page
+ * noindex, which keeps it out of search results, but the status stays 200.
+ * For the fixed routes whose existence depends only on settings.yaml or a file
+ * in content/journal/, the answer is known here, before streaming starts, so
+ * they can get a real 404. Album and subpage slugs need Immich and stay soft.
+ */
+export function isKnownMissing(
+  pathname: string,
+  contentDir = path.join(process.cwd(), 'content'),
+): boolean {
+  const config = getConfigOrNull();
+  if (!config) return false;
+
+  if (pathname === '/contact') return !config.contact.enabled;
+  if (pathname === '/impressum') return !config.legal.enabled;
+  if (pathname === '/map') return !config.map;
+
+  const journal = /^\/journal\/([^/]+)\/?$/.exec(pathname);
+  if (journal) {
+    const slug = decodeURIComponent(journal[1]);
+    if (!isValidSlug(slug)) return true;
+    // A draft still has its file, so it stays a soft 404 for visitors and
+    // reachable for a signed-in admin, which only the page can tell apart.
+    return !['journal', 'essays'].some((dir) =>
+      fs.existsSync(path.join(contentDir, dir, `${slug}.md`)),
+    );
+  }
+  return false;
 }
 
 export function proxy(request: NextRequest) {
@@ -115,11 +153,18 @@ export function proxy(request: NextRequest) {
   requestHeaders.set('x-pathname', request.nextUrl.pathname);
   requestHeaders.set('Content-Security-Policy', cspDirectives);
 
-  const response = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+  // The page itself still renders and calls notFound(); this only lets the
+  // status say so before streaming starts. See isKnownMissing().
+  const response = isKnownMissing(request.nextUrl.pathname)
+    ? NextResponse.rewrite(request.nextUrl, {
+        request: { headers: requestHeaders },
+        status: 404,
+      })
+    : NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
 
   // Only the CSP is set here. Every other security header comes from
   // next.config.ts, which also covers /api and static assets. Setting a header

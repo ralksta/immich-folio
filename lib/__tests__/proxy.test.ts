@@ -16,13 +16,23 @@ vi.mock('@/lib/cdn', () => ({
   cdnOrigin: vi.fn(() => null),
 }));
 
+// Null by default: isKnownMissing() then leaves every path to the page.
+vi.mock('@/lib/config', () => ({
+  getConfigOrNull: vi.fn(() => null),
+}));
+
 import { isSiteUnlocked } from '@/lib/auth';
 import { cdnOrigin } from '@/lib/cdn';
 import { tryToParsePath } from 'next/dist/lib/try-to-parse-path';
-import { proxy, config } from '@/proxy';
+import { proxy, config, isKnownMissing } from '@/proxy';
+import { getConfigOrNull } from '@/lib/config';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 const mockUnlocked = isSiteUnlocked as unknown as ReturnType<typeof vi.fn>;
 const mockCdnOrigin = cdnOrigin as unknown as ReturnType<typeof vi.fn>;
+const mockConfig = getConfigOrNull as unknown as ReturnType<typeof vi.fn>;
 
 // Next.js 16 renamed the "middleware" file convention to "proxy": the file must
 // be proxy.ts and must export proxy(), not middleware(). A silent regression here
@@ -255,5 +265,52 @@ describe('proxy', () => {
       expect(rewrittenTo(run('/japan/osaka-2023'))).toBeNull();
       expect(run().headers.get('Content-Security-Policy')).toBeTruthy();
     });
+  });
+});
+
+/*
+ * app/loading.tsx makes every page stream, so notFound() in a page can no
+ * longer change the 200 that was already sent. Routes whose existence the
+ * proxy can decide on its own get the 404 before streaming starts.
+ */
+describe('isKnownMissing', () => {
+  let contentDir: string;
+  const settings = { contact: { enabled: false }, legal: { enabled: true }, map: false };
+
+  beforeEach(() => {
+    contentDir = fs.mkdtempSync(path.join(os.tmpdir(), 'folio-proxy-'));
+    fs.mkdirSync(path.join(contentDir, 'journal'));
+    fs.writeFileSync(path.join(contentDir, 'journal', 'kyoto.md'), '---\ntitle: Kyoto\n---\n');
+    mockConfig.mockReturnValue(settings);
+  });
+
+  it('knows the pages that are switched off in settings', () => {
+    expect(isKnownMissing('/contact', contentDir)).toBe(true);
+    expect(isKnownMissing('/map', contentDir)).toBe(true);
+    expect(isKnownMissing('/impressum', contentDir)).toBe(false);
+  });
+
+  it('knows a journal entry by its file, and rejects slugs that are not slugs', () => {
+    expect(isKnownMissing('/journal/kyoto', contentDir)).toBe(false);
+    expect(isKnownMissing('/journal/osaka', contentDir)).toBe(true);
+    expect(isKnownMissing('/journal/..%2Fsettings', contentDir)).toBe(true);
+  });
+
+  it('leaves album and subpage slugs to the page, which needs Immich to decide', () => {
+    expect(isKnownMissing('/japan', contentDir)).toBe(false);
+    expect(isKnownMissing('/japan/tokyo', contentDir)).toBe(false);
+  });
+
+  it('decides nothing when the config cannot be read', () => {
+    mockConfig.mockReturnValue(null);
+    expect(isKnownMissing('/contact', contentDir)).toBe(false);
+  });
+
+  it('makes proxy() answer 404 with the policy still set', () => {
+    const res = proxy(new NextRequest('https://example.com/contact'));
+    expect(res.status).toBe(404);
+    expect(res.headers.get('Content-Security-Policy')).toBeTruthy();
+    mockConfig.mockReturnValue(null);
+    expect(proxy(new NextRequest('https://example.com/contact')).status).toBe(200);
   });
 });
