@@ -12,6 +12,8 @@ import { getServerDictionary } from '@/lib/i18n/server';
 import './contact.css';
 
 export function generateMetadata(): Metadata {
+  // No title for a page that is switched off: it renders the 404 page.
+  if (!getConfig().contact.enabled) return {};
   return { title: getServerDictionary().contact.title };
 }
 
