@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
   }
 
   const inboxUrl = config.siteUrl ? `${config.siteUrl.replace(/\/$/, '')}/admin/messages` : null;
-  await notifyNewMessage(config.contact.notifyUrl, result.name, inboxUrl);
+  await notifyNewMessage(config.contact.notifyUrl, inboxUrl);
 
   return NextResponse.json({ ok: true });
 }

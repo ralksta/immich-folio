@@ -5,8 +5,8 @@
  * No SMTP and no form service: the owner reads them in the admin panel and
  * learns about new ones through an optional plain-text POST to
  * `contact.notifyUrl` (an ntfy topic, typically). The notification carries
- * the sender's name only, never the message, so the text does not end up on
- * a push service.
+ * nothing about the sender: no name, no address, no text. A push service is a
+ * third party, and a fixed "new message" needs no line in the privacy policy.
  *
  * Retention is enforced on every read and write rather than by a timer, so
  * nothing older than `retentionDays` survives the next visit to the inbox or
@@ -205,7 +205,6 @@ export async function deleteMessage(id: string): Promise<boolean> {
  */
 export async function notifyNewMessage(
   notifyUrl: string | undefined,
-  name: string,
   inboxUrl: string | null,
 ): Promise<void> {
   if (!notifyUrl) return;
@@ -219,7 +218,7 @@ export async function notifyNewMessage(
     const res = await fetch(notifyUrl, {
       method: 'POST',
       headers,
-      body: `New message from ${name}`,
+      body: 'A new message arrived through the contact form.',
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) console.warn(`[Folio] contact: notification answered ${res.status}`);

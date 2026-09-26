@@ -129,13 +129,13 @@ describe('notifyNewMessage', () => {
     vi.restoreAllMocks();
   });
 
-  it('posts the sender name only, never the message', async () => {
+  it('posts nothing about the sender, so the push service gets no personal data', async () => {
     const fetchMock = vi.fn(async () => new Response('ok'));
     vi.stubGlobal('fetch', fetchMock);
-    await notifyNewMessage('https://ntfy.sh/topic', 'Ada', 'https://site.example/admin/messages');
+    await notifyNewMessage('https://ntfy.sh/topic', 'https://site.example/admin/messages');
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://ntfy.sh/topic');
-    expect(init.body).toBe('New message from Ada');
+    expect(init.body).toBe('A new message arrived through the contact form.');
     expect((init.headers as Record<string, string>).Click).toBe(
       'https://site.example/admin/messages',
     );
@@ -147,8 +147,8 @@ describe('notifyNewMessage', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
     vi.spyOn(console, 'warn').mockImplementation(() => {});
-    await notifyNewMessage(undefined, 'Ada', null);
+    await notifyNewMessage(undefined, null);
     expect(fetchMock).not.toHaveBeenCalled();
-    await expect(notifyNewMessage('https://ntfy.sh/t', 'Ada', null)).resolves.toBeUndefined();
+    await expect(notifyNewMessage('https://ntfy.sh/t', null)).resolves.toBeUndefined();
   });
 });
