@@ -43,9 +43,16 @@ import { useDraft } from './useDraft';
 import DraftNotice from './DraftNotice';
 import { reportIfSessionExpired } from './sessionExpiry';
 import { IconCamera, IconFolder, IconHome, IconPlus, IconSearch } from './Icons';
+import { useNotify } from './Notifications';
 
 export default function PageBuilder() {
   const [gallery, setGallery] = useState<GalleryState>({ hero: [], albums: [], subpages: [] });
+  const notify = useNotify();
+  /** The state as last rendered, for Undo to check nothing changed since. */
+  const galleryRef = useRef(gallery);
+  useEffect(() => {
+    galleryRef.current = gallery;
+  }, [gallery]);
   const [immichAlbums, setImmichAlbums] = useState<ImmichAlbumInfo[]>([]);
   const [loading, setLoading] = useState(true);
   /**
@@ -354,10 +361,8 @@ export default function PageBuilder() {
   // ── Subpages and sections ────────────────────────────────────
   const addSubpage = () => edit(ops.addSubpage);
 
-  function removeSubpage(index: number) {
-    if (!confirm('Remove this subpage?')) return;
-    edit((g) => ops.removeSubpage(g, index));
-  }
+  const removeSubpage = (index: number) =>
+    removeWithUndo('Page removed.', (g) => ops.removeSubpage(g, index));
 
   const updateSubpage = (index: number, updates: Partial<Subpage>) =>
     edit((g) => ops.updateSubpage(g, index, updates));
@@ -371,29 +376,47 @@ export default function PageBuilder() {
     edit((g) => ops.updateSection(g, subpageIndex, sectionIndex, updates));
 
   // ── Removal ──────────────────────────────────────────────────
-  // Confirmed like removeSubpage: an album entry carries its grid overrides,
-  // cover asset and manual assetOrder with it, there is no undo stack in the
-  // builder, and the only escape from an accidental click used to be
-  // reloading the page — which discards every other unsaved edit too (#597).
-  function removeStandaloneAlbum(index: number) {
-    if (!confirm('Remove this album from the gallery?')) return;
-    edit((g) => ops.removeAlbum(g, { type: 'standalone' }, index));
+  // Removing only changes unsaved state, so it happens at once and offers Undo
+  // instead of asking first (#694 §3). It used to be a confirm() before every
+  // click, which is how the builder ended up asking about things nobody could
+  // lose: nothing is written until Save.
+  function removeWithUndo(message: string, op: (g: GalleryState) => GalleryState) {
+    const before = gallery;
+    const after = op(before);
+    if (after === before) return;
+    edit(() => after);
+    notify('success', message, {
+      label: 'Undo',
+      run: () => {
+        // Only while nothing else changed since: restoring `before` on top of
+        // later edits would silently throw those away.
+        if (galleryRef.current !== after) {
+          notify(
+            'error',
+            'Could not undo: the page structure changed since. Nothing is saved yet.',
+          );
+          return;
+        }
+        edit(() => before);
+      },
+    });
   }
 
-  function removeSubpageAlbum(subpageIndex: number, albumIndex: number) {
-    if (!confirm('Remove this album from the subpage?')) return;
-    edit((g) => ops.removeAlbum(g, { type: 'subpage', subpageIndex }, albumIndex));
-  }
+  const removeStandaloneAlbum = (index: number) =>
+    removeWithUndo('Album removed.', (g) => ops.removeAlbum(g, { type: 'standalone' }, index));
 
-  function removeSectionAlbum(subpageIndex: number, sectionIndex: number, albumIndex: number) {
-    if (!confirm('Remove this album from the section?')) return;
-    edit((g) => ops.removeAlbum(g, { type: 'section', subpageIndex, sectionIndex }, albumIndex));
-  }
+  const removeSubpageAlbum = (subpageIndex: number, albumIndex: number) =>
+    removeWithUndo('Album removed from the page.', (g) =>
+      ops.removeAlbum(g, { type: 'subpage', subpageIndex }, albumIndex),
+    );
 
-  function removeHero(index: number) {
-    if (!confirm('Remove this photo from the home page hero?')) return;
-    edit((g) => ops.removeHero(g, index));
-  }
+  const removeSectionAlbum = (subpageIndex: number, sectionIndex: number, albumIndex: number) =>
+    removeWithUndo('Album removed from the section.', (g) =>
+      ops.removeAlbum(g, { type: 'section', subpageIndex, sectionIndex }, albumIndex),
+    );
+
+  const removeHero = (index: number) =>
+    removeWithUndo('Hero photo removed.', (g) => ops.removeHero(g, index));
 
   // ── Helpers ──────────────────────────────────────────────────
   function getAlbumName(id: string): string {
