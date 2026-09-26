@@ -617,3 +617,52 @@
     padding: 1.5rem 1rem 6rem;
   }
 }
+
+/* ── Confirm dialog (stage 3) ──────────────────────────────── */
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: var(--admin-overlay);
+}
+
+.confirm-card {
+  width: min(420px, 100%);
+  padding: 1.4rem 1.5rem 1.2rem;
+  border: 1px solid var(--admin-border-hover);
+  border-radius: var(--admin-radius);
+  background: var(--admin-bg-raised);
+  color: var(--admin-text);
+  font-family: var(--admin-font);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+.confirm-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.confirm-message {
+  margin: 0.5rem 0 0;
+  color: var(--admin-text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.4rem;
+}
+
+.admin-btn.confirm-danger {
+  background: var(--admin-error);
+  border-color: var(--admin-error);
+  color: #fff;
+}
