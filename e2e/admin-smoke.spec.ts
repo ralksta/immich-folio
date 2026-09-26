@@ -25,12 +25,13 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'e2e-admin-password';
  * empty shell would still pass.
  */
 const ROUTES: { path: string; content: string; name: string }[] = [
-  { path: '/admin', content: '.page-builder', name: 'dashboard' },
+  { path: '/admin', content: '.admin-overview', name: 'overview' },
   { path: '/admin/pages', content: '.page-builder', name: 'pages' },
   { path: '/admin/journal', content: '.journal-studio', name: 'journal' },
   // AnalyticsView falls back to .admin-panel when the analytics API is
   // unreachable, which is the normal case without a live Immich behind it.
   { path: '/admin/analytics', content: '.analytics-view, .admin-panel', name: 'analytics' },
+  { path: '/admin/messages', content: '.messages-view, .admin-load-error', name: 'messages' },
   { path: '/admin/help', content: '.settings-panel', name: 'help' },
   { path: '/admin/settings', content: '.settings-editor', name: 'settings' },
   ...['general', 'theme', 'grid', 'footer', 'legal', 'seo', 'security', 'about'].map((id) => ({
@@ -80,7 +81,7 @@ test('every admin route renders without throwing', async ({ page }) => {
 
   await page.fill('input[type="password"]', ADMIN_PASSWORD);
   await page.click('button[type="submit"]');
-  await expect(page.locator('.page-builder')).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('.admin-overview')).toBeVisible({ timeout: 15_000 });
 
   // One test walking every route rather than one test each: the routes share a
   // login, and expect.soft keeps a broken route from hiding the ones after it.

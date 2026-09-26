@@ -9,6 +9,7 @@ import { DOCTOR_LEVEL_EVENT, systemHealth } from './systemHealth';
 import { reportIfSessionExpired } from './sessionExpiry';
 import * as Icons from './Icons';
 import { useNotify } from './Notifications';
+import { adminGet } from './useAdminFetch';
 
 interface Props {
   onLogout: () => void;
@@ -16,14 +17,94 @@ interface Props {
   children: ReactNode;
 }
 
-const TABS = [
-  { label: 'Pages', href: '/admin/pages', match: /^\/admin\/pages$/ },
-  { label: 'Journal', href: '/admin/journal', match: /^\/admin\/journal/ },
-  { label: 'Settings', href: '/admin/settings', match: /^\/admin\/settings/ },
-  { label: 'Messages', href: '/admin/messages', match: /^\/admin\/messages/ },
-  { label: 'Analytics', href: '/admin/analytics', match: /^\/admin\/analytics/ },
-  { label: 'Diagnostics', href: '/admin/diagnostics', match: /^\/admin\/diagnostics/ },
-  { label: 'Help', href: '/admin/help', match: /^\/admin\/help/ },
+/**
+ * The sidebar, grouped by what the owner is doing (docs/admin-ux-concept.md).
+ * `match` decides the active entry; Overview only matches /admin itself.
+ */
+const NAV: {
+  group?: string;
+  items: {
+    label: string;
+    href: string;
+    match: RegExp;
+    icon: ReactNode;
+    badge?: 'messages' | 'health';
+  }[];
+}[] = [
+  {
+    items: [
+      {
+        label: 'Overview',
+        href: '/admin',
+        match: /^\/admin\/?$/,
+        icon: <Icons.IconHome size={16} />,
+      },
+    ],
+  },
+  {
+    group: 'Content',
+    items: [
+      {
+        label: 'Pages',
+        href: '/admin/pages',
+        match: /^\/admin\/pages$/,
+        icon: <Icons.IconGrid size={16} />,
+      },
+      {
+        label: 'Journal',
+        href: '/admin/journal',
+        match: /^\/admin\/journal/,
+        icon: <Icons.IconBook size={16} />,
+      },
+    ],
+  },
+  {
+    group: 'Visitors',
+    items: [
+      {
+        label: 'Messages',
+        href: '/admin/messages',
+        match: /^\/admin\/messages/,
+        icon: <Icons.IconFileText size={16} />,
+        badge: 'messages',
+      },
+      {
+        label: 'Analytics',
+        href: '/admin/analytics',
+        match: /^\/admin\/analytics/,
+        icon: <Icons.IconBarChart size={16} />,
+      },
+    ],
+  },
+  {
+    group: 'Site',
+    items: [
+      {
+        label: 'Settings',
+        href: '/admin/settings',
+        match: /^\/admin\/settings/,
+        icon: <Icons.IconGear size={16} />,
+      },
+    ],
+  },
+  {
+    group: 'System',
+    items: [
+      {
+        label: 'Diagnostics',
+        href: '/admin/diagnostics',
+        match: /^\/admin\/diagnostics/,
+        icon: <Icons.IconShieldCheck size={16} />,
+        badge: 'health',
+      },
+      {
+        label: 'Help',
+        href: '/admin/help',
+        match: /^\/admin\/help/,
+        icon: <Icons.IconQuote size={16} />,
+      },
+    ],
+  },
 ];
 
 export default function AdminDashboard({ onLogout, children }: Props) {
@@ -43,6 +124,8 @@ export default function AdminDashboard({ onLogout, children }: Props) {
   // an expired session or a 500 rendered exactly like a real outage — every
   // indicator flipped to its alarming value at once (#341).
   const [statusError, setStatusError] = useState(false);
+  /** Unread contact messages, for the count next to Messages. */
+  const [unread, setUnread] = useState(0);
 
   async function handleLogout() {
     await fetch('/api/admin/auth', { method: 'DELETE' });
@@ -115,6 +198,18 @@ export default function AdminDashboard({ onLogout, children }: Props) {
     fetchDoctor();
   }, [fetchDoctor]);
 
+  // Re-counted on every navigation: reading a message in the inbox and moving
+  // on should clear the count without a reload.
+  useEffect(() => {
+    let live = true;
+    adminGet<{ messages: { read: boolean }[] }>('/api/admin/messages').then((r) => {
+      if (live && r.data) setUnread(r.data.messages.filter((m) => !m.read).length);
+    });
+    return () => {
+      live = false;
+    };
+  }, [pathname]);
+
   // The diagnostics page runs the doctor itself; take its answer rather than
   // asking Immich the same three questions again.
   useEffect(() => {
@@ -149,31 +244,52 @@ export default function AdminDashboard({ onLogout, children }: Props) {
   const missingCredentials = status?.setup?.credentials === 'missing';
 
   return (
-    <div className="admin-dashboard">
-      <header className="admin-header">
-        <div className="admin-header-left">
-          <h1>Immich Folio</h1>
-          <nav className="admin-tabs">
-            {TABS.map((t) => {
-              const active = t.match.test(pathname);
-              return (
-                <Link
-                  key={t.href}
-                  href={t.href}
-                  className={`admin-tab ${active ? 'active' : ''}`}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  {t.label}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-        <div className="admin-header-right">
+    <div className="admin-dashboard admin-app">
+      <aside className="admin-sidebar" aria-label="Admin">
+        <Link href="/admin" className="admin-brand">
+          <span className="admin-brand-mark" aria-hidden="true" />
+          <span className="admin-brand-text">
+            <span className="admin-brand-name">Immich Folio</span>
+            <span className="admin-brand-sub">Admin</span>
+          </span>
+        </Link>
+
+        <nav className="admin-nav">
+          {NAV.map((section, i) => (
+            <div key={section.group ?? i} className="admin-nav-group">
+              {section.group && <span className="admin-nav-label">{section.group}</span>}
+              {section.items.map((item) => {
+                const active = item.match.test(pathname);
+                const count = item.badge === 'messages' ? unread : 0;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`admin-nav-item ${active ? 'active' : ''}`}
+                    aria-current={active ? 'page' : undefined}
+                  >
+                    <span className="admin-nav-icon">{item.icon}</span>
+                    <span className="admin-nav-text">{item.label}</span>
+                    {count > 0 && (
+                      <span className="admin-nav-count" aria-label={`${count} unread`}>
+                        {count}
+                      </span>
+                    )}
+                    {item.badge === 'health' && health.tone === 'disconnected' && (
+                      <span className={`admin-nav-dot ${health.tone}`} aria-label={health.label} />
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+
+        <div className="admin-sidebar-foot">
           {/* Diagnostics Badge */}
           <div className="status-indicator-container">
             <button
-              className={`status-badge-btn ${health.tone}`}
+              className={`status-badge-btn sidebar-status ${health.tone}`}
               onClick={() => {
                 setShowStatus(!showStatus);
                 if (!showStatus) fetchStatus();
@@ -269,39 +385,39 @@ export default function AdminDashboard({ onLogout, children }: Props) {
             )}
           </div>
 
-          <span className="admin-header-divider" aria-hidden="true" />
-
-          <a
-            href="/?fresh=1"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="admin-btn admin-btn-ghost"
-            title="Open site in new tab (bypassing cache)"
-          >
-            <Icons.IconLink size={14} /> Site
-          </a>
-          <button
-            className="admin-btn admin-btn-ghost"
-            onClick={() => setShowBackupModal(true)}
-            title="Manage config backups & restore"
-          >
-            <Icons.IconArchive size={14} /> Backups
-          </button>
-          <button
-            className="admin-btn admin-btn-ghost"
-            onClick={handleReload}
-            disabled={saving}
-            title="Reload config & clear cache"
-          >
-            <Icons.IconRefresh size={14} /> Reload
-          </button>
-          <button className="admin-btn admin-btn-ghost" onClick={handleLogout}>
-            Logout
-          </button>
+          <div className="admin-sidebar-actions">
+            <a
+              href="/?fresh=1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-side-action"
+              title="Open site in new tab (bypassing cache)"
+            >
+              <Icons.IconLink size={14} /> View site
+            </a>
+            <button
+              className="admin-side-action"
+              onClick={() => setShowBackupModal(true)}
+              title="Manage config backups & restore"
+            >
+              <Icons.IconArchive size={14} /> Backups
+            </button>
+            <button
+              className="admin-side-action"
+              onClick={handleReload}
+              disabled={saving}
+              title="Reload config & clear cache"
+            >
+              <Icons.IconRefresh size={14} /> Reload
+            </button>
+            <button className="admin-side-action" onClick={handleLogout}>
+              <Icons.IconX size={14} /> Sign out
+            </button>
+          </div>
         </div>
-      </header>
+      </aside>
 
-      <main className="admin-main">{children}</main>
+      <main className="admin-main admin-workspace">{children}</main>
 
       <BackupManagerModal
         isOpen={showBackupModal}

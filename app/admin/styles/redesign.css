@@ -1,0 +1,550 @@
+/* ── Admin redesign, stage 1 (docs/admin-ux-concept.md) ──────────
+   Loaded last from admin.css, so it overrides the earlier sheets rather than
+   rewriting them. Stage 1: the sidebar shell, the overview page, the site's
+   typography and a calmer use of the accent. */
+
+/* ── Tokens ────────────────────────────────────────────────── */
+
+.admin-layout,
+.admin-listbox-popup {
+  /* The site's own fonts (set on <html> by the root layout from the preset).
+     The fallbacks are what the admin used before. */
+  --admin-font: var(
+    --font-sans,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    system-ui,
+    sans-serif
+  );
+  --admin-font-label: var(--font-caption, ui-monospace, 'SF Mono', Menlo, monospace);
+  --admin-bg: #0c0c0c;
+  --admin-bg-raised: #141414;
+  --admin-bg-elevated: #1b1b1b;
+  --admin-bg-input: #101010;
+  --admin-border: #242424;
+  --admin-border-hover: #3a3a3a;
+  --admin-sidebar-bg: #090909;
+  --admin-radius: 4px;
+  --admin-sidebar-width: 232px;
+  font-family: var(--admin-font);
+}
+
+[data-theme='light'] .admin-layout,
+[data-theme='light'] .admin-listbox-popup {
+  --admin-bg: #f6f6f5;
+  --admin-bg-raised: #ffffff;
+  --admin-bg-elevated: #efefee;
+  --admin-bg-input: #ffffff;
+  --admin-border: #e2e2e0;
+  --admin-border-hover: #c8c8c5;
+  --admin-sidebar-bg: #fbfbfa;
+}
+
+.admin-listbox-popup {
+  font-family: var(--admin-font);
+}
+
+/* ── Shell: sidebar + workspace ────────────────────────────── */
+
+.admin-app {
+  display: grid;
+  grid-template-columns: var(--admin-sidebar-width) minmax(0, 1fr);
+  flex-direction: unset;
+  min-height: 100vh;
+}
+
+.admin-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.25rem 0.75rem 1rem;
+  background: var(--admin-sidebar-bg);
+  border-right: 1px solid var(--admin-border);
+  overflow-y: auto;
+  z-index: 50;
+}
+
+.admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.25rem 0.6rem 0.75rem;
+  color: var(--admin-text);
+  text-decoration: none;
+}
+
+/* The square marker the site uses for kickers and the header dot. */
+.admin-brand-mark {
+  width: 10px;
+  height: 10px;
+  background: var(--admin-accent);
+  flex-shrink: 0;
+}
+
+.admin-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.admin-brand-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.admin-brand-sub {
+  font-family: var(--admin-font-label);
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--admin-text-muted);
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+.admin-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.admin-nav-label {
+  padding: 0 0.6rem 0.35rem;
+  font-family: var(--admin-font-label);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--admin-text-muted);
+}
+
+.admin-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--admin-radius);
+  color: var(--admin-text-secondary);
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.admin-nav-item:hover {
+  color: var(--admin-text);
+  background: var(--admin-bg-raised);
+}
+
+.admin-nav-item.active {
+  color: var(--admin-text);
+  background: var(--admin-bg-elevated);
+}
+
+/* One of the accent's three jobs: where you are. */
+.admin-nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: -0.75rem;
+  top: 50%;
+  width: 3px;
+  height: 18px;
+  transform: translateY(-50%);
+  background: var(--admin-accent);
+}
+
+.admin-nav-icon {
+  display: inline-flex;
+  color: var(--admin-text-muted);
+}
+
+.admin-nav-item.active .admin-nav-icon {
+  color: var(--admin-text);
+}
+
+.admin-nav-text {
+  flex: 1;
+}
+
+.admin-nav-count {
+  min-width: 1.35rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: var(--admin-accent);
+  color: #fff;
+  font-family: var(--admin-font-label);
+  font-size: 0.68rem;
+  text-align: center;
+}
+
+.admin-nav-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--admin-error);
+}
+
+.admin-sidebar-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--admin-border);
+}
+
+.admin-sidebar .status-indicator-container {
+  display: block;
+  margin: 0;
+}
+
+.admin-sidebar .sidebar-status {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+/* In the sidebar foot the dropdown opens upwards and to the right. */
+.admin-sidebar .status-dropdown {
+  top: auto;
+  bottom: 100%;
+  left: 0;
+  right: auto;
+  margin: 0 0 0.5rem;
+  width: 280px;
+  border-radius: var(--admin-radius);
+}
+
+.admin-sidebar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.admin-side-action {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: none;
+  border-radius: var(--admin-radius);
+  background: none;
+  color: var(--admin-text-muted);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.admin-side-action:hover:not(:disabled) {
+  color: var(--admin-text);
+  background: var(--admin-bg-raised);
+}
+
+.admin-side-action:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.admin-workspace {
+  max-width: 1180px;
+  padding: 2.25rem 2.5rem 6rem;
+  margin: 0;
+}
+
+/* The save bar centres on the workspace, not on the window. */
+.admin-app ~ .floating-save-bar,
+.admin-app .floating-save-bar {
+  left: calc(50% + var(--admin-sidebar-width) / 2);
+}
+
+@media (max-width: 860px) {
+  .admin-app {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--admin-border);
+  }
+
+  .admin-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+  }
+
+  .admin-nav-item.active::before {
+    display: none;
+  }
+
+  .admin-workspace {
+    padding: 1.5rem 1rem 6rem;
+  }
+
+  .admin-app .floating-save-bar {
+    left: 50%;
+  }
+}
+
+/* ── Calmer accent ─────────────────────────────────────────── */
+
+/* A switched-on card keeps a hairline; its switch carries the state. A thick
+   accent frame on every active card turned Studio Modern's settings into a
+   wall of red and took the colour's meaning with it. */
+.admin-layout .admin-toggle-card.active {
+  border-color: var(--admin-border-hover);
+  box-shadow: none;
+}
+
+.admin-layout .admin-toggle-card,
+.admin-layout .settings-group,
+.admin-layout .analytics-panel,
+.admin-layout .metric-card,
+.admin-layout .messages-list {
+  border-radius: var(--admin-radius);
+}
+
+/* Section and field labels in the site's caption voice. */
+.admin-layout .admin-field > label,
+.admin-layout .settings-group-title,
+.admin-layout .analytics-section-title h3 {
+  font-family: var(--admin-font-label);
+  letter-spacing: 0.12em;
+}
+
+.admin-layout .settings-section-header h3,
+.admin-layout .analytics-header h2 {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Section icons stay neutral; the accent is not decoration. */
+.admin-layout .settings-section-header h3 svg,
+.admin-layout .analytics-header h2 svg {
+  color: var(--admin-text-muted);
+}
+
+/* ── Overview ──────────────────────────────────────────────── */
+
+.admin-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.overview-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.overview-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.6rem;
+  font-family: var(--admin-font-label);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--admin-text-muted);
+}
+
+.overview-kicker::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  background: var(--admin-accent);
+}
+
+.overview-title {
+  margin: 0;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.overview-sub {
+  margin: 0.4rem 0 0;
+  color: var(--admin-text-secondary);
+  font-size: 0.9rem;
+}
+
+.overview-section-label {
+  margin: 0 0 0.9rem;
+  font-family: var(--admin-font-label);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--admin-text-muted);
+}
+
+.overview-attention {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-bg-raised);
+}
+
+.overview-attention-item {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.95rem 1.1rem;
+  color: var(--admin-text);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.overview-attention-item + .overview-attention-item {
+  border-top: 1px solid var(--admin-border);
+}
+
+.overview-attention-item:hover {
+  background: var(--admin-bg-elevated);
+}
+
+.overview-attention-marker {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+}
+
+.overview-attention-marker.accent {
+  background: var(--admin-accent);
+}
+
+.overview-attention-marker.warn {
+  background: var(--admin-warning);
+}
+
+.overview-attention-marker.error {
+  background: var(--admin-error);
+}
+
+.overview-attention-text {
+  flex: 1;
+}
+
+.overview-attention-detail {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--admin-text-muted);
+  font-size: 0.8rem;
+}
+
+.overview-attention-go {
+  font-family: var(--admin-font-label);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--admin-text-muted);
+}
+
+.overview-calm {
+  margin: 0;
+  padding: 1rem 1.1rem;
+  border: 1px dashed var(--admin-border);
+  border-radius: var(--admin-radius);
+  color: var(--admin-text-muted);
+  font-size: 0.88rem;
+}
+
+.overview-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-border);
+  overflow: hidden;
+}
+
+.overview-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.2rem 1.25rem 1.1rem;
+  background: var(--admin-bg-raised);
+  color: inherit;
+  text-decoration: none;
+}
+
+.overview-stat:hover {
+  background: var(--admin-bg-elevated);
+}
+
+.overview-stat-value {
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.overview-stat-label {
+  font-family: var(--admin-font-label);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--admin-text-muted);
+}
+
+.overview-stat-note {
+  color: var(--admin-text-secondary);
+  font-size: 0.78rem;
+}
+
+.overview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+/* Same rule for the metadata master card: its switch says it is on. */
+.admin-layout .metadata-card.active {
+  border-color: var(--admin-border-hover);
+  box-shadow: none;
+}
+
+/* A chosen option (preset, frame, layout…) is a place, so it keeps the accent,
+   but as a hairline rather than a doubled frame. */
+.admin-layout .preset-card.active,
+.admin-layout .preset-btn.active {
+  box-shadow: none;
+}
+
+/* Page builder section icons: neutral, like the settings headers. */
+.admin-layout .builder-section-header h2 svg {
+  color: var(--admin-text-muted);
+}
+
+/* "Disabled" is a state, not an error. The badge sets its red inline, hence
+   !important; stage 2 moves the colour into the stylesheet (after #711). */
+.admin-layout .subpage-badge-protected[title='Page is disabled'] {
+  background: rgba(0, 0, 0, 0.72) !important;
+  color: var(--admin-text-secondary) !important;
+  border: 1px solid var(--admin-border-hover);
+}
+
+/* Every screen starts at the same left edge (stage 2 adds the shared page header). */
+.admin-layout .diag-page {
+  margin-left: 0;
+}
