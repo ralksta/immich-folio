@@ -6,7 +6,7 @@ import { listJournalBackups, restoreJournalBackup } from '@/lib/admin/journal-se
 import { invalidateConfigCache } from '@/lib/config';
 import { immich } from '@/lib/immich';
 
-export type BackupTarget = 'gallery' | 'settings' | 'about' | 'journal';
+export type BackupTarget = 'gallery' | 'settings' | 'about' | 'privacy' | 'journal';
 
 export interface BackupItem {
   filename: string;
@@ -51,6 +51,7 @@ export const GET = withAdmin(async () => {
       parseBackupInfo(f, 'settings'),
     );
     const about = (await listBackups('about.md')).map((f) => parseBackupInfo(f, 'about'));
+    const privacy = (await listBackups('privacy.md')).map((f) => parseBackupInfo(f, 'privacy'));
     // Newest first across all entries, so a just-deleted entry sits on top.
     const journal = (await listJournalBackups())
       .map((b) => ({
@@ -65,6 +66,7 @@ export const GET = withAdmin(async () => {
         gallery,
         settings,
         about,
+        privacy,
         journal,
       },
     });

@@ -111,6 +111,13 @@ footer:
   email: "hello@example.com"
   website: "https://example.com"
 
+# ── Privacy policy ───────────────────────────────────────────────
+# The text lives in content/privacy.md, written in the admin panel under
+# Settings → Legal. /privacy is shown, and linked in the footer, while this is
+# on (the default) and the file has text.
+# privacy:
+#   enabled: false
+
 # ── Contact form ─────────────────────────────────────────────────
 # A form at /contact. Messages are stored in content/messages/ and read in
 # the admin panel under Messages; no mail is sent. With the Impressum on and

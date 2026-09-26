@@ -44,7 +44,7 @@ const GROUPS: { id: string; title: string; checks: string[] }[] = [
   {
     id: 'content',
     title: 'Content',
-    checks: ['albums-shared', 'content-writable', 'alt-text', 'legal'],
+    checks: ['albums-shared', 'content-writable', 'alt-text', 'legal', 'contact', 'privacy'],
   },
 ];
 
@@ -66,6 +66,7 @@ const FIXES: Record<string, { label: string; href: string }> = {
   'albums-shared': { label: 'Open pages', href: '/admin/pages' },
   legal: { label: 'Open settings', href: '/admin/settings/legal' },
   contact: { label: 'Open settings', href: '/admin/settings/legal' },
+  privacy: { label: 'Open settings', href: '/admin/settings/legal' },
   'content-writable': { label: 'How to fix', href: `${DOCS}/docs/admin-panel.md#docker-usage` },
   'immich-api': {
     label: 'API key permissions',

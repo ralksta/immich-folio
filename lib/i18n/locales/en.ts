@@ -240,4 +240,9 @@ export const en = {
     privacy: (days: number) =>
       `Your message is stored on this site's own server, is only used to reply to you, and is deleted after ${days} ${days === 1 ? 'day' : 'days'}.`,
   },
+
+  privacy: {
+    navLabel: 'Privacy',
+    title: 'Privacy Policy',
+  },
 };

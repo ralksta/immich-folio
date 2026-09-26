@@ -6,6 +6,7 @@ import { getConfig, slugify } from '@/lib/config';
 import { env } from '@/lib/env';
 import { listJournalEntries } from '@/lib/admin/journal-service';
 import { readSettingsYaml } from '@/lib/admin/yaml-service';
+import { readPrivacy } from '@/lib/privacy';
 import {
   checkAlbumIds,
   checkAlbumSlugCollisions,
@@ -15,6 +16,7 @@ import {
   checkImmichCalls,
   checkContact,
   checkLegal,
+  checkPrivacy,
   checkPasswords,
   checkProxyHops,
   checkWritable,
@@ -158,6 +160,12 @@ export const GET = withAdmin(async (request: NextRequest) => {
   if (legal) findings.push(legal);
   const contact = checkContact(rawContact, env.CONTACT_NOTIFY_URL);
   if (contact) findings.push(contact);
+  const privacy = checkPrivacy({
+    legalEnabled: config.legal.enabled,
+    privacyEnabled: config.privacy.enabled,
+    hasText: readPrivacy() !== '',
+  });
+  if (privacy) findings.push(privacy);
 
   // ── Writability of the content volume ────────────────────────────────
   const contentDir = path.join(process.cwd(), 'content');

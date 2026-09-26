@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getConfigOrNull } from '@/lib/config';
 import { isValidSlug } from '@/lib/journal';
+import { privacyAvailable } from '@/lib/privacy';
 import { isSiteUnlocked } from '@/lib/auth';
 import { isAdminPath } from '@/lib/admin/paths';
 import { isInstallPath } from '@/lib/install';
@@ -80,6 +81,7 @@ export function isKnownMissing(
 
   if (pathname === '/contact') return !config.contact.enabled;
   if (pathname === '/impressum') return !config.legal.enabled;
+  if (pathname === '/privacy') return !privacyAvailable(config, contentDir);
   if (pathname === '/map') return !config.map;
 
   const journal = /^\/journal\/([^/]+)\/?$/.exec(pathname);

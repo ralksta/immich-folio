@@ -275,7 +275,12 @@ describe('proxy', () => {
  */
 describe('isKnownMissing', () => {
   let contentDir: string;
-  const settings = { contact: { enabled: false }, legal: { enabled: true }, map: false };
+  const settings = {
+    contact: { enabled: false },
+    legal: { enabled: true },
+    map: false,
+    privacy: { enabled: true },
+  };
 
   beforeEach(() => {
     contentDir = fs.mkdtempSync(path.join(os.tmpdir(), 'folio-proxy-'));
@@ -288,6 +293,12 @@ describe('isKnownMissing', () => {
     expect(isKnownMissing('/contact', contentDir)).toBe(true);
     expect(isKnownMissing('/map', contentDir)).toBe(true);
     expect(isKnownMissing('/impressum', contentDir)).toBe(false);
+  });
+
+  it('knows /privacy by its switch and its file', () => {
+    expect(isKnownMissing('/privacy', contentDir)).toBe(true);
+    fs.writeFileSync(path.join(contentDir, 'privacy.md'), '## Datenschutz\n');
+    expect(isKnownMissing('/privacy', contentDir)).toBe(false);
   });
 
   it('knows a journal entry by its file, and rejects slugs that are not slugs', () => {

@@ -56,6 +56,7 @@ import {
   checkContact,
   checkImmichCalls,
   checkLegal,
+  checkPrivacy,
   checkPasswords,
   worstLevel,
   type AlbumRef,
@@ -715,6 +716,20 @@ export async function gatherFindings(cwd: string, env: EnvLike): Promise<CliFind
     if (legal) findings.push(legal);
     const contact = checkContact(contactNode, env.CONTACT_NOTIFY_URL);
     if (contact) findings.push(contact);
+    const legalNode = node.legal as { enabled?: unknown } | undefined;
+    const privacyNode = node.privacy as { enabled?: unknown } | undefined;
+    let privacyText = '';
+    try {
+      privacyText = fs.readFileSync(path.join(contentDir, 'privacy.md'), 'utf8').trim();
+    } catch {
+      // No policy written yet.
+    }
+    const privacy = checkPrivacy({
+      legalEnabled: legalNode?.enabled === true,
+      privacyEnabled: privacyNode?.enabled !== false,
+      hasText: privacyText !== '',
+    });
+    if (privacy) findings.push(privacy);
   }
 
   // ── Writability of the content volume ───────────────────────────────

@@ -34,6 +34,7 @@ const baseConfig = {
     country: '',
   } as Record<string, unknown>,
   contact: { enabled: false, retentionDays: 90 } as Record<string, unknown>,
+  privacy: { enabled: true },
 };
 const getConfigMock = vi.fn(() => baseConfig);
 

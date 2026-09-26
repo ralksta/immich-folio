@@ -254,6 +254,8 @@ export interface AppConfig {
   footer: FooterConfig | null;
   legal: LegalConfig;
   contact: ContactConfig;
+  /** /privacy, shown while this is on and content/privacy.md has text (#699). */
+  privacy: { enabled: boolean };
   map: boolean;
   transitions: boolean;
   /** Floating back-to-top arrow in the frontend. */
@@ -437,6 +439,7 @@ export interface SettingsYaml {
   footer?: FooterConfig;
   legal?: Partial<LegalConfig>;
   contact?: { enabled?: boolean; notifyUrl?: string; retentionDays?: number };
+  privacy?: { enabled?: boolean };
   /** EXPERIMENTAL: external links appended to the header navigation. */
   navLinks?: Array<{ label?: string; url?: string }>;
   protection?: {

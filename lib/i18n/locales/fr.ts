@@ -238,4 +238,9 @@ export const fr: Dictionary = {
     privacy: (days: number) =>
       `Votre message est conservé sur le serveur de ce site, sert uniquement à vous répondre et est supprimé après ${days} ${days === 1 ? 'jour' : 'jours'}.`,
   },
+
+  privacy: {
+    navLabel: 'Confidentialité',
+    title: 'Politique de confidentialité',
+  },
 };

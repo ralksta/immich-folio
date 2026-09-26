@@ -238,4 +238,9 @@ export const nl: Dictionary = {
     privacy: (days: number) =>
       `Je bericht wordt op de eigen server van deze site bewaard, alleen gebruikt om je te antwoorden en na ${days} ${days === 1 ? 'dag' : 'dagen'} verwijderd.`,
   },
+
+  privacy: {
+    navLabel: 'Privacy',
+    title: 'Privacyverklaring',
+  },
 };
