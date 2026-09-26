@@ -75,11 +75,13 @@ export function LeafletMap({
       const map = L.map(containerRef.current, { zoomControl: true, attributionControl: true });
       mapRef.current = map;
 
-      // Dark-themed tiles (CartoDB Dark Matter)
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      // OpenStreetMap's own tiles: free to use with attribution and a Referer,
+      // which the Referrer-Policy sends. CARTO's Dark Matter, used before,
+      // started answering every tile with "API KEY REQUIRED". The dark look
+      // comes from a filter in app/leaflet.css, so it follows the colour mode.
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-        subdomains: 'abcd',
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
       }).addTo(map);
 

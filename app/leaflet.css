@@ -3,6 +3,19 @@
    page and inside a journal entry alike. Leaflet's own stylesheet is
    emitted by components/LeafletMap.tsx. */
 
+/* ── Tiles ─────────────────────────────────────────────────── */
+
+/* OpenStreetMap's tiles are bright and colourful. Photographs should carry
+   the colour, so the map is muted in both modes, and inverted into a dark
+   map in dark mode (the default; light mode sets data-theme='light'). */
+.leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) grayscale(0.85) brightness(0.9) contrast(0.9);
+}
+
+[data-theme='light'] .leaflet-tile-pane {
+  filter: grayscale(0.85) contrast(0.95);
+}
+
 /* ── Popups ────────────────────────────────────────────────── */
 
 .leaflet-popup-content-wrapper {

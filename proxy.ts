@@ -100,7 +100,7 @@ export function proxy(request: NextRequest) {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
     "font-src 'self' https://fonts.gstatic.com",
-    `img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org https://unpkg.com${cdn ? ` ${cdn}` : ''}`,
+    `img-src 'self' data: blob: https://tile.openstreetmap.org https://unpkg.com${cdn ? ` ${cdn}` : ''}`,
     ...(cdn ? [`media-src 'self' ${cdn}`] : []),
     "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
     "frame-ancestors 'none'",
