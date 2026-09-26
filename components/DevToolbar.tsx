@@ -16,6 +16,7 @@
 
 import React, { useState, useEffect, useCallback, useLayoutEffect } from 'react';
 import { IconPalette, IconX } from './Icons';
+import { getFontsCssUrl } from '@/lib/config/theme';
 
 const PRESETS = ['studio', 'studio-modern', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
 const FRAMES = ['none', 'passepartout', 'shadow'];
@@ -108,14 +109,8 @@ export function DevToolbar() {
         `'${fonts.body}', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`,
       );
       setVar('--font-caption', `'${fonts.caption}', Georgia, serif`);
-      // Dynamically load Google Fonts if not already loaded
-      const families = [fonts.heading, fonts.body, fonts.caption]
-        .filter((f, i, a) => a.indexOf(f) === i)
-        .map(
-          (f) => `family=${f.replace(/\s+/g, '+')}:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400`,
-        )
-        .join('&');
-      const href = `https://fonts.googleapis.com/css2?${families}&display=swap`;
+      // Load the fonts through the same-origin proxy the layout uses
+      const href = getFontsCssUrl([fonts.heading, fonts.body, fonts.caption]);
       // Check if already loaded
       const existing = document.querySelector(`link[href="${href}"]`);
       if (!existing) {

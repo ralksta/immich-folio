@@ -5,12 +5,14 @@
  * blocks: tiles, markers from props, an optional line through them, fit to
  * bounds. It knows nothing about /api/map; MapView fetches and hands over.
  *
- * The Leaflet stylesheet is emitted here rather than by each page, so a map
- * anywhere brings its own CSS. Marker and popup styling lives in
- * app/leaflet.css, loaded globally.
+ * The Leaflet stylesheet is imported here rather than by each page, so a map
+ * anywhere brings its own CSS. It comes from the npm package, bundled, not
+ * from a CDN: no visitor request leaves this origin for it (#699). Marker
+ * and popup styling lives in app/leaflet.css, loaded globally.
  */
 
 import { useEffect, useRef } from 'react';
+import 'leaflet/dist/leaflet.css';
 
 export interface LeafletMarker {
   lat: number;
@@ -40,9 +42,6 @@ export function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
-
-const LEAFLET_CSS_HREF = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-const LEAFLET_CSS_INTEGRITY = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
 
 export function LeafletMap({
   markers,
@@ -138,15 +137,5 @@ export function LeafletMap({
     };
   }, [markersKey, line, fitMaxZoom]);
 
-  return (
-    <>
-      <link
-        rel="stylesheet"
-        href={LEAFLET_CSS_HREF}
-        integrity={LEAFLET_CSS_INTEGRITY}
-        crossOrigin=""
-      />
-      <div ref={containerRef} className={className} />
-    </>
-  );
+  return <div ref={containerRef} className={className} />;
 }

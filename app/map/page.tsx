@@ -9,6 +9,9 @@ import { MapView } from '@/components/MapView';
 import { BackLink } from '@/components/BackLink';
 import type { Metadata } from 'next';
 import { getServerDictionary } from '@/lib/i18n/server';
+// Imported here as well as in LeafletMap: this page has the stylesheet in its
+// server HTML, so the tiles never render before their CSS.
+import 'leaflet/dist/leaflet.css';
 import './map.css';
 
 export const dynamic = 'force-dynamic';
@@ -33,15 +36,6 @@ export default function MapPage() {
 
   return (
     <>
-      {/* LeafletMap emits this too, but only once /api/map has answered; on
-          this page the stylesheet should be in the server HTML so the tiles
-          never render before their CSS. Same href — the browser loads it once. */}
-      <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-        crossOrigin=""
-      />
       <div className="map-page">
         <div className="map-page__header">
           <div className="map-page__header-main">

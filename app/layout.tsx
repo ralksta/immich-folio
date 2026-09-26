@@ -14,7 +14,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { Footer } from '@/components/Footer';
 import { SetupScreen } from '@/components/SetupScreen';
-import { getConfigOrNull, getGoogleFontsUrl, AppConfig } from '@/lib/config';
+import { getConfigOrNull, getThemeFontsUrl, AppConfig } from '@/lib/config';
 import { accentForMode, onAccent } from '@/lib/config/theme';
 import { isAdminPath } from '@/lib/admin/paths';
 import { isInstallPath } from '@/lib/install';
@@ -96,7 +96,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   const { theme } = config;
-  const fontsUrl = getGoogleFontsUrl(theme);
+  const fontsUrl = getThemeFontsUrl(theme);
 
   const themeVars: Record<string, string> = {
     // One accent per colour mode; tokens.css picks the active one as --accent,
@@ -162,8 +162,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       data-default-theme={config.colorMode}
     >
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="stylesheet" href={fontsUrl} />
       </head>
       <body>

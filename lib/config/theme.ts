@@ -215,9 +215,16 @@ export function resolveTheme(raw?: SettingsYaml['theme']): ThemeConfig {
   };
 }
 
-export function getGoogleFontsUrl(theme: ThemeConfig): string {
-  const weights = '300;400;500;600';
-  const families = [...new Set([theme.fonts.heading, theme.fonts.body, theme.fonts.caption])];
-  const params = families.map((f) => `family=${f.replace(/ /g, '+')}:wght@${weights}`).join('&');
-  return `https://fonts.googleapis.com/css2?${params}&display=swap`;
+/**
+ * The stylesheet for a set of Google Fonts families, served from this origin
+ * by /api/fonts/css (lib/fonts.ts) so a visitor's browser never contacts
+ * Google. Client-safe: the dev toolbar builds the same URL.
+ */
+export function getFontsCssUrl(families: string[]): string {
+  const unique = [...new Set(families)];
+  return `/api/fonts/css?${unique.map((f) => `family=${encodeURIComponent(f)}`).join('&')}`;
+}
+
+export function getThemeFontsUrl(theme: ThemeConfig): string {
+  return getFontsCssUrl([theme.fonts.heading, theme.fonts.body, theme.fonts.caption]);
 }
