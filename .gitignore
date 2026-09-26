@@ -86,6 +86,8 @@ content/*.screenshot-bak
 content/install.json
 # One-time setup token, written on first access and removed once install completes
 content/.setup-token
+# Contact form messages (lib/contact.ts), personal data of visitors
+content/messages/
 # Google Fonts cached by /api/fonts (lib/fonts.ts)
 content/.fonts/
 

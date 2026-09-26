@@ -53,6 +53,7 @@ import {
   checkAlbumIds,
   checkAlbumsShared,
   checkAuthSecret,
+  checkContact,
   checkImmichCalls,
   checkLegal,
   checkPasswords,
@@ -60,6 +61,7 @@ import {
   type AlbumRef,
   type DoctorFinding,
   type DoctorLevel,
+  type ContactRef,
   type LegalRef,
   type PasswordRef,
 } from '../lib/admin/doctor.ts';
@@ -707,8 +709,12 @@ export async function gatherFindings(cwd: string, env: EnvLike): Promise<CliFind
   // ── Impressum ───────────────────────────────────────────────────────
   const settingsNode = settings.node;
   if (settingsNode && typeof settingsNode === 'object' && !Array.isArray(settingsNode)) {
-    const legal = checkLegal((settingsNode as Record<string, unknown>).legal as LegalRef);
+    const node = settingsNode as Record<string, unknown>;
+    const contactNode = node.contact as ContactRef | undefined;
+    const legal = checkLegal(node.legal as LegalRef, contactNode?.enabled === true);
     if (legal) findings.push(legal);
+    const contact = checkContact(contactNode, env.CONTACT_NOTIFY_URL);
+    if (contact) findings.push(contact);
   }
 
   // ── Writability of the content volume ───────────────────────────────

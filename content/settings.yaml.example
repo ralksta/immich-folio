@@ -111,6 +111,17 @@ footer:
   email: "hello@example.com"
   website: "https://example.com"
 
+# ── Contact form ─────────────────────────────────────────────────
+# A form at /contact. Messages are stored in content/messages/ and read in
+# the admin panel under Messages; no mail is sent. With the Impressum on and
+# no legal.contactUrl, the Impressum links this form as its second channel.
+contact:
+  enabled: false
+  # A short "New message from <name>" push, never the message itself.
+  # Pick a topic nobody can guess. CONTACT_NOTIFY_URL overrides this.
+  # notifyUrl: "https://ntfy.sh/your-secret-topic"
+  retentionDays: 90 # messages are deleted after this many days
+
 # ── Legal / Impressum (German Law compliance) ────────────────────
 # If enabled: true, a link to /impressum will appear in the footer.
 legal:

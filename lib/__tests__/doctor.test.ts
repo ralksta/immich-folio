@@ -10,6 +10,7 @@ import {
   checkPasswords,
   checkWritable,
   checkImmichCalls,
+  checkContact,
   checkLegal,
   worstLevel,
 } from '../admin/doctor';
@@ -380,5 +381,42 @@ describe('checkLegal', () => {
     const f = checkLegal({ ...complete, name: 42, email: ['a'] })!;
     expect(f.level).toBe('warn');
     expect(f.detail).toContain('Missing: name');
+  });
+});
+
+describe('checkLegal with the built-in contact form', () => {
+  const emailOnly = {
+    enabled: true,
+    name: 'Ralf',
+    address: 'Street 1',
+    zipCity: '10247 Berlin',
+    email: 'mail@example.com',
+  };
+
+  it('counts the form as the second contact channel', () => {
+    expect(checkLegal(emailOnly)?.level).toBe('warn');
+    expect(checkLegal(emailOnly, true)?.level).toBe('ok');
+  });
+});
+
+describe('checkContact', () => {
+  it('returns nothing while the form is off', () => {
+    expect(checkContact({ enabled: false })).toBeNull();
+    expect(checkContact(undefined)).toBeNull();
+  });
+
+  it('warns when nobody hears about new messages', () => {
+    expect(checkContact({ enabled: true })?.level).toBe('warn');
+  });
+
+  it('warns about a URL that is not http(s)', () => {
+    const f = checkContact({ enabled: true, notifyUrl: 'ntfy.sh/topic' })!;
+    expect(f.level).toBe('warn');
+    expect(f.title).toContain('ignored');
+  });
+
+  it('is satisfied by the settings value or by CONTACT_NOTIFY_URL', () => {
+    expect(checkContact({ enabled: true, notifyUrl: 'https://ntfy.sh/t' })?.level).toBe('ok');
+    expect(checkContact({ enabled: true }, 'https://ntfy.sh/t')?.level).toBe('ok');
   });
 });

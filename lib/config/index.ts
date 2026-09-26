@@ -26,6 +26,9 @@ import {
   SettingsYaml,
   GridConfig,
   LegalConfig,
+  ContactConfig,
+  CONTACT_RETENTION_DEFAULT,
+  CONTACT_RETENTION_MAX,
   isHttpUrl,
 } from './schema';
 
@@ -205,6 +208,34 @@ export function resolveLegal(raw?: Partial<LegalConfig>): LegalConfig {
     taxId: opt(raw?.taxId),
     vatId: opt(raw?.vatId),
     extraInfo: opt(raw?.extraInfo),
+  };
+}
+
+/**
+ * The `contact:` block. `CONTACT_NOTIFY_URL` wins over `notifyUrl`, the same
+ * precedence SITE_PASSWORD has: an ntfy topic URL is as good as a password to
+ * anyone who wants to spam the owner's phone, so it may live outside the YAML.
+ * A non-http(s) URL is dropped with a warning, like `legal.contactUrl`.
+ */
+export function resolveContact(
+  raw?: SettingsYaml['contact'],
+  envNotifyUrl?: string,
+): ContactConfig {
+  let notifyUrl = envNotifyUrl?.trim() || raw?.notifyUrl?.trim() || undefined;
+  if (notifyUrl && !isHttpUrl(notifyUrl)) {
+    console.warn(
+      `[Folio] contact.notifyUrl: dropping ${JSON.stringify(notifyUrl)} — only http(s) URLs are allowed.`,
+    );
+    notifyUrl = undefined;
+  }
+  const days = raw?.retentionDays;
+  return {
+    enabled: raw?.enabled === true,
+    notifyUrl,
+    retentionDays:
+      typeof days === 'number' && Number.isFinite(days)
+        ? clamp(Math.round(days), 1, CONTACT_RETENTION_MAX)
+        : CONTACT_RETENTION_DEFAULT,
   };
 }
 
@@ -598,6 +629,7 @@ export function getConfig(): AppConfig {
       theme: resolveTheme(DEFAULT_PRESET),
       footer: null,
       legal: { enabled: false, name: '', address: '', zipCity: '', country: '' },
+      contact: { enabled: false, retentionDays: CONTACT_RETENTION_DEFAULT },
       map: false,
       transitions: false,
       scrollToTop: false,
@@ -704,6 +736,7 @@ export function getConfig(): AppConfig {
         }
       : null,
     legal: resolveLegal(settings.legal),
+    contact: resolveContact(settings.contact, env.CONTACT_NOTIFY_URL),
     map: settings.map === true,
     transitions: settings.transitions !== false,
     scrollToTop: settings.scrollToTop !== false,

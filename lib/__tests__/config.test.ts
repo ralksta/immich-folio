@@ -20,6 +20,7 @@ import {
   buildSubpageGrid,
   sanitizeNavLinks,
   resolveLegal,
+  resolveContact,
 } from '@/lib/config';
 
 // EXPERIMENTAL: external navigation links — rendered as <a href> in the
@@ -86,6 +87,35 @@ describe('resolveLegal', () => {
   it('is disabled unless enabled is literally true', () => {
     expect(resolveLegal(undefined).enabled).toBe(false);
     expect(resolveLegal({ name: 'Ralf' }).enabled).toBe(false);
+  });
+});
+
+describe('resolveContact', () => {
+  it('is off with a 90-day retention by default', () => {
+    expect(resolveContact(undefined)).toEqual({
+      enabled: false,
+      notifyUrl: undefined,
+      retentionDays: 90,
+    });
+  });
+
+  it('lets CONTACT_NOTIFY_URL override the settings value', () => {
+    expect(
+      resolveContact({ enabled: true, notifyUrl: 'https://a.example/x' }, 'https://b.example/y')
+        .notifyUrl,
+    ).toBe('https://b.example/y');
+  });
+
+  it('drops a notify URL that is not http(s)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(resolveContact({ notifyUrl: 'javascript:alert(1)' }).notifyUrl).toBeUndefined();
+    warn.mockRestore();
+  });
+
+  it('clamps the retention period', () => {
+    expect(resolveContact({ retentionDays: 0 }).retentionDays).toBe(1);
+    expect(resolveContact({ retentionDays: 10_000 }).retentionDays).toBe(365);
+    expect(resolveContact({ retentionDays: 'soon' as unknown as number }).retentionDays).toBe(90);
   });
 });
 

@@ -222,6 +222,7 @@ TRUSTED_PROXY_HOPS=1                   # reverse proxies in front, default: 0
 ADMIN_PASSWORD=your-secure-password   # enables /admin panel
 WEBHOOK_SECRET=long-random-string     # enables POST /api/webhook cache invalidation
 CDN_URL=https://cdn.example.com       # serve photos and videos through a pull CDN
+CONTACT_NOTIFY_URL=https://ntfy.sh/x  # push for new contact form messages, overrides settings.yaml
 ```
 
 > Login and setup endpoints have their own, much lower limits that `RATE_LIMIT_RPM` does not raise — see [Rate Limiting](docs/gallery-config.md#rate-limiting).

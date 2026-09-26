@@ -22,7 +22,7 @@ const ROUTES: {
   name: string;
   path: string;
   load: () => Promise<Record<string, unknown>>;
-  method: 'GET' | 'PUT' | 'POST' | 'DELETE';
+  method: 'GET' | 'PUT' | 'POST' | 'DELETE' | 'PATCH';
   args: () => unknown[];
 }[] = [
   {
@@ -123,6 +123,30 @@ const ROUTES: {
     load: () => import('../analytics/route'),
     method: 'GET',
     args: () => [],
+  },
+  {
+    // Names and email addresses of everyone who used the contact form.
+    name: 'GET /api/admin/messages',
+    path: 'messages',
+    load: () => import('../messages/route'),
+    method: 'GET',
+    args: () => [],
+  },
+  {
+    name: 'PATCH /api/admin/messages',
+    path: 'messages',
+    load: () => import('../messages/route'),
+    method: 'PATCH',
+    args: () => [
+      new NextRequest('http://localhost/api/admin/messages', { method: 'PATCH', body: '{}' }),
+    ],
+  },
+  {
+    name: 'DELETE /api/admin/messages',
+    path: 'messages',
+    load: () => import('../messages/route'),
+    method: 'DELETE',
+    args: () => [new NextRequest('http://localhost/api/admin/messages?id=x', { method: 'DELETE' })],
   },
   {
     name: 'GET /api/admin/backups',

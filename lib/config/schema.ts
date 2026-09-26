@@ -96,6 +96,21 @@ export interface LegalConfig {
   extraInfo?: string;
 }
 
+/** The built-in contact form (`/contact`, #702). */
+export interface ContactConfig {
+  enabled: boolean;
+  /**
+   * Where a "new message" notification is POSTed, e.g. an ntfy topic URL.
+   * `CONTACT_NOTIFY_URL` overrides the settings.yaml value. http(s) only.
+   */
+  notifyUrl?: string;
+  /** Messages older than this are deleted. */
+  retentionDays: number;
+}
+
+export const CONTACT_RETENTION_DEFAULT = 90;
+export const CONTACT_RETENTION_MAX = 365;
+
 export interface ThemeConfig {
   preset: string;
   accent: string;
@@ -238,6 +253,7 @@ export interface AppConfig {
   theme: ThemeConfig;
   footer: FooterConfig | null;
   legal: LegalConfig;
+  contact: ContactConfig;
   map: boolean;
   transitions: boolean;
   /** Floating back-to-top arrow in the frontend. */
@@ -420,6 +436,7 @@ export interface SettingsYaml {
   };
   footer?: FooterConfig;
   legal?: Partial<LegalConfig>;
+  contact?: { enabled?: boolean; notifyUrl?: string; retentionDays?: number };
   /** EXPERIMENTAL: external links appended to the header navigation. */
   navLinks?: Array<{ label?: string; url?: string }>;
   protection?: {

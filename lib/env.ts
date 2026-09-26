@@ -18,6 +18,7 @@ export interface Env {
   WEBHOOK_SECRET?: string;
   ADMIN_PASSWORD?: string;
   SITE_PASSWORD?: string;
+  CONTACT_NOTIFY_URL?: string;
   INSTALL_CONTENT_DIR?: string;
   /** Whether the admin dashboard may ask GitHub for the latest release. */
   UPDATE_CHECK: boolean;
@@ -165,6 +166,7 @@ function parseEnv(): Env {
     WEBHOOK_SECRET: process.env.WEBHOOK_SECRET || undefined,
     ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || undefined,
     SITE_PASSWORD: process.env.SITE_PASSWORD || undefined,
+    CONTACT_NOTIFY_URL: process.env.CONTACT_NOTIFY_URL || undefined,
     INSTALL_CONTENT_DIR: process.env.INSTALL_CONTENT_DIR || undefined,
     // On unless switched off: an instance that never learns about a security
     // release is the worse default. Only `false` disables it, so a typo does

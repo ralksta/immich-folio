@@ -696,6 +696,18 @@ channel such as a contact form, which case law accepts in place of a phone
 number; it takes http(s) URLs only and is dropped with a warning otherwise.
 `heading` replaces the "Angaben gemäß § 5 DDG" line, e.g. for § 5 ECG in Austria.
 
+A `contact:` block with `enabled: true` adds a contact form at `/contact` and
+links it in the footer. Messages stay on the server (`content/messages/`) and
+are read in the admin panel; see [Messages](admin-panel.md#messages). While the
+Impressum has no `contactUrl`, it links this form as the second contact channel.
+
+```yaml
+contact:
+  enabled: true
+  notifyUrl: https://ntfy.sh/your-secret-topic # optional push for new messages
+  retentionDays: 90 # delete messages after this many days
+```
+
 ## About Page
 
 Create `content/about.md` with YAML frontmatter:

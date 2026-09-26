@@ -111,6 +111,8 @@ export const settingsSchema = z.looseObject({
     })
     .optional(),
 
+  contact: z.looseObject({ enabled: bool, notifyUrl: str, retentionDays: num }).optional(),
+
   navLinks: z.array(z.looseObject({ label: str, url: str })).optional(),
 
   protection: z.looseObject({ disableRightClick: bool, disableImageDrag: bool }).optional(),

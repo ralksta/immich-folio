@@ -222,4 +222,22 @@ export const en = {
     vatId: 'VAT ID',
     extraInfo: 'Additional Information',
   },
+
+  contact: {
+    navLabel: 'Contact',
+    title: 'Contact',
+    subtitle: 'Write me a message',
+    name: 'Name',
+    email: 'Email',
+    message: 'Message',
+    submit: 'Send message',
+    sending: 'Sending…',
+    successTitle: 'Thank you',
+    successText: 'Your message has arrived. I will get back to you by email.',
+    invalid: 'Please fill in every field with a valid email address.',
+    tooMany: 'Too many messages in a short time. Please try again in a minute.',
+    failed: 'The message could not be sent. Please try again later.',
+    privacy: (days: number) =>
+      `Your message is stored on this site's own server, is only used to reply to you, and is deleted after ${days} ${days === 1 ? 'day' : 'days'}.`,
+  },
 };

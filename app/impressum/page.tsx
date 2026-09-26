@@ -25,8 +25,11 @@ function telHref(phone: string): string {
 }
 
 export default function ImpressumPage() {
-  const { legal } = getConfig();
+  const { legal, contact } = getConfig();
   const t = getServerDictionary();
+  // The built-in form stands in as the second contact channel unless an
+  // external one is configured.
+  const contactUrl = legal.contactUrl ?? (contact.enabled ? '/contact' : undefined);
 
   if (!legal.enabled) {
     notFound();
@@ -54,7 +57,7 @@ export default function ImpressumPage() {
           </p>
         </section>
 
-        {(legal.email || legal.phone || legal.contactUrl) && (
+        {(legal.email || legal.phone || contactUrl) && (
           <section className="legal-section">
             <h2 className="legal-section__title">{t.legal.contact}</h2>
             <p className="legal-section__text">
@@ -70,8 +73,8 @@ export default function ImpressumPage() {
                   <br />
                 </>
               )}
-              {legal.contactUrl && (
-                <a href={legal.contactUrl} rel="noopener">
+              {contactUrl && (
+                <a href={contactUrl} rel="noopener">
                   {legal.contactLabel ?? t.legal.contactForm}
                 </a>
               )}

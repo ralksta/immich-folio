@@ -13,6 +13,7 @@ import {
   checkAuthSecret,
   checkCdn,
   checkImmichCalls,
+  checkContact,
   checkLegal,
   checkPasswords,
   checkProxyHops,
@@ -23,6 +24,7 @@ import {
   type AlbumRef,
   type AlbumSlugGroup,
   type DoctorFinding,
+  type ContactRef,
   type LegalRef,
   type PasswordRef,
 } from '@/lib/admin/doctor';
@@ -142,15 +144,20 @@ export const GET = withAdmin(async (request: NextRequest) => {
   }
   findings.push(checkPasswords(passwords));
 
-  // ── Impressum: judged on the raw block, see checkLegal ──────────────
+  // ── Impressum and contact form: judged on the raw blocks, see checkLegal ──
   let rawLegal: LegalRef = config.legal;
+  let rawContact: ContactRef = config.contact;
   try {
-    rawLegal = (await readSettingsYaml())?.legal ?? rawLegal;
+    const settings = await readSettingsYaml();
+    rawLegal = settings?.legal ?? rawLegal;
+    rawContact = settings?.contact ?? rawContact;
   } catch {
-    // Fall back to the resolved block; only a dropped contact URL goes unseen.
+    // Fall back to the resolved blocks; only a dropped URL goes unseen.
   }
-  const legal = checkLegal(rawLegal);
+  const legal = checkLegal(rawLegal, config.contact.enabled);
   if (legal) findings.push(legal);
+  const contact = checkContact(rawContact, env.CONTACT_NOTIFY_URL);
+  if (contact) findings.push(contact);
 
   // ── Writability of the content volume ────────────────────────────────
   const contentDir = path.join(process.cwd(), 'content');

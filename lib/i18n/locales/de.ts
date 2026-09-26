@@ -219,4 +219,22 @@ export const de: Dictionary = {
     vatId: 'Umsatzsteuer-ID',
     extraInfo: 'Weitere Informationen',
   },
+
+  contact: {
+    navLabel: 'Kontakt',
+    title: 'Kontakt',
+    subtitle: 'Schreib mir eine Nachricht',
+    name: 'Name',
+    email: 'E-Mail',
+    message: 'Nachricht',
+    submit: 'Nachricht senden',
+    sending: 'Wird gesendet…',
+    successTitle: 'Danke',
+    successText: 'Deine Nachricht ist angekommen. Ich antworte dir per E-Mail.',
+    invalid: 'Bitte fülle alle Felder aus und gib eine gültige E-Mail-Adresse an.',
+    tooMany: 'Zu viele Nachrichten in kurzer Zeit. Bitte versuch es in einer Minute noch einmal.',
+    failed: 'Die Nachricht konnte nicht gesendet werden. Bitte versuch es später noch einmal.',
+    privacy: (days: number) =>
+      `Deine Nachricht wird auf dem eigenen Server dieser Seite gespeichert, nur für die Antwort verwendet und nach ${days} ${days === 1 ? 'Tag' : 'Tagen'} gelöscht.`,
+  },
 };

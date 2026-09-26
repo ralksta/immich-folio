@@ -33,6 +33,7 @@ const baseConfig = {
     zipCity: '',
     country: '',
   } as Record<string, unknown>,
+  contact: { enabled: false, retentionDays: 90 } as Record<string, unknown>,
 };
 const getConfigMock = vi.fn(() => baseConfig);
 

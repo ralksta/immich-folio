@@ -220,4 +220,22 @@ export const fr: Dictionary = {
     vatId: 'Numéro de TVA',
     extraInfo: 'Informations complémentaires',
   },
+
+  contact: {
+    navLabel: 'Contact',
+    title: 'Contact',
+    subtitle: 'Écrivez-moi un message',
+    name: 'Nom',
+    email: 'E-mail',
+    message: 'Message',
+    submit: 'Envoyer le message',
+    sending: 'Envoi…',
+    successTitle: 'Merci',
+    successText: 'Votre message est bien arrivé. Je vous répondrai par e-mail.',
+    invalid: 'Veuillez remplir tous les champs avec une adresse e-mail valide.',
+    tooMany: 'Trop de messages en peu de temps. Réessayez dans une minute.',
+    failed: 'Le message n’a pas pu être envoyé. Réessayez plus tard.',
+    privacy: (days: number) =>
+      `Votre message est conservé sur le serveur de ce site, sert uniquement à vous répondre et est supprimé après ${days} ${days === 1 ? 'jour' : 'jours'}.`,
+  },
 };
