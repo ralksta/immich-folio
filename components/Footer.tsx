@@ -9,12 +9,13 @@ import { getServerDictionary } from '@/lib/i18n/server';
 
 export function Footer() {
   const config = getConfig();
-  const { footer, legal } = config;
+  const { footer, legal, contact } = config;
   const t = getServerDictionary();
 
-  // Don't render if no footer config AND no legal config
+  // Don't render if there is no footer config and no legal or contact page to link
   if (
     !legal.enabled &&
+    !contact.enabled &&
     (!footer || (!footer.name && !footer.instagram && !footer.email && !footer.website))
   ) {
     return null;
@@ -28,6 +29,11 @@ export function Footer() {
           {legal.enabled && (
             <Link href="/impressum" className="footer__legal-link">
               {t.legal.navLabel}
+            </Link>
+          )}
+          {contact.enabled && (
+            <Link href="/contact" className="footer__legal-link">
+              {t.contact.navLabel}
             </Link>
           )}
         </div>

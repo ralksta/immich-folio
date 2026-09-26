@@ -1,0 +1,112 @@
+.contact-page {
+  padding: 4rem 2rem;
+  min-height: 80vh;
+}
+.contact-page__header {
+  margin-bottom: 3rem;
+  text-align: center;
+}
+.contact-page__title {
+  font-family: var(--font-serif);
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  font-weight: 400;
+  margin-bottom: 1rem;
+}
+.contact-page__subtitle {
+  font-family: var(--font-caption);
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+.contact-page__content {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.contact-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.contact-form__label {
+  font-family: var(--font-caption);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+.contact-form__input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  transition: border-color var(--transition-fast);
+}
+.contact-form__input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-color: var(--accent);
+}
+textarea.contact-form__input {
+  min-height: 10rem;
+  resize: vertical;
+  line-height: 1.5;
+}
+/* The honeypot. Off-screen rather than display:none, which some bots skip. */
+.contact-form__trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.contact-form__privacy {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.contact-form__submit {
+  align-self: flex-start;
+  padding: 12px 28px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+.contact-form__submit:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.contact-form__error {
+  color: #e74c3c;
+  font-size: 0.9rem;
+}
+.contact-form__done {
+  text-align: center;
+}
+.contact-form__done h2 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 1.8rem;
+  margin-bottom: 0.75rem;
+}
+.contact-form__done p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}

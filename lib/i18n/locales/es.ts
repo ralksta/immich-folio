@@ -219,4 +219,22 @@ export const es: Dictionary = {
     vatId: 'Número de IVA',
     extraInfo: 'Información adicional',
   },
+
+  contact: {
+    navLabel: 'Contacto',
+    title: 'Contacto',
+    subtitle: 'Escríbeme un mensaje',
+    name: 'Nombre',
+    email: 'Correo electrónico',
+    message: 'Mensaje',
+    submit: 'Enviar mensaje',
+    sending: 'Enviando…',
+    successTitle: 'Gracias',
+    successText: 'Tu mensaje ha llegado. Te responderé por correo electrónico.',
+    invalid: 'Rellena todos los campos con una dirección de correo válida.',
+    tooMany: 'Demasiados mensajes en poco tiempo. Inténtalo de nuevo en un minuto.',
+    failed: 'No se ha podido enviar el mensaje. Inténtalo más tarde.',
+    privacy: (days: number) =>
+      `Tu mensaje se guarda en el propio servidor de este sitio, solo se usa para responderte y se borra después de ${days} ${days === 1 ? 'día' : 'días'}.`,
+  },
 };

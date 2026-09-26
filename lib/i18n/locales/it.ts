@@ -219,4 +219,22 @@ export const it: Dictionary = {
     vatId: 'Partita IVA',
     extraInfo: 'Ulteriori informazioni',
   },
+
+  contact: {
+    navLabel: 'Contatto',
+    title: 'Contatto',
+    subtitle: 'Scrivimi un messaggio',
+    name: 'Nome',
+    email: 'E-mail',
+    message: 'Messaggio',
+    submit: 'Invia messaggio',
+    sending: 'Invio…',
+    successTitle: 'Grazie',
+    successText: 'Il tuo messaggio è arrivato. Ti risponderò via e-mail.',
+    invalid: 'Compila tutti i campi con un indirizzo e-mail valido.',
+    tooMany: 'Troppi messaggi in poco tempo. Riprova tra un minuto.',
+    failed: 'Non è stato possibile inviare il messaggio. Riprova più tardi.',
+    privacy: (days: number) =>
+      `Il tuo messaggio viene salvato sul server di questo sito, usato solo per risponderti e cancellato dopo ${days} ${days === 1 ? 'giorno' : 'giorni'}.`,
+  },
 };

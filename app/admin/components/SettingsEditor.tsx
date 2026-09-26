@@ -14,6 +14,8 @@ import OptionGrid, { toOptions } from './fields/OptionGrid';
 import { DEFAULT_PRESET, resolveTheme } from '@/lib/config/theme';
 import type { SettingsYaml } from '@/lib/config/schema';
 import {
+  CONTACT_RETENTION_DEFAULT,
+  CONTACT_RETENTION_MAX,
   isHttpUrl,
   PHOTO_GRID_COLUMNS_MAX,
   PHOTO_GRID_COLUMNS_MIN,
@@ -64,6 +66,7 @@ interface Settings {
   };
   /** EXPERIMENTAL: external links appended to the header navigation */
   navLinks?: Array<{ label?: string; url?: string }>;
+  contact?: { enabled?: boolean; notifyUrl?: string; retentionDays?: number };
   legal?: {
     enabled?: boolean;
     heading?: string;
@@ -727,6 +730,8 @@ export default function SettingsEditor() {
   // log, where nobody looks; say it here instead.
   const contactUrl = settings.legal?.contactUrl?.trim();
   const contactUrlInvalid = !!contactUrl && !isHttpUrl(contactUrl);
+  const notifyUrl = settings.contact?.notifyUrl?.trim();
+  const notifyUrlInvalid = !!notifyUrl && !isHttpUrl(notifyUrl);
 
   function updateMany(entries: Record<string, unknown>) {
     setSettings((s) => {
@@ -1805,6 +1810,59 @@ export default function SettingsEditor() {
                     />
                   </div>
                 </>
+              )}
+
+              <div className="settings-section-divider" />
+
+              <div className="admin-toggle-cards-grid" style={{ marginBottom: '1.25rem' }}>
+                <ToggleCard
+                  icon={<Icons.IconFileText size={16} />}
+                  title="Contact Form (/contact)"
+                  description="Messages are stored on this server and read under Messages. No mail is sent."
+                  checked={settings.contact?.enabled === true}
+                  onToggle={() => update('contact.enabled', !settings.contact?.enabled)}
+                />
+              </div>
+
+              {settings.contact?.enabled && (
+                <div className="admin-field-row">
+                  <div className="admin-field">
+                    <label htmlFor="contact-notify-url">Notification URL (ntfy)</label>
+                    <input
+                      id="contact-notify-url"
+                      type="url"
+                      value={settings.contact?.notifyUrl || ''}
+                      onChange={(e) => update('contact.notifyUrl', e.target.value)}
+                      placeholder="https://ntfy.sh/your-secret-topic"
+                      aria-invalid={notifyUrlInvalid || undefined}
+                      aria-describedby="contact-notify-url-hint"
+                    />
+                    <p
+                      id="contact-notify-url-hint"
+                      className={`admin-field-hint${notifyUrlInvalid ? ' admin-field-hint--error' : ''}`}
+                    >
+                      {notifyUrlInvalid
+                        ? 'Must start with https:// or http://.'
+                        : 'Gets a short "New message from …" push, never the message itself. Pick a topic name nobody can guess. CONTACT_NOTIFY_URL overrides this.'}
+                    </p>
+                  </div>
+                  <div className="admin-field">
+                    <label htmlFor="contact-retention">Delete messages after (days)</label>
+                    <input
+                      id="contact-retention"
+                      type="number"
+                      min={1}
+                      max={CONTACT_RETENTION_MAX}
+                      value={settings.contact?.retentionDays ?? CONTACT_RETENTION_DEFAULT}
+                      onChange={(e) =>
+                        update(
+                          'contact.retentionDays',
+                          parseInt(e.target.value) || CONTACT_RETENTION_DEFAULT,
+                        )
+                      }
+                    />
+                  </div>
+                </div>
               )}
             </div>
           )}

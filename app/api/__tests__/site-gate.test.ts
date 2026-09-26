@@ -37,6 +37,8 @@ const config = {
   subpages: [],
   albumPasswords: {},
   theme: { accent: '#e60012', fonts: { heading: 'Inter', body: 'Inter', caption: 'Inter' } },
+  contact: { enabled: true, retentionDays: 90 },
+  siteUrl: null,
 };
 
 vi.mock('@/lib/config', () => ({
@@ -87,6 +89,14 @@ const GATED: { name: string; call: () => Promise<Response> }[] = [
       (await import('../download/[album]/archive/route')).GET(
         request('/api/download/tok/archive') as never,
         { params: Promise.resolve({ album: 'tok' }) } as never,
+      ),
+  },
+  {
+    // Stores whatever a visitor sends; a locked site accepts nothing from strangers.
+    name: 'POST /api/contact',
+    call: async () =>
+      (await import('../contact/route')).POST(
+        new NextRequest('http://localhost/api/contact', { method: 'POST', body: '{}' }) as never,
       ),
   },
 ];

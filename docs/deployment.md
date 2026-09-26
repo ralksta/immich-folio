@@ -44,7 +44,8 @@ server, so a typo cannot leave you with an "installed" site that loads no photos
 `IMMICH_API_URL`, `IMMICH_API_KEY`, `AUTH_SECRET` and `ADMIN_PASSWORD` override
 anything in `install.json`, so any of them can be rotated by setting the variable
 — no need to touch the file. `SITE_PASSWORD` works the same way over
-`sitePassword` in `settings.yaml`.
+`sitePassword` in `settings.yaml`, and so does `CONTACT_NOTIFY_URL` over
+`contact.notifyUrl`.
 
 Set all of them up front and the wizard never appears, which is the usual choice
 for an infrastructure-as-code deployment.
@@ -114,7 +115,8 @@ Checks an installation from the terminal and prints what it finds: whether
 whether every published album ID still exists in Immich (and is shared there),
 whether any password is still stored in plaintext or as an unusable bcrypt
 hash, whether an enabled Impressum has a name, address, email and a second
-contact channel, and whether `content/` can be written to.
+contact channel, whether the contact form notifies anyone, and whether
+`content/` can be written to.
 
 This is the same set of checks as the **Diagnostics** page in `/admin`, but it
 needs neither a running app nor an admin password — which is the point. It is

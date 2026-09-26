@@ -65,6 +65,7 @@ const FIXES: Record<string, { label: string; href: string }> = {
   'album-ids': { label: 'Open pages', href: '/admin/pages' },
   'albums-shared': { label: 'Open pages', href: '/admin/pages' },
   legal: { label: 'Open settings', href: '/admin/settings/legal' },
+  contact: { label: 'Open settings', href: '/admin/settings/legal' },
   'content-writable': { label: 'How to fix', href: `${DOCS}/docs/admin-panel.md#docker-usage` },
   'immich-api': {
     label: 'API key permissions',

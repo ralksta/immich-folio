@@ -220,4 +220,22 @@ export const nl: Dictionary = {
     vatId: 'Btw-nummer',
     extraInfo: 'Aanvullende informatie',
   },
+
+  contact: {
+    navLabel: 'Contact',
+    title: 'Contact',
+    subtitle: 'Stuur me een bericht',
+    name: 'Naam',
+    email: 'E-mail',
+    message: 'Bericht',
+    submit: 'Bericht versturen',
+    sending: 'Versturen…',
+    successTitle: 'Bedankt',
+    successText: 'Je bericht is aangekomen. Ik antwoord je per e-mail.',
+    invalid: 'Vul alle velden in met een geldig e-mailadres.',
+    tooMany: 'Te veel berichten in korte tijd. Probeer het over een minuut opnieuw.',
+    failed: 'Het bericht kon niet worden verstuurd. Probeer het later opnieuw.',
+    privacy: (days: number) =>
+      `Je bericht wordt op de eigen server van deze site bewaard, alleen gebruikt om je te antwoorden en na ${days} ${days === 1 ? 'dag' : 'dagen'} verwijderd.`,
+  },
 };

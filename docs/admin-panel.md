@@ -111,7 +111,7 @@ Eight sections, each at its own URL (`/admin/settings/theme`, …):
 | **Theme**                 | Preset, colour mode, accent, photo frame, hero style, grain, header dot                                                             |
 | **Grid**                  | Layout algorithm, columns, gap, aspect ratio                                                                                        |
 | **Footer**                | Name, Instagram, email, website, and the header navigation links                                                                    |
-| **Legal**                 | Impressum toggle and all legal fields                                                                                               |
+| **Legal**                 | Impressum toggle and all legal fields, the contact form and its notification                                                        |
 | **SEO**                   | Meta title, subpage title template, description, noindex, nofollow                                                                  |
 | **Security & Protection** | Right-click and image-drag deterrents, lightbox watermark (text, position, opacity)                                                 |
 | **About**                 | Portrait asset, name, location, gear list, and the biography — written to `content/about.md`                                        |
@@ -125,6 +125,14 @@ Theme presets, grid layouts, photo frames, hero styles and the Google search sni
 ## Analytics
 
 View counts per page and album, read from `content/analytics.json`. No cookies, no third party, nothing leaving your server. Switch the collection off entirely in **Settings → General**; the tracking endpoint then refuses to record.
+
+## Messages
+
+The inbox of the contact form at `/contact`, switched on under **Settings → Legal**. Each message is a file in `content/messages/` and is deleted automatically after the retention period (90 days unless set otherwise). Opening a message marks it read; **Reply by email** opens your own mail client with the sender's address and the message quoted, since Folio sends no mail itself.
+
+To hear about new messages, set a **Notification URL**. Folio POSTs a short "New message from <name>" to it, never the message text. That fits [ntfy](https://ntfy.sh): install the app, subscribe to a topic name nobody can guess, and paste `https://ntfy.sh/<topic>` (or the URL of your own ntfy server). Any other endpoint that accepts a plain-text POST works too. `CONTACT_NOTIFY_URL` in the environment overrides the field. Without a notification, the Diagnostics page warns: a contact channel nobody reads does not count as one.
+
+Spam protection works without a captcha: a hidden field only bots fill in, a minimum time between opening the form and sending it, three messages a minute per IP, and a cap of 500 stored messages. At the cap new messages are refused rather than old ones dropped.
 
 ## Album & Asset Pickers
 

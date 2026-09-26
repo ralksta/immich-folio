@@ -1,0 +1,138 @@
+/* The contact form inbox (#702). */
+
+.messages-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 900px;
+}
+
+.messages-count {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--admin-accent);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* A hint, not an error: --admin-warning, never the accent (a preset may make
+   the accent red). */
+.messages-notice {
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--admin-warning);
+  border-radius: 8px;
+  color: var(--admin-text);
+  font-size: 0.82rem;
+}
+
+.messages-notice a {
+  color: var(--admin-warning);
+  text-decoration: underline;
+}
+
+.messages-empty {
+  color: var(--admin-text-muted);
+  text-align: center;
+}
+
+.messages-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--admin-bg-raised);
+}
+
+.messages-item + .messages-item {
+  border-top: 1px solid var(--admin-border);
+}
+
+.messages-summary {
+  display: grid;
+  grid-template-columns: 10px minmax(8rem, 12rem) 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background: none;
+  border: none;
+  color: var(--admin-text);
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.messages-summary:hover {
+  background: var(--admin-bg-hover, rgba(128, 128, 128, 0.08));
+}
+
+.messages-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.messages-item--unread .messages-dot {
+  background: var(--admin-accent);
+}
+
+.messages-item--unread .messages-from {
+  font-weight: 600;
+}
+
+.messages-from,
+.messages-preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.messages-preview,
+.messages-date {
+  color: var(--admin-text-muted);
+}
+
+.messages-date {
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.messages-body {
+  padding: 0 1rem 1rem calc(1rem + 10px + 0.75rem);
+}
+
+.messages-meta {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: var(--admin-text-muted);
+}
+
+.messages-text {
+  margin: 0 0 1rem;
+  white-space: pre-wrap;
+  line-height: 1.55;
+  font-size: 0.9rem;
+}
+
+.messages-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .messages-summary {
+    grid-template-columns: 10px 1fr auto;
+  }
+  .messages-preview {
+    display: none;
+  }
+  .messages-body {
+    padding-left: 1rem;
+  }
+}

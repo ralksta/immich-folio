@@ -99,6 +99,7 @@ const TRANSLATIONS: [string, Dictionary, string[]][] = [
       'lightbox.copyLinkShort',
       'lightbox.downloadShort',
       'common.website',
+      'contact.name',
     ],
   ],
   [
@@ -116,6 +117,9 @@ const TRANSLATIONS: [string, Dictionary, string[]][] = [
       'common.photos',
       'common.albums',
       'common.collections',
+      'contact.navLabel',
+      'contact.title',
+      'contact.message',
     ],
   ],
   ['es', es, ['lightbox.downloadShort', 'lightbox.info']],
@@ -132,6 +136,8 @@ const TRANSLATIONS: [string, Dictionary, string[]][] = [
       'lightbox.info',
       'lightbox.copyLinkShort',
       'legal.contact',
+      'contact.navLabel',
+      'contact.title',
     ],
   ],
 ];
