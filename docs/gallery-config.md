@@ -285,8 +285,10 @@ Three storage formats are accepted:
 
 To get the hash for an existing plaintext password, unlock the gallery once and
 read the server log: the successful unlock prints the matching `scrypt:…` line
-to paste back into `gallery.yaml`. The admin panel writes the hashed form
-directly.
+to paste back into `gallery.yaml`. Simpler: open the page or album in the
+admin panel and save it once. Every password saved there is stored as a
+`scrypt:…` hash, and the field then reads **Protected** with **Change** and
+**Remove** instead of showing the stored value.
 
 > [!NOTE]
 > Album and subpage gates protect the **page**. Image URLs handed out while a

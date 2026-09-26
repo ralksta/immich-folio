@@ -5,6 +5,9 @@ import { readGalleryYaml, writeGalleryYaml } from '@/lib/admin/yaml-service';
 import { invalidateConfigCache, deriveGallery } from '@/lib/config';
 import { immich } from '@/lib/immich';
 import type { GalleryYaml } from '@/lib/config/schema';
+import { hashPasswordKeys } from '@/lib/admin/passwordHashing';
+
+const PASSWORD_KEY = new Set(['password']);
 
 /** GET: Read current gallery.yaml config. */
 export const GET = withAdmin(async () => {
@@ -44,7 +47,13 @@ export const PUT = withAdmin(async (request: Request) => {
   }
 
   try {
-    await writeGalleryYaml(gallery);
+    // Subpage and album passwords, wherever the entry sits (#690).
+    const toWrite = await hashPasswordKeys(
+      gallery,
+      PASSWORD_KEY,
+      await readGalleryYaml().catch(() => null),
+    );
+    await writeGalleryYaml(toWrite);
     invalidateConfigCache();
     immich.invalidateAll();
     // Revalidate all pages so the homepage picks up new hero images immediately

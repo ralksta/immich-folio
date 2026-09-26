@@ -260,9 +260,10 @@ A `password` in the frontmatter puts the entry behind the same gate used for
 subpages and albums. The unlock cookie is `lb_auth_journal_<slug>` and expires
 after 24 hours.
 
-Store a hash rather than the plaintext where possible — the `scrypt:salt:hash`
-format described in [Gallery Configuration](gallery-config.md) applies here too.
-A plaintext password works but is logged as a warning at startup.
+A password set in Journal Studio is stored as a `scrypt:salt:hash`, never as
+typed. For hand-written frontmatter the same format described in
+[Gallery Configuration](gallery-config.md) applies. A plaintext password works
+but is logged as a warning.
 
 ## Journal Studio
 
