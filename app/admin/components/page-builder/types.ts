@@ -38,6 +38,11 @@ export interface Subpage {
   subtitle?: string;
   password?: string;
   enabled?: boolean;
+  /**
+   * Client proofing on this page, overriding the site-wide setting in either
+   * direction. No control in the builder yet; carried so a save keeps it.
+   */
+  proofing?: boolean;
   /** EXPERIMENTAL: reachable by direct link, but not shown in navigation */
   hidden?: boolean;
   essayText?: string;

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseGalleryYaml, serializeGallery } from '../components/page-builder/galleryYaml';
+import type { GalleryYaml } from '@/lib/config/schema';
 
 /**
  * #608: gallery.yaml ⇄ the page builder's model. This is what decides what the
@@ -114,5 +115,48 @@ describe('gallery.yaml round trip', () => {
       subpages: { Japan: { grid: { columns: 2 }, albums: [A] } },
     });
     expect(roundTrip(once)).toEqual(once);
+  });
+});
+
+/**
+ * The builder rewrites gallery.yaml wholesale on every save, so a subpage key
+ * it does not carry is deleted, not ignored. `proofing` was lost this way: a
+ * page switched off for client proofing by hand came back on after any
+ * unrelated save in the admin. Same lesson as #614 for album entries.
+ *
+ * The type annotation is the enforcement: every key the schema allows on a
+ * subpage has to be listed here, so the next one added and forgotten in
+ * galleryYaml.ts fails this test instead of vanishing from someone's file.
+ */
+type SubpageYaml = Extract<NonNullable<GalleryYaml['subpages']>, unknown[]>[number];
+
+const everySubpageKey: Required<SubpageYaml> = {
+  name: 'Clients',
+  title: 'For clients',
+  subtitle: 'Handover',
+  albums: [A],
+  sections: [{ title: 'North', description: 'Cold', albums: [B] }],
+  password: 'scrypt:aa:bb',
+  proofing: false,
+  essayFile: 'story',
+  essayText: 'Text',
+  enabled: false,
+  hidden: true,
+  location: 'city',
+  grid: { columns: 4, gap: 6, aspectRatio: '3/2', layout: 'justified' },
+  coverGrid: { columns: 2, gap: 8, aspectRatio: '1', layout: 'masonry' },
+};
+
+describe('subpage keys', () => {
+  it('survives a round trip with every key the schema allows', () => {
+    expect(roundTrip({ subpages: [everySubpageKey] })).toEqual({ subpages: [everySubpageKey] });
+  });
+
+  it('keeps proofing in either direction, and writes nothing when unset', () => {
+    const on = { name: 'P', proofing: true, albums: [A] };
+    expect(roundTrip({ subpages: [on] })).toEqual({ subpages: [on] });
+    expect(roundTrip({ subpages: [{ name: 'P', albums: [A] }] })).toEqual({
+      subpages: [{ name: 'P', albums: [A] }],
+    });
   });
 });

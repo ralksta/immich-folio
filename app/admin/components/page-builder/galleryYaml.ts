@@ -35,6 +35,7 @@ export function parseGalleryYaml(raw: Record<string, unknown>): GalleryState {
       password: sp.password as string | undefined,
       enabled: sp.enabled !== false,
       hidden: sp.hidden === true,
+      proofing: typeof sp.proofing === 'boolean' ? sp.proofing : undefined,
       location: sp.location as string | undefined,
       essayText: sp.essayText as string | undefined,
       essayFile: sp.essayFile as string | undefined,
@@ -63,6 +64,7 @@ export function parseGalleryYaml(raw: Record<string, unknown>): GalleryState {
         password: sp.password as string | undefined,
         enabled: sp.enabled !== false,
         hidden: sp.hidden === true,
+        proofing: typeof sp.proofing === 'boolean' ? sp.proofing : undefined,
         location: sp.location as string | undefined,
         essayText: sp.essayText as string | undefined,
         essayFile: sp.essayFile as string | undefined,
@@ -96,6 +98,8 @@ export function serializeGallery(gallery: GalleryState): Record<string, unknown>
       if (sp.password) entry.password = sp.password;
       if (sp.enabled === false) entry.enabled = false;
       if (sp.hidden === true) entry.hidden = true;
+      // Both values mean something: false switches proofing off for this page.
+      if (sp.proofing !== undefined) entry.proofing = sp.proofing;
       if (sp.essayText) entry.essayText = sp.essayText;
       if (sp.essayFile) entry.essayFile = sp.essayFile;
       if (sp.grid) entry.grid = sp.grid;
