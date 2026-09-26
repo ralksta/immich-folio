@@ -7,6 +7,8 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getConfig } from '@/lib/config';
 import { BackLink } from '@/components/BackLink';
+import EmailLink from '@/components/EmailLink';
+import { encodeEmail, spelledOutEmail } from '@/lib/emailObfuscation';
 import { getServerDictionary } from '@/lib/i18n/server';
 import './impressum.css';
 
@@ -65,7 +67,9 @@ export default function ImpressumPage() {
             <p className="legal-section__text">
               {legal.email && (
                 <>
-                  {t.legal.email}: <a href={`mailto:${legal.email}`}>{legal.email}</a>
+                  {t.legal.email}: <EmailLink encoded={encodeEmail(legal.email)} />
+                  {/* § 5 DDG wants the address reachable without JavaScript too. */}
+                  <noscript>{spelledOutEmail(legal.email)}</noscript>
                   <br />
                 </>
               )}
