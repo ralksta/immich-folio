@@ -19,6 +19,7 @@ import {
   normalizeSlug,
   buildSubpageGrid,
   sanitizeNavLinks,
+  resolveLegal,
 } from '@/lib/config';
 
 // EXPERIMENTAL: external navigation links — rendered as <a href> in the
@@ -49,6 +50,42 @@ describe('sanitizeNavLinks', () => {
 
   it('returns empty for undefined input', () => {
     expect(sanitizeNavLinks(undefined)).toEqual([]);
+  });
+});
+
+// legal.contactUrl lands in an <a href> on /impressum, so it gets the
+// navLinks rule: http(s) or nothing.
+describe('resolveLegal', () => {
+  it('keeps an http(s) contact URL and its label', () => {
+    const legal = resolveLegal({
+      enabled: true,
+      contactUrl: ' https://example.com/contact ',
+      contactLabel: 'Write to me',
+    });
+    expect(legal.contactUrl).toBe('https://example.com/contact');
+    expect(legal.contactLabel).toBe('Write to me');
+  });
+
+  it('drops a contact URL with any other scheme', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    for (const contactUrl of ['javascript:alert(1)', 'data:text/html,x', 'example.com/contact']) {
+      expect(resolveLegal({ contactUrl }).contactUrl).toBeUndefined();
+    }
+    expect(warn).toHaveBeenCalledTimes(3);
+    warn.mockRestore();
+  });
+
+  it('turns blank optional fields into undefined so the page can skip them', () => {
+    const legal = resolveLegal({ heading: '  ', email: '', phone: ' ', vatId: '' });
+    expect(legal.heading).toBeUndefined();
+    expect(legal.email).toBeUndefined();
+    expect(legal.phone).toBeUndefined();
+    expect(legal.vatId).toBeUndefined();
+  });
+
+  it('is disabled unless enabled is literally true', () => {
+    expect(resolveLegal(undefined).enabled).toBe(false);
+    expect(resolveLegal({ name: 'Ralf' }).enabled).toBe(false);
   });
 });
 

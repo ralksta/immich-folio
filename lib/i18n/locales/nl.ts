@@ -209,15 +209,15 @@ export const nl: Dictionary = {
   legal: {
     navLabel: 'Colofon',
     title: 'Colofon',
-    subtitle: 'Gegevens volgens § 5 TMG',
+    subtitle: 'Gegevens volgens § 5 DDG',
     address: 'Adres',
     contact: 'Contact',
     email: 'E-mail',
     phone: 'Telefoon',
+    contactForm: 'Contactformulier',
     taxSection: 'Fiscale gegevens',
     taxId: 'Fiscaal nummer',
     vatId: 'Btw-nummer',
     extraInfo: 'Aanvullende informatie',
-    source: 'Bron: gemaakt met de Impressum-generator van eRecht24.',
   },
 };

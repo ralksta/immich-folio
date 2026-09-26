@@ -211,15 +211,15 @@ export const en = {
   legal: {
     navLabel: 'Legal Notice',
     title: 'Legal Notice',
-    subtitle: 'Information pursuant to § 5 TMG',
+    subtitle: 'Information pursuant to § 5 DDG',
     address: 'Address',
     contact: 'Contact',
     email: 'Email',
     phone: 'Phone',
+    contactForm: 'Contact form',
     taxSection: 'Tax Information',
     taxId: 'Tax number',
     vatId: 'VAT ID',
     extraInfo: 'Additional Information',
-    source: 'Source: Created with the Impressum generator by eRecht24.',
   },
 };

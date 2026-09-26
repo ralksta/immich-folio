@@ -65,12 +65,15 @@ interface Settings {
   navLinks?: Array<{ label?: string; url?: string }>;
   legal?: {
     enabled?: boolean;
+    heading?: string;
     name?: string;
     address?: string;
     zipCity?: string;
     country?: string;
     email?: string;
     phone?: string;
+    contactUrl?: string;
+    contactLabel?: string;
     taxId?: string;
     vatId?: string;
     extraInfo?: string;
@@ -1645,8 +1648,8 @@ export default function SettingsEditor() {
                   <Icons.IconScale size={18} /> Legal Notice &amp; Impressum
                 </h3>
                 <p className="settings-section-sub">
-                  Configure required legal disclosure page for EU / German Telemediengesetz
-                  compliance.
+                  Configure the legal disclosure page required by the German Digitale-Dienste-Gesetz
+                  (DDG).
                 </p>
               </div>
 
@@ -1662,6 +1665,18 @@ export default function SettingsEditor() {
 
               {settings.legal?.enabled && (
                 <>
+                  <div className="admin-field">
+                    <label>Heading</label>
+                    <input
+                      value={settings.legal?.heading || ''}
+                      onChange={(e) => update('legal.heading', e.target.value)}
+                      placeholder="Angaben gemäß § 5 DDG"
+                    />
+                    <p className="admin-field-hint">
+                      Leave empty for the § 5 DDG line in the site language. Set it when a different
+                      law applies, e.g. § 5 ECG in Austria.
+                    </p>
+                  </div>
                   <div className="admin-field-row">
                     <div className="admin-field">
                       <label>Full Name / Business Name</label>
@@ -1716,8 +1731,45 @@ export default function SettingsEditor() {
                       />
                     </div>
                   </div>
+                  <div className="admin-field-row">
+                    <div className="admin-field">
+                      <label>Contact Form URL</label>
+                      <input
+                        type="url"
+                        value={settings.legal?.contactUrl || ''}
+                        onChange={(e) => update('legal.contactUrl', e.target.value)}
+                        placeholder="https://example.com/contact"
+                      />
+                    </div>
+                    <div className="admin-field">
+                      <label>Contact Link Text</label>
+                      <input
+                        value={settings.legal?.contactLabel || ''}
+                        onChange={(e) => update('legal.contactLabel', e.target.value)}
+                        placeholder="Contact form"
+                      />
+                    </div>
+                  </div>
+                  <div className="admin-field-row">
+                    <div className="admin-field">
+                      <label>VAT ID</label>
+                      <input
+                        value={settings.legal?.vatId || ''}
+                        onChange={(e) => update('legal.vatId', e.target.value)}
+                        placeholder="DE123456789"
+                      />
+                    </div>
+                    <div className="admin-field">
+                      <label>Tax Number</label>
+                      <input
+                        value={settings.legal?.taxId || ''}
+                        onChange={(e) => update('legal.taxId', e.target.value)}
+                        placeholder="12/345/67890"
+                      />
+                    </div>
+                  </div>
                   <div className="admin-field">
-                    <label>Additional Disclosures / Tax ID</label>
+                    <label>Additional Disclosures</label>
                     <textarea
                       value={settings.legal?.extraInfo || ''}
                       onChange={(e) => update('legal.extraInfo', e.target.value)}

@@ -19,6 +19,11 @@ export function generateMetadata(): Metadata {
 
 export const dynamic = 'force-dynamic';
 
+/** `tel:` takes digits and a leading +; the displayed number keeps its spacing. */
+function telHref(phone: string): string {
+  return `tel:${phone.replace(/[^\d+]/g, '')}`;
+}
+
 export default function ImpressumPage() {
   const { legal } = getConfig();
   const t = getServerDictionary();
@@ -32,7 +37,7 @@ export default function ImpressumPage() {
       <header className="subpage-header">
         <BackLink href="/" label={t.common.home} />
         <h1 className="subpage-title">{t.legal.title}</h1>
-        <p className="subpage-subtitle">{t.legal.subtitle}</p>
+        <p className="subpage-subtitle">{legal.heading ?? t.legal.subtitle}</p>
       </header>
 
       <main className="subpage-content">
@@ -49,20 +54,26 @@ export default function ImpressumPage() {
           </p>
         </section>
 
-        {(legal.email || legal.phone) && (
+        {(legal.email || legal.phone || legal.contactUrl) && (
           <section className="legal-section">
             <h2 className="legal-section__title">{t.legal.contact}</h2>
             <p className="legal-section__text">
               {legal.email && (
                 <>
-                  {t.legal.email}: {legal.email}
+                  {t.legal.email}: <a href={`mailto:${legal.email}`}>{legal.email}</a>
                   <br />
                 </>
               )}
               {legal.phone && (
                 <>
-                  {t.legal.phone}: {legal.phone}
+                  {t.legal.phone}: <a href={telHref(legal.phone)}>{legal.phone}</a>
+                  <br />
                 </>
+              )}
+              {legal.contactUrl && (
+                <a href={legal.contactUrl} rel="noopener">
+                  {legal.contactLabel ?? t.legal.contactForm}
+                </a>
               )}
             </p>
           </section>
@@ -93,10 +104,6 @@ export default function ImpressumPage() {
             <p className="legal-section__text legal-section__text--pre">{legal.extraInfo}</p>
           </section>
         )}
-
-        <section className="legal-source">
-          <p>{t.legal.source}</p>
-        </section>
       </main>
     </div>
   );

@@ -96,12 +96,15 @@ export const settingsSchema = z.looseObject({
   legal: z
     .looseObject({
       enabled: bool,
+      heading: str,
       name: str,
       address: str,
       zipCity: str,
       country: str,
       email: str,
       phone: str,
+      contactUrl: str,
+      contactLabel: str,
       taxId: str,
       vatId: str,
       extraInfo: str,
