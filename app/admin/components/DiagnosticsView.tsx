@@ -41,7 +41,11 @@ type AltTextData = AltTextReport & {
 const GROUPS: { id: string; title: string; checks: string[] }[] = [
   { id: 'connection', title: 'Connection', checks: ['immich-api', 'album-ids'] },
   { id: 'security', title: 'Security', checks: ['auth-secret', 'passwords', 'proxy-hops', 'cdn'] },
-  { id: 'content', title: 'Content', checks: ['albums-shared', 'content-writable', 'alt-text'] },
+  {
+    id: 'content',
+    title: 'Content',
+    checks: ['albums-shared', 'content-writable', 'alt-text', 'legal'],
+  },
 ];
 
 const LEVEL_LABEL: Record<DoctorLevel, string> = { ok: 'OK', warn: 'Check', error: 'Problem' };
@@ -60,6 +64,7 @@ const FIXES: Record<string, { label: string; href: string }> = {
   passwords: { label: 'Open settings', href: '/admin/settings/security' },
   'album-ids': { label: 'Open pages', href: '/admin/pages' },
   'albums-shared': { label: 'Open pages', href: '/admin/pages' },
+  legal: { label: 'Open settings', href: '/admin/settings/legal' },
   'content-writable': { label: 'How to fix', href: `${DOCS}/docs/admin-panel.md#docker-usage` },
   'immich-api': {
     label: 'API key permissions',

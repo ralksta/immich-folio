@@ -113,7 +113,8 @@ Checks an installation from the terminal and prints what it finds: whether
 `settings.yaml` parse, whether Immich answers the three calls Folio depends on,
 whether every published album ID still exists in Immich (and is shared there),
 whether any password is still stored in plaintext or as an unusable bcrypt
-hash, and whether `content/` can be written to.
+hash, whether an enabled Impressum has a name, address, email and a second
+contact channel, and whether `content/` can be written to.
 
 This is the same set of checks as the **Diagnostics** page in `/admin`, but it
 needs neither a running app nor an admin password — which is the point. It is

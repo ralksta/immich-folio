@@ -10,6 +10,7 @@ import {
   checkPasswords,
   checkWritable,
   checkImmichCalls,
+  checkLegal,
   worstLevel,
 } from '../admin/doctor';
 
@@ -328,5 +329,56 @@ describe('checkCdn', () => {
     const finding = checkCdn('https://cdn.example.net', false, 2)!;
     expect(finding.level).toBe('ok');
     expect(finding.detail).toContain('https://cdn.example.net');
+  });
+});
+
+describe('checkLegal', () => {
+  const complete = {
+    enabled: true,
+    name: 'Ralf',
+    address: 'Street 1',
+    zipCity: '10247 Berlin',
+    email: 'mail@example.com',
+    contactUrl: 'https://example.com/contact',
+  };
+
+  it('returns nothing while the Impressum is switched off or absent', () => {
+    expect(checkLegal({ ...complete, enabled: false })).toBeNull();
+    expect(checkLegal(undefined)).toBeNull();
+  });
+
+  it('passes with name, address, email and a second channel', () => {
+    expect(checkLegal(complete)?.level).toBe('ok');
+    expect(checkLegal({ ...complete, contactUrl: undefined, phone: '+49 30 1' })?.level).toBe('ok');
+  });
+
+  it('names the missing address fields', () => {
+    const f = checkLegal({ ...complete, address: '', zipCity: ' ' })!;
+    expect(f.level).toBe('warn');
+    expect(f.detail).toContain('street address, ZIP and city');
+  });
+
+  it('asks for an email address', () => {
+    expect(checkLegal({ ...complete, email: undefined })!.detail).toContain('No email address');
+  });
+
+  it('flags email as the only contact channel', () => {
+    const f = checkLegal({ ...complete, contactUrl: undefined })!;
+    expect(f.level).toBe('warn');
+    expect(f.detail).toContain('only contact channel');
+  });
+
+  it('reports a contact URL the page drops, and does not count it as a channel', () => {
+    const f = checkLegal({ ...complete, contactUrl: 'javascript:alert(1)' })!;
+    expect(f.level).toBe('warn');
+    expect(f.title).toContain('2 gaps');
+    expect(f.detail).toContain('ignored');
+    expect(f.detail).toContain('only contact channel');
+  });
+
+  it('tolerates hand-edited YAML with the wrong types', () => {
+    const f = checkLegal({ ...complete, name: 42, email: ['a'] })!;
+    expect(f.level).toBe('warn');
+    expect(f.detail).toContain('Missing: name');
   });
 });

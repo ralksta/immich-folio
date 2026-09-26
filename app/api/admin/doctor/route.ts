@@ -5,6 +5,7 @@ import path from 'node:path';
 import { getConfig, slugify } from '@/lib/config';
 import { env } from '@/lib/env';
 import { listJournalEntries } from '@/lib/admin/journal-service';
+import { readSettingsYaml } from '@/lib/admin/yaml-service';
 import {
   checkAlbumIds,
   checkAlbumSlugCollisions,
@@ -12,6 +13,7 @@ import {
   checkAuthSecret,
   checkCdn,
   checkImmichCalls,
+  checkLegal,
   checkPasswords,
   checkProxyHops,
   checkWritable,
@@ -21,6 +23,7 @@ import {
   type AlbumRef,
   type AlbumSlugGroup,
   type DoctorFinding,
+  type LegalRef,
   type PasswordRef,
 } from '@/lib/admin/doctor';
 
@@ -138,6 +141,16 @@ export const GET = withAdmin(async (request: NextRequest) => {
     // Journal entries are optional; a missing directory is not a fault.
   }
   findings.push(checkPasswords(passwords));
+
+  // ── Impressum: judged on the raw block, see checkLegal ──────────────
+  let rawLegal: LegalRef = config.legal;
+  try {
+    rawLegal = (await readSettingsYaml())?.legal ?? rawLegal;
+  } catch {
+    // Fall back to the resolved block; only a dropped contact URL goes unseen.
+  }
+  const legal = checkLegal(rawLegal);
+  if (legal) findings.push(legal);
 
   // ── Writability of the content volume ────────────────────────────────
   const contentDir = path.join(process.cwd(), 'content');

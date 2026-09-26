@@ -26,6 +26,7 @@ import {
   SettingsYaml,
   GridConfig,
   LegalConfig,
+  isHttpUrl,
 } from './schema';
 
 export * from './schema';
@@ -183,7 +184,7 @@ export function sanitizeNavLinks(
 export function resolveLegal(raw?: Partial<LegalConfig>): LegalConfig {
   const opt = (value?: string) => value?.trim() || undefined;
   let contactUrl = opt(raw?.contactUrl);
-  if (contactUrl && !/^https?:\/\//i.test(contactUrl)) {
+  if (contactUrl && !isHttpUrl(contactUrl)) {
     console.warn(
       `[Folio] settings.yaml legal.contactUrl: dropping ${JSON.stringify(contactUrl)} — ` +
         'only http(s) URLs are allowed.',

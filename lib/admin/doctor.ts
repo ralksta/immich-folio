@@ -438,6 +438,73 @@ export function checkPasswords(passwords: PasswordRef[]): DoctorFinding {
   };
 }
 
+/** The `legal:` block as settings.yaml holds it, before resolveLegal(). */
+export interface LegalRef {
+  enabled?: unknown;
+  name?: unknown;
+  address?: unknown;
+  zipCity?: unknown;
+  email?: unknown;
+  phone?: unknown;
+  contactUrl?: unknown;
+}
+
+/**
+ * Whether an enabled Impressum carries what § 5 DDG asks for: a name and a
+ * postal address, an email address, and a second fast way to get in touch
+ * (phone or a contact form, ECJ C-298/07).
+ *
+ * It takes the raw block rather than the resolved one because resolveLegal()
+ * drops a contact URL that is not http(s) and only tells the server log, so
+ * the link would just go missing. The http(s) test repeats isHttpUrl() from
+ * lib/config/schema.ts: this module has no imports, so the CLI can load it.
+ * Returns null when the page is switched off.
+ */
+export function checkLegal(legal: LegalRef | null | undefined): DoctorFinding | null {
+  if (!legal || legal.enabled !== true) return null;
+
+  const text = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
+  const email = text(legal.email);
+  const phone = text(legal.phone);
+  const rawUrl = text(legal.contactUrl);
+  const contactUrl = /^https?:\/\//i.test(rawUrl) ? rawUrl : '';
+
+  const problems: string[] = [];
+  const missing = (
+    [
+      ['name', legal.name],
+      ['street address', legal.address],
+      ['ZIP and city', legal.zipCity],
+    ] as const
+  )
+    .filter(([, value]) => !text(value))
+    .map(([label]) => label);
+  if (missing.length) problems.push(`Missing: ${missing.join(', ')}.`);
+  if (!email) problems.push('No email address; § 5 DDG requires one.');
+  if (rawUrl && !contactUrl) {
+    problems.push('The contact form URL is ignored because it does not start with http(s)://.');
+  }
+  if (email && !phone && !contactUrl) {
+    problems.push('Email is the only contact channel. Add a phone number or a contact form URL.');
+  }
+
+  if (problems.length) {
+    return {
+      id: 'legal',
+      level: 'warn',
+      title: `The Impressum has ${problems.length} gap${problems.length === 1 ? '' : 's'}`,
+      detail: problems.join(' '),
+    };
+  }
+
+  return {
+    id: 'legal',
+    level: 'ok',
+    title: 'The Impressum is complete',
+    detail: 'Name, address, email and a second contact channel are set.',
+  };
+}
+
 /**
  * The whole content directory must be writable: the wizard, the admin panel,
  * the journal, favicon upload, analytics and backup rotation all write there.

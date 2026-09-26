@@ -14,6 +14,7 @@ import OptionGrid, { toOptions } from './fields/OptionGrid';
 import { DEFAULT_PRESET, resolveTheme } from '@/lib/config/theme';
 import type { SettingsYaml } from '@/lib/config/schema';
 import {
+  isHttpUrl,
   PHOTO_GRID_COLUMNS_MAX,
   PHOTO_GRID_COLUMNS_MIN,
   PHOTO_GRID_GAP_MAX,
@@ -722,6 +723,11 @@ export default function SettingsEditor() {
   }
 
   /** Write several paths in one state update — used by the metadata master switch. */
+  // The Impressum drops a non-http(s) contact URL with a warning in the server
+  // log, where nobody looks; say it here instead.
+  const contactUrl = settings.legal?.contactUrl?.trim();
+  const contactUrlInvalid = !!contactUrl && !isHttpUrl(contactUrl);
+
   function updateMany(entries: Record<string, unknown>) {
     setSettings((s) => {
       const copy = JSON.parse(JSON.stringify(s));
@@ -1651,6 +1657,16 @@ export default function SettingsEditor() {
                   Configure the legal disclosure page required by the German Digitale-Dienste-Gesetz
                   (DDG).
                 </p>
+                {settings.legal?.enabled && (
+                  <a
+                    href="/impressum"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="admin-btn admin-btn-sm settings-section-action"
+                  >
+                    View /impressum ↗
+                  </a>
+                )}
               </div>
 
               <div className="admin-toggle-cards-grid" style={{ marginBottom: '1.25rem' }}>
@@ -1733,13 +1749,24 @@ export default function SettingsEditor() {
                   </div>
                   <div className="admin-field-row">
                     <div className="admin-field">
-                      <label>Contact Form URL</label>
+                      <label htmlFor="legal-contact-url">Contact Form URL</label>
                       <input
+                        id="legal-contact-url"
                         type="url"
                         value={settings.legal?.contactUrl || ''}
                         onChange={(e) => update('legal.contactUrl', e.target.value)}
                         placeholder="https://example.com/contact"
+                        aria-invalid={contactUrlInvalid || undefined}
+                        aria-describedby={contactUrlInvalid ? 'legal-contact-url-error' : undefined}
                       />
+                      {contactUrlInvalid && (
+                        <p
+                          id="legal-contact-url-error"
+                          className="admin-field-hint admin-field-hint--error"
+                        >
+                          Must start with https:// or http://. Any other link is left off the page.
+                        </p>
+                      )}
                     </div>
                     <div className="admin-field">
                       <label>Contact Link Text</label>
