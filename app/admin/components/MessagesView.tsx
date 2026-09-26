@@ -6,11 +6,14 @@
  * mail client through a mailto: link, since Folio sends no mail.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import * as Icons from './Icons';
 import { reportIfSessionExpired } from './sessionExpiry';
+import { useAdminFetch } from './useAdminFetch';
+import AdminLoadState from './AdminLoadState';
 import type { ContactMessage } from '@/lib/contact';
+import { useNotify } from './Notifications';
 
 interface InboxData {
   enabled: boolean;
@@ -32,39 +35,11 @@ function replyHref(m: ContactMessage): string {
   return `mailto:${to}?subject=${subject}&body=${body}`;
 }
 
-/** State is set by the caller, so the mount effect only starts a request. */
-async function fetchInbox(): Promise<{ data: InboxData } | { error: string }> {
-  try {
-    const res = await fetch('/api/admin/messages');
-    if (!res.ok) {
-      reportIfSessionExpired(res);
-      return { error: `Could not load messages (HTTP ${res.status}).` };
-    }
-    return { data: await res.json() };
-  } catch {
-    return { error: 'Could not load messages.' };
-  }
-}
-
 export default function MessagesView() {
-  const [data, setData] = useState<InboxData | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const notify = useNotify();
+  const inbox = useAdminFetch<InboxData>('/api/admin/messages');
+  const data = inbox.data;
   const [open, setOpen] = useState<string | null>(null);
-
-  const apply = useCallback((result: { data: InboxData } | { error: string }) => {
-    if ('data' in result) {
-      setData(result.data);
-      setError(null);
-    } else {
-      setError(result.error);
-    }
-  }, []);
-
-  const load = useCallback(() => fetchInbox().then(apply), [apply]);
-
-  useEffect(() => {
-    fetchInbox().then(apply);
-  }, [apply]);
 
   async function markRead(m: ContactMessage, read: boolean) {
     const res = await fetch('/api/admin/messages', {
@@ -76,9 +51,10 @@ export default function MessagesView() {
       reportIfSessionExpired(res);
       return;
     }
-    setData((d) =>
-      d ? { ...d, messages: d.messages.map((x) => (x.id === m.id ? { ...x, read } : x)) } : d,
-    );
+    inbox.mutate((d) => ({
+      ...d,
+      messages: d.messages.map((x) => (x.id === m.id ? { ...x, read } : x)),
+    }));
   }
 
   function toggle(m: ContactMessage) {
@@ -93,28 +69,20 @@ export default function MessagesView() {
       method: 'DELETE',
     });
     if (!res.ok) {
-      if (!reportIfSessionExpired(res)) alert(`Delete failed (HTTP ${res.status}).`);
+      if (!reportIfSessionExpired(res)) notify('error', `Delete failed (HTTP ${res.status}).`);
       return;
     }
-    setData((d) => (d ? { ...d, messages: d.messages.filter((x) => x.id !== m.id) } : d));
+    inbox.mutate((d) => ({ ...d, messages: d.messages.filter((x) => x.id !== m.id) }));
   }
 
-  if (error) {
+  if (!data || inbox.error) {
     return (
-      <div className="admin-panel" style={{ padding: '2rem', textAlign: 'center' }}>
-        <p style={{ color: 'var(--admin-text-muted)', marginBottom: '1rem' }}>{error}</p>
-        <button className="admin-btn admin-btn-primary" onClick={load}>
-          <Icons.IconRefresh size={14} /> Retry
-        </button>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="admin-loading-container">
-        <div className="admin-spinner" />
-      </div>
+      <AdminLoadState
+        loading={inbox.loading}
+        error={inbox.error}
+        onRetry={inbox.reload}
+        hasData={!!data}
+      />
     );
   }
 
@@ -133,7 +101,7 @@ export default function MessagesView() {
             {data.retentionDays} days.
           </p>
         </div>
-        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={load}>
+        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={inbox.reload}>
           <Icons.IconRefresh size={14} /> Refresh
         </button>
       </div>

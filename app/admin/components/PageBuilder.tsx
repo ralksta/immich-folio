@@ -22,7 +22,7 @@ import { CSS } from '@dnd-kit/utilities';
 import AlbumPicker from './AlbumPicker';
 import AssetPicker from './AssetPicker';
 import AssetOrderEditor from './AssetOrderEditor';
-import SaveBar from './SaveBar';
+import SaveBar, { type SaveStatus } from './SaveBar';
 import AlbumDrawer from './page-builder/AlbumDrawer';
 import { SortableAlbumCard } from './page-builder/AlbumCard';
 import SubpageDrawer from './page-builder/SubpageDrawer';
@@ -212,7 +212,7 @@ export default function PageBuilder() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [saveMessage, setSaveMessage] = useState('');
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>(null);
   const [expandedSubpage, setExpandedSubpage] = useState<number | null>(null);
   const [drawerMode, setDrawerMode] = useState<'edit' | 'preview'>('edit');
   const [pickerTarget, setPickerTarget] = useState<PickerTarget | null>(null);
@@ -432,7 +432,7 @@ export default function PageBuilder() {
     draft.discard();
     if (serverState.current) setGallery(serverState.current);
     setDirty(false);
-    setSaveMessage('');
+    setSaveStatus(null);
   }
 
   function restoreConflictingDraft() {
@@ -444,7 +444,7 @@ export default function PageBuilder() {
 
   const markDirty = useCallback(() => {
     setDirty(true);
-    setSaveMessage('');
+    setSaveStatus(null);
   }, []);
 
   // ── Save ──────────────────────────────────────────────────────
@@ -453,7 +453,7 @@ export default function PageBuilder() {
     if (loadError) return;
 
     setSaving(true);
-    setSaveMessage('');
+    setSaveStatus(null);
 
     const yamlData: Record<string, unknown> = {};
 
@@ -521,14 +521,14 @@ export default function PageBuilder() {
         // Show the hashes, so a new password reads "Protected" right away.
         if (JSON.stringify(written) !== JSON.stringify(yamlData)) setGallery(asLoaded);
         setDirty(false);
-        setSaveMessage(data.message || 'Saved successfully!');
-        setTimeout(() => setSaveMessage(''), 5000);
+        setSaveStatus({ kind: 'success', message: data.message || 'Saved successfully!' });
+        setTimeout(() => setSaveStatus(null), 5000);
       } else if (!reportIfSessionExpired(res)) {
         const err = await res.json();
-        setSaveMessage(`Error: ${err.error}`);
+        setSaveStatus({ kind: 'error', message: `Error: ${err.error}` });
       }
     } catch {
-      setSaveMessage('Error: Failed to save');
+      setSaveStatus({ kind: 'error', message: 'Error: Failed to save' });
     } finally {
       setSaving(false);
     }
@@ -882,7 +882,7 @@ export default function PageBuilder() {
       <SaveBar
         dirty={dirty}
         saving={saving}
-        saveMessage={saveMessage}
+        status={saveStatus}
         onSave={handleSave}
         label="Save Changes"
         showPreview

@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import type { BackupItem, BackupTarget } from '@/app/api/admin/backups/route';
 import * as Icons from './Icons';
 import { useScrollLock } from './useScrollLock';
 import { useModalDialog } from '@/hooks/useModalDialog';
+import { useAdminFetch } from './useAdminFetch';
 
 interface Props {
   isOpen: boolean;
@@ -26,38 +27,30 @@ const EMPTY_LISTS: BackupLists = { gallery: [], settings: [], about: [], journal
 export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }: Props) {
   const [activeTab, setActiveTab] = useState<BackupTarget>('gallery');
   const [showAllBackups, setShowAllBackups] = useState(false);
-  const [backups, setBackups] = useState<BackupLists>(EMPTY_LISTS);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const list = useAdminFetch<{ backups: Partial<BackupLists> }>(
+    isOpen ? '/api/admin/backups' : null,
+  );
+  const backups: BackupLists = { ...EMPTY_LISTS, ...list.data?.backups };
+  /** A failed restore; a failed load is list.error. */
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+  const error = list.error ?? restoreError;
+  const loading = list.loading;
+  const reloadList = list.reload;
   const [restoringFilename, setRestoringFilename] = useState<string | null>(null);
   const [confirmItem, setConfirmItem] = useState<BackupItem | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const fetchBackups = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/admin/backups');
-      if (!res.ok) {
-        throw new Error('Failed to fetch backup history');
-      }
-      const data = await res.json();
-      setBackups({ ...EMPTY_LISTS, ...data.backups });
-    } catch (err: any) {
-      setError(err.message || 'Error loading backups');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     if (isOpen) {
-      fetchBackups();
+      // Each opening shows the backups as they are now, not as they were
+      // the last time the modal was open.
+      reloadList();
+      setRestoreError(null);
       setConfirmItem(null);
       setSuccessMsg(null);
       setShowAllBackups(false);
     }
-  }, [isOpen, fetchBackups]);
+  }, [isOpen, reloadList]);
 
   useScrollLock(isOpen);
   /* Before the early `return null`: hooks must not run conditionally. */
@@ -68,7 +61,7 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
   async function handleRestore(item: BackupItem) {
     const filename = item.filename;
     setRestoringFilename(filename);
-    setError(null);
+    setRestoreError(null);
     setSuccessMsg(null);
 
     try {
@@ -90,10 +83,10 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
           : `Backup restored successfully! (${filename})`,
       );
       setConfirmItem(null);
-      await fetchBackups();
+      reloadList();
       onRestoreSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Error restoring backup');
+    } catch (err) {
+      setRestoreError(err instanceof Error ? err.message : 'Error restoring backup');
     } finally {
       setRestoringFilename(null);
     }

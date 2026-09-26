@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
 import * as Icons from './Icons';
+import { useAdminFetch } from './useAdminFetch';
+import AdminLoadState from './AdminLoadState';
 
 interface AnalyticsData {
   trackingEnabled?: boolean;
@@ -22,47 +23,17 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsView() {
-  const [data, setData] = useState<AnalyticsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const analytics = useAdminFetch<AnalyticsData>('/api/admin/analytics');
+  const data = analytics.data;
 
-  const fetchAnalytics = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/admin/analytics');
-      if (!res.ok) throw new Error('Failed to fetch analytics');
-      const json = await res.json();
-      setData(json);
-    } catch (err: any) {
-      setError(err.message || 'Error loading analytics');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAnalytics();
-  }, [fetchAnalytics]);
-
-  if (loading) {
+  if (!data || analytics.error) {
     return (
-      <div className="admin-loading-container">
-        <div className="admin-spinner" />
-      </div>
-    );
-  }
-
-  if (error || !data) {
-    return (
-      <div className="admin-panel" style={{ padding: '2rem', textAlign: 'center' }}>
-        <p style={{ color: 'var(--admin-text-muted)', marginBottom: '1rem' }}>
-          {error || 'No analytics data'}
-        </p>
-        <button className="admin-btn admin-btn-primary" onClick={fetchAnalytics}>
-          <Icons.IconRefresh size={14} /> Retry
-        </button>
-      </div>
+      <AdminLoadState
+        loading={analytics.loading}
+        error={analytics.error}
+        onRetry={analytics.reload}
+        hasData={!!data}
+      />
     );
   }
 
@@ -90,7 +61,7 @@ export default function AnalyticsView() {
             Privacy-first aggregate traffic stats. No personal data collected.
           </p>
         </div>
-        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={fetchAnalytics}>
+        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={analytics.reload}>
           <Icons.IconRefresh size={14} /> Refresh
         </button>
       </div>

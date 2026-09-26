@@ -1,0 +1,84 @@
+/* The admin notification stack (#600), bottom right, above the save bar. */
+
+.admin-notifications {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 5.5rem;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: min(420px, calc(100vw - 2.5rem));
+  pointer-events: none;
+}
+
+.admin-notifications__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-notification {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.7rem 0.8rem 0.7rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--admin-border);
+  border-left-width: 4px;
+  background: var(--admin-bg-raised);
+  color: var(--admin-text);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  pointer-events: auto;
+}
+
+.admin-notification--success {
+  border-left-color: var(--admin-success, #10b981);
+}
+
+.admin-notification--error {
+  border-left-color: var(--admin-error);
+}
+
+.admin-notification__text {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.admin-notification__close {
+  display: inline-flex;
+  padding: 2px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--admin-text-muted);
+  cursor: pointer;
+}
+
+.admin-notification__close:hover {
+  color: var(--admin-text);
+}
+
+@media (max-width: 640px) {
+  .admin-notifications {
+    left: 1rem;
+    right: 1rem;
+    max-width: none;
+  }
+}
+
+/* AdminLoadState (#609): the shared failed-load panel. */
+.admin-load-error {
+  padding: 2rem;
+  text-align: center;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  background: var(--admin-bg-raised);
+}
+
+.admin-load-error p {
+  margin: 0 0 1rem;
+  color: var(--admin-text-muted);
+}

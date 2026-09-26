@@ -36,6 +36,7 @@ import { StorySettingsModal } from './StorySettingsModal';
 import { JournalPreview } from './JournalPreview';
 import { createBlock, moveBlock } from './blockOps';
 import { useSplitPane, SPLIT_MIN, SPLIT_MAX } from './splitPane';
+import { useNotify } from '../Notifications';
 
 interface JournalEditorProps {
   slug: string;
@@ -44,6 +45,7 @@ interface JournalEditorProps {
 }
 
 export function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) {
+  const notify = useNotify();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -181,10 +183,10 @@ export function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) 
         setDirty(false);
       } else if (!reportIfSessionExpired(res)) {
         const data = await res.json();
-        alert(data.error || 'Failed to save');
+        notify('error', data.error || 'Failed to save');
       }
     } catch {
-      alert('Error saving entry');
+      notify('error', 'Could not save the entry. Check the connection and try again.');
     } finally {
       setSaving(false);
     }
