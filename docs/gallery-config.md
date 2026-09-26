@@ -550,8 +550,9 @@ as Japanese.
 Two things stay in one language by design:
 
 - **The admin panel** is always English, whatever `lang` says.
-- **`/impressum`** keeps its German headings when `lang: de` and the § 5 TMG
-  citation in every language, because that is what the statute names. Under `lang: en`
+- **`/impressum`** keeps its German headings when `lang: de` and the § 5 DDG
+  citation in every language, because that is what the statute names
+  (`legal.heading` replaces it where another law applies). Under `lang: en`
   the footer link reads "Legal Notice" rather than "Impressum" — the page is
   optional (`legal.enabled`), and an unexplained German word in the footer of
   an English site is what drove this out of the backlog.
@@ -689,6 +690,11 @@ footer:
 
 A `legal:` block with `enabled: true` adds an Impressum page at `/impressum` and
 links it in the footer — see `content/settings.yaml.example` for every field.
+
+Email, phone and `contactUrl` render as links. `contactUrl` is a second contact
+channel such as a contact form, which case law accepts in place of a phone
+number; it takes http(s) URLs only and is dropped with a warning otherwise.
+`heading` replaces the "Angaben gemäß § 5 DDG" line, e.g. for § 5 ECG in Austria.
 
 ## About Page
 

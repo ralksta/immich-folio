@@ -115,12 +115,17 @@ footer:
 # If enabled: true, a link to /impressum will appear in the footer.
 legal:
   enabled: false
+  # heading: "Angaben gemäß § 5 ECG"  # replaces the default "§ 5 DDG" line
   name: "Your Full Name"
   address: "Street and House Number"
   zipCity: "ZIP Code and City"
   country: "Germany"
   email: "legal@example.com"
   phone: "+49 123 456789"
-  # taxId: "DE123456789"
-  # vatId: "12/345/67890"
+  # A contact form counts as the second contact channel next to email, so
+  # phone can be left out. Only http(s) URLs are accepted.
+  # contactUrl: "https://example.com/contact"
+  # contactLabel: "Contact form"
+  # vatId: "DE123456789"
+  # taxId: "12/345/67890"
   extraInfo: "Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: Max Mustermann"

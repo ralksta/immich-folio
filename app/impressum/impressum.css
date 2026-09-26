@@ -39,8 +39,14 @@
 .legal-section__text--pre {
   white-space: pre-wrap;
 }
-.legal-source {
-  margin-top: 4rem;
-  font-size: 0.85rem;
-  color: var(--text-muted);
+/* tokens.css strips link underlines site-wide; here the links sit inside
+   running text and would otherwise be indistinguishable from it. */
+.legal-section__text a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--text-muted);
+  transition: text-decoration-color var(--transition-fast);
+}
+.legal-section__text a:hover {
+  text-decoration-color: currentColor;
 }

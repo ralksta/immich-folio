@@ -208,15 +208,15 @@ export const es: Dictionary = {
   legal: {
     navLabel: 'Aviso legal',
     title: 'Aviso legal',
-    subtitle: 'Información conforme al § 5 TMG',
+    subtitle: 'Información conforme al § 5 DDG',
     address: 'Dirección',
     contact: 'Contacto',
     email: 'Correo electrónico',
     phone: 'Teléfono',
+    contactForm: 'Formulario de contacto',
     taxSection: 'Información fiscal',
     taxId: 'Número de identificación fiscal',
     vatId: 'Número de IVA',
     extraInfo: 'Información adicional',
-    source: 'Fuente: creado con el generador de avisos legales de eRecht24.',
   },
 };

@@ -208,15 +208,15 @@ export const it: Dictionary = {
   legal: {
     navLabel: 'Note legali',
     title: 'Note legali',
-    subtitle: 'Informazioni ai sensi del § 5 TMG',
+    subtitle: 'Informazioni ai sensi del § 5 DDG',
     address: 'Indirizzo',
     contact: 'Contatti',
     email: 'E-mail',
     phone: 'Telefono',
+    contactForm: 'Modulo di contatto',
     taxSection: 'Informazioni fiscali',
     taxId: 'Codice fiscale',
     vatId: 'Partita IVA',
     extraInfo: 'Ulteriori informazioni',
-    source: 'Fonte: creato con il generatore di note legali di eRecht24.',
   },
 };

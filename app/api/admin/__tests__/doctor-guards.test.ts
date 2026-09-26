@@ -26,6 +26,13 @@ const baseConfig = {
   sitePassword: '',
   immich: { apiUrl: '', apiKey: '' },
   immichTimeoutMs: 1000,
+  legal: {
+    enabled: false,
+    name: '',
+    address: '',
+    zipCity: '',
+    country: '',
+  } as Record<string, unknown>,
 };
 const getConfigMock = vi.fn(() => baseConfig);
 
@@ -40,6 +47,8 @@ vi.mock('@/lib/config', () => ({
 
 vi.mock('@/lib/env', () => ({ env: { AUTH_SECRET: 'x'.repeat(64) } }));
 vi.mock('@/lib/admin/journal-service', () => ({ listJournalEntries: async () => [] }));
+const readSettingsYamlMock = vi.fn(async (): Promise<unknown> => null);
+vi.mock('@/lib/admin/yaml-service', () => ({ readSettingsYaml: () => readSettingsYamlMock() }));
 
 import { GET } from '../doctor/route';
 import { NextRequest } from 'next/server';
@@ -213,5 +222,38 @@ describe('GET /api/admin/doctor — album slug collisions', () => {
     expect(finding?.level).toBe('ok');
 
     vi.unstubAllGlobals();
+  });
+});
+
+/**
+ * resolveLegal() drops a non-http(s) contact URL and only tells the server
+ * log. The doctor reads the raw settings.yaml so the admin sees why the link
+ * is gone.
+ */
+describe('GET /api/admin/doctor — Impressum', () => {
+  const complete = {
+    enabled: true,
+    name: 'Ralf',
+    address: 'Street 1',
+    zipCity: '10247 Berlin',
+    country: 'Germany',
+    email: 'mail@example.com',
+  };
+
+  it('stays out of the report while the page is off', async () => {
+    const body = await (await GET(req())).json();
+    expect(body.findings.find((f: { id: string }) => f.id === 'legal')).toBeUndefined();
+  });
+
+  it('names a contact URL that the page dropped', async () => {
+    readSettingsYamlMock.mockResolvedValueOnce({
+      legal: { ...complete, contactUrl: 'javascript:alert(1)' },
+    });
+
+    const body = await (await GET(req())).json();
+    const finding = body.findings.find((f: { id: string }) => f.id === 'legal');
+
+    expect(finding?.level).toBe('warn');
+    expect(finding?.detail).toContain('contact form URL is ignored');
   });
 });

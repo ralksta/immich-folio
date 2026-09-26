@@ -70,14 +70,27 @@ export interface FooterConfig {
   website?: string;
 }
 
+/**
+ * Whether a URL may go into an `href` taken from settings: http(s) only, so a
+ * `javascript:` or `data:` URL in hand-edited YAML never reaches a link.
+ */
+export function isHttpUrl(url: string): boolean {
+  return /^https?:\/\//i.test(url.trim());
+}
+
 export interface LegalConfig {
   enabled: boolean;
+  /** Replaces the statute line under the title ("Angaben gemäß § 5 DDG"). */
+  heading?: string;
   name: string;
   address: string;
   zipCity: string;
   country: string;
   email?: string;
   phone?: string;
+  /** Second contact channel next to email, e.g. a contact form. http(s) only. */
+  contactUrl?: string;
+  contactLabel?: string;
   taxId?: string;
   vatId?: string;
   extraInfo?: string;

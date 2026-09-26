@@ -14,6 +14,7 @@ import OptionGrid, { toOptions } from './fields/OptionGrid';
 import { DEFAULT_PRESET, resolveTheme } from '@/lib/config/theme';
 import type { SettingsYaml } from '@/lib/config/schema';
 import {
+  isHttpUrl,
   PHOTO_GRID_COLUMNS_MAX,
   PHOTO_GRID_COLUMNS_MIN,
   PHOTO_GRID_GAP_MAX,
@@ -65,12 +66,15 @@ interface Settings {
   navLinks?: Array<{ label?: string; url?: string }>;
   legal?: {
     enabled?: boolean;
+    heading?: string;
     name?: string;
     address?: string;
     zipCity?: string;
     country?: string;
     email?: string;
     phone?: string;
+    contactUrl?: string;
+    contactLabel?: string;
     taxId?: string;
     vatId?: string;
     extraInfo?: string;
@@ -719,6 +723,11 @@ export default function SettingsEditor() {
   }
 
   /** Write several paths in one state update — used by the metadata master switch. */
+  // The Impressum drops a non-http(s) contact URL with a warning in the server
+  // log, where nobody looks; say it here instead.
+  const contactUrl = settings.legal?.contactUrl?.trim();
+  const contactUrlInvalid = !!contactUrl && !isHttpUrl(contactUrl);
+
   function updateMany(entries: Record<string, unknown>) {
     setSettings((s) => {
       const copy = JSON.parse(JSON.stringify(s));
@@ -1645,9 +1654,19 @@ export default function SettingsEditor() {
                   <Icons.IconScale size={18} /> Legal Notice &amp; Impressum
                 </h3>
                 <p className="settings-section-sub">
-                  Configure required legal disclosure page for EU / German Telemediengesetz
-                  compliance.
+                  Configure the legal disclosure page required by the German Digitale-Dienste-Gesetz
+                  (DDG).
                 </p>
+                {settings.legal?.enabled && (
+                  <a
+                    href="/impressum"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="admin-btn admin-btn-sm settings-section-action"
+                  >
+                    View /impressum ↗
+                  </a>
+                )}
               </div>
 
               <div className="admin-toggle-cards-grid" style={{ marginBottom: '1.25rem' }}>
@@ -1662,6 +1681,18 @@ export default function SettingsEditor() {
 
               {settings.legal?.enabled && (
                 <>
+                  <div className="admin-field">
+                    <label>Heading</label>
+                    <input
+                      value={settings.legal?.heading || ''}
+                      onChange={(e) => update('legal.heading', e.target.value)}
+                      placeholder="Angaben gemäß § 5 DDG"
+                    />
+                    <p className="admin-field-hint">
+                      Leave empty for the § 5 DDG line in the site language. Set it when a different
+                      law applies, e.g. § 5 ECG in Austria.
+                    </p>
+                  </div>
                   <div className="admin-field-row">
                     <div className="admin-field">
                       <label>Full Name / Business Name</label>
@@ -1716,8 +1747,56 @@ export default function SettingsEditor() {
                       />
                     </div>
                   </div>
+                  <div className="admin-field-row">
+                    <div className="admin-field">
+                      <label htmlFor="legal-contact-url">Contact Form URL</label>
+                      <input
+                        id="legal-contact-url"
+                        type="url"
+                        value={settings.legal?.contactUrl || ''}
+                        onChange={(e) => update('legal.contactUrl', e.target.value)}
+                        placeholder="https://example.com/contact"
+                        aria-invalid={contactUrlInvalid || undefined}
+                        aria-describedby={contactUrlInvalid ? 'legal-contact-url-error' : undefined}
+                      />
+                      {contactUrlInvalid && (
+                        <p
+                          id="legal-contact-url-error"
+                          className="admin-field-hint admin-field-hint--error"
+                        >
+                          Must start with https:// or http://. Any other link is left off the page.
+                        </p>
+                      )}
+                    </div>
+                    <div className="admin-field">
+                      <label>Contact Link Text</label>
+                      <input
+                        value={settings.legal?.contactLabel || ''}
+                        onChange={(e) => update('legal.contactLabel', e.target.value)}
+                        placeholder="Contact form"
+                      />
+                    </div>
+                  </div>
+                  <div className="admin-field-row">
+                    <div className="admin-field">
+                      <label>VAT ID</label>
+                      <input
+                        value={settings.legal?.vatId || ''}
+                        onChange={(e) => update('legal.vatId', e.target.value)}
+                        placeholder="DE123456789"
+                      />
+                    </div>
+                    <div className="admin-field">
+                      <label>Tax Number</label>
+                      <input
+                        value={settings.legal?.taxId || ''}
+                        onChange={(e) => update('legal.taxId', e.target.value)}
+                        placeholder="12/345/67890"
+                      />
+                    </div>
+                  </div>
                   <div className="admin-field">
-                    <label>Additional Disclosures / Tax ID</label>
+                    <label>Additional Disclosures</label>
                     <textarea
                       value={settings.legal?.extraInfo || ''}
                       onChange={(e) => update('legal.extraInfo', e.target.value)}

@@ -208,15 +208,15 @@ export const de: Dictionary = {
   legal: {
     navLabel: 'Impressum',
     title: 'Impressum',
-    subtitle: 'Angaben gemäß § 5 TMG',
+    subtitle: 'Angaben gemäß § 5 DDG',
     address: 'Anschrift',
     contact: 'Kontakt',
     email: 'E-Mail',
     phone: 'Telefon',
+    contactForm: 'Kontaktformular',
     taxSection: 'Steuernummer',
     taxId: 'Steuernummer',
     vatId: 'Umsatzsteuer-ID',
     extraInfo: 'Weitere Informationen',
-    source: 'Quelle: Erstellt mit dem Impressum-Generator von eRecht24.',
   },
 };

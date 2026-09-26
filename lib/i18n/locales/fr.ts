@@ -209,15 +209,15 @@ export const fr: Dictionary = {
   legal: {
     navLabel: 'Mentions légales',
     title: 'Mentions légales',
-    subtitle: 'Informations conformément au § 5 TMG',
+    subtitle: 'Informations conformément au § 5 DDG',
     address: 'Adresse',
     contact: 'Contact',
     email: 'E-mail',
     phone: 'Téléphone',
+    contactForm: 'Formulaire de contact',
     taxSection: 'Informations fiscales',
     taxId: 'Numéro fiscal',
     vatId: 'Numéro de TVA',
     extraInfo: 'Informations complémentaires',
-    source: 'Source : créé avec le générateur de mentions légales d’eRecht24.',
   },
 };
