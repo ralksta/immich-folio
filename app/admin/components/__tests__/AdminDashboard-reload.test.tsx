@@ -3,6 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import AdminDashboard from '../AdminDashboard';
 import { SESSION_EXPIRED_EVENT } from '../sessionExpiry';
+import { NotificationProvider } from '../Notifications';
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/admin',
@@ -16,8 +17,6 @@ afterEach(cleanup);
  */
 describe('AdminDashboard reload failure reporting', () => {
   it('reports a non-ok, non-401 reload failure', async () => {
-    const alertMock = vi.fn();
-    vi.stubGlobal('alert', alertMock);
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string, init?: RequestInit) => {
@@ -29,19 +28,22 @@ describe('AdminDashboard reload failure reporting', () => {
     );
 
     render(
-      <AdminDashboard onLogout={() => {}}>
-        <div>Panel</div>
-      </AdminDashboard>,
+      <NotificationProvider>
+        <AdminDashboard onLogout={() => {}}>
+          <div>Panel</div>
+        </AdminDashboard>
+      </NotificationProvider>,
     );
 
     fireEvent.click(screen.getByTitle('Reload config & clear cache'));
 
-    await waitFor(() => expect(alertMock).toHaveBeenCalledWith('Reload failed (HTTP 500).'));
+    // Reported through the notification surface (#600), not alert().
+    await waitFor(() =>
+      expect(screen.getByRole('alert').textContent).toContain('Reload failed (HTTP 500).'),
+    );
   });
 
-  it('raises the session-expired event instead of alerting on a 401', async () => {
-    const alertMock = vi.fn();
-    vi.stubGlobal('alert', alertMock);
+  it('raises the session-expired event instead of reporting an error on a 401', async () => {
     const listener = vi.fn();
     window.addEventListener(SESSION_EXPIRED_EVENT, listener);
     vi.stubGlobal(
@@ -55,21 +57,21 @@ describe('AdminDashboard reload failure reporting', () => {
     );
 
     render(
-      <AdminDashboard onLogout={() => {}}>
-        <div>Panel</div>
-      </AdminDashboard>,
+      <NotificationProvider>
+        <AdminDashboard onLogout={() => {}}>
+          <div>Panel</div>
+        </AdminDashboard>
+      </NotificationProvider>,
     );
 
     fireEvent.click(screen.getByTitle('Reload config & clear cache'));
 
     await waitFor(() => expect(listener).toHaveBeenCalledOnce());
-    expect(alertMock).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert').textContent).toBe('');
     window.removeEventListener(SESSION_EXPIRED_EVENT, listener);
   });
 
-  it('does not alert when the reload succeeds', async () => {
-    const alertMock = vi.fn();
-    vi.stubGlobal('alert', alertMock);
+  it('reports no error when the reload succeeds', async () => {
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url === '/api/admin/reload' && init?.method === 'POST') {
         return new Response(null, { status: 200 });
@@ -79,9 +81,11 @@ describe('AdminDashboard reload failure reporting', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     render(
-      <AdminDashboard onLogout={() => {}}>
-        <div>Panel</div>
-      </AdminDashboard>,
+      <NotificationProvider>
+        <AdminDashboard onLogout={() => {}}>
+          <div>Panel</div>
+        </AdminDashboard>
+      </NotificationProvider>,
     );
 
     fireEvent.click(screen.getByTitle('Reload config & clear cache'));
@@ -93,6 +97,6 @@ describe('AdminDashboard reload failure reporting', () => {
         ),
       ).toHaveLength(1),
     );
-    expect(alertMock).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert').textContent).toBe('');
   });
 });

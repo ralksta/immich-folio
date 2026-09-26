@@ -1,9 +1,16 @@
 'use client';
 
+/**
+ * The outcome of the last save. Typed rather than read off the wording: the bar
+ * used to call a message an error when it started with "Error", so a failure
+ * worded any other way was shown as a success (#600).
+ */
+export type SaveStatus = { kind: 'success' | 'error'; message: string } | null;
+
 interface SaveBarProps {
   dirty: boolean;
   saving: boolean;
-  saveMessage: string;
+  status: SaveStatus;
   onSave: () => void;
   label: string;
   /** Show the cache-bypassing preview link (page builder only). */
@@ -21,20 +28,18 @@ interface SaveBarProps {
 export default function SaveBar({
   dirty,
   saving,
-  saveMessage,
+  status,
   onSave,
   label,
   showPreview = false,
 }: SaveBarProps) {
-  if (!dirty && !saving && !saveMessage) return null;
+  if (!dirty && !saving && !status) return null;
 
   return (
     <div className={`floating-save-bar ${dirty ? 'dirty' : ''}`} role="status">
       <div className="save-bar-left">
-        {saveMessage ? (
-          <span className={`save-message ${saveMessage.startsWith('Error') ? 'error' : 'success'}`}>
-            {saveMessage}
-          </span>
+        {status ? (
+          <span className={`save-message ${status.kind}`}>{status.message}</span>
         ) : (
           <span className="unsaved-badge">
             <span className="badge-pulse-dot" aria-hidden="true" />

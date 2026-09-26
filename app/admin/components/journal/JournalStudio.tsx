@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { JournalEntrySummary } from '@/lib/journal';
 import { serializeJournalMarkdown, sanitizeSlug } from '@/lib/journal';
@@ -16,6 +16,9 @@ import {
 } from '../Icons';
 import './journal-studio.css';
 import { JournalEditor } from './JournalEditor';
+import { useNotify } from '../Notifications';
+import { useAdminFetch } from '../useAdminFetch';
+import AdminLoadState from '../AdminLoadState';
 
 interface JournalStudioProps {
   /** Entry to open, taken from the /admin/journal/[slug] route. */
@@ -25,10 +28,11 @@ interface JournalStudioProps {
 }
 
 export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioProps) {
+  const notify = useNotify();
   const router = useRouter();
-  const [entries, setEntries] = useState<JournalEntrySummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const list = useAdminFetch<{ entries?: JournalEntrySummary[] }>('/api/admin/journal');
+  const entries = list.data?.entries ?? [];
+  const fetchEntries = list.reload;
 
   // New Entry Modal
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -37,28 +41,6 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
   const [creating, setCreating] = useState(false);
   /** null = start blank, matching the previous (only) behavior. */
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
-
-  const fetchEntries = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/admin/journal');
-      if (res.ok) {
-        const data = await res.json();
-        setEntries(data.entries || []);
-      } else {
-        setError('Failed to load journal entries');
-      }
-    } catch {
-      setError('Failed to load journal entries');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchEntries();
-  }, [fetchEntries]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,16 +80,16 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
         setNewTitle('');
         setNewSlug('');
         setSelectedTemplateId(null);
-        await fetchEntries();
+        fetchEntries();
         if (data.entry?.slug) {
           router.push(`/admin/journal/${data.entry.slug}`);
         }
       } else {
         const data = await res.json();
-        alert(data.error || 'Failed to create journal entry');
+        notify('error', data.error || 'Failed to create journal entry');
       }
     } catch {
-      alert('Error creating journal entry');
+      notify('error', 'Could not create the journal entry. Check the connection and try again.');
     } finally {
       setCreating(false);
     }
@@ -126,13 +108,13 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
         method: 'DELETE',
       });
       if (res.ok) {
-        await fetchEntries();
+        fetchEntries();
         if (activeSlug === slug) router.push('/admin/journal');
       } else {
-        alert('Failed to delete journal entry');
+        notify('error', 'Failed to delete journal entry');
       }
     } catch {
-      alert('Error deleting journal entry');
+      notify('error', 'Could not delete the journal entry. Check the connection and try again.');
     }
   };
 
@@ -166,12 +148,13 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
         </button>
       </div>
 
-      {loading ? (
-        <div style={{ padding: '3rem', textAlign: 'center', opacity: 0.6 }}>
-          Loading journal entries...
-        </div>
-      ) : error ? (
-        <div style={{ padding: '3rem', textAlign: 'center', color: '#ef4444' }}>{error}</div>
+      {(list.loading && !list.data) || list.error ? (
+        <AdminLoadState
+          loading={list.loading}
+          error={list.error}
+          onRetry={list.reload}
+          hasData={!!list.data}
+        />
       ) : entries.length === 0 ? (
         <div style={{ padding: '5rem 2rem', textAlign: 'center', opacity: 0.6 }}>
           <h3>No journal entries yet</h3>

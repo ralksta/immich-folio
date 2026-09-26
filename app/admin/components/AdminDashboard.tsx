@@ -8,6 +8,7 @@ import type { DoctorLevel } from '@/lib/admin/doctor';
 import { DOCTOR_LEVEL_EVENT, systemHealth } from './systemHealth';
 import { reportIfSessionExpired } from './sessionExpiry';
 import * as Icons from './Icons';
+import { useNotify } from './Notifications';
 
 interface Props {
   onLogout: () => void;
@@ -26,6 +27,7 @@ const TABS = [
 ];
 
 export default function AdminDashboard({ onLogout, children }: Props) {
+  const notify = useNotify();
   const pathname = usePathname();
   const [saving, setSaving] = useState(false);
 
@@ -55,7 +57,7 @@ export default function AdminDashboard({ onLogout, children }: Props) {
       // result was never checked at all (#596).
       if (!res.ok) {
         if (!reportIfSessionExpired(res)) {
-          alert(`Reload failed (HTTP ${res.status}).`);
+          notify('error', `Reload failed (HTTP ${res.status}).`);
         }
         return;
       }

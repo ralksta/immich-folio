@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import * as Icons from './Icons';
-import SaveBar from './SaveBar';
+import SaveBar, { type SaveStatus } from './SaveBar';
 import { useUnsavedGuard } from './useUnsavedGuard';
 import { reportIfSessionExpired } from './sessionExpiry';
 import ToggleCard from './fields/ToggleCard';
@@ -620,11 +620,11 @@ export default function SettingsEditor() {
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [saveMessage, setSaveMessage] = useState('');
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>(null);
 
   const [currentMode, setCurrentMode] = useState<'dark' | 'light'>('dark');
   const [faviconUploading, setFaviconUploading] = useState(false);
-  const [faviconMessage, setFaviconMessage] = useState('');
+  const [faviconStatus, setFaviconStatus] = useState<SaveStatus>(null);
 
   // About content state (independent of main settings save)
   const [aboutMeta, setAboutMeta] = useState<{
@@ -638,7 +638,7 @@ export default function SettingsEditor() {
   const [aboutLoaded, setAboutLoaded] = useState(false);
   const [aboutSaving, setAboutSaving] = useState(false);
   const [aboutDirty, setAboutDirty] = useState(false);
-  const [aboutMessage, setAboutMessage] = useState('');
+  const [aboutStatus, setAboutStatus] = useState<SaveStatus>(null);
   const [aboutGearText, setAboutGearText] = useState('');
 
   useEffect(() => {
@@ -749,7 +749,7 @@ export default function SettingsEditor() {
       return copy;
     });
     setDirty(true);
-    setSaveMessage('');
+    setSaveStatus(null);
   }
 
   function update(path: string, value: unknown) {
@@ -770,7 +770,7 @@ export default function SettingsEditor() {
       return copy;
     });
     setDirty(true);
-    setSaveMessage('');
+    setSaveStatus(null);
   }
 
   async function handleSave() {
@@ -778,7 +778,7 @@ export default function SettingsEditor() {
     if (loadError) return;
 
     setSaving(true);
-    setSaveMessage('');
+    setSaveStatus(null);
 
     // Clean up empty objects
     const cleaned = JSON.parse(JSON.stringify(settings));
@@ -802,9 +802,9 @@ export default function SettingsEditor() {
           setSettings((s) => ({ ...s, sitePassword: data.sitePassword }));
         }
         setDirty(false);
-        setSaveMessage(data.message || 'Saved!');
+        setSaveStatus({ kind: 'success', message: data.message || 'Saved!' });
         router.refresh();
-        setTimeout(() => setSaveMessage(''), 5000);
+        setTimeout(() => setSaveStatus(null), 5000);
       } else if (!reportIfSessionExpired(res)) {
         const err = await res.json();
         // A rejected save names the fields that caused it. Listing them beats
@@ -813,10 +813,13 @@ export default function SettingsEditor() {
         const fields: string[] = Array.isArray(err.fields)
           ? err.fields.map((f: { field?: string }) => f.field || 'settings')
           : [];
-        setSaveMessage(`Error: ${err.error}${fields.length ? ` — ${fields.join(', ')}` : ''}`);
+        setSaveStatus({
+          kind: 'error',
+          message: `Error: ${err.error}${fields.length ? ` — ${fields.join(', ')}` : ''}`,
+        });
       }
     } catch {
-      setSaveMessage('Error: Failed to save');
+      setSaveStatus({ kind: 'error', message: 'Error: Failed to save' });
     } finally {
       setSaving(false);
     }
@@ -824,7 +827,7 @@ export default function SettingsEditor() {
 
   async function loadAboutContent() {
     setAboutLoading(true);
-    setAboutMessage('');
+    setAboutStatus(null);
     try {
       const res = await fetch('/api/admin/about');
       if (!res.ok) {
@@ -843,9 +846,10 @@ export default function SettingsEditor() {
       console.error('Failed to load about content:', err);
       // aboutLoaded stays false, which is what blocks the save below: an empty
       // editor written to about.md would replace the page with nothing.
-      setAboutMessage(
-        `Error: ${err instanceof Error ? err.message : 'The About page could not be loaded.'}`,
-      );
+      setAboutStatus({
+        kind: 'error',
+        message: `Error: ${err instanceof Error ? err.message : 'The About page could not be loaded.'}`,
+      });
     } finally {
       setAboutLoading(false);
     }
@@ -855,7 +859,7 @@ export default function SettingsEditor() {
     if (!aboutLoaded) return;
 
     setAboutSaving(true);
-    setAboutMessage('');
+    setAboutStatus(null);
     const cleanedMeta = { ...aboutMeta };
     for (const [k, v] of Object.entries(cleanedMeta)) {
       if (v === '' || v === undefined) delete cleanedMeta[k as keyof typeof cleanedMeta];
@@ -879,14 +883,14 @@ export default function SettingsEditor() {
       if (res.ok) {
         const data = await res.json();
         setAboutDirty(false);
-        setAboutMessage(data.message || 'Saved!');
-        setTimeout(() => setAboutMessage(''), 4000);
+        setAboutStatus({ kind: 'success', message: data.message || 'Saved!' });
+        setTimeout(() => setAboutStatus(null), 4000);
       } else {
         const err = await res.json();
-        setAboutMessage(`Error: ${err.error}`);
+        setAboutStatus({ kind: 'error', message: `Error: ${err.error}` });
       }
     } catch {
-      setAboutMessage('Error: Failed to save');
+      setAboutStatus({ kind: 'error', message: 'Error: Failed to save' });
     } finally {
       setAboutSaving(false);
     }
@@ -905,7 +909,7 @@ export default function SettingsEditor() {
   function updateAboutMeta(key: string, value: unknown) {
     setAboutMeta((m) => ({ ...m, [key]: value }));
     setAboutDirty(true);
-    setAboutMessage('');
+    setAboutStatus(null);
   }
 
   if (loading) {
@@ -969,8 +973,8 @@ export default function SettingsEditor() {
     });
 
   // An error from either save wins over the other's success.
-  const saveBarMessage =
-    [saveMessage, aboutMessage].find((m) => m.startsWith('Error')) || saveMessage || aboutMessage;
+  const saveBarStatus: SaveStatus =
+    [saveStatus, aboutStatus].find((st) => st?.kind === 'error') ?? saveStatus ?? aboutStatus;
 
   return (
     <div className="settings-editor">
@@ -979,7 +983,7 @@ export default function SettingsEditor() {
       <SaveBar
         dirty={dirty || aboutDirty}
         saving={saving || aboutSaving}
-        saveMessage={saveBarMessage}
+        status={saveBarStatus}
         onSave={saveAll}
         label="Save Changes"
       />
@@ -1231,7 +1235,7 @@ export default function SettingsEditor() {
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      setFaviconMessage('');
+                      setFaviconStatus(null);
                       setFaviconUploading(true);
                       const form = new FormData();
                       form.append('file', file);
@@ -1241,9 +1245,13 @@ export default function SettingsEditor() {
                           body: form,
                         });
                         const data = await res.json();
-                        setFaviconMessage(res.ok ? data.message : `Error: ${data.error}`);
+                        setFaviconStatus(
+                          res.ok
+                            ? { kind: 'success', message: data.message }
+                            : { kind: 'error', message: `Error: ${data.error}` },
+                        );
                       } catch {
-                        setFaviconMessage('Error: Upload failed');
+                        setFaviconStatus({ kind: 'error', message: 'Error: Upload failed' });
                       } finally {
                         setFaviconUploading(false);
                         e.target.value = '';
@@ -1255,14 +1263,18 @@ export default function SettingsEditor() {
                     className="admin-btn"
                     disabled={faviconUploading}
                     onClick={async () => {
-                      setFaviconMessage('');
+                      setFaviconStatus(null);
                       setFaviconUploading(true);
                       try {
                         const res = await fetch('/api/admin/favicon', { method: 'DELETE' });
                         const data = await res.json();
-                        setFaviconMessage(res.ok ? data.message : `Error: ${data.error}`);
+                        setFaviconStatus(
+                          res.ok
+                            ? { kind: 'success', message: data.message }
+                            : { kind: 'error', message: `Error: ${data.error}` },
+                        );
                       } catch {
-                        setFaviconMessage('Error: Reset failed');
+                        setFaviconStatus({ kind: 'error', message: 'Error: Reset failed' });
                       } finally {
                         setFaviconUploading(false);
                       }
@@ -1272,12 +1284,8 @@ export default function SettingsEditor() {
                   </button>
                   {faviconUploading && <div className="admin-spinner" />}
                 </div>
-                {faviconMessage && (
-                  <p
-                    className={`save-message ${faviconMessage.startsWith('Error') ? 'error' : 'success'}`}
-                  >
-                    {faviconMessage}
-                  </p>
+                {faviconStatus && (
+                  <p className={`save-message ${faviconStatus.kind}`}>{faviconStatus.message}</p>
                 )}
                 <span className="admin-field-hint">
                   SVG, PNG, ICO, or JPEG — max 512 kB. Stored in the content volume. Reset restores
@@ -2172,7 +2180,7 @@ export default function SettingsEditor() {
                       onChange={(e) => {
                         setAboutGearText(e.target.value);
                         setAboutDirty(true);
-                        setAboutMessage('');
+                        setAboutStatus(null);
                       }}
                       placeholder={`Leica Q3\nSummilux 35mm f/1.4`}
                       rows={4}
@@ -2185,7 +2193,7 @@ export default function SettingsEditor() {
                       onChange={(e) => {
                         setAboutBody(e.target.value);
                         setAboutDirty(true);
-                        setAboutMessage('');
+                        setAboutStatus(null);
                       }}
                       placeholder="Photographer based in..."
                       rows={6}
