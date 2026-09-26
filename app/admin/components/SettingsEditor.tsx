@@ -1858,7 +1858,7 @@ export default function SettingsEditor() {
                     >
                       {notifyUrlInvalid
                         ? 'Must start with https:// or http://.'
-                        : 'Gets a short "New message from …" push, never the message itself. Pick a topic name nobody can guess. CONTACT_NOTIFY_URL overrides this.'}
+                        : 'Gets a fixed "new message" push, with nothing about the sender. Pick a topic name nobody can guess. CONTACT_NOTIFY_URL overrides this.'}
                     </p>
                   </div>
                   <div className="admin-field">

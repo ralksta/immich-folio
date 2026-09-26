@@ -101,10 +101,10 @@ export function processingFacts(
       topic: 'Contact form',
       detail: `Name, email address and message are stored on this server in content/messages/ and deleted after ${config.contact.retentionDays} days.${
         config.contact.notifyUrl
-          ? ` A notification with the sender’s name only goes to ${hostOf(config.contact.notifyUrl)}.`
+          ? ` A notification goes to ${hostOf(config.contact.notifyUrl)}, carrying nothing about the sender.`
           : ''
       }`,
-      thirdParty: !!config.contact.notifyUrl,
+      thirdParty: false,
     });
   }
   if (env.hasPasswords) {

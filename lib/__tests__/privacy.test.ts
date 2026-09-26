@@ -54,7 +54,9 @@ describe('processingFacts', () => {
       { hasPasswords: true, CDN_URL: 'https://cdn.example.net' },
     );
     const third = facts.filter((f) => f.thirdParty).map((f) => f.topic);
-    expect(third).toEqual(['Map', 'Contact form', 'CDN']);
+    // The notification carries nothing about the sender (#702), so the
+    // contact form is not a third-party transfer.
+    expect(third).toEqual(['Map', 'CDN']);
     const contact = facts.find((f) => f.topic === 'Contact form')!;
     expect(contact.detail).toContain('30 days');
     // The host, never the topic path: the topic name is the secret.

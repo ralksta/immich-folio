@@ -124,7 +124,7 @@ footer:
 # no legal.contactUrl, the Impressum links this form as its second channel.
 contact:
   enabled: false
-  # A short "New message from <name>" push, never the message itself.
+  # A fixed "new message" push, with nothing about the sender.
   # Pick a topic nobody can guess. CONTACT_NOTIFY_URL overrides this.
   # notifyUrl: "https://ntfy.sh/your-secret-topic"
   retentionDays: 90 # messages are deleted after this many days
