@@ -166,8 +166,18 @@ export function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) 
       });
 
       if (res.ok) {
-        serverMarkdown.current = rawMarkdown;
-        draft.saved(rawMarkdown);
+        // The file as written, not as sent: a password line is hashed on the
+        // way to disk (#690). Taking the sent text as the base would make the
+        // next draft look like a conflicting edit from elsewhere.
+        const data = await res.json().catch(() => null);
+        const written: string =
+          typeof data?.entry?.rawMarkdown === 'string' ? data.entry.rawMarkdown : rawMarkdown;
+        serverMarkdown.current = written;
+        draft.saved(written);
+        if (written !== rawMarkdown) {
+          setRawMarkdown(written);
+          setParsed(parseJournalMarkdown(written));
+        }
         setDirty(false);
       } else if (!reportIfSessionExpired(res)) {
         const data = await res.json();

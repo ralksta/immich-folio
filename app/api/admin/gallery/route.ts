@@ -62,6 +62,8 @@ export const PUT = withAdmin(async (request: Request) => {
     return NextResponse.json({
       success: true,
       message: 'Saved successfully. Backup of previous version created.',
+      // What was written, passwords hashed, so the editor can take it over.
+      gallery: toWrite,
     });
   } catch (err) {
     console.error('[Admin] Failed to write gallery.yaml:', err);

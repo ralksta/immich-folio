@@ -797,6 +797,10 @@ export default function SettingsEditor() {
 
       if (res.ok) {
         const data = await res.json();
+        // The site password is stored hashed (#690); show that, not the typed text.
+        if (typeof data.sitePassword === 'string') {
+          setSettings((s) => ({ ...s, sitePassword: data.sitePassword }));
+        }
         setDirty(false);
         setSaveMessage(data.message || 'Saved!');
         router.refresh();

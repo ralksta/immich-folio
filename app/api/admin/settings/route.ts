@@ -59,6 +59,8 @@ export const PUT = withAdmin(async (request: Request) => {
     return NextResponse.json({
       success: true,
       message: 'Saved successfully. Backup of previous version created.',
+      // The stored site password, hashed, so the field can read "Protected".
+      sitePassword: settings.sitePassword,
     });
   } catch (err) {
     console.error('[Admin] Failed to write settings.yaml:', err);
