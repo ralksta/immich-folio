@@ -548,3 +548,72 @@
 .admin-layout .diag-page {
   margin-left: 0;
 }
+
+/* ── Page header (stage 2) ─────────────────────────────────── */
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  flex-wrap: wrap;
+  margin: 0 0 2rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.page-header-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.55rem;
+  font-family: var(--admin-font-label);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--admin-text-muted);
+}
+
+.page-header-kicker::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  background: var(--admin-accent);
+}
+
+.page-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  font-size: clamp(1.5rem, 2.4vw, 1.9rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.page-header-sub {
+  margin: 0.35rem 0 0;
+  max-width: 62ch;
+  color: var(--admin-text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.page-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* The journal list is an ordinary screen and gets the workspace column; only
+   the editor (split view) needs the full width journal-studio.css gives it. */
+.admin-app .admin-main:has(> .journal-studio) {
+  max-width: 1180px;
+  padding: 2.25rem 2.5rem 6rem;
+}
+
+@media (max-width: 860px) {
+  .admin-app .admin-main:has(> .journal-studio) {
+    padding: 1.5rem 1rem 6rem;
+  }
+}

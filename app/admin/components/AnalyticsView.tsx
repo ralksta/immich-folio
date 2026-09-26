@@ -3,6 +3,7 @@
 import * as Icons from './Icons';
 import { useAdminFetch } from './useAdminFetch';
 import AdminLoadState from './AdminLoadState';
+import PageHeader from './PageHeader';
 
 interface AnalyticsData {
   trackingEnabled?: boolean;
@@ -51,20 +52,16 @@ export default function AnalyticsView() {
 
   return (
     <div className="analytics-view">
-      {/* Header */}
-      <div className="analytics-header">
-        <div>
-          <h2>
-            <Icons.IconSparkles size={20} /> Visitor Insights &amp; Analytics
-          </h2>
-          <p className="analytics-subtitle">
-            Privacy-first aggregate traffic stats. No personal data collected.
-          </p>
-        </div>
-        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={analytics.reload}>
-          <Icons.IconRefresh size={14} /> Refresh
-        </button>
-      </div>
+      <PageHeader
+        kicker="Visitors"
+        title="Analytics"
+        description="Cookieless page counts, kept on this server. No personal data is collected."
+        actions={
+          <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={analytics.reload}>
+            <Icons.IconRefresh size={14} /> Refresh
+          </button>
+        }
+      />
 
       {data.trackingEnabled === false && (
         <div

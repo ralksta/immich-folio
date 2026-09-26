@@ -7,6 +7,7 @@ import * as Icons from './Icons';
 import { DOCTOR_LEVEL_EVENT } from './systemHealth';
 import type { DoctorFinding, DoctorLevel } from '@/lib/admin/doctor';
 import type { AltTextReport } from '@/lib/admin/alt-text';
+import PageHeader from './PageHeader';
 
 /**
  * Diagnostics as a page (/admin/diagnostics).
@@ -379,27 +380,26 @@ export default function DiagnosticsView() {
 
   return (
     <div className="diag-page">
-      <div className="diag-head">
-        <div>
-          <h2>{headline}</h2>
-          <p className="diag-sub">
-            {ranAt ? `Last run ${ranAt.toLocaleString()}` : 'Running the checks…'}
-          </p>
-        </div>
-        <div className="diag-actions">
-          <button className="admin-btn admin-btn-sm" onClick={run} disabled={loading}>
-            <Icons.IconRefresh size={14} /> {loading ? 'Checking…' : 'Run again'}
-          </button>
-          <button
-            className="admin-btn admin-btn-sm"
-            onClick={copyReport}
-            disabled={loading || !all.length}
-            title="Markdown, ready to paste into an issue"
-          >
-            <Icons.IconCopy size={14} /> {copied ? 'Copied' : 'Copy report'}
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        kicker="System"
+        title={headline}
+        description={ranAt ? `Last run ${ranAt.toLocaleString()}` : 'Running the checks…'}
+        actions={
+          <>
+            <button className="admin-btn admin-btn-sm" onClick={run} disabled={loading}>
+              <Icons.IconRefresh size={14} /> {loading ? 'Checking…' : 'Run again'}
+            </button>
+            <button
+              className="admin-btn admin-btn-sm"
+              onClick={copyReport}
+              disabled={loading || !all.length}
+              title="Markdown, ready to paste into an issue"
+            >
+              <Icons.IconCopy size={14} /> {copied ? 'Copied' : 'Copy report'}
+            </button>
+          </>
+        }
+      />
 
       {error && <div className="admin-error">{error}</div>}
 

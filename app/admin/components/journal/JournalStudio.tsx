@@ -19,6 +19,7 @@ import { JournalEditor } from './JournalEditor';
 import { useNotify } from '../Notifications';
 import { useAdminFetch } from '../useAdminFetch';
 import AdminLoadState from '../AdminLoadState';
+import PageHeader from '../PageHeader';
 
 interface JournalStudioProps {
   /** Entry to open, taken from the /admin/journal/[slug] route. */
@@ -130,23 +131,20 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
 
   return (
     <div className="journal-studio">
-      <div className="journal-studio-header">
-        <div>
-          <h2>
-            <IconBook size={20} /> Journal &amp; Photo Essays
-          </h2>
-          <p style={{ margin: '4px 0 0', opacity: 0.7, fontSize: '0.9rem' }}>
-            Author visual stories, field notes, and longform photo essays with live preview.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="admin-btn admin-btn-primary"
-          onClick={() => setShowCreateModal(true)}
-        >
-          <IconPlus size={16} /> New Journal Entry
-        </button>
-      </div>
+      <PageHeader
+        kicker="Content"
+        title="Journal"
+        description="Stories, field notes and longform photo essays, written with a live preview."
+        actions={
+          <button
+            type="button"
+            className="admin-btn admin-btn-primary"
+            onClick={() => setShowCreateModal(true)}
+          >
+            <IconPlus size={16} /> New Journal Entry
+          </button>
+        }
+      />
 
       {(list.loading && !list.data) || list.error ? (
         <AdminLoadState
