@@ -1,0 +1,205 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import * as Icons from '../Icons';
+import type { SaveStatus } from '../SaveBar';
+
+interface AboutMeta {
+  portrait?: string;
+  name?: string;
+  location?: string;
+  gear?: string[];
+}
+
+/**
+ * The About page editor's state: content/about.md, loaded over its own
+ * endpoint and saved on its own, but reached through the settings nav and
+ * saved by the same save bar and ⌘S (#554).
+ *
+ * A hook rather than state inside the section, because the section unmounts
+ * when another one is opened while an About edit is still unsaved, and the
+ * save bar has to keep offering it.
+ */
+export function useAboutEditor(active: boolean) {
+  const [aboutMeta, setAboutMeta] = useState<AboutMeta>({});
+  const [aboutBody, setAboutBody] = useState('');
+  const [aboutLoading, setAboutLoading] = useState(false);
+  const [aboutLoaded, setAboutLoaded] = useState(false);
+  const [aboutSaving, setAboutSaving] = useState(false);
+  const [aboutDirty, setAboutDirty] = useState(false);
+  const [aboutStatus, setAboutStatus] = useState<SaveStatus>(null);
+  const [aboutGearText, setAboutGearText] = useState('');
+
+  const loadAboutContent = useCallback(async () => {
+    setAboutLoading(true);
+    setAboutStatus(null);
+    try {
+      const res = await fetch('/api/admin/about');
+      if (!res.ok) {
+        throw new Error(
+          res.status === 401
+            ? 'Your session has expired. Sign in again to continue.'
+            : `The server answered ${res.status}.`,
+        );
+      }
+      const data = await res.json();
+      setAboutMeta(data.meta || {});
+      setAboutBody(data.body || '');
+      setAboutGearText(data.meta?.gear?.join('\n') || '');
+      setAboutLoaded(true);
+    } catch (err) {
+      console.error('Failed to load about content:', err);
+      // aboutLoaded stays false, which is what blocks the save below: an empty
+      // editor written to about.md would replace the page with nothing.
+      setAboutStatus({
+        kind: 'error',
+        message: `Error: ${err instanceof Error ? err.message : 'The About page could not be loaded.'}`,
+      });
+    } finally {
+      setAboutLoading(false);
+    }
+  }, []);
+
+  async function saveAboutContent() {
+    if (!aboutLoaded) return;
+
+    setAboutSaving(true);
+    setAboutStatus(null);
+    const cleanedMeta = { ...aboutMeta };
+    for (const [k, v] of Object.entries(cleanedMeta)) {
+      if (v === '' || v === undefined) delete cleanedMeta[k as keyof typeof cleanedMeta];
+    }
+    const gearLines = aboutGearText
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (gearLines.length > 0) {
+      cleanedMeta.gear = gearLines;
+    } else {
+      delete cleanedMeta.gear;
+    }
+
+    try {
+      const res = await fetch('/api/admin/about', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ meta: cleanedMeta, body: aboutBody }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAboutDirty(false);
+        setAboutStatus({ kind: 'success', message: data.message || 'Saved!' });
+        setTimeout(() => setAboutStatus(null), 4000);
+      } else {
+        const err = await res.json();
+        setAboutStatus({ kind: 'error', message: `Error: ${err.error}` });
+      }
+    } catch {
+      setAboutStatus({ kind: 'error', message: 'Error: Failed to save' });
+    } finally {
+      setAboutSaving(false);
+    }
+  }
+
+  // Loaded the first time the About section opens, and only then: the editor
+  // stays mounted across sections, so reloading on every visit would overwrite
+  // unsaved About edits with the file on disk.
+  useEffect(() => {
+    if (active && !aboutLoaded) loadAboutContent();
+  }, [active, aboutLoaded, loadAboutContent]);
+
+  function updateAboutMeta(key: string, value: unknown) {
+    setAboutMeta((m) => ({ ...m, [key]: value }));
+    setAboutDirty(true);
+    setAboutStatus(null);
+  }
+
+  return {
+    meta: aboutMeta,
+    body: aboutBody,
+    gearText: aboutGearText,
+    loading: aboutLoading,
+    saving: aboutSaving,
+    dirty: aboutDirty,
+    status: aboutStatus as SaveStatus,
+    updateMeta: updateAboutMeta,
+    setBody: (value: string) => {
+      setAboutBody(value);
+      setAboutDirty(true);
+      setAboutStatus(null);
+    },
+    setGearText: (value: string) => {
+      setAboutGearText(value);
+      setAboutDirty(true);
+      setAboutStatus(null);
+    },
+    save: saveAboutContent,
+  };
+}
+
+export type AboutEditor = ReturnType<typeof useAboutEditor>;
+
+export default function AboutSection({ about }: { about: AboutEditor }) {
+  return (
+    <div className="settings-panel">
+      <div className="settings-section-header">
+        <h3>
+          <Icons.IconCamera size={18} /> About Page
+        </h3>
+        <p className="settings-section-sub">
+          Edit the portrait, biography and gear shown on the About page. Use General to show or hide
+          the page itself.
+        </p>
+      </div>
+
+      {about.loading ? (
+        <div className="admin-spinner" style={{ margin: '2rem auto' }} />
+      ) : (
+        <>
+          <div className="admin-field">
+            <label>Portrait Asset ID</label>
+            <input
+              value={about.meta.portrait || ''}
+              onChange={(e) => about.updateMeta('portrait', e.target.value)}
+              placeholder="Immich asset UUID for the portrait photo"
+            />
+          </div>
+          <div className="admin-field">
+            <label>Name</label>
+            <input
+              value={about.meta.name || ''}
+              onChange={(e) => about.updateMeta('name', e.target.value)}
+              placeholder="Your name"
+            />
+          </div>
+          <div className="admin-field">
+            <label>Location</label>
+            <input
+              value={about.meta.location || ''}
+              onChange={(e) => about.updateMeta('location', e.target.value)}
+              placeholder="City, Country"
+            />
+          </div>
+          <div className="admin-field">
+            <label>Gear (one per line)</label>
+            <textarea
+              value={about.gearText}
+              onChange={(e) => about.setGearText(e.target.value)}
+              placeholder={`Leica Q3\nSummilux 35mm f/1.4`}
+              rows={4}
+            />
+          </div>
+          <div className="admin-field">
+            <label>Biography (Markdown)</label>
+            <textarea
+              value={about.body}
+              onChange={(e) => about.setBody(e.target.value)}
+              placeholder="Photographer based in..."
+              rows={6}
+            />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
