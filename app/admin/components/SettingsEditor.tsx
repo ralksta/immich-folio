@@ -188,6 +188,12 @@ export default function SettingsEditor() {
     setSettings((s) => {
       const copy = JSON.parse(JSON.stringify(s));
       const parts = path.split('.');
+      // Paths are literals in the section components, but a key like
+      // `__proto__` would write through to Object.prototype (CodeQL
+      // js/prototype-pollution-utility).
+      if (parts.some((p) => p === '__proto__' || p === 'constructor' || p === 'prototype')) {
+        return s;
+      }
       let obj = copy;
       for (let i = 0; i < parts.length - 1; i++) {
         if (!obj[parts[i]]) obj[parts[i]] = {};
