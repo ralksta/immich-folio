@@ -38,6 +38,18 @@ const SETTINGS_SECTIONS = [
   { id: 'about', label: 'About' },
 ];
 
+function withoutSitePassword(settings: Settings): Settings {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { sitePassword, ...rest } = settings;
+  return rest;
+}
+
+function withSitePasswordOf(draft: Settings, source: Settings): Settings {
+  return source.sitePassword === undefined
+    ? draft
+    : { ...draft, sitePassword: source.sitePassword };
+}
+
 export default function SettingsEditor() {
   const router = useRouter();
   // Read here rather than passed in: the editor is mounted by the settings
@@ -70,7 +82,11 @@ export default function SettingsEditor() {
   // builder's and the journal's do (#592) — useUnsavedGuard only covers
   // leaving the browser.
   const [serverSettings, setServerSettings] = useState<Settings>({});
-  const settingsDraft = useDraft<Settings>('settings', settings, dirty);
+  // The draft never sees `sitePassword`: sessionStorage is readable by any
+  // script on the admin origin, and until it is saved (and hashed) the field
+  // holds the password as typed. A restored draft takes the password from the
+  // server instead; a new one is typed again after a reload.
+  const settingsDraft = useDraft<Settings>('settings', withoutSitePassword(settings), dirty);
 
   useEffect(() => {
     loadSettings();
@@ -136,7 +152,8 @@ export default function SettingsEditor() {
       const { settings: data, siteUrl } = await res.json();
       const loaded: Settings = data || {};
       setServerSettings(loaded);
-      const restored = settingsDraft.load(JSON.stringify(loaded));
+      const restoredDraft = settingsDraft.load(JSON.stringify(withoutSitePassword(loaded)));
+      const restored = restoredDraft && withSitePasswordOf(restoredDraft, loaded);
       setSettings(restored ?? loaded);
       setDirty(restored !== null);
       setSiteUrlInfo(siteUrl ?? null);
@@ -221,7 +238,7 @@ export default function SettingsEditor() {
           setSettings((s) => ({ ...s, sitePassword: data.sitePassword }));
         }
         setServerSettings(stored);
-        settingsDraft.saved(JSON.stringify(stored));
+        settingsDraft.saved(JSON.stringify(withoutSitePassword(stored)));
         setDirty(false);
         setSaveStatus({ kind: 'success', message: data.message || 'Saved!' });
         router.refresh();
@@ -314,7 +331,7 @@ export default function SettingsEditor() {
         onRestore={() => {
           const value = settingsDraft.takeConflicting();
           if (!value) return;
-          setSettings(value);
+          setSettings(withSitePasswordOf(value, serverSettings));
           setDirty(true);
         }}
         onDismiss={settingsDraft.dismiss}
