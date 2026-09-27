@@ -337,8 +337,8 @@ export default function PageBuilder() {
   }
 
   // ── Pickers ──────────────────────────────────────────────────
-  function handleHeroSelect(assetId: string) {
-    edit((g) => ops.addHero(g, assetId));
+  function handleHeroSelectMany(assetIds: string[]) {
+    edit((g) => ops.addHeroes(g, assetIds));
     setHeroPickerTarget(null);
   }
 
@@ -1019,9 +1019,9 @@ export default function PageBuilder() {
                     className="admin-btn admin-btn-sm"
                     onClick={() =>
                       setHeroPickerTarget({
-                        onSelect: handleHeroSelect,
+                        onSelectMany: handleHeroSelectMany,
                         currentAssetIds: gallery.hero,
-                        title: 'Pick Hero Image for Homepage',
+                        title: 'Pick Hero Images for Homepage',
                       })
                     }
                   >
@@ -1102,6 +1102,7 @@ export default function PageBuilder() {
         <AssetPicker
           albumId={heroPickerTarget.albumId}
           onSelect={heroPickerTarget.onSelect}
+          onSelectMany={heroPickerTarget.onSelectMany}
           onClose={() => setHeroPickerTarget(null)}
           currentAssetIds={heroPickerTarget.currentAssetIds}
           title={heroPickerTarget.title}

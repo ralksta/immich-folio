@@ -167,3 +167,85 @@
   margin-top: 0.3rem;
   display: block;
 }
+
+/* ── Search and multi-select (#602) ────────────────────────── */
+
+.asset-picker-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--admin-border);
+  color: var(--admin-text-muted);
+}
+
+.asset-picker-search-input {
+  flex: 1;
+  padding: 0.45rem 0.7rem;
+  background: var(--admin-bg-input);
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  color: var(--admin-text);
+  font-size: 0.85rem;
+}
+
+.asset-picker-search-input:focus-visible {
+  outline: var(--admin-focus-ring);
+  outline-offset: 1px;
+  border-color: var(--admin-border-focus);
+}
+
+/* Tiles are buttons now; reset what the browser gives a button. */
+button.asset-picker-tile {
+  display: block;
+  width: 100%;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+}
+
+.asset-picker-tile:focus-visible {
+  outline: var(--admin-focus-ring);
+  outline-offset: 2px;
+}
+
+.asset-picker-tile:disabled:not(.used) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.asset-picker-tile.selected {
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 2px var(--admin-accent);
+}
+
+.asset-picker-order-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: var(--admin-accent);
+  color: #000;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.asset-picker-selection {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-top: 1px solid var(--admin-border);
+  font-size: 0.85rem;
+  color: var(--admin-text-secondary);
+}
+
+.asset-picker-selection > span {
+  flex: 1;
+}

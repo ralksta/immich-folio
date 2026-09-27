@@ -36,7 +36,7 @@ import { BlockFields, type AssetPickTarget } from './BlockFields';
 import { StorySettingsModal } from './StorySettingsModal';
 import { PageSettingsPanel } from './PageSettingsPanel';
 import { JournalPreview } from './JournalPreview';
-import { createBlock, moveBlock } from './blockOps';
+import { createBlock, createPhotoBlocks, moveBlock } from './blockOps';
 import { useSplitPane, SPLIT_MIN, SPLIT_MAX } from './splitPane';
 import { useNotify } from '../Notifications';
 
@@ -524,6 +524,19 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
                 <button
                   type="button"
                   className="admin-btn admin-btn-xs admin-btn-primary"
+                  onClick={() =>
+                    setAssetPickerTarget({
+                      title: 'Add Photos (one block each)',
+                      onSelectMany: (ids) =>
+                        handleBlocksChange([...parsed.blocks, ...createPhotoBlocks(ids)]),
+                    })
+                  }
+                >
+                  <IconCamera size={13} /> + Photos
+                </button>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-xs admin-btn-primary"
                   onClick={() => handleAddBlock('photo-pair')}
                 >
                   <IconArrowLeftRight size={13} /> + 2-Photo Pair
@@ -674,10 +687,18 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
       {assetPickerTarget && (
         <AssetPicker
           title={assetPickerTarget.title}
+          max={assetPickerTarget.max}
           onSelect={(id) => {
-            assetPickerTarget.onSelect(id);
+            assetPickerTarget.onSelect?.(id);
             setAssetPickerTarget(null);
           }}
+          onSelectMany={
+            assetPickerTarget.onSelectMany &&
+            ((ids) => {
+              assetPickerTarget.onSelectMany?.(ids);
+              setAssetPickerTarget(null);
+            })
+          }
           onClose={() => setAssetPickerTarget(null)}
         />
       )}

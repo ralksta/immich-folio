@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import type { JournalBlock } from '@/lib/journal';
 import { serializeJournalMarkdown, parseJournalMarkdown } from '@/lib/journal';
-import { createBlock, moveBlock, isLegacyAssetRef } from '../components/journal/blockOps';
+import {
+  createBlock,
+  createPhotoBlocks,
+  fillAssetSlots,
+  moveBlock,
+  isLegacyAssetRef,
+} from '../components/journal/blockOps';
 import {
   clampSplit,
   splitFromPointer,
@@ -122,5 +128,23 @@ describe('split pane', () => {
     expect(parseStoredSplit(null)).toBeNull();
     expect(parseStoredSplit('90')).toBeNull();
     expect(parseStoredSplit('abc')).toBeNull();
+  });
+});
+
+describe('multi-pick into photo blocks (#602)', () => {
+  it('fills empty slots first, then appends', () => {
+    expect(fillAssetSlots(['a', '', ''], ['x', 'y', 'z'])).toEqual(['a', 'x', 'y', 'z']);
+  });
+
+  it('never grows past a capacity', () => {
+    expect(fillAssetSlots(['', ''], ['x', 'y', 'z'], 2)).toEqual(['x', 'y']);
+    expect(fillAssetSlots(['a', ''], ['x'], 2)).toEqual(['a', 'x']);
+  });
+
+  it('creates one contained photo block per asset', () => {
+    expect(createPhotoBlocks(['x', 'y'])).toEqual([
+      { type: 'photo', assetId: 'x', caption: '', layout: 'contained' },
+      { type: 'photo', assetId: 'y', caption: '', layout: 'contained' },
+    ]);
   });
 });

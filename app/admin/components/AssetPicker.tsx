@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useModalDialog } from '@/hooks/useModalDialog';
-import { IconCheck, IconFolder, IconImage, IconStar } from './Icons';
+import { canSelectMore, matchesQuery, toggleSelection } from '@/lib/admin/assetSelection';
+import { IconCheck, IconFolder, IconImage, IconSearch, IconStar } from './Icons';
 import { useScrollLock } from './useScrollLock';
 
 interface AssetInfo {
@@ -13,7 +14,15 @@ interface AssetInfo {
 }
 
 interface Props {
-  onSelect: (assetId: string) => void;
+  /** Single-select: called with the one asset picked; the caller closes the picker. */
+  onSelect?: (assetId: string) => void;
+  /**
+   * Multi-select (#602): tiles toggle, and a confirm button hands over every
+   * picked asset in the order they were picked. Takes precedence over `onSelect`.
+   */
+  onSelectMany?: (assetIds: string[]) => void;
+  /** Most assets `onSelectMany` accepts; unlimited when omitted. */
+  max?: number;
   onClose: () => void;
   currentAssetIds?: string[];
   albumId?: string;
@@ -22,8 +31,12 @@ interface Props {
 
 type Tab = 'album' | 'favorites' | 'all';
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 export default function AssetPicker({
   onSelect,
+  onSelectMany,
+  max,
   onClose,
   currentAssetIds = [],
   albumId,
@@ -31,16 +44,30 @@ export default function AssetPicker({
 }: Props) {
   useScrollLock(true);
   const cardRef = useModalDialog(onClose);
+  const multi = onSelectMany !== undefined;
   const [tab, setTab] = useState<Tab>(albumId ? 'album' : 'favorites');
   const [assets, setAssets] = useState<AssetInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const [queryInput, setQueryInput] = useState('');
+  const [query, setQuery] = useState('');
+  const [selected, setSelected] = useState<string[]>([]);
   const [uuidInput, setUuidInput] = useState('');
   const [uuidError, setUuidError] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
-  const currentIds = new Set(currentAssetIds);
+  const currentIds = useMemo(() => new Set(currentAssetIds), [currentAssetIds]);
+
+  // Debounce typing into the query the fetch runs on.
+  useEffect(() => {
+    const t = setTimeout(() => setQuery(queryInput.trim()), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [queryInput]);
+
+  // The album tab loads the album whole and filters locally; the library tabs
+  // search server-side, since they are paged.
+  const serverQuery = tab === 'album' ? '' : query;
 
   const loadAssets = useCallback(
     async (pageNum: number, append: boolean = false) => {
@@ -56,11 +83,17 @@ export default function AssetPicker({
             page: pageNum.toString(),
             favorites: tab === 'favorites' ? 'true' : 'false',
           });
+          if (serverQuery) params.set('q', serverQuery);
           res = await fetch(`/api/admin/assets?${params}`);
         }
         if (res.ok) {
           const data = await res.json();
-          setAssets((prev) => (append ? [...prev, ...data.assets] : data.assets));
+          setAssets((prev) => {
+            if (!append) return data.assets;
+            // Merged filename + description pages can overlap across pages.
+            const seen = new Set(prev.map((a) => a.id));
+            return [...prev, ...data.assets.filter((a: AssetInfo) => !seen.has(a.id))];
+          });
           setHasMore(data.nextPage !== null);
           setPage(pageNum);
         }
@@ -71,7 +104,7 @@ export default function AssetPicker({
         setLoadingMore(false);
       }
     },
-    [tab, albumId],
+    [tab, albumId, serverQuery],
   );
 
   useEffect(() => {
@@ -79,7 +112,9 @@ export default function AssetPicker({
     setPage(1);
     setHasMore(false);
     loadAssets(1);
-  }, [tab, loadAssets]);
+  }, [loadAssets]);
+
+  const visible = tab === 'album' ? assets.filter((a) => matchesQuery(a, query)) : assets;
 
   // Infinite scroll
   function handleScroll() {
@@ -88,6 +123,16 @@ export default function AssetPicker({
     if (scrollHeight - scrollTop - clientHeight < 200) {
       loadAssets(page + 1, true);
     }
+  }
+
+  function pick(id: string) {
+    if (currentIds.has(id)) return;
+    if (multi) setSelected((s) => toggleSelection(s, id, { disabled: currentIds, max }));
+    else onSelect?.(id);
+  }
+
+  function confirm() {
+    if (multi && selected.length > 0) onSelectMany(selected);
   }
 
   function handleUuidSubmit(e: React.FormEvent) {
@@ -99,7 +144,12 @@ export default function AssetPicker({
       return;
     }
     setUuidError('');
-    onSelect(uuid);
+    if (multi) {
+      setSelected((s) => toggleSelection(s, uuid.toLowerCase(), { disabled: currentIds, max }));
+      setUuidInput('');
+    } else {
+      onSelect?.(uuid);
+    }
   }
 
   function formatDate(dateStr: string): string {
@@ -114,6 +164,8 @@ export default function AssetPicker({
     }
   }
 
+  const full = multi && !canSelectMore(selected, max);
+
   return (
     <div className="picker-overlay" onClick={onClose}>
       <div
@@ -126,7 +178,7 @@ export default function AssetPicker({
       >
         <div className="picker-header">
           <h3 id="asset-picker-title">{title || 'Select Hero Image'}</h3>
-          <button className="admin-btn-icon" onClick={onClose}>
+          <button className="admin-btn-icon" onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
@@ -136,6 +188,7 @@ export default function AssetPicker({
           {albumId && (
             <button
               className={`asset-picker-tab ${tab === 'album' ? 'active' : ''}`}
+              aria-pressed={tab === 'album'}
               onClick={() => setTab('album')}
             >
               <IconFolder size={14} />
@@ -144,6 +197,7 @@ export default function AssetPicker({
           )}
           <button
             className={`asset-picker-tab ${tab === 'favorites' ? 'active' : ''}`}
+            aria-pressed={tab === 'favorites'}
             onClick={() => setTab('favorites')}
           >
             <IconStar size={14} />
@@ -151,6 +205,7 @@ export default function AssetPicker({
           </button>
           <button
             className={`asset-picker-tab ${tab === 'all' ? 'active' : ''}`}
+            aria-pressed={tab === 'all'}
             onClick={() => setTab('all')}
           >
             <IconImage size={14} />
@@ -158,45 +213,91 @@ export default function AssetPicker({
           </button>
         </div>
 
+        {/* Search */}
+        <div className="asset-picker-search">
+          <IconSearch size={14} />
+          <input
+            type="search"
+            value={queryInput}
+            onChange={(e) => setQueryInput(e.target.value)}
+            onKeyDown={(e) => {
+              // Enter in the field searches at once instead of submitting anything.
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                setQuery(queryInput.trim());
+              }
+            }}
+            maxLength={100}
+            placeholder={
+              tab === 'album'
+                ? 'Filter this album by filename…'
+                : 'Search filename, description, or a date (2024-05)…'
+            }
+            aria-label="Search photos"
+            className="asset-picker-search-input"
+          />
+        </div>
+
         {/* Asset Grid */}
-        <div className="asset-picker-grid" ref={listRef} onScroll={handleScroll}>
+        <div
+          className="asset-picker-grid"
+          ref={listRef}
+          onScroll={handleScroll}
+          role="group"
+          aria-label="Photos"
+        >
           {loading ? (
             <div className="asset-picker-loading">
               <div className="admin-spinner" />
             </div>
-          ) : assets.length === 0 ? (
+          ) : visible.length === 0 ? (
             <p className="empty-hint">
-              {tab === 'favorites'
-                ? 'No favorite photos found. Star photos in Immich first, or switch to "All Photos".'
-                : 'No photos found.'}
+              {query
+                ? `No photos match “${query}”.`
+                : tab === 'favorites'
+                  ? 'No favorite photos found. Star photos in Immich first, or switch to "All Photos".'
+                  : 'No photos found.'}
             </p>
           ) : (
             <>
-              {assets.map((asset) => {
+              {visible.map((asset) => {
                 const isUsed = currentIds.has(asset.id);
+                const order = selected.indexOf(asset.id);
+                const isSelected = order !== -1;
+                const blocked = isUsed || (full && !isSelected);
+                const label = `${asset.originalFileName}, ${formatDate(asset.fileCreatedAt)}${
+                  isUsed ? ' (already used)' : ''
+                }`;
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={asset.id}
-                    className={`asset-picker-tile ${isUsed ? 'used' : ''}`}
-                    onClick={() => !isUsed && onSelect(asset.id)}
+                    className={`asset-picker-tile ${isUsed ? 'used' : ''} ${
+                      isSelected ? 'selected' : ''
+                    }`}
+                    onClick={() => pick(asset.id)}
+                    disabled={blocked}
+                    aria-pressed={multi ? isSelected : undefined}
+                    aria-label={label}
                     title={`${asset.originalFileName}\n${formatDate(asset.fileCreatedAt)}`}
                   >
-                    <img
-                      src={`/api/admin/thumbnail/${asset.id}`}
-                      alt={asset.originalFileName}
-                      loading="lazy"
-                    />
+                    <img src={`/api/admin/thumbnail/${asset.id}`} alt="" loading="lazy" />
                     {isUsed && (
-                      <div className="asset-picker-used-badge">
+                      <span className="asset-picker-used-badge" aria-hidden="true">
                         <IconCheck size={11} />
-                      </div>
+                      </span>
+                    )}
+                    {isSelected && (
+                      <span className="asset-picker-order-badge" aria-hidden="true">
+                        {max === 1 ? <IconCheck size={11} /> : order + 1}
+                      </span>
                     )}
                     {asset.isFavorite && !isUsed && (
-                      <div className="asset-picker-fav-badge" title="Favorite in Immich">
+                      <span className="asset-picker-fav-badge" aria-hidden="true">
                         <IconStar size={14} />
-                      </div>
+                      </span>
                     )}
-                  </div>
+                  </button>
                 );
               })}
               {loadingMore && (
@@ -207,6 +308,36 @@ export default function AssetPicker({
             </>
           )}
         </div>
+
+        {/* Selection bar (multi-select) */}
+        {multi && (
+          <div className="asset-picker-selection">
+            <span aria-live="polite">
+              {selected.length === 0
+                ? max && max > 1
+                  ? `Pick up to ${max} photos`
+                  : 'Pick photos'
+                : `${selected.length}${max && max > 1 ? ` of ${max}` : ''} selected`}
+            </span>
+            {selected.length > 0 && (
+              <button
+                type="button"
+                className="admin-btn admin-btn-sm"
+                onClick={() => setSelected([])}
+              >
+                Clear
+              </button>
+            )}
+            <button
+              type="button"
+              className="admin-btn admin-btn-sm admin-btn-primary"
+              disabled={selected.length === 0}
+              onClick={confirm}
+            >
+              {selected.length > 1 ? `Add ${selected.length} photos` : 'Add photo'}
+            </button>
+          </div>
+        )}
 
         {/* UUID Fallback */}
         <div className="asset-picker-uuid-section">
@@ -219,6 +350,7 @@ export default function AssetPicker({
                 setUuidError('');
               }}
               placeholder="Or paste asset UUID directly..."
+              aria-label="Asset UUID"
               className="asset-picker-uuid-input"
             />
             <button type="submit" className="admin-btn admin-btn-sm" disabled={!uuidInput.trim()}>

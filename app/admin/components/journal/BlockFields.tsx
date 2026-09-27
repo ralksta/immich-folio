@@ -13,12 +13,16 @@ import {
   IconFolder,
   IconX,
 } from '../Icons';
-import { isLegacyAssetRef } from './blockOps';
+import { fillAssetSlots, isLegacyAssetRef } from './blockOps';
 
 /** What the asset picker is opened for: its title, and where the pick goes. */
 export interface AssetPickTarget {
   title: string;
-  onSelect: (assetId: string) => void;
+  onSelect?: (assetId: string) => void;
+  /** Multi-select: several picks confirmed at once (#602). */
+  onSelectMany?: (assetIds: string[]) => void;
+  /** Most assets `onSelectMany` takes. */
+  max?: number;
 }
 
 interface BlockFieldsProps {
@@ -242,6 +246,26 @@ export function BlockFields({
               </div>
             ))}
           </div>
+          <div>
+            <button
+              type="button"
+              className="admin-btn admin-btn-xs"
+              onClick={() =>
+                onPickAsset({
+                  title: 'Select Photos for Pair',
+                  max: 2,
+                  onSelectMany: (ids) => {
+                    // Two picks replace the pair; a single pick fills a gap.
+                    const base = ids.length >= 2 ? ['', ''] : [...block.assetIds];
+                    const [a, b] = fillAssetSlots(base, ids, 2);
+                    onChange({ ...block, assetIds: [a ?? '', b ?? ''] });
+                  },
+                })
+              }
+            >
+              <IconCamera size={12} /> Pick both photos
+            </button>
+          </div>
           <input
             type="text"
             className="admin-input"
@@ -315,6 +339,19 @@ export function BlockFields({
               }
             >
               <IconPlus size={12} /> Add photo
+            </button>
+            <button
+              type="button"
+              className="admin-btn admin-btn-xs"
+              onClick={() =>
+                onPickAsset({
+                  title: 'Select Photos for Grid',
+                  onSelectMany: (ids) =>
+                    onChange({ ...block, assetIds: fillAssetSlots(block.assetIds, ids) }),
+                })
+              }
+            >
+              <IconCamera size={12} /> Pick several
             </button>
             <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
               Three or more photos, laid out in rows of three.
