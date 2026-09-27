@@ -1045,3 +1045,92 @@
     display: none;
   }
 }
+
+/* ── Status pill switches ──────────────────────────────────── */
+
+/* Every switch reads as a pill that says what it is: a dot plus ON or OFF.
+   "On" is the success green, never the accent — a preset may make the accent
+   red, and a switched-on setting must not look like an error. The markup is
+   unchanged (`.switch-toggle` > `.switch-slider`); the slider becomes the dot
+   and the word comes from CSS, hidden from assistive technology because the
+   button already carries `aria-pressed`. */
+.admin-layout .switch-toggle,
+.admin-layout .switch-toggle--sm {
+  width: auto;
+  min-width: 62px;
+  height: 24px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--admin-border-hover);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--admin-text-muted);
+  font-family: var(--admin-font-label);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.admin-layout .switch-toggle--sm {
+  min-width: 56px;
+  height: 22px;
+  padding: 0 8px;
+}
+
+.admin-layout .switch-toggle::after {
+  content: 'Off' / '';
+}
+
+.admin-layout .switch-toggle .switch-slider,
+.admin-layout .switch-toggle--sm .switch-slider {
+  position: static;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--admin-border-hover);
+  box-shadow: none;
+  transform: none;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.admin-layout .switch-toggle.on {
+  color: var(--admin-success);
+  border-color: var(--admin-success);
+  background: color-mix(in srgb, var(--admin-success) 12%, transparent);
+}
+
+.admin-layout .switch-toggle.on::after {
+  content: 'On' / '';
+}
+
+.admin-layout .switch-toggle.on .switch-slider {
+  background: var(--admin-success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--admin-success) 22%, transparent);
+  transform: none;
+}
+
+/* Inert: dashed, no dot colour — not an off switch someone could turn on. */
+.admin-layout .setting-row--disabled .switch-toggle {
+  border-style: dashed;
+  background: transparent;
+  opacity: 0.6;
+}
+
+.admin-layout .setting-row--disabled .switch-slider {
+  background: var(--admin-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-layout .switch-toggle,
+  .admin-layout .switch-slider {
+    transition: none;
+  }
+}
