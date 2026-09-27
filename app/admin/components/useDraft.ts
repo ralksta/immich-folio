@@ -46,7 +46,35 @@ export function readDraft<T>(key: string): Draft<T> | null {
   }
 }
 
+/**
+ * True when a draft holds a password as typed. Passwords are stored as scrypt
+ * hashes (#706), but between typing and saving the editor holds the plaintext,
+ * and sessionStorage is readable by any script on the admin origin. Such a
+ * draft is not kept: the unsaved-changes guard still warns before leaving, and
+ * the password is typed again after a reload.
+ */
+export function holdsPlaintextPassword(value: unknown): boolean {
+  if (typeof value === 'string') {
+    // Journal markdown: a `password:` line in the frontmatter.
+    const fm = /^---\n([\s\S]*?)\n---/.exec(value)?.[1] ?? '';
+    return /^password:[ \t]*(?!['"]?scrypt:)['"]?\S/m.test(fm);
+  }
+  if (Array.isArray(value)) return value.some(holdsPlaintextPassword);
+  if (value && typeof value === 'object') {
+    return Object.entries(value).some(([k, v]) =>
+      /^(?:password|sitePassword)$/.test(k) && typeof v === 'string'
+        ? v !== '' && !v.startsWith('scrypt:')
+        : holdsPlaintextPassword(v),
+    );
+  }
+  return false;
+}
+
 export function writeDraft<T>(key: string, draft: Draft<T>): void {
+  if (holdsPlaintextPassword(draft.value)) {
+    clearDraft(key);
+    return;
+  }
   try {
     window.sessionStorage.setItem(PREFIX + key, JSON.stringify(draft));
   } catch {
