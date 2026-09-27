@@ -11,6 +11,13 @@ vi.mock('@/lib/admin/yaml-service', () => ({
     sitePassword: 'scrypt:stored:hash',
     contact: { enabled: true, notifyUrl: 'https://ntfy.sh/stored' },
   })),
+  readSettingsYamlVersioned: vi.fn(async () => ({
+    data: {
+      sitePassword: 'scrypt:stored:hash',
+      contact: { enabled: true, notifyUrl: 'https://ntfy.sh/stored' },
+    },
+    version: 'v1',
+  })),
   writeSettingsYaml: vi.fn(async () => undefined),
 }));
 

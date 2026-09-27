@@ -5,6 +5,15 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 import { atomicWrite } from '@/lib/atomicWrite';
+import {
+  VersionConflictError,
+  assertVersion,
+  baseVersionFrom,
+  conflictResponse,
+  etag,
+  serializeContentWrite,
+  versionOf,
+} from '@/lib/admin/contentVersion';
 
 const CONTENT_DIR = path.resolve(process.cwd(), 'content');
 const FILENAME = 'about.md';
@@ -26,9 +35,10 @@ export const GET = withAdmin(async () => {
   const filePath = path.join(CONTENT_DIR, FILENAME);
   let meta: AboutMeta = {};
   let body = '';
+  let raw: string | null = null;
 
   try {
-    const raw = await fs.readFile(filePath, 'utf-8');
+    raw = await fs.readFile(filePath, 'utf-8');
     const match = raw.match(/^(?:---\r?\n)([\s\S]*?)(?:\r?\n---\r?\n)([\s\S]*)$/);
     if (match) {
       try {
@@ -42,7 +52,9 @@ export const GET = withAdmin(async () => {
     // File doesn't exist yet — return empty defaults
   }
 
-  return NextResponse.json({ meta, body });
+  // `version` goes back in If-Match on save (#601).
+  const version = versionOf(raw);
+  return NextResponse.json({ meta, body, version }, { headers: { ETag: etag(version) } });
 });
 
 export const PUT = withAdmin(async (request: Request) => {
@@ -64,38 +76,53 @@ export const PUT = withAdmin(async (request: Request) => {
   const content = `---\n${frontmatter}\n---\n\n${data.body ?? ''}\n`;
 
   const filePath = path.join(CONTENT_DIR, FILENAME);
-  await fs.mkdir(CONTENT_DIR, { recursive: true });
-
-  // "No file yet" and "the backup could not be written" used to share one
-  // catch, so a `.backups/` this save couldn't write to looked exactly like a
-  // brand-new file: the save went ahead with no snapshot taken (#630). Only
-  // ENOENT means there is nothing to back up; anything else aborts the save
-  // before it overwrites the live file.
-  let fileExists = true;
+  const baseVersion = baseVersionFrom(request);
   try {
-    await fs.access(filePath);
+    await serializeContentWrite(async () => {
+      await assertVersion(filePath, baseVersion);
+      await fs.mkdir(CONTENT_DIR, { recursive: true });
+
+      // "No file yet" and "the backup could not be written" used to share one
+      // catch, so a `.backups/` this save couldn't write to looked exactly like a
+      // brand-new file: the save went ahead with no snapshot taken (#630). Only
+      // ENOENT means there is nothing to back up; anything else aborts the save
+      // before it overwrites the live file.
+      let fileExists = true;
+      try {
+        await fs.access(filePath);
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException & { code?: string }).code !== 'ENOENT') throw err;
+        fileExists = false;
+      }
+
+      if (fileExists) {
+        const backupDir = path.join(CONTENT_DIR, '.backups');
+        await fs.mkdir(backupDir, { recursive: true });
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        await fs.copyFile(filePath, path.join(backupDir, `${FILENAME}.${timestamp}.bak`));
+
+        // Prune old backups
+        const entries = await fs.readdir(backupDir);
+        const aboutBackups = entries
+          .filter((e) => e.startsWith(FILENAME) && e.endsWith('.bak'))
+          .sort();
+        while (aboutBackups.length > MAX_BACKUPS) {
+          await fs.unlink(path.join(backupDir, aboutBackups.shift()!));
+        }
+      }
+
+      await atomicWrite(filePath, content);
+    });
   } catch (err) {
-    if ((err as NodeJS.ErrnoException & { code?: string }).code !== 'ENOENT') throw err;
-    fileExists = false;
+    if (err instanceof VersionConflictError) return conflictResponse(err.currentVersion);
+    throw err;
   }
-
-  if (fileExists) {
-    const backupDir = path.join(CONTENT_DIR, '.backups');
-    await fs.mkdir(backupDir, { recursive: true });
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    await fs.copyFile(filePath, path.join(backupDir, `${FILENAME}.${timestamp}.bak`));
-
-    // Prune old backups
-    const entries = await fs.readdir(backupDir);
-    const aboutBackups = entries.filter((e) => e.startsWith(FILENAME) && e.endsWith('.bak')).sort();
-    while (aboutBackups.length > MAX_BACKUPS) {
-      await fs.unlink(path.join(backupDir, aboutBackups.shift()!));
-    }
-  }
-
-  await atomicWrite(filePath, content);
 
   revalidatePath('/about', 'layout');
 
-  return NextResponse.json({ success: true, message: 'About page saved.' });
+  return NextResponse.json({
+    success: true,
+    message: 'About page saved.',
+    version: versionOf(content),
+  });
 });

@@ -4,9 +4,16 @@ import { isValidSlug, sanitizeSlug, parseJournalMarkdown } from '@/lib/journal';
 import { hashFrontmatterPassword } from '@/lib/admin/passwordHashing';
 import {
   readJournalEntry,
-  writeJournalEntry,
+  saveJournalEntry,
   deleteJournalEntry,
 } from '@/lib/admin/journal-service';
+import {
+  VersionConflictError,
+  baseVersionFrom,
+  conflictResponse,
+  etag,
+  versionOf,
+} from '@/lib/admin/contentVersion';
 
 interface RouteContext {
   params: Promise<{ slug: string }>;
@@ -23,7 +30,9 @@ export const GET = withAdmin(async (request: Request, context: RouteContext) => 
     if (!entry) {
       return NextResponse.json({ error: 'Journal entry not found' }, { status: 404 });
     }
-    return NextResponse.json({ entry });
+    // `version` goes back in If-Match on save (#601).
+    const version = versionOf(entry.rawMarkdown);
+    return NextResponse.json({ entry, version }, { headers: { ETag: etag(version) } });
   } catch (err) {
     console.error(`[Admin API] Failed to get journal entry "${slug}":`, err);
     return NextResponse.json({ error: 'Failed to read journal entry' }, { status: 500 });
@@ -67,16 +76,16 @@ export const PUT = withAdmin(async (request: Request, context: RouteContext) => 
     const current = await readJournalEntry(slug);
     const markdown = await hashFrontmatterPassword(rawMarkdown, current?.rawMarkdown ?? null);
 
-    if (targetSlug !== slug) {
-      await writeJournalEntry(targetSlug, markdown);
-      await deleteJournalEntry(slug);
-    } else {
-      await writeJournalEntry(slug, markdown);
-    }
+    // A rename is checked against the file the editor loaded, the old slug.
+    const version = await saveJournalEntry(targetSlug, markdown, {
+      baseVersion: baseVersionFrom(request),
+      fromSlug: slug,
+    });
 
     const updated = await readJournalEntry(targetSlug);
-    return NextResponse.json({ success: true, entry: updated });
+    return NextResponse.json({ success: true, entry: updated, version });
   } catch (err) {
+    if (err instanceof VersionConflictError) return conflictResponse(err.currentVersion);
     console.error(`[Admin API] Failed to update journal entry "${slug}":`, err);
     return NextResponse.json({ error: 'Failed to update journal entry' }, { status: 500 });
   }

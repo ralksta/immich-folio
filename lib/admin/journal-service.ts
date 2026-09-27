@@ -7,6 +7,7 @@ import fs from 'fs/promises';
 import nodeFs from 'fs';
 import path from 'path';
 import { atomicWrite } from '../atomicWrite';
+import { assertVersion, serializeContentWrite, versionOf } from './contentVersion';
 import {
   parseJournalMarkdown,
   calculateReadingTime,
@@ -357,4 +358,29 @@ export async function deleteJournalEntry(slug: string): Promise<boolean> {
 
   if (deletedAny) console.log(`[Journal] 🗑️ Deleted ${filename}`);
   return deletedAny;
+}
+
+/**
+ * The editor's save (#601): write `slug`, refusing with a VersionConflictError
+ * when the file the editor loaded — `fromSlug`'s, for a rename — is no longer
+ * at `baseVersion`. A rename writes the new file and then deletes the old one.
+ * Check, write and delete run in the content write queue, so another save
+ * cannot land between them. Returns the version of what was written.
+ */
+export function saveJournalEntry(
+  slug: string,
+  rawMarkdown: string,
+  options: { baseVersion?: string; fromSlug?: string } = {},
+): Promise<string> {
+  const fromSlug = options.fromSlug ?? slug;
+  return serializeContentWrite(async () => {
+    if (options.baseVersion !== undefined) {
+      const loaded = resolveJournalFilePath(fromSlug);
+      if (!loaded) throw new Error(`Invalid journal entry slug: "${fromSlug}"`);
+      await assertVersion(loaded, options.baseVersion);
+    }
+    await writeJournalEntry(slug, rawMarkdown);
+    if (fromSlug !== slug) await deleteJournalEntry(fromSlug);
+    return versionOf(rawMarkdown);
+  });
 }

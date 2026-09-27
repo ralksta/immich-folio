@@ -11,6 +11,7 @@ import fs from 'fs/promises';
 import nodeFs from 'fs';
 import path from 'path';
 import { atomicWrite } from '../atomicWrite';
+import { assertVersion, serializeContentWrite, versionOf } from './contentVersion';
 import { isValidSlug, parseJournalMarkdown, type ParsedJournal } from '../journal';
 import type { PageSummary } from '../pages';
 
@@ -236,4 +237,29 @@ export async function restorePageBackup(backupFilename: string): Promise<string>
   await atomicWrite(target, content);
   console.log(`[Pages] 🔄 Restored ${slug}.md from ${backupFilename}`);
   return slug;
+}
+
+/**
+ * The editor's save (#601): write `slug`, refusing with a VersionConflictError
+ * when the file the editor loaded — `fromSlug`'s, for a rename — is no longer
+ * at `baseVersion`. A rename writes the new file and then deletes the old one.
+ * Check, write and delete run in the content write queue, so another save
+ * cannot land between them. Returns the version of what was written.
+ */
+export function savePage(
+  slug: string,
+  rawMarkdown: string,
+  options: { baseVersion?: string; fromSlug?: string } = {},
+): Promise<string> {
+  const fromSlug = options.fromSlug ?? slug;
+  return serializeContentWrite(async () => {
+    if (options.baseVersion !== undefined) {
+      const loaded = resolvePageFilePath(fromSlug);
+      if (!loaded) throw new Error(`Invalid page slug: "${fromSlug}"`);
+      await assertVersion(loaded, options.baseVersion);
+    }
+    await writePage(slug, rawMarkdown);
+    if (fromSlug !== slug) await deletePage(fromSlug);
+    return versionOf(rawMarkdown);
+  });
 }
