@@ -6,6 +6,7 @@ import { invalidateConfigCache, deriveGallery } from '@/lib/config';
 import { immich } from '@/lib/immich';
 import type { GalleryYaml } from '@/lib/config/schema';
 import { hashPasswordKeys } from '@/lib/admin/passwordHashing';
+import { listPageSlugsSync } from '@/lib/admin/pages-service';
 
 const PASSWORD_KEY = new Set(['password']);
 
@@ -39,7 +40,17 @@ export const PUT = withAdmin(async (request: Request) => {
   // validating before the write rather than rolling back after — a rollback
   // leaves a window in which other requests read the broken config.
   try {
-    deriveGallery(gallery);
+    const derived = deriveGallery(gallery);
+    // A subpage renamed onto a content page's slug would shadow the page
+    // (#722). The page side of the same rule is enforced where pages save.
+    const pageSlugs = new Set(listPageSlugsSync());
+    const clash = derived.subpages.find((sp) => pageSlugs.has(sp.slug));
+    if (clash) {
+      throw new Error(
+        `Subpage "${clash.name}" would take /${clash.slug}, which is already a content page. ` +
+          `Rename one of them.`,
+      );
+    }
   } catch (err) {
     const reason = err instanceof Error ? err.message : 'Invalid gallery structure';
     console.warn('[Admin] Rejected an unloadable gallery.yaml:', reason);

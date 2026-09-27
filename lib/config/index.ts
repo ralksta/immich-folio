@@ -30,7 +30,11 @@ import {
   CONTACT_RETENTION_DEFAULT,
   CONTACT_RETENTION_MAX,
   isHttpUrl,
+  isPageRef,
+  type GallerySubpageYaml,
 } from './schema';
+import { isValidSlug } from '../journal';
+import type { NavEntry } from '../pages';
 
 export * from './schema';
 export * from './theme';
@@ -244,6 +248,7 @@ export interface GalleryDerivation {
   albums: string[];
   standaloneAlbums: string[];
   subpages: SubpageConfig[];
+  nav: NavEntry[];
   albumOverrides: Record<string, string>;
   albumDescriptions: Record<string, string>;
   albumPasswords: Record<string, string>;
@@ -408,9 +413,35 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   const standaloneAlbumIds = processAlbumEntries(gallery.albums ?? [], 'gallery.yaml albums');
 
   let subpages: SubpageConfig[] = [];
+  /** Menu order, subpages and `- page:` references interleaved (#722). */
+  const nav: NavEntry[] = [];
 
   if (Array.isArray(gallery.subpages)) {
-    subpages = gallery.subpages.map((sp) => {
+    const pageRefs = new Set<string>();
+    const subpageEntries: GallerySubpageYaml[] = [];
+    for (const entry of gallery.subpages) {
+      if (isPageRef(entry)) {
+        const slug = entry.page.trim();
+        // Thrown like every other structure error: the admin PUT turns it into
+        // a 400, and a hand-edited file degrades to the setup screen.
+        if (!isValidSlug(slug)) {
+          throw new Error(
+            `gallery.yaml subpages: "page: ${entry.page}" is not a valid page slug ` +
+              `(letters, digits, "-" and "_" only).`,
+          );
+        }
+        if (pageRefs.has(slug)) {
+          throw new Error(`gallery.yaml subpages: page "${slug}" is listed more than once.`);
+        }
+        pageRefs.add(slug);
+        nav.push({ type: 'page', slug });
+      } else {
+        subpageEntries.push(entry);
+        // Placeholder, filled in with the derived slug below.
+        nav.push({ type: 'subpage', slug: '' });
+      }
+    }
+    subpages = subpageEntries.map((sp) => {
       if (!sp.name) {
         throw new Error(`Subpage "(unnamed)" must have a name`);
       }
@@ -467,6 +498,10 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         ...buildSubpageGrids(sp.grid, sp.coverGrid),
       };
     });
+    let next = 0;
+    for (const entry of nav) {
+      if (entry.type === 'subpage') entry.slug = subpages[next++].slug;
+    }
   } else if (gallery.subpages) {
     subpages = Object.entries(gallery.subpages).map(([name, value]) => {
       if (Array.isArray(value)) {
@@ -498,6 +533,10 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         ...buildSubpageGrids(sp.grid, sp.coverGrid),
       };
     });
+  }
+
+  if (!Array.isArray(gallery.subpages)) {
+    for (const sp of subpages) nav.push({ type: 'subpage', slug: sp.slug });
   }
 
   const subpageAlbumIds = new Set(subpages.flatMap((sp) => sp.albumIds));
@@ -550,6 +589,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
     albums: allAlbumIds,
     standaloneAlbums,
     subpages,
+    nav,
     albumOverrides,
     albumDescriptions,
     albumPasswords,
@@ -604,6 +644,7 @@ export function getConfig(): AppConfig {
       albums: [],
       standaloneAlbums: [],
       subpages: [],
+      nav: [],
       siteTitle: env.SITE_TITLE || 'Immich Folio',
       siteSubtitle: env.SITE_SUBTITLE || 'Setup Required',
       lang: 'en',
@@ -665,6 +706,7 @@ export function getConfig(): AppConfig {
     albums: allAlbumIds,
     standaloneAlbums,
     subpages,
+    nav,
     albumOverrides,
     albumDescriptions,
     albumPasswords,
@@ -685,6 +727,7 @@ export function getConfig(): AppConfig {
     albums: allAlbumIds,
     standaloneAlbums,
     subpages,
+    nav,
     siteTitle: settings.title ?? env.SITE_TITLE,
     siteSubtitle: settings.subtitle ?? env.SITE_SUBTITLE,
     lang: settings.lang ?? 'en',

@@ -83,6 +83,8 @@ export const fr: Dictionary = {
   password: {
     subtitle: 'Cette galerie est protégée par un mot de passe.',
     siteSubtitle: 'Ce site est protégé par un mot de passe.',
+    pageSubtitle: 'Cette page est protégée par un mot de passe.',
+    protectedPage: 'Page protégée',
     placeholder: 'Saisissez le mot de passe',
     submit: 'Entrer',
     verifying: 'Vérification…',

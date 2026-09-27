@@ -249,6 +249,50 @@ const ROUTES: {
     ],
   },
   {
+    name: 'GET /api/admin/pages',
+    path: 'pages',
+    load: () => import('../pages/route'),
+    method: 'GET',
+    args: () => [],
+  },
+  {
+    name: 'POST /api/admin/pages',
+    path: 'pages',
+    load: () => import('../pages/route'),
+    method: 'POST',
+    args: () => [new Request('http://localhost/api/admin/pages', { method: 'POST', body: '{}' })],
+  },
+  {
+    name: 'GET /api/admin/pages/[slug]',
+    path: 'pages/[slug]',
+    load: () => import('../pages/[slug]/route'),
+    method: 'GET',
+    args: () => [
+      new Request('http://localhost/api/admin/pages/test-slug'),
+      { params: Promise.resolve({ slug: 'test-slug' }) },
+    ],
+  },
+  {
+    name: 'PUT /api/admin/pages/[slug]',
+    path: 'pages/[slug]',
+    load: () => import('../pages/[slug]/route'),
+    method: 'PUT',
+    args: () => [
+      new Request('http://localhost/api/admin/pages/test-slug', { method: 'PUT', body: '{}' }),
+      { params: Promise.resolve({ slug: 'test-slug' }) },
+    ],
+  },
+  {
+    name: 'DELETE /api/admin/pages/[slug]',
+    path: 'pages/[slug]',
+    load: () => import('../pages/[slug]/route'),
+    method: 'DELETE',
+    args: () => [
+      new Request('http://localhost/api/admin/pages/test-slug', { method: 'DELETE' }),
+      { params: Promise.resolve({ slug: 'test-slug' }) },
+    ],
+  },
+  {
     name: 'GET /api/admin/proofing',
     path: 'proofing',
     load: () => import('../proofing/route'),

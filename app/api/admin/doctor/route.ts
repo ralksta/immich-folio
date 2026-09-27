@@ -7,6 +7,9 @@ import { env } from '@/lib/env';
 import { listJournalEntries } from '@/lib/admin/journal-service';
 import { readSettingsYaml } from '@/lib/admin/yaml-service';
 import { readPrivacy } from '@/lib/privacy';
+import { listPageSlugsSync } from '@/lib/admin/pages-service';
+import { takenPageSlugs } from '@/lib/admin/pageSlugs';
+import { describeCollision, menuPageSlugs, pageSlugCollision } from '@/lib/pages';
 import {
   checkAlbumIds,
   checkAlbumSlugCollisions,
@@ -15,6 +18,7 @@ import {
   checkCdn,
   checkImmichCalls,
   checkContact,
+  checkContentPages,
   checkLegal,
   checkPrivacy,
   checkPasswords,
@@ -167,10 +171,30 @@ export const GET = withAdmin(async (request: NextRequest) => {
   });
   if (privacy) findings.push(privacy);
 
+  // ── Content pages: missing menu targets and slug collisions (#722) ────
+  try {
+    const pageSlugs = listPageSlugsSync();
+    const taken = pageSlugs.length ? await takenPageSlugs() : null;
+    const collisions = taken
+      ? pageSlugs.flatMap((slug) => {
+          const collision = pageSlugCollision(slug, taken);
+          return collision ? [{ slug, reason: describeCollision(slug, collision) }] : [];
+        })
+      : [];
+    const pages = checkContentPages({
+      menuRefs: menuPageSlugs(config.nav),
+      pages: pageSlugs,
+      collisions,
+    });
+    if (pages) findings.push(pages);
+  } catch {
+    // Pages are optional; a failure to list them is not a finding of its own.
+  }
+
   // ── Writability of the content volume ────────────────────────────────
   const contentDir = path.join(process.cwd(), 'content');
   const unwritable: string[] = [];
-  for (const dir of ['', '.backups', 'journal']) {
+  for (const dir of ['', '.backups', 'journal', 'pages']) {
     const target = path.join(contentDir, dir);
     try {
       await fs.access(target, (await import('node:fs')).constants.W_OK);

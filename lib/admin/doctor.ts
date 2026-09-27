@@ -637,3 +637,60 @@ export function checkImmichCalls(results: Array<{ endpoint: string; ok: boolean 
     detail: results.map((r) => r.endpoint).join(', '),
   };
 }
+
+export interface PageSlugProblem {
+  slug: string;
+  /** One sentence from describeCollision(). */
+  reason: string;
+}
+
+/**
+ * Content pages (#722): a `- page:` reference in gallery.yaml whose file does
+ * not exist puts nothing in the menu, and a page whose slug is already taken
+ * is shadowed by the subpage or album — or, for a built-in route, never
+ * reached at all. Returns null while there are no pages and no references.
+ */
+export function checkContentPages(p: {
+  /** Slugs referenced from gallery.yaml. */
+  menuRefs: string[];
+  /** Slugs of the files in content/pages/. */
+  pages: string[];
+  collisions: PageSlugProblem[];
+}): DoctorFinding | null {
+  if (!p.menuRefs.length && !p.pages.length) return null;
+  const existing = new Set(p.pages);
+  const missing = p.menuRefs.filter((slug) => !existing.has(slug));
+  const missingList = missing.map((s) => `"${s}"`).join(', ');
+
+  if (p.collisions.length) {
+    const n = p.collisions.length;
+    return {
+      id: 'content-pages',
+      level: 'error',
+      title: `${n} content ${n === 1 ? 'page has' : 'pages have'} a slug that is already taken`,
+      detail:
+        p.collisions.map((c) => c.reason).join(' ') +
+        ' Rename the page in Pages so visitors can reach it.' +
+        (missing.length ? ` The menu also lists missing pages: ${missingList}.` : ''),
+    };
+  }
+
+  if (missing.length) {
+    return {
+      id: 'content-pages',
+      level: 'warn',
+      title: `The menu lists ${missing.length} missing ${missing.length === 1 ? 'page' : 'pages'}`,
+      detail:
+        `gallery.yaml references ${missingList}, but content/pages/ has no such file. ` +
+        'The menu skips the entry; remove the reference or create the page.',
+    };
+  }
+
+  const n = p.pages.length;
+  return {
+    id: 'content-pages',
+    level: 'ok',
+    title: `${n} content ${n === 1 ? 'page' : 'pages'}, every slug free`,
+    detail: `${p.menuRefs.length} of them in the menu.`,
+  };
+}

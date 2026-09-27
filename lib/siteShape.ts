@@ -10,6 +10,7 @@ import { getConfig } from './config';
 import { immich } from './immich';
 import { isProtected, isSiteLocked } from './auth';
 import { listJournalEntries } from './admin/journal-service';
+import { listPages } from './admin/pages-service';
 import type { SiteShape, PublicAlbum } from './publicPages';
 
 export async function buildSiteShape(): Promise<SiteShape> {
@@ -26,6 +27,7 @@ export async function buildSiteShape(): Promise<SiteShape> {
       .map((album) => ({ id: album.id, slug: album.slug }));
 
   const journal = await listJournalEntries().catch(() => []);
+  const pages = await listPages().catch(() => []);
 
   return {
     siteLocked: isSiteLocked(),
@@ -40,6 +42,11 @@ export async function buildSiteShape(): Promise<SiteShape> {
     journal: journal.map((entry) => ({
       slug: entry.slug,
       draft: entry.frontmatter.draft === true,
+    })),
+    pages: pages.map((page) => ({
+      slug: page.slug,
+      draft: page.frontmatter.draft === true,
+      isProtected: !!page.frontmatter.password,
     })),
     isAlbumProtected: (albumId) => isProtected(albumId, 'album'),
     aboutEnabled: config.aboutEnabled,
