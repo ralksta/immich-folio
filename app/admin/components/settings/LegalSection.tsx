@@ -219,7 +219,8 @@ export default function LegalSection({ settings, update, envLocks }: SectionProp
             >
               {notifyUrlInvalid
                 ? 'Must start with https:// or http://.'
-                : 'Gets a fixed "new message" push, with nothing about the sender. Pick a topic name nobody can guess. CONTACT_NOTIFY_URL overrides this.'}
+                : 'Gets a fixed "new message" push, with nothing about the sender. Pick a topic name nobody can guess.' +
+                  (notifyLock ? '' : ' CONTACT_NOTIFY_URL overrides this.')}
             </p>
           </div>
           <div className="admin-field">

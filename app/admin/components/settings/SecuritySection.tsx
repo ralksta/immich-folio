@@ -33,9 +33,14 @@ export default function SecuritySection({ settings, update, envLocks }: SectionP
         />
         {passwordLock && <EnvLockNote variable={passwordLock} />}
         <p className="admin-field-hint">
-          Stored as a <code>scrypt:…</code> hash in <code>settings.yaml</code>, never as typed. The{' '}
-          <code>SITE_PASSWORD</code> environment variable overrides this field. The admin panel
-          keeps its own password and is never behind this gate.
+          Stored as a <code>scrypt:…</code> hash in <code>settings.yaml</code>, never as typed.
+          {!passwordLock && (
+            <>
+              {' '}
+              The <code>SITE_PASSWORD</code> environment variable overrides this field.
+            </>
+          )}{' '}
+          The admin panel keeps its own password and is never behind this gate.
         </p>
       </div>
 
