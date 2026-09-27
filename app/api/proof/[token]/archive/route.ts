@@ -48,7 +48,7 @@ export async function GET(
   if (assets.length === 0) return refusal(request, 404, 'notAvailable');
 
   try {
-    await claimDownload(token);
+    await claimDownload(token, scope);
   } catch (err) {
     if (err instanceof ProofError && err.code === 'limit') {
       return refusal(request, 403, 'limitReached');

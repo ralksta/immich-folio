@@ -42,4 +42,11 @@ describe('formatExport', () => {
     const csv = formatExport([{ position: 1, fileName: '=HYPERLINK("x")' }], 'csv');
     expect(csv).toContain(`"'=HYPERLINK(""x"")"`);
   });
+
+  it('also neutralises names starting with a tab or carriage return', () => {
+    for (const name of ['\t=1+1', '\r=1+1']) {
+      const row = formatExport([{ position: 1, fileName: name }], 'csv').split('\r\n')[1];
+      expect(row).toMatch(/^1,"?'/);
+    }
+  });
 });

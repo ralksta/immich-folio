@@ -91,6 +91,34 @@ const GATED: { name: string; call: () => Promise<Response> }[] = [
         { params: Promise.resolve({ album: 'tok' }) } as never,
       ),
   },
+  // Client proofing links: the site password applies to clients as well.
+  {
+    name: 'PUT /api/proof/[token]/selection',
+    call: async () =>
+      (await import('../proof/[token]/selection/route')).PUT(
+        new NextRequest('http://localhost/api/proof/tok/selection', {
+          method: 'PUT',
+          body: '{"selection":[]}',
+        }) as never,
+        { params: Promise.resolve({ token: 'tok' }) } as never,
+      ),
+  },
+  {
+    name: 'POST /api/proof/[token]/submit',
+    call: async () =>
+      (await import('../proof/[token]/submit/route')).POST(
+        new NextRequest('http://localhost/api/proof/tok/submit', { method: 'POST' }) as never,
+        { params: Promise.resolve({ token: 'tok' }) } as never,
+      ),
+  },
+  {
+    name: 'GET /api/proof/[token]/archive',
+    call: async () =>
+      (await import('../proof/[token]/archive/route')).GET(
+        request('/api/proof/tok/archive') as never,
+        { params: Promise.resolve({ token: 'tok' }) } as never,
+      ),
+  },
   {
     // Stores whatever a visitor sends; a locked site accepts nothing from strangers.
     name: 'POST /api/contact',

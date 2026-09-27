@@ -26,7 +26,8 @@ export function baseName(fileName: string): string {
 function csvField(value: string): string {
   // A leading =, +, - or @ makes Excel and LibreOffice evaluate the cell. File
   // names come from the client's camera, not from us — never let one run.
-  const safe = /^[=+\-@]/.test(value) ? `'${value}` : value;
+  // Tab and CR start a formula in some spreadsheet apps as well (OWASP).
+  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 

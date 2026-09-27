@@ -9,6 +9,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import PageHeader from './PageHeader';
 import * as Icons from './Icons';
 import { reportIfSessionExpired } from './sessionExpiry';
 import type { AdminProofPick, AdminProofSession } from '@/lib/admin/proofing-view';
@@ -423,20 +424,16 @@ export default function ProofingView() {
 
   return (
     <div className="analytics-view proofing-view">
-      <div className="analytics-header">
-        <div>
-          <h2>
-            <Icons.IconHeart size={20} /> Client Proofing
-          </h2>
-          <p className="analytics-subtitle">
-            A private link per client. Picks are saved as they go; you see them here once they
-            submit.
-          </p>
-        </div>
-        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => void load()}>
-          <Icons.IconRefresh size={14} /> Refresh
-        </button>
-      </div>
+      <PageHeader
+        kicker="Visitors"
+        title="Client proofing"
+        description="A private link per client. Picks are saved as they go; you see them here once they submit."
+        actions={
+          <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => void load()}>
+            <Icons.IconRefresh size={14} /> Refresh
+          </button>
+        }
+      />
 
       {!webhookConfigured && (
         <p className="analytics-subtitle">

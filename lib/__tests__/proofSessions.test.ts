@@ -147,6 +147,23 @@ describe('store', () => {
     expect(downloadsRemaining(await claimDownload(created.token))).toBe(1);
   });
 
+  it('refuses to submit an empty selection, decided under the write lock', async () => {
+    const { token, id } = await createSession(input());
+    await saveSelection(token, ['a']);
+    // A save of [] landing between the route's snapshot and the submit.
+    await saveSelection(token, []);
+    await expect(submitSelection(token)).rejects.toMatchObject({ code: 'empty' });
+    expect((await getSessionById(id))?.submittedAt).toBeUndefined();
+  });
+
+  it('re-checks the download scope under the lock', async () => {
+    const { token, id } = await createSession(input({ download: 'album' }));
+    // The photographer narrows the link while a request is on its way.
+    await updateSession(id, { download: 'selection' });
+    await expect(claimDownload(token, 'album')).rejects.toMatchObject({ code: 'not-found' });
+    await expect(claimDownload(token, 'selection')).resolves.toBeTruthy();
+  });
+
   it('refuses downloads on a link that offers none', async () => {
     const { token } = await createSession(input());
     await expect(claimDownload(token)).rejects.toBeInstanceOf(ProofError);

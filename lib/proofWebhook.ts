@@ -26,7 +26,6 @@ export interface ProofWebhookPayload {
   proofing: {
     id: string;
     clientName: string;
-    albumId: string;
     albumName: string;
     selected: number;
     submittedAt: string;
@@ -55,7 +54,6 @@ export function buildWebhookPayload(
     proofing: {
       id: session.id,
       clientName: session.clientName,
-      albumId: session.albumId,
       albumName,
       selected: count,
       submittedAt: session.submittedAt ?? new Date().toISOString(),

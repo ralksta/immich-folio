@@ -178,14 +178,25 @@ export async function getSessionById(id: string): Promise<ProofSession | null> {
   return (await readStore()).sessions.find((s) => s.id === id) ?? null;
 }
 
+/**
+ * Constant-time token comparison. With 192 random bits a timing attack is not
+ * practical, but the link token is the client's only credential and the
+ * comparison costs nothing to harden.
+ */
+function tokenMatches(stored: string, given: string): boolean {
+  const a = Buffer.from(stored);
+  const b = Buffer.from(given);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
 export async function findSessionByToken(token: string): Promise<ProofSession | null> {
   if (!isTokenShaped(token)) return null;
-  return (await readStore()).sessions.find((s) => s.token === token) ?? null;
+  return (await readStore()).sessions.find((s) => tokenMatches(s.token, token)) ?? null;
 }
 
 export class ProofError extends Error {
   constructor(
-    public readonly code: 'not-found' | 'expired' | 'submitted' | 'limit' | 'too-many',
+    public readonly code: 'not-found' | 'expired' | 'submitted' | 'limit' | 'too-many' | 'empty',
     message: string,
   ) {
     super(message);
@@ -244,7 +255,9 @@ export async function deleteSession(id: string): Promise<void> {
 
 /** Find the session for a token and refuse anything that may not change. */
 function openSession(store: ProofStore, token: string): ProofSession {
-  const session = isTokenShaped(token) ? store.sessions.find((s) => s.token === token) : undefined;
+  const session = isTokenShaped(token)
+    ? store.sessions.find((s) => tokenMatches(s.token, token))
+    : undefined;
   if (!session) throw new ProofError('not-found', 'No such proofing link.');
   if (isExpired(session)) throw new ProofError('expired', 'This proofing link has expired.');
   return session;
@@ -277,16 +290,24 @@ export async function submitSelection(
   return mutate((store) => {
     const session = openSession(store, token);
     if (session.submittedAt) return { session, firstSubmit: false };
+    // Checked here, under the write lock: a save of an empty selection racing
+    // the submit would otherwise lock nothing and still fire the webhook.
+    if (session.selection.length === 0) throw new ProofError('empty', 'Nothing selected.');
     session.submittedAt = new Date().toISOString();
     return { session, firstSubmit: true };
   });
 }
 
 /** Count one ZIP download against the link's limit, refusing past it. */
-export async function claimDownload(token: string): Promise<ProofSession> {
+export async function claimDownload(
+  token: string,
+  scope: 'selection' | 'album' = 'selection',
+): Promise<ProofSession> {
   return mutate((store) => {
     const session = openSession(store, token);
-    if (session.download === 'none') {
+    // Re-checked under the lock: the admin may have narrowed the link since
+    // the request read its snapshot.
+    if (session.download === 'none' || (scope === 'album' && session.download !== 'album')) {
       throw new ProofError('not-found', 'This proofing link offers no downloads.');
     }
     if (session.downloadLimit !== undefined && session.downloadsUsed >= session.downloadLimit) {

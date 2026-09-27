@@ -24,10 +24,6 @@ export async function POST(
   const access = await resolveProofAccess(request, token, 'proof-submit', SUBMIT_RPM);
   if ('error' in access) return access.error;
 
-  if (access.session.selection.length === 0 && !access.session.submittedAt) {
-    return proofError(400, 'Nothing selected');
-  }
-
   try {
     const { session, firstSubmit } = await submitSelection(token);
     if (firstSubmit) {
@@ -39,6 +35,9 @@ export async function POST(
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch (err) {
+    if (err instanceof ProofError && err.code === 'empty') {
+      return proofError(400, 'Nothing selected');
+    }
     if (err instanceof ProofError) return proofError(404, 'Not found');
     throw err;
   }
