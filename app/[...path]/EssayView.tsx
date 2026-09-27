@@ -9,6 +9,7 @@ import { FadeIn } from '@/components/FadeIn';
 import { LeafletMap, escapeHtml } from '@/components/LeafletMap';
 import type { ParsedEssay, EssayBlock } from '@/lib/essay';
 import { renderInlineMarkdown } from '@/lib/essay';
+import { essayPhotoSequence } from '@/lib/essaySequence';
 import type { PhotoItem } from './PhotoGrid';
 import './essay.css';
 import { useDictionary } from '@/components/I18nProvider';
@@ -60,19 +61,35 @@ function EssayViewContent({
     ? assetMap.get(essay.frontmatter.coverAssetId)
     : undefined;
 
+  // The lightbox walks only the photos this essay shows, in reading order —
+  // not every photo of the subpage's albums (`assets`).
+  const sequence = useMemo(
+    () =>
+      essayPhotoSequence(
+        essay.blocks,
+        essay.frontmatter.coverAssetId,
+        (key) => assetMap.get(key)?.item,
+      ),
+    [essay.blocks, essay.frontmatter.coverAssetId, assetMap],
+  );
+  const openPhoto = (item: PhotoItem) => {
+    const at = sequence.findIndex((p) => p.id === item.id);
+    if (at !== -1) setLightboxIndex(at);
+  };
+
   /**
    * One photo tile of a pair or a grid: sized by its real ratio (see
    * .essay-pair-grid), opens the lightbox, carries the proofing heart. The pair
    * used to spell this out a second time next to the photo case; a third copy
    * for the grid is where that stops.
    */
-  const renderTile = ({ item, index }: { item: PhotoItem; index: number }, key: number) => {
+  const renderTile = ({ item }: { item: PhotoItem }, key: number) => {
     const isFav = proofing ? proofing.isFavorite(item.id) : false;
     return (
       <div
         key={key}
         className="essay-image-wrapper photo-grid__item"
-        onClick={() => setLightboxIndex(index)}
+        onClick={() => openPhoto(item)}
         style={{
           ...(item.dominantColor ? { backgroundColor: item.dominantColor } : {}),
           flexGrow: item.aspectRatio ?? 1.5,
@@ -166,7 +183,7 @@ function EssayViewContent({
       case 'photo': {
         const resolved = assetMap.get(block.assetId);
         if (!resolved) return null;
-        const { item, index } = resolved;
+        const { item } = resolved;
         const isFav = proofing ? proofing.isFavorite(item.id) : false;
 
         return (
@@ -174,7 +191,7 @@ function EssayViewContent({
             <figure className={`essay-figure essay-figure--${block.layout}`}>
               <div
                 className="essay-image-wrapper photo-grid__item"
-                onClick={() => setLightboxIndex(index)}
+                onClick={() => openPhoto(item)}
                 style={{
                   ...(item.dominantColor ? { backgroundColor: item.dominantColor } : {}),
                   ...(item.aspectRatio ? { aspectRatio: `${item.aspectRatio}` } : {}),
@@ -388,7 +405,7 @@ function EssayViewContent({
         <figure className="essay-figure essay-figure--wide" style={{ marginBottom: '4rem' }}>
           <div
             className="essay-image-wrapper photo-grid__item"
-            onClick={() => setLightboxIndex(coverAsset.index)}
+            onClick={() => openPhoto(coverAsset.item)}
             style={{
               ...(coverAsset.item.dominantColor
                 ? { backgroundColor: coverAsset.item.dominantColor }
@@ -434,26 +451,11 @@ function EssayViewContent({
             backdropFilter: 'blur(8px)',
           }}
         >
-          <button
-            type="button"
-            onClick={() => proofing.setIsFilterActive((prev) => !prev)}
-            style={{
-              background: proofing.isFilterActive
-                ? 'var(--accent, #e60012)'
-                : 'var(--bg-card-hover)',
-              color: proofing.isFilterActive ? '#fff' : 'var(--text-primary)',
-              border: 'none',
-              padding: '6px 14px',
-              borderRadius: '20px',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
-          >
-            {proofing.isFilterActive
-              ? t.proofing.showAll
-              : t.proofing.selected(proofing.favorites.size)}
-          </button>
+          {/* A count, not the album grid's filter toggle: a story's layout is
+              authored, so there is nothing for "show favourites" to narrow. */}
+          <span style={{ fontSize: '0.85rem', fontWeight: 500, padding: '6px 4px' }}>
+            {t.proofing.selected(proofing.favorites.size)}
+          </span>
           <button
             type="button"
             onClick={() => proofing.setIsModalOpen(true)}
@@ -476,15 +478,15 @@ function EssayViewContent({
 
       {lightboxIndex !== null && (
         <Lightbox
-          assets={assets}
+          assets={sequence}
           currentIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
           onNext={() =>
-            setLightboxIndex((prev) => (prev !== null ? (prev + 1) % assets.length : null))
+            setLightboxIndex((prev) => (prev !== null ? (prev + 1) % sequence.length : null))
           }
           onPrev={() =>
             setLightboxIndex((prev) =>
-              prev !== null ? (prev - 1 + assets.length) % assets.length : null,
+              prev !== null ? (prev - 1 + sequence.length) % sequence.length : null,
             )
           }
           watermark={watermark}
