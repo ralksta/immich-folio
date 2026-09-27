@@ -346,6 +346,7 @@ export function JournalEditor({ slug, mapEnabled, onBack }: JournalEditorProps) 
             className="journal-editor-title-input"
             value={parsed.frontmatter.title || ''}
             placeholder="Story Title..."
+            aria-label="Story title"
             onChange={(e) => handleFrontmatterChange({ title: e.target.value })}
           />
 
