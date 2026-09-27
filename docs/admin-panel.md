@@ -45,6 +45,10 @@ Each area has its own URL, so a section can be bookmarked and the browser's back
 
 Unsaved changes raise a save bar pinned to the bottom of the viewport, so the Save button is reachable without scrolling back up. Saving applies immediately — no server restart.
 
+## Overview
+
+`/admin` opens on the overview: what needs attention (unread messages, doctor warnings and errors, each linking to where it is fixed), the site at a glance (published pages, hero photos, journal entries and drafts, views in the last seven days) and a few quick actions. Navigation sits in a sidebar grouped into Content, Visitors, Site and System; View site, Backups, Reload and Sign out are at its foot. See [the UX concept](admin-ux-concept.md) for where this is going.
+
 ## Pages
 
 A visual tree of your gallery structure. Each item opens a slide-over drawer with its settings.

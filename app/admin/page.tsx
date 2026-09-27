@@ -1,15 +1,11 @@
-import { redirect } from 'next/navigation';
+import AdminOverview from './components/AdminOverview';
 
 /**
- * `/admin` and `/admin/pages` both rendered the page builder, so the same
- * screen had two addresses: two routes to keep in step, two things to find
- * when something about the builder changes, and no way to tell which one a
- * bookmark or a bug report meant.
- *
- * `/admin/pages` wins because that is what the Pages tab links to. `/admin`
- * stays as the entry point people type and bookmark — and it is what the
- * public diagnostic banner links to — so it redirects rather than disappearing.
+ * `/admin` is the overview: what needs attention, and the site at a glance
+ * (docs/admin-ux-concept.md). It used to redirect to the page builder, which
+ * left unread messages and doctor warnings to be found by visiting the right
+ * tab. The page builder keeps its own address at `/admin/pages`.
  */
 export default function AdminHomePage() {
-  redirect('/admin/pages');
+  return <AdminOverview />;
 }
