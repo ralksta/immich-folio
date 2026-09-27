@@ -107,6 +107,8 @@ const NAV: {
   },
 ];
 
+const SIDEBAR_KEY = 'folio_admin_sidebar';
+
 export default function AdminDashboard({ onLogout, children }: Props) {
   const notify = useNotify();
   const pathname = usePathname();
@@ -124,6 +126,27 @@ export default function AdminDashboard({ onLogout, children }: Props) {
   // an expired session or a 500 rendered exactly like a real outage — every
   // indicator flipped to its alarming value at once (#341).
   const [statusError, setStatusError] = useState(false);
+  /**
+   * Icons-only sidebar, remembered per browser. The dashboard only renders
+   * after the client-side session check, so reading storage in the initial
+   * state cannot mismatch a server render.
+   */
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem(SIDEBAR_KEY) === 'collapsed';
+    } catch {
+      return false;
+    }
+  });
+  const toggleCollapsed = () =>
+    setCollapsed((c) => {
+      try {
+        window.localStorage.setItem(SIDEBAR_KEY, c ? 'expanded' : 'collapsed');
+      } catch {
+        // Private mode or blocked storage: the toggle still works for this visit.
+      }
+      return !c;
+    });
   /** Unread contact messages, for the count next to Messages. */
   const [unread, setUnread] = useState(0);
 
@@ -244,9 +267,31 @@ export default function AdminDashboard({ onLogout, children }: Props) {
   const missingCredentials = status?.setup?.credentials === 'missing';
 
   return (
-    <div className="admin-dashboard admin-app">
+    <div className={`admin-dashboard admin-app${collapsed ? ' is-collapsed' : ''}`}>
       <aside className="admin-sidebar" aria-label="Admin">
-        <Link href="/admin" className="admin-brand">
+        <button
+          type="button"
+          className="admin-sidebar-toggle"
+          onClick={toggleCollapsed}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          data-tip={collapsed ? 'Expand' : undefined}
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points={collapsed ? '9 6 15 12 9 18' : '15 6 9 12 15 18'} />
+          </svg>
+        </button>
+        <Link href="/admin" className="admin-brand" data-tip="Immich Folio">
           <span className="admin-brand-mark" aria-hidden="true" />
           <span className="admin-brand-text">
             <span className="admin-brand-name">Immich Folio</span>
@@ -266,6 +311,7 @@ export default function AdminDashboard({ onLogout, children }: Props) {
                     key={item.href}
                     href={item.href}
                     className={`admin-nav-item ${active ? 'active' : ''}`}
+                    data-tip={item.label}
                     aria-current={active ? 'page' : undefined}
                   >
                     <span className="admin-nav-icon">{item.icon}</span>
@@ -295,6 +341,7 @@ export default function AdminDashboard({ onLogout, children }: Props) {
                 if (!showStatus) fetchStatus();
               }}
               title="Show system status"
+              data-tip={health.label}
             >
               <span className="status-dot"></span>
               <span className="status-text">{health.label}</span>
@@ -391,27 +438,34 @@ export default function AdminDashboard({ onLogout, children }: Props) {
               target="_blank"
               rel="noopener noreferrer"
               className="admin-side-action"
+              data-tip="View site"
               title="Open site in new tab (bypassing cache)"
             >
-              <Icons.IconLink size={14} /> View site
+              <Icons.IconLink size={14} />
+              <span className="admin-side-label">View site</span>
             </a>
             <button
               className="admin-side-action"
+              data-tip="Backups"
               onClick={() => setShowBackupModal(true)}
               title="Manage config backups & restore"
             >
-              <Icons.IconArchive size={14} /> Backups
+              <Icons.IconArchive size={14} />
+              <span className="admin-side-label">Backups</span>
             </button>
             <button
               className="admin-side-action"
+              data-tip="Reload"
               onClick={handleReload}
               disabled={saving}
               title="Reload config & clear cache"
             >
-              <Icons.IconRefresh size={14} /> Reload
+              <Icons.IconRefresh size={14} />
+              <span className="admin-side-label">Reload</span>
             </button>
-            <button className="admin-side-action" onClick={handleLogout}>
-              <Icons.IconX size={14} /> Sign out
+            <button className="admin-side-action" data-tip="Sign out" onClick={handleLogout}>
+              <Icons.IconX size={14} />
+              <span className="admin-side-label">Sign out</span>
             </button>
           </div>
         </div>
