@@ -1131,6 +1131,31 @@
   max-width: 640px;
 }
 
+/* Client proofing link (/proof/<token>): greeting and notes under the title. */
+.proof-session-intro {
+  margin-top: 16px;
+  max-width: 640px;
+}
+
+.proof-session-intro__greeting {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.proof-session-intro__text {
+  margin-top: 6px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.proof-session-intro__meta {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
 .album-header__meta {
   margin-top: 8px;
   font-size: 0.9rem;

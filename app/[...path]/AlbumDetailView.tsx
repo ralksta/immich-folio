@@ -11,14 +11,16 @@ import { albumMetaDetail } from '@/lib/albumMeta';
 import { AlbumNav } from '@/components/AlbumNav';
 import { StructuredData } from '@/components/StructuredData';
 import type { AlbumNavPair } from '@/lib/albumNav';
+import type { ProofSessionInit } from '@/components/ProofingContext';
 
 interface AlbumDetailViewProps {
   album: ImmichAlbum;
   images: PhotoItem[];
   layout: GridConfig['layout'];
   gridStyle: React.CSSProperties;
-  backLinkHref: string;
-  backLinkLabel: string;
+  /** Omitted on a client proofing link, which has nowhere to go back to. */
+  backLinkHref?: string;
+  backLinkLabel?: string;
   subtitle?: string;
   heroImageUrl?: string;
   heroBlurDataURL?: string;
@@ -41,6 +43,10 @@ interface AlbumDetailViewProps {
   nav?: AlbumNavPair;
   /** JSON-LD for this album, or null when no site URL is configured (#472). */
   structuredData?: Record<string, unknown> | null;
+  /** A client proofing link's session; see PhotoGrid. */
+  proofSession?: ProofSessionInit;
+  /** Rendered under the title — the proofing link's greeting and notes. */
+  intro?: React.ReactNode;
 }
 
 export function AlbumDetailView({
@@ -61,6 +67,8 @@ export function AlbumDetailView({
   downloadArchiveUrl,
   nav,
   structuredData,
+  proofSession,
+  intro,
 }: AlbumDetailViewProps) {
   const metaDetail = albumMetaDetail(album, showGear);
   const t = getServerDictionary();
@@ -86,7 +94,7 @@ export function AlbumDetailView({
       )}
       <div className={`album-header${heroImageUrl ? ' album-header--has-hero' : ''}`}>
         <div className="album-header__main">
-          <BackLink href={backLinkHref} label={backLinkLabel} />
+          {backLinkHref && <BackLink href={backLinkHref} label={backLinkLabel ?? ''} />}
           <h1 className="album-header__title">{album.albumName}</h1>
           {subtitle && (
             <p className="subpage-subtitle" style={{ textAlign: 'left', marginLeft: 0 }}>
@@ -94,6 +102,7 @@ export function AlbumDetailView({
             </p>
           )}
           {album.description && <p className="album-header__description">{album.description}</p>}
+          {intro}
           {downloadArchiveUrl && (
             <a className="album-header__download" href={downloadArchiveUrl}>
               <svg
@@ -129,6 +138,7 @@ export function AlbumDetailView({
         allowMailto={allowMailto}
         downloadArchiveUrl={downloadArchiveUrl}
         albumName={album.albumName}
+        proofSession={proofSession}
       />
       {nav && <AlbumNav {...nav} />}
     </>

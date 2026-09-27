@@ -71,6 +71,7 @@ export const es: Dictionary = {
     immichUnavailable:
       'La fototeca no está disponible en este momento. Vuelve a intentarlo en breve.',
     back: 'Volver a la galería',
+    limitReached: 'Se ha alcanzado el límite de descargas de este enlace.',
   },
 
   theme: {
@@ -203,6 +204,30 @@ export const es: Dictionary = {
     mailSubject: (n: number) => `Selección de fotos (${n})`,
     mailBody: (list: string, url: string) =>
       `Hola:\n\nEsta es mi selección de fotos:\n\n${list}\n\nEnlace: ${url}\n\nUn saludo,`,
+  },
+
+  proofSession: {
+    greeting: (name: string) => `Selección para ${name}`,
+    intro:
+      'Toca el corazón en las fotos que quieras. Tu selección se guarda sobre la marcha: puedes volver con este enlace cuando quieras.',
+    saving: 'Guardando…',
+    saved: 'Selección guardada',
+    saveFailed: 'No se ha podido guardar tu selección. Revisa la conexión e inténtalo de nuevo.',
+    review: 'Revisar y enviar',
+    modalTitle: (n: number) => `Tu selección (${n})`,
+    empty: 'Todavía no has seleccionado ninguna foto.',
+    submit: 'Enviar selección',
+    submitting: 'Enviando…',
+    confirmSubmit: (n: number) =>
+      `¿Enviar ${plural(n, 'foto', 'fotos')}? Después no podrás cambiar la selección.`,
+    submitted: 'Gracias: tu selección se ha enviado.',
+    locked: 'Esta selección ya se ha enviado y no se puede modificar.',
+    validUntil: (date: string) => `Este enlace es válido hasta el ${date}.`,
+    expiredTitle: 'Este enlace ha caducado',
+    expiredText: 'Pide un enlace nuevo a tu fotógrafo.',
+    downloadSelection: 'Descargar selección (.zip)',
+    downloadAll: 'Descargar todas las fotos (.zip)',
+    downloadsLeft: (n: number) => `${plural(n, 'descarga restante', 'descargas restantes')}`,
   },
 
   legal: {
