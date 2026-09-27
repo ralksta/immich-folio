@@ -174,7 +174,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 {t.nav.skipToContent}
               </a>
               <header className="header">
-                <nav className="header__nav">
+                <nav className="header__nav" aria-label={t.nav.mainNavAria}>
                   {/* Brand wordmark — presets that show it pair it with the dot. */}
                   <span className="header__wordmark" aria-hidden="true">
                     {config.siteTitle}
@@ -182,8 +182,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <MobileNav>
                     <NavLink href="/">{t.nav.home}</NavLink>
                     <SubpageNav />
-                    {config.aboutEnabled && <NavLink href="/about">{t.nav.about}</NavLink>}
-                    {config.map && <NavLink href="/map">{t.nav.map}</NavLink>}
                   </MobileNav>
                   <ThemeToggle />
                 </nav>
