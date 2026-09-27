@@ -15,6 +15,7 @@ import AdminLoadState from './AdminLoadState';
 import type { ContactMessage } from '@/lib/contact';
 import { useNotify } from './Notifications';
 import PageHeader from './PageHeader';
+import { useConfirm } from './ConfirmDialog';
 
 interface InboxData {
   enabled: boolean;
@@ -37,6 +38,7 @@ function replyHref(m: ContactMessage): string {
 }
 
 export default function MessagesView() {
+  const confirm = useConfirm();
   const notify = useNotify();
   const inbox = useAdminFetch<InboxData>('/api/admin/messages');
   const data = inbox.data;
@@ -65,7 +67,13 @@ export default function MessagesView() {
   }
 
   async function remove(m: ContactMessage) {
-    if (!confirm(`Delete the message from ${m.name}? This cannot be undone.`)) return;
+    const ok = await confirm({
+      title: `Delete the message from ${m.name}?`,
+      message: 'It is removed from this server and cannot be restored.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (!ok) return;
     const res = await fetch(`/api/admin/messages?id=${encodeURIComponent(m.id)}`, {
       method: 'DELETE',
     });

@@ -8,8 +8,10 @@ import { resolveExifDisplay } from '@/lib/config/schema';
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
 import { FeatureGroup, SettingRow } from './fields';
 import type { SectionProps } from './types';
+import { useConfirm } from '../ConfirmDialog';
 
 export default function GeneralSection({ settings, update, updateMany }: SectionProps) {
+  const confirm = useConfirm();
   // Collapsed by default: the four metadata switches are a detail of one
   // decision, and showing them permanently is what made the section a wall (#510).
   const [metadataOpen, setMetadataOpen] = useState(false);
@@ -296,6 +298,14 @@ export default function GeneralSection({ settings, update, updateMany }: Section
             className="admin-btn"
             disabled={faviconUploading}
             onClick={async () => {
+              // Deletes the uploaded file at once, outside the staged form.
+              const ok = await confirm({
+                title: 'Reset the favicon?',
+                message: 'The uploaded icon is deleted and the bundled default is used again.',
+                confirmLabel: 'Reset',
+                danger: true,
+              });
+              if (!ok) return;
               setFaviconStatus(null);
               setFaviconUploading(true);
               try {

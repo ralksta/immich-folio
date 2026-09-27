@@ -20,6 +20,7 @@ import { useNotify } from '../Notifications';
 import { useAdminFetch } from '../useAdminFetch';
 import AdminLoadState from '../AdminLoadState';
 import PageHeader from '../PageHeader';
+import { useConfirm } from '../ConfirmDialog';
 
 interface JournalStudioProps {
   /** Entry to open, taken from the /admin/journal/[slug] route. */
@@ -29,6 +30,7 @@ interface JournalStudioProps {
 }
 
 export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioProps) {
+  const confirm = useConfirm();
   const notify = useNotify();
   const router = useRouter();
   const list = useAdminFetch<{ entries?: JournalEntrySummary[] }>('/api/admin/journal');
@@ -97,12 +99,13 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
   };
 
   const handleDelete = async (slug: string) => {
-    if (
-      !confirm(
-        `Delete "${slug}"?\n\nA copy is kept and can be restored from Backups on the dashboard.`,
-      )
-    )
-      return;
+    const ok = await confirm({
+      title: `Delete “${slug}”?`,
+      message: 'A copy is kept and can be restored under Backups.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (!ok) return;
 
     try {
       const res = await fetch(`/api/admin/journal/${slug}`, {
