@@ -891,3 +891,157 @@
   font-style: normal;
   font-weight: 600;
 }
+
+/* ── Collapsible sidebar ───────────────────────────────────── */
+
+.admin-sidebar {
+  position: sticky;
+  transition: width 0.18s ease;
+}
+
+.admin-app {
+  transition: grid-template-columns 0.18s ease;
+}
+
+.admin-sidebar-toggle {
+  position: absolute;
+  top: 1.35rem;
+  right: 0.6rem;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-bg-raised);
+  color: var(--admin-text-muted);
+  cursor: pointer;
+  z-index: 2;
+}
+
+.admin-sidebar-toggle:hover {
+  color: var(--admin-text);
+  border-color: var(--admin-border-hover);
+}
+
+.admin-app.is-collapsed {
+  --admin-sidebar-width: 64px;
+}
+
+.admin-app.is-collapsed .admin-sidebar {
+  padding-left: 0.6rem;
+  padding-right: 0.6rem;
+  align-items: center;
+  /* The name overlays sit outside the 64px column. */
+  overflow: visible;
+}
+
+.admin-app.is-collapsed .admin-sidebar-toggle {
+  position: static;
+  order: -1;
+}
+
+.admin-app.is-collapsed .admin-brand {
+  justify-content: center;
+  padding: 0.25rem 0 0.5rem;
+}
+
+.admin-app.is-collapsed .admin-brand-text,
+.admin-app.is-collapsed .admin-nav-text,
+.admin-app.is-collapsed .admin-side-label,
+.admin-app.is-collapsed .status-text {
+  display: none;
+}
+
+/* Group labels become a hairline between groups. */
+.admin-app.is-collapsed .admin-nav-label {
+  display: block;
+  height: 1px;
+  margin: 0 0.35rem 0.35rem;
+  padding: 0;
+  overflow: hidden;
+  font-size: 0;
+  background: var(--admin-border);
+}
+
+.admin-app.is-collapsed .admin-nav,
+.admin-app.is-collapsed .admin-sidebar-foot,
+.admin-app.is-collapsed .admin-sidebar-actions {
+  width: 100%;
+  align-items: center;
+}
+
+.admin-app.is-collapsed .admin-nav-item,
+.admin-app.is-collapsed .admin-side-action {
+  justify-content: center;
+  width: 40px;
+  height: 36px;
+  padding: 0;
+}
+
+.admin-app.is-collapsed .admin-nav-item.active::before {
+  left: -0.6rem;
+}
+
+/* The unread count shrinks to a dot on the icon. */
+.admin-app.is-collapsed .admin-nav-count {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 0;
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  font-size: 0;
+}
+
+.admin-app.is-collapsed .admin-nav-dot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+}
+
+.admin-app.is-collapsed .sidebar-status {
+  justify-content: center;
+  width: 40px;
+  padding: 0;
+}
+
+.admin-app.is-collapsed .status-indicator-container {
+  display: flex;
+  justify-content: center;
+}
+
+/* Name overlays: on hover and on keyboard focus, beside the icon. */
+.admin-app.is-collapsed [data-tip] {
+  position: relative;
+}
+
+.admin-app.is-collapsed [data-tip]:hover::after,
+.admin-app.is-collapsed [data-tip]:focus-visible::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--admin-border-hover);
+  border-radius: var(--admin-radius);
+  background: var(--admin-bg-elevated);
+  color: var(--admin-text);
+  font-family: var(--admin-font);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 200;
+}
+
+@media (max-width: 860px) {
+  .admin-sidebar-toggle {
+    display: none;
+  }
+}
