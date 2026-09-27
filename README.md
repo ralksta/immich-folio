@@ -377,7 +377,14 @@ easier to live with.
   readable in light mode. Also brought links to journal quote attributions. In
   v0.17.0, built the ZIP download: a whole album, or just the photos a client
   picked, as one archive of the originals — streamed, so even a large shoot
-  arrives complete.
+  arrives complete. In v0.18.0, kept accent-coloured buttons readable when the
+  accent is light, and made a mistyped accent fall back to the theme instead of
+  turning every button invisible.
+- **[@RichKidsDev](https://github.com/RichKidsDev)** — noticed that the
+  Impressum still cited the TMG, which the DDG replaced in 2024. That report
+  turned into a proper overhaul in v0.18.0: the right law by default, a heading
+  you can change for other countries, clickable contacts and a contact form as
+  a second channel.
 - **[@ImScheinox](https://github.com/ImScheinox)** — found and fixed portrait
   photos rendering as landscape tiles, because the grid ignored the camera's
   EXIF orientation flag. That brought the masonry layout's stagger back for
