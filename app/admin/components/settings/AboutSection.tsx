@@ -3,12 +3,36 @@
 import { useCallback, useEffect, useState } from 'react';
 import * as Icons from '../Icons';
 import type { SaveStatus } from '../SaveBar';
+import { useDraft, readDraft } from '../useDraft';
+import { useContentRestored } from '../contentRestored';
 
 interface AboutMeta {
   portrait?: string;
   name?: string;
   location?: string;
   gear?: string[];
+}
+
+/** The About editor's state, as kept in a draft. */
+interface AboutDraft {
+  meta: AboutMeta;
+  body: string;
+  gearText: string;
+}
+
+/**
+ * What a draft of the About page is compared against: the file's content, not
+ * the textarea's. `gearText` is derived from `meta.gear` and would make a
+ * trailing newline read as a change on disk.
+ */
+function aboutFingerprint(about: AboutDraft): string {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { gear: _gear, ...meta } = about.meta;
+  const gear = about.gearText
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return JSON.stringify({ meta, gear, body: about.body });
 }
 
 /**
@@ -29,6 +53,21 @@ export function useAboutEditor(active: boolean) {
   const [aboutDirty, setAboutDirty] = useState(false);
   const [aboutStatus, setAboutStatus] = useState<SaveStatus>(null);
   const [aboutGearText, setAboutGearText] = useState('');
+  const [serverAbout, setServerAbout] = useState<AboutDraft | null>(null);
+
+  // Unsaved About edits survive a tab switch or Reload, like settings (#592).
+  const draft = useDraft<AboutDraft>(
+    'about',
+    { meta: aboutMeta, body: aboutBody, gearText: aboutGearText },
+    aboutDirty,
+  );
+  const loadDraft = draft.load;
+
+  const applyAbout = (value: AboutDraft) => {
+    setAboutMeta(value.meta);
+    setAboutBody(value.body);
+    setAboutGearText(value.gearText);
+  };
 
   const loadAboutContent = useCallback(async () => {
     setAboutLoading(true);
@@ -43,9 +82,18 @@ export function useAboutEditor(active: boolean) {
         );
       }
       const data = await res.json();
-      setAboutMeta(data.meta || {});
-      setAboutBody(data.body || '');
-      setAboutGearText(data.meta?.gear?.join('\n') || '');
+      const loaded: AboutDraft = {
+        meta: data.meta || {},
+        body: data.body || '',
+        gearText: data.meta?.gear?.join('\n') || '',
+      };
+      setServerAbout(loaded);
+      const restored = loadDraft(aboutFingerprint(loaded));
+      const value = restored ?? loaded;
+      setAboutMeta(value.meta);
+      setAboutBody(value.body);
+      setAboutGearText(value.gearText);
+      setAboutDirty(restored !== null);
       setAboutLoaded(true);
     } catch (err) {
       console.error('Failed to load about content:', err);
@@ -58,7 +106,7 @@ export function useAboutEditor(active: boolean) {
     } finally {
       setAboutLoading(false);
     }
-  }, []);
+  }, [loadDraft]);
 
   async function saveAboutContent() {
     if (!aboutLoaded) return;
@@ -87,6 +135,9 @@ export function useAboutEditor(active: boolean) {
       });
       if (res.ok) {
         const data = await res.json();
+        const saved: AboutDraft = { meta: cleanedMeta, body: aboutBody, gearText: aboutGearText };
+        setServerAbout(saved);
+        draft.saved(aboutFingerprint(saved));
         setAboutDirty(false);
         setAboutStatus({ kind: 'success', message: data.message || 'Saved!' });
         setTimeout(() => setAboutStatus(null), 4000);
@@ -107,6 +158,18 @@ export function useAboutEditor(active: boolean) {
   useEffect(() => {
     if (active && !aboutLoaded) loadAboutContent();
   }, [active, aboutLoaded, loadAboutContent]);
+
+  // A kept About draft loads the file at once, from any section, so the save
+  // bar owns up to those edits before the About section is ever opened.
+  useEffect(() => {
+    if (!active && readDraft('about')) loadAboutContent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // A restored about.md replaces what this editor loaded.
+  useContentRestored(({ target }) => {
+    if (target === 'about' && aboutLoaded) loadAboutContent();
+  });
 
   function updateAboutMeta(key: string, value: unknown) {
     setAboutMeta((m) => ({ ...m, [key]: value }));
@@ -134,6 +197,20 @@ export function useAboutEditor(active: boolean) {
       setAboutStatus(null);
     },
     save: saveAboutContent,
+    draftStatus: draft.status,
+    dismissDraft: draft.dismiss,
+    discardDraft: () => {
+      draft.discard();
+      if (serverAbout) applyAbout(serverAbout);
+      setAboutDirty(false);
+      setAboutStatus(null);
+    },
+    restoreDraft: () => {
+      const value = draft.takeConflicting();
+      if (!value) return;
+      applyAbout(value);
+      setAboutDirty(true);
+    },
   };
 }
 

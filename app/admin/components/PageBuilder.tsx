@@ -17,6 +17,7 @@ import {
   horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import AlbumPicker from './AlbumPicker';
+import { useContentRestored } from './contentRestored';
 import AssetPicker from './AssetPicker';
 import AssetOrderEditor from './AssetOrderEditor';
 import SaveBar, { type SaveStatus } from './SaveBar';
@@ -95,6 +96,11 @@ export default function PageBuilder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // A restored gallery.yaml replaces what this editor loaded.
+  useContentRestored(({ target }) => {
+    if (target === 'gallery') loadData();
+  });
+
   // ── Keyboard shortcut: ⌘+S / Ctrl+S ─────────────────────────
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -159,7 +165,9 @@ export default function PageBuilder() {
       serverState.current = parsed;
       const restored = draft.load(JSON.stringify(parsed));
       setGallery(restored ?? parsed);
-      if (restored) setDirty(true);
+      // Not merely "set when restored": on a reload after a backup restore the
+      // editor may have been dirty, and now shows the server state.
+      setDirty(restored !== null);
       openAlbumFromLink(restored ?? parsed);
 
       // A failed album list is survivable — it only empties the picker, and
@@ -451,6 +459,9 @@ export default function PageBuilder() {
         if (addr.type === 'standalone') removeStandaloneAlbum(addr.albumIndex);
         else if (addr.type === 'subpage') removeSubpageAlbum(addr.subpageIndex!, addr.albumIndex);
         else removeSectionAlbum(addr.subpageIndex!, addr.sectionIndex!, addr.albumIndex);
+        // The drawer is addressed by index and would otherwise show whichever
+        // album slid into this slot.
+        setEditingAlbumAddress(null);
       },
     };
   }
