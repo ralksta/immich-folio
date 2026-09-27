@@ -153,6 +153,27 @@
   }
 }
 
+/* Reduced motion, site-wide — visitor pages, admin and /install alike (#696).
+ *
+ * Durations collapse to near zero instead of `none`, so every animation and
+ * transition still lands on its end state (a drawer still opens, a toast still
+ * shows) and animationend/transitionend still fire for code that waits on
+ * them. Looping animations — the skeleton shimmer, spinners — run once and
+ * stop; the element itself stays visible. !important is needed to win over
+ * component styles and inline `style` animations (MapView's spinner). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Homepage hero + About page use full bleed — override main padding */
 .main:has(.hero),
 .main:has(.about) {
