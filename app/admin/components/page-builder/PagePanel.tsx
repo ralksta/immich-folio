@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   parseJournalMarkdown,
@@ -19,6 +19,8 @@ import { IconFileText, IconTrash } from '../Icons';
 import { useConfirm } from '../ConfirmDialog';
 import { useNotify } from '../Notifications';
 import { reportIfSessionExpired } from '../sessionExpiry';
+import { useVersionedSave } from '../useVersionedSave';
+import type { GalleryVersionChange } from '@/lib/admin/pageRefs';
 
 interface PagePanelProps {
   slug: string;
@@ -29,8 +31,22 @@ interface PagePanelProps {
   taken: SlugTakenBy;
   /** The other pages' slugs, which a rename must not take either. */
   otherPageSlugs: string[];
-  onSaved: (oldSlug: string, page: PageSummary, menuRenamed: boolean) => void;
-  onDeleted: (slug: string, removedFromMenu: boolean) => void;
+  /**
+   * `galleryVersion` is set when the server rewrote gallery.yaml's menu, so
+   * the builder can follow that change without mistaking it for a foreign
+   * edit (#601).
+   */
+  onSaved: (
+    oldSlug: string,
+    page: PageSummary,
+    menuRenamed: boolean,
+    galleryVersion?: GalleryVersionChange | null,
+  ) => void;
+  onDeleted: (
+    slug: string,
+    removedFromMenu: boolean,
+    galleryVersion?: GalleryVersionChange | null,
+  ) => void;
 }
 
 /**
@@ -58,6 +74,11 @@ export default function PagePanel({
   const [password, setPassword] = useState<string | undefined>(undefined);
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
+  /** The page file as loaded, sent back on save (#601). */
+  const versionRef = useRef<string | null>(null);
+  const versionedSave = useVersionedSave();
+  /** Bumped to load the file again — "Reload" in the conflict prompt. */
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -75,8 +96,9 @@ export default function PagePanel({
         }
         return res.json();
       })
-      .then((data: { page: { rawMarkdown: string } }) => {
+      .then((data: { page: { rawMarkdown: string }; version?: string }) => {
         if (cancelled) return;
+        versionRef.current = data.version ?? null;
         const p = parseJournalMarkdown(data.page.rawMarkdown);
         setParsed(p);
         setTitle(p.frontmatter.title || '');
@@ -91,7 +113,7 @@ export default function PagePanel({
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, reloadKey]);
 
   const fm = parsed?.frontmatter;
   const dirty =
@@ -134,19 +156,31 @@ export default function PagePanel({
           description: description.trim() || undefined,
         },
       });
-      const res = await fetch(`/api/admin/pages/${encodeURIComponent(slug)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          rawMarkdown: markdown,
-          ...(renaming ? { newSlug: slugInput } : {}),
-        }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        if (!reportIfSessionExpired(res)) notify('error', data?.error || 'Failed to save the page');
+      const result = await versionedSave(
+        `/api/admin/pages/${encodeURIComponent(slug)}`,
+        { rawMarkdown: markdown, ...(renaming ? { newSlug: slugInput } : {}) },
+        versionRef,
+        'This page',
+      );
+      if (result.kind === 'reload') {
+        setReloadKey((k) => k + 1);
         return;
       }
+      if (result.kind === 'keep') {
+        notify('error', 'Not saved — the page changed elsewhere. Your edits are still here.');
+        return;
+      }
+      if (result.kind === 'failed') {
+        if (!reportIfSessionExpired(result.res)) {
+          notify('error', result.data?.error || 'Failed to save the page');
+        }
+        return;
+      }
+      const data = result.data as {
+        page: { slug: string; rawMarkdown: string };
+        menuRenamed?: boolean;
+        galleryVersion?: GalleryVersionChange | null;
+      };
       const written = parseJournalMarkdown(data.page.rawMarkdown);
       setParsed(written);
       setPassword(written.frontmatter.password || undefined);
@@ -158,6 +192,7 @@ export default function PagePanel({
           frontmatter: { title: t, description: d, password: pw, draft: dr },
         },
         data.menuRenamed === true,
+        data.galleryVersion,
       );
       notify('success', 'Page saved.');
     } catch {
@@ -187,7 +222,7 @@ export default function PagePanel({
           notify('error', data?.error || 'Failed to delete the page');
         return;
       }
-      onDeleted(slug, data?.removedFromMenu === true);
+      onDeleted(slug, data?.removedFromMenu === true, data?.galleryVersion);
       notify('success', 'Page deleted.');
     } catch {
       notify('error', 'Could not delete the page. Check the connection and try again.');

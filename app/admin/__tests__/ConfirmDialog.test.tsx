@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
-import { ConfirmProvider, useConfirm } from '../components/ConfirmDialog';
+import { ConfirmProvider, useChoice, useConfirm } from '../components/ConfirmDialog';
 
 afterEach(cleanup);
 
@@ -58,5 +58,48 @@ describe('ConfirmDialog', () => {
     fireEvent.click(screen.getByText('go'));
     fireEvent.keyDown(document, { key: 'Escape' });
     await waitFor(() => expect(results).toEqual([false, false]));
+  });
+});
+
+/** The concurrent-edit prompt (#601): more than two ways out. */
+function ChoiceTrigger({ onResult }: { onResult: (id: string | null) => void }) {
+  const choose = useChoice();
+  return (
+    <button
+      onClick={async () =>
+        onResult(
+          await choose({
+            title: 'Changed elsewhere',
+            actions: [
+              { id: 'overwrite', label: 'Overwrite anyway' },
+              { id: 'reload', label: 'Reload (discard mine)' },
+            ],
+            cancelLabel: 'Keep editing',
+          }),
+        )
+      }
+    >
+      choose
+    </button>
+  );
+}
+
+describe('useChoice', () => {
+  it('resolves to the picked action, or null on cancel', async () => {
+    const results: (string | null)[] = [];
+    render(
+      <ConfirmProvider>
+        <ChoiceTrigger onResult={(id) => results.push(id)} />
+      </ConfirmProvider>,
+    );
+    fireEvent.click(screen.getByText('choose'));
+    fireEvent.click(screen.getByRole('button', { name: 'Reload (discard mine)' }));
+    await waitFor(() => expect(results).toEqual(['reload']));
+    fireEvent.click(screen.getByText('choose'));
+    fireEvent.click(screen.getByRole('button', { name: 'Overwrite anyway' }));
+    await waitFor(() => expect(results).toEqual(['reload', 'overwrite']));
+    fireEvent.click(screen.getByText('choose'));
+    fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }));
+    await waitFor(() => expect(results).toEqual(['reload', 'overwrite', null]));
   });
 });

@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Icons from '../Icons';
 import type { SaveStatus } from '../SaveBar';
 import { useDraft, readDraft } from '../useDraft';
 import { useContentRestored } from '../contentRestored';
+import { useVersionedSave } from '../useVersionedSave';
 
 interface AboutMeta {
   portrait?: string;
@@ -62,6 +63,9 @@ export function useAboutEditor(active: boolean) {
     aboutDirty,
   );
   const loadDraft = draft.load;
+  /** about.md as loaded, sent back on save so a change elsewhere is caught (#601). */
+  const versionRef = useRef<string | null>(null);
+  const versionedSave = useVersionedSave();
 
   const applyAbout = (value: AboutDraft) => {
     setAboutMeta(value.meta);
@@ -82,6 +86,7 @@ export function useAboutEditor(active: boolean) {
         );
       }
       const data = await res.json();
+      versionRef.current = typeof data.version === 'string' ? data.version : null;
       const loaded: AboutDraft = {
         meta: data.meta || {},
         body: data.body || '',
@@ -128,22 +133,33 @@ export function useAboutEditor(active: boolean) {
     }
 
     try {
-      const res = await fetch('/api/admin/about', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ meta: cleanedMeta, body: aboutBody }),
-      });
-      if (res.ok) {
-        const data = await res.json();
+      const result = await versionedSave(
+        '/api/admin/about',
+        { meta: cleanedMeta, body: aboutBody },
+        versionRef,
+        'The About page',
+      );
+      if (result.kind === 'reload') {
+        draft.discard();
+        await loadAboutContent();
+      } else if (result.kind === 'keep') {
+        setAboutStatus({ kind: 'error', message: 'Not saved — the About page changed elsewhere.' });
+      } else if (result.kind === 'saved') {
+        const data = result.data;
         const saved: AboutDraft = { meta: cleanedMeta, body: aboutBody, gearText: aboutGearText };
         setServerAbout(saved);
         draft.saved(aboutFingerprint(saved));
         setAboutDirty(false);
-        setAboutStatus({ kind: 'success', message: data.message || 'Saved!' });
+        setAboutStatus({
+          kind: 'success',
+          message: typeof data.message === 'string' ? data.message : 'Saved!',
+        });
         setTimeout(() => setAboutStatus(null), 4000);
       } else {
-        const err = await res.json();
-        setAboutStatus({ kind: 'error', message: `Error: ${err.error}` });
+        setAboutStatus({
+          kind: 'error',
+          message: `Error: ${result.data?.error ?? `HTTP ${result.res.status}`}`,
+        });
       }
     } catch {
       setAboutStatus({ kind: 'error', message: 'Error: Failed to save' });

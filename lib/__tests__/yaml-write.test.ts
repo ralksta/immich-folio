@@ -90,7 +90,7 @@ describe('writeYamlFile backup failure', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('still saves a brand-new file with no backup', async () => {
-    await expect(writeGalleryYaml(gallery)).resolves.toBeUndefined();
+    await expect(writeGalleryYaml(gallery)).resolves.toMatch(/^[0-9a-f]{32}$/);
     expect(fs.copyFile).not.toHaveBeenCalled();
   });
 

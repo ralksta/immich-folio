@@ -1,7 +1,17 @@
 import { NextResponse } from 'next/server';
 import { withAdmin } from '@/lib/admin/withAdmin';
 import { revalidatePath } from 'next/cache';
-import { readGalleryYaml, writeGalleryYaml } from '@/lib/admin/yaml-service';
+import {
+  readGalleryYaml,
+  readGalleryYamlVersioned,
+  writeGalleryYaml,
+} from '@/lib/admin/yaml-service';
+import {
+  VersionConflictError,
+  baseVersionFrom,
+  conflictResponse,
+  etag,
+} from '@/lib/admin/contentVersion';
 import { invalidateConfigCache, deriveGallery } from '@/lib/config';
 import { immich } from '@/lib/immich';
 import type { GalleryYaml } from '@/lib/config/schema';
@@ -12,8 +22,12 @@ const PASSWORD_KEY = new Set(['password']);
 
 /** GET: Read current gallery.yaml config. */
 export const GET = withAdmin(async () => {
-  const gallery = await readGalleryYaml();
-  return NextResponse.json({ gallery: gallery || { hero: [], albums: [], subpages: [] } });
+  const { data: gallery, version } = await readGalleryYamlVersioned();
+  // `version` goes back in If-Match on save (#601).
+  return NextResponse.json(
+    { gallery: gallery || { hero: [], albums: [], subpages: [] }, version },
+    { headers: { ETag: etag(version) } },
+  );
 });
 
 /** PUT: Write gallery.yaml config. */
@@ -64,7 +78,7 @@ export const PUT = withAdmin(async (request: Request) => {
       PASSWORD_KEY,
       await readGalleryYaml().catch(() => null),
     );
-    await writeGalleryYaml(toWrite);
+    const version = await writeGalleryYaml(toWrite, baseVersionFrom(request));
     invalidateConfigCache();
     immich.invalidateAll();
     // Revalidate all pages so the homepage picks up new hero images immediately
@@ -75,8 +89,10 @@ export const PUT = withAdmin(async (request: Request) => {
       message: 'Saved successfully. Backup of previous version created.',
       // What was written, passwords hashed, so the editor can take it over.
       gallery: toWrite,
+      version,
     });
   } catch (err) {
+    if (err instanceof VersionConflictError) return conflictResponse(err.currentVersion);
     console.error('[Admin] Failed to write gallery.yaml:', err);
     return NextResponse.json({ error: 'Failed to save gallery config' }, { status: 500 });
   }

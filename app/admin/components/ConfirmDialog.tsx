@@ -28,37 +28,90 @@ export interface ConfirmOptions {
 
 type Confirm = (options: ConfirmOptions) => Promise<boolean>;
 
-/** Outside the provider (a component tested on its own) it falls back to window.confirm. */
-const ConfirmContext = createContext<Confirm>(async (o) =>
-  typeof window === 'undefined' ? false : window.confirm(o.title),
-);
-
-export function useConfirm(): Confirm {
-  return useContext(ConfirmContext);
+/** One button of a choice; `id` is what the promise resolves to. */
+export interface ChoiceAction<Id extends string> {
+  id: Id;
+  label: string;
+  danger?: boolean;
 }
 
-export function ConfirmProvider({ children }: { children: ReactNode }) {
-  const [pending, setPending] = useState<ConfirmOptions | null>(null);
-  const resolver = useRef<((ok: boolean) => void) | null>(null);
+/**
+ * More than yes or no — the concurrent-edit prompt (#601) offers three ways
+ * out. The cancel button (and Esc, and the backdrop) resolves to null.
+ */
+export interface ChoiceOptions<Id extends string> {
+  title: string;
+  message?: ReactNode;
+  /** Left to right; the last one is the primary button. */
+  actions: ChoiceAction<Id>[];
+  cancelLabel?: string;
+}
 
-  const confirm = useCallback<Confirm>(
-    (options) =>
-      new Promise<boolean>((resolve) => {
-        resolver.current?.(false);
+type Choose = <Id extends string>(options: ChoiceOptions<Id>) => Promise<Id | null>;
+
+interface DialogContext {
+  confirm: Confirm;
+  choose: Choose;
+}
+
+/** Outside the provider (a component tested on its own) it falls back to window.confirm. */
+const ConfirmContext = createContext<DialogContext>({
+  confirm: async (o) => (typeof window === 'undefined' ? false : window.confirm(o.title)),
+  choose: async (o) =>
+    typeof window !== 'undefined' && window.confirm(o.title)
+      ? (o.actions[o.actions.length - 1]?.id ?? null)
+      : null,
+});
+
+export function useConfirm(): Confirm {
+  return useContext(ConfirmContext).confirm;
+}
+
+export function useChoice(): Choose {
+  return useContext(ConfirmContext).choose;
+}
+
+const CONFIRM_ID = 'confirm';
+
+export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const [pending, setPending] = useState<ChoiceOptions<string> | null>(null);
+  const resolver = useRef<((id: string | null) => void) | null>(null);
+
+  const choose = useCallback(
+    (options: ChoiceOptions<string>) =>
+      new Promise<string | null>((resolve) => {
+        resolver.current?.(null);
         resolver.current = resolve;
         setPending(options);
       }),
     [],
+  ) as Choose;
+
+  const confirm = useCallback<Confirm>(
+    async (options) =>
+      (await choose({
+        title: options.title,
+        message: options.message,
+        cancelLabel: options.cancelLabel,
+        actions: [
+          {
+            id: CONFIRM_ID,
+            label: options.confirmLabel ?? 'Confirm',
+            danger: options.danger,
+          },
+        ],
+      })) === CONFIRM_ID,
+    [choose],
   );
 
-  const settle = useCallback((ok: boolean) => {
-    resolver.current?.(ok);
+  const settle = useCallback((id: string | null) => {
+    resolver.current?.(id);
     resolver.current = null;
     setPending(null);
   }, []);
 
   return (
-    <ConfirmContext.Provider value={confirm}>
+    <ConfirmContext.Provider value={{ confirm, choose }}>
       {children}
       {pending && <Dialog options={pending} onSettle={settle} />}
     </ConfirmContext.Provider>
@@ -69,13 +122,14 @@ function Dialog({
   options,
   onSettle,
 }: {
-  options: ConfirmOptions;
-  onSettle: (ok: boolean) => void;
+  options: ChoiceOptions<string>;
+  onSettle: (id: string | null) => void;
 }) {
   // Esc cancels, focus is trapped and returned (the same hook the modals use).
-  const cardRef = useModalDialog(() => onSettle(false));
+  const cardRef = useModalDialog(() => onSettle(null));
+  const last = options.actions.length - 1;
   return (
-    <div className="confirm-backdrop" onClick={() => onSettle(false)}>
+    <div className="confirm-backdrop" onClick={() => onSettle(null)}>
       <div
         ref={cardRef}
         className="confirm-card"
@@ -97,17 +151,26 @@ function Dialog({
           <button
             type="button"
             className="admin-btn admin-btn-ghost"
-            onClick={() => onSettle(false)}
+            onClick={() => onSettle(null)}
           >
             {options.cancelLabel ?? 'Cancel'}
           </button>
-          <button
-            type="button"
-            className={`admin-btn ${options.danger ? 'confirm-danger' : 'admin-btn-primary'}`}
-            onClick={() => onSettle(true)}
-          >
-            {options.confirmLabel ?? 'Confirm'}
-          </button>
+          {options.actions.map((action, i) => (
+            <button
+              key={action.id}
+              type="button"
+              className={`admin-btn ${
+                action.danger
+                  ? 'confirm-danger'
+                  : i === last
+                    ? 'admin-btn-primary'
+                    : 'admin-btn-ghost'
+              }`}
+              onClick={() => onSettle(action.id)}
+            >
+              {action.label}
+            </button>
+          ))}
         </div>
       </div>
     </div>

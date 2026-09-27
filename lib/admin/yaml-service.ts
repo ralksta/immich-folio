@@ -8,35 +8,67 @@ import path from 'path';
 import yaml from 'js-yaml';
 import { atomicWrite } from '../atomicWrite';
 import type { GalleryYaml, SettingsYaml } from '../config/schema';
+import { assertVersion, serializeContentWrite, versionOf } from './contentVersion';
 
 const CONTENT_DIR = path.join(process.cwd(), 'content');
 const MAX_BACKUPS = 10; // Keep last 10 backups per file
 
-/** Read gallery.yaml and return parsed content. */
-export async function readGalleryYaml(): Promise<GalleryYaml | null> {
+/** A parsed YAML file and the version (#601) of the bytes it was parsed from. */
+export interface VersionedYaml<T> {
+  data: T | null;
+  version: string;
+}
+
+async function readYamlVersioned<T>(filename: string): Promise<VersionedYaml<T>> {
   try {
-    const raw = await fs.readFile(path.join(CONTENT_DIR, 'gallery.yaml'), 'utf8');
-    return yaml.load(raw) as GalleryYaml;
+    const raw = await fs.readFile(path.join(CONTENT_DIR, filename), 'utf8');
+    return { data: yaml.load(raw) as T, version: versionOf(raw) };
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+      return { data: null, version: versionOf(null) };
+    }
     throw err;
   }
+}
+
+/** Read gallery.yaml and return parsed content. */
+export async function readGalleryYaml(): Promise<GalleryYaml | null> {
+  return (await readGalleryYamlVersioned()).data;
+}
+
+/** gallery.yaml with its version, for the editor that will save it back. */
+export function readGalleryYamlVersioned(): Promise<VersionedYaml<GalleryYaml>> {
+  return readYamlVersioned<GalleryYaml>('gallery.yaml');
 }
 
 /** Read settings.yaml and return parsed content. */
 export async function readSettingsYaml(): Promise<SettingsYaml | null> {
-  try {
-    const raw = await fs.readFile(path.join(CONTENT_DIR, 'settings.yaml'), 'utf8');
-    return yaml.load(raw) as SettingsYaml;
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return null;
-    throw err;
-  }
+  return (await readSettingsYamlVersioned()).data;
 }
 
-/** Atomically write a YAML file with backup. */
-async function writeYamlFile(filename: string, data: unknown): Promise<void> {
+/** settings.yaml with its version, for the editor that will save it back. */
+export function readSettingsYamlVersioned(): Promise<VersionedYaml<SettingsYaml>> {
+  return readYamlVersioned<SettingsYaml>('settings.yaml');
+}
+
+/**
+ * Atomically write a YAML file with backup, returning the new version.
+ *
+ * With a `baseVersion`, the write is refused with a VersionConflictError when
+ * the file on disk is no longer that version (#601) — checked inside the write
+ * queue, so no other save can slip in between the check and the rename.
+ */
+function writeYamlFile(filename: string, data: unknown, baseVersion?: string): Promise<string> {
+  return serializeContentWrite(() => writeYamlFileNow(filename, data, baseVersion));
+}
+
+async function writeYamlFileNow(
+  filename: string,
+  data: unknown,
+  baseVersion: string | undefined,
+): Promise<string> {
   const filePath = path.join(CONTENT_DIR, filename);
+  await assertVersion(filePath, baseVersion);
 
   // Ensure content directory exists
   await fs.mkdir(CONTENT_DIR, { recursive: true });
@@ -85,16 +117,17 @@ async function writeYamlFile(filename: string, data: unknown): Promise<void> {
   await atomicWrite(filePath, content);
 
   console.log(`[Admin] ✅ Saved ${filename}`);
+  return versionOf(content);
 }
 
-/** Write gallery.yaml. */
-export async function writeGalleryYaml(data: GalleryYaml): Promise<void> {
-  await writeYamlFile('gallery.yaml', data);
+/** Write gallery.yaml; see writeYamlFile for `baseVersion`. Returns the new version. */
+export function writeGalleryYaml(data: GalleryYaml, baseVersion?: string): Promise<string> {
+  return writeYamlFile('gallery.yaml', data, baseVersion);
 }
 
-/** Write settings.yaml. */
-export async function writeSettingsYaml(data: SettingsYaml): Promise<void> {
-  await writeYamlFile('settings.yaml', data);
+/** Write settings.yaml; see writeYamlFile for `baseVersion`. Returns the new version. */
+export function writeSettingsYaml(data: SettingsYaml, baseVersion?: string): Promise<string> {
+  return writeYamlFile('settings.yaml', data, baseVersion);
 }
 
 /** List available backups for a file. */

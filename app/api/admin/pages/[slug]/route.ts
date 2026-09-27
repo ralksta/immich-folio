@@ -4,7 +4,14 @@ import { withAdmin } from '@/lib/admin/withAdmin';
 import { isValidSlug, parseJournalMarkdown, sanitizeSlug } from '@/lib/journal';
 import { describeCollision, pageSlugCollision } from '@/lib/pages';
 import { hashFrontmatterPassword } from '@/lib/admin/passwordHashing';
-import { deletePage, readPage, writePage } from '@/lib/admin/pages-service';
+import { deletePage, readPage, savePage } from '@/lib/admin/pages-service';
+import {
+  VersionConflictError,
+  baseVersionFrom,
+  conflictResponse,
+  etag,
+  versionOf,
+} from '@/lib/admin/contentVersion';
 import { takenPageSlugs } from '@/lib/admin/pageSlugs';
 import { updatePageRefs } from '@/lib/admin/pageRefs';
 
@@ -20,7 +27,9 @@ export const GET = withAdmin(async (_request: Request, context: RouteContext) =>
   try {
     const page = await readPage(slug);
     if (!page) return NextResponse.json({ error: 'Page not found' }, { status: 404 });
-    return NextResponse.json({ page });
+    // `version` goes back in If-Match on save (#601).
+    const version = versionOf(page.rawMarkdown);
+    return NextResponse.json({ page, version }, { headers: { ETag: etag(version) } });
   } catch (err) {
     console.error(`[Admin API] Failed to read page "${slug}":`, err);
     return NextResponse.json({ error: 'Failed to read page' }, { status: 500 });
@@ -72,18 +81,24 @@ export const PUT = withAdmin(async (request: Request, context: RouteContext) => 
     // Stored hashed (#690); the current file supplies the hash to keep.
     const markdown = await hashFrontmatterPassword(rawMarkdown, current.rawMarkdown);
 
-    let menuRenamed = false;
-    if (targetSlug !== slug) {
-      await writePage(targetSlug, markdown);
-      await deletePage(slug);
-      menuRenamed = await updatePageRefs(slug, targetSlug);
-    } else {
-      await writePage(slug, markdown);
-    }
+    // A rename is checked against the file the editor loaded, the old slug.
+    const version = await savePage(targetSlug, markdown, {
+      baseVersion: baseVersionFrom(request),
+      fromSlug: slug,
+    });
+    const galleryVersion = targetSlug !== slug ? await updatePageRefs(slug, targetSlug) : null;
 
     revalidatePath('/', 'layout');
-    return NextResponse.json({ success: true, page: await readPage(targetSlug), menuRenamed });
+    return NextResponse.json({
+      success: true,
+      page: await readPage(targetSlug),
+      menuRenamed: galleryVersion !== null,
+      // So the open page builder can follow the menu rewrite (#601).
+      galleryVersion,
+      version,
+    });
   } catch (err) {
+    if (err instanceof VersionConflictError) return conflictResponse(err.currentVersion);
     console.error(`[Admin API] Failed to save page "${slug}":`, err);
     return NextResponse.json({ error: 'Failed to save page' }, { status: 500 });
   }
@@ -102,9 +117,14 @@ export const DELETE = withAdmin(async (_request: Request, context: RouteContext)
   try {
     const deleted = await deletePage(slug);
     if (!deleted) return NextResponse.json({ error: 'Page not found' }, { status: 404 });
-    const removedFromMenu = await updatePageRefs(slug, null);
+    const galleryVersion = await updatePageRefs(slug, null);
     revalidatePath('/', 'layout');
-    return NextResponse.json({ success: true, deletedSlug: slug, removedFromMenu });
+    return NextResponse.json({
+      success: true,
+      deletedSlug: slug,
+      removedFromMenu: galleryVersion !== null,
+      galleryVersion,
+    });
   } catch (err) {
     console.error(`[Admin API] Failed to delete page "${slug}":`, err);
     return NextResponse.json({ error: 'Failed to delete page' }, { status: 500 });

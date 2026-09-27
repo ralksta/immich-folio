@@ -7,7 +7,7 @@
  * path through useAboutEditor().
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SaveBar, { type SaveStatus } from './SaveBar';
@@ -16,6 +16,7 @@ import { useDraft } from './useDraft';
 import DraftNotice from './DraftNotice';
 import { useContentRestored } from './contentRestored';
 import { reportIfSessionExpired } from './sessionExpiry';
+import { useVersionedSave } from './useVersionedSave';
 import type { Settings, SectionProps } from './settings/types';
 import type { EnvLocks } from '@/lib/admin/envLocks';
 import GeneralSection from './settings/GeneralSection';
@@ -90,6 +91,9 @@ export default function SettingsEditor() {
   // holds the password as typed. A restored draft takes the password from the
   // server instead; a new one is typed again after a reload.
   const settingsDraft = useDraft<Settings>('settings', withoutSitePassword(settings), dirty);
+  /** settings.yaml as loaded, sent back on save so a change elsewhere is caught (#601). */
+  const versionRef = useRef<string | null>(null);
+  const versionedSave = useVersionedSave();
 
   useEffect(() => {
     loadSettings();
@@ -152,8 +156,9 @@ export default function SettingsEditor() {
             : `The server answered ${res.status}.`,
         );
       }
-      const { settings: data, siteUrl, envLocks: locks } = await res.json();
+      const { settings: data, siteUrl, envLocks: locks, version } = await res.json();
       const loaded: Settings = data || {};
+      versionRef.current = typeof version === 'string' ? version : null;
       setServerSettings(loaded);
       const restoredDraft = settingsDraft.load(JSON.stringify(withoutSitePassword(loaded)));
       const restored = restoredDraft && withSitePasswordOf(restoredDraft, loaded);
@@ -231,30 +236,40 @@ export default function SettingsEditor() {
     }
 
     try {
-      const res = await fetch('/api/admin/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ settings: cleaned }),
-      });
+      const result = await versionedSave(
+        '/api/admin/settings',
+        { settings: cleaned },
+        versionRef,
+        'The settings file',
+      );
 
-      if (res.ok) {
-        const data = await res.json();
+      if (result.kind === 'reload') {
+        settingsDraft.discard();
+        await loadSettings();
+      } else if (result.kind === 'keep') {
+        setSaveStatus({ kind: 'error', message: 'Not saved — the settings changed elsewhere.' });
+      } else if (result.kind === 'saved') {
+        const data = result.data;
         // The site password is stored hashed (#690); show that, not the typed text.
         const stored: Settings =
           typeof data.sitePassword === 'string'
             ? { ...cleaned, sitePassword: data.sitePassword }
             : cleaned;
         if (typeof data.sitePassword === 'string') {
-          setSettings((s) => ({ ...s, sitePassword: data.sitePassword }));
+          const hashed = data.sitePassword;
+          setSettings((s) => ({ ...s, sitePassword: hashed }));
         }
         setServerSettings(stored);
         settingsDraft.saved(JSON.stringify(withoutSitePassword(stored)));
         setDirty(false);
-        setSaveStatus({ kind: 'success', message: data.message || 'Saved!' });
+        setSaveStatus({
+          kind: 'success',
+          message: typeof data.message === 'string' ? data.message : 'Saved!',
+        });
         router.refresh();
         setTimeout(() => setSaveStatus(null), 5000);
-      } else if (!reportIfSessionExpired(res)) {
-        const err = await res.json();
+      } else if (!reportIfSessionExpired(result.res)) {
+        const err = result.data ?? {};
         // A rejected save names the fields that caused it. Listing them beats
         // "could not be saved" over a form with forty inputs; putting the
         // message next to each input is the job of #600.
@@ -263,7 +278,7 @@ export default function SettingsEditor() {
           : [];
         setSaveStatus({
           kind: 'error',
-          message: `Error: ${err.error}${fields.length ? ` — ${fields.join(', ')}` : ''}`,
+          message: `Error: ${err.error ?? `HTTP ${result.res.status}`}${fields.length ? ` — ${fields.join(', ')}` : ''}`,
         });
       }
     } catch {

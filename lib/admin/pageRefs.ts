@@ -6,7 +6,8 @@
  * gallery.yaml is backed up first like every other admin save.
  */
 
-import { readGalleryYaml, writeGalleryYaml } from './yaml-service';
+import { readGalleryYamlVersioned, writeGalleryYaml } from './yaml-service';
+import { VersionConflictError } from './contentVersion';
 import { invalidateConfigCache, isPageRef } from '../config';
 
 /**
@@ -21,13 +22,38 @@ export function rewritePageRefs<T>(subpages: T[], from: string, to: string | nul
   });
 }
 
-/** Apply rewritePageRefs() to gallery.yaml on disk. True when the file changed. */
-export async function updatePageRefs(from: string, to: string | null): Promise<boolean> {
-  const gallery = await readGalleryYaml();
-  if (!gallery || !Array.isArray(gallery.subpages)) return false;
-  const next = rewritePageRefs(gallery.subpages, from, to);
-  if (next === gallery.subpages) return false;
-  await writeGalleryYaml({ ...gallery, subpages: next });
-  invalidateConfigCache();
-  return true;
+/** gallery.yaml's version before and after a menu rewrite (#601). */
+export interface GalleryVersionChange {
+  from: string;
+  to: string;
+}
+
+/**
+ * Apply rewritePageRefs() to gallery.yaml on disk. Returns the version change
+ * when the file changed, null when it did not.
+ *
+ * The page builder is open while this runs and holds gallery.yaml's version.
+ * With `from` and `to` it can tell "only this rewrite happened since I loaded"
+ * (take the new version) from "someone else saved too" (keep the old one, so
+ * its next save is refused rather than clobbering). The write itself is
+ * checked against the version read here, and re-read on a conflict, so a
+ * builder save racing the rewrite is not overwritten either.
+ */
+export async function updatePageRefs(
+  from: string,
+  to: string | null,
+): Promise<GalleryVersionChange | null> {
+  for (let attempt = 0; ; attempt++) {
+    const { data: gallery, version } = await readGalleryYamlVersioned();
+    if (!gallery || !Array.isArray(gallery.subpages)) return null;
+    const next = rewritePageRefs(gallery.subpages, from, to);
+    if (next === gallery.subpages) return null;
+    try {
+      const written = await writeGalleryYaml({ ...gallery, subpages: next }, version);
+      invalidateConfigCache();
+      return { from: version, to: written };
+    } catch (err) {
+      if (!(err instanceof VersionConflictError) || attempt >= 2) throw err;
+    }
+  }
 }
