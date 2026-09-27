@@ -2,10 +2,9 @@
 
 import { useState, type CSSProperties } from 'react';
 import * as Icons from '../Icons';
-import ToggleCard from '../fields/ToggleCard';
 import OptionGrid, { toOptions } from '../fields/OptionGrid';
 import { DEFAULT_PRESET } from '@/lib/config/theme';
-import { effectiveTheme } from './fields';
+import { effectiveTheme, FeatureRow } from './fields';
 import type { SectionProps } from './types';
 
 const PRESETS = ['studio-modern', 'studio', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
@@ -456,24 +455,37 @@ export default function ThemeSection({ settings, update }: SectionProps) {
 
       <div className="settings-section-header">
         <h3>
-          <Icons.IconSparkles size={18} /> Finishing Touches
+          <Icons.IconSparkles size={18} /> Look &amp; motion
         </h3>
-        <p className="settings-section-sub">Enable optional visual effects and indicators.</p>
+        <p className="settings-section-sub">Effects and small controls on every page.</p>
       </div>
 
-      <div className="admin-toggle-cards-grid">
-        <ToggleCard
-          icon={<Icons.IconFilm size={16} />}
-          title="Film Grain Texture"
-          description="Adds analog noise overlay across portfolio background"
+      <div className="feature-list">
+        <FeatureRow
+          icon={<Icons.IconSparkles size={15} />}
+          title="Page transitions"
+          description="A short fade between pages"
+          checked={settings.transitions !== false}
+          onToggle={() => update('transitions', settings.transitions === false)}
+        />
+        <FeatureRow
+          icon={<Icons.IconArrowUp size={15} />}
+          title="Scroll-to-top button"
+          description="A floating arrow on long pages"
+          checked={settings.scrollToTop !== false}
+          onToggle={() => update('scrollToTop', settings.scrollToTop === false)}
+        />
+        <FeatureRow
+          icon={<Icons.IconFilm size={15} />}
+          title="Film grain"
+          description="Analog noise over the background"
           checked={theme.grain}
           onToggle={() => update('theme.grain', !theme.grain)}
         />
-
-        <ToggleCard
-          icon={<Icons.IconTarget size={16} />}
-          title="Header Accent Dot"
-          description="Displays accent dot next to active section header"
+        <FeatureRow
+          icon={<Icons.IconTarget size={15} />}
+          title="Header accent dot"
+          description="A dot beside the active section heading"
           checked={theme.headerDot}
           onToggle={() => update('theme.headerDot', !theme.headerDot)}
         />
