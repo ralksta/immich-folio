@@ -666,3 +666,17 @@
   border-color: var(--admin-error);
   color: #fff;
 }
+
+/* A caption over a group of buttons or a self-labelled switch: looks like a
+   field label, but is not a <label>, since there is no single control for it
+   to name (#694 §4). */
+.admin-layout .admin-field-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-family: var(--admin-font-label);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--admin-text-secondary);
+}

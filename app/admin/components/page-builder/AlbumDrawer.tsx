@@ -72,8 +72,9 @@ export default function AlbumDrawer({
               </div>
 
               <div className="admin-field">
-                <label>Title override</label>
+                <label htmlFor="album-title-override">Title override</label>
                 <input
+                  id="album-title-override"
                   value={album.title || ''}
                   onChange={(e) => onUpdate({ title: e.target.value || undefined })}
                   placeholder={name}
@@ -81,8 +82,9 @@ export default function AlbumDrawer({
               </div>
 
               <div className="admin-field">
-                <label>Description</label>
+                <label htmlFor="album-description">Description</label>
                 <textarea
+                  id="album-description"
                   value={album.description || ''}
                   onChange={(e) => onUpdate({ description: e.target.value || undefined })}
                   placeholder="Optional description for visitors"
@@ -91,8 +93,9 @@ export default function AlbumDrawer({
               </div>
 
               <div className="admin-field">
-                <label>Password protection</label>
+                <label htmlFor="album-password">Password protection</label>
                 <PasswordField
+                  id="album-password"
                   value={album.password}
                   onChange={(password) => onUpdate({ password })}
                   label="Album password"
@@ -100,7 +103,7 @@ export default function AlbumDrawer({
               </div>
 
               <div className="admin-field">
-                <label>Downloads</label>
+                <span className="admin-field-label">Downloads</span>
                 <button
                   type="button"
                   className={`admin-toggle-card ${album.download ? 'active' : ''}`}
@@ -139,8 +142,9 @@ export default function AlbumDrawer({
 
             <div className="admin-sheet-col admin-sheet-col--divided">
               <div className="admin-field">
-                <label>Layout override (Experimental)</label>
+                <label htmlFor="album-layout-override">Layout override (Experimental)</label>
                 <select
+                  id="album-layout-override"
                   aria-label="Layout override"
                   value={album.grid?.layout || ''}
                   onChange={(e) => {
@@ -164,8 +168,9 @@ export default function AlbumDrawer({
               </div>
 
               <div className="admin-field">
-                <label>Cover focal point (Experimental)</label>
+                <label htmlFor="album-cover-focal-point">Cover focal point (Experimental)</label>
                 <input
+                  id="album-cover-focal-point"
                   value={album.coverPosition || ''}
                   onChange={(e) => onUpdate({ coverPosition: e.target.value || undefined })}
                   placeholder={'e.g. "50% 25%" or "top" — where the cover crop should anchor'}
@@ -174,7 +179,7 @@ export default function AlbumDrawer({
 
               {/* Hero Image Selection */}
               <div className="admin-field">
-                <label>Custom Hero Image</label>
+                <span className="admin-field-label">Custom Hero Image</span>
                 <div className="album-hero-field">
                   {album.heroImage ? (
                     <div className="album-hero-preview">
@@ -211,7 +216,9 @@ export default function AlbumDrawer({
 
               {/* Photo order */}
               <div className="admin-field">
-                <label id="album-sort-label">Photo order</label>
+                <span className="admin-field-label" id="album-sort-label">
+                  Photo order
+                </span>
                 <Listbox
                   labelledBy="album-sort-label"
                   value={album.sort || DEFAULT_ALBUM_SORT}

@@ -175,10 +175,11 @@ export default function GridSection({ settings, update }: SectionProps) {
 
       <div className="admin-field-row">
         <div className="admin-field">
-          <label>
+          <label htmlFor="grid-columns">
             Columns ({PHOTO_GRID_COLUMNS_MIN} - {PHOTO_GRID_COLUMNS_MAX})
           </label>
           <input
+            id="grid-columns"
             type="number"
             min={PHOTO_GRID_COLUMNS_MIN}
             max={PHOTO_GRID_COLUMNS_MAX}
@@ -187,8 +188,9 @@ export default function GridSection({ settings, update }: SectionProps) {
           />
         </div>
         <div className="admin-field">
-          <label>Gap Spacing (px)</label>
+          <label htmlFor="grid-gap-spacing">Gap Spacing (px)</label>
           <input
+            id="grid-gap-spacing"
             type="number"
             min={0}
             max={PHOTO_GRID_GAP_MAX}

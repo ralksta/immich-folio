@@ -28,6 +28,7 @@ export function StorySettingsModal({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
             <label
+              htmlFor="story-subtitle"
               style={{
                 display: 'block',
                 fontSize: '0.8rem',
@@ -38,6 +39,7 @@ export function StorySettingsModal({
               Subtitle
             </label>
             <input
+              id="story-subtitle"
               type="text"
               className="admin-input"
               value={frontmatter.subtitle || ''}
@@ -49,6 +51,7 @@ export function StorySettingsModal({
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label
+                htmlFor="story-author"
                 style={{
                   display: 'block',
                   fontSize: '0.8rem',
@@ -59,6 +62,7 @@ export function StorySettingsModal({
                 Author
               </label>
               <input
+                id="story-author"
                 type="text"
                 className="admin-input"
                 value={frontmatter.author || ''}
@@ -68,6 +72,7 @@ export function StorySettingsModal({
             </div>
             <div>
               <label
+                htmlFor="story-publish-date"
                 style={{
                   display: 'block',
                   fontSize: '0.8rem',
@@ -78,6 +83,7 @@ export function StorySettingsModal({
                 Publish Date
               </label>
               <input
+                id="story-publish-date"
                 type="date"
                 className="admin-input"
                 value={frontmatter.date || ''}

@@ -20,8 +20,9 @@ export default function SecuritySection({ settings, update }: SectionProps) {
       </div>
 
       <div className="admin-field">
-        <label>Site Password</label>
+        <label htmlFor="security-site-password">Site Password</label>
         <PasswordField
+          id="security-site-password"
           value={settings.sitePassword}
           onChange={(password) => update('sitePassword', password ?? '')}
           placeholder="Leave empty for a public site"
@@ -89,8 +90,9 @@ export default function SecuritySection({ settings, update }: SectionProps) {
       {settings.watermark?.enabled && (
         <>
           <div className="admin-field">
-            <label>Watermark Text</label>
+            <label htmlFor="security-watermark-text">Watermark Text</label>
             <input
+              id="security-watermark-text"
               value={settings.watermark?.text || ''}
               onChange={(e) => update('watermark.text', e.target.value)}
               placeholder="© Ralfo Photography"
@@ -99,8 +101,9 @@ export default function SecuritySection({ settings, update }: SectionProps) {
 
           <div className="admin-field-row">
             <div className="admin-field">
-              <label>Position</label>
+              <label htmlFor="security-position">Position</label>
               <select
+                id="security-position"
                 aria-label="Watermark position"
                 value={settings.watermark?.position || 'bottom-right'}
                 onChange={(e) => update('watermark.position', e.target.value)}
@@ -114,11 +117,12 @@ export default function SecuritySection({ settings, update }: SectionProps) {
               {/* Read through the same normaliser the lightbox uses, so a
                           config written as a percentage shows as "90%" here rather
                           than "9000%" — and is written back as a fraction on save. */}
-              <label>
+              <label htmlFor="security-opacity-100">
                 Opacity ({Math.round(resolveWatermarkOpacity(settings.watermark?.opacity) * 100)}
                 %)
               </label>
               <input
+                id="security-opacity-100"
                 type="range"
                 min="0.1"
                 max="1"

@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 
 type GridOverride = { columns?: number; gap?: number };
 
@@ -50,16 +50,20 @@ export default function GridOverrideFields({
     });
   };
 
+  const labelId = useId();
   return (
     <div className="admin-field" style={{ marginTop: '1rem' }}>
-      <label>{label}</label>
-      <div style={{ display: 'flex', gap: '12px' }}>
+      <span className="admin-field-label" id={labelId}>
+        {label}
+      </span>
+      <div style={{ display: 'flex', gap: '12px' }} role="group" aria-labelledby={labelId}>
         <input
           type="number"
           min={columnsMin}
           max={columnsMax}
           value={value?.columns ?? ''}
           placeholder="Columns (site default)"
+          aria-label="Columns"
           onChange={(e) => patch('columns', e.target.value, columnsMin, columnsMax)}
           style={NUMBER_INPUT_STYLE}
         />
@@ -69,6 +73,7 @@ export default function GridOverrideFields({
           max={gapMax}
           value={value?.gap ?? ''}
           placeholder="Gap in px (theme default)"
+          aria-label="Gap in px"
           onChange={(e) => patch('gap', e.target.value, 0, gapMax)}
           style={NUMBER_INPUT_STYLE}
         />

@@ -16,16 +16,18 @@ export default function FooterSection({ settings, update }: SectionProps) {
       </div>
 
       <div className="admin-field">
-        <label>Footer Brand Name</label>
+        <label htmlFor="footer-brand-name">Footer Brand Name</label>
         <input
+          id="footer-brand-name"
           value={settings.footer?.name || ''}
           onChange={(e) => update('footer.name', e.target.value)}
           placeholder="My Photography"
         />
       </div>
       <div className="admin-field">
-        <label>Instagram URL</label>
+        <label htmlFor="footer-instagram-url">Instagram URL</label>
         <input
+          id="footer-instagram-url"
           value={settings.footer?.instagram || ''}
           onChange={(e) => update('footer.instagram', e.target.value)}
           placeholder="https://instagram.com/your-handle"
@@ -33,16 +35,18 @@ export default function FooterSection({ settings, update }: SectionProps) {
       </div>
       <div className="admin-field-row">
         <div className="admin-field">
-          <label>Contact Email</label>
+          <label htmlFor="footer-contact-email">Contact Email</label>
           <input
+            id="footer-contact-email"
             value={settings.footer?.email || ''}
             onChange={(e) => update('footer.email', e.target.value)}
             placeholder="hello@example.com"
           />
         </div>
         <div className="admin-field">
-          <label>Personal Website</label>
+          <label htmlFor="footer-personal-website">Personal Website</label>
           <input
+            id="footer-personal-website"
             value={settings.footer?.website || ''}
             onChange={(e) => update('footer.website', e.target.value)}
             placeholder="https://example.com"
@@ -63,8 +67,9 @@ export default function FooterSection({ settings, update }: SectionProps) {
       {(settings.navLinks || []).map((link, i) => (
         <div className="admin-field-row" key={i}>
           <div className="admin-field">
-            <label>Label</label>
+            <label htmlFor="footer-label">Label</label>
             <input
+              id="footer-label"
               value={link.label || ''}
               onChange={(e) => {
                 const next = [...(settings.navLinks || [])];
@@ -75,8 +80,9 @@ export default function FooterSection({ settings, update }: SectionProps) {
             />
           </div>
           <div className="admin-field">
-            <label>URL</label>
+            <label htmlFor="footer-url">URL</label>
             <input
+              id="footer-url"
               value={link.url || ''}
               onChange={(e) => {
                 const next = [...(settings.navLinks || [])];

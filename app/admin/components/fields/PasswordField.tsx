@@ -22,6 +22,7 @@ export default function PasswordField({
   placeholder = 'Leave empty for public access',
   disabled,
   label,
+  id: idProp,
 }: {
   value: string | undefined;
   /** `undefined` removes the password. */
@@ -30,8 +31,11 @@ export default function PasswordField({
   disabled?: boolean;
   /** Accessible name when there is no visible <label> for the field. */
   label?: string;
+  /** For a visible <label htmlFor>; generated otherwise. */
+  id?: string;
 }) {
-  const id = useId();
+  const generatedId = useId();
+  const id = idProp ?? generatedId;
   /** The stored hash while it is being changed, so "Keep" can put it back. */
   const [original, setOriginal] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
