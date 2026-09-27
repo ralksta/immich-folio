@@ -6,8 +6,10 @@
  */
 
 import { useSortable } from '@dnd-kit/sortable';
+import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { IconFolder, IconGripVertical, IconLock, IconPencil, IconX } from '../Icons';
+import type { ReactNode } from 'react';
+import { IconFileText, IconFolder, IconGripVertical, IconLock, IconPencil, IconX } from '../Icons';
 import type { Subpage } from './types';
 
 // ── Sortable Hero Tile ─────────────────────────────────────────
@@ -208,6 +210,82 @@ export function SortableSubpageRow({
           <span className="pb-row-count">{totalAlbums}</span>
         )}
       </button>
+    </div>
+  );
+}
+
+// ── Sortable Page Row (#722) ───────────────────────────────────
+
+/**
+ * A content page in the structure list: document icon and a PAGE tag, so it
+ * reads as something other than a subpage. The same row sits in the menu
+ * list and in "Not in menu"; `id` says which, for the drag handler.
+ */
+export function SortablePageRow({
+  id,
+  title,
+  isActive,
+  draft,
+  hasPassword,
+  missing,
+  onClick,
+}: {
+  id: string;
+  title: string;
+  isActive: boolean;
+  draft?: boolean;
+  hasPassword?: boolean;
+  /** Referenced from gallery.yaml, but there is no file for it. */
+  missing?: boolean;
+  onClick: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 10 : undefined,
+      }}
+      className={`pb-row ${isActive ? 'active' : ''} ${draft || missing ? 'is-off' : ''}`}
+      {...attributes}
+    >
+      <span className="pb-row-grip" {...listeners} title="Drag to reorder">
+        <IconGripVertical size={14} />
+      </span>
+      <button type="button" className="pb-row-main" onClick={onClick} aria-current={isActive}>
+        <span className="pb-row-thumb">
+          <IconFileText size={14} />
+        </span>
+        <span className="pb-row-name">
+          {title}
+          {hasPassword && <IconLock size={11} />}
+        </span>
+        {missing ? (
+          <span className="pb-row-state">Missing</span>
+        ) : draft ? (
+          <span className="pb-row-state">Draft</span>
+        ) : (
+          <span className="pb-row-tag">Page</span>
+        )}
+      </button>
+    </div>
+  );
+}
+
+/**
+ * The "Not in menu" group as a drop target, so a page dragged out of the
+ * menu lands there even when the group is empty (#722).
+ */
+export function OffMenuDropZone({ id, children }: { id: string; children: ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return (
+    <div ref={setNodeRef} className={`pb-offmenu ${isOver ? 'is-over' : ''}`}>
+      {children}
     </div>
   );
 }

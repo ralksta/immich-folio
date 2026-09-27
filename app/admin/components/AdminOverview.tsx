@@ -17,7 +17,7 @@ import type { DoctorFinding, DoctorLevel } from '@/lib/admin/doctor';
 import { DOCTOR_LEVEL_EVENT } from './systemHealth';
 
 interface OverviewData {
-  gallery: { hero?: unknown; subpages?: Array<{ enabled?: boolean }> } | null;
+  gallery: { hero?: unknown; subpages?: Array<{ enabled?: boolean; page?: string }> } | null;
   journal: Array<{ frontmatter: { draft?: boolean } }> | null;
   messages: Array<{ read: boolean; name: string }> | null;
   analytics: { days?: Record<string, { pageviews?: number }> } | null;
@@ -32,6 +32,7 @@ const FIX_ROUTE: Record<string, string> = {
   passwords: '/admin/settings/security',
   'album-ids': '/admin/pages',
   'albums-shared': '/admin/pages',
+  'content-pages': '/admin/pages',
 };
 
 function viewsLastDays(
@@ -85,7 +86,8 @@ export default function AdminOverview() {
     };
   }, []);
 
-  const subpages = data?.gallery?.subpages ?? [];
+  // `- page:` entries are content pages placed in the menu, not subpages (#722).
+  const subpages = (data?.gallery?.subpages ?? []).filter((sp) => typeof sp.page !== 'string');
   const published = subpages.filter((sp) => sp.enabled !== false).length;
   const heroRaw = data?.gallery?.hero;
   const heroCount = Array.isArray(heroRaw) ? heroRaw.length : heroRaw ? 1 : 0;

@@ -160,3 +160,29 @@ describe('subpage keys', () => {
     });
   });
 });
+
+describe('content page references (#722)', () => {
+  it('keeps `- page:` entries where they were among the subpages', () => {
+    const yaml = {
+      subpages: [
+        { page: 'pricing' },
+        { name: 'Japan', albums: [A] },
+        { page: 'faq' },
+        { name: 'Korea', albums: [B] },
+        { page: 'contact-me' },
+      ],
+    };
+    expect(roundTrip(yaml)).toEqual(yaml);
+  });
+
+  it('parses page references apart from the subpages', () => {
+    const g = parseGalleryYaml({ subpages: [{ name: 'Japan', albums: [A] }, { page: 'faq' }] });
+    expect(g.subpages.map((s) => s.name)).toEqual(['Japan']);
+    expect(g.pageRefs).toEqual([{ slug: 'faq', position: 1 }]);
+  });
+
+  it('writes a menu of pages only', () => {
+    const yaml = { subpages: [{ page: 'pricing' }] };
+    expect(roundTrip(yaml)).toEqual(yaml);
+  });
+});

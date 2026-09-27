@@ -20,6 +20,7 @@ const TABS: { target: BackupTarget; label: string; file: string }[] = [
   { target: 'about', label: 'About', file: 'about.md' },
   { target: 'privacy', label: 'Privacy', file: 'privacy.md' },
   { target: 'journal', label: 'Journal', file: 'journal entries' },
+  { target: 'pages', label: 'Content pages', file: 'content pages' },
 ];
 
 type BackupLists = Record<BackupTarget, BackupItem[]>;
@@ -30,6 +31,7 @@ const EMPTY_LISTS: BackupLists = {
   about: [],
   privacy: [],
   journal: [],
+  pages: [],
 };
 
 export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }: Props) {
@@ -87,7 +89,7 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
 
       setSuccessMsg(
         item.slug
-          ? `Journal entry "${item.slug}" restored.`
+          ? `${item.target === 'pages' ? 'Page' : 'Journal entry'} "${item.slug}" restored.`
           : `Backup restored successfully! (${filename})`,
       );
       setConfirmItem(null);
@@ -121,8 +123,8 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
           <div>
             <h2 id="backup-modal-title">Backup History &amp; Restoration</h2>
             <p className="backup-modal-subtitle">
-              Restore an earlier version of your pages, settings, about page or journal — including
-              deleted journal entries.
+              Restore an earlier version of your pages, settings, about page, journal or content
+              pages — including deleted journal entries and pages.
             </p>
           </div>
           <button className="backup-modal-close-btn" onClick={onClose} aria-label="Close">

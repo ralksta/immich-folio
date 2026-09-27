@@ -640,6 +640,11 @@
   color: var(--admin-error);
 }
 
+/* A consequence to know about, not an error: --admin-accent may be red (#722). */
+.admin-field-hint--warn {
+  color: var(--admin-warning);
+}
+
 /* A link out of a section header, e.g. to the page the section configures.
    It shows the saved state, not unsaved edits. */
 .settings-section-action {

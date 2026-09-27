@@ -3,19 +3,20 @@ import { withAdmin } from '@/lib/admin/withAdmin';
 import { revalidatePath } from 'next/cache';
 import { listBackups, restoreBackup } from '@/lib/admin/yaml-service';
 import { listJournalBackups, restoreJournalBackup } from '@/lib/admin/journal-service';
+import { listPageBackups, restorePageBackup } from '@/lib/admin/pages-service';
 import { invalidateConfigCache } from '@/lib/config';
 import { immich } from '@/lib/immich';
 
-export type BackupTarget = 'gallery' | 'settings' | 'about' | 'privacy' | 'journal';
+export type BackupTarget = 'gallery' | 'settings' | 'about' | 'privacy' | 'journal' | 'pages';
 
 export interface BackupItem {
   filename: string;
   target: BackupTarget;
   timestamp: string | null;
   isPreRestore: boolean;
-  /** Journal backups only: the entry the backup belongs to. */
+  /** Journal and page backups only: the entry or page the backup belongs to. */
   slug?: string;
-  /** Journal backups only: the snapshot taken when the entry was deleted. */
+  /** Journal and page backups only: the snapshot taken when it was deleted. */
   isDeleted?: boolean;
 }
 
@@ -60,6 +61,13 @@ export const GET = withAdmin(async () => {
         isDeleted: b.kind === 'deleted',
       }))
       .sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? ''));
+    const pages = (await listPageBackups())
+      .map((b) => ({
+        ...parseBackupInfo(b.filename, 'pages'),
+        slug: b.slug,
+        isDeleted: b.kind === 'deleted',
+      }))
+      .sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? ''));
 
     return NextResponse.json({
       backups: {
@@ -68,6 +76,7 @@ export const GET = withAdmin(async () => {
         about,
         privacy,
         journal,
+        pages,
       },
     });
   } catch (err) {
@@ -103,6 +112,8 @@ export const POST = withAdmin(async (req: Request) => {
     // cannot be told apart from an about.md backup by name alone.
     if (target === 'journal') {
       await restoreJournalBackup(backupFilename);
+    } else if (target === 'pages') {
+      await restorePageBackup(backupFilename);
     } else {
       await restoreBackup(backupFilename);
     }
