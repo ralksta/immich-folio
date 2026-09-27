@@ -6,6 +6,8 @@ import { invalidateConfigCache, getConfigOrNull } from '@/lib/config';
 import { immich } from '@/lib/immich';
 import { validateSettings } from '@/lib/config/settingsSchema';
 import { hashPasswordKeys } from '@/lib/admin/passwordHashing';
+import { keepLockedValues, resolveEnvLocks } from '@/lib/admin/envLocks';
+import { env } from '@/lib/env';
 
 const SITE_PASSWORD_KEY = new Set(['sitePassword']);
 import type { SettingsYaml } from '@/lib/config/schema';
@@ -22,6 +24,9 @@ export const GET = withAdmin(async () => {
       effective: config?.siteUrl ?? null,
       source: config?.siteUrlSource ?? 'none',
     },
+    // Fields an environment variable overrides, as path → variable name. Only
+    // the names: the values are secrets (a password, an ntfy topic) (#605).
+    envLocks: resolveEnvLocks(env),
   });
 });
 
@@ -47,11 +52,11 @@ export const PUT = withAdmin(async (request: Request) => {
 
   try {
     // Only the top-level site password: settings.yaml has no other password.
-    const settings = await hashPasswordKeys(
-      body.settings as SettingsYaml,
-      SITE_PASSWORD_KEY,
-      await readSettingsYaml().catch(() => null),
-    );
+    const stored = await readSettingsYaml().catch(() => null);
+    // A locked field keeps what the file holds: the environment wins anyway,
+    // so a changed value would be saved and then silently ignored (#605).
+    const incoming = keepLockedValues(body.settings as SettingsYaml, stored, resolveEnvLocks(env));
+    const settings = await hashPasswordKeys(incoming, SITE_PASSWORD_KEY, stored);
     await writeSettingsYaml(settings);
     invalidateConfigCache();
     immich.invalidateAll();
