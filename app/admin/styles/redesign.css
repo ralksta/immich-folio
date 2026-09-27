@@ -1247,3 +1247,80 @@
     display: none;
   }
 }
+
+/* ── Phone header (#732) ───────────────────────────────────── */
+
+/* On a phone the sidebar used to unfold above the content — nav, status,
+   and four actions — and filled most of an iPhone screen. It is now a
+   header row with the brand and a menu button; the rest opens on demand. */
+.admin-menu-toggle {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .admin-sidebar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0;
+    padding: 0.6rem 1rem;
+  }
+
+  .admin-sidebar .admin-brand {
+    margin: 0;
+  }
+
+  .admin-menu-toggle {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    background: transparent;
+    color: var(--admin-text);
+    cursor: pointer;
+  }
+
+  .admin-menu-toggle:focus-visible {
+    outline: var(--admin-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .admin-menu-dot {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--admin-accent);
+  }
+
+  .admin-sidebar-menu {
+    display: none;
+    grid-column: 1 / -1;
+    padding-top: 0.75rem;
+  }
+
+  .admin-app.menu-open .admin-sidebar-menu {
+    display: block;
+  }
+
+  .admin-app.menu-open .admin-sidebar {
+    max-height: 100dvh;
+    overflow-y: auto;
+  }
+
+  /* One column: tap targets of a full row, not a wrapped cloud of links. */
+  .admin-nav {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0;
+  }
+
+  .admin-nav .admin-nav-item {
+    min-height: 44px;
+  }
+}
