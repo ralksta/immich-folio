@@ -4,7 +4,6 @@
  */
 
 import Link from 'next/link';
-import { getServerDictionary } from '@/lib/i18n/server';
 
 interface BackLinkProps {
   href: string;
@@ -12,9 +11,10 @@ interface BackLinkProps {
 }
 
 export function BackLink({ href, label }: BackLinkProps) {
-  const t = getServerDictionary();
   return (
-    <Link href={href} className="album-header__back" aria-label={t.common.backTo(label)}>
+    // No aria-label: every caller's label already reads "Back to …", and an
+    // aria-label built from it announced "Back to Back to …".
+    <Link href={href} className="album-header__back">
       <svg
         aria-hidden="true"
         viewBox="0 0 24 24"
