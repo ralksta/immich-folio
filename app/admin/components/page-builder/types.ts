@@ -111,7 +111,10 @@ export interface PickerTarget {
 
 export interface HeroPickerTarget {
   albumId?: string;
-  onSelect: (assetId: string) => void;
+  /** Single pick; the picker closes after it. */
+  onSelect?: (assetId: string) => void;
+  /** Multi-select: several picks confirmed at once (#602). */
+  onSelectMany?: (assetIds: string[]) => void;
   currentAssetIds?: string[];
   title?: string;
 }

@@ -162,3 +162,15 @@ describe('menu with content pages (#722)', () => {
     expect(labels(g)).not.toContain('page:faq');
   });
 });
+
+describe('addHeroes (#602)', () => {
+  it('appends a multi-pick in pick order, skipping duplicates', () => {
+    expect(ops.addHeroes(state(), ['h9', 'h2', 'h8', 'h9']).hero).toEqual([
+      'h1',
+      'h2',
+      'h3',
+      'h9',
+      'h8',
+    ]);
+  });
+});

@@ -90,6 +90,15 @@ export const addHero = (g: GalleryState, assetId: string): GalleryState => ({
   hero: [...g.hero, assetId],
 });
 
+/** Append several hero photos in pick order, skipping any already listed. */
+export const addHeroes = (g: GalleryState, assetIds: string[]): GalleryState => ({
+  ...g,
+  hero: [
+    ...g.hero,
+    ...assetIds.filter((id, i) => !g.hero.includes(id) && assetIds.indexOf(id) === i),
+  ],
+});
+
 export const removeHero = (g: GalleryState, index: number): GalleryState => ({
   ...g,
   hero: g.hero.filter((_, i) => i !== index),

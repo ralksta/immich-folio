@@ -17,6 +17,26 @@ export function isLegacyAssetRef(assetId: string): boolean {
   return assetId.length > 0 && !ASSET_UUID.test(assetId);
 }
 
+/**
+ * Slots after a multi-pick (#602): picked photos fill the empty slots first,
+ * in pick order, and the rest are appended. With `capacity` (a pair holds two)
+ * the list never grows past it; overflow picks are dropped.
+ */
+export function fillAssetSlots(slots: string[], picked: string[], capacity?: number): string[] {
+  const next = [...slots];
+  const queue = [...picked];
+  for (let i = 0; i < next.length && queue.length > 0; i++) {
+    if (!next[i]) next[i] = queue.shift()!;
+  }
+  next.push(...queue);
+  return capacity === undefined ? next : next.slice(0, capacity);
+}
+
+/** One photo block per picked asset, for "+ Photos" (#602). */
+export function createPhotoBlocks(assetIds: string[]): JournalBlock[] {
+  return assetIds.map((assetId) => ({ type: 'photo', assetId, caption: '', layout: 'contained' }));
+}
+
 /** The block the "Add Block" toolbar inserts for each type. */
 export function createBlock(type: JournalBlock['type']): JournalBlock {
   switch (type) {
