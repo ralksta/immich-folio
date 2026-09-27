@@ -37,7 +37,7 @@ export default function PrivacyPage() {
 
       {/* Every html string below comes from renderInlineMarkdown, which escapes
           the author's text before adding its own tags. */}
-      <main className="privacy-page__content">
+      <div className="privacy-page__content">
         {blocks.map((block, i) => {
           if (block.type === 'heading') {
             const Tag = block.level === 2 ? 'h2' : 'h3';
@@ -55,7 +55,7 @@ export default function PrivacyPage() {
           }
           return <p key={i} dangerouslySetInnerHTML={{ __html: block.html }} />;
         })}
-      </main>
+      </div>
     </div>
   );
 }

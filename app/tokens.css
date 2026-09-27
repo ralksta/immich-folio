@@ -314,10 +314,17 @@ img {
   max-width: 100%;
 }
 
+/* [tabindex='-1'] is left out: those are focus targets for scripts and skip
+   links (<main>, the lightbox dialog), and outlining a whole region there
+   helps nobody. */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
-[role='button']:focus-visible {
+textarea:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+[role='button']:focus-visible,
+[tabindex]:not([tabindex='-1']):focus-visible {
   outline: 2px solid var(--text-primary);
   outline-offset: 2px;
 }

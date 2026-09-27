@@ -115,8 +115,9 @@ export function MapView() {
       {loading && (
         <div
           className="map-container__loading"
-          role="alert"
-          aria-live="polite"
+          // A loading notice is a status, not an alert (role="alert" is
+          // assertive and contradicted the aria-live="polite" beside it).
+          role="status"
           style={{
             position: 'absolute',
             inset: 0,

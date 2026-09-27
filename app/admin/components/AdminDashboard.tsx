@@ -283,6 +283,9 @@ export default function AdminDashboard({ onLogout, children }: Props) {
         menuOpen ? ' menu-open' : ''
       }`}
     >
+      <a href="#admin-main" className="skip-link">
+        Skip to content
+      </a>
       <aside className="admin-sidebar" aria-label="Admin">
         <button
           type="button"
@@ -512,7 +515,9 @@ export default function AdminDashboard({ onLogout, children }: Props) {
         </div>
       </aside>
 
-      <main className="admin-main admin-workspace">{children}</main>
+      <main id="admin-main" tabIndex={-1} className="admin-main admin-workspace">
+        {children}
+      </main>
 
       <BackupManagerModal
         isOpen={showBackupModal}
