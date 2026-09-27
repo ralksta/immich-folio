@@ -16,13 +16,20 @@ import { IconX } from './Icons';
 
 export type NotificationKind = 'success' | 'error';
 
+/** One button on a notification, e.g. Undo after a removal. */
+export interface NotificationAction {
+  label: string;
+  run: () => void;
+}
+
 interface Notification {
   id: number;
   kind: NotificationKind;
   message: string;
+  action?: NotificationAction;
 }
 
-type Notify = (kind: NotificationKind, message: string) => void;
+type Notify = (kind: NotificationKind, message: string, action?: NotificationAction) => void;
 
 /**
  * Outside the provider (a component rendered on its own in a test) notifying
@@ -35,6 +42,7 @@ export function useNotify(): Notify {
 }
 
 const SUCCESS_MS = 4000;
+const ACTION_MS = 8000;
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<Notification[]>([]);
@@ -45,10 +53,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const notify = useCallback<Notify>(
-    (kind, message) => {
+    (kind, message, action) => {
       const id = nextId.current++;
-      setItems((list) => [...list, { id, kind, message }]);
-      if (kind === 'success') setTimeout(() => dismiss(id), SUCCESS_MS);
+      setItems((list) => [...list, { id, kind, message, action }]);
+      // Longer with an action: there has to be time to reach the button.
+      if (kind === 'success') setTimeout(() => dismiss(id), action ? ACTION_MS : SUCCESS_MS);
     },
     [dismiss],
   );
@@ -59,6 +68,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       .map((n) => (
         <div key={n.id} className={`admin-notification admin-notification--${n.kind}`}>
           <span className="admin-notification__text">{n.message}</span>
+          {n.action && (
+            <button
+              type="button"
+              className="admin-notification__action"
+              onClick={() => {
+                n.action!.run();
+                dismiss(n.id);
+              }}
+            >
+              {n.action.label}
+            </button>
+          )}
           <button
             type="button"
             className="admin-notification__close"

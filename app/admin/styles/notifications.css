@@ -82,3 +82,19 @@
   margin: 0 0 1rem;
   color: var(--admin-text-muted);
 }
+
+.admin-notification__action {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--admin-border-hover);
+  border-radius: 4px;
+  background: none;
+  color: var(--admin-text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-notification__action:hover {
+  background: var(--admin-bg-elevated);
+}

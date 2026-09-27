@@ -50,4 +50,25 @@ describe('admin notifications', () => {
     render(<Trigger kind="error" message="x" />);
     expect(() => fireEvent.click(screen.getByText('go'))).not.toThrow();
   });
+
+  it('runs an action once and closes the notification', () => {
+    let runs = 0;
+    function WithAction() {
+      const notify = useNotify();
+      return (
+        <button onClick={() => notify('success', 'Removed', { label: 'Undo', run: () => runs++ })}>
+          go
+        </button>
+      );
+    }
+    render(
+      <NotificationProvider>
+        <WithAction />
+      </NotificationProvider>,
+    );
+    fireEvent.click(screen.getByText('go'));
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(runs).toBe(1);
+    expect(screen.queryByText('Removed')).toBeNull();
+  });
 });
