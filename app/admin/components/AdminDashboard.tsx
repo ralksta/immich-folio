@@ -112,6 +112,11 @@ const SIDEBAR_KEY = 'folio_admin_sidebar';
 export default function AdminDashboard({ onLogout, children }: Props) {
   const notify = useNotify();
   const pathname = usePathname();
+  // Phones: the sidebar folds into a header row, and the nav opens from a
+  // menu button (#732) — spread out above the content, it took most of an
+  // iPhone screen before anything could be edited.
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => setMenuOpen(false), [pathname]);
   const [saving, setSaving] = useState(false);
 
   // Diagnostics & Backup state
@@ -267,7 +272,11 @@ export default function AdminDashboard({ onLogout, children }: Props) {
   const missingCredentials = status?.setup?.credentials === 'missing';
 
   return (
-    <div className={`admin-dashboard admin-app${collapsed ? ' is-collapsed' : ''}`}>
+    <div
+      className={`admin-dashboard admin-app${collapsed ? ' is-collapsed' : ''}${
+        menuOpen ? ' menu-open' : ''
+      }`}
+    >
       <aside className="admin-sidebar" aria-label="Admin">
         <button
           type="button"
@@ -298,175 +307,201 @@ export default function AdminDashboard({ onLogout, children }: Props) {
             <span className="admin-brand-sub">Admin</span>
           </span>
         </Link>
-
-        <nav className="admin-nav">
-          {NAV.map((section, i) => (
-            <div key={section.group ?? i} className="admin-nav-group">
-              {section.group && <span className="admin-nav-label">{section.group}</span>}
-              {section.items.map((item) => {
-                const active = item.match.test(pathname);
-                const count = item.badge === 'messages' ? unread : 0;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`admin-nav-item ${active ? 'active' : ''}`}
-                    data-tip={item.label}
-                    aria-current={active ? 'page' : undefined}
-                  >
-                    <span className="admin-nav-icon">{item.icon}</span>
-                    <span className="admin-nav-text">{item.label}</span>
-                    {count > 0 && (
-                      <span className="admin-nav-count" aria-label={`${count} unread`}>
-                        {count}
-                      </span>
-                    )}
-                    {item.badge === 'health' && health.tone === 'disconnected' && (
-                      <span className={`admin-nav-dot ${health.tone}`} aria-label={health.label} />
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
-        </nav>
-
-        <div className="admin-sidebar-foot">
-          {/* Diagnostics Badge */}
-          <div className="status-indicator-container">
-            <button
-              className={`status-badge-btn sidebar-status ${health.tone}`}
-              onClick={() => {
-                setShowStatus(!showStatus);
-                if (!showStatus) fetchStatus();
-              }}
-              title="Show system status"
-              data-tip={health.label}
-            >
-              <span className="status-dot"></span>
-              <span className="status-text">{health.label}</span>
-            </button>
-
-            {showStatus && (
-              <>
-                <div className="status-dropdown-backdrop" onClick={() => setShowStatus(false)} />
-                <div className="status-dropdown">
-                  <div className="status-dropdown-header">
-                    <h4>System Diagnostics</h4>
-                    <button
-                      className="status-refresh-btn"
-                      onClick={fetchStatus}
-                      disabled={statusLoading}
-                      title="Refresh diagnostics"
+        <button
+          type="button"
+          className="admin-menu-toggle"
+          onClick={() => setMenuOpen((open) => !open)}
+          aria-expanded={menuOpen}
+          aria-controls="admin-sidebar-menu"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            {menuOpen ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+          </svg>
+          {unread > 0 && !menuOpen && <span className="admin-menu-dot" aria-hidden="true" />}
+        </button>
+        <div className="admin-sidebar-menu" id="admin-sidebar-menu">
+          <nav className="admin-nav">
+            {NAV.map((section, i) => (
+              <div key={section.group ?? i} className="admin-nav-group">
+                {section.group && <span className="admin-nav-label">{section.group}</span>}
+                {section.items.map((item) => {
+                  const active = item.match.test(pathname);
+                  const count = item.badge === 'messages' ? unread : 0;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`admin-nav-item ${active ? 'active' : ''}`}
+                      data-tip={item.label}
+                      aria-current={active ? 'page' : undefined}
                     >
-                      {statusLoading ? '...' : '↻'}
-                    </button>
-                  </div>
-                  <div className="status-dropdown-body">
-                    {setupIncomplete && (
-                      <p className="status-setup-note">
-                        {missingCredentials
-                          ? 'No Immich URL or API key configured. Set IMMICH_API_URL and IMMICH_API_KEY, or run the '
-                          : 'No content/gallery.yaml yet — the public site has nothing to show. Add a page below, or run the '}
-                        <a href="/install" target="_blank" rel="noopener noreferrer">
-                          setup wizard
-                        </a>
-                        {missingCredentials
-                          ? '.'
-                          : ' (the one-time token is printed to the server log).'}
-                      </p>
-                    )}
-                    <div className="status-item">
-                      <span className="status-label">Immich Connection</span>
-                      <span className={`status-val ${immichIndicator.className}`}>
-                        {immichIndicator.label}
-                      </span>
+                      <span className="admin-nav-icon">{item.icon}</span>
+                      <span className="admin-nav-text">{item.label}</span>
+                      {count > 0 && (
+                        <span className="admin-nav-count" aria-label={`${count} unread`}>
+                          {count}
+                        </span>
+                      )}
+                      {item.badge === 'health' && health.tone === 'disconnected' && (
+                        <span
+                          className={`admin-nav-dot ${health.tone}`}
+                          aria-label={health.label}
+                        />
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
+          </nav>
+
+          <div className="admin-sidebar-foot">
+            {/* Diagnostics Badge */}
+            <div className="status-indicator-container">
+              <button
+                className={`status-badge-btn sidebar-status ${health.tone}`}
+                onClick={() => {
+                  setShowStatus(!showStatus);
+                  if (!showStatus) fetchStatus();
+                }}
+                title="Show system status"
+                data-tip={health.label}
+              >
+                <span className="status-dot"></span>
+                <span className="status-text">{health.label}</span>
+              </button>
+
+              {showStatus && (
+                <>
+                  <div className="status-dropdown-backdrop" onClick={() => setShowStatus(false)} />
+                  <div className="status-dropdown">
+                    <div className="status-dropdown-header">
+                      <h4>System Diagnostics</h4>
+                      <button
+                        className="status-refresh-btn"
+                        onClick={fetchStatus}
+                        disabled={statusLoading}
+                        title="Refresh diagnostics"
+                      >
+                        {statusLoading ? '...' : '↻'}
+                      </button>
                     </div>
-                    <div className="status-item">
-                      <span className="status-label">Config Integrity</span>
-                      <span className={`status-val ${configIndicator.className}`}>
-                        {configIndicator.label}
-                      </span>
-                    </div>
-                    <div className="status-item">
-                      <span className="status-label">Config Backups</span>
-                      <span className="status-val">{status?.backups?.count ?? 0} Backups</span>
-                    </div>
-                    <div className="status-item">
-                      <span className="status-label">Latest Backup</span>
-                      <span className="status-val" title={status?.backups?.lastBackup || 'None'}>
-                        {status?.backups?.lastBackup
-                          ? new Date(status.backups.lastBackup).toLocaleDateString()
-                          : 'None'}
-                      </span>
-                    </div>
-                    <div className="status-item">
-                      <span className="status-label">In-Memory Cache</span>
-                      <span className="status-val">{status?.cache?.size ?? 0} items</span>
-                    </div>
-                    {/*
+                    <div className="status-dropdown-body">
+                      {setupIncomplete && (
+                        <p className="status-setup-note">
+                          {missingCredentials
+                            ? 'No Immich URL or API key configured. Set IMMICH_API_URL and IMMICH_API_KEY, or run the '
+                            : 'No content/gallery.yaml yet — the public site has nothing to show. Add a page below, or run the '}
+                          <a href="/install" target="_blank" rel="noopener noreferrer">
+                            setup wizard
+                          </a>
+                          {missingCredentials
+                            ? '.'
+                            : ' (the one-time token is printed to the server log).'}
+                        </p>
+                      )}
+                      <div className="status-item">
+                        <span className="status-label">Immich Connection</span>
+                        <span className={`status-val ${immichIndicator.className}`}>
+                          {immichIndicator.label}
+                        </span>
+                      </div>
+                      <div className="status-item">
+                        <span className="status-label">Config Integrity</span>
+                        <span className={`status-val ${configIndicator.className}`}>
+                          {configIndicator.label}
+                        </span>
+                      </div>
+                      <div className="status-item">
+                        <span className="status-label">Config Backups</span>
+                        <span className="status-val">{status?.backups?.count ?? 0} Backups</span>
+                      </div>
+                      <div className="status-item">
+                        <span className="status-label">Latest Backup</span>
+                        <span className="status-val" title={status?.backups?.lastBackup || 'None'}>
+                          {status?.backups?.lastBackup
+                            ? new Date(status.backups.lastBackup).toLocaleDateString()
+                            : 'None'}
+                        </span>
+                      </div>
+                      <div className="status-item">
+                        <span className="status-label">In-Memory Cache</span>
+                        <span className="status-val">{status?.cache?.size ?? 0} items</span>
+                      </div>
+                      {/*
                       Discreet on purpose: a row in the status list, not a
                       banner. When the check is off or could not run, the row
                       still names the running version and says nothing about
                       updates (#496).
                     */}
-                    <div className="status-item">
-                      <span className="status-label">Version</span>
-                      {status?.update?.updateAvailable ? (
-                        <a
-                          className="status-val update"
-                          href="https://github.com/ralksta/immich-folio/releases/latest"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title={`Version ${status.update.latest} is available`}
-                        >
-                          {status.update.current} → {status.update.latest}
-                        </a>
-                      ) : (
-                        <span className="status-val">{status?.update?.current ?? '—'}</span>
-                      )}
+                      <div className="status-item">
+                        <span className="status-label">Version</span>
+                        {status?.update?.updateAvailable ? (
+                          <a
+                            className="status-val update"
+                            href="https://github.com/ralksta/immich-folio/releases/latest"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`Version ${status.update.latest} is available`}
+                          >
+                            {status.update.current} → {status.update.latest}
+                          </a>
+                        ) : (
+                          <span className="status-val">{status?.update?.current ?? '—'}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </>
-            )}
-          </div>
+                </>
+              )}
+            </div>
 
-          <div className="admin-sidebar-actions">
-            <a
-              href="/?fresh=1"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="admin-side-action"
-              data-tip="View site"
-              title="Open site in new tab (bypassing cache)"
-            >
-              <Icons.IconLink size={14} />
-              <span className="admin-side-label">View site</span>
-            </a>
-            <button
-              className="admin-side-action"
-              data-tip="Backups"
-              onClick={() => setShowBackupModal(true)}
-              title="Manage config backups & restore"
-            >
-              <Icons.IconArchive size={14} />
-              <span className="admin-side-label">Backups</span>
-            </button>
-            <button
-              className="admin-side-action"
-              data-tip="Reload"
-              onClick={handleReload}
-              disabled={saving}
-              title="Reload config & clear cache"
-            >
-              <Icons.IconRefresh size={14} />
-              <span className="admin-side-label">Reload</span>
-            </button>
-            <button className="admin-side-action" data-tip="Sign out" onClick={handleLogout}>
-              <Icons.IconX size={14} />
-              <span className="admin-side-label">Sign out</span>
-            </button>
+            <div className="admin-sidebar-actions">
+              <a
+                href="/?fresh=1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="admin-side-action"
+                data-tip="View site"
+                title="Open site in new tab (bypassing cache)"
+              >
+                <Icons.IconLink size={14} />
+                <span className="admin-side-label">View site</span>
+              </a>
+              <button
+                className="admin-side-action"
+                data-tip="Backups"
+                onClick={() => setShowBackupModal(true)}
+                title="Manage config backups & restore"
+              >
+                <Icons.IconArchive size={14} />
+                <span className="admin-side-label">Backups</span>
+              </button>
+              <button
+                className="admin-side-action"
+                data-tip="Reload"
+                onClick={handleReload}
+                disabled={saving}
+                title="Reload config & clear cache"
+              >
+                <Icons.IconRefresh size={14} />
+                <span className="admin-side-label">Reload</span>
+              </button>
+              <button className="admin-side-action" data-tip="Sign out" onClick={handleLogout}>
+                <Icons.IconX size={14} />
+                <span className="admin-side-label">Sign out</span>
+              </button>
+            </div>
           </div>
         </div>
       </aside>
