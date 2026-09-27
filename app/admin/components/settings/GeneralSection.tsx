@@ -2,11 +2,10 @@
 
 import { useState } from 'react';
 import * as Icons from '../Icons';
-import ToggleCard from '../fields/ToggleCard';
 import type { SaveStatus } from '../SaveBar';
 import { resolveExifDisplay } from '@/lib/config/schema';
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
-import { FeatureGroup, SettingRow } from './fields';
+import { FeatureGroup, FeatureRow, SettingRow } from './fields';
 import type { SectionProps } from './types';
 import { useConfirm } from '../ConfirmDialog';
 
@@ -105,46 +104,45 @@ export default function GeneralSection({ settings, update, updateMany }: Section
           <Icons.IconSparkles size={18} /> Portfolio Features &amp; Modules
         </h3>
         <p className="settings-section-sub">
-          Enable or disable optional portfolio modules, privacy analytics, and map widgets.
+          Optional pages, and what the site reveals about your photos and counts about visits.
         </p>
       </div>
 
       <FeatureGroup
         icon={<Icons.IconFrame size={13} />}
-        title="Pages &amp; motion"
-        description="Chrome the visitor sees on every page."
+        title="Modules"
+        description="Each one adds a page or a control visitors can use."
       >
-        <div className="admin-toggle-cards-grid">
-          <ToggleCard
-            icon={<Icons.IconCamera size={16} />}
-            title="About Page"
-            description="Show a portrait, bio, and gear section on your portfolio"
+        <div className="feature-list">
+          <FeatureRow
+            icon={<Icons.IconCamera size={15} />}
+            title="About page"
+            description="Portrait, bio and gear at /about"
             checked={settings.about?.enabled !== false}
             onToggle={() => update('about.enabled', settings.about?.enabled === false)}
+            href="/admin/settings/about"
           />
-
-          <ToggleCard
-            icon={<Icons.IconSparkles size={16} />}
-            title="Smooth Page Transitions"
-            description="Enable subtle fade-in animations between page navigation"
-            checked={settings.transitions !== false}
-            onToggle={() => update('transitions', settings.transitions === false)}
+          <FeatureRow
+            icon={<Icons.IconMap size={15} />}
+            title="Map"
+            description="Photo locations on a world map at /map"
+            checked={settings.map === true}
+            onToggle={() => update('map', !settings.map)}
           />
-
-          <ToggleCard
-            icon={<Icons.IconArrowUp size={16} />}
-            title="Scroll-to-Top Button"
-            description="Show a floating arrow that returns visitors to the top of long pages"
-            checked={settings.scrollToTop !== false}
-            onToggle={() => update('scrollToTop', settings.scrollToTop === false)}
+          <FeatureRow
+            icon={<Icons.IconHeart size={15} />}
+            title="Client proofing"
+            description="Visitors heart, filter and export a selection of photos"
+            checked={settings.proofing?.enabled !== false}
+            onToggle={() => update('proofing.enabled', settings.proofing?.enabled === false)}
           />
         </div>
       </FeatureGroup>
 
       <FeatureGroup
         icon={<Icons.IconShieldCheck size={13} />}
-        title="What each photo reveals"
-        description="Published to anyone who opens a photo."
+        title="What visitors learn about you"
+        description="What each photo reveals, and what is counted about a visit."
         chip="visible to visitors"
       >
         <div className={`metadata-card ${anyMetadata ? 'active' : ''}`}>
@@ -221,44 +219,14 @@ export default function GeneralSection({ settings, update, updateMany }: Section
             </div>
           )}
         </div>
-      </FeatureGroup>
-
-      <FeatureGroup
-        icon={<Icons.IconHeart size={13} />}
-        title="What visitors can do"
-        description="Optional pages and interactions."
-      >
-        <div className="admin-toggle-cards-grid">
-          <ToggleCard
-            icon={<Icons.IconMap size={16} />}
-            title="Interactive GPS Map"
-            description="Enable /map view showing photo locations on a world map"
-            checked={settings.map === true}
-            onToggle={() => update('map', !settings.map)}
-          />
-
-          <ToggleCard
-            icon={<Icons.IconHeart size={16} />}
-            title="Client Proofing & Favorites"
-            description="Allow visitors & clients to heart, filter, and export favorite photo selections"
-            checked={settings.proofing?.enabled !== false}
-            onToggle={() => update('proofing.enabled', settings.proofing?.enabled === false)}
-          />
-        </div>
-      </FeatureGroup>
-
-      <FeatureGroup
-        icon={<Icons.IconBarChart size={13} />}
-        title="Measurement"
-        description="Cookieless and self-hosted — nothing leaves your server."
-      >
-        <div className="admin-toggle-cards-grid">
-          <ToggleCard
-            icon={<Icons.IconBarChart size={16} />}
-            title="Analytics Tracking"
-            description="Collect anonymous privacy-friendly visit statistics"
+        <div className="feature-list">
+          <FeatureRow
+            icon={<Icons.IconBarChart size={15} />}
+            title="Analytics"
+            description="Cookieless view counts, stored on your server only"
             checked={settings.analytics !== false}
             onToggle={() => update('analytics', settings.analytics === false)}
+            href="/admin/analytics"
           />
         </div>
       </FeatureGroup>

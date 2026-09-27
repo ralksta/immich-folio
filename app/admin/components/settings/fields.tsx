@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 import * as Icons from '../Icons';
 // Direct import from the theme module, not from '@/lib/config': the config
 // index pulls in `fs` and cannot be bundled into a client component.
@@ -90,6 +91,53 @@ export function SettingRow({
         <span className="switch-slider" />
       </span>
     </button>
+  );
+}
+
+/**
+ * One switch in a feature list: a single dense line instead of a card. Cards
+ * gave every switch the same weight, so a fade and a whole page looked alike;
+ * rows grouped by meaning let the group heading carry that weight instead.
+ * The optional link sits beside the switch, not inside it — a link nested in
+ * a button is invalid and swallows the click.
+ */
+export function FeatureRow({
+  icon,
+  title,
+  description,
+  checked,
+  onToggle,
+  href,
+}: {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  checked: boolean;
+  onToggle: () => void;
+  /** Where this feature is configured beyond on/off. */
+  href?: string;
+}) {
+  return (
+    <div className="feature-row">
+      <button type="button" className="feature-row-main" onClick={onToggle} aria-pressed={checked}>
+        <span className="feature-row-icon">{icon}</span>
+        <span className="feature-row-info">
+          <span className="feature-row-title">{title}</span>
+          <span className="feature-row-desc">{description}</span>
+        </span>
+        <span className={`switch-toggle ${checked ? 'on' : ''}`}>
+          <span className="switch-slider" />
+        </span>
+      </button>
+      {/* Reserved even without a link, so every switch lines up in one column. */}
+      {href ? (
+        <Link href={href} className="feature-row-link">
+          Configure →
+        </Link>
+      ) : (
+        <span className="feature-row-link" aria-hidden="true" />
+      )}
+    </div>
   );
 }
 

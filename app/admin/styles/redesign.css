@@ -1134,3 +1134,107 @@
     transition: none;
   }
 }
+
+/* ── Feature lists ─────────────────────────────────────────── */
+
+/* Dense rows grouped by meaning replace the grid of equal cards: the group
+   heading carries the weight, each switch is one line. */
+.admin-layout .feature-list {
+  border-top: 1px solid var(--admin-border);
+}
+
+.admin-layout .feature-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-layout .feature-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 4px;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-layout .feature-row-main:focus-visible {
+  outline: var(--admin-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--admin-radius);
+}
+
+.admin-layout .feature-row-icon {
+  display: inline-flex;
+  color: var(--admin-text-muted);
+  flex-shrink: 0;
+}
+
+.admin-layout .feature-row-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-layout .feature-row-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--admin-text);
+}
+
+.admin-layout .feature-row-desc {
+  font-size: 0.78rem;
+  color: var(--admin-text-muted);
+}
+
+.admin-layout .feature-row-main:hover .feature-row-title {
+  color: var(--admin-text);
+  text-decoration: underline;
+  text-decoration-color: var(--admin-border-hover);
+  text-underline-offset: 3px;
+}
+
+.admin-layout .feature-row-link {
+  flex-shrink: 0;
+  width: 84px;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--admin-text-secondary);
+  text-decoration: none;
+  padding: 4px 2px;
+}
+
+.admin-layout .feature-row-link:hover {
+  color: var(--admin-text);
+}
+
+.admin-layout .settings-group .feature-list + .metadata-card,
+.admin-layout .settings-group .metadata-card + .feature-list {
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .admin-layout .feature-row {
+    flex-wrap: wrap;
+    gap: 0 12px;
+  }
+
+  .admin-layout .feature-row-link {
+    width: auto;
+    padding: 0 0 10px 31px;
+  }
+
+  .admin-layout .feature-row-link:empty {
+    display: none;
+  }
+}
