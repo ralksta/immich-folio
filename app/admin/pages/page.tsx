@@ -7,7 +7,7 @@ export default function AdminPagesPage() {
       <PageHeader
         kicker="Content"
         title="Pages"
-        description="The home page hero, standalone albums and every subpage. Drag to reorder; changes go live when saved."
+        description="The home page hero, standalone albums, subpages and content pages. Drag to reorder; changes go live when saved."
       />
       <PageBuilder />
     </>

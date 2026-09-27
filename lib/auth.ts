@@ -1,5 +1,6 @@
 /**
- * Password gating for subpages, albums, journal entries and the site as a whole.
+ * Password gating for subpages, albums, journal entries, content pages and the
+ * site as a whole.
  * Uses HMAC tokens stored in HttpOnly cookies — no database needed.
  *
  * Token = HMAC-SHA256(slug + passwordSecret, authSecret)
@@ -16,7 +17,7 @@ import { verifyScrypt, generateScryptHash, isScryptHash } from './password';
 const TOKEN_EXPIRY_HOURS = 24;
 
 /** What a password can protect. */
-export type ProtectedType = 'subpage' | 'album' | 'journal' | 'site';
+export type ProtectedType = 'subpage' | 'album' | 'journal' | 'page' | 'site';
 
 /**
  * Key used for the site-wide gate. There is only ever one, so it is a constant
@@ -39,15 +40,24 @@ export const SITE_AUTH_KEY = 'site';
  */
 const SITE_TOKEN_KEY = '__site__';
 
-/** The key that actually gets signed: only the site gate is remapped. */
+/**
+ * The key that actually gets signed. The site gate is remapped (see above), and
+ * a content page is prefixed: a page and a subpage or journal entry of the same
+ * slug and password would otherwise sign identical tokens, and a visitor could
+ * copy one cookie's value into the other's name. `page:` cannot be a slug —
+ * isValidSlug() rejects the colon.
+ */
 function tokenKey(key: string, type: ProtectedType): string {
-  return type === 'site' ? SITE_TOKEN_KEY : key;
+  if (type === 'site') return SITE_TOKEN_KEY;
+  if (type === 'page') return `page:${key}`;
+  return key;
 }
 
 const TYPE_LABELS: Record<ProtectedType, string> = {
   subpage: 'Subpage',
   album: 'Album',
   journal: 'Journal entry',
+  page: 'Page',
   site: 'Site',
 };
 
@@ -78,10 +88,12 @@ function authToken(key: string, passwordSecret: string, expiresAt: number): stri
 import nodeFs from 'fs';
 import { parseFrontmatter } from './journal';
 import { resolveJournalFilePath } from './admin/journal-service';
+import { readPageSync } from './admin/pages-service';
 
 function cookieName(key: string, type: ProtectedType): string {
   if (type === 'subpage') return `lb_auth_${key}`;
   if (type === 'journal') return `lb_auth_journal_${key}`;
+  if (type === 'page') return `lb_auth_page_${key}`;
   if (type === 'site') return SITE_AUTH_COOKIE;
   return `lb_auth_album_${key}`;
 }
@@ -174,6 +186,9 @@ function findPassword(key: string, type: ProtectedType): string | undefined {
       }
     } catch {}
     return undefined;
+  }
+  if (type === 'page') {
+    return readPageSync(key)?.parsed.frontmatter.password || undefined;
   }
   return undefined;
 }

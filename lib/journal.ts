@@ -6,6 +6,8 @@
 export interface JournalFrontmatter {
   title?: string;
   subtitle?: string;
+  /** SEO description. Content pages use it (#722); journal entries ignore it. */
+  description?: string;
   date?: string;
   author?: string;
   coverAssetId?: string;
@@ -365,6 +367,7 @@ export function parseFrontmatter(content: string): {
 
     if (key === 'title') frontmatter.title = val;
     else if (key === 'subtitle') frontmatter.subtitle = val;
+    else if (key === 'description') frontmatter.description = val;
     else if (key === 'date') frontmatter.date = val;
     else if (key === 'author') frontmatter.author = val;
     else if (key === 'coverAssetId') frontmatter.coverAssetId = val;

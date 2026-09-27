@@ -146,3 +146,11 @@ subpages:
       layout: essay
     albums:
       - "album-uuid-iceland-1"
+
+  # ── Content Page in the Menu ─────────────────────────────────────
+  # A timeless text page (pricing, workshops, FAQ) lives in
+  # content/pages/<slug>.md and is served at /<slug>. Listing it here puts it
+  # in the header menu at this position; leave it out and the page is still
+  # reachable at its URL, just not in the menu. Create and edit pages under
+  # Admin → Pages. See docs/gallery-config.md#content-pages.
+  - page: pricing

@@ -3,6 +3,7 @@
  *
  * Single segment:
  *   - If slug matches a subpage → render subpage album grid
+ *   - If slug matches a content page (content/pages/<slug>.md) → render it
  *   - If slug matches a standalone album → render album detail
  *
  * Two segments:
@@ -42,6 +43,7 @@ import { mapBlockAssetIds } from '@/lib/journal';
 import { strictestPrecision, type LocationPrecision } from '@/lib/mapPrecision';
 import { resolveEssayFile, generatedEssayCaption } from '@/lib/essaySource';
 import { getServerDictionary } from '@/lib/i18n/server';
+import { contentPageMetadata, renderContentPage } from './contentPage';
 
 // Render at request time — requires live Immich connection
 export const dynamic = 'force-dynamic';
@@ -114,6 +116,10 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
       if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
     }
   } else {
+    if (path.length === 1) {
+      const pageMeta = await contentPageMetadata(slug);
+      if (pageMeta) return pageMeta;
+    }
     const album = await immich.getAlbumBySlug(slug);
     if (album && !(await isLocked(album.id, 'album'))) {
       title = album.albumName;
@@ -609,6 +615,14 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
           : {})}
       />
     );
+  }
+
+  // A content page (#722). The admin refuses a page slug that collides with a
+  // subpage or an album, so the order here only matters for a hand-edited file.
+  if (path.length === 1) {
+    const page = await renderContentPage(slug);
+    if (page === 'not-found') notFound();
+    if (page) return page;
   }
 
   // Otherwise treat as a standalone album slug

@@ -798,6 +798,79 @@ The admin panel's **Settings → About** section edits the same file — portrai
 name, location, gear list and bio — so `about.md` does not have to be written by
 hand.
 
+## Content Pages
+
+Pages beyond the gallery — pricing and packages, workshops, press, a booking
+FAQ — are content pages. Each one is a file, `content/pages/<slug>.md`, served
+at `/<slug>`.
+
+```markdown
+---
+title: 'Pricing'
+description: 'Packages and rates for portrait and wedding sessions'
+draft: true
+---
+
+## Portrait sessions
+
+One hour on location, 25 edited photos.
+
+![0a1b2c3d-…:wide](A session in the Highlands)
+```
+
+The frontmatter keys are `title`, `description` (used for search engines and
+link previews), `password` and `draft`. The body uses the journal's block
+syntax ([Journal & Photo Essays](journal.md)): headings, text and photo blocks
+(`:wide` or `:fullbleed`). A page has no date, no reading time and no index,
+and it has no map block.
+
+### In the menu
+
+A page appears in the header menu through a reference among the subpages in
+`gallery.yaml`, at the position it should take:
+
+```yaml
+subpages:
+  - name: Landscapes
+    albums:
+      - 'album-uuid-1'
+  - page: pricing
+```
+
+A page without a reference is still reachable at `/<slug>`, but it is not in
+the menu, which suits a page that is only shared by link. The menu stays flat:
+a page cannot sit inside a subpage's sections. A reference to a page whose file
+does not exist is skipped, and the config doctor reports it.
+
+### Slugs
+
+A page's slug must not be taken by a subpage, a standalone album, a journal
+entry or one of the built-in routes (`about`, `map`, `journal`, `impressum`,
+`privacy`, `install`, `admin`, `gate`, `api`, `proof`, `contact`). The admin
+panel refuses to save a page on such a slug, and the doctor reports a collision
+in a hand-edited file. Renaming a page's slug breaks old links: there are no
+automatic redirects.
+
+### Draft and password
+
+A draft is visible only to a signed-in admin, and it is left out of the menu and
+the sitemap. A `password` locks the page like a journal entry, with its own
+cookie (`lb_auth_page_<slug>`). The site password, when one is set, applies
+before either. Password-protected pages are not listed in the sitemap.
+
+### In the admin panel
+
+Admin → Pages lists pages next to the subpages, with a document icon and a
+PAGE tag, and a separate "Not in menu" group for pages without a reference.
+**+ New page** creates one (it starts blank and as a draft). Select a page to
+edit its title, URL, draft flag, password and description, and to switch
+"Show in menu"; dragging a page into or out of "Not in menu" does the same.
+The menu change is saved with **Save Changes**, like any other change to the
+structure. **Edit content →** opens the journal's block editor with a live
+preview. Every save keeps a backup in `content/pages/.backups/`, and deleting a
+page that is in the menu also removes its `gallery.yaml` reference; both files
+are backed up first.
+
 ## Journal & Photo Essays
 
 Long-form storytelling with fullbleed photos, side-by-side pairs, quotes and

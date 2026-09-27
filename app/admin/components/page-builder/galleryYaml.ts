@@ -14,6 +14,22 @@ export interface GalleryState {
   hero: string[];
   albums: AlbumEntry[];
   subpages: Subpage[];
+  /**
+   * Content pages in the menu (#722): `- page: <slug>` among the subpages.
+   * Optional so a draft saved before pages existed still loads.
+   */
+  pageRefs?: PageRef[];
+}
+
+/**
+ * A content page placed in the menu. `position` is the number of subpages in
+ * front of it, so the subpage list keeps its own indexes — every drawer and
+ * album address in the builder is one — and the menu order is rebuilt from
+ * both lists when saving. Refs sharing a position keep their array order.
+ */
+export interface PageRef {
+  slug: string;
+  position: number;
 }
 
 /**
@@ -27,8 +43,18 @@ export function parseGalleryYaml(raw: Record<string, unknown>): GalleryState {
   );
 
   let subpages: Subpage[] = [];
+  const pageRefs: PageRef[] = [];
   if (Array.isArray(raw.subpages)) {
-    subpages = (raw.subpages as Array<Record<string, unknown>>).map((sp) => ({
+    const entries = raw.subpages as Array<Record<string, unknown>>;
+    const subpageEntries: Array<Record<string, unknown>> = [];
+    for (const entry of entries) {
+      if (entry && typeof entry.page === 'string') {
+        pageRefs.push({ slug: entry.page, position: subpageEntries.length });
+      } else {
+        subpageEntries.push(entry);
+      }
+    }
+    subpages = subpageEntries.map((sp) => ({
       name: (sp.name as string) || '',
       title: sp.title as string | undefined,
       subtitle: sp.subtitle as string | undefined,
@@ -77,7 +103,7 @@ export function parseGalleryYaml(raw: Record<string, unknown>): GalleryState {
     });
   }
 
-  return { hero, albums, subpages };
+  return { hero, albums, subpages, pageRefs };
 }
 
 /** The gallery.yaml object for a builder state. Empty groups are left out. */
@@ -90,8 +116,9 @@ export function serializeGallery(gallery: GalleryState): Record<string, unknown>
   if (gallery.albums.length > 0) {
     yamlData.albums = serializeAlbumEntries(gallery.albums);
   }
-  if (gallery.subpages.length > 0) {
-    yamlData.subpages = gallery.subpages.map((sp) => {
+  const pageRefs = gallery.pageRefs ?? [];
+  if (gallery.subpages.length > 0 || pageRefs.length > 0) {
+    const subpageEntries = gallery.subpages.map((sp) => {
       const entry: Record<string, unknown> = { name: sp.name };
       if (sp.title) entry.title = sp.title;
       if (sp.subtitle) entry.subtitle = sp.subtitle;
@@ -124,7 +151,25 @@ export function serializeGallery(gallery: GalleryState): Record<string, unknown>
 
       return entry;
     });
+    yamlData.subpages = interleave(subpageEntries, pageRefs);
   }
 
   return yamlData;
+}
+
+/** Subpage entries with `{ page }` entries placed at their positions. */
+function interleave(
+  subpageEntries: Record<string, unknown>[],
+  pageRefs: PageRef[],
+): Record<string, unknown>[] {
+  const out: Record<string, unknown>[] = [];
+  for (let i = 0; i <= subpageEntries.length; i++) {
+    // A ref beyond the end (a subpage was removed) lands at the end.
+    for (const ref of pageRefs) {
+      const at = Math.min(ref.position, subpageEntries.length);
+      if (at === i) out.push({ page: ref.slug });
+    }
+    if (i < subpageEntries.length) out.push(subpageEntries[i]);
+  }
+  return out;
 }

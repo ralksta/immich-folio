@@ -110,3 +110,55 @@ describe('reading', () => {
     expect(ops.followMovedIndex(open, from, to)).toBe(expected);
   });
 });
+
+describe('menu with content pages (#722)', () => {
+  const withPages = (): GalleryState => ({
+    ...state(),
+    // pricing before Japan, faq between Trips and Korea.
+    pageRefs: [
+      { slug: 'pricing', position: 0 },
+      { slug: 'faq', position: 2 },
+    ],
+  });
+  const labels = (g: GalleryState) =>
+    ops.menuItems(g).map((i) => (i.kind === 'page' ? `page:${i.slug}` : g.subpages[i.index].name));
+
+  it('interleaves pages and subpages', () => {
+    expect(labels(withPages())).toEqual(['page:pricing', 'Japan', 'Trips', 'page:faq', 'Korea']);
+  });
+
+  it('moves a page between subpages', () => {
+    const g = ops.moveMenuItem(withPages(), 0, 2);
+    expect(labels(g)).toEqual(['Japan', 'Trips', 'page:pricing', 'page:faq', 'Korea']);
+  });
+
+  it('moves a subpage past a page and follows the open sheet', () => {
+    const before = withPages();
+    // Japan (row 1) to the end (row 4).
+    expect(ops.followMenuMove(before, 0, 1, 4)).toBe(2);
+    const g = ops.moveMenuItem(before, 1, 4);
+    expect(labels(g)).toEqual(['page:pricing', 'Trips', 'page:faq', 'Korea', 'Japan']);
+    expect(g.subpages.map((s) => s.name)).toEqual(['Trips', 'Korea', 'Japan']);
+  });
+
+  it('puts a page in the menu at the end, or before a row, and takes it out', () => {
+    let g = ops.setPageInMenu(state(), 'about-me', true);
+    expect(labels(g)).toEqual(['Japan', 'Trips', 'Korea', 'page:about-me']);
+    g = ops.setPageInMenu(g, 'rates', true, 1);
+    expect(labels(g)).toEqual(['Japan', 'page:rates', 'Trips', 'Korea', 'page:about-me']);
+    g = ops.setPageInMenu(g, 'rates', false);
+    expect(labels(g)).toEqual(['Japan', 'Trips', 'Korea', 'page:about-me']);
+    expect(ops.isPageInMenu(g, 'rates')).toBe(false);
+  });
+
+  it('keeps pages in place when a subpage is removed', () => {
+    const g = ops.removeSubpage(withPages(), 0);
+    expect(labels(g)).toEqual(['page:pricing', 'Trips', 'page:faq', 'Korea']);
+  });
+
+  it('follows a rename', () => {
+    const g = ops.renamePageRef(withPages(), 'faq', 'questions');
+    expect(labels(g)).toContain('page:questions');
+    expect(labels(g)).not.toContain('page:faq');
+  });
+});

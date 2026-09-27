@@ -150,6 +150,32 @@ describe('publicPaths', () => {
     expect(paths).toEqual([...new Set(paths)]);
   });
 
+  it('lists a published content page, whether or not it is in the menu (#722)', () => {
+    const paths = publicPaths(
+      site({ pages: [{ slug: 'pricing', draft: false, isProtected: false }] }),
+    );
+    expect(paths).toEqual(['/', '/pricing']);
+  });
+
+  it('leaves out a draft content page and a password-protected one', () => {
+    const paths = publicPaths(
+      site({
+        pages: [
+          { slug: 'draft', draft: true, isProtected: false },
+          { slug: 'secret', draft: false, isProtected: true },
+        ],
+      }),
+    );
+    expect(paths).toEqual(['/']);
+  });
+
+  it('lists no content page on a locked site', () => {
+    const paths = publicPaths(
+      site({ siteLocked: true, pages: [{ slug: 'pricing', draft: false, isProtected: false }] }),
+    );
+    expect(paths).toEqual([]);
+  });
+
   it('emits only absolute-looking, single-slash paths', () => {
     const paths = publicPaths(
       site({

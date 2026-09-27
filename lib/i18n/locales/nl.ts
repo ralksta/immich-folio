@@ -83,6 +83,8 @@ export const nl: Dictionary = {
   password: {
     subtitle: 'Deze galerij is met een wachtwoord beveiligd.',
     siteSubtitle: 'Deze site is met een wachtwoord beveiligd.',
+    pageSubtitle: 'Deze pagina is met een wachtwoord beveiligd.',
+    protectedPage: 'Beveiligde pagina',
     placeholder: 'Voer het wachtwoord in',
     submit: 'Binnenkomen',
     verifying: 'Controleren…',

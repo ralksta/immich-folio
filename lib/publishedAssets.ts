@@ -14,6 +14,9 @@
  *   - every journal entry: cover, photo blocks, and the assets of its album
  *     blocks (drafts and locked entries included: their page gate still hides
  *     them, and the tokens cannot be guessed)
+ *   - every content page (#722): photo blocks and the assets of its album
+ *     blocks, drafts and locked pages included for the same reason; its map
+ *     blocks are not rendered, so their photos do not count
  *   - album blocks in a subpage's inline essayText
  *   - the album of every open (unexpired) proofing link
  *
@@ -32,6 +35,7 @@ import { getConfig } from './config';
 import { immich } from './immich';
 import { collectAssetIds, parseJournalMarkdown, type JournalBlock } from './journal';
 import { listJournalEntries, readJournalEntry } from './admin/journal-service';
+import { listPages, readPage } from './admin/pages-service';
 import { isExpired, listSessions } from './proofSessions';
 
 /** A forced rebuild on a miss at most this often, so misses cannot hammer Immich. */
@@ -40,7 +44,15 @@ const MIN_REBUILD_MS = 10_000;
 const STAT_EVERY_MS = 2_000;
 
 const CONTENT = path.join(process.cwd(), 'content');
-const WATCHED = ['gallery.yaml', 'settings.yaml', 'about.md', 'proofing.json', 'journal', 'essays'];
+const WATCHED = [
+  'gallery.yaml',
+  'settings.yaml',
+  'about.md',
+  'proofing.json',
+  'journal',
+  'essays',
+  'pages',
+];
 
 let current: { assets: Set<string>; builtAt: number; stamp: string } | null = null;
 let lastStatAt = 0;
@@ -106,6 +118,19 @@ async function build(): Promise<Set<string>> {
       add(read.parsed.frontmatter.coverAssetId);
       collectAssetIds(read.parsed.blocks).forEach(add);
       albumBlockIds(read.parsed.blocks).forEach((id) => rawAlbums.add(id));
+    }),
+  );
+
+  // Content pages, drafts and locked ones included. Map blocks are dropped
+  // before a page renders, so their photos are not published through it.
+  const pages = await listPages().catch(() => []);
+  await Promise.all(
+    pages.map(async (page) => {
+      const read = await readPage(page.slug).catch(() => null);
+      if (!read) return;
+      const blocks = read.parsed.blocks.filter((b) => b.type !== 'map');
+      collectAssetIds(blocks).forEach(add);
+      albumBlockIds(blocks).forEach((id) => rawAlbums.add(id));
     }),
   );
 

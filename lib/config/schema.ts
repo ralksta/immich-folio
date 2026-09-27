@@ -1,5 +1,6 @@
 import type { AlbumSortMode } from '../albumSort';
 import type { LocationPrecision } from '../mapPrecision';
+import type { NavEntry } from '../pages';
 
 export interface SubpageSectionConfig {
   title: string;
@@ -217,6 +218,11 @@ export interface AppConfig {
   albums: string[];
   standaloneAlbums: string[];
   subpages: SubpageConfig[];
+  /**
+   * The header menu in gallery.yaml order: every subpage (hidden and disabled
+   * ones included — the menu filters) and every `- page:` reference (#722).
+   */
+  nav: NavEntry[];
   siteTitle: string;
   siteSubtitle: string;
   lang: string;
@@ -352,43 +358,63 @@ export interface AlbumEntryObject {
   location?: string;
 }
 
+/**
+ * A content page placed in the menu (#722): `- page: <slug>` among the
+ * subpages. The page itself lives in content/pages/<slug>.md.
+ */
+export interface PageRefYaml {
+  page: string;
+}
+
+/** Whether a raw `subpages:` list entry is a page reference rather than a subpage. */
+export function isPageRef(entry: unknown): entry is PageRefYaml {
+  return (
+    typeof entry === 'object' &&
+    entry !== null &&
+    'page' in entry &&
+    typeof (entry as { page: unknown }).page === 'string'
+  );
+}
+
 export interface GalleryYaml {
   hero?: string | string[];
   albums?: Array<string | Record<string, string | AlbumEntryObject>>;
   subpages?:
     | Record<string, string[] | Array<string | Record<string, string>>>
-    | Array<{
-        name: string;
-        title?: string;
-        subtitle?: string;
-        albums?: Array<string | Record<string, string | AlbumEntryObject>>;
-        sections?: Array<{
-          title: string;
-          description?: string;
-          albums: Array<string | Record<string, string | AlbumEntryObject>>;
-        }>;
-        password?: string;
-        proofing?: boolean;
-        essayFile?: string;
-        essayText?: string;
-        enabled?: boolean;
-        hidden?: boolean;
-        /** Map precision inherited by every album here (#469). */
-        location?: string;
-        grid?: {
-          columns?: number;
-          gap?: number;
-          aspectRatio?: string;
-          layout?: string;
-        };
-        /** Album covers only; falls back to `grid` when unset (#523). */
-        coverGrid?: {
-          columns?: number;
-          gap?: number;
-          aspectRatio?: string;
-          layout?: string;
-        };
-      }>;
+    | Array<GallerySubpageYaml | PageRefYaml>;
+}
+
+export interface GallerySubpageYaml {
+  name: string;
+  title?: string;
+  subtitle?: string;
+  albums?: Array<string | Record<string, string | AlbumEntryObject>>;
+  sections?: Array<{
+    title: string;
+    description?: string;
+    albums: Array<string | Record<string, string | AlbumEntryObject>>;
+  }>;
+  password?: string;
+  proofing?: boolean;
+  essayFile?: string;
+  essayText?: string;
+  enabled?: boolean;
+  hidden?: boolean;
+  /** Map precision inherited by every album here (#469). */
+  location?: string;
+  grid?: {
+    columns?: number;
+    gap?: number;
+    aspectRatio?: string;
+    layout?: string;
+  };
+  /** Album covers only; falls back to `grid` when unset (#523). */
+  coverGrid?: {
+    columns?: number;
+    gap?: number;
+    aspectRatio?: string;
+    layout?: string;
+  };
 }
 
 export interface SettingsYaml {

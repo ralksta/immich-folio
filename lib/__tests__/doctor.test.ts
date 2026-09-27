@@ -13,6 +13,7 @@ import {
   checkContact,
   checkLegal,
   checkPrivacy,
+  checkContentPages,
   worstLevel,
 } from '../admin/doctor';
 
@@ -442,5 +443,41 @@ describe('checkPrivacy', () => {
     expect(checkPrivacy({ legalEnabled: true, privacyEnabled: true, hasText: true })?.level).toBe(
       'ok',
     );
+  });
+});
+
+describe('checkContentPages (#722)', () => {
+  it('stays silent without pages or references', () => {
+    expect(checkContentPages({ menuRefs: [], pages: [], collisions: [] })).toBeNull();
+  });
+
+  it('is ok when every reference has a file and no slug is taken', () => {
+    const f = checkContentPages({
+      menuRefs: ['pricing'],
+      pages: ['pricing', 'faq'],
+      collisions: [],
+    });
+    expect(f?.level).toBe('ok');
+    expect(f?.id).toBe('content-pages');
+  });
+
+  it('warns about a menu reference without a file, naming it', () => {
+    const f = checkContentPages({
+      menuRefs: ['pricing', 'gone'],
+      pages: ['pricing'],
+      collisions: [],
+    });
+    expect(f?.level).toBe('warn');
+    expect(f?.detail).toContain('"gone"');
+  });
+
+  it('reports a slug collision as an error', () => {
+    const f = checkContentPages({
+      menuRefs: [],
+      pages: ['travel'],
+      collisions: [{ slug: 'travel', reason: '/travel is already a subpage.' }],
+    });
+    expect(f?.level).toBe('error');
+    expect(f?.detail).toContain('/travel is already a subpage.');
   });
 });

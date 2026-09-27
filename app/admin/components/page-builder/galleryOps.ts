@@ -113,6 +113,14 @@ export const addSubpage = (g: GalleryState): GalleryState => ({
 export const removeSubpage = (g: GalleryState, index: number): GalleryState => ({
   ...g,
   subpages: g.subpages.filter((_, i) => i !== index),
+  // A page after the removed subpage moves up with the rest of the menu.
+  ...(g.pageRefs
+    ? {
+        pageRefs: g.pageRefs.map((r) =>
+          r.position > index ? { ...r, position: r.position - 1 } : r,
+        ),
+      }
+    : {}),
 });
 
 export const updateSubpage = (g: GalleryState, index: number, updates: Partial<Subpage>) =>
@@ -141,6 +149,98 @@ export const updateSection = (
   sectionIndex: number,
   updates: Partial<Section>,
 ) => mapSection(g, subpageIndex, sectionIndex, (sec) => ({ ...sec, ...updates }));
+
+// ── Menu: subpages and content pages together (#722) ────────────
+
+/** One row of the menu list: a subpage by its index, or a page by its slug. */
+export type MenuItem = { kind: 'subpage'; index: number } | { kind: 'page'; slug: string };
+
+/** The menu in the order it is saved and shown: subpages with pages interleaved. */
+export function menuItems(g: GalleryState): MenuItem[] {
+  const refs = g.pageRefs ?? [];
+  const out: MenuItem[] = [];
+  for (let i = 0; i <= g.subpages.length; i++) {
+    for (const ref of refs) {
+      if (Math.min(ref.position, g.subpages.length) === i)
+        out.push({ kind: 'page', slug: ref.slug });
+    }
+    if (i < g.subpages.length) out.push({ kind: 'subpage', index: i });
+  }
+  return out;
+}
+
+/** Rebuild the state from a reordered menu list. */
+function fromMenu(g: GalleryState, items: MenuItem[]): GalleryState {
+  const subpages: GalleryState['subpages'] = [];
+  const pageRefs: NonNullable<GalleryState['pageRefs']> = [];
+  for (const item of items) {
+    if (item.kind === 'subpage') subpages.push(g.subpages[item.index]);
+    else pageRefs.push({ slug: item.slug, position: subpages.length });
+  }
+  return { ...g, subpages, pageRefs };
+}
+
+/**
+ * Move a menu row from one position to another. Subpage indexes change with
+ * it; `followMenuMove` tells the builder where an open subpage went.
+ */
+export function moveMenuItem(g: GalleryState, from: number, to: number): GalleryState {
+  const items = menuItems(g);
+  if (!items[from] || !items[to]) return g;
+  return fromMenu(g, arrayMove(items, from, to));
+}
+
+/** The index an open subpage has after moveMenuItem(from, to). */
+export function followMenuMove(
+  g: GalleryState,
+  open: number | null,
+  from: number,
+  to: number,
+): number | null {
+  if (open === null) return null;
+  const moved = arrayMove(menuItems(g), from, to);
+  let index = 0;
+  for (const item of moved) {
+    if (item.kind !== 'subpage') continue;
+    if (item.index === open) return index;
+    index++;
+  }
+  return open;
+}
+
+export function isPageInMenu(g: GalleryState, slug: string): boolean {
+  return (g.pageRefs ?? []).some((r) => r.slug === slug);
+}
+
+/**
+ * Put a page in the menu or take it out. `at` is a menu row index to insert
+ * before; without one the page goes to the end of the menu.
+ */
+export function setPageInMenu(
+  g: GalleryState,
+  slug: string,
+  inMenu: boolean,
+  at?: number,
+): GalleryState {
+  const without = (g.pageRefs ?? []).filter((r) => r.slug !== slug);
+  if (!inMenu) {
+    return isPageInMenu(g, slug) ? { ...g, pageRefs: without } : g;
+  }
+  if (isPageInMenu(g, slug)) return g;
+  const items = menuItems(g);
+  const index = at === undefined ? items.length : Math.max(0, Math.min(at, items.length));
+  items.splice(index, 0, { kind: 'page', slug });
+  return fromMenu(g, items);
+}
+
+/** Follow a page rename, keeping its place in the menu. */
+export function renamePageRef(g: GalleryState, from: string, to: string): GalleryState {
+  if (!isPageInMenu(g, from)) return g;
+  return {
+    ...g,
+    pageRefs: (g.pageRefs ?? []).map((r) => (r.slug === from ? { ...r, slug: to } : r)),
+  };
+}
 
 // ── Reading ─────────────────────────────────────────────────────
 

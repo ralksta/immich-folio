@@ -47,7 +47,7 @@ const NAV: {
       {
         label: 'Pages',
         href: '/admin/pages',
-        match: /^\/admin\/pages$/,
+        match: /^\/admin\/pages(\/|$)/,
         icon: <Icons.IconGrid size={16} />,
       },
       {

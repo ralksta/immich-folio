@@ -20,6 +20,7 @@ const state = vi.hoisted(() => ({
   raw: {
     'album-journal': [{ id: 'j-album-1' }],
     'album-essay': [{ id: 'essay-1' }],
+    'album-page': [{ id: 'page-album-1' }],
   } as Record<string, { id: string }[]>,
   proofAlbums: {
     'album-proof': { albumThumbnailAssetId: null, assets: [{ id: 'proof-1' }] },
@@ -57,6 +58,26 @@ vi.mock('../admin/journal-service', () => ({
             ],
           }
         : { frontmatter: {}, blocks: [{ type: 'photo', assetId: 'draft-photo', layout: 'wide' }] },
+  }),
+}));
+
+vi.mock('../admin/pages-service', () => ({
+  listPages: async () => [{ slug: 'pricing', frontmatter: {} }],
+  readPage: async (slug: string) => ({
+    slug,
+    rawMarkdown: '',
+    parsed: {
+      frontmatter: { draft: true },
+      blocks: [
+        { type: 'photo', assetId: 'page-photo', layout: 'wide' },
+        { type: 'album', albumId: 'album-page', layout: 'grid' },
+        {
+          type: 'map',
+          line: true,
+          items: [{ kind: 'photo', assetId: 'page-map-photo' }],
+        },
+      ],
+    },
   }),
 }));
 
@@ -105,6 +126,8 @@ describe('isPublishedAsset', () => {
     ["a journal album block's photo", 'j-album-1'],
     ['a draft entry photo (its page gate hides it)', 'draft-photo'],
     ["an inline essay's album block photo", 'essay-1'],
+    ['a content page photo block (draft included)', 'page-photo'],
+    ["a content page album block's photo", 'page-album-1'],
     ['a photo of an open proofing link', 'proof-1'],
   ])('serves %s', async (_label, id) => {
     expect(await isPublishedAsset(id)).toBe(true);
@@ -112,6 +135,10 @@ describe('isPublishedAsset', () => {
 
   it('refuses a photo of an expired proofing link', async () => {
     expect(await isPublishedAsset('expired-1')).toBe(false);
+  });
+
+  it('refuses a photo only a content page map block names (maps do not render on pages)', async () => {
+    expect(await isPublishedAsset('page-map-photo')).toBe(false);
   });
 
   it('refuses any other asset in the library', async () => {

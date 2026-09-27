@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid password format or length' }, { status: 400 });
     }
 
-    const TYPES: ProtectedType[] = ['subpage', 'album', 'journal', 'site'];
+    const TYPES: ProtectedType[] = ['subpage', 'album', 'journal', 'page', 'site'];
     if (!TYPES.includes(type)) {
       return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
     }
@@ -58,11 +58,13 @@ export async function POST(request: NextRequest) {
       const typeLabel =
         type === 'journal'
           ? 'Journal entry'
-          : type === 'subpage'
-            ? 'Subpage'
-            : type === 'site'
-              ? 'Site'
-              : 'Album';
+          : type === 'page'
+            ? 'Page'
+            : type === 'subpage'
+              ? 'Subpage'
+              : type === 'site'
+                ? 'Site'
+                : 'Album';
       return NextResponse.json(
         {
           error: `${typeLabel} is not password-protected`,
