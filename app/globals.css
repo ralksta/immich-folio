@@ -257,6 +257,39 @@
   opacity: 1;
 }
 
+/* Pause/play for the crossfade (WCAG 2.2.2). Sits over the photo, so it
+   takes the theme's background at partial opacity rather than a fixed
+   black; the 44px box is the touch target. */
+.hero__carousel-toggle {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bg-primary) 70%, transparent);
+  color: var(--text-primary);
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity var(--transition-fast);
+}
+
+.hero__carousel-toggle:hover,
+.hero__carousel-toggle:focus-visible {
+  opacity: 1;
+}
+
+.hero__carousel-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
 /* Camera chip over the hero image — opt-in per preset. */
 .hero__exif-chip {
   display: none;

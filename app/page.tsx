@@ -302,7 +302,7 @@ export default async function HomePage() {
 
       {/* ── Right Panel (Hero Carousel) ─────────────── */}
       <div className="hero__right">
-        <HeroCarousel images={heroData} />
+        <HeroCarousel images={heroData} sizes="(max-width: 640px) 100vw, 50vw" />
       </div>
     </div>
   );
