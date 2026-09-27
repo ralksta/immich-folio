@@ -3,10 +3,12 @@
 import * as Icons from '../Icons';
 import ToggleCard from '../fields/ToggleCard';
 import PasswordField from '../fields/PasswordField';
+import EnvLockNote from '../fields/EnvLockNote';
 import { resolveWatermarkOpacity } from '@/lib/config/schema';
 import type { SectionProps } from './types';
 
-export default function SecuritySection({ settings, update }: SectionProps) {
+export default function SecuritySection({ settings, update, envLocks }: SectionProps) {
+  const passwordLock = envLocks?.sitePassword;
   return (
     <div className="settings-panel">
       <div className="settings-section-header">
@@ -27,11 +29,18 @@ export default function SecuritySection({ settings, update }: SectionProps) {
           onChange={(password) => update('sitePassword', password ?? '')}
           placeholder="Leave empty for a public site"
           label="Site password"
+          disabled={!!passwordLock}
         />
+        {passwordLock && <EnvLockNote variable={passwordLock} />}
         <p className="admin-field-hint">
-          Stored as a <code>scrypt:…</code> hash in <code>settings.yaml</code>, never as typed. The{' '}
-          <code>SITE_PASSWORD</code> environment variable overrides this field. The admin panel
-          keeps its own password and is never behind this gate.
+          Stored as a <code>scrypt:…</code> hash in <code>settings.yaml</code>, never as typed.
+          {!passwordLock && (
+            <>
+              {' '}
+              The <code>SITE_PASSWORD</code> environment variable overrides this field.
+            </>
+          )}{' '}
+          The admin panel keeps its own password and is never behind this gate.
         </p>
       </div>
 

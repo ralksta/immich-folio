@@ -1,3 +1,5 @@
+import type { EnvLocks } from '@/lib/admin/envLocks';
+
 /**
  * Shared shape of the settings form (#554). The sections edit one object
  * that mirrors settings.yaml; SettingsEditor owns it and hands each section
@@ -92,4 +94,6 @@ export interface SectionProps {
   update: (path: string, value: unknown) => void;
   /** Set several paths in one state update. */
   updateMany: (entries: Record<string, unknown>) => void;
+  /** Fields an environment variable overrides; rendered locked (#605). */
+  envLocks?: EnvLocks;
 }

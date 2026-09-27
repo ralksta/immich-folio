@@ -1400,3 +1400,34 @@
     min-height: 44px;
   }
 }
+
+/* ── Env-locked fields (#605) ──────────────────────────────── */
+
+/* A field an environment variable overrides: the input is disabled and this
+   note names the variable. Neutral pill, not the warning or accent colour —
+   the lock is a fact about the deployment, not a problem. */
+.admin-env-lock {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 0.4rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--admin-text-muted);
+}
+
+.admin-env-lock-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  padding: 0 8px;
+  border: 1px solid var(--admin-border-hover);
+  border-radius: 999px;
+  font-family: var(--admin-font-label);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}

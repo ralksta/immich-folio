@@ -17,6 +17,7 @@ import DraftNotice from './DraftNotice';
 import { useContentRestored } from './contentRestored';
 import { reportIfSessionExpired } from './sessionExpiry';
 import type { Settings, SectionProps } from './settings/types';
+import type { EnvLocks } from '@/lib/admin/envLocks';
 import GeneralSection from './settings/GeneralSection';
 import ThemeSection from './settings/ThemeSection';
 import GridSection from './settings/GridSection';
@@ -65,6 +66,8 @@ export default function SettingsEditor() {
     effective: string | null;
     source: 'env' | 'settings' | 'none';
   } | null>(null);
+  /** Fields an environment variable overrides, path to variable name (#605). */
+  const [envLocks, setEnvLocks] = useState<EnvLocks>({});
   const [loading, setLoading] = useState(true);
   /**
    * Set when the settings could not be fetched. It blocks saving, because an
@@ -149,7 +152,7 @@ export default function SettingsEditor() {
             : `The server answered ${res.status}.`,
         );
       }
-      const { settings: data, siteUrl } = await res.json();
+      const { settings: data, siteUrl, envLocks: locks } = await res.json();
       const loaded: Settings = data || {};
       setServerSettings(loaded);
       const restoredDraft = settingsDraft.load(JSON.stringify(withoutSitePassword(loaded)));
@@ -157,6 +160,7 @@ export default function SettingsEditor() {
       setSettings(restored ?? loaded);
       setDirty(restored !== null);
       setSiteUrlInfo(siteUrl ?? null);
+      setEnvLocks(locks ?? {});
     } catch (err) {
       console.error('Failed to load settings:', err);
       setLoadError(err instanceof Error ? err.message : 'The settings could not be loaded.');
@@ -311,7 +315,7 @@ export default function SettingsEditor() {
   const saveBarStatus: SaveStatus =
     [saveStatus, about.status].find((st) => st?.kind === 'error') ?? saveStatus ?? about.status;
 
-  const props: SectionProps = { settings, update, updateMany };
+  const props: SectionProps = { settings, update, updateMany, envLocks };
 
   return (
     <div className="settings-editor">

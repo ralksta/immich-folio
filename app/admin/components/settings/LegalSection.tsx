@@ -3,10 +3,12 @@
 import * as Icons from '../Icons';
 import ToggleCard from '../fields/ToggleCard';
 import PrivacyEditor from '../PrivacyEditor';
+import EnvLockNote from '../fields/EnvLockNote';
 import { CONTACT_RETENTION_DEFAULT, CONTACT_RETENTION_MAX, isHttpUrl } from '@/lib/config/schema';
 import type { SectionProps } from './types';
 
-export default function LegalSection({ settings, update }: SectionProps) {
+export default function LegalSection({ settings, update, envLocks }: SectionProps) {
+  const notifyLock = envLocks?.['contact.notifyUrl'];
   // The Impressum drops a non-http(s) contact URL with a warning in the server
   // log, where nobody looks; say it here instead.
   const contactUrl = settings.legal?.contactUrl?.trim();
@@ -206,16 +208,19 @@ export default function LegalSection({ settings, update }: SectionProps) {
               value={settings.contact?.notifyUrl || ''}
               onChange={(e) => update('contact.notifyUrl', e.target.value)}
               placeholder="https://ntfy.sh/your-secret-topic"
-              aria-invalid={notifyUrlInvalid || undefined}
-              aria-describedby="contact-notify-url-hint"
+              aria-invalid={(!notifyLock && notifyUrlInvalid) || undefined}
+              aria-describedby={notifyLock ? 'contact-notify-url-lock' : 'contact-notify-url-hint'}
+              disabled={!!notifyLock}
             />
+            {notifyLock && <EnvLockNote id="contact-notify-url-lock" variable={notifyLock} />}
             <p
               id="contact-notify-url-hint"
               className={`admin-field-hint${notifyUrlInvalid ? ' admin-field-hint--error' : ''}`}
             >
               {notifyUrlInvalid
                 ? 'Must start with https:// or http://.'
-                : 'Gets a fixed "new message" push, with nothing about the sender. Pick a topic name nobody can guess. CONTACT_NOTIFY_URL overrides this.'}
+                : 'Gets a fixed "new message" push, with nothing about the sender. Pick a topic name nobody can guess.' +
+                  (notifyLock ? '' : ' CONTACT_NOTIFY_URL overrides this.')}
             </p>
           </div>
           <div className="admin-field">
