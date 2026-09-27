@@ -30,6 +30,15 @@ Releases up to and including v0.9.2 are documented in the
   `exif.caption: false` is respected there as well. Tracked in
   [#689](https://github.com/ralksta/immich-folio/issues/689).
 
+- **Admin drafts no longer keep a typed password, and the contact form's
+  email check runs in linear time**
+  ([#727](https://github.com/ralksta/immich-folio/pull/727)). The admin's
+  session drafts wrote a password as typed to `sessionStorage`; a draft
+  holding a plaintext password is now not kept (the unsaved-changes guard
+  still warns). The email pattern could backtrack polynomially on a crafted
+  domain; its labels now exclude the dot and the length is checked first.
+  Both found by CodeQL before release.
+
 ### Added
 
 - **A built-in contact form with an inbox in the admin**
