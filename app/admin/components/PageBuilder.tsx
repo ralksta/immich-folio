@@ -567,7 +567,8 @@ export default function PageBuilder() {
             <IconSearch size={14} />
           </span>
           <input
-            type="text"
+            type="search"
+            aria-label="Search albums or subpages"
             className="builder-search-input"
             placeholder="Search albums or subpages..."
             value={searchQuery}
