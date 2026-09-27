@@ -152,7 +152,8 @@ function parseEnv(): Env {
   return {
     IMMICH_API_URL: apiUrl,
     IMMICH_API_KEY: apiKey as string,
-    SITE_TITLE: process.env.SITE_TITLE || 'Gallery',
+    // No English default here: lib/config falls back to the locale's word.
+    SITE_TITLE: process.env.SITE_TITLE || '',
     SITE_SUBTITLE: process.env.SITE_SUBTITLE || '',
     CACHE_TTL: Math.max(0, cacheTtl),
     STALE_MAX_AGE: Math.max(0, staleMaxAge),

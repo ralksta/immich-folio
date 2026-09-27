@@ -19,6 +19,8 @@ export const es: Dictionary = {
     map: 'Mapa',
     journal: 'Diario',
     skipToContent: 'Saltar al contenido',
+    mainNavAria: 'Navegación principal',
+    heroNavAria: 'Secciones',
     openMenu: 'Abrir menú',
     closeMenu: 'Cerrar menú',
   },
@@ -44,12 +46,15 @@ export const es: Dictionary = {
     nextEntryAria: (title: string) => `Entrada siguiente: ${title}`,
     entryNavAria: 'Navegación entre entradas del diario',
     loadingGallery: 'Cargando la galería',
+    gallery: 'Galería',
     loadingPhotos: 'Cargando fotos',
     downloadAlbum: 'Descargar álbum',
   },
 
   home: {
     enter: 'Entrar',
+    pauseSlideshow: 'Pausar la presentación',
+    playSlideshow: 'Reproducir la presentación',
   },
 
   error: {
@@ -58,8 +63,6 @@ export const es: Dictionary = {
     errorTitle: 'Algo ha salido mal',
     errorText:
       'No se ha podido cargar esta página. Suele ser algo temporal: inténtalo de nuevo en un momento.',
-    siteErrorText:
-      'No se ha podido cargar este sitio. Suele ser algo temporal: inténtalo de nuevo en un momento.',
     tryAgain: 'Reintentar',
     reference: (digest: string) => `Referencia: ${digest}`,
   },
@@ -133,6 +136,7 @@ export const es: Dictionary = {
 
   lightbox: {
     viewer: 'Visor de imágenes',
+    position: (n: number, total: number) => `Foto ${n} de ${total}`,
     openPhoto: (n: number) => `Ver foto ${n}`,
     close: 'Cerrar',
     closeTitle: 'Cerrar (Esc)',

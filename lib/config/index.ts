@@ -34,6 +34,7 @@ import {
   type GallerySubpageYaml,
 } from './schema';
 import { isValidSlug } from '../journal';
+import { getDictionary, resolveLocale } from '../i18n';
 import type { NavEntry } from '../pages';
 
 export * from './schema';
@@ -719,7 +720,10 @@ export function getConfig(): AppConfig {
     albumLocationPrecision,
   } = deriveGallery(gallery);
 
-  const siteSeoTitle = settings.seo?.title || settings.title || env.SITE_TITLE || 'Gallery';
+  // Last-resort title in the site's own language rather than a hardcoded
+  // English "Gallery" (#696).
+  const defaultTitle = env.SITE_TITLE || getDictionary(resolveLocale(settings.lang)).common.gallery;
+  const siteSeoTitle = settings.seo?.title || settings.title || defaultTitle;
 
   return {
     immich: { apiUrl: immichApiUrl, apiKey },
@@ -728,7 +732,7 @@ export function getConfig(): AppConfig {
     standaloneAlbums,
     subpages,
     nav,
-    siteTitle: settings.title ?? env.SITE_TITLE,
+    siteTitle: settings.title ?? defaultTitle,
     siteSubtitle: settings.subtitle ?? env.SITE_SUBTITLE,
     lang: settings.lang ?? 'en',
     // Env wins, so a deployment can rotate the site password without touching

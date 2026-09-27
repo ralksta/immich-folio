@@ -609,9 +609,7 @@ export function Lightbox({
 
         {/* Counter */}
         <div className={styles.counter} aria-live="polite" aria-atomic="true">
-          <span className="sr-only">
-            Photo {currentIndex + 1} of {assets.length}
-          </span>
+          <span className="sr-only">{t.lightbox.position(currentIndex + 1, assets.length)}</span>
           <span aria-hidden="true">
             {currentIndex + 1} / {assets.length}
           </span>

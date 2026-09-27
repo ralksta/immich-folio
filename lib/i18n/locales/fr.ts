@@ -19,6 +19,8 @@ export const fr: Dictionary = {
     map: 'Carte',
     journal: 'Journal',
     skipToContent: 'Aller au contenu',
+    mainNavAria: 'Navigation principale',
+    heroNavAria: 'Rubriques',
     openMenu: 'Ouvrir le menu',
     closeMenu: 'Fermer le menu',
   },
@@ -44,12 +46,15 @@ export const fr: Dictionary = {
     nextEntryAria: (title: string) => `Article suivant : ${title}`,
     entryNavAria: 'Navigation entre les articles du journal',
     loadingGallery: 'Chargement de la galerie',
+    gallery: 'Galerie',
     loadingPhotos: 'Chargement des photos',
     downloadAlbum: 'Télécharger l’album',
   },
 
   home: {
     enter: 'Entrer',
+    pauseSlideshow: 'Mettre le diaporama en pause',
+    playSlideshow: 'Lancer le diaporama',
   },
 
   error: {
@@ -58,8 +63,6 @@ export const fr: Dictionary = {
     errorTitle: 'Une erreur est survenue',
     errorText:
       'Cette page n’a pas pu être chargée. C’est généralement temporaire — réessayez dans un instant.',
-    siteErrorText:
-      'Ce site n’a pas pu être chargé. C’est généralement temporaire — réessayez dans un instant.',
     tryAgain: 'Réessayer',
     reference: (digest: string) => `Référence : ${digest}`,
   },
@@ -133,6 +136,7 @@ export const fr: Dictionary = {
 
   lightbox: {
     viewer: 'Visionneuse d’images',
+    position: (n: number, total: number) => `Photo ${n} sur ${total}`,
     openPhoto: (n: number) => `Afficher la photo ${n}`,
     close: 'Fermer',
     closeTitle: 'Fermer (Échap)',
