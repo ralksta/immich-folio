@@ -1451,6 +1451,24 @@
   opacity: 1;
 }
 
+/* Hover-only overlays leave keyboard and touch visitors out (#696). A tile
+   with keyboard focus shows its overlay like a hovered one, and on devices
+   without hover — phones, and tablets wider than the 640px mobile rules — the
+   overlays are simply always shown. */
+.photo-grid__item:has(:focus-visible) .photo-grid__item-exif,
+.subpage-grid__item:is(:focus-visible, :has(:focus-visible)) .subpage-grid__item-overlay,
+.album-card:is(:focus-visible, :has(:focus-visible)) .album-card__overlay {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .photo-grid__item .photo-grid__item-exif,
+  .subpage-grid__item .subpage-grid__item-overlay,
+  .album-card .album-card__overlay {
+    opacity: 1;
+  }
+}
+
 .photo-grid__item-play {
   position: absolute;
   inset: 0;
@@ -1531,8 +1549,9 @@
   bottom: 32px;
   right: 32px;
   z-index: 90;
-  width: 40px;
-  height: 40px;
+  /* 44px: the minimum touch target, same as the proofing hearts (#696). */
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1px solid var(--border-subtle);
   background: var(--bg-card);
@@ -1590,14 +1609,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px;
+  /* 44px touch target (16px icon + 14px padding), pulled back into the
+     original 32px footprint by the negative margins so the header does not
+     grow (#696). */
+  padding: 14px;
+  margin: -6px -6px -6px auto;
   background: none;
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
   border-radius: var(--radius-sm);
   transition: color var(--transition-fast);
-  margin-left: auto;
 }
 
 .theme-toggle:hover {
@@ -2024,8 +2046,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: auto;
-    padding: 8px;
+    /* 44px touch target (20px icon + 12px padding); the negative margins
+       keep the header's height and spacing as before (#696). */
+    margin: -4px -4px -4px auto;
+    padding: 12px;
     background: none;
     border: none;
     color: var(--text-secondary);
