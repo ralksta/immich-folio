@@ -31,6 +31,7 @@ import { useDraft } from '../useDraft';
 import DraftNotice from '../DraftNotice';
 import { reportIfSessionExpired } from '../sessionExpiry';
 import { useContentRestored } from '../contentRestored';
+import { useVersionedSave } from '../useVersionedSave';
 import './journal-studio.css';
 import { BlockFields, type AssetPickTarget } from './BlockFields';
 import { StorySettingsModal } from './StorySettingsModal';
@@ -94,6 +95,9 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
   const draft = useDraft<string>(`${isPage ? 'page' : 'journal'}-${slug}`, rawMarkdown, dirty);
   const loadDraft = draft.load;
   const serverMarkdown = useRef('');
+  /** The file as loaded, sent back on save so a change elsewhere is caught (#601). */
+  const versionRef = useRef<string | null>(null);
+  const versionedSave = useVersionedSave();
 
   // Bumped when this entry is restored from a backup, to load it again.
   const [reloadKey, setReloadKey] = useState(0);
@@ -116,6 +120,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
           );
         }
         const data = await res.json();
+        versionRef.current = typeof data.version === 'string' ? data.version : null;
         const md: string = (isPage ? data.page : data.entry).rawMarkdown;
         serverMarkdown.current = md;
         const restored = loadDraft(md);
@@ -181,20 +186,27 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
 
     setSaving(true);
     try {
-      const res = await fetch(apiUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          rawMarkdown: toSave,
-        }),
-      });
+      const result = await versionedSave(
+        apiUrl,
+        { rawMarkdown: toSave },
+        versionRef,
+        isPage ? 'This page' : 'This entry',
+      );
 
-      if (res.ok) {
+      if (result.kind === 'reload') {
+        draft.discard();
+        setReloadKey((k) => k + 1);
+      } else if (result.kind === 'keep') {
+        notify('error', 'Not saved — it changed elsewhere. Your edits are still here.');
+      } else if (result.kind === 'saved') {
         // The file as written, not as sent: a password line is hashed on the
         // way to disk (#690). Taking the sent text as the base would make the
         // next draft look like a conflicting edit from elsewhere.
-        const data = await res.json().catch(() => null);
-        const record = isPage ? data?.page : data?.entry;
+        const data = result.data as {
+          page?: { rawMarkdown?: unknown };
+          entry?: { rawMarkdown?: unknown };
+        };
+        const record = isPage ? data.page : data.entry;
         const written: string =
           typeof record?.rawMarkdown === 'string' ? record.rawMarkdown : toSave;
         serverMarkdown.current = written;
@@ -204,9 +216,8 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
           setParsed(parseJournalMarkdown(written));
         }
         setDirty(false);
-      } else if (!reportIfSessionExpired(res)) {
-        const data = await res.json();
-        notify('error', data.error || 'Failed to save');
+      } else if (!reportIfSessionExpired(result.res)) {
+        notify('error', result.data?.error || 'Failed to save');
       }
     } catch {
       notify(

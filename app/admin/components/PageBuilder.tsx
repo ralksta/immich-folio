@@ -49,6 +49,8 @@ import {
 import { useScrollLock } from './useScrollLock';
 import { useUnsavedGuard } from './useUnsavedGuard';
 import { useDraft } from './useDraft';
+import { useVersionedSave } from './useVersionedSave';
+import type { GalleryVersionChange } from '@/lib/admin/pageRefs';
 import DraftNotice from './DraftNotice';
 import { reportIfSessionExpired } from './sessionExpiry';
 import { IconCamera, IconHome, IconPlus, IconSearch } from './Icons';
@@ -151,6 +153,9 @@ export default function PageBuilder() {
   // Logout (#592). `serverState` is what a discard goes back to.
   const draft = useDraft<GalleryState>('page-builder', gallery, dirty);
   const serverState = useRef<GalleryState | null>(null);
+  /** gallery.yaml as loaded, sent back on save so a change elsewhere is caught (#601). */
+  const versionRef = useRef<string | null>(null);
+  const versionedSave = useVersionedSave();
 
   // A subpage opened from a `?album=` link can hold dozens of albums: bring the
   // linked one into view, and let the mark fade after a moment. The mark itself
@@ -190,7 +195,8 @@ export default function PageBuilder() {
         );
       }
 
-      const { gallery: raw } = await galleryRes.json();
+      const { gallery: raw, version } = await galleryRes.json();
+      versionRef.current = typeof version === 'string' ? version : null;
       const parsed = parseGalleryYaml(raw);
       serverState.current = parsed;
       const restored = draft.load(JSON.stringify(parsed));
@@ -294,14 +300,20 @@ export default function PageBuilder() {
     const yamlData = serializeGallery(gallery);
 
     try {
-      const res = await fetch('/api/admin/gallery', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gallery: yamlData }),
-      });
+      const result = await versionedSave(
+        '/api/admin/gallery',
+        { gallery: yamlData },
+        versionRef,
+        'The page structure (gallery.yaml)',
+      );
 
-      if (res.ok) {
-        const data = await res.json();
+      if (result.kind === 'reload') {
+        draft.discard();
+        await loadData();
+      } else if (result.kind === 'keep') {
+        setSaveStatus({ kind: 'error', message: 'Not saved — gallery.yaml changed elsewhere.' });
+      } else if (result.kind === 'saved') {
+        const data = result.data as { gallery?: unknown; message?: string };
         // Fingerprint what the next load will see, the way it will see it: the
         // file as written, read back through the same parser. The editor's own
         // state can differ in shape (an `undefined` here, a default there) and
@@ -319,9 +331,11 @@ export default function PageBuilder() {
         setDirty(false);
         setSaveStatus({ kind: 'success', message: data.message || 'Saved successfully!' });
         setTimeout(() => setSaveStatus(null), 5000);
-      } else if (!reportIfSessionExpired(res)) {
-        const err = await res.json();
-        setSaveStatus({ kind: 'error', message: `Error: ${err.error}` });
+      } else if (!reportIfSessionExpired(result.res)) {
+        setSaveStatus({
+          kind: 'error',
+          message: `Error: ${result.data?.error ?? `HTTP ${result.res.status}`}`,
+        });
       }
     } catch {
       setSaveStatus({ kind: 'error', message: 'Error: Failed to save' });
@@ -429,8 +443,14 @@ export default function PageBuilder() {
    * same change goes into the builder's state and into what it considers
    * saved, so neither a pending edit nor the draft check trips over it.
    */
-  function applyServerMenuChange(op: (g: GalleryState) => GalleryState) {
+  function applyServerMenuChange(
+    op: (g: GalleryState) => GalleryState,
+    change?: GalleryVersionChange | null,
+  ) {
     setGallery(op);
+    // Follow the rewrite only when it was the sole change since this editor
+    // loaded; otherwise the old version stays and the next save asks (#601).
+    if (change && versionRef.current === change.from) versionRef.current = change.to;
     if (serverState.current) {
       serverState.current = op(serverState.current);
       draft.saved(JSON.stringify(serverState.current));
@@ -472,20 +492,29 @@ export default function PageBuilder() {
     }
   }
 
-  function handlePageSaved(oldSlug: string, page: PageSummary, menuRenamed: boolean) {
+  function handlePageSaved(
+    oldSlug: string,
+    page: PageSummary,
+    menuRenamed: boolean,
+    galleryVersion?: GalleryVersionChange | null,
+  ) {
     setPages((prev) => [...prev.filter((p) => p.slug !== oldSlug), page]);
     if (page.slug !== oldSlug) {
       const rename = (g: GalleryState) => ops.renamePageRef(g, oldSlug, page.slug);
-      if (menuRenamed) applyServerMenuChange(rename);
+      if (menuRenamed) applyServerMenuChange(rename, galleryVersion);
       else setGallery(rename);
       setSelectedPage(page.slug);
     }
   }
 
-  function handlePageDeleted(slug: string, removedFromMenu: boolean) {
+  function handlePageDeleted(
+    slug: string,
+    removedFromMenu: boolean,
+    galleryVersion?: GalleryVersionChange | null,
+  ) {
     setPages((prev) => prev.filter((p) => p.slug !== slug));
     const remove = (g: GalleryState) => ops.setPageInMenu(g, slug, false);
-    if (removedFromMenu) applyServerMenuChange(remove);
+    if (removedFromMenu) applyServerMenuChange(remove, galleryVersion);
     else setGallery(remove);
     setSelectedPage(null);
   }
