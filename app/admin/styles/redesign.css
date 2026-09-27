@@ -873,6 +873,15 @@
   animation: none;
 }
 
+/* Out of the overlay, the page itself scrolls. The body keeps no scroller of
+   its own: with `overflow-y: auto` it still became one (a sideways overflow
+   is enough), and `overscroll-behavior: contain` then swallowed every wheel
+   turn over the panel instead of handing it to the page. */
+.subpage-drawer-container--inline .subpage-drawer-body {
+  overflow: visible;
+  overscroll-behavior: auto;
+}
+
 @media (max-width: 1100px) {
   .pb-split {
     grid-template-columns: 1fr;
