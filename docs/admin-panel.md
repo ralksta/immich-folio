@@ -51,6 +51,7 @@ Unsaved changes raise a save bar pinned to the bottom of the viewport, so the Sa
 
 ## Pages
 
+The page builder has two columns: on the left the whole structure (home page hero, every subpage with its cover, state and album count, standalone albums), always visible and drag-sortable; on the right the selected entry, edited in place. A subpage's panel switches between **Edit** and **Live preview** in its header.
 A visual tree of your gallery structure. Each item opens a slide-over drawer with its settings.
 
 ### Hero Images

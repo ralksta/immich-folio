@@ -680,3 +680,214 @@
   text-transform: uppercase;
   color: var(--admin-text-secondary);
 }
+
+/* ── Page builder: structure list + panel (stage 4) ────────── */
+
+/* The builder uses the full workspace width: the list and the panel both
+   need room, and the panel carries the live preview. */
+.admin-app .admin-main:has(.pb-split) {
+  max-width: none;
+}
+
+.pb-split {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 1.75rem;
+  align-items: start;
+}
+
+.pb-tree {
+  position: sticky;
+  top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.pb-tree .builder-search-container {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+.pb-tree .builder-search-wrapper {
+  max-width: none;
+}
+
+.pb-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pb-group-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 0.5rem 0.4rem;
+  font-family: var(--admin-font-label);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--admin-text-muted);
+}
+
+.pb-row {
+  display: flex;
+  align-items: center;
+  border-radius: var(--admin-radius);
+}
+
+.pb-row-grip {
+  display: inline-flex;
+  padding: 0 0.1rem 0 0.25rem;
+  color: var(--admin-text-muted);
+  opacity: 0.45;
+  cursor: grab;
+}
+
+.pb-row:hover .pb-row-grip {
+  opacity: 1;
+}
+
+.pb-row-main {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.5rem;
+  border: none;
+  border-radius: var(--admin-radius);
+  background: none;
+  color: var(--admin-text-secondary);
+  font: inherit;
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pb-row-solo {
+  width: 100%;
+}
+
+.pb-row-main:hover {
+  background: var(--admin-bg-raised);
+  color: var(--admin-text);
+}
+
+.pb-row.active .pb-row-main,
+.pb-row-main.active {
+  background: var(--admin-bg-elevated);
+  color: var(--admin-text);
+  box-shadow: inset 2px 0 0 var(--admin-accent);
+}
+
+.pb-row.is-off .pb-row-name {
+  color: var(--admin-text-muted);
+}
+
+.pb-row-thumb {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 26px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--admin-bg-elevated);
+  color: var(--admin-text-muted);
+}
+
+.pb-row-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pb-row-name {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pb-row-count,
+.pb-row-state {
+  font-family: var(--admin-font-label);
+  font-size: 0.68rem;
+  color: var(--admin-text-muted);
+}
+
+.pb-row-state {
+  padding: 0 0.35rem;
+  border: 1px solid var(--admin-border-hover);
+  border-radius: 2px;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pb-add {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px dashed var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: none;
+  color: var(--admin-text-muted);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.pb-add:hover {
+  border-color: var(--admin-border-hover);
+  color: var(--admin-text);
+}
+
+.pb-panel {
+  min-width: 0;
+}
+
+.pb-panel .builder-section:first-child {
+  margin-top: 0;
+}
+
+/* The subpage sheet, in place: no overlay chrome, full panel height. */
+.subpage-drawer-container--inline {
+  max-width: none;
+  max-height: none;
+  border-radius: var(--admin-radius);
+  box-shadow: none;
+  animation: none;
+}
+
+@media (max-width: 1100px) {
+  .pb-split {
+    grid-template-columns: 1fr;
+  }
+
+  .pb-tree {
+    position: static;
+    max-height: none;
+  }
+}
+
+/* A custom album title is marked by weight, not by the accent: red italics
+   on every renamed album read as an error. */
+.admin-layout .album-tile-name.custom-title {
+  color: var(--admin-text);
+  font-style: normal;
+  font-weight: 600;
+}

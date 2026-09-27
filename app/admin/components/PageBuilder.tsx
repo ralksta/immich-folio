@@ -23,7 +23,7 @@ import SaveBar, { type SaveStatus } from './SaveBar';
 import AlbumDrawer from './page-builder/AlbumDrawer';
 import { SortableAlbumCard } from './page-builder/AlbumCard';
 import SubpageDrawer from './page-builder/SubpageDrawer';
-import { SortableHeroTile, SortableSubpageTile } from './page-builder/SortableTiles';
+import { SortableHeroTile, SortableSubpageRow } from './page-builder/SortableTiles';
 import { findAlbumAddress } from './page-builder/findAlbumAddress';
 import { parseGalleryYaml, serializeGallery, type GalleryState } from './page-builder/galleryYaml';
 import * as ops from './page-builder/galleryOps';
@@ -42,7 +42,7 @@ import { useUnsavedGuard } from './useUnsavedGuard';
 import { useDraft } from './useDraft';
 import DraftNotice from './DraftNotice';
 import { reportIfSessionExpired } from './sessionExpiry';
-import { IconCamera, IconFolder, IconHome, IconPlus, IconSearch } from './Icons';
+import { IconCamera, IconHome, IconPlus, IconSearch } from './Icons';
 import { useNotify } from './Notifications';
 
 export default function PageBuilder() {
@@ -65,6 +65,8 @@ export default function PageBuilder() {
   const [dirty, setDirty] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>(null);
   const [expandedSubpage, setExpandedSubpage] = useState<number | null>(null);
+  /** What the panel shows while no subpage is selected (UX stage 4). */
+  const [overview, setOverview] = useState<'hero' | 'albums'>('hero');
   const [drawerMode, setDrawerMode] = useState<'edit' | 'preview'>('edit');
   const [pickerTarget, setPickerTarget] = useState<PickerTarget | null>(null);
   const [heroPickerTarget, setHeroPickerTarget] = useState<HeroPickerTarget | null>(null);
@@ -79,7 +81,7 @@ export default function PageBuilder() {
   // Keep the builder still behind either drawer. One combined lock rather than
   // one per drawer: the album drawer opens from inside the subpage drawer, and
   // a single condition avoids two locks racing over the same inline style.
-  useScrollLock(editingAlbumAddress !== null || expandedSubpage !== null);
+  useScrollLock(editingAlbumAddress !== null);
 
   // DnD sensors
   const sensors = useSensors(
@@ -107,22 +109,6 @@ export default function PageBuilder() {
     return () => window.removeEventListener('keydown', handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dirty, saving, gallery]);
-
-  // ── Escape closes the subpage sheet — only when it is topmost ─
-  useEffect(() => {
-    if (expandedSubpage === null) return;
-    function handleEscape(e: KeyboardEvent) {
-      if (e.key !== 'Escape') return;
-      // Listbox preventDefaults its own Escape but does not stopPropagation —
-      // respect that so closing a popup never also closes the sheet.
-      if (e.defaultPrevented) return;
-      // A higher layer (album editor, pickers, order editor) owns the key.
-      if (editingAlbumAddress || pickerTarget || heroPickerTarget || orderEditorTarget) return;
-      setExpandedSubpage(null);
-    }
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [expandedSubpage, editingAlbumAddress, pickerTarget, heroPickerTarget, orderEditorTarget]);
 
   useUnsavedGuard(dirty);
 
@@ -560,214 +546,272 @@ export default function PageBuilder() {
         onDismiss={draft.dismiss}
       />
 
-      {/* Search Bar */}
-      <div className="builder-search-container">
-        <div className="builder-search-wrapper">
-          <span className="builder-search-icon">
-            <IconSearch size={14} />
-          </span>
-          <input
-            type="search"
-            aria-label="Search albums or subpages"
-            className="builder-search-input"
-            placeholder="Search albums or subpages..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
+      <div className="pb-split">
+        {/* Structure: everything on the site, always visible (UX stage 4). */}
+        <aside className="pb-tree" aria-label="Page structure">
+          {/* Search Bar */}
+          <div className="builder-search-container">
+            <div className="builder-search-wrapper">
+              <span className="builder-search-icon">
+                <IconSearch size={14} />
+              </span>
+              <input
+                type="search"
+                aria-label="Search albums or subpages"
+                className="builder-search-input"
+                placeholder="Search albums or subpages..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  className="builder-search-clear"
+                  onClick={() => setSearchQuery('')}
+                  title="Clear search"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="pb-group">
+            <div className="pb-group-head">
+              <span>Home page</span>
+            </div>
             <button
-              className="builder-search-clear"
-              onClick={() => setSearchQuery('')}
-              title="Clear search"
+              type="button"
+              className={`pb-row-main pb-row-solo ${expandedSubpage === null && overview === 'hero' ? 'active' : ''}`}
+              onClick={() => {
+                setExpandedSubpage(null);
+                setOverview('hero');
+              }}
             >
-              ×
+              <span className="pb-row-thumb">
+                {gallery.hero[0] ? (
+                  <img src={`/api/admin/thumbnail/${gallery.hero[0]}`} alt="" loading="lazy" />
+                ) : (
+                  <IconHome size={14} />
+                )}
+              </span>
+              <span className="pb-row-name">Hero photos</span>
+              <span className="pb-row-count">{gallery.hero.length}</span>
             </button>
+          </div>
+
+          <div className="pb-group">
+            <div className="pb-group-head">
+              <span>Subpages</span>
+              <span>
+                {gallery.subpages.filter((sp) => sp.enabled !== false).length} of{' '}
+                {gallery.subpages.length} live
+              </span>
+            </div>
+            {gallery.subpages.length > 0 && filteredSubpages.length === 0 && (
+              <p className="empty-hint">No matching subpages.</p>
+            )}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleSubpageDragEnd}
+            >
+              <SortableContext
+                items={filteredSubpages.map(({ index }) => `subpage-${index}`)}
+                strategy={verticalListSortingStrategy}
+              >
+                {filteredSubpages.map(({ sp, index }) => (
+                  <SortableSubpageRow
+                    key={`subpage-${index}`}
+                    sp={sp}
+                    spIndex={index}
+                    isActive={expandedSubpage === index}
+                    onClick={() => setExpandedSubpage(index)}
+                    getFirstThumb={getFirstSubpageThumb}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+            <button
+              type="button"
+              className="pb-add"
+              onClick={() => {
+                addSubpage();
+                setExpandedSubpage(gallery.subpages.length);
+              }}
+            >
+              <IconPlus size={13} /> New subpage
+            </button>
+          </div>
+
+          <div className="pb-group">
+            <div className="pb-group-head">
+              <span>Standalone albums</span>
+            </div>
+            <button
+              type="button"
+              className={`pb-row-main pb-row-solo ${expandedSubpage === null && overview === 'albums' ? 'active' : ''}`}
+              onClick={() => {
+                setExpandedSubpage(null);
+                setOverview('albums');
+              }}
+            >
+              <span className="pb-row-thumb">
+                <IconCamera size={14} />
+              </span>
+              <span className="pb-row-name">On the home page</span>
+              <span className="pb-row-count">{gallery.albums.length}</span>
+            </button>
+          </div>
+        </aside>
+
+        {/* The selected entry, edited in place instead of in an overlay. */}
+        <div className="pb-panel">
+          {expandedSubpage !== null && gallery.subpages[expandedSubpage] ? (
+            <>
+              <SubpageDrawer
+                sp={gallery.subpages[expandedSubpage]}
+                spIndex={expandedSubpage}
+                kickerIndex={ops.enabledPosition(gallery, expandedSubpage)}
+                immichAlbums={immichAlbums}
+                sensors={sensors}
+                drawerMode={drawerMode}
+                onDrawerModeChange={setDrawerMode}
+                onClose={() => {
+                  setExpandedSubpage(null);
+                  setLinkedAlbumId(null);
+                }}
+                updateSubpage={updateSubpage}
+                removeSubpage={removeSubpage}
+                addSection={addSection}
+                removeSection={removeSection}
+                updateSection={updateSection}
+                removeSubpageAlbum={removeSubpageAlbum}
+                removeSectionAlbum={removeSectionAlbum}
+                onAlbumDragEnd={handleSubpageAlbumDragEnd(expandedSubpage)}
+                onPickAlbum={setPickerTarget}
+                onEditAlbum={setEditingAlbumAddress}
+                onPickHero={setHeroPickerTarget}
+                getAlbumName={getAlbumName}
+                getAlbumCount={getAlbumCount}
+                getAlbumThumbnailId={getAlbumThumbnailId}
+                highlightedAlbumId={linkedAlbumId}
+                inline
+              />
+            </>
+          ) : overview === 'albums' ? (
+            <>
+              {/* Standalone Albums */}
+              <section className="builder-section">
+                <div className="builder-section-header">
+                  <h2>
+                    <IconCamera />
+                    Standalone Albums
+                  </h2>
+                  <button
+                    className="admin-btn admin-btn-sm"
+                    onClick={() => setPickerTarget({ type: 'standalone' })}
+                  >
+                    + Add Album
+                  </button>
+                </div>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleAlbumDragEnd}
+                >
+                  <SortableContext
+                    items={filteredAlbums.map((a) => {
+                      const originalIndex = gallery.albums.findIndex((x) => x.id === a.id);
+                      return `album-${a.id}-${originalIndex}`;
+                    })}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="album-list">
+                      {filteredAlbums.length === 0 && (
+                        <p className="empty-hint">
+                          {searchQuery
+                            ? 'No matching standalone albums found.'
+                            : 'No standalone albums. These show directly on the homepage.'}
+                        </p>
+                      )}
+                      {filteredAlbums.map((album) => {
+                        const originalIndex = gallery.albums.findIndex((a) => a.id === album.id);
+                        return (
+                          <SortableAlbumCard
+                            key={`${album.id}-${originalIndex}`}
+                            album={album}
+                            index={originalIndex}
+                            name={getAlbumName(album.id)}
+                            count={getAlbumCount(album.id)}
+                            thumbnailId={getAlbumThumbnailId(album.id)}
+                            onRemove={() => removeStandaloneAlbum(originalIndex)}
+                            onEdit={() =>
+                              setEditingAlbumAddress({
+                                type: 'standalone',
+                                albumIndex: originalIndex,
+                              })
+                            }
+                          />
+                        );
+                      })}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </section>
+            </>
+          ) : (
+            <>
+              {/* Hero Section */}
+              <section className="builder-section">
+                <div className="builder-section-header">
+                  <h2>
+                    <IconHome /> Homepage Hero
+                  </h2>
+                  <button
+                    className="admin-btn admin-btn-sm"
+                    onClick={() =>
+                      setHeroPickerTarget({
+                        onSelect: handleHeroSelect,
+                        currentAssetIds: gallery.hero,
+                        title: 'Pick Hero Image for Homepage',
+                      })
+                    }
+                  >
+                    <IconPlus size={14} /> Add Hero
+                  </button>
+                </div>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleHeroDragEnd}
+                >
+                  <SortableContext
+                    items={gallery.hero.map((_, i) => `hero-${i}`)}
+                    strategy={horizontalListSortingStrategy}
+                  >
+                    <div className="hero-grid">
+                      {gallery.hero.length === 0 && (
+                        <p className="empty-hint">
+                          No hero images configured. Add photos to show a hero carousel on the
+                          homepage.
+                        </p>
+                      )}
+                      {gallery.hero.map((id, i) => (
+                        <SortableHeroTile
+                          key={`hero-${i}`}
+                          id={id}
+                          index={i}
+                          onRemove={() => removeHero(i)}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </section>
+            </>
           )}
         </div>
       </div>
-
-      {/* Hero Section */}
-      <section className="builder-section">
-        <div className="builder-section-header">
-          <h2>
-            <IconHome /> Homepage Hero
-          </h2>
-          <button
-            className="admin-btn admin-btn-sm"
-            onClick={() =>
-              setHeroPickerTarget({
-                onSelect: handleHeroSelect,
-                currentAssetIds: gallery.hero,
-                title: 'Pick Hero Image for Homepage',
-              })
-            }
-          >
-            <IconPlus size={14} /> Add Hero
-          </button>
-        </div>
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleHeroDragEnd}
-        >
-          <SortableContext
-            items={gallery.hero.map((_, i) => `hero-${i}`)}
-            strategy={horizontalListSortingStrategy}
-          >
-            <div className="hero-grid">
-              {gallery.hero.length === 0 && (
-                <p className="empty-hint">
-                  No hero images configured. Add photos to show a hero carousel on the homepage.
-                </p>
-              )}
-              {gallery.hero.map((id, i) => (
-                <SortableHeroTile
-                  key={`hero-${i}`}
-                  id={id}
-                  index={i}
-                  onRemove={() => removeHero(i)}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-      </section>
-
-      {/* Standalone Albums */}
-      <section className="builder-section">
-        <div className="builder-section-header">
-          <h2>
-            <IconCamera />
-            Standalone Albums
-          </h2>
-          <button
-            className="admin-btn admin-btn-sm"
-            onClick={() => setPickerTarget({ type: 'standalone' })}
-          >
-            + Add Album
-          </button>
-        </div>
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleAlbumDragEnd}
-        >
-          <SortableContext
-            items={filteredAlbums.map((a) => {
-              const originalIndex = gallery.albums.findIndex((x) => x.id === a.id);
-              return `album-${a.id}-${originalIndex}`;
-            })}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="album-list">
-              {filteredAlbums.length === 0 && (
-                <p className="empty-hint">
-                  {searchQuery
-                    ? 'No matching standalone albums found.'
-                    : 'No standalone albums. These show directly on the homepage.'}
-                </p>
-              )}
-              {filteredAlbums.map((album) => {
-                const originalIndex = gallery.albums.findIndex((a) => a.id === album.id);
-                return (
-                  <SortableAlbumCard
-                    key={`${album.id}-${originalIndex}`}
-                    album={album}
-                    index={originalIndex}
-                    name={getAlbumName(album.id)}
-                    count={getAlbumCount(album.id)}
-                    thumbnailId={getAlbumThumbnailId(album.id)}
-                    onRemove={() => removeStandaloneAlbum(originalIndex)}
-                    onEdit={() =>
-                      setEditingAlbumAddress({ type: 'standalone', albumIndex: originalIndex })
-                    }
-                  />
-                );
-              })}
-            </div>
-          </SortableContext>
-        </DndContext>
-      </section>
-
-      {/* Subpages */}
-      <section className="builder-section">
-        <div className="builder-section-header">
-          <h2>
-            <IconFolder />
-            Subpages
-          </h2>
-          <button className="admin-btn admin-btn-sm" onClick={addSubpage}>
-            + New Subpage
-          </button>
-        </div>
-
-        {gallery.subpages.length === 0 && (
-          <p className="empty-hint">
-            No subpages. Create one to group albums under a custom URL path.
-          </p>
-        )}
-
-        {gallery.subpages.length > 0 && filteredSubpages.length === 0 && (
-          <p className="empty-hint">No matching subpages found.</p>
-        )}
-
-        {/* Collapsed overview grid with DnD */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleSubpageDragEnd}
-        >
-          <SortableContext
-            items={filteredSubpages.map(({ index }) => `subpage-${index}`)}
-            strategy={horizontalListSortingStrategy}
-          >
-            <div className="subpage-tiles">
-              {filteredSubpages.map(({ sp, index }) => (
-                <SortableSubpageTile
-                  key={`subpage-${index}`}
-                  sp={sp}
-                  spIndex={index}
-                  isActive={expandedSubpage === index}
-                  onClick={() => setExpandedSubpage(expandedSubpage === index ? null : index)}
-                  getFirstThumb={getFirstSubpageThumb}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-
-        {/* Expanded subpage detail (Slide-Over Drawer) */}
-        {expandedSubpage !== null && gallery.subpages[expandedSubpage] && (
-          <SubpageDrawer
-            sp={gallery.subpages[expandedSubpage]}
-            spIndex={expandedSubpage}
-            kickerIndex={ops.enabledPosition(gallery, expandedSubpage)}
-            immichAlbums={immichAlbums}
-            sensors={sensors}
-            drawerMode={drawerMode}
-            onDrawerModeChange={setDrawerMode}
-            onClose={() => {
-              setExpandedSubpage(null);
-              setLinkedAlbumId(null);
-            }}
-            updateSubpage={updateSubpage}
-            removeSubpage={removeSubpage}
-            addSection={addSection}
-            removeSection={removeSection}
-            updateSection={updateSection}
-            removeSubpageAlbum={removeSubpageAlbum}
-            removeSectionAlbum={removeSectionAlbum}
-            onAlbumDragEnd={handleSubpageAlbumDragEnd(expandedSubpage)}
-            onPickAlbum={setPickerTarget}
-            onEditAlbum={setEditingAlbumAddress}
-            onPickHero={setHeroPickerTarget}
-            getAlbumName={getAlbumName}
-            getAlbumCount={getAlbumCount}
-            getAlbumThumbnailId={getAlbumThumbnailId}
-            highlightedAlbumId={linkedAlbumId}
-          />
-        )}
-      </section>
 
       {/* Album Picker Modal */}
       {pickerTarget && (
