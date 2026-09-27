@@ -4,6 +4,14 @@ import { GET } from '../[id]/route';
 import { encodeAssetId } from '@/lib/tokens';
 import { immich, ImmichUnavailableError } from '@/lib/immich';
 
+const published = vi.hoisted(() => ({ value: true }));
+vi.mock('@/lib/publishedAssets', () => ({
+  isPublishedAsset: async () => published.value,
+}));
+vi.mock('@/lib/admin/auth', () => ({
+  isAdminAuthenticated: async () => false,
+}));
+
 vi.mock('@/lib/immich', async () => {
   const actual = await vi.importActual<typeof import('@/lib/immich')>('@/lib/immich');
   return {
@@ -51,6 +59,18 @@ describe('GET /api/image/[id]', () => {
     const res = await call('v2:not-valid-base64url!!');
     expect(res.status).toBe(400);
     expect(mockStream).not.toHaveBeenCalled();
+  });
+
+  it('refuses an asset the site no longer shows, without caching the refusal', async () => {
+    published.value = false;
+    try {
+      const res = await call(encodeAssetId(ASSET_ID));
+      expect(res.status).toBe(404);
+      expect(res.headers.get('Cache-Control')).toBe('no-store');
+      expect(mockStream).not.toHaveBeenCalled();
+    } finally {
+      published.value = true;
+    }
   });
 
   it('serves a valid token', async () => {

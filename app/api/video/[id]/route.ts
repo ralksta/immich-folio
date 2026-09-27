@@ -11,6 +11,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { immich, ImmichUnavailableError } from '@/lib/immich';
+import { isPublishedAsset } from '@/lib/publishedAssets';
+import { isAdminAuthenticated } from '@/lib/admin/auth';
 import { decodeAssetId } from '@/lib/tokens';
 import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
@@ -45,6 +47,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (!assetId) {
     console.error(`[Video API] ❌ Invalid token: ${token.substring(0, 10)}...`);
     return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
+  }
+
+  // Only what the site currently shows (GHSA-gfh4-6275-9gqv): a token stays
+  // decodable forever, so an unpublished album or a revoked proofing link
+  // would otherwise keep serving. Signed-in admins pass for previews.
+  if (!(await isPublishedAsset(assetId)) && !(await isAdminAuthenticated())) {
+    return NextResponse.json(
+      { error: 'Not found' },
+      { status: 404, headers: { 'Cache-Control': 'no-store' } },
+    );
   }
 
   // Forward Range header from browser (needed for <video> seeking)
