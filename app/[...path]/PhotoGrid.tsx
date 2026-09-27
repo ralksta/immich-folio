@@ -210,6 +210,7 @@ function PhotoGridInner({
             }}
             role="button"
             tabIndex={0}
+            data-lightbox-index={index}
             aria-label={t.lightbox.openPhoto(index + 1)}
             aria-haspopup="dialog"
             style={{
@@ -293,7 +294,7 @@ function PhotoGridInner({
 
   return (
     <>
-      <div className={`photo-grid photo-grid--${layout}`} style={gridStyle}>
+      <div className={`photo-grid photo-grid--${layout}`} style={gridStyle} data-lightbox-group>
         {gridItems}
       </div>
 

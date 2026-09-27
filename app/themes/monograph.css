@@ -86,7 +86,9 @@
 }
 
 [data-preset='monograph'] .photo-grid__item:hover .photo-grid__item-exif,
-[data-preset='monograph'] .photo-grid__item:has(:focus-visible) .photo-grid__item-exif {
+[data-preset='monograph']
+  .photo-grid__item:is(:focus-visible, :has(:focus-visible))
+  .photo-grid__item-exif {
   opacity: 1;
   transform: translateY(0);
 }

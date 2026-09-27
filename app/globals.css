@@ -1455,7 +1455,7 @@
    with keyboard focus shows its overlay like a hovered one, and on devices
    without hover — phones, and tablets wider than the 640px mobile rules — the
    overlays are simply always shown. */
-.photo-grid__item:has(:focus-visible) .photo-grid__item-exif,
+.photo-grid__item:is(:focus-visible, :has(:focus-visible)) .photo-grid__item-exif,
 .subpage-grid__item:is(:focus-visible, :has(:focus-visible)) .subpage-grid__item-overlay,
 .album-card:is(:focus-visible, :has(:focus-visible)) .album-card__overlay {
   opacity: 1;

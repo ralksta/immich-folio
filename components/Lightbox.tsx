@@ -27,6 +27,7 @@ import { useDictionary } from './I18nProvider';
 import { resolveWatermarkOpacity } from '@/lib/config/schema';
 import { formatCamera } from '@/lib/exif';
 import { buildPhotoPermalink } from '@/lib/photoHash';
+import { trapTabKey } from '@/lib/focusTrap';
 import { nextSlideshowSpeed, type SlideshowSpeed } from '@/lib/slideshow';
 import {
   LIGHTBOX_SHORTCUTS,
@@ -104,6 +105,34 @@ export function Lightbox({
       closeBtnRef.current?.focus();
     }
   }, [mounted]);
+
+  /*
+   * Focus stays inside the dialog while it is open, and goes back to the grid
+   * when it closes (#696) — to the tile of the photo that was on screen last,
+   * not necessarily the one that opened the viewer, so a keyboard visitor who
+   * browsed ahead continues from where they are. Tiles mark themselves with
+   * `data-lightbox-index` inside a `data-lightbox-group`; without them the
+   * opener gets focus back.
+   */
+  const indexRef = useRef(currentIndex);
+  useEffect(() => {
+    indexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const onTab = (e: KeyboardEvent) => {
+      if (overlayRef.current) trapTabKey(overlayRef.current, e);
+    };
+    document.addEventListener('keydown', onTab);
+    return () => {
+      document.removeEventListener('keydown', onTab);
+      const group = opener?.closest('[data-lightbox-group]');
+      const tile = group?.querySelector<HTMLElement>(`[data-lightbox-index="${indexRef.current}"]`);
+      const target = tile ?? opener;
+      if (target?.isConnected) target.focus();
+    };
+  }, []);
 
   // Reset EXIF data when switching images; refetch if panel is open
   useEffect(() => {
