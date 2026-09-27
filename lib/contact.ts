@@ -53,7 +53,11 @@ const MAX_FILL_MS = 24 * 60 * 60 * 1000;
 export const MAX_MESSAGES = 500;
 
 const ID_RE = /^\d{13}-[a-f0-9]{8}$/;
-const EMAIL_RE = /^[^\s@<>()[\]\\,;:"]+@[^\s@<>()[\]\\,;:"]+\.[^\s@<>()[\]\\,;:"]+$/;
+// One `@`, a local part, and a domain of dot-separated labels. The labels
+// exclude the dot, so each character can match only one way: the previous
+// pattern let `[^…]+\.[^…]+` split a dotted domain in many places and ran in
+// polynomial time on crafted input (CodeQL js/polynomial-redos).
+const EMAIL_RE = /^[^\s@<>()[\]\\,;:"]+@[^\s@<>()[\]\\,;:".]+(?:\.[^\s@<>()[\]\\,;:".]+)+$/;
 
 export function messagesDir(): string {
   return path.join(process.cwd(), 'content', 'messages');
@@ -82,8 +86,9 @@ export function validateContact(input: ContactInput, now = Date.now()): Validati
   if (
     !name ||
     name.length > LIMITS.name ||
-    !EMAIL_RE.test(email) ||
+    // Length first: the pattern never sees more than the limit.
     email.length > LIMITS.email ||
+    !EMAIL_RE.test(email) ||
     !message ||
     message.length > LIMITS.message
   ) {

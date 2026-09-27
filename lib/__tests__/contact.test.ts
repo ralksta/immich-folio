@@ -152,3 +152,24 @@ describe('notifyNewMessage', () => {
     await expect(notifyNewMessage('https://ntfy.sh/t', null)).resolves.toBeUndefined();
   });
 });
+
+describe('validateContact: email pattern', () => {
+  it('accepts ordinary addresses and rejects malformed ones', () => {
+    for (const email of ['a@b.de', 'first.last@mail.example.co.uk']) {
+      expect(validateContact({ ...valid, email }, NOW).ok).toBe(true);
+    }
+    for (const email of ['a@b', 'a@.de', 'a@b.', 'a@b..de', 'a b@c.de', 'a@@b.de']) {
+      expect(validateContact({ ...valid, email }, NOW).ok).toBe(false);
+    }
+  });
+
+  // CodeQL js/polynomial-redos: the old pattern backtracked polynomially on a
+  // domain of many dots. The limit keeps input short, and the pattern no
+  // longer has more than one way to match.
+  it('answers crafted input at once', () => {
+    const crafted = '!@!.' + '!.'.repeat(50_000);
+    const start = performance.now();
+    expect(validateContact({ ...valid, email: crafted }, NOW).ok).toBe(false);
+    expect(performance.now() - start).toBeLessThan(50);
+  });
+});
