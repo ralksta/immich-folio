@@ -59,7 +59,7 @@ Light mode follows the same rules with inverted surfaces.
 1. **Shell, overview, visual language** (this PR): sidebar with groups and counts, `/admin` overview, tokens and typography, calmer cards. No screen's behaviour changes.
 2. **Page headers**: one `PageHeader` component on every screen; remove the per-screen title variants.
 3. **Forms**: one field, switch and dialog pattern (#694); replaces `confirm()` with an inline confirmation.
-4. **Page builder**: the tree on the left, the sheet as a right-hand panel instead of a modal, the live preview kept prominent. Builds on the split in #608.
+4. **Page builder** (done): the structure (hero, subpages, standalone albums) as an always-visible list on the left, the selected entry edited in a panel on the right instead of an overlay, with Edit / Live preview in the panel header. Builds on the split in #608.
 5. **Mobile**: the sidebar collapses into a sheet; not a priority for how the panel is used today, but the grid should not break.
 
 ## Not changing

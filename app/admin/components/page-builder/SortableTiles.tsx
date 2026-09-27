@@ -145,3 +145,69 @@ export function SortableSubpageTile({
 }
 
 // ── Component ──────────────────────────────────────────────────
+
+// ── Sortable Subpage Row (stage 4 structure list) ──────────────
+
+/**
+ * One subpage in the page builder's structure list (UX stage 4): drag handle,
+ * cover, name, state and album count, in one line. Same sortable id as the
+ * tile it replaces, so the builder's drag handler is unchanged.
+ */
+export function SortableSubpageRow({
+  sp,
+  spIndex,
+  isActive,
+  onClick,
+  getFirstThumb,
+}: {
+  sp: Subpage;
+  spIndex: number;
+  isActive: boolean;
+  onClick: () => void;
+  getFirstThumb: (sp: Subpage) => string | null;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: `subpage-${spIndex}`,
+  });
+  const totalAlbums =
+    sp.albums.length + (sp.sections?.reduce((sum, sec) => sum + sec.albums.length, 0) || 0);
+  const thumb = getFirstThumb(sp);
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 10 : undefined,
+      }}
+      className={`pb-row ${isActive ? 'active' : ''} ${sp.enabled === false ? 'is-off' : ''}`}
+      {...attributes}
+    >
+      <span className="pb-row-grip" {...listeners} title="Drag to reorder">
+        <IconGripVertical size={14} />
+      </span>
+      <button type="button" className="pb-row-main" onClick={onClick} aria-current={isActive}>
+        <span className="pb-row-thumb">
+          {thumb ? (
+            <img src={`/api/admin/thumbnail/${thumb}`} alt="" loading="lazy" />
+          ) : (
+            <IconFolder size={14} />
+          )}
+        </span>
+        <span className="pb-row-name">
+          {sp.title || sp.name}
+          {sp.password && <IconLock size={11} />}
+        </span>
+        {sp.enabled === false ? (
+          <span className="pb-row-state">Off</span>
+        ) : sp.hidden ? (
+          <span className="pb-row-state">Unlisted</span>
+        ) : (
+          <span className="pb-row-count">{totalAlbums}</span>
+        )}
+      </button>
+    </div>
+  );
+}
