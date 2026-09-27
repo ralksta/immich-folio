@@ -13,6 +13,8 @@
 
 A self-hosted portfolio powered by [Immich](https://immich.app). It acts as a **secure reverse proxy** between your visitors and your private Immich instance: your Immich server stays on your local network, completely invisible to the outside world, while your albums are published as a gallery you control.
 
+**Latest: v0.18.0** — built-in contact form, privacy page and a reworked admin panel. → [What's New](#whats-new)
+
 ## Contents
 
 - [Features](#features)
@@ -340,15 +342,15 @@ own password, separate from any album passwords, and writes straight to
 
 ## What's New
 
-v0.17.0 — originals as a ZIP, and a richer journal:
+v0.18.0 — a contact form, a privacy page and a reworked admin:
 
-- **Download originals as a ZIP** — a whole album, or just the photos a client picked in proofing, as one archive of the originals. Opt-in per album; contributed by [@lancetm714](https://github.com/lancetm714)
-- **Journal templates** — start a new entry from eight structures, from a wedding to a hiking trip
-- **New journal blocks** — photo grids, facts lists, a map with the pins you choose, and a slice of an album; reorder blocks by dragging → [Journal guide](docs/journal.md)
-- **Unsaved admin edits survive navigation** — switching tabs or reloading no longer throws your changes away
-- **Plain-HTTP installs** — admin login and gallery passwords now work at `http://host:7211`
+- **Built-in contact form** — no SMTP or form service: messages land in a new admin inbox, with an optional ntfy push that carries nothing about the sender
+- **Privacy page and fewer third parties** — `/privacy` with a list of what your installation actually processes; fonts and map styles are served from your own server, and email addresses stay out of the page source
+- **A reworked admin panel** — a collapsible sidebar, an overview page, the page builder as a structure list with Undo, and ON/OFF switches grouped by meaning
+- **Four more languages and a CDN mode** — French, Spanish, Italian and Dutch, and `CDN_URL` to serve photos through a pull CDN
+- **Two security fixes** — draft and password-protected journal entries used as subpage essays, and unescaped Immich descriptions ([advisories](https://github.com/ralksta/immich-folio/security/advisories))
 
-**Upgrade note:** visitors' proofing favourites from before v0.17.0 are not carried over. Nothing else to migrate.
+**Upgrade note:** a custom CSP or proxy allowlist must now allow `tile.openstreetmap.org` for map tiles, and `theme.accent` must be a hex colour. Nothing else to migrate.
 
 Security fixes ship in normal releases, so **running the latest release is the
 recommended baseline**.
