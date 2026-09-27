@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [0.18.1] — 2026-09-27
+
+### Fixed
+
+- **The admin fits a phone**
+  ([#733](https://github.com/ralksta/immich-folio/pull/733), reported in
+  [#732](https://github.com/ralksta/immich-folio/issues/732) by
+  [@RichKidsDev](https://github.com/RichKidsDev)). Below 860px the sidebar
+  unfolded above the content — navigation, status and four actions — and
+  filled most of an iPhone screen. It is now a header row with the brand and
+  a menu button; the menu opens as one column of full-width rows and closes
+  again on navigation, and an unread message shows as a dot on the button.
+  Desktop is unchanged.
+
+- **The settings editor refuses prototype keys in a setting's path**
+  ([#731](https://github.com/ralksta/immich-folio/pull/731)). All paths are
+  written in the code, so this was not reachable; CodeQL flagged the setter
+  after the v0.18.0 release.
+
 ## [0.18.0] — 2026-09-27
 
 ### Security
