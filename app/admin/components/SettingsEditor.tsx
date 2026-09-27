@@ -12,6 +12,9 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SaveBar, { type SaveStatus } from './SaveBar';
 import { useUnsavedGuard } from './useUnsavedGuard';
+import { useDraft } from './useDraft';
+import DraftNotice from './DraftNotice';
+import { useContentRestored } from './contentRestored';
 import { reportIfSessionExpired } from './sessionExpiry';
 import type { Settings, SectionProps } from './settings/types';
 import GeneralSection from './settings/GeneralSection';
@@ -63,9 +66,22 @@ export default function SettingsEditor() {
 
   const about = useAboutEditor(activeSection === 'about');
 
+  // Unsaved edits survive a tab switch, Reload or Logout the way the page
+  // builder's and the journal's do (#592) — useUnsavedGuard only covers
+  // leaving the browser.
+  const [serverSettings, setServerSettings] = useState<Settings>({});
+  const settingsDraft = useDraft<Settings>('settings', settings, dirty);
+
   useEffect(() => {
     loadSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // A restored settings.yaml replaces what this editor loaded. (About handles
+  // its own file in useAboutEditor.)
+  useContentRestored(({ target }) => {
+    if (target === 'settings') loadSettings();
+  });
 
   // Sync picked preset & accent color to document element immediately for live feedback
   useEffect(() => {
@@ -118,7 +134,11 @@ export default function SettingsEditor() {
         );
       }
       const { settings: data, siteUrl } = await res.json();
-      setSettings(data || {});
+      const loaded: Settings = data || {};
+      setServerSettings(loaded);
+      const restored = settingsDraft.load(JSON.stringify(loaded));
+      setSettings(restored ?? loaded);
+      setDirty(restored !== null);
       setSiteUrlInfo(siteUrl ?? null);
     } catch (err) {
       console.error('Failed to load settings:', err);
@@ -193,9 +213,15 @@ export default function SettingsEditor() {
       if (res.ok) {
         const data = await res.json();
         // The site password is stored hashed (#690); show that, not the typed text.
+        const stored: Settings =
+          typeof data.sitePassword === 'string'
+            ? { ...cleaned, sitePassword: data.sitePassword }
+            : cleaned;
         if (typeof data.sitePassword === 'string') {
           setSettings((s) => ({ ...s, sitePassword: data.sitePassword }));
         }
+        setServerSettings(stored);
+        settingsDraft.saved(JSON.stringify(stored));
         setDirty(false);
         setSaveStatus({ kind: 'success', message: data.message || 'Saved!' });
         router.refresh();
@@ -274,6 +300,31 @@ export default function SettingsEditor() {
         status={saveBarStatus}
         onSave={saveAll}
         label="Save Changes"
+      />
+
+      <DraftNotice
+        status={settingsDraft.status}
+        subject="settings"
+        onDiscard={() => {
+          settingsDraft.discard();
+          setSettings(serverSettings);
+          setDirty(false);
+          setSaveStatus(null);
+        }}
+        onRestore={() => {
+          const value = settingsDraft.takeConflicting();
+          if (!value) return;
+          setSettings(value);
+          setDirty(true);
+        }}
+        onDismiss={settingsDraft.dismiss}
+      />
+      <DraftNotice
+        status={about.draftStatus}
+        subject="About page"
+        onDiscard={about.discardDraft}
+        onRestore={about.restoreDraft}
+        onDismiss={about.dismissDraft}
       />
 
       <PageHeader

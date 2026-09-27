@@ -18,6 +18,7 @@ import './journal-studio.css';
 import { JournalEditor } from './JournalEditor';
 import { useNotify } from '../Notifications';
 import { useAdminFetch } from '../useAdminFetch';
+import { useContentRestored } from '../contentRestored';
 import AdminLoadState from '../AdminLoadState';
 import PageHeader from '../PageHeader';
 import { useConfirm } from '../ConfirmDialog';
@@ -36,6 +37,11 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
   const list = useAdminFetch<{ entries?: JournalEntrySummary[] }>('/api/admin/journal');
   const entries = list.data?.entries ?? [];
   const fetchEntries = list.reload;
+
+  // A restored entry may be one that was deleted, or have a new title.
+  useContentRestored(({ target }) => {
+    if (target === 'journal') fetchEntries();
+  });
 
   // New Entry Modal
   const [showCreateModal, setShowCreateModal] = useState(false);
