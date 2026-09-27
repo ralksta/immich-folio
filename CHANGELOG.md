@@ -7,6 +7,264 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [0.18.0] — 2026-09-27
+
+### Security
+
+- **Journal drafts and password-protected entries no longer render publicly
+  as a subpage essay**
+  ([#684](https://github.com/ralksta/immich-folio/pull/684),
+  [GHSA-987w-cpwm-c9g9](https://github.com/ralksta/immich-folio/security/advisories/GHSA-987w-cpwm-c9g9),
+  medium). A subpage's `essayFile` read the journal entry straight from disk,
+  skipping the draft and password rules `/journal/<slug>` applies. It now
+  resolves through the same rules: a draft reads as missing for visitors, and
+  a protected entry shows its password gate, sharing the
+  `lb_auth_journal_<slug>` cookie.
+
+- **Immich descriptions are escaped in generated subpage essays**
+  ([#684](https://github.com/ralksta/immich-folio/pull/684),
+  [GHSA-8ppx-39jv-q5xm](https://github.com/ralksta/immich-folio/security/advisories/GHSA-8ppx-39jv-q5xm),
+  low). The essay built from a subpage's albums (`layout: essay` without
+  markdown) put each asset's Immich description into the page as raw HTML.
+  Captions are now HTML-escaped, and they go through `assetCaption()`, so
+  `exif.caption: false` is respected there as well. Tracked in
+  [#689](https://github.com/ralksta/immich-folio/issues/689).
+
+### Added
+
+- **A built-in contact form with an inbox in the admin**
+  ([#703](https://github.com/ralksta/immich-folio/pull/703), closes
+  [#702](https://github.com/ralksta/immich-folio/issues/702)). `/contact`
+  needs neither SMTP nor a form service: each message is one file in
+  `content/messages/` (mode `0600`), read under the new _Messages_ tab, where
+  _Reply by email_ opens the owner's mail client with the message quoted.
+  Messages older than `contact.retentionDays` (default 90) are deleted. An
+  optional ntfy push goes to `contact.notifyUrl` or `CONTACT_NOTIFY_URL`, and
+  since [#709](https://github.com/ralksta/immich-folio/pull/709) it carries a
+  fixed "new message" line and nothing about the sender — no name, no
+  address, no text. Spam is kept out without a captcha: an off-screen
+  honeypot, a minimum fill time, three submissions a minute per IP and a cap
+  of 500 stored messages. With the Impressum on and no `legal.contactUrl`,
+  the Impressum links the form as its second contact channel. A new doctor
+  check warns when the form is on but nobody is notified.
+
+- **A privacy policy page, next to a list of what the site processes**
+  ([#708](https://github.com/ralksta/immich-folio/pull/708)). `/privacy`
+  renders `content/privacy.md`, edited under Settings → Legal, and the footer
+  links it once the file has text; `privacy.enabled: false` hides it. Folio
+  writes no legal text. Beside the editor it lists what _this_ installation
+  does, read off the configuration — the map, statistics, contact form,
+  password cookies, CDN — and marks every entry that involves a third party.
+  _Insert headings_ adds the matching section headings and nothing else. The
+  doctor warns while the Impressum is on and there is no policy.
+
+- **French, Spanish, Italian and Dutch interface translations**
+  ([#681](https://github.com/ralksta/immich-folio/pull/681)), selected with
+  `settings.yaml: lang` as before. The admin panel stays English.
+
+- **CDN mode for photos and videos**
+  ([#681](https://github.com/ralksta/immich-folio/pull/681)). With `CDN_URL`
+  set, image and video URLs point at a pull CDN whose origin is this server,
+  so repeat views reach neither the server nor Immich. A site password
+  switches the mode off, since a CDN would hand out cached photos without
+  checking the unlock cookie. The CDN origin is added to the CSP, and a
+  doctor check covers the password and `TRUSTED_PROXY_HOPS` cases. See
+  `docs/deployment.md#cdn-mode`.
+
+- **A reworked admin panel**
+  ([#712](https://github.com/ralksta/immich-folio/pull/712),
+  [#713](https://github.com/ralksta/immich-folio/pull/713),
+  [#714](https://github.com/ralksta/immich-folio/pull/714),
+  [#716](https://github.com/ralksta/immich-folio/pull/716),
+  [#717](https://github.com/ralksta/immich-folio/pull/717),
+  [#718](https://github.com/ralksta/immich-folio/pull/718),
+  [#719](https://github.com/ralksta/immich-folio/pull/719),
+  [#721](https://github.com/ralksta/immich-folio/pull/721)):
+  - **A sidebar instead of the header row**, grouped by task, with an unread
+    count on Messages and a dot on Diagnostics while Immich is down. It
+    collapses to an icon rail, with names shown on hover and focus, and
+    remembers that per browser.
+  - **`/admin` is an overview**: what needs attention (unread messages,
+    doctor warnings), published pages, journal entries and recent views.
+  - **The site's own visual language** — the preset's fonts, hairline
+    borders, the square marker — and one page header on every screen. The
+    accent is kept for the current place and the primary action; switches
+    are now pills reading ON or OFF, in green rather than the accent, so
+    Studio Modern's red no longer makes an enabled setting look like an
+    error.
+  - **The page builder is a structure list and a panel.** Hero, subpages and
+    standalone albums sit in one list on the left, subpages drag-sorted in
+    place; the selected entry is edited on the right instead of in an
+    overlay.
+  - **Dialogs only where a change is permanent.** Deleting a message or a
+    journal entry, and resetting the favicon (which used to delete the file
+    without asking), go through one confirm dialog in the admin's own look.
+    Removals in the page builder, which only touch unsaved state, happen at
+    once and offer _Undo_. No `window.confirm()` is left.
+  - **Feature switches are grouped by meaning** as one-line rows under
+    Settings → General; page transitions and scroll-to-top moved to Theme →
+    Look & motion. No setting keys changed.
+
+### Changed
+
+- **Fonts and the Leaflet stylesheet are served from the site itself**
+  ([#700](https://github.com/ralksta/immich-folio/pull/700)). Every page used
+  to link `fonts.googleapis.com`, which sends each visitor's IP address to
+  Google. The server now fetches a theme's Google fonts once, rewrites the
+  stylesheet and caches the files in `content/.fonts/`; custom fonts in
+  `theme.fonts` keep working. If Google cannot be reached before a font is
+  cached, the page falls back to the theme's system fonts. `leaflet.css`
+  comes from the npm package instead of unpkg. The CSP drops
+  `fonts.googleapis.com`, `fonts.gstatic.com` and `unpkg.com`.
+
+- **Email addresses are kept out of the served HTML**
+  ([#705](https://github.com/ralksta/immich-folio/pull/705)). The Impressum
+  and footer render the address only after hydration, from an encoded form,
+  so harvesters reading raw HTML find nothing. Without JavaScript the
+  Impressum shows `name [at] example [dot] de`. This defeats bulk harvesting,
+  not a person with a browser.
+
+- **The Impressum cites § 5 DDG and links its contacts**
+  ([#698](https://github.com/ralksta/immich-folio/pull/698), reported in
+  [#697](https://github.com/ralksta/immich-folio/issues/697) by
+  [@RichKidsDev](https://github.com/RichKidsDev)). The TMG was replaced by the
+  DDG in May 2024; `legal.heading` replaces the line for other laws (e.g.
+  § 5 ECG in Austria). `legal.contactUrl` and `legal.contactLabel` add a
+  contact form as the second channel, so a phone number stays optional.
+  Email, phone and contact URL are now links, and the "Created with the
+  Impressum generator by eRecht24" line, shown on every site whether true or
+  not, is gone. Settings → Legal gains fields for heading, contact URL, VAT
+  ID and tax number, and a doctor check flags missing details.
+
+- **Missing pages answer `404`**
+  ([#704](https://github.com/ralksta/immich-folio/pull/704)). Every missing
+  page used to answer `200`, because streaming had started before
+  `notFound()` ran. `/contact`, `/impressum`, `/map` and `/privacy` while
+  switched off, and `/journal/<slug>` without an entry, now return a real
+  404 with the same not-found page. Album and subpage slugs still depend on
+  Immich and stay soft 404s.
+
+- **Passwords set in the admin are stored as scrypt hashes**
+  ([#706](https://github.com/ralksta/immich-folio/pull/706), closes
+  [#690](https://github.com/ralksta/immich-folio/issues/690)). Subpage,
+  album, journal-entry and site passwords were written as typed. The save
+  routes now hash them; a stored hash reads _Protected_ with _Change_ and
+  _Remove_ and is never put into an input. Visitors who unlocked a page stay
+  signed in across unrelated saves. Existing plaintext passwords are hashed
+  the next time their file is saved in the admin.
+
+- **One notification surface in the admin**
+  ([#707](https://github.com/ralksta/immich-folio/pull/707)) replaces every
+  `alert()`: errors stay until dismissed, successes clear themselves, and
+  screen readers announce both.
+
+### Fixed
+
+- **Map tiles load again**
+  ([#701](https://github.com/ralksta/immich-folio/pull/701)). CARTO started
+  answering every tile with an "API KEY REQUIRED" image, leaving `/map` and
+  journal map blocks as a grey grid. Tiles now come from OpenStreetMap; the
+  dark look is a CSS filter, so the map now follows the colour mode.
+
+- **The page builder no longer drops a subpage's `proofing:` flag on save**
+  ([#711](https://github.com/ralksta/immich-folio/pull/711)). A page switched
+  off for proofing by hand reverted after any unrelated edit.
+
+- **Unsaved edits in Settings and About survive switching admin tabs, and a
+  backup restore is no longer overwritten by the next save**
+  ([#687](https://github.com/ralksta/immich-folio/pull/687)). Editors that
+  were open during a restore now reload and offer unsaved edits back as a
+  conflict. Also: "Restore my changes" after a conflict found nothing,
+  removing an album left its drawer showing the next album, and the journal
+  saved (rotating a backup) without changes.
+
+- **Accent-backed buttons stay readable with a light or malformed accent**
+  ([#724](https://github.com/ralksta/immich-folio/pull/724), supersedes
+  [#680](https://github.com/ralksta/immich-folio/pull/680)) — contributed by
+  [@lancetm714](https://github.com/lancetm714). A white accent made the
+  proofing dialog's _Download selected (.zip)_ button white on white.
+  `theme.accent` is now accepted as hex only and normalised to `#rrggbb`,
+  anything else falls back to the preset, and the proofing dialog and filter
+  pills use the mode-aware `--on-accent` text colour from #688.
+
+- **Every preset's accent is visible in both colour modes**
+  ([#688](https://github.com/ralksta/immich-folio/pull/688)). Presets had one
+  accent for both modes; minimal's dark mode drew black buttons on black.
+  Presets now carry a light and a dark accent, and text on accent-filled
+  buttons picks black or white for contrast. A custom accent stays the
+  owner's choice in both modes.
+
+- **Visitor-side inconsistencies**
+  ([#685](https://github.com/ralksta/immich-folio/pull/685)): after visiting
+  `/impressum`, every subpage header turned centred and uppercase; back links
+  announced "Back to Back to …"; the hero EXIF chip ignored
+  `exif.location`/`camera`/`settings`; videos in journal entries opened as
+  stills; the setup screen named a non-existent `.env.example`.
+
+- **An essay's lightbox walks only the photos the story shows**
+  ([#686](https://github.com/ralksta/immich-folio/pull/686)), not every photo
+  of the subpage's albums, and the proofing bar in essays shows the selection
+  count instead of a filter button that did nothing.
+
+- **The page panel scrolls with the mouse wheel**
+  ([#720](https://github.com/ralksta/immich-folio/pull/720)).
+
+- **The journal editor's top bar wraps on phones**
+  ([#723](https://github.com/ralksta/immich-folio/pull/723), closes
+  [#675](https://github.com/ralksta/immich-folio/issues/675)), so the title
+  stays editable and Save stays on screen.
+
+- **Every admin form field has a name for assistive technology**
+  ([#715](https://github.com/ralksta/immich-folio/pull/715)). Only two inputs
+  had a linked label; 47 are linked now, and clicking a label focuses its
+  field.
+
+### Internal
+
+- **`SettingsEditor` and `PageBuilder` are split up**
+  ([#710](https://github.com/ralksta/immich-folio/pull/710),
+  [#711](https://github.com/ralksta/immich-folio/pull/711)). The 2,200-line
+  settings editor is a shell with one file per section; the page builder's
+  YAML handling and edits are pure functions under test. Both were checked
+  side by side against `dev` for identical output.
+- **`useAdminFetch()`** ([#707](https://github.com/ralksta/immich-folio/pull/707))
+  gives Analytics, Messages, Backups and the journal list one loading and
+  error pattern.
+- README brought up to v0.17.0
+  ([#678](https://github.com/ralksta/immich-folio/pull/678),
+  [#679](https://github.com/ralksta/immich-folio/pull/679)).
+
+### Upgrade notes
+
+**`content/` gains two directories the app writes to:** `content/.fonts/`
+for the cached fonts and `content/messages/` for contact-form messages. Both
+are created on demand, so a writable `content/` is enough, as before.
+
+**The server needs outbound HTTPS to Google once per font** to fill the font
+cache. Until then pages fall back to the theme's system fonts. Visitors'
+browsers no longer contact Google.
+
+**A custom CSP or reverse-proxy allowlist** must now allow
+`tile.openstreetmap.org` for images instead of `*.basemaps.cartocdn.com`,
+and no longer needs `fonts.googleapis.com`, `fonts.gstatic.com` or
+`unpkg.com`. The built-in CSP is updated.
+
+**`theme.accent` must be hex** (`#rgb`, `#rrggbb` or `#rrggbbaa`). Anything
+else, including a value without `#`, falls back to the preset's accent.
+
+**Plaintext passwords in `gallery.yaml`, `settings.yaml` or journal entries**
+are hashed the next time that file is saved in the admin; one save clears the
+doctor's warning.
+
+**New, optional settings:** `contact.*` (the form is off by default),
+`privacy.enabled`, `legal.heading`, `legal.contactUrl`, `legal.contactLabel`,
+and the `CDN_URL` and `CONTACT_NOTIFY_URL` environment variables. See
+`content/settings.yaml.example` and `.env.local.example`. In the example file,
+`vatId` and `taxId` had swapped sample values; check yours if you copied
+them.
+
+No `IMAGE_CACHE_VERSION` bump is needed this time.
+
 ## [0.17.0] — 2026-09-23
 
 ### Added
