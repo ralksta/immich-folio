@@ -477,20 +477,25 @@ async function captureAdmin(browser: Browser): Promise<void> {
     await page.locator('.admin-login-card').waitFor({ timeout: 15000 });
     await capture(page, 'admin-login');
 
+    // Login lands on the overview (#712). It is not captured: its "needs
+    // attention" list is the live doctor, which names albums, IDs and secrets'
+    // lengths — nothing for a public screenshot.
     await adminLogin(page);
+
+    // The page builder is a structure list and a panel (#717): open the first
+    // subpage, so the panel shows a page with its albums rather than the
+    // empty state.
+    await page.goto(`${BASE_URL}/admin/pages`, { waitUntil: 'networkidle' });
+    await page.locator('.pb-tree').waitFor({ timeout: 20000 });
+    const firstSubpage = page.locator('.pb-tree .pb-group').nth(1).locator('.pb-row-main').first();
+    if ((await firstSubpage.count()) > 0) await firstSubpage.click();
     await page.waitForTimeout(2500);
     await waitForImages(page);
     await capture(page, 'admin-page-builder');
 
     await captureAlbumPicker(page);
 
-    // Reload rather than trusting Escape to have closed the picker — a modal
-    // still on screen swallows the click on the settings tab.
-    await page.reload({ waitUntil: 'networkidle' });
-    await page.locator('.admin-tabs').waitFor({ timeout: 20000 });
-    await page.locator('.admin-tab', { hasText: 'Settings' }).first().click();
-    await page.waitForTimeout(1500);
-    await capture(page, 'admin-settings');
+    await capturePage(page, '/admin/settings/general', 'admin-settings', 1500);
   });
 }
 
@@ -634,7 +639,7 @@ async function adminLogin(page: Page): Promise<void> {
   await page.goto(`${BASE_URL}/admin`, { waitUntil: 'networkidle' });
   await page.locator('.admin-login-card input[type="password"]').fill(ADMIN_PASSWORD!);
   await page.locator('.admin-login-card button[type="submit"]').click();
-  await page.locator('.admin-tabs').waitFor({ timeout: 20000 });
+  await page.locator('.admin-sidebar').waitFor({ timeout: 20000 });
 }
 
 /**
@@ -853,6 +858,12 @@ see the frames on a proper screen before deciding what this is about.
 
 /** Best effort: the picker is a modal behind a button whose label may change. */
 async function captureAlbumPicker(page: Page): Promise<void> {
+  // "Add album" lives in the standalone-albums panel of the page builder.
+  const standalone = page.locator('.pb-row-solo').last();
+  if ((await standalone.count()) > 0) {
+    await standalone.click();
+    await page.waitForTimeout(800);
+  }
   const trigger = page.getByRole('button', { name: /add album/i }).first();
   if ((await trigger.count()) === 0) {
     console.log('  ⏭  No "Add album" button found — skipping the album picker shot.');
