@@ -3,6 +3,7 @@
 import * as Icons from './Icons';
 import { en } from '@/lib/i18n/locales/en';
 import { LIGHTBOX_SHORTCUTS, shortcutDisplayKeys } from '@/lib/lightboxShortcuts';
+import PageHeader from './PageHeader';
 
 /**
  * The admin help section.
@@ -19,14 +20,11 @@ import { LIGHTBOX_SHORTCUTS, shortcutDisplayKeys } from '@/lib/lightboxShortcuts
 export default function HelpView() {
   return (
     <div className="settings-panel">
-      <div className="settings-section-header">
-        <h3>
-          <Icons.IconFileText size={18} /> Help
-        </h3>
-        <p className="settings-section-sub">
-          What your portfolio can do that has no button of its own.
-        </p>
-      </div>
+      <PageHeader
+        kicker="System"
+        title="Help"
+        description="What your portfolio can do that has no button of its own."
+      />
 
       <div className="settings-group">
         <div className="settings-group-head">

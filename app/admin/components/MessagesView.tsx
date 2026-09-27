@@ -14,6 +14,7 @@ import { useAdminFetch } from './useAdminFetch';
 import AdminLoadState from './AdminLoadState';
 import type { ContactMessage } from '@/lib/contact';
 import { useNotify } from './Notifications';
+import PageHeader from './PageHeader';
 
 interface InboxData {
   enabled: boolean;
@@ -90,21 +91,21 @@ export default function MessagesView() {
 
   return (
     <div className="messages-view">
-      <div className="analytics-header">
-        <div>
-          <h2>
-            <Icons.IconFileText size={20} /> Messages
+      <PageHeader
+        kicker="Visitors"
+        title={
+          <>
+            Messages
             {unread > 0 && <span className="messages-count">{unread} unread</span>}
-          </h2>
-          <p className="analytics-subtitle">
-            Sent through the contact form at /contact. Stored on this server and deleted after{' '}
-            {data.retentionDays} days.
-          </p>
-        </div>
-        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={inbox.reload}>
-          <Icons.IconRefresh size={14} /> Refresh
-        </button>
-      </div>
+          </>
+        }
+        description={`Sent through the contact form at /contact. Stored on this server and deleted after ${data.retentionDays} days.`}
+        actions={
+          <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={inbox.reload}>
+            <Icons.IconRefresh size={14} /> Refresh
+          </button>
+        }
+      />
 
       {!data.enabled && (
         <div className="messages-notice">

@@ -10,7 +10,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import * as Icons from './Icons';
 import SaveBar, { type SaveStatus } from './SaveBar';
 import { useUnsavedGuard } from './useUnsavedGuard';
 import { reportIfSessionExpired } from './sessionExpiry';
@@ -23,6 +22,7 @@ import LegalSection from './settings/LegalSection';
 import SeoSection from './settings/SeoSection';
 import SecuritySection from './settings/SecuritySection';
 import AboutSection, { useAboutEditor } from './settings/AboutSection';
+import PageHeader from './PageHeader';
 
 const SETTINGS_SECTIONS = [
   { id: 'general', label: 'General' },
@@ -276,9 +276,11 @@ export default function SettingsEditor() {
         label="Save Changes"
       />
 
-      <p className="settings-live-sync-note">
-        <Icons.IconRefresh size={13} /> Live Sync (No Docker restart required)
-      </p>
+      <PageHeader
+        kicker="Site"
+        title="Settings"
+        description="Saved changes apply to the site at once, no restart needed."
+      />
 
       <div className="settings-layout">
         {/* Sidebar */}
