@@ -330,11 +330,11 @@ own password, separate from any album passwords, and writes straight to
 
 <p align="center">
   <img src="docs/screenshots/admin-login.png" width="49%" alt="Admin panel login screen" />
-  <img src="docs/screenshots/admin-page-builder.png" width="49%" alt="Visual page builder with hero images, standalone albums and subpages" />
+  <img src="docs/screenshots/admin-page-builder.png" width="49%" alt="Page builder: the site structure on the left, the selected page with its albums on the right" />
 </p>
 <p align="center">
   <img src="docs/screenshots/admin-album-picker.png" width="49%" alt="Album picker listing shared Immich albums with photo counts" />
-  <img src="docs/screenshots/admin-settings.png" width="49%" alt="Settings editor with site identity and feature toggles" />
+  <img src="docs/screenshots/admin-settings.png" width="49%" alt="Settings editor: sections on the left, site identity and feature switches grouped by meaning" />
 </p>
 <p align="center"><em>Login · page builder · album picker · settings editor</em></p>
 
