@@ -85,9 +85,19 @@
     transform 0.4s ease;
 }
 
-[data-preset='monograph'] .photo-grid__item:hover .photo-grid__item-exif {
+[data-preset='monograph'] .photo-grid__item:hover .photo-grid__item-exif,
+[data-preset='monograph']
+  .photo-grid__item:is(:focus-visible, :has(:focus-visible))
+  .photo-grid__item-exif {
   opacity: 1;
   transform: translateY(0);
+}
+
+@media (hover: none) {
+  [data-preset='monograph'] .photo-grid__item .photo-grid__item-exif {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Album cards: minimal text below */

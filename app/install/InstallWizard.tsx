@@ -147,7 +147,10 @@ export function InstallWizard({ initialApiUrl, setupToken }: Props) {
   if (done) {
     return (
       <div className="admin-layout">
-        <div className="install-page">
+        <a href="#install-main" className="skip-link">
+          Skip to content
+        </a>
+        <main id="install-main" tabIndex={-1} className="install-page">
           <div className="install-card">
             <div className="install-card__header">
               <span className="install-card__kicker">Immich Folio</span>
@@ -176,14 +179,17 @@ export function InstallWizard({ initialApiUrl, setupToken }: Props) {
               </div>
             </div>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
 
   return (
     <div className="admin-layout">
-      <div className="install-page">
+      <a href="#install-main" className="skip-link">
+        Skip to content
+      </a>
+      <main id="install-main" tabIndex={-1} className="install-page">
         <div className="install-card">
           <div className="install-card__header">
             <span className="install-card__kicker">Immich Folio</span>
@@ -470,7 +476,7 @@ export function InstallWizard({ initialApiUrl, setupToken }: Props) {
             )}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -35,9 +35,9 @@ export default function ContactPage() {
         <p className="contact-page__subtitle">{t.contact.subtitle}</p>
       </header>
 
-      <main className="contact-page__content">
+      <div className="contact-page__content">
         <ContactForm retentionDays={contact.retentionDays} />
-      </main>
+      </div>
     </div>
   );
 }

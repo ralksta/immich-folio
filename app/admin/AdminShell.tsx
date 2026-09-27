@@ -49,8 +49,9 @@ export default function AdminShell({ children }: { children: ReactNode }) {
 
   if (authenticated === null) {
     return (
-      <div className="admin-loading">
-        <div className="admin-spinner" />
+      <div className="admin-loading" role="status">
+        <div className="admin-spinner" aria-hidden="true" />
+        <span className="sr-only">Loading admin panel</span>
       </div>
     );
   }

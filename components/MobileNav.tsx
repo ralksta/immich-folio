@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { focusableIn } from '@/lib/focusTrap';
 import { usePathname } from 'next/navigation';
 import { useDictionary } from './I18nProvider';
 
@@ -37,10 +38,23 @@ export function MobileNav({ children }: { children: React.ReactNode }) {
     setOpen(false);
   }
 
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!open) return;
+    // Focus moves into the panel when it opens (#696), so a keyboard or
+    // screen-reader visitor lands on the first link rather than behind it.
+    // Only when the panel is actually the dropdown — above the breakpoint it
+    // is `display: contents` and the button is hidden, so this never runs.
+    if (panelRef.current) focusableIn(panelRef.current)[0]?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
+      if (e.key === 'Escape') {
+        close();
+        // Esc returns focus to the button that opened the panel; otherwise
+        // it would be left on a link that is no longer visible.
+        buttonRef.current?.focus();
+      }
     };
     document.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
@@ -53,6 +67,7 @@ export function MobileNav({ children }: { children: React.ReactNode }) {
   return (
     <>
       <button
+        ref={buttonRef}
         type="button"
         className="header__menu-btn"
         aria-expanded={open}
@@ -90,7 +105,7 @@ export function MobileNav({ children }: { children: React.ReactNode }) {
         )}
       </button>
       {open && <div className="header__nav-backdrop" onClick={close} aria-hidden="true" />}
-      <div id="header-nav-panel" className="header__nav-links" data-open={open}>
+      <div ref={panelRef} id="header-nav-panel" className="header__nav-links" data-open={open}>
         {children}
       </div>
     </>

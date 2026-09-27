@@ -22,7 +22,7 @@ const OG_RPM = 30;
 
 export async function GET(request: NextRequest) {
   const ip = getClientIp(request);
-  const { theme } = getConfig();
+  const { theme, siteTitle } = getConfig();
 
   const { success, resetAt } = checkRateLimit(`og:${ip}`, OG_RPM);
   if (!success) {
@@ -41,7 +41,9 @@ export async function GET(request: NextRequest) {
   if (locked) return locked;
 
   const { searchParams } = request.nextUrl;
-  const title = (searchParams.get('title') || 'Gallery').slice(0, 200);
+  // The site title is already in the visitor's language, or falls back to the
+  // locale's own word for "Gallery" (lib/config).
+  const title = (searchParams.get('title') || siteTitle || '').slice(0, 200);
   const subtitle = (searchParams.get('subtitle') || '').slice(0, 100);
 
   return new ImageResponse(

@@ -19,6 +19,8 @@ export const nl: Dictionary = {
     map: 'Kaart',
     journal: 'Journal',
     skipToContent: 'Naar de inhoud',
+    mainNavAria: 'Hoofdnavigatie',
+    heroNavAria: 'Onderdelen',
     openMenu: 'Menu openen',
     closeMenu: 'Menu sluiten',
   },
@@ -44,12 +46,15 @@ export const nl: Dictionary = {
     nextEntryAria: (title: string) => `Volgend verhaal: ${title}`,
     entryNavAria: 'Navigatie tussen journalverhalen',
     loadingGallery: 'Galerij laden',
+    gallery: 'Galerie',
     loadingPhotos: 'Foto’s laden',
     downloadAlbum: 'Album downloaden',
   },
 
   home: {
     enter: 'Binnenkomen',
+    pauseSlideshow: 'Diavoorstelling pauzeren',
+    playSlideshow: 'Diavoorstelling afspelen',
   },
 
   error: {
@@ -58,8 +63,6 @@ export const nl: Dictionary = {
     errorTitle: 'Er is iets misgegaan',
     errorText:
       'Deze pagina kon niet worden geladen. Meestal is dat tijdelijk — probeer het zo nog eens.',
-    siteErrorText:
-      'Deze site kon niet worden geladen. Meestal is dat tijdelijk — probeer het zo nog eens.',
     tryAgain: 'Opnieuw proberen',
     reference: (digest: string) => `Referentie: ${digest}`,
   },
@@ -133,6 +136,7 @@ export const nl: Dictionary = {
 
   lightbox: {
     viewer: 'Fotoviewer',
+    position: (n: number, total: number) => `Foto ${n} van ${total}`,
     openPhoto: (n: number) => `Foto ${n} bekijken`,
     close: 'Sluiten',
     closeTitle: 'Sluiten (Esc)',

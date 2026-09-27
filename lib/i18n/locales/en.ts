@@ -19,6 +19,8 @@ export const en = {
     map: 'Map',
     journal: 'Journal',
     skipToContent: 'Skip to content',
+    mainNavAria: 'Main',
+    heroNavAria: 'Sections',
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
   },
@@ -45,12 +47,15 @@ export const en = {
     nextEntryAria: (title: string) => `Next entry: ${title}`,
     entryNavAria: 'Journal entry navigation',
     loadingGallery: 'Loading gallery',
+    gallery: 'Gallery',
     loadingPhotos: 'Loading photos',
     downloadAlbum: 'Download album',
   },
 
   home: {
     enter: 'Enter',
+    pauseSlideshow: 'Pause slideshow',
+    playSlideshow: 'Play slideshow',
   },
 
   error: {
@@ -59,8 +64,6 @@ export const en = {
     errorTitle: 'Something went wrong',
     errorText:
       'This page could not be loaded right now. It is usually temporary — try again in a moment.',
-    siteErrorText:
-      'This site could not be loaded right now. It is usually temporary — try again in a moment.',
     tryAgain: 'Try again',
     reference: (digest: string) => `Reference: ${digest}`,
   },
@@ -134,6 +137,7 @@ export const en = {
 
   lightbox: {
     viewer: 'Image viewer',
+    position: (n: number, total: number) => `Photo ${n} of ${total}`,
     /** A grid tile, which opens the viewer on that photo. */
     openPhoto: (n: number) => `View photo ${n}`,
     close: 'Close',

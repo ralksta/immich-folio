@@ -19,6 +19,8 @@ export const it: Dictionary = {
     map: 'Mappa',
     journal: 'Diario',
     skipToContent: 'Vai al contenuto',
+    mainNavAria: 'Navigazione principale',
+    heroNavAria: 'Sezioni',
     openMenu: 'Apri menu',
     closeMenu: 'Chiudi menu',
   },
@@ -45,12 +47,15 @@ export const it: Dictionary = {
     nextEntryAria: (title: string) => `Articolo successivo: ${title}`,
     entryNavAria: 'Navigazione tra gli articoli del diario',
     loadingGallery: 'Caricamento della galleria',
+    gallery: 'Galleria',
     loadingPhotos: 'Caricamento delle foto',
     downloadAlbum: 'Scarica album',
   },
 
   home: {
     enter: 'Entra',
+    pauseSlideshow: 'Metti in pausa la presentazione',
+    playSlideshow: 'Avvia la presentazione',
   },
 
   error: {
@@ -59,8 +64,6 @@ export const it: Dictionary = {
     errorTitle: 'Qualcosa è andato storto',
     errorText:
       'Non è stato possibile caricare questa pagina. Di solito è temporaneo: riprova tra un momento.',
-    siteErrorText:
-      'Non è stato possibile caricare questo sito. Di solito è temporaneo: riprova tra un momento.',
     tryAgain: 'Riprova',
     reference: (digest: string) => `Riferimento: ${digest}`,
   },
@@ -133,6 +136,7 @@ export const it: Dictionary = {
 
   lightbox: {
     viewer: 'Visualizzatore di immagini',
+    position: (n: number, total: number) => `Foto ${n} di ${total}`,
     openPhoto: (n: number) => `Apri la foto ${n}`,
     close: 'Chiudi',
     closeTitle: 'Chiudi (Esc)',

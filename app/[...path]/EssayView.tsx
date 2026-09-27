@@ -429,7 +429,7 @@ function EssayViewContent({
         </figure>
       )}
 
-      <main>{essay.blocks.map(renderBlock)}</main>
+      <div>{essay.blocks.map(renderBlock)}</div>
 
       {proofing && proofing.favorites.size > 0 && (
         <div

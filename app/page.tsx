@@ -14,36 +14,13 @@ import { imageUrl, assetPlaceholder } from '@/lib/urls';
 import { HeroCarousel } from '@/components/HeroCarousel';
 import { FadeIn } from '@/components/FadeIn';
 import { getServerDictionary } from '@/lib/i18n/server';
-import type { Dictionary } from '@/lib/i18n';
+import { loadSiteNav } from '@/lib/siteNav.server';
+import type { SiteNavLink } from '@/lib/siteNav';
 
 // Render at request time — requires live Immich connection
 export const dynamic = 'force-dynamic';
 
-type HeroSubpage = { slug: string; name: string; albumCount: number };
-type HeroAlbum = { id: string; slug: string; albumName: string; assetCount: number };
-
 const pad2 = (n: number) => String(n).padStart(2, '0');
-
-/**
- * Flatten subpages + standalone albums into one indexed nav list.
- * Every entry carries an index and a count; presets decide what to show.
- */
-function heroNavEntries(subpages: HeroSubpage[], albums: HeroAlbum[], t: Dictionary) {
-  return [
-    ...subpages.map((sp) => ({
-      key: `sp-${sp.slug}`,
-      href: `/${sp.slug}`,
-      label: sp.name,
-      count: t.common.albums(sp.albumCount),
-    })),
-    ...albums.map((a) => ({
-      key: `al-${a.id}`,
-      href: `/${a.slug}`,
-      label: a.albumName,
-      count: t.common.photos(a.assetCount),
-    })),
-  ];
-}
 
 /**
  * Camera line for the hero chip: "Q3 · 28MM · ƒ/5.6 · 1/250 · ISO 200".
@@ -72,20 +49,21 @@ async function heroExifLine(
   return parts.length > 0 ? parts.join(' · ') : undefined;
 }
 
-/** Shared nav links for hero sections. */
-function HeroNavLinks({ subpages, albums }: { subpages: HeroSubpage[]; albums: HeroAlbum[] }) {
-  const t = getServerDictionary();
+/** Shared nav links for hero sections — same entries and order as the header. */
+function HeroNavLinks({ links }: { links: SiteNavLink[] }) {
   return (
     <>
-      {heroNavEntries(subpages, albums, t).map((entry, i) => (
+      {links.map((entry, i) => (
         <Link key={entry.key} href={entry.href} className="hero__nav-link">
           <span className="hero__nav-index" aria-hidden="true">
             {pad2(i + 1)}
           </span>
           <span className="hero__nav-label">{entry.label}</span>
-          <span className="hero__nav-count" aria-hidden="true">
-            {entry.count}
-          </span>
+          {entry.count && (
+            <span className="hero__nav-count" aria-hidden="true">
+              {entry.count}
+            </span>
+          )}
         </Link>
       ))}
     </>
@@ -96,13 +74,13 @@ function HeroNavLinks({ subpages, albums }: { subpages: HeroSubpage[]; albums: H
 function HeroTextContent({
   title,
   subtitle,
-  subpages,
-  albums,
+  links,
+  navLabel,
 }: {
   title: string;
   subtitle?: string;
-  subpages: HeroSubpage[];
-  albums: HeroAlbum[];
+  links: SiteNavLink[];
+  navLabel: string;
 }) {
   return (
     <>
@@ -115,8 +93,8 @@ function HeroTextContent({
         </FadeIn>
       )}
       <FadeIn delay={200}>
-        <nav className="hero__nav">
-          <HeroNavLinks subpages={subpages} albums={albums} />
+        <nav className="hero__nav" aria-label={navLabel}>
+          <HeroNavLinks links={links} />
         </nav>
       </FadeIn>
     </>
@@ -131,10 +109,7 @@ export default async function HomePage() {
     return null;
   }
 
-  const [subpages, albums] = await Promise.all([
-    immich.getSubpages(),
-    immich.getStandaloneAlbums(),
-  ]);
+  const links = await loadSiteNav();
 
   // Fetch ThumbHash + camera line for all hero images
   const heroData = await Promise.all(
@@ -156,8 +131,8 @@ export default async function HomePage() {
   // Welcome-page splash: one fullbleed image, the site
   // title, and one link into the portfolio (the first nav entry).
   if (heroStyle === 'cover') {
-    const entries = heroNavEntries(subpages, albums, t);
-    const enterHref = entries[0]?.href ?? '/about';
+    // No fallback: /about used to be hardcoded here and 404ed with About off.
+    const enterHref = links[0]?.href;
 
     return (
       <div className="hero hero--cover">
@@ -171,14 +146,16 @@ export default async function HomePage() {
               <p className="hero__subtitle">{config.siteSubtitle}</p>
             </FadeIn>
           )}
-          <FadeIn delay={250}>
-            <Link href={enterHref} className="hero__cover-enter">
-              {t.home.enter}
-              <span className="hero__cover-enter-arrow" aria-hidden="true">
-                →
-              </span>
-            </Link>
-          </FadeIn>
+          {enterHref && (
+            <FadeIn delay={250}>
+              <Link href={enterHref} className="hero__cover-enter">
+                {t.home.enter}
+                <span className="hero__cover-enter-arrow" aria-hidden="true">
+                  →
+                </span>
+              </Link>
+            </FadeIn>
+          )}
         </div>
       </div>
     );
@@ -201,8 +178,8 @@ export default async function HomePage() {
             <div className="hero__divider" />
           </FadeIn>
           <FadeIn delay={300}>
-            <nav className="hero__nav hero__nav--indexed">
-              <HeroNavLinks subpages={subpages} albums={albums} />
+            <nav className="hero__nav hero__nav--indexed" aria-label={t.nav.heroNavAria}>
+              <HeroNavLinks links={links} />
             </nav>
           </FadeIn>
         </div>
@@ -212,8 +189,6 @@ export default async function HomePage() {
 
   // ── Stacked: fullbleed image + text at bottom + thumbnail strip ─
   if (heroStyle === 'stacked') {
-    const allEntries = heroNavEntries(subpages, albums, t);
-
     return (
       <div className="hero hero--stacked">
         <div className="hero__stacked-image">
@@ -230,8 +205,8 @@ export default async function HomePage() {
           </div>
         </div>
         <FadeIn delay={200}>
-          <nav className="hero__thumbnail-strip">
-            {allEntries.map((entry, i) => (
+          <nav className="hero__thumbnail-strip" aria-label={t.nav.heroNavAria}>
+            {links.map((entry, i) => (
               <Link key={entry.key} href={entry.href} className="hero__thumbnail-item">
                 <span className="hero__thumbnail-index" aria-hidden="true">
                   {pad2(i + 1)}
@@ -269,8 +244,8 @@ export default async function HomePage() {
           <HeroTextContent
             title={config.siteTitle}
             subtitle={config.siteSubtitle}
-            subpages={subpages}
-            albums={albums}
+            links={links}
+            navLabel={t.nav.heroNavAria}
           />
         </div>
       </div>
@@ -285,8 +260,8 @@ export default async function HomePage() {
           <HeroTextContent
             title={config.siteTitle}
             subtitle={config.siteSubtitle}
-            subpages={subpages}
-            albums={albums}
+            links={links}
+            navLabel={t.nav.heroNavAria}
           />
         </div>
       </div>
@@ -302,8 +277,8 @@ export default async function HomePage() {
           <HeroTextContent
             title={config.siteTitle}
             subtitle={config.siteSubtitle}
-            subpages={subpages}
-            albums={albums}
+            links={links}
+            navLabel={t.nav.heroNavAria}
           />
         </div>
       </div>
@@ -319,15 +294,15 @@ export default async function HomePage() {
           <HeroTextContent
             title={config.siteTitle}
             subtitle={config.siteSubtitle}
-            subpages={subpages}
-            albums={albums}
+            links={links}
+            navLabel={t.nav.heroNavAria}
           />
         </div>
       </div>
 
       {/* ── Right Panel (Hero Carousel) ─────────────── */}
       <div className="hero__right">
-        <HeroCarousel images={heroData} />
+        <HeroCarousel images={heroData} sizes="(max-width: 640px) 100vw, 50vw" />
       </div>
     </div>
   );

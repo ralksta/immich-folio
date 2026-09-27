@@ -153,6 +153,27 @@
   }
 }
 
+/* Reduced motion, site-wide — visitor pages, admin and /install alike (#696).
+ *
+ * Durations collapse to near zero instead of `none`, so every animation and
+ * transition still lands on its end state (a drawer still opens, a toast still
+ * shows) and animationend/transitionend still fire for code that waits on
+ * them. Looping animations — the skeleton shimmer, spinners — run once and
+ * stop; the element itself stays visible. !important is needed to win over
+ * component styles and inline `style` animations (MapView's spinner). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Homepage hero + About page use full bleed — override main padding */
 .main:has(.hero),
 .main:has(.about) {
@@ -255,6 +276,39 @@
 
 .hero__carousel-image--active {
   opacity: 1;
+}
+
+/* Pause/play for the crossfade (WCAG 2.2.2). Sits over the photo, so it
+   takes the theme's background at partial opacity rather than a fixed
+   black; the 44px box is the touch target. */
+.hero__carousel-toggle {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bg-primary) 70%, transparent);
+  color: var(--text-primary);
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity var(--transition-fast);
+}
+
+.hero__carousel-toggle:hover,
+.hero__carousel-toggle:focus-visible {
+  opacity: 1;
+}
+
+.hero__carousel-toggle svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* Camera chip over the hero image — opt-in per preset. */
@@ -1397,6 +1451,24 @@
   opacity: 1;
 }
 
+/* Hover-only overlays leave keyboard and touch visitors out (#696). A tile
+   with keyboard focus shows its overlay like a hovered one, and on devices
+   without hover — phones, and tablets wider than the 640px mobile rules — the
+   overlays are simply always shown. */
+.photo-grid__item:is(:focus-visible, :has(:focus-visible)) .photo-grid__item-exif,
+.subpage-grid__item:is(:focus-visible, :has(:focus-visible)) .subpage-grid__item-overlay,
+.album-card:is(:focus-visible, :has(:focus-visible)) .album-card__overlay {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .photo-grid__item .photo-grid__item-exif,
+  .subpage-grid__item .subpage-grid__item-overlay,
+  .album-card .album-card__overlay {
+    opacity: 1;
+  }
+}
+
 .photo-grid__item-play {
   position: absolute;
   inset: 0;
@@ -1477,8 +1549,9 @@
   bottom: 32px;
   right: 32px;
   z-index: 90;
-  width: 40px;
-  height: 40px;
+  /* 44px: the minimum touch target, same as the proofing hearts (#696). */
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1px solid var(--border-subtle);
   background: var(--bg-card);
@@ -1536,14 +1609,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px;
+  /* 44px touch target (16px icon + 14px padding). The negative block
+     margins keep the header from growing; no negative inline margin, which
+     pushed the button past the viewport edge on phones (#696). */
+  padding: 14px;
+  margin: -6px 0 -6px auto;
   background: none;
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
   border-radius: var(--radius-sm);
   transition: color var(--transition-fast);
-  margin-left: auto;
 }
 
 .theme-toggle:hover {
@@ -1970,8 +2046,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: auto;
-    padding: 8px;
+    /* 44px touch target (20px icon + 12px padding); the negative margins
+       keep the header's height and spacing as before (#696). */
+    margin: -4px -4px -4px auto;
+    align-self: center;
+    padding: 12px;
     background: none;
     border: none;
     color: var(--text-secondary);

@@ -100,7 +100,7 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
         if (album && !subpageLocked && !(await isLocked(album.id, 'album'))) {
           title = album.albumName;
           const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
-          subtitle = `${count} photo${count === 1 ? '' : 's'}`;
+          subtitle = getServerDictionary().common.photos(count);
           if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
         }
       } else if (!subpageLocked) {
@@ -112,7 +112,7 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
     if (album && !(await isLocked(slug, 'subpage')) && !(await isLocked(album.id, 'album'))) {
       title = album.albumName;
       const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
-      subtitle = `${count} photo${count === 1 ? '' : 's'}`;
+      subtitle = getServerDictionary().common.photos(count);
       if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
     }
   } else {
@@ -124,7 +124,7 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
     if (album && !(await isLocked(album.id, 'album'))) {
       title = album.albumName;
       const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
-      subtitle = `${count} photo${count === 1 ? '' : 's'}`;
+      subtitle = getServerDictionary().common.photos(count);
       if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
     }
   }

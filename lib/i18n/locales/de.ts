@@ -19,6 +19,8 @@ export const de: Dictionary = {
     map: 'Karte',
     journal: 'Journal',
     skipToContent: 'Zum Inhalt springen',
+    mainNavAria: 'Hauptnavigation',
+    heroNavAria: 'Bereiche',
     openMenu: 'Menü öffnen',
     closeMenu: 'Menü schließen',
   },
@@ -44,12 +46,15 @@ export const de: Dictionary = {
     nextEntryAria: (title: string) => `Nächster Beitrag: ${title}`,
     entryNavAria: 'Journal-Navigation',
     loadingGallery: 'Galerie wird geladen',
+    gallery: 'Galerie',
     loadingPhotos: 'Fotos werden geladen',
     downloadAlbum: 'Album herunterladen',
   },
 
   home: {
     enter: 'Eintreten',
+    pauseSlideshow: 'Diashow anhalten',
+    playSlideshow: 'Diashow abspielen',
   },
 
   error: {
@@ -58,8 +63,6 @@ export const de: Dictionary = {
     errorTitle: 'Etwas ist schiefgelaufen',
     errorText:
       'Diese Seite konnte gerade nicht geladen werden. Das ist meist vorübergehend — bitte gleich noch einmal versuchen.',
-    siteErrorText:
-      'Diese Website konnte gerade nicht geladen werden. Das ist meist vorübergehend — bitte gleich noch einmal versuchen.',
     tryAgain: 'Erneut versuchen',
     reference: (digest: string) => `Referenz: ${digest}`,
   },
@@ -133,6 +136,7 @@ export const de: Dictionary = {
 
   lightbox: {
     viewer: 'Bildansicht',
+    position: (n: number, total: number) => `Foto ${n} von ${total}`,
     openPhoto: (n: number) => `Foto ${n} ansehen`,
     close: 'Schließen',
     closeTitle: 'Schließen (Esc)',
