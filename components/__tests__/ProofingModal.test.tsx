@@ -105,6 +105,16 @@ describe('ProofingModal email to photographer (#736)', () => {
     expect(location.href.startsWith(`mailto:${RECIPIENT}?subject=`)).toBe(true);
   });
 
+  it('keeps a crafted address from adding its own header fields', () => {
+    setContext({ allowMailto: true, encodedMailto: encodeEmail('a@b.c?bcc=evil@x.y') });
+    const location = { href: '' };
+    vi.stubGlobal('location', location);
+    render(<ProofingModal />);
+    fireEvent.click(screen.getByText(/Send Email/));
+    // The `?` and `=` are escaped, so the draft gains no bcc field.
+    expect(location.href.startsWith('mailto:a@b.c%3Fbcc%3Devil@x.y?subject=')).toBe(true);
+  });
+
   it('keeps the plain address out of the rendered markup', () => {
     setContext({ allowMailto: true, encodedMailto: encodeEmail(RECIPIENT) });
     const { container } = render(<ProofingModal />);

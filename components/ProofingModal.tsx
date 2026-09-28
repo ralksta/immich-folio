@@ -73,7 +73,10 @@ export function ProofingModal() {
   const handleMailto = () => {
     const subject = encodeURIComponent(t.proofing.mailSubject(favorites.size));
     const body = encodeURIComponent(t.proofing.mailBody(getFormattedList(), getProofingUrl()));
-    window.location.href = `mailto:${mailtoRecipient}?subject=${subject}&body=${body}`;
+    // Percent-encode the address, keeping '@' readable, so a value from the
+    // settings cannot smuggle its own `?bcc=`/`&…` header fields into the draft.
+    const to = encodeURIComponent(mailtoRecipient).replace(/%40/g, '@');
+    window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
   };
 
   const handleDownloadSelection = () => {
