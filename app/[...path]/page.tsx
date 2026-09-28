@@ -18,6 +18,7 @@ import { notFound } from 'next/navigation';
 import { toPhotoItems } from './photoItems';
 import { imageUrl, assetPlaceholder, archiveUrl } from '@/lib/urls';
 import { encodeAssetId, decodeAssetId } from '@/lib/tokens';
+import { encodeEmail } from '@/lib/emailObfuscation';
 import {
   buildCoverGridVars,
   getConfig,
@@ -238,6 +239,12 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
 
   const config = getConfig();
 
+  // The proofing dialog's "email to photographer" needs a recipient: the
+  // configured `proofing.email`, else the footer contact email (#736). Encoded
+  // here so the plain address stays out of the HTML and the RSC payload, like
+  // every other address the site renders.
+  const encodedMailto = config.proofing.email ? encodeEmail(config.proofing.email) : undefined;
+
   // Build grid CSS custom properties, optionally merging subpage overrides
   const buildGridStyle = (overrides?: Partial<GridConfig>): React.CSSProperties => {
     const g = { ...config.grid, ...overrides };
@@ -343,6 +350,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         showGear={config.exif.camera}
         proofing={proofingFor(subpageData?.subpage)}
         allowMailto={config.proofing.allowMailto}
+        encodedMailto={encodedMailto}
         downloadArchiveUrl={config.albumDownloads[album.id] ? archiveUrl(album.id) : undefined}
         {...heroData}
       />
@@ -509,6 +517,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
           watermark={config.watermark}
           proofing={essayProofing}
           allowMailto={config.proofing.allowMailto}
+          encodedMailto={encodedMailto}
         />
       );
     }

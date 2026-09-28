@@ -28,6 +28,8 @@ interface EssayViewProps {
   proofing?: boolean;
   /** Offer the "send by email" button in the proofing modal. */
   allowMailto?: boolean;
+  /** `encodeEmail()` of the proofing recipient, when one is configured (#736). */
+  encodedMailto?: string;
 }
 
 function EssayViewContent({
@@ -513,6 +515,7 @@ export function EssayView(props: EssayViewProps) {
       // default key with every album (and story) on the site.
       albumName={props.title || props.essay.frontmatter.title}
       allowMailto={props.allowMailto ?? true}
+      encodedMailto={props.encodedMailto}
     >
       <EssayViewContent {...props} />
     </ProofingProvider>

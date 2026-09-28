@@ -156,6 +156,20 @@ export function resolveProofing(
 }
 
 /**
+ * The recipient of the proofing dialog's "email to photographer" (#736):
+ * `proofing.email` when set, else the footer contact email. The first
+ * non-empty value, trimmed — an address saved as only whitespace is not
+ * configured. Undefined means neither is set, and the dialog hides the button
+ * rather than opening a compose with an empty To:.
+ */
+export function resolveProofingEmail(
+  proofingEmail?: string,
+  footerEmail?: string,
+): string | undefined {
+  return (proofingEmail ?? '').trim() || (footerEmail ?? '').trim() || undefined;
+}
+
+/**
  * EXPERIMENTAL: keep only nav links that are safe to render as header <a>
  * tags. Non-http(s) schemes (javascript:, data:) and incomplete entries are
  * dropped with a warning rather than throwing — a bad external link should
@@ -793,6 +807,9 @@ export function getConfig(): AppConfig {
     proofing: {
       enabled: settings.proofing?.enabled !== false,
       allowMailto: settings.proofing?.allowMailto !== false,
+      // `proofing.email`, else the footer contact email (#736); absent hides
+      // the dialog's email button.
+      email: resolveProofingEmail(settings.proofing?.email, settings.footer?.email),
     },
     protection: settings.protection,
     watermark: settings.watermark,

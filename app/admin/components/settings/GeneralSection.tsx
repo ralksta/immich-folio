@@ -137,6 +137,23 @@ export default function GeneralSection({ settings, update, updateMany }: Section
             onToggle={() => update('proofing.enabled', settings.proofing?.enabled === false)}
           />
         </div>
+        {/* Shown even while proofing is off globally: a subpage can switch it
+            on for itself (`proofing: true`), so the address still has to be
+            settable from here. */}
+        <div className="admin-field">
+          <label htmlFor="proofing-email">Proofing email</label>
+          <input
+            id="proofing-email"
+            type="email"
+            value={settings.proofing?.email || ''}
+            onChange={(e) => update('proofing.email', e.target.value)}
+            placeholder="Defaults to the footer contact email"
+          />
+          <p className="admin-field-hint">
+            Where &ldquo;Email to photographer&rdquo; sends a selection. Falls back to the footer
+            contact email; when neither is set, the button is hidden.
+          </p>
+        </div>
       </FeatureGroup>
 
       <FeatureGroup

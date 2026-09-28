@@ -270,6 +270,13 @@ export interface AppConfig {
   proofing: {
     enabled: boolean;
     allowMailto: boolean;
+    /**
+     * Effective "email to photographer" recipient: `proofing.email` from
+     * settings when set, otherwise the footer contact email. Undefined means
+     * neither is configured, and the proofing dialog hides the email action
+     * rather than opening a compose with an empty To: (#736).
+     */
+    email?: string;
   };
   aboutEnabled: boolean;
   albumOverrides: Record<string, string>;
@@ -443,6 +450,8 @@ export interface SettingsYaml {
   proofing?: {
     enabled?: boolean;
     allowMailto?: boolean;
+    /** Overrides the footer contact email as the proofing recipient. */
+    email?: string;
   };
   theme?:
     | string
