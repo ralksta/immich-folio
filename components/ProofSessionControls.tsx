@@ -69,7 +69,7 @@ export function ProofSessionControls() {
   const cardRef = useModalDialog(close, open);
 
   if (!proofing?.session) return null;
-  const { session, favorites, isFilterActive, setIsFilterActive, getSelectedTokens } = proofing;
+  const { session, isFilterActive, setIsFilterActive, getSelectedTokens } = proofing;
   const count = getSelectedTokens().length;
   const p = t.proofSession;
 
@@ -98,7 +98,7 @@ export function ProofSessionControls() {
   return (
     <>
       <div className="proofing-sticky-bar proof-session-bar" style={barStyle}>
-        {favorites.size > 0 && (
+        {(count > 0 || isFilterActive) && (
           <button
             type="button"
             onClick={() => setIsFilterActive((prev) => !prev)}
@@ -114,7 +114,7 @@ export function ProofSessionControls() {
               cursor: 'pointer',
             }}
           >
-            {isFilterActive ? t.proofing.showAll : t.proofing.selected(favorites.size)}
+            {isFilterActive ? t.proofing.showAll : t.proofing.selected(count)}
           </button>
         )}
         <span
