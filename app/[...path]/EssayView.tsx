@@ -13,6 +13,7 @@ import { essayPhotoSequence } from '@/lib/essaySequence';
 import type { PhotoItem } from './PhotoGrid';
 import './essay.css';
 import { useDictionary } from '@/components/I18nProvider';
+import { formatJournalDate } from '@/lib/journalDate';
 
 interface EssayViewProps {
   essay: ParsedEssay;
@@ -398,7 +399,9 @@ function EssayViewContent({
         {displaySubtitle && <p className="essay-header__subtitle">{displaySubtitle}</p>}
         {(essay.frontmatter.author || essay.frontmatter.date) && (
           <div className="essay-header__meta">
-            {[essay.frontmatter.author, essay.frontmatter.date].filter(Boolean).join(' • ')}
+            {[essay.frontmatter.author, formatJournalDate(essay.frontmatter.date, t.dateLocale)]
+              .filter(Boolean)
+              .join(' • ')}
           </div>
         )}
       </header>
