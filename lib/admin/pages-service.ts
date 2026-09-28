@@ -14,6 +14,7 @@ import { atomicWrite } from '../atomicWrite';
 import { assertVersion, readVersioned, serializeContentWrite, versionOf } from './contentVersion';
 import { isValidSlug, parseJournalMarkdown, type ParsedJournal } from '../journal';
 import type { PageSummary } from '../pages';
+import { ParsedFileCache } from './parsedFileCache';
 
 const MAX_BACKUPS = 10;
 
@@ -100,6 +101,16 @@ export async function listPageBackups(): Promise<PageBackup[]> {
     .sort((a, b) => b.filename.localeCompare(a.filename));
 }
 
+/**
+ * The listed frontmatter per file, reused while the file is unchanged: every
+ * public page render lists the pages for the header nav (see
+ * parsedFileCache.ts).
+ */
+const frontmatterCache = new ParsedFileCache<PageSummary['frontmatter']>((raw) => {
+  const { title, description, password, draft } = parseJournalMarkdown(raw).frontmatter;
+  return { title, description, password, draft };
+});
+
 /** Every page, sorted by title. Unparseable files are skipped with a log line. */
 export async function listPages(): Promise<PageSummary[]> {
   let files: string[];
@@ -109,19 +120,20 @@ export async function listPages(): Promise<PageSummary[]> {
     return [];
   }
   const pages: PageSummary[] = [];
+  const listed = new Set<string>();
   for (const file of files) {
     if (!file.endsWith('.md')) continue;
     const slug = file.slice(0, -3);
     const filePath = resolvePageFilePath(slug);
     if (!filePath) continue;
+    listed.add(filePath);
     try {
-      const parsed = parseJournalMarkdown(await fs.readFile(filePath, 'utf8'));
-      const { title, description, password, draft } = parsed.frontmatter;
-      pages.push({ slug, frontmatter: { title, description, password, draft } });
+      pages.push({ slug, frontmatter: await frontmatterCache.read(filePath) });
     } catch (err) {
       console.error(`[Pages] Failed to read ${file}:`, err);
     }
   }
+  frontmatterCache.retain(listed);
   return pages.sort((a, b) =>
     (a.frontmatter.title || a.slug).localeCompare(b.frontmatter.title || b.slug),
   );
