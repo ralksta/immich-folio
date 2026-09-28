@@ -821,6 +821,85 @@ describe('ImmichClient', () => {
       });
     });
   });
+
+  /**
+   * Album blocks in journal entries, content pages and essay files are
+   * rendered from getAlbumAssetsRaw(), and so is the published-asset set. It
+   * used to go to Immich on every call — two requests per album per page view,
+   * and again on every set rebuild — with no cache and no coalescing.
+   */
+  describe('getAlbumAssetsRaw() request count', () => {
+    function mockRawAlbumApi(albumId: string) {
+      mockFetch.mockImplementation(async (url: string) => {
+        const body = url.includes('/search/metadata')
+          ? {
+              assets: {
+                items: [
+                  { id: 'old', isTrashed: false, fileCreatedAt: '2024-01-01T00:00:00Z' },
+                  { id: 'gone', isTrashed: true, fileCreatedAt: '2024-01-02T00:00:00Z' },
+                  { id: 'new', isTrashed: false, fileCreatedAt: '2024-01-03T00:00:00Z' },
+                ],
+                nextPage: null,
+              },
+            }
+          : { id: albumId, albumName: 'Raw', assetCount: 3, assets: [], order: 'desc' };
+        return { ok: true, headers: { get: () => 'application/json' }, json: async () => body };
+      });
+    }
+
+    it('asks Immich once for many concurrent callers and serves repeats from the cache', async () => {
+      mockRawAlbumApi('unlisted');
+
+      const lists = await Promise.all(
+        Array.from({ length: 10 }, () => immich.getAlbumAssetsRaw('unlisted')),
+      );
+      // One album request plus one metadata page — not 2 × 10.
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      await immich.getAlbumAssetsRaw('unlisted');
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      // Unchanged result: trashed dropped, capture-time order of a 'desc' album.
+      for (const list of lists) expect(list.map((a) => a.id)).toEqual(['new', 'old']);
+    });
+
+    it('shares the load with getAlbum() for an allowlisted album', async () => {
+      mockRawAlbumApi('album-1');
+
+      await immich.getAlbum('album-1');
+      const raw = await immich.getAlbumAssetsRaw('album-1');
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(raw.map((a) => a.id)).toEqual(['new', 'old']);
+    });
+
+    it('hands each caller its own array, so no one reorders the cached entry', async () => {
+      mockRawAlbumApi('unlisted');
+
+      const first = await immich.getAlbumAssetsRaw('unlisted');
+      first.reverse();
+
+      expect((await immich.getAlbumAssetsRaw('unlisted')).map((a) => a.id)).toEqual(['new', 'old']);
+    });
+
+    it('goes back to Immich when the admin editors ask for a fresh copy', async () => {
+      mockRawAlbumApi('unlisted');
+
+      await immich.getAlbumAssetsRaw('unlisted');
+      await immich.getAlbumAssetsRaw('unlisted', true);
+
+      expect(mockFetch).toHaveBeenCalledTimes(4);
+    });
+
+    it('still does not open getAlbum() to an album outside the allowlist', async () => {
+      mockRawAlbumApi('unlisted');
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await immich.getAlbumAssetsRaw('unlisted');
+
+      expect(await immich.getAlbum('unlisted')).toBeNull();
+    });
+  });
 });
 
 describe('stale fallback when Immich is unavailable', () => {
