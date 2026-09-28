@@ -14,7 +14,7 @@ vi.mock('@/lib/env', () => ({
   },
 }));
 
-import { resolveProofing, resolveProofingEmail } from '@/lib/config';
+import { resolveProofing, resolveProofingEmail, resolveProofingEmailSource } from '@/lib/config';
 
 /**
  * Client proofing hands a gallery to a client and takes their picks back, so
@@ -51,33 +51,37 @@ describe('resolveProofing', () => {
 
 /**
  * "Email to photographer" opened a draft with no recipient (#736). The address
- * comes from the settings that already hold it, footer first.
+ * is `proofing.email`; a site that never set it falls back to the addresses
+ * it already has, footer first.
  */
 describe('resolveProofingEmail', () => {
-  const legal = (enabled: boolean, email?: string) => ({
-    enabled,
-    name: '',
-    address: '',
-    zipCity: '',
-    country: '',
-    email,
+  const footer = { email: 'footer@example.com' };
+  const legal = (enabled: boolean) => ({ enabled, email: 'legal@example.com' });
+
+  it('prefers its own setting', () => {
+    expect(resolveProofingEmail({ email: ' own@example.com ' }, footer, legal(true))).toBe(
+      'own@example.com',
+    );
+    expect(resolveProofingEmailSource({ email: 'own@example.com' }, footer)?.source).toBe(
+      'proofing',
+    );
   });
 
-  it('uses the footer address', () => {
-    expect(resolveProofingEmail({ email: ' me@example.com ' }, legal(true, 'l@example.com'))).toBe(
-      'me@example.com',
-    );
+  it('falls back to the footer address', () => {
+    expect(resolveProofingEmail({ email: '  ' }, footer, legal(true))).toBe('footer@example.com');
+    expect(resolveProofingEmailSource(undefined, footer)?.source).toBe('footer');
   });
 
   it('falls back to the Impressum address while that page is on', () => {
-    expect(resolveProofingEmail({ email: '  ' }, legal(true, 'l@example.com'))).toBe(
-      'l@example.com',
-    );
-    expect(resolveProofingEmail(undefined, legal(true, 'l@example.com'))).toBe('l@example.com');
+    expect(resolveProofingEmail(undefined, { email: '' }, legal(true))).toBe('legal@example.com');
+    expect(resolveProofingEmailSource(undefined, undefined, legal(true))?.source).toBe('legal');
   });
 
   it('does not publish the address of a disabled Impressum', () => {
-    expect(resolveProofingEmail(undefined, legal(false, 'l@example.com'))).toBeUndefined();
+    expect(resolveProofingEmail(undefined, undefined, legal(false))).toBeUndefined();
+    expect(
+      resolveProofingEmail(undefined, undefined, { email: 'legal@example.com' }),
+    ).toBeUndefined();
   });
 
   it('is undefined when nothing is configured', () => {

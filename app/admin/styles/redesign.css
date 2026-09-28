@@ -1304,6 +1304,23 @@
   color: var(--admin-text);
 }
 
+/* Settings of the feature row above, lined up under its title (4px padding +
+   15px icon + 12px gap) on the left, and on the right under the row's switch
+   (84px link column + 12px gap + 4px padding). */
+.admin-layout .feature-suboptions {
+  padding: 0 100px 12px 31px;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-layout .feature-suboptions .setting-row {
+  border-top: none;
+  padding-top: 0;
+}
+
+.admin-layout .feature-suboptions .admin-field {
+  margin-bottom: 0;
+}
+
 .admin-layout .settings-group .feature-list + .metadata-card,
 .admin-layout .settings-group .metadata-card + .feature-list {
   margin-top: 12px;
@@ -1322,6 +1339,11 @@
 
   .admin-layout .feature-row-link:empty {
     display: none;
+  }
+
+  /* No link column on a phone; the switches sit at the edge. */
+  .admin-layout .feature-suboptions {
+    padding-right: 0;
   }
 }
 

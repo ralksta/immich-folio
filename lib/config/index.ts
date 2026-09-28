@@ -25,13 +25,13 @@ import {
   GalleryYaml,
   SettingsYaml,
   GridConfig,
-  FooterConfig,
   LegalConfig,
   ContactConfig,
   CONTACT_RETENTION_DEFAULT,
   CONTACT_RETENTION_MAX,
   isHttpUrl,
   isPageRef,
+  resolveProofingEmail,
   type GallerySubpageYaml,
 } from './schema';
 import { isValidSlug } from '../journal';
@@ -180,23 +180,6 @@ export function sanitizeNavLinks(
     links.push({ label, url });
   }
   return links;
-}
-
-/**
- * Where the proofing modal's "email to photographer" draft is addressed (#736).
- *
- * Folio has no setting of its own for this: the photographer's address is
- * already configured for the footer, and failing that for the Impressum. The
- * Impressum address only counts while the page is on — a disabled Impressum
- * keeps its address unpublished, and the draft must not publish it either.
- */
-export function resolveProofingEmail(
-  footer?: FooterConfig,
-  legal?: LegalConfig,
-): string | undefined {
-  const footerEmail = footer?.email?.trim();
-  if (footerEmail) return footerEmail;
-  return legal?.enabled ? legal.email : undefined;
 }
 
 /**
@@ -811,7 +794,7 @@ export function getConfig(): AppConfig {
     proofing: {
       enabled: settings.proofing?.enabled !== false,
       allowMailto: settings.proofing?.allowMailto !== false,
-      email: resolveProofingEmail(settings.footer, resolveLegal(settings.legal)),
+      email: resolveProofingEmail(settings.proofing, settings.footer, settings.legal),
     },
     protection: settings.protection,
     watermark: settings.watermark,

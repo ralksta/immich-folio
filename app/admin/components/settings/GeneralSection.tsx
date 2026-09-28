@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import * as Icons from '../Icons';
 import type { SaveStatus } from '../SaveBar';
-import { resolveExifDisplay } from '@/lib/config/schema';
+import { resolveExifDisplay, resolveProofingEmailSource } from '@/lib/config/schema';
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
 import { FeatureGroup, FeatureRow, SettingRow } from './fields';
 import type { SectionProps } from './types';
@@ -35,6 +35,20 @@ export default function GeneralSection({ settings, update, updateMany }: Section
     ]
       .filter(Boolean)
       .join(' · ') || 'Nothing published — the lightbox hides its info panel';
+
+  // Where the proofing email draft goes when the field below is left empty —
+  // the same resolution the site uses, minus the field itself.
+  const mailtoOn = settings.proofing?.allowMailto !== false;
+  const proofingFallback = resolveProofingEmailSource(undefined, settings.footer, settings.legal);
+  const proofingEmailHint = !mailtoOn
+    ? 'The email button is off; clients copy the link or list instead.'
+    : settings.proofing?.email?.trim()
+      ? 'Clients’ mail apps open a draft addressed here.'
+      : proofingFallback
+        ? `Left empty, drafts go to ${proofingFallback.email}, the address set under ${
+            proofingFallback.source === 'footer' ? 'Footer' : 'Legal'
+          }.`
+        : 'Left empty, drafts open without a recipient — clients have to type your address.';
 
   /** Turning it back on selects everything; the details below narrow it again. */
   const toggleMetadata = () =>
@@ -136,6 +150,31 @@ export default function GeneralSection({ settings, update, updateMany }: Section
             checked={settings.proofing?.enabled !== false}
             onToggle={() => update('proofing.enabled', settings.proofing?.enabled === false)}
           />
+          {/* Shown even with proofing off here: a subpage can switch it on for
+              itself, and its clients then get this email button (#736). */}
+          <div className="feature-suboptions">
+            <SettingRow
+              title="Email button"
+              description="Clients can send their selection to you by email"
+              checked={mailtoOn}
+              onToggle={() => update('proofing.allowMailto', !mailtoOn)}
+            />
+            <div className="admin-field">
+              <label htmlFor="proofing-email">Email for client selections</label>
+              <input
+                id="proofing-email"
+                type="email"
+                value={settings.proofing?.email || ''}
+                onChange={(e) => update('proofing.email', e.target.value)}
+                placeholder="selections@example.com"
+                disabled={!mailtoOn}
+                aria-describedby="proofing-email-hint"
+              />
+              <p id="proofing-email-hint" className="admin-field-hint">
+                {proofingEmailHint}
+              </p>
+            </div>
+          </div>
         </div>
       </FeatureGroup>
 

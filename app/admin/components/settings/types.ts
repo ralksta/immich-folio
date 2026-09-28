@@ -78,6 +78,7 @@ export interface Settings {
   proofing?: {
     enabled?: boolean;
     allowMailto?: boolean;
+    email?: string;
   };
   watermark?: {
     enabled?: boolean;

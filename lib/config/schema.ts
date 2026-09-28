@@ -79,6 +79,41 @@ export function isHttpUrl(url: string): boolean {
   return /^https?:\/\//i.test(url.trim());
 }
 
+/** Which setting supplied the proofing draft's recipient. */
+export type ProofingEmailSource = 'proofing' | 'footer' | 'legal';
+
+/**
+ * Where the proofing modal's "email to photographer" draft is addressed (#736):
+ * `proofing.email`, else the footer's address, else the Impressum's.
+ *
+ * The fallbacks keep a site that never set `proofing.email` working. The
+ * Impressum address only counts while that page is on (the same
+ * `enabled === true` rule as resolveLegal): a disabled Impressum keeps its
+ * address unpublished, and the draft must not publish it either.
+ *
+ * Takes the raw settings.yaml blocks, and lives here rather than in
+ * `lib/config/index.ts`, so the admin panel can show which address applies.
+ */
+export function resolveProofingEmailSource(
+  proofing?: { email?: string },
+  footer?: { email?: string },
+  legal?: { enabled?: boolean; email?: string },
+): { email: string; source: ProofingEmailSource } | undefined {
+  const own = proofing?.email?.trim();
+  if (own) return { email: own, source: 'proofing' };
+  const footerEmail = footer?.email?.trim();
+  if (footerEmail) return { email: footerEmail, source: 'footer' };
+  const legalEmail = legal?.enabled === true ? legal.email?.trim() : undefined;
+  return legalEmail ? { email: legalEmail, source: 'legal' } : undefined;
+}
+
+/** resolveProofingEmailSource(), address only. */
+export function resolveProofingEmail(
+  ...args: Parameters<typeof resolveProofingEmailSource>
+): string | undefined {
+  return resolveProofingEmailSource(...args)?.email;
+}
+
 export interface LegalConfig {
   enabled: boolean;
   /** Replaces the statute line under the title ("Angaben gemäß § 5 DDG"). */
@@ -271,8 +306,8 @@ export interface AppConfig {
     enabled: boolean;
     allowMailto: boolean;
     /**
-     * Recipient of the "email to photographer" draft: `footer.email`, else the
-     * Impressum address when that page is on. Undefined leaves `To:` empty.
+     * Recipient of the "email to photographer" draft, see
+     * resolveProofingEmail(). Undefined leaves `To:` empty.
      */
     email?: string;
   };
@@ -448,6 +483,8 @@ export interface SettingsYaml {
   proofing?: {
     enabled?: boolean;
     allowMailto?: boolean;
+    /** Recipient of the email draft; falls back to footer, then Impressum. */
+    email?: string;
   };
   theme?:
     | string

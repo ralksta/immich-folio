@@ -84,7 +84,7 @@ export const settingsSchema = z.looseObject({
   scrollToTop: bool,
   analytics: bool,
 
-  proofing: z.looseObject({ enabled: bool, allowMailto: bool }).optional(),
+  proofing: z.looseObject({ enabled: bool, allowMailto: bool, email: str }).optional(),
 
   // Checked separately in validateSettings — see themeObjectSchema.
   theme: z.unknown().optional(),

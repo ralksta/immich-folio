@@ -61,6 +61,7 @@ scrollToTop: true
 # proofing:
 #   enabled: true
 #   allowMailto: true
+#   email: selections@example.com   # email draft recipient; default: footer.email
 
 # Watermark overlay on the lightbox. opacity is a fraction: 0.5 = 50%.
 # watermark:

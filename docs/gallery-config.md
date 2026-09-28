@@ -618,7 +618,15 @@ Configured in `settings.yaml`:
 proofing:
   enabled: true # hearts, selection bar and export modal (default: true)
   allowMailto: true # offer "send by email" alongside the copyable list (default: true)
+  email: selections@example.com # recipient of that email draft (optional)
 ```
+
+The email draft is addressed to `proofing.email`. Left empty, it falls back to
+`footer.email`, then to `legal.email` while the Impressum is enabled; with none
+of them set, the client's mail app opens with an empty **To:** field. The
+address reaches the browser obfuscated like the footer's, but it is not
+secret: the client sees it in their mail app. Both settings are also in the
+admin panel under **Settings → General → Client proofing**.
 
 A subpage overrides `enabled` in either direction — useful to keep proofing off
 across a public portfolio and switch it on for a single client handover:
