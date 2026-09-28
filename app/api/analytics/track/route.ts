@@ -23,6 +23,16 @@ const MAX_PAGES_PER_DAY = 500;
 /** Well past any real route on this app; anything longer is not a path someone navigated to. */
 const MAX_PATH_LENGTH = 200;
 
+/**
+ * The path as it is counted. A client proofing link's path carries its token
+ * (/proof/<token>), which is the client's only credential: proofing.json is
+ * written 0600 for that reason, and this file is not. Every link is counted as
+ * `/proof`, so the counter never holds a working link.
+ */
+function countedPath(pagePath: string): string {
+  return /^\/proof(?:\/|$)/.test(pagePath) ? '/proof' : pagePath;
+}
+
 interface AnalyticsData {
   summary: {
     totalViews: number;
@@ -92,7 +102,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json().catch(() => null);
     const rawPath = typeof body?.path === 'string' ? body.path : '/';
-    const pagePath = (rawPath.split('?')[0].slice(0, MAX_PATH_LENGTH) || '/') as string;
+    const pagePath = countedPath(rawPath.split('?')[0].slice(0, MAX_PATH_LENGTH) || '/');
     const userAgent = req.headers.get('user-agent') || '';
     const isMobile = /mobile|iphone|ipad|android/i.test(userAgent);
     const deviceType = isMobile ? 'mobile' : 'desktop';
