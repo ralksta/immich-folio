@@ -29,8 +29,11 @@ vi.mock('@/lib/rate-limit', () => ({
 vi.mock('@/lib/auth', () => ({ siteLockResponse: vi.fn(() => null) }));
 vi.mock('@/lib/proofWebhook', () => ({ notifySubmitted: vi.fn(async () => {}) }));
 vi.mock('@/lib/zipArchive', () => ({
-  streamArchive: vi.fn((name: string, assets: { id: string }[]) =>
-    Response.json({ name, ids: assets.map((a) => a.id) }),
+  withArchiveSlot: vi.fn(
+    (
+      _req: unknown,
+      handler: (stream: (name: string, assets: { id: string }[]) => Response) => unknown,
+    ) => handler((name, assets) => Response.json({ name, ids: assets.map((a) => a.id) })),
   ),
   refusal: vi.fn((_req: unknown, status: number, reason: string) =>
     Response.json({ reason }, { status }),

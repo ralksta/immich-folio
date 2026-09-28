@@ -11,7 +11,7 @@
 import { NextRequest } from 'next/server';
 import { resolveProofAccess } from '@/lib/proofAccess';
 import { claimDownload, ProofError } from '@/lib/proofSessions';
-import { refusal, streamArchive } from '@/lib/zipArchive';
+import { refusal, withArchiveSlot, type ArchiveStreamer } from '@/lib/zipArchive';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +23,17 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> },
 ) {
   const { token } = await params;
+  // One slot pool with the album archive route, taken before the first Immich
+  // request and before the download is counted against the link's limit.
+  return withArchiveSlot(request, (stream) => streamProofArchive(request, token, stream));
+}
+
+/** The handler's body, run inside the client's archive slot. */
+async function streamProofArchive(
+  request: NextRequest,
+  token: string,
+  stream: ArchiveStreamer,
+): Promise<Response> {
   const access = await resolveProofAccess(request, token, 'proof-archive', ARCHIVE_RPM);
   if ('error' in access) {
     const status = access.error.status;
@@ -57,5 +68,5 @@ export async function GET(
     throw err;
   }
 
-  return streamArchive(access.albumName, assets);
+  return stream(access.albumName, assets);
 }
