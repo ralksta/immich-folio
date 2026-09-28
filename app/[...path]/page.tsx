@@ -9,6 +9,8 @@
  * Two segments:
  *   - Treat as subpage-slug/album-slug → render album detail
  *     with back-link to the subpage
+ *
+ * Three or more segments: 404.
  */
 
 import { cookies } from 'next/headers';
@@ -74,7 +76,8 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
   // comparison downstream works on the same form (#522).
   const { path: rawPath } = await params;
   const path = rawPath?.map(normalizeSlug);
-  if (!path || path.length === 0) return {};
+  // Deeper paths are a 404 (see the page below); they name nothing to describe.
+  if (!path || path.length === 0 || path.length > 2) return {};
 
   // A shared photo link's whole point is that it reaches the server — unlike
   // the #photo-N hash it replaces, a `photo` query param is visible here, so
@@ -287,7 +290,10 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
     return { ...spGrid, ...albumGrid };
   };
 
-  if (!path || path.length === 0) {
+  // One segment or two: nothing on this site lives deeper. A third segment
+  // used to fall through to the one-segment branch below, which reads only
+  // `path[0]`, so `/travel/iceland/anything` rendered the Travel subpage.
+  if (!path || path.length === 0 || path.length > 2) {
     notFound();
   }
 
