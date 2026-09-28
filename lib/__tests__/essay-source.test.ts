@@ -62,7 +62,7 @@ describe('resolveEssayFile', () => {
   });
 
   it('locks a password-protected entry without a cookie', () => {
-    expect(resolveEssayFile('locked', anonymous)).toEqual({ status: 'locked', title: 'Locked' });
+    expect(resolveEssayFile('locked', anonymous)).toEqual({ status: 'locked' });
   });
 
   it('keeps the entry locked for the admin, like /journal/<slug> does', () => {

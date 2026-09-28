@@ -18,8 +18,11 @@ export type EssayFileResult =
   | { status: 'open'; parsed: ParsedJournal }
   /** No such entry, or a draft seen by a non-admin — both render as absent. */
   | { status: 'missing' }
-  /** The entry has a password this visitor has not entered. */
-  | { status: 'locked'; title: string };
+  /**
+   * The entry has a password this visitor has not entered. No title: the
+   * journal index hides a locked entry by name, so the gate must not show it.
+   */
+  | { status: 'locked' };
 
 export function resolveEssayFile(
   slug: string,
@@ -31,7 +34,7 @@ export function resolveEssayFile(
   const { frontmatter } = parsed;
   if (frontmatter.draft && !visitor.isAdmin) return { status: 'missing' };
   if (frontmatter.password && !isAuthenticated(slug, visitor.getCookie, 'journal')) {
-    return { status: 'locked', title: frontmatter.title || slug };
+    return { status: 'locked' };
   }
   return { status: 'open', parsed };
 }
