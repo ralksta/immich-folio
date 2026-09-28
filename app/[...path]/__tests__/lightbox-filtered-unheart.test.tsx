@@ -56,7 +56,8 @@ async function openFilteredLightboxOn(n: number) {
   return screen.getByRole('dialog');
 }
 
-const shownPhoto = (dialog: HTMLElement) => dialog.querySelector('img')?.getAttribute('src');
+const shownPhoto = (dialog: HTMLElement) =>
+  dialog.querySelector('img')?.getAttribute('src')?.split('?')[0];
 
 describe('un-hearting inside the filtered lightbox', () => {
   it('moves to the previous favourite when the last one is removed', async () => {
