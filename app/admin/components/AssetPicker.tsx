@@ -57,6 +57,13 @@ export default function AssetPicker({
   const [uuidInput, setUuidInput] = useState('');
   const [uuidError, setUuidError] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
+  /**
+   * Bumped each time the list starts over (tab, album or search changed). A
+   * request is only allowed to touch the list while its generation is current:
+   * without this, a slow Favorites answer landing after a switch to All Photos
+   * replaced that tab's photos, and ended its spinner early.
+   */
+  const generation = useRef(0);
   const currentIds = useMemo(() => new Set(currentAssetIds), [currentAssetIds]);
 
   // Debounce typing into the query the fetch runs on.
@@ -71,8 +78,16 @@ export default function AssetPicker({
 
   const loadAssets = useCallback(
     async (pageNum: number, append: boolean = false) => {
-      if (pageNum === 1) setLoading(true);
-      else setLoadingMore(true);
+      // A fresh list starts a generation; a further page belongs to the current one.
+      const gen = append ? generation.current : ++generation.current;
+      const current = () => gen === generation.current;
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+        // A "load more" of the previous list will not clear this itself.
+        setLoadingMore(false);
+      }
 
       try {
         let res: Response;
@@ -88,6 +103,7 @@ export default function AssetPicker({
         }
         if (res.ok) {
           const data = await res.json();
+          if (!current()) return;
           setAssets((prev) => {
             if (!append) return data.assets;
             // Merged filename + description pages can overlap across pages.
@@ -98,10 +114,12 @@ export default function AssetPicker({
           setPage(pageNum);
         }
       } catch (err) {
-        console.error('Failed to load assets:', err);
+        if (current()) console.error('Failed to load assets:', err);
       } finally {
-        setLoading(false);
-        setLoadingMore(false);
+        if (current()) {
+          setLoading(false);
+          setLoadingMore(false);
+        }
       }
     },
     [tab, albumId, serverQuery],
