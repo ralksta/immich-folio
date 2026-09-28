@@ -24,11 +24,18 @@ export type ProofSaveState = 'idle' | 'saving' | 'saved' | 'error';
  */
 export interface ProofSessionState {
   saveState: ProofSaveState;
+  /**
+   * Hearts the server has not confirmed yet — including those still waiting
+   * out the autosave debounce, while `saveState` reads 'idle' or 'saved'.
+   */
+  unsaved: boolean;
   submitted: boolean;
   /** Save anything pending, then lock the selection. Resolves to success. */
   submit: () => Promise<boolean>;
   download: ProofSessionInit['download'];
   downloadsRemaining: number | null;
+  /** Count a download that was just started against `downloadsRemaining`. */
+  countDownload: () => void;
   /** The ZIP route for this session. */
   archiveUrl: string;
 }
@@ -97,6 +104,15 @@ export function ProofingProvider({
   const [edits, setEdits] = useState(0);
   const editsRef = useRef(0);
   const savedEdits = useRef(0);
+  /** `savedEdits` for rendering: what makes `unsaved` clear once a save lands. */
+  const [savedEditsShown, setSavedEditsShown] = useState(0);
+  /**
+   * Starts from the page load and counts down with each download started here,
+   * so the dialog does not keep offering a download the limit has used up.
+   */
+  const [downloadsRemaining, setDownloadsRemaining] = useState(
+    sessionInit?.downloadsRemaining ?? null,
+  );
   useEffect(() => {
     editsRef.current = edits;
   }, [edits]);
@@ -167,6 +183,7 @@ export function ProofingProvider({
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       savedEdits.current = Math.max(savedEdits.current, version);
+      setSavedEditsShown(savedEdits.current);
       // A heart clicked while this request was in flight has its own save queued.
       if (editsRef.current <= savedEdits.current) setSaveState('saved');
       return true;
@@ -323,10 +340,13 @@ export function ProofingProvider({
         session: sessionInit
           ? {
               saveState,
+              unsaved: edits > savedEditsShown,
               submitted,
               submit,
               download: sessionInit.download,
-              downloadsRemaining: sessionInit.downloadsRemaining,
+              downloadsRemaining,
+              countDownload: () =>
+                setDownloadsRemaining((n) => (n === null ? null : Math.max(0, n - 1))),
               archiveUrl: `/api/proof/${encodeURIComponent(sessionInit.token)}/archive`,
             }
           : undefined,
