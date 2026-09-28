@@ -123,8 +123,21 @@ describe('publicPaths', () => {
       site({
         journalEnabled: true,
         journal: [
-          { slug: 'published', draft: false },
-          { slug: 'wip', draft: true },
+          { slug: 'published', draft: false, isProtected: false },
+          { slug: 'wip', draft: true, isProtected: false },
+        ],
+      }),
+    );
+    expect(paths).toEqual(['/', '/journal', '/journal/published']);
+  });
+
+  it('omits a password-protected journal entry, as the journal index does', () => {
+    const paths = publicPaths(
+      site({
+        journalEnabled: true,
+        journal: [
+          { slug: 'published', draft: false, isProtected: false },
+          { slug: 'private', draft: false, isProtected: true },
         ],
       }),
     );
@@ -133,7 +146,10 @@ describe('publicPaths', () => {
 
   it('omits journal entries entirely when the journal is off', () => {
     const paths = publicPaths(
-      site({ journalEnabled: false, journal: [{ slug: 'published', draft: false }] }),
+      site({
+        journalEnabled: false,
+        journal: [{ slug: 'published', draft: false, isProtected: false }],
+      }),
     );
     expect(paths).toEqual(['/']);
   });
@@ -181,7 +197,7 @@ describe('publicPaths', () => {
       site({
         aboutEnabled: true,
         journalEnabled: true,
-        journal: [{ slug: 'story', draft: false }],
+        journal: [{ slug: 'story', draft: false, isProtected: false }],
         subpages: [openSubpage('travel', [{ id: 'a', slug: 'iceland' }])],
         standaloneAlbums: [{ id: 'b', slug: 'portraits' }],
       }),

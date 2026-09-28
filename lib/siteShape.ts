@@ -42,6 +42,7 @@ export async function buildSiteShape(): Promise<SiteShape> {
     journal: journal.map((entry) => ({
       slug: entry.slug,
       draft: entry.frontmatter.draft === true,
+      isProtected: !!entry.frontmatter.password,
     })),
     pages: pages.map((page) => ({
       slug: page.slug,

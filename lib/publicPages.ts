@@ -29,6 +29,8 @@ export interface PublicSubpage {
 export interface PublicJournalEntry {
   slug: string;
   draft: boolean;
+  /** The entry carries a password of its own. */
+  isProtected: boolean;
 }
 
 export interface PublicContentPage {
@@ -100,8 +102,9 @@ export function publicPaths(site: SiteShape): string[] {
   if (site.journalEnabled) {
     for (const entry of site.journal) {
       // Drafts stay visible to the logged-in admin and absent for everyone
-      // else; a listing is "everyone else".
-      if (entry.draft) continue;
+      // else; a listing is "everyone else". A locked entry is left out for
+      // the reason /journal hides it: its URL leads to a gate that names it.
+      if (entry.draft || entry.isProtected) continue;
       paths.push(`/journal/${entry.slug}`);
     }
   }
