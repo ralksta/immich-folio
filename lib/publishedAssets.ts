@@ -8,8 +8,10 @@
  *
  * What counts as published — every source that turns an asset ID into a
  * public URL:
- *   - the assets and thumbnail of every allowlisted album
- *   - the homepage hero list and per-album hero images (gallery.yaml)
+ *   - the assets and thumbnail of every standalone album and every album of
+ *     an enabled subpage; a subpage taken offline with `enabled: false` keeps
+ *     its albums on the allowlist, but publishes nothing
+ *   - the homepage hero list, and the hero image of each album above
  *   - the about.md portrait
  *   - every journal entry: cover, photo blocks, and the assets of its album
  *     blocks (drafts and locked entries included: their page gate still hides
@@ -17,7 +19,7 @@
  *   - every content page (#722): photo blocks and the assets of its album
  *     blocks, drafts and locked pages included for the same reason; its map
  *     blocks are not rendered, so their photos do not count
- *   - album blocks in a subpage's inline essayText
+ *   - album blocks in an enabled subpage's inline essayText
  *   - the album of every open (unexpired) proofing link
  *
  * Built lazily, cached for CACHE_TTL, one build shared by concurrent callers.
@@ -32,6 +34,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import yaml from 'js-yaml';
 import { getConfig } from './config';
+import { onlineAlbumIds } from './config/schema';
 import { immich } from './immich';
 import { collectAssetIds, parseJournalMarkdown, type JournalBlock } from './journal';
 import { listJournalEntries, readJournalEntry } from './admin/journal-service';
@@ -94,10 +97,11 @@ async function build(): Promise<Set<string>> {
     if (id) assets.add(id);
   };
   const rawAlbums = new Set<string>();
+  const online = onlineAlbumIds(config);
 
-  // Allowlisted albums. A failing album must not empty the whole set.
+  // Published albums. A failing album must not empty the whole set.
   await Promise.all(
-    config.albums.map(async (id) => {
+    [...online].map(async (id) => {
       const album = await immich.getAlbum(id).catch(() => null);
       if (!album) return;
       add(album.albumThumbnailAssetId);
@@ -106,7 +110,9 @@ async function build(): Promise<Set<string>> {
   );
 
   config.heroImages.forEach(add);
-  Object.values(config.albumHeroImages).forEach(add);
+  for (const [albumId, assetId] of Object.entries(config.albumHeroImages)) {
+    if (online.has(albumId)) add(assetId);
+  }
   add(await aboutPortrait());
 
   // Journal entries, including drafts and locked ones (see above).
@@ -137,7 +143,7 @@ async function build(): Promise<Set<string>> {
   // Inline essays in gallery.yaml: only their album blocks add assets; a photo
   // block outside the subpage's albums is dropped before it becomes a URL.
   for (const sp of config.subpages) {
-    if (sp.essayText) {
+    if (sp.enabled !== false && sp.essayText) {
       albumBlockIds(parseJournalMarkdown(sp.essayText).blocks).forEach((id) => rawAlbums.add(id));
     }
   }

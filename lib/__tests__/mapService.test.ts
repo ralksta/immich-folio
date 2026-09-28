@@ -13,8 +13,15 @@ vi.mock('@/lib/immich', () => ({
   },
 }));
 
+const config = vi.hoisted(() => ({
+  value: {
+    standaloneAlbums: ['album-1'] as string[],
+    subpages: [] as Array<{ slug: string; albumIds: string[]; enabled: boolean }>,
+    cacheTtl: 60_000,
+  },
+}));
 vi.mock('@/lib/config', () => ({
-  getConfig: () => ({ subpages: [], cacheTtl: 60_000 }),
+  getConfig: () => config.value,
 }));
 
 vi.mock('@/lib/cache', () => ({
@@ -30,6 +37,8 @@ function asset(id: string, exif: Record<string, unknown>) {
 }
 
 beforeEach(() => {
+  config.value.standaloneAlbums = ['album-1'];
+  config.value.subpages = [];
   getAlbums.mockReset();
   getAlbum.mockReset();
   getAlbums.mockResolvedValue([ALBUM]);
@@ -81,5 +90,38 @@ describe('getMapData coordinate filtering (#635)', () => {
     const locations = await getMapData();
 
     expect(locations).toHaveLength(0);
+  });
+});
+
+/**
+ * `enabled: false` takes a subpage offline. Its albums stay on the allowlist
+ * (the configuration is kept), so the map has to leave them out itself: a
+ * marker names the album, links it, counts it and shows one of its photos.
+ */
+describe('getMapData and offline subpages', () => {
+  const berlin = { latitude: 52.5, longitude: 13.4, city: 'Berlin', country: 'Germany' };
+
+  beforeEach(() => {
+    getAlbum.mockResolvedValue({ id: ALBUM.id, assets: [asset('a', berlin)] });
+  });
+
+  it('leaves out an album whose only subpage is offline', async () => {
+    config.value.standaloneAlbums = [];
+    config.value.subpages = [{ slug: 'old-series', albumIds: [ALBUM.id], enabled: false }];
+
+    expect(await getMapData()).toEqual([]);
+  });
+
+  it('keeps it when an enabled subpage lists it too, and links it there', async () => {
+    config.value.standaloneAlbums = [];
+    config.value.subpages = [
+      { slug: 'old-series', albumIds: [ALBUM.id], enabled: false },
+      { slug: 'travel', albumIds: [ALBUM.id], enabled: true },
+    ];
+
+    const locations = await getMapData();
+
+    expect(locations).toHaveLength(1);
+    expect(locations[0].albums[0].subpageSlug).toBe('travel');
   });
 });

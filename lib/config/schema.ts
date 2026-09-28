@@ -679,3 +679,21 @@ export function normalizeSlug(slug: string): string {
   }
   return decoded.normalize('NFC');
 }
+
+/**
+ * The albums the public site shows: the standalone ones and those of every
+ * subpage that is not offline. `albums` is the allowlist for loading an album
+ * and still holds the albums of a subpage taken offline with `enabled: false`
+ * (its configuration is kept), so it does not answer "is this published".
+ * Anything that lists albums or serves their photos outside a page route asks
+ * this instead.
+ */
+export function onlineAlbumIds(config: {
+  standaloneAlbums?: readonly string[];
+  subpages: ReadonlyArray<{ albumIds: readonly string[]; enabled?: boolean }>;
+}): Set<string> {
+  return new Set([
+    ...(config.standaloneAlbums ?? []),
+    ...config.subpages.filter((sp) => sp.enabled !== false).flatMap((sp) => sp.albumIds),
+  ]);
+}

@@ -1,5 +1,6 @@
 import { immich } from './immich';
 import { getConfig } from './config';
+import { onlineAlbumIds } from './config/schema';
 import { cache } from './cache';
 
 /**
@@ -44,13 +45,18 @@ export async function getMapData(): Promise<MapLocation[]> {
 
   pendingMapDataPromise = (async () => {
     try {
-      const albums = await immich.getAlbums();
+      // The allowlist still holds the albums of subpages taken offline with
+      // `enabled: false`. A marker names, links and shows a photo of every
+      // album it counts, so those have to go before anything is aggregated.
+      const online = onlineAlbumIds(config);
+      const albums = (await immich.getAlbums()).filter((a) => online.has(a.id));
 
       // Build a lookup: album ID → { name, slug, subpageSlug? }
       const albumMeta = new Map<string, { name: string; slug: string; subpageSlug?: string }>();
       for (const a of albums) {
-        // Check if this album belongs to a subpage
-        const sp = config.subpages.find((s) => s.albumIds.includes(a.id));
+        // The subpage the marker links to, and whose password gates it. Never
+        // an offline one: its URL is a 404 and its password guards nothing.
+        const sp = config.subpages.find((s) => s.enabled !== false && s.albumIds.includes(a.id));
         albumMeta.set(a.id, { name: a.albumName, slug: a.slug, subpageSlug: sp?.slug });
       }
 
