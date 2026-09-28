@@ -28,6 +28,7 @@ import type { AlbumAssetRef } from '@/lib/journalAlbum';
 import { BlockBadge } from '../BlockBadge';
 import { useUnsavedGuard } from '../useUnsavedGuard';
 import { useDraft } from '../useDraft';
+import { useLatest } from '../useLatest';
 import DraftNotice from '../DraftNotice';
 import { reportIfSessionExpired } from '../sessionExpiry';
 import { useContentRestored } from '../contentRestored';
@@ -74,6 +75,8 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
   } = useSplitPane();
 
   const [rawMarkdown, setRawMarkdown] = useState('');
+  /** The markdown as last rendered: tells a finished save whether typing went on meanwhile. */
+  const latestMarkdown = useLatest(rawMarkdown);
   const [parsed, setParsed] = useState<ParsedJournal>(() => ({
     frontmatter: {},
     blocks: [],
@@ -210,12 +213,17 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
         const written: string =
           typeof record?.rawMarkdown === 'string' ? record.rawMarkdown : toSave;
         serverMarkdown.current = written;
-        draft.saved(written);
-        if (written !== rawMarkdown) {
-          setRawMarkdown(written);
-          setParsed(parseJournalMarkdown(written));
+        // Edited while the request was out: those edits are not saved yet, so
+        // they stay dirty and are not replaced by the file as written.
+        const editedMeanwhile = latestMarkdown.current !== toSave;
+        draft.saved(written, editedMeanwhile);
+        if (!editedMeanwhile) {
+          if (written !== toSave) {
+            setRawMarkdown(written);
+            setParsed(parseJournalMarkdown(written));
+          }
+          setDirty(false);
         }
-        setDirty(false);
       } else if (!reportIfSessionExpired(result.res)) {
         notify('error', result.data?.error || 'Failed to save');
       }

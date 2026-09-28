@@ -49,6 +49,7 @@ import {
 import { useScrollLock } from './useScrollLock';
 import { useUnsavedGuard } from './useUnsavedGuard';
 import { useDraft } from './useDraft';
+import { useLatest } from './useLatest';
 import { useVersionedSave } from './useVersionedSave';
 import type { GalleryVersionChange } from '@/lib/admin/pageRefs';
 import DraftNotice from './DraftNotice';
@@ -152,6 +153,8 @@ export default function PageBuilder() {
   // Unsaved edits survive leaving the builder — a tab link, back, Reload,
   // Logout (#592). `serverState` is what a discard goes back to.
   const draft = useDraft<GalleryState>('page-builder', gallery, dirty);
+  /** The tree as last rendered: tells a finished save whether editing went on meanwhile. */
+  const latestGallery = useLatest(gallery);
   const serverState = useRef<GalleryState | null>(null);
   /** gallery.yaml as loaded, sent back on save so a change elsewhere is caught (#601). */
   const versionRef = useRef<string | null>(null);
@@ -297,7 +300,8 @@ export default function PageBuilder() {
     setSaving(true);
     setSaveStatus(null);
 
-    const yamlData = serializeGallery(gallery);
+    const sent = gallery;
+    const yamlData = serializeGallery(sent);
 
     try {
       const result = await versionedSave(
@@ -325,10 +329,15 @@ export default function PageBuilder() {
         const written = (data.gallery ?? yamlData) as Record<string, unknown>;
         const asLoaded = parseGalleryYaml(JSON.parse(JSON.stringify(written)));
         serverState.current = asLoaded;
-        draft.saved(JSON.stringify(asLoaded));
-        // Show the hashes, so a new password reads "Protected" right away.
-        if (JSON.stringify(written) !== JSON.stringify(yamlData)) setGallery(asLoaded);
-        setDirty(false);
+        // Edited while the request was out: those edits are not saved yet, so
+        // they stay dirty and are not replaced by the file as written.
+        const editedMeanwhile = latestGallery.current !== sent;
+        draft.saved(JSON.stringify(asLoaded), editedMeanwhile);
+        if (!editedMeanwhile) {
+          // Show the hashes, so a new password reads "Protected" right away.
+          if (JSON.stringify(written) !== JSON.stringify(yamlData)) setGallery(asLoaded);
+          setDirty(false);
+        }
         setSaveStatus({ kind: 'success', message: data.message || 'Saved successfully!' });
         setTimeout(() => setSaveStatus(null), 5000);
       } else if (!reportIfSessionExpired(result.res)) {

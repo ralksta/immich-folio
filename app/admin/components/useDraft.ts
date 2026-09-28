@@ -108,6 +108,11 @@ export function useDraft<T>(key: string, value: T, dirty: boolean) {
    */
   const holdRef = useRef(false);
   const [status, setStatus] = useState<DraftStatus>('none');
+  /** The value as last rendered, for `saved()` when edits arrived during the save. */
+  const valueRef = useRef(value);
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   // Mirror the edits while there are any, and drop the draft once there are
   // none — a save or a discard. Nothing is written before `load()` has set a
@@ -142,12 +147,19 @@ export function useDraft<T>(key: string, value: T, dirty: boolean) {
     [key],
   );
 
-  /** Call after a successful save, with the fingerprint of what was saved. */
+  /**
+   * Call after a successful save, with the fingerprint of what was saved.
+   * `stillDirty` when the editor was changed while the save was in flight: those
+   * edits stay a draft, now on top of the version just written. Clearing it
+   * would leave them unkept until the next keystroke, since the mirror effect
+   * above only runs when the value or the dirty flag changes.
+   */
   const saved = useCallback(
-    (base: string) => {
+    (base: string, stillDirty = false) => {
       baseRef.current = base;
       holdRef.current = false;
-      clearDraft(key);
+      if (stillDirty) writeDraft(key, { base, value: valueRef.current });
+      else clearDraft(key);
       setStatus('none');
     },
     [key],

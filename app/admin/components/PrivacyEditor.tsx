@@ -17,6 +17,7 @@ import { reportIfSessionExpired } from './sessionExpiry';
 import { useUnsavedGuard } from './useUnsavedGuard';
 import { useContentRestored } from './contentRestored';
 import { useVersionedSave } from './useVersionedSave';
+import { useLatest } from './useLatest';
 import type { ProcessingFact } from '@/lib/privacy';
 
 interface PrivacyData {
@@ -42,6 +43,8 @@ export default function PrivacyEditor() {
   /** privacy.md as loaded, sent back on save so a change elsewhere is caught (#601). */
   const versionRef = useRef<string | null>(null);
   const versionedSave = useVersionedSave();
+  /** The text as last rendered: tells a finished save whether typing went on meanwhile. */
+  const latestBody = useLatest(body);
   const dirtyRef = useRef(dirty);
   useEffect(() => {
     dirtyRef.current = dirty;
@@ -77,10 +80,11 @@ export default function PrivacyEditor() {
   async function save() {
     setSaving(true);
     setStatus(null);
+    const sent = body;
     try {
       const result = await versionedSave(
         '/api/admin/privacy',
-        { body },
+        { body: sent },
         versionRef,
         'The privacy policy',
       );
@@ -98,7 +102,8 @@ export default function PrivacyEditor() {
         }
         return;
       }
-      setDirty(false);
+      // Typed while the request was out: that part is not saved yet.
+      if (latestBody.current === sent) setDirty(false);
       setStatus({ kind: 'success', message: 'Privacy policy saved.' });
     } catch {
       setStatus({ kind: 'error', message: 'Could not reach the server.' });

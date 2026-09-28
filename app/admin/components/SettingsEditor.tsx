@@ -13,6 +13,7 @@ import Link from 'next/link';
 import SaveBar, { type SaveStatus } from './SaveBar';
 import { useUnsavedGuard } from './useUnsavedGuard';
 import { useDraft } from './useDraft';
+import { useLatest } from './useLatest';
 import DraftNotice from './DraftNotice';
 import { useContentRestored } from './contentRestored';
 import { reportIfSessionExpired } from './sessionExpiry';
@@ -91,6 +92,8 @@ export default function SettingsEditor() {
   // holds the password as typed. A restored draft takes the password from the
   // server instead; a new one is typed again after a reload.
   const settingsDraft = useDraft<Settings>('settings', withoutSitePassword(settings), dirty);
+  /** The form as last rendered: tells a finished save whether editing went on meanwhile. */
+  const latestSettings = useLatest(settings);
   /** settings.yaml as loaded, sent back on save so a change elsewhere is caught (#601). */
   const versionRef = useRef<string | null>(null);
   const versionedSave = useVersionedSave();
@@ -227,8 +230,9 @@ export default function SettingsEditor() {
     setSaving(true);
     setSaveStatus(null);
 
+    const sent = settings;
     // Clean up empty objects
-    const cleaned = JSON.parse(JSON.stringify(settings));
+    const cleaned = JSON.parse(JSON.stringify(sent));
     for (const key of Object.keys(cleaned)) {
       if (typeof cleaned[key] === 'object' && Object.keys(cleaned[key]).length === 0) {
         delete cleaned[key];
@@ -255,13 +259,18 @@ export default function SettingsEditor() {
           typeof data.sitePassword === 'string'
             ? { ...cleaned, sitePassword: data.sitePassword }
             : cleaned;
+        // Edited while the request was out: those edits are not saved yet, so
+        // they stay dirty, and a password retyped meanwhile is not replaced.
+        const editedMeanwhile = latestSettings.current !== sent;
         if (typeof data.sitePassword === 'string') {
           const hashed = data.sitePassword;
-          setSettings((s) => ({ ...s, sitePassword: hashed }));
+          setSettings((s) =>
+            s.sitePassword === sent.sitePassword ? { ...s, sitePassword: hashed } : s,
+          );
         }
         setServerSettings(stored);
-        settingsDraft.saved(JSON.stringify(withoutSitePassword(stored)));
-        setDirty(false);
+        settingsDraft.saved(JSON.stringify(withoutSitePassword(stored)), editedMeanwhile);
+        if (!editedMeanwhile) setDirty(false);
         setSaveStatus({
           kind: 'success',
           message: typeof data.message === 'string' ? data.message : 'Saved!',
