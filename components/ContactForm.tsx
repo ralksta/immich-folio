@@ -7,6 +7,12 @@
  * Spam protection without a captcha, which would be another third party: a
  * honeypot field people never see, and `startedAt`, the time the form was
  * rendered, which the server compares against the submission.
+ *
+ * `startedAt` is the server's clock, handed down by the page. The check
+ * subtracts it from the server's clock at submission, and a stamp from the
+ * visitor's device made that a comparison between two clocks: a phone running
+ * a few minutes fast looked like a bot posting before the form existed, and
+ * its message was dropped behind a thank-you page.
  */
 
 import { useState } from 'react';
@@ -14,15 +20,14 @@ import { useDictionary } from './I18nProvider';
 
 interface Props {
   retentionDays: number;
+  /** `Date.now()` on the server when the page was rendered. */
+  renderedAt: number;
 }
 
 type State = 'idle' | 'sending' | 'done';
 
-export default function ContactForm({ retentionDays }: Props) {
+export default function ContactForm({ retentionDays, renderedAt }: Props) {
   const t = useDictionary().contact;
-  // When the form became usable. A bot posting straight to the endpoint has
-  // none; one filling the form on load is faster than MIN_FILL_MS.
-  const [startedAt] = useState(() => Date.now());
   const [state, setState] = useState<State>('idle');
   const [error, setError] = useState('');
 
@@ -40,7 +45,9 @@ export default function ContactForm({ retentionDays }: Props) {
           email: data.get('email'),
           message: data.get('message'),
           website: data.get('website'),
-          startedAt,
+          // A bot posting straight to the endpoint has no stamp; one filling
+          // the form on load is faster than MIN_FILL_MS.
+          startedAt: renderedAt,
         }),
       });
       if (res.ok) {

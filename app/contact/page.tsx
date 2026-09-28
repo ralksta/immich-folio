@@ -19,6 +19,16 @@ export function generateMetadata(): Metadata {
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * The server's clock for the form's fill-time stamp. The check on submission
+ * runs on this clock, so the start has to as well (see ContactForm). A server
+ * component renders once per request, which is why reading the clock here is
+ * not the re-render hazard `react-hooks/purity` looks for.
+ */
+function serverNow(): number {
+  return Date.now();
+}
+
 export default function ContactPage() {
   const { contact } = getConfig();
   const t = getServerDictionary();
@@ -36,7 +46,7 @@ export default function ContactPage() {
       </header>
 
       <div className="contact-page__content">
-        <ContactForm retentionDays={contact.retentionDays} />
+        <ContactForm retentionDays={contact.retentionDays} renderedAt={serverNow()} />
       </div>
     </div>
   );
