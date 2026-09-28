@@ -314,6 +314,10 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
     const serialized = serializeJournalMarkdown(updated);
     setParsed(updated);
     setRawMarkdown(serialized);
+    // An edit like any other until the save lands: a failed or refused save
+    // must leave the flipped flag unsaved, not shown as "Saved" (a success
+    // clears it again).
+    setDirty(true);
     handleSave(serialized);
   };
 
