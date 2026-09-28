@@ -2,17 +2,31 @@
 
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { Lightbox, type LightboxWatermark } from '@/components/Lightbox';
 import { ProofingProvider, useProofing } from '@/components/ProofingContext';
 import { ProofingModal } from '@/components/ProofingModal';
 import { FadeIn } from '@/components/FadeIn';
-import { LeafletMap, escapeHtml } from '@/components/LeafletMap';
+import { escapeHtml } from '@/lib/escapeHtml';
 import type { ParsedEssay, EssayBlock } from '@/lib/essay';
 import { renderInlineMarkdown } from '@/lib/essay';
 import { essayPhotoSequence } from '@/lib/essaySequence';
 import type { PhotoItem } from './PhotoGrid';
 import './essay.css';
 import { useDictionary } from '@/components/I18nProvider';
+
+/**
+ * The map block is the only thing in an essay that needs Leaflet, and most
+ * essays have none. Imported statically, LeafletMap put its wrapper and
+ * Leaflet's stylesheet (render-blocking CSS) on every album, subpage and
+ * journal page. The map only ever drew on the client — Leaflet itself was
+ * already imported inside an effect — so the server renders the same empty
+ * container it rendered before, and the wrapper arrives with the map.
+ */
+const LeafletMap = dynamic(() => import('@/components/LeafletMap').then((m) => m.LeafletMap), {
+  ssr: false,
+  loading: () => <div className="essay-map" />,
+});
 
 interface EssayViewProps {
   essay: ParsedEssay;

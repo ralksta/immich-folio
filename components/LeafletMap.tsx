@@ -33,15 +33,7 @@ interface LeafletMapProps {
   onError?: (err: unknown) => void;
 }
 
-/** Escapes special HTML characters for Leaflet's string-based popups and icons. */
-export function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+export { escapeHtml } from '@/lib/escapeHtml';
 
 export function LeafletMap({
   markers,
