@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import type { Metadata } from 'next';
-import { readJournalEntry, listJournalEntries } from '@/lib/admin/journal-service';
+import { readJournalEntryForRequest, listJournalEntriesForRequest } from '@/lib/journal.server';
 import type { ParsedJournal } from '@/lib/journal';
 import { buildEssayPayload } from '@/app/[...path]/essayPayload';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
@@ -24,7 +24,7 @@ interface JournalDetailPageProps {
 
 export async function generateMetadata({ params }: JournalDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const entry = await readJournalEntry(slug);
+  const entry = await readJournalEntryForRequest(slug);
   const t = getServerDictionary();
   if (!entry) return { title: t.journal.notFound };
 
@@ -98,7 +98,7 @@ function isJournalAuthenticated(
 
 export default async function JournalDetailPage({ params }: JournalDetailPageProps) {
   const { slug } = await params;
-  const entry = await readJournalEntry(slug);
+  const entry = await readJournalEntryForRequest(slug);
 
   if (!entry) {
     notFound();
@@ -134,7 +134,7 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
   // here even by name, the same rule the index and this entry's own gate
   // already enforce (GHSA-fvgv-97g3-wjr7).
   const journalCookies = await cookies();
-  const allEntries = await listJournalEntries();
+  const allEntries = await listJournalEntriesForRequest();
   const visibleEntries = isAuthedAdmin
     ? allEntries
     : allEntries.filter((e) => {

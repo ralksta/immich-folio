@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { type JournalEntrySummary } from '@/lib/journal';
 import { formatJournalDate } from '@/lib/journalDate';
-import { listJournalEntries } from '@/lib/admin/journal-service';
+import { listJournalEntriesForRequest } from '@/lib/journal.server';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import { isAuthenticated } from '@/lib/auth';
 import { immich } from '@/lib/immich';
@@ -30,7 +30,7 @@ interface EnrichedJournalEntry extends JournalEntrySummary {
 export default async function JournalIndexPage() {
   const t = getServerDictionary();
   const isAuthedAdmin = await isAdminAuthenticated();
-  const allEntries = await listJournalEntries();
+  const allEntries = await listJournalEntriesForRequest();
 
   // Non-admins only see published entries, and only a password-protected one
   // once they have actually unlocked it — the card otherwise names it, shows
