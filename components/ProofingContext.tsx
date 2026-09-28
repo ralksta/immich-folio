@@ -1,8 +1,11 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { encodeProofBitmask, decodeProofBitmask } from '@/lib/proofing';
 import { useDictionary } from './I18nProvider';
+import { ProofingContext } from './useProofing';
+
+export { useProofing } from './useProofing';
 
 /** What the server tells a client proofing page about its session. */
 export interface ProofSessionInit {
@@ -36,7 +39,7 @@ export interface ProofSessionState {
 /** How long the selection may sit unsaved after the last heart. */
 const SAVE_DEBOUNCE_MS = 600;
 
-interface ProofingContextType {
+export interface ProofingContextType {
   favorites: Set<string>;
   toggleFavorite: (token: string) => void;
   isFavorite: (token: string) => boolean;
@@ -61,8 +64,6 @@ interface ProofingContextType {
   /** Present on a client proofing link only. */
   session?: ProofSessionState;
 }
-
-const ProofingContext = createContext<ProofingContextType | null>(null);
 
 export function ProofingProvider({
   children,
@@ -335,9 +336,4 @@ export function ProofingProvider({
       {children}
     </ProofingContext.Provider>
   );
-}
-
-export function useProofing() {
-  const context = useContext(ProofingContext);
-  return context;
 }
