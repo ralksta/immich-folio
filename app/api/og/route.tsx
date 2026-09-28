@@ -3,7 +3,11 @@
  * Uses next/og (ImageResponse) to create 1200×630 cards.
  * Reads accent color from theme config.
  *
- * GET /api/og?title=Album+Name&subtitle=12+photos
+ * GET /api/og?title=Album+Name&subtitle=12+photos&sig=…
+ *
+ * Only text signed by `ogImageUrl()` (lib/ogImage.ts) is rendered; anything
+ * else gets the plain site card, so the site cannot be made to print
+ * arbitrary text under its own name.
  */
 
 import { ImageResponse } from 'next/og';
@@ -11,6 +15,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 import { siteLockResponse } from '@/lib/auth';
+import { verifiedOgText } from '@/lib/ogImage';
 
 /**
  * OG image rendering runs satori + resvg per request and each unique ?title
@@ -22,7 +27,7 @@ const OG_RPM = 30;
 
 export async function GET(request: NextRequest) {
   const ip = getClientIp(request);
-  const { theme, siteTitle } = getConfig();
+  const { theme, siteTitle, authSecret } = getConfig();
 
   const { success, resetAt } = checkRateLimit(`og:${ip}`, OG_RPM);
   if (!success) {
@@ -40,11 +45,12 @@ export async function GET(request: NextRequest) {
   const locked = siteLockResponse(request);
   if (locked) return locked;
 
-  const { searchParams } = request.nextUrl;
   // The site title is already in the visitor's language, or falls back to the
-  // locale's own word for "Gallery" (lib/config).
-  const title = (searchParams.get('title') || siteTitle || '').slice(0, 200);
-  const subtitle = (searchParams.get('subtitle') || '').slice(0, 100);
+  // locale's own word for "Gallery" (lib/config). It is also the card for any
+  // URL whose text the site did not sign itself.
+  const signed = verifiedOgText(request.nextUrl.searchParams, authSecret);
+  const title = signed?.title || siteTitle || '';
+  const subtitle = signed?.subtitle ?? '';
 
   return new ImageResponse(
     <div
