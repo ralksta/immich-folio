@@ -1,4 +1,7 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import os from 'os';
+import path from 'path';
+import { mkdtemp, rm } from 'fs/promises';
 import {
   parseJournalMarkdown,
   serializeJournalMarkdown,
@@ -7,22 +10,8 @@ import {
   isValidSlug,
   sanitizeSlug,
 } from '../journal';
-import {
-  writeJournalEntry,
-  readJournalEntry,
-  deleteJournalEntry,
-  listJournalEntries,
-} from '../admin/journal-service';
 
 describe('Journal Service & Parser', () => {
-  const testSlug = 'test-journey-nordkap';
-
-  afterEach(async () => {
-    try {
-      await deleteJournalEntry(testSlug);
-    } catch {}
-  });
-
   describe('slug validation and sanitization', () => {
     it('validates safe alphanumeric and hyphenated slugs', () => {
       expect(isValidSlug('my-story-2026')).toBe(true);
@@ -149,7 +138,28 @@ A paragraph of text.
   });
 
   describe('filesystem CRUD operations', () => {
+    // The service resolves content/journal from process.cwd() at import time.
+    // Without a temp cwd this wrote a real entry into the checkout's content/
+    // — the live site's, in a deployment — and left a .deleted.bak behind.
+    const testSlug = 'test-journey-nordkap';
+    let root: string;
+    let service: typeof import('../admin/journal-service');
+
+    beforeEach(async () => {
+      root = await mkdtemp(path.join(os.tmpdir(), 'folio-journal-crud-'));
+      vi.spyOn(process, 'cwd').mockReturnValue(root);
+      vi.resetModules();
+      service = await import('../admin/journal-service');
+    });
+
+    afterEach(async () => {
+      vi.restoreAllMocks();
+      await rm(root, { recursive: true, force: true });
+    });
+
     it('writes, reads, lists and deletes journal files safely', async () => {
+      const { writeJournalEntry, readJournalEntry, deleteJournalEntry, listJournalEntries } =
+        service;
       const testContent = `---
 title: "Vitest Journey"
 date: "2026-08-14"
