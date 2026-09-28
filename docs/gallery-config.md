@@ -618,7 +618,15 @@ Configured in `settings.yaml`:
 proofing:
   enabled: true # hearts, selection bar and export modal (default: true)
   allowMailto: true # offer "send by email" alongside the copyable list (default: true)
+  email: proofs@example.com # recipient of that email (default: footer.email)
 ```
+
+The email draft goes to `proofing.email`, or to the footer contact email
+(`footer.email`) when that is unset. With neither configured the dialog hides
+the email button rather than opening a draft with an empty **To:**. The address
+is set in the admin panel under **Settings → General → Proofing email**, and it
+reaches the page encoded like the footer address, so it does not appear in the
+HTML in plain text.
 
 A subpage overrides `enabled` in either direction — useful to keep proofing off
 across a public portfolio and switch it on for a single client handover:

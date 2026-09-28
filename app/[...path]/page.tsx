@@ -566,6 +566,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
           showGear={config.exif.camera}
           proofing={proofingFor(result.subpage)}
           allowMailto={config.proofing.allowMailto}
+          encodedMailto={encodedMailto}
           downloadArchiveUrl={config.albumDownloads[album.id] ? archiveUrl(album.id) : undefined}
           {...heroData}
         />
@@ -676,6 +677,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       showGear={config.exif.camera}
       proofing={proofingFor()}
       allowMailto={config.proofing.allowMailto}
+      encodedMailto={encodedMailto}
       downloadArchiveUrl={config.albumDownloads[album.id] ? archiveUrl(album.id) : undefined}
       {...heroData}
     />

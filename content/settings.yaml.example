@@ -111,6 +111,16 @@ footer:
   email: "hello@example.com"
   website: "https://example.com"
 
+# ── Client proofing ──────────────────────────────────────────────
+# Hearts on every photo, a selection bar and an export dialog. A subpage's own
+# `proofing:` in gallery.yaml overrides `enabled` in either direction.
+# "Send by email" addresses `email`, else footer.email, and is hidden when
+# neither is set.
+# proofing:
+#   enabled: true
+#   allowMailto: true
+#   email: "proofs@example.com"
+
 # ── Privacy policy ───────────────────────────────────────────────
 # The text lives in content/privacy.md, written in the admin panel under
 # Settings → Legal. /privacy is shown, and linked in the footer, while this is
