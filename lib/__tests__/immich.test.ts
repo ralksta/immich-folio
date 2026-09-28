@@ -16,7 +16,8 @@ vi.mock('../config', async () => {
   const actual = await vi.importActual<typeof config>('../config');
   return {
     ...actual,
-    getConfig: () => ({
+    // A spy, so the tests below can count how often the client reads it.
+    getConfig: vi.fn(() => ({
       immich: { apiUrl: 'http://immich.test/api', apiKey: 'test-key' },
       authSecret: 'test-auth-secret-32-chars-long-min',
       albums: ['album-1', 'album-2'],
@@ -34,7 +35,7 @@ vi.mock('../config', async () => {
       cacheTtl: 60_000,
       staleMaxAge: 86_400_000,
       immichTimeoutMs: 15000,
-    }),
+    })),
   };
 });
 
@@ -564,6 +565,59 @@ describe('ImmichClient', () => {
 
       const albums = await immich.getStandaloneAlbums();
       expect(albums.map((a) => a.id)).toEqual(['album-2', 'album-1']);
+    });
+  });
+
+  /**
+   * getConfig() re-checks the content files and clones the whole config on
+   * every call, and the client used to call it once per property it read —
+   * four times per streamed image, twice per album on a list refresh.
+   */
+  describe('reads the config once per operation', () => {
+    const configReads = () => vi.mocked(config.getConfig).mock.calls.length;
+    const json = (body: unknown) => ({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: async () => body,
+    });
+
+    it('streamAsset(): once per image', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        body: new ReadableStream(),
+        headers: { get: () => 'image/jpeg' },
+      });
+
+      await immich.streamAsset('asset-1', 'preview');
+
+      expect(configReads()).toBe(1);
+    });
+
+    it('getAlbums(): twice on a refresh, however many albums there are', async () => {
+      const album = (id: string) => ({ id, albumName: id, assetCount: 1, assets: [] });
+      mockFetch.mockResolvedValueOnce(json([album('album-1'), album('album-2')]));
+
+      expect(await immich.getAlbums()).toHaveLength(2);
+
+      // One for the request, one for filtering, naming and caching the list.
+      expect(configReads()).toBe(2);
+    });
+
+    it('getAlbum(): twice on a cache hit', async () => {
+      mockFetch.mockImplementation(async (url: string) =>
+        json(
+          url.includes('/search/metadata')
+            ? { assets: { items: [], nextPage: null } }
+            : { id: 'album-1', albumName: 'A', assetCount: 0, assets: [], order: 'desc' },
+        ),
+      );
+      await immich.getAlbum('album-1');
+      vi.mocked(config.getConfig).mockClear();
+
+      await immich.getAlbum('album-1');
+
+      // The allowlist check, then the configured sort.
+      expect(configReads()).toBe(2);
     });
   });
 
