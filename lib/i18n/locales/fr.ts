@@ -8,7 +8,9 @@
 
 import type { Dictionary } from '../index';
 
-const plural = (n: number, one: string, other: string) => `${n} ${n === 1 ? one : other}`;
+// CLDR: French puts 0 in the singular ("0 photo", "0 jour"), unlike English.
+const isOne = (n: number) => n === 0 || n === 1;
+const plural = (n: number, one: string, other: string) => `${n} ${isOne(n) ? one : other}`;
 
 export const fr: Dictionary = {
   dateLocale: 'fr-FR',
@@ -189,7 +191,7 @@ export const fr: Dictionary = {
     saved: 'Enregistré',
     favorite: 'Favori',
     showAll: 'Tout afficher',
-    selected: (n: number) => `❤️ ${n} ${n === 1 ? 'sélectionnée' : 'sélectionnées'}`,
+    selected: (n: number) => `❤️ ${n} ${isOne(n) ? 'sélectionnée' : 'sélectionnées'}`,
     shareExport: 'Partager & exporter',
     modalTitle: (n: number) => `❤️ Sélection (${n})`,
     closeModal: 'Fermer la fenêtre',
@@ -269,7 +271,7 @@ export const fr: Dictionary = {
     tooMany: 'Trop de messages en peu de temps. Réessayez dans une minute.',
     failed: 'Le message n’a pas pu être envoyé. Réessayez plus tard.',
     privacy: (days: number) =>
-      `Votre message est conservé sur le serveur de ce site, sert uniquement à vous répondre et est supprimé après ${days} ${days === 1 ? 'jour' : 'jours'}.`,
+      `Votre message est conservé sur le serveur de ce site, sert uniquement à vous répondre et est supprimé après ${days} ${isOne(days) ? 'jour' : 'jours'}.`,
   },
 
   privacy: {

@@ -219,3 +219,132 @@ describe('plural helpers', () => {
     },
   );
 });
+
+/**
+ * Count strings at the CLDR boundaries. French puts 0 in the singular ("0 photo"),
+ * the other five use the singular for exactly 1 — so a shared `n === 1` helper
+ * was wrong for French, and a hard-coded plural noun ("(1 items)") was wrong for
+ * everyone at 1. Italian "foto"/"album" and the Dutch/German participles are
+ * invariable, which the table spells out rather than skips.
+ */
+type Counted = (d: Dictionary, n: number) => string;
+const COUNTED = {
+  photos: (d, n) => d.common.photos(n),
+  albums: (d, n) => d.common.albums(n),
+  collections: (d, n) => d.common.collections(n),
+  selected: (d, n) => d.proofing.selected(n),
+  mailSubject: (d, n) => d.proofing.mailSubject(n),
+  downloadsLeft: (d, n) => d.proofSession.downloadsLeft(n),
+} satisfies Record<string, Counted>;
+type CountedKey = keyof typeof COUNTED;
+
+const PLURAL_TABLE: [string, Dictionary, Record<CountedKey, [string, string, string]>][] = [
+  [
+    'en',
+    en,
+    {
+      photos: ['0 photos', '1 photo', '2 photos'],
+      albums: ['0 albums', '1 album', '2 albums'],
+      collections: ['0 collections', '1 collection', '2 collections'],
+      selected: ['❤️ 0 Selected', '❤️ 1 Selected', '❤️ 2 Selected'],
+      mailSubject: [
+        'Photo Selection (0 items)',
+        'Photo Selection (1 item)',
+        'Photo Selection (2 items)',
+      ],
+      downloadsLeft: ['0 downloads left', '1 download left', '2 downloads left'],
+    },
+  ],
+  [
+    'de',
+    de,
+    {
+      photos: ['0 Fotos', '1 Foto', '2 Fotos'],
+      albums: ['0 Alben', '1 Album', '2 Alben'],
+      collections: ['0 Sammlungen', '1 Sammlung', '2 Sammlungen'],
+      selected: ['❤️ 0 ausgewählt', '❤️ 1 ausgewählt', '❤️ 2 ausgewählt'],
+      mailSubject: ['Fotoauswahl (0 Fotos)', 'Fotoauswahl (1 Foto)', 'Fotoauswahl (2 Fotos)'],
+      downloadsLeft: ['Noch 0 Downloads', 'Noch 1 Download', 'Noch 2 Downloads'],
+    },
+  ],
+  [
+    'fr',
+    fr,
+    {
+      photos: ['0 photo', '1 photo', '2 photos'],
+      albums: ['0 album', '1 album', '2 albums'],
+      collections: ['0 collection', '1 collection', '2 collections'],
+      selected: ['❤️ 0 sélectionnée', '❤️ 1 sélectionnée', '❤️ 2 sélectionnées'],
+      mailSubject: [
+        'Sélection de photos (0)',
+        'Sélection de photos (1)',
+        'Sélection de photos (2)',
+      ],
+      downloadsLeft: [
+        '0 téléchargement restant',
+        '1 téléchargement restant',
+        '2 téléchargements restants',
+      ],
+    },
+  ],
+  [
+    'es',
+    es,
+    {
+      photos: ['0 fotos', '1 foto', '2 fotos'],
+      albums: ['0 álbumes', '1 álbum', '2 álbumes'],
+      collections: ['0 colecciones', '1 colección', '2 colecciones'],
+      selected: ['❤️ 0 seleccionadas', '❤️ 1 seleccionada', '❤️ 2 seleccionadas'],
+      mailSubject: ['Selección de fotos (0)', 'Selección de fotos (1)', 'Selección de fotos (2)'],
+      downloadsLeft: ['0 descargas restantes', '1 descarga restante', '2 descargas restantes'],
+    },
+  ],
+  [
+    'it',
+    itIT,
+    {
+      photos: ['0 foto', '1 foto', '2 foto'],
+      albums: ['0 album', '1 album', '2 album'],
+      collections: ['0 collezioni', '1 collezione', '2 collezioni'],
+      selected: ['❤️ 0 selezionate', '❤️ 1 selezionata', '❤️ 2 selezionate'],
+      mailSubject: ['Selezione di foto (0)', 'Selezione di foto (1)', 'Selezione di foto (2)'],
+      downloadsLeft: ['0 download rimasti', '1 download rimasto', '2 download rimasti'],
+    },
+  ],
+  [
+    'nl',
+    nl,
+    {
+      photos: ['0 foto’s', '1 foto', '2 foto’s'],
+      albums: ['0 albums', '1 album', '2 albums'],
+      collections: ['0 collecties', '1 collectie', '2 collecties'],
+      selected: ['❤️ 0 geselecteerd', '❤️ 1 geselecteerd', '❤️ 2 geselecteerd'],
+      mailSubject: ['Fotoselectie (0)', 'Fotoselectie (1)', 'Fotoselectie (2)'],
+      downloadsLeft: ['Nog 0 downloads', 'Nog 1 download', 'Nog 2 downloads'],
+    },
+  ],
+];
+
+describe('plural forms at 0, 1 and 2', () => {
+  it('cover every supported locale', () => {
+    expect(PLURAL_TABLE.map(([code]) => code).sort()).toEqual([...SUPPORTED_LOCALES].sort());
+  });
+
+  describe.each(PLURAL_TABLE)('%s', (_code, dict, expected) => {
+    it.each(Object.keys(COUNTED) as CountedKey[])('%s', (key) => {
+      expect([0, 1, 2].map((n) => COUNTED[key](dict, n))).toEqual(expected[key]);
+    });
+  });
+
+  it.each([
+    ['en', en, ['0 days.', '1 day.', '2 days.']],
+    ['de', de, ['0 Tagen gelöscht.', '1 Tag gelöscht.', '2 Tagen gelöscht.']],
+    ['fr', fr, ['0 jour.', '1 jour.', '2 jours.']],
+    ['es', es, ['0 días.', '1 día.', '2 días.']],
+    ['it', itIT, ['0 giorni.', '1 giorno.', '2 giorni.']],
+    ['nl', nl, ['0 dagen verwijderd.', '1 dag verwijderd.', '2 dagen verwijderd.']],
+  ] as const)('contact retention days in %s', (_code, dict, endings) => {
+    const got = [0, 1, 2].map((n) => dict.contact.privacy(n));
+    got.forEach((text, i) => expect(text.endsWith(` ${endings[i]}`), text).toBe(true));
+  });
+});

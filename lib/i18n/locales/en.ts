@@ -210,7 +210,7 @@ export const en = {
     listEmpty: (albumName: string) => `${albumName}: No photos selected.`,
     listSummary: (albumName: string, count: number, indices: string) =>
       `${albumName} — Selected Photos (${count}): ${indices}`,
-    mailSubject: (n: number) => `Photo Selection (${n} items)`,
+    mailSubject: (n: number) => `Photo Selection (${plural(n, 'item', 'items')})`,
     mailBody: (list: string, url: string) =>
       `Hello,\n\nHere is my photo selection:\n\n${list}\n\nShare Link: ${url}\n\nBest regards,`,
   },
