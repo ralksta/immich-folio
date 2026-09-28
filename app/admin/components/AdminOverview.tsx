@@ -15,9 +15,11 @@ import * as Icons from './Icons';
 import { adminGet } from './useAdminFetch';
 import type { DoctorFinding, DoctorLevel } from '@/lib/admin/doctor';
 import { DOCTOR_LEVEL_EVENT } from './systemHealth';
+import { parseGalleryYaml } from './page-builder/galleryYaml';
 
 interface OverviewData {
-  gallery: { hero?: unknown; subpages?: Array<{ enabled?: boolean; page?: string }> } | null;
+  /** gallery.yaml as stored; `subpages` may be a list or the older name → albums map. */
+  gallery: Record<string, unknown> | null;
   journal: Array<{ frontmatter: { draft?: boolean } }> | null;
   messages: Array<{ read: boolean; name: string }> | null;
   analytics: { days?: Record<string, { pageviews?: number }> } | null;
@@ -86,8 +88,9 @@ export default function AdminOverview() {
     };
   }, []);
 
-  // `- page:` entries are content pages placed in the menu, not subpages (#722).
-  const subpages = (data?.gallery?.subpages ?? []).filter((sp) => typeof sp.page !== 'string');
+  // Read the way the page builder reads it: both shapes of `subpages:`, and
+  // `- page:` entries, which are content pages in the menu, not subpages (#722).
+  const subpages = data?.gallery ? parseGalleryYaml(data.gallery).subpages : [];
   const published = subpages.filter((sp) => sp.enabled !== false).length;
   const heroRaw = data?.gallery?.hero;
   const heroCount = Array.isArray(heroRaw) ? heroRaw.length : heroRaw ? 1 : 0;
