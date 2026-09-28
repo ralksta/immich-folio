@@ -186,14 +186,28 @@ export function isValidSlug(slug: string): boolean {
 }
 
 export function sanitizeSlug(input: string): string {
-  return (
-    input
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9_-]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '') || 'untitled'
-  );
+  return slugFieldValue(input.trim()).replace(/-$/, '') || 'untitled';
+}
+
+/**
+ * A slug field's value while it is being typed: sanitizeSlug() without the two
+ * steps that only suit a finished slug. Dropping the trailing "-" on every
+ * keystroke made a hyphen impossible to type ("about-" became "about", and the
+ * next key gave "aboutu"), and an emptied field jumped to "untitled". Pass the
+ * result through sanitizeSlug() before using it as a slug.
+ *
+ * Accented letters keep their base letter ("für" → "fur", "Straße" →
+ * "strasse"), as subpage slugs do; before, each one split the word ("f-r").
+ */
+export function slugFieldValue(input: string): string {
+  return input
+    .replace(/ß/g, 'ss')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-/, '');
 }
 
 /** Simple Markdown inline formatting (bold, italic, links) */

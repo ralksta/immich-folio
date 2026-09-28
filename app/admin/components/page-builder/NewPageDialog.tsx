@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { sanitizeSlug } from '@/lib/journal';
+import { sanitizeSlug, slugFieldValue } from '@/lib/journal';
 import { describeCollision, pageSlugCollision, type SlugTakenBy } from '@/lib/pages';
 import { useModalDialog } from '@/hooks/useModalDialog';
 
@@ -30,7 +30,10 @@ export default function NewPageDialog({
   const [slugEdited, setSlugEdited] = useState(false);
   const [showInMenu, setShowInMenu] = useState(true);
 
-  const effectiveSlug = slug || (title.trim() ? sanitizeSlug(title) : '');
+  /** What the field shows: the typed slug, or the one derived from the title. */
+  const fieldSlug = slug || (title.trim() ? sanitizeSlug(title) : '');
+  /** What gets created: the typed slug finished, e.g. without a trailing "-". */
+  const effectiveSlug = slug ? sanitizeSlug(slug) : fieldSlug;
   const collision = !effectiveSlug
     ? null
     : existingPageSlugs.includes(effectiveSlug)
@@ -79,12 +82,12 @@ export default function NewPageDialog({
               <input
                 id="new-page-slug"
                 className="subpage-name-input"
-                value={effectiveSlug}
+                value={fieldSlug}
                 placeholder="pricing"
                 aria-describedby="new-page-slug-hint"
                 onChange={(e) => {
                   setSlugEdited(e.target.value !== '');
-                  setSlug(e.target.value ? sanitizeSlug(e.target.value) : '');
+                  setSlug(slugFieldValue(e.target.value));
                 }}
               />
               <span className="input-slug-preview">/{effectiveSlug || 'slug'}</span>
