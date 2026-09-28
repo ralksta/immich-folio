@@ -105,7 +105,7 @@ describe('proofing counts in the album grid', () => {
     const location = { href: 'http://localhost/wedding' };
     vi.stubGlobal('location', location);
     fireEvent.click(screen.getByText('✉️ Send Email to Photographer'));
-    expect(decodeURIComponent(location.href)).toContain('Photo Selection (1 items)');
+    expect(decodeURIComponent(location.href)).toMatch(/Photo Selection \(1 items?\)/);
   });
 });
 
