@@ -41,7 +41,11 @@ export default function FooterSection({ settings, update }: SectionProps) {
             value={settings.footer?.email || ''}
             onChange={(e) => update('footer.email', e.target.value)}
             placeholder="hello@example.com"
+            aria-describedby="footer-contact-email-hint"
           />
+          <p id="footer-contact-email-hint" className="admin-field-hint">
+            Also the recipient when a client emails a proofing selection.
+          </p>
         </div>
         <div className="admin-field">
           <label htmlFor="footer-personal-website">Personal Website</label>

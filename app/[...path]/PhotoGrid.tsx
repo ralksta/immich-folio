@@ -62,6 +62,11 @@ interface PhotoGridProps {
   /** Offer the "send by email" button in the proofing modal. */
   allowMailto?: boolean;
   /**
+   * The photographer's address for that button, as encodeEmail() writes it;
+   * decoded only when the button is clicked. Without it `To:` stays empty.
+   */
+  mailtoEmail?: string;
+  /**
    * The ZIP endpoint for this album, when it offers downloads. Lets the
    * proofing modal offer a "download selected" action (#475).
    */
@@ -389,6 +394,7 @@ export function PhotoGrid(props: PhotoGridProps) {
       albumTokens={albumTokens}
       albumName={props.albumName}
       allowMailto={props.allowMailto ?? true}
+      mailtoEmail={props.mailtoEmail}
       downloadArchiveUrl={props.downloadArchiveUrl}
       session={props.proofSession}
     >

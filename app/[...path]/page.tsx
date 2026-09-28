@@ -43,6 +43,7 @@ import { mapBlockAssetIds } from '@/lib/journal';
 import { strictestPrecision, type LocationPrecision } from '@/lib/mapPrecision';
 import { resolveEssayFile, generatedEssayCaption } from '@/lib/essaySource';
 import { getServerDictionary } from '@/lib/i18n/server';
+import { encodeEmail } from '@/lib/emailObfuscation';
 import { contentPageMetadata, renderContentPage } from './contentPage';
 
 // Render at request time — requires live Immich connection
@@ -268,6 +269,13 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
   // reached without a subpage follow the global setting.
   const proofingFor = (subpage?: { proofing?: boolean }) =>
     resolveProofing(subpage, config.proofing.enabled);
+  // The draft's recipient, encoded like the footer's address so a harvester
+  // reading the RSC payload does not find it. Left out when the email button
+  // is switched off.
+  const proofingEmail =
+    config.proofing.allowMailto && config.proofing.email
+      ? encodeEmail(config.proofing.email)
+      : undefined;
 
   // EXPERIMENTAL: per-album grid override — merged over the subpage grid so
   // the precedence is global < subpage < album.
@@ -343,6 +351,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         showGear={config.exif.camera}
         proofing={proofingFor(subpageData?.subpage)}
         allowMailto={config.proofing.allowMailto}
+        mailtoEmail={proofingEmail}
         downloadArchiveUrl={config.albumDownloads[album.id] ? archiveUrl(album.id) : undefined}
         {...heroData}
       />
@@ -509,6 +518,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
           watermark={config.watermark}
           proofing={essayProofing}
           allowMailto={config.proofing.allowMailto}
+          mailtoEmail={proofingEmail}
         />
       );
     }
@@ -557,6 +567,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
           showGear={config.exif.camera}
           proofing={proofingFor(result.subpage)}
           allowMailto={config.proofing.allowMailto}
+          mailtoEmail={proofingEmail}
           downloadArchiveUrl={config.albumDownloads[album.id] ? archiveUrl(album.id) : undefined}
           {...heroData}
         />
@@ -667,6 +678,7 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       showGear={config.exif.camera}
       proofing={proofingFor()}
       allowMailto={config.proofing.allowMailto}
+      mailtoEmail={proofingEmail}
       downloadArchiveUrl={config.albumDownloads[album.id] ? archiveUrl(album.id) : undefined}
       {...heroData}
     />

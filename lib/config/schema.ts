@@ -270,6 +270,11 @@ export interface AppConfig {
   proofing: {
     enabled: boolean;
     allowMailto: boolean;
+    /**
+     * Recipient of the "email to photographer" draft: `footer.email`, else the
+     * Impressum address when that page is on. Undefined leaves `To:` empty.
+     */
+    email?: string;
   };
   aboutEnabled: boolean;
   albumOverrides: Record<string, string>;

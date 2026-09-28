@@ -14,7 +14,7 @@ vi.mock('@/lib/env', () => ({
   },
 }));
 
-import { resolveProofing } from '@/lib/config';
+import { resolveProofing, resolveProofingEmail } from '@/lib/config';
 
 /**
  * Client proofing hands a gallery to a client and takes their picks back, so
@@ -46,5 +46,41 @@ describe('resolveProofing', () => {
     // Same distinction stated directly — `proofing: false` must not read as
     // "unset" and inherit the global default.
     expect(resolveProofing({ proofing: false }, true)).not.toBe(resolveProofing(undefined, true));
+  });
+});
+
+/**
+ * "Email to photographer" opened a draft with no recipient (#736). The address
+ * comes from the settings that already hold it, footer first.
+ */
+describe('resolveProofingEmail', () => {
+  const legal = (enabled: boolean, email?: string) => ({
+    enabled,
+    name: '',
+    address: '',
+    zipCity: '',
+    country: '',
+    email,
+  });
+
+  it('uses the footer address', () => {
+    expect(resolveProofingEmail({ email: ' me@example.com ' }, legal(true, 'l@example.com'))).toBe(
+      'me@example.com',
+    );
+  });
+
+  it('falls back to the Impressum address while that page is on', () => {
+    expect(resolveProofingEmail({ email: '  ' }, legal(true, 'l@example.com'))).toBe(
+      'l@example.com',
+    );
+    expect(resolveProofingEmail(undefined, legal(true, 'l@example.com'))).toBe('l@example.com');
+  });
+
+  it('does not publish the address of a disabled Impressum', () => {
+    expect(resolveProofingEmail(undefined, legal(false, 'l@example.com'))).toBeUndefined();
+  });
+
+  it('is undefined when nothing is configured', () => {
+    expect(resolveProofingEmail()).toBeUndefined();
   });
 });

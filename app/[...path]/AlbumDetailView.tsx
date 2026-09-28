@@ -34,6 +34,11 @@ interface AlbumDetailViewProps {
   /** Offer the "send by email" button in the proofing modal. */
   allowMailto?: boolean;
   /**
+   * The photographer's address for that button, as encodeEmail() writes it;
+   * decoded only when the button is clicked. Without it `To:` stays empty.
+   */
+  mailtoEmail?: string;
+  /**
    * The ZIP endpoint for this album, when it offers downloads (#475). Renders a
    * "download album" link in the header and lets the proofing modal offer a
    * "download selected" action.
@@ -64,6 +69,7 @@ export function AlbumDetailView({
   showGear = true,
   proofing,
   allowMailto,
+  mailtoEmail,
   downloadArchiveUrl,
   nav,
   structuredData,
@@ -136,6 +142,7 @@ export function AlbumDetailView({
         showExifPanel={showExifPanel}
         proofing={proofing}
         allowMailto={allowMailto}
+        mailtoEmail={mailtoEmail}
         downloadArchiveUrl={downloadArchiveUrl}
         albumName={album.albumName}
         proofSession={proofSession}

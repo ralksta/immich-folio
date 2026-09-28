@@ -5,6 +5,18 @@ import { useProofing } from './ProofingContext';
 import { IconCheck, IconCopy, IconLink } from './Icons';
 import { useDictionary } from './I18nProvider';
 import { useModalDialog } from '@/hooks/useModalDialog';
+import { decodeEmail } from '@/lib/emailObfuscation';
+
+/**
+ * The `To:` part of the draft. It used to be left out entirely, so the mail
+ * app opened with no recipient (#736). Percent-encoded so an address can
+ * never add its own `?`/`&` fields, but with `@` kept readable — mail apps
+ * show this string as the recipient.
+ */
+function mailtoRecipient(encoded?: string): string {
+  const address = encoded ? decodeEmail(encoded) : '';
+  return encodeURIComponent(address).replace(/%40/g, '@');
+}
 
 export function ProofingModal() {
   const t = useDictionary();
@@ -34,6 +46,7 @@ export function ProofingModal() {
     getSelectedTokens,
     clearFavorites,
     allowMailto,
+    mailtoEmail,
     downloadArchiveUrl,
   } = proofing;
 
@@ -66,7 +79,7 @@ export function ProofingModal() {
   const handleMailto = () => {
     const subject = encodeURIComponent(t.proofing.mailSubject(favorites.size));
     const body = encodeURIComponent(t.proofing.mailBody(getFormattedList(), getProofingUrl()));
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:${mailtoRecipient(mailtoEmail)}?subject=${subject}&body=${body}`;
   };
 
   const handleDownloadSelection = () => {
