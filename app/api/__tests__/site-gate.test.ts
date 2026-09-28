@@ -91,6 +91,14 @@ const GATED: { name: string; call: () => Promise<Response> }[] = [
         { params: Promise.resolve({ album: 'tok' }) } as never,
       ),
   },
+  {
+    name: 'GET /api/download/[album]/[id]',
+    call: async () =>
+      (await import('../download/[album]/[id]/route')).GET(
+        request('/api/download/tok/tok') as never,
+        { params: Promise.resolve({ album: 'tok', id: 'tok' }) } as never,
+      ),
+  },
   // Client proofing links: the site password applies to clients as well.
   {
     name: 'PUT /api/proof/[token]/selection',
@@ -128,6 +136,68 @@ const GATED: { name: string; call: () => Promise<Response> }[] = [
       ),
   },
 ];
+
+/**
+ * Routes that answer a locked site on purpose, keyed like the GATED names
+ * (path under /api). Everything else under app/api must be in GATED.
+ * /api/admin is absent: it has its own password and its own suite
+ * (app/api/admin/__tests__/admin-guards.test.ts).
+ */
+const OPEN: Record<string, string> = {
+  health: 'a container health probe runs without cookies',
+  auth: 'the login endpoint cannot sit behind the lock it opens',
+  'fonts/css': 'the gate page is set in the theme fonts',
+  'fonts/file/[name]': 'the gate page is set in the theme fonts',
+  favicon: 'the gate page shows the site icon',
+  install: 'the first-run wizard; setup-token gated, refuses once installed',
+  'install/albums': 'the first-run wizard; setup-token gated, refuses once installed',
+  webhook: 'server-to-server from Immich, HMAC-verified',
+  'analytics/track': 'counts a view of the gate itself; returns no content',
+};
+
+/** `GET /api/download/[album]/[id]` → `download/[album]/[id]`. */
+const routeDir = (name: string) => name.replace(/^[A-Z]+ \/api\//, '');
+
+describe('site gate coverage', () => {
+  it('has a GATED or OPEN row for every public route module under app/api', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const apiDir = path.join(process.cwd(), 'app/api');
+
+    const found: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (entry.name === '__tests__') continue;
+          walk(full);
+        } else if (/^route\.tsx?$/.test(entry.name)) {
+          found.push(path.relative(apiDir, path.dirname(full)).replace(/\\/g, '/'));
+        }
+      }
+    };
+    walk(apiDir);
+
+    const covered = new Set([...GATED.map((r) => routeDir(r.name)), ...Object.keys(OPEN)]);
+    const uncovered = found.filter((p) => !p.startsWith('admin/') && !covered.has(p));
+
+    expect(uncovered, `Public API routes with no site-gate row: ${uncovered.join(', ')}`).toEqual(
+      [],
+    );
+  });
+
+  it('lists no route in OPEN that does not exist', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const missing = Object.keys(OPEN).filter((dir) => {
+      const base = path.join(process.cwd(), 'app/api', dir);
+      return (
+        !fs.existsSync(path.join(base, 'route.ts')) && !fs.existsSync(path.join(base, 'route.tsx'))
+      );
+    });
+    expect(missing).toEqual([]);
+  });
+});
 
 describe('public content routes behind a locked site', () => {
   beforeEach(() => {
