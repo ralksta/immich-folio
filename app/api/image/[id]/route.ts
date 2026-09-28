@@ -3,7 +3,7 @@
  * without exposing the Immich server or API key.
  *
  * Usage: GET /api/image/:token?size=thumbnail|preview|original
- *        GET /api/image/:token?w=640&q=75  (for next/image loader)
+ *        GET /api/image/:token?size=preview&w=1440  (next/image loader, lib/imageSize.ts)
  * The :token is an encoded asset ID (not a raw UUID).
  */
 

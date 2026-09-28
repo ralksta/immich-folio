@@ -62,3 +62,32 @@ export function resolveImageSize(sizeParam: string | null, widthParam: string | 
     explicit && fromWidth ? smaller(explicit, fromWidth) : (explicit ?? fromWidth ?? 'preview');
   return smaller(resolved, MAX_SIZE);
 }
+
+/**
+ * The `?w=` written for each tier: the widest value that still resolves to it.
+ * `resolveImageSize(size, String(TIER_WIDTH[t]))` is `t` for every tier the
+ * ceiling allows, so the canonical URL fetches exactly the rendition the
+ * original width did.
+ */
+const TIER_WIDTH: Record<ImageSize, number> = { thumbnail: 250, preview: 1440, original: 3840 };
+
+/**
+ * One URL per asset and tier, whatever width is asked for.
+ *
+ * The proxy answers every width inside a tier with the same bytes — Immich
+ * has one thumbnail and one preview per asset, and `MAX_SIZE` caps the rest —
+ * but each distinct `?w=` is a separate `immutable` cache entry. next/image
+ * writes eight or more widths into every srcset and the lightbox asked for the
+ * bare URL, so a grid tile and the same photo in the lightbox, or one tile
+ * before and after a rotation, downloaded the identical preview twice.
+ * Collapsing the width to its tier makes all of them one cache entry. `q` is
+ * dropped for the same reason: the proxy never read it.
+ *
+ * `width` defaults to "as large as the ceiling allows" — the lightbox's case.
+ */
+export function canonicalImageUrl(src: string, width: number = Number.MAX_SAFE_INTEGER): string {
+  const queryAt = src.indexOf('?');
+  const sizeParam = queryAt === -1 ? null : new URLSearchParams(src.slice(queryAt + 1)).get('size');
+  const tier = resolveImageSize(sizeParam, String(Math.max(1, Math.round(width))));
+  return `${src}${queryAt === -1 ? '?' : '&'}w=${TIER_WIDTH[tier]}`;
+}
