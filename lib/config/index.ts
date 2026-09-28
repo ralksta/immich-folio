@@ -3,7 +3,7 @@ import path from 'node:path';
 import { env } from '../env';
 import { resolveAuthSecret } from '../secret';
 import { resolveSiteUrl } from '../siteUrl';
-import { getInstallCredentials } from '../install';
+import { getInstallCredentials, installFilePath } from '../install';
 import { loadYaml, clearYamlCache, validateUuid } from './parser';
 import { resolveTheme, VALID_LAYOUTS, DEFAULT_PRESET } from './theme';
 import { ALBUM_SORT_MODES, isAlbumSortMode, type AlbumSortMode } from '../albumSort';
@@ -40,9 +40,13 @@ import type { NavEntry } from '../pages';
 export * from './schema';
 export * from './theme';
 
+/** The last derived config and the inputs it was derived from; see getConfig(). */
+let derived: { inputs: string; config: AppConfig } | null = null;
+
 /** Invalidate the cached YAML so the next getConfig() call re-parses the files. */
 export function invalidateConfigCache(): void {
   clearYamlCache();
+  derived = null;
 }
 
 /**
@@ -627,11 +631,50 @@ function aboutContentExists(): boolean {
   }
 }
 
+/**
+ * Everything deriveConfig() reads, as one string: the path and mtime of each
+ * file (or `-` when it is absent) and the parsed environment.
+ */
+function configInputs(): string {
+  const content = path.join(process.cwd(), 'content');
+  const files = [
+    installFilePath(),
+    path.join(content, 'gallery.yaml'),
+    path.join(content, 'settings.yaml'),
+    path.join(content, 'about.md'),
+  ];
+  // throwIfNoEntry: a missing file is the normal case for install.json and
+  // about.md, and building an ENOENT error costs more than the stat.
+  const stamps = files.map(
+    (file) => `${file}@${fs.statSync(file, { throwIfNoEntry: false })?.mtimeMs ?? '-'}`,
+  );
+  return `${stamps.join('|')}|${JSON.stringify(env)}`;
+}
+
+/**
+ * The site configuration.
+ *
+ * Admin saves can land in a different worker or process than page rendering,
+ * so this cannot be a per-process singleton: freshness comes from the files'
+ * mtimes, re-checked on every call (a statSync each). What is cached is the
+ * derivation. A render and every image request call this many times over
+ * (`immich.config` is a getter), and rebuilding the whole config from the
+ * YAML each time cost more than the stats.
+ *
+ * The inputs are the ones loadYaml() and readInstallFile() already key their
+ * own caches on, so this is never staler than they are. Each caller still
+ * gets its own copy, exactly as before: nothing can mutate the cached one.
+ * A config that throws is not cached, so it throws again on the next call.
+ */
 export function getConfig(): AppConfig {
-  // No in-memory config cache: admin saves can land in a different
-  // worker/process than page rendering, so a per-worker cache goes stale
-  // until restart. Freshness comes from the mtime-checked YAML cache in
-  // loadYaml() — a statSync per file, negligible next to Immich API calls.
+  const inputs = configInputs();
+  if (derived?.inputs !== inputs) {
+    derived = { inputs, config: deriveConfig() };
+  }
+  return structuredClone(derived.config);
+}
+
+function deriveConfig(): AppConfig {
   const { apiUrl, apiKey } = getInstallCredentials();
   const authSecret = resolveAuthSecret();
 
