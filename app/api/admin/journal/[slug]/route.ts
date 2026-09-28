@@ -12,7 +12,6 @@ import {
   baseVersionFrom,
   conflictResponse,
   etag,
-  versionOf,
 } from '@/lib/admin/contentVersion';
 
 interface RouteContext {
@@ -31,7 +30,7 @@ export const GET = withAdmin(async (request: Request, context: RouteContext) => 
       return NextResponse.json({ error: 'Journal entry not found' }, { status: 404 });
     }
     // `version` goes back in If-Match on save (#601).
-    const version = versionOf(entry.rawMarkdown);
+    const version = entry.version;
     return NextResponse.json({ entry, version }, { headers: { ETag: etag(version) } });
   } catch (err) {
     console.error(`[Admin API] Failed to get journal entry "${slug}":`, err);

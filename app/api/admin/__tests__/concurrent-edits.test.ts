@@ -173,6 +173,24 @@ describe.each(cases)('$name route (#601)', ({ file, initial, load, ctx, body }) 
     expect(forced.status).toBe(200);
   });
 
+  it('a file that is not valid UTF-8 saves with the version GET handed out', async () => {
+    // A hand edit in Latin-1: "Über" as 0xDC, which UTF-8 cannot decode. The
+    // decoded text re-encodes to other bytes, so a version taken from it never
+    // matched the save's check and every save was a 409.
+    const latin1 = Buffer.concat([
+      Buffer.from(initial),
+      Buffer.from('\n# '),
+      Buffer.from([0xdc]),
+      Buffer.from('ber\n'),
+    ]);
+    await writeFile(path.join(content, file), latin1);
+    const { GET, PUT } = await load();
+
+    const { version } = await (await call(GET, req('GET'))).json();
+    const res = await call(PUT, req('PUT', body('Mine'), `"${version}"`));
+    expect(res.status).toBe(200);
+  });
+
   it('a PUT without If-Match still saves (older clients)', async () => {
     await writeFile(path.join(content, file), initial);
     const { PUT } = await load();

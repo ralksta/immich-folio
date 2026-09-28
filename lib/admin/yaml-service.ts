@@ -8,7 +8,7 @@ import path from 'path';
 import yaml from 'js-yaml';
 import { atomicWrite } from '../atomicWrite';
 import type { GalleryYaml, SettingsYaml } from '../config/schema';
-import { assertVersion, serializeContentWrite, versionOf } from './contentVersion';
+import { assertVersion, readVersioned, serializeContentWrite, versionOf } from './contentVersion';
 
 const CONTENT_DIR = path.join(process.cwd(), 'content');
 const MAX_BACKUPS = 10; // Keep last 10 backups per file
@@ -21,8 +21,8 @@ export interface VersionedYaml<T> {
 
 async function readYamlVersioned<T>(filename: string): Promise<VersionedYaml<T>> {
   try {
-    const raw = await fs.readFile(path.join(CONTENT_DIR, filename), 'utf8');
-    return { data: yaml.load(raw) as T, version: versionOf(raw) };
+    const { text, version } = await readVersioned(path.join(CONTENT_DIR, filename));
+    return { data: yaml.load(text) as T, version };
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
       return { data: null, version: versionOf(null) };

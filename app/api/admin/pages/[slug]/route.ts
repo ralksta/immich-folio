@@ -10,7 +10,6 @@ import {
   baseVersionFrom,
   conflictResponse,
   etag,
-  versionOf,
 } from '@/lib/admin/contentVersion';
 import { takenPageSlugs } from '@/lib/admin/pageSlugs';
 import { updatePageRefs } from '@/lib/admin/pageRefs';
@@ -28,7 +27,7 @@ export const GET = withAdmin(async (_request: Request, context: RouteContext) =>
     const page = await readPage(slug);
     if (!page) return NextResponse.json({ error: 'Page not found' }, { status: 404 });
     // `version` goes back in If-Match on save (#601).
-    const version = versionOf(page.rawMarkdown);
+    const version = page.version;
     return NextResponse.json({ page, version }, { headers: { ETag: etag(version) } });
   } catch (err) {
     console.error(`[Admin API] Failed to read page "${slug}":`, err);

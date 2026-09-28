@@ -27,10 +27,27 @@ import { NextResponse } from 'next/server';
 /** The version of a file that does not exist. A save expecting it creates the file. */
 export const ABSENT_VERSION = 'absent';
 
-/** Version of some content; null content means "no file". */
+/**
+ * Version of some content; null content means "no file". A string is hashed
+ * as its UTF-8 bytes, which is what a save writes — so it fits content about
+ * to be written, not text decoded from a file (see readVersioned).
+ */
 export function versionOf(content: string | Buffer | null): string {
   if (content === null) return ABSENT_VERSION;
   return crypto.createHash('sha256').update(content).digest('hex').slice(0, 32);
+}
+
+/**
+ * Read a text file together with the version of its bytes, for an editor's
+ * GET. The version has to come from the bytes, never from the decoded text:
+ * a file that is not valid UTF-8 (a Latin-1 "Über" from a hand edit) decodes
+ * lossily, the text re-encodes to other bytes, and a version taken from it
+ * would never equal what `fileVersion()` computes at save time — every save
+ * of that file would be refused as a conflict. Throws ENOENT like readFile.
+ */
+export async function readVersioned(filePath: string): Promise<{ text: string; version: string }> {
+  const bytes = await fs.readFile(filePath);
+  return { text: bytes.toString('utf8'), version: versionOf(bytes) };
 }
 
 /** Version of the file at `filePath` as it is on disk now. */
