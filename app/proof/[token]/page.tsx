@@ -13,6 +13,7 @@ import { notFound } from 'next/navigation';
 import { immich } from '@/lib/immich';
 import { getConfig, hasExifPanelContent } from '@/lib/config';
 import { encodeAssetId } from '@/lib/tokens';
+import { encodeEmail } from '@/lib/emailObfuscation';
 import { getServerDictionary } from '@/lib/i18n/server';
 import { downloadsRemaining, findSessionByToken, isExpired } from '@/lib/proofSessions';
 import { AlbumDetailView } from '../../[...path]/AlbumDetailView';
@@ -60,6 +61,9 @@ export default async function ProofPage({ params }: ProofPageProps) {
   if (!album) notFound();
 
   const config = getConfig();
+  // The proofing recipient for the dialog's email action (#736), encoded like
+  // every address the site renders. Absent means the button stays hidden.
+  const encodedMailto = config.proofing.email ? encodeEmail(config.proofing.email) : undefined;
   const images = toPhotoItems(
     album.assets,
     config.exif.onHover && config.exif.camera,
@@ -94,6 +98,7 @@ export default async function ProofPage({ params }: ProofPageProps) {
       watermark={config.watermark}
       showExifPanel={hasExifPanelContent(config.exif)}
       showGear={config.exif.camera}
+      encodedMailto={encodedMailto}
       proofSession={{
         token: session.token,
         selected,

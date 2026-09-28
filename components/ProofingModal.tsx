@@ -5,6 +5,7 @@ import { useProofing } from './ProofingContext';
 import { IconCheck, IconCopy, IconLink } from './Icons';
 import { useDictionary } from './I18nProvider';
 import { useModalDialog } from '@/hooks/useModalDialog';
+import { decodeEmail } from '@/lib/emailObfuscation';
 
 export function ProofingModal() {
   const t = useDictionary();
@@ -34,6 +35,7 @@ export function ProofingModal() {
     getSelectedTokens,
     clearFavorites,
     allowMailto,
+    encodedMailto,
     downloadArchiveUrl,
   } = proofing;
 
@@ -42,6 +44,11 @@ export function ProofingModal() {
   // the provider's storage key when no `albumName` is passed) can never light up
   // a button that would post an empty selection and 404.
   const selectedCount = getSelectedTokens().length;
+
+  // Decoded in the browser only: the address never travels in the clear. The
+  // email button is hidden without a recipient, so a mailto is never built with
+  // an empty To: — which opened a compose that went nowhere (#736).
+  const mailtoRecipient = encodedMailto ? decodeEmail(encodedMailto) : '';
 
   /** Copy to the clipboard, or show the text to copy by hand where it is unavailable. */
   const copy = (kind: 'link' | 'list', text: string) => {
@@ -66,7 +73,7 @@ export function ProofingModal() {
   const handleMailto = () => {
     const subject = encodeURIComponent(t.proofing.mailSubject(favorites.size));
     const body = encodeURIComponent(t.proofing.mailBody(getFormattedList(), getProofingUrl()));
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:${mailtoRecipient}?subject=${subject}&body=${body}`;
   };
 
   const handleDownloadSelection = () => {
@@ -296,7 +303,7 @@ export function ProofingModal() {
             </div>
           )}
 
-          {allowMailto && (
+          {allowMailto && mailtoRecipient && (
             <button
               type="button"
               onClick={handleMailto}

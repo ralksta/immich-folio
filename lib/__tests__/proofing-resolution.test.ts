@@ -14,7 +14,7 @@ vi.mock('@/lib/env', () => ({
   },
 }));
 
-import { resolveProofing } from '@/lib/config';
+import { resolveProofing, resolveProofingEmail } from '@/lib/config';
 
 /**
  * Client proofing hands a gallery to a client and takes their picks back, so
@@ -46,5 +46,35 @@ describe('resolveProofing', () => {
     // Same distinction stated directly — `proofing: false` must not read as
     // "unset" and inherit the global default.
     expect(resolveProofing({ proofing: false }, true)).not.toBe(resolveProofing(undefined, true));
+  });
+});
+
+/**
+ * The proofing dialog's "email to photographer" needs a recipient (#736): the
+ * footer contact email by default, overridable with `proofing.email`. Neither
+ * set means no recipient, and the dialog hides the button rather than opening
+ * a compose with an empty To:.
+ */
+describe('resolveProofingEmail', () => {
+  it('prefers the proofing address over the footer contact email', () => {
+    expect(resolveProofingEmail('proofs@example.com', 'hello@example.com')).toBe(
+      'proofs@example.com',
+    );
+  });
+
+  it('falls back to the footer contact email', () => {
+    expect(resolveProofingEmail(undefined, 'hello@example.com')).toBe('hello@example.com');
+    expect(resolveProofingEmail('', 'hello@example.com')).toBe('hello@example.com');
+    expect(resolveProofingEmail('   ', 'hello@example.com')).toBe('hello@example.com');
+  });
+
+  it('is undefined when neither is set, so the button is hidden', () => {
+    expect(resolveProofingEmail(undefined, undefined)).toBeUndefined();
+    expect(resolveProofingEmail('', '')).toBeUndefined();
+    expect(resolveProofingEmail('  ', '  ')).toBeUndefined();
+  });
+
+  it('trims surrounding whitespace', () => {
+    expect(resolveProofingEmail('  proofs@example.com  ', undefined)).toBe('proofs@example.com');
   });
 });

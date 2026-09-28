@@ -50,6 +50,12 @@ interface ProofingContextType {
   /** Selected asset tokens in album order — the payload for a ZIP download. */
   getSelectedTokens: () => string[];
   allowMailto: boolean;
+  /**
+   * `encodeEmail()` of the "email to photographer" recipient, when one is
+   * configured (#736). The modal decodes it in the browser; without it the
+   * button is hidden.
+   */
+  encodedMailto?: string;
   /** The ZIP endpoint when the album offers downloads; undefined otherwise. */
   downloadArchiveUrl?: string;
   /** Present on a client proofing link only. */
@@ -63,6 +69,7 @@ export function ProofingProvider({
   albumTokens = [],
   albumName = 'Gallery',
   allowMailto = true,
+  encodedMailto,
   downloadArchiveUrl,
   session: sessionInit,
 }: {
@@ -70,6 +77,7 @@ export function ProofingProvider({
   albumTokens?: string[];
   albumName?: string;
   allowMailto?: boolean;
+  encodedMailto?: string;
   downloadArchiveUrl?: string;
   session?: ProofSessionInit;
 }) {
@@ -310,6 +318,7 @@ export function ProofingProvider({
         getFormattedList,
         getSelectedTokens,
         allowMailto,
+        encodedMailto,
         downloadArchiveUrl,
         session: sessionInit
           ? {
