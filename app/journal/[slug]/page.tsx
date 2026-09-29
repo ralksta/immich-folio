@@ -91,7 +91,7 @@ function isJournalAuthenticated(
   cookieVal?: string,
 ): boolean {
   if (!storedPassword) return true;
-  if (!cookieVal) return false;
+  if (!cookieVal || cookieVal.length > 512) return false;
 
   const sep = cookieVal.indexOf('.');
   if (sep === -1) return false;

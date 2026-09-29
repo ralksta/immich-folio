@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
   // ── Signature verification ─────────────────────────
   const signature = request.headers.get('x-immich-signature');
-  if (!signature) {
+  if (!signature || signature.length > 256) {
     console.warn('[Webhook] ⚠️ Missing x-immich-signature header');
     return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
   }

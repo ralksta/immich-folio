@@ -278,7 +278,7 @@ export function isAuthenticated(
   if (!storedPassword) return true; // not protected
 
   const cookie = getCookie(cookieName(key, type));
-  if (!cookie) return false;
+  if (!cookie || cookie.length > 512) return false;
 
   // Legacy tokens (bare HMAC, no expiry) do not parse here and are rejected;
   // the visitor simply re-enters the password.
