@@ -48,3 +48,31 @@ describe('localizedLeafletPrefix', () => {
     );
   });
 });
+
+describe('LeafletMap marker names', () => {
+  it('names a marker by its label, not by the count it shows', async () => {
+    const { container } = render(
+      <I18nProvider locale="de">
+        <LeafletMap
+          markers={[
+            {
+              lat: 54.16,
+              lng: 15.39,
+              html: '<div class="map-marker">12</div>',
+              label: 'Dźwirzyno, Polen, 12 Fotos',
+            },
+          ]}
+        />
+      </I18nProvider>,
+    );
+
+    const icon = await waitFor(() => {
+      const el = container.querySelector('.leaflet-marker-icon');
+      if (!el) throw new Error('marker not placed yet');
+      return el;
+    });
+    expect(icon.getAttribute('aria-label')).toBe('Dźwirzyno, Polen, 12 Fotos');
+    expect(icon.getAttribute('title')).toBe('Dźwirzyno, Polen, 12 Fotos');
+    expect(icon.getAttribute('role')).toBe('button');
+  });
+});
