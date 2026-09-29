@@ -41,6 +41,13 @@ vi.mock('@/lib/config', () => ({
         password:
           'scrypt:0123456789abcdef0123456789abcdef:4850eef18a09612ef11fdcd943bf64ce98d0eca2b0f677f9c0c51d1f648b8a101cf7ea36b6f94cfc05236b2fda6fffabd0929dc7e14c07626522fba68bf26de5',
       },
+      {
+        // A leftover bcrypt hash: refused outright, whatever the attempt.
+        name: 'Legacy',
+        slug: 'legacy',
+        albumIds: ['00000000-0000-0000-0000-000000000007'],
+        password: '$2b$10$abcdefghijklmnopqrstuuPjJ7x1b0c9vX8rZ0Yx0mZ1n2o3p4q5r',
+      },
     ],
   }),
 }));
@@ -133,6 +140,41 @@ describe('password hashing does not stall the process', () => {
     // many. A slower machine makes the hash longer, i.e. more ticks — so this
     // fails on a blocked loop, not on a busy one.
     expect(ticks).toBeGreaterThan(3);
+  });
+});
+
+/**
+ * A key with an scrypt hash took ~50ms to answer, every other key ~2ms — the
+ * early return skipped hashing. Identical reply bodies did not help: the clock
+ * alone told a prober which pages, albums and journal entries are locked,
+ * drafts included. Every attempt now runs exactly one scrypt. Counting the
+ * calls keeps the test independent of how fast the machine is.
+ */
+describe('authenticate — one scrypt per attempt, whatever the key', () => {
+  const attempts: [string, () => Promise<string | null>][] = [
+    ['scrypt hash, right password', () => authenticate('hashed', 'scrypted-pass')],
+    ['scrypt hash, wrong password', () => authenticate('hashed', 'wrong')],
+    ['plaintext, right password', () => authenticate('private', 'secret123')],
+    ['plaintext, wrong password', () => authenticate('private', 'wrong')],
+    ['key without a password', () => authenticate('public', 'anything')],
+    ['unknown key', () => authenticate('no-such-page', 'anything')],
+    ['unknown journal entry', () => authenticate('no-such-entry', 'x', 'journal')],
+    ['unknown album', () => authenticate('00000000-0000-0000-0000-00000000dead', 'x', 'album')],
+    ['legacy bcrypt hash', () => authenticate('legacy', 'anything')],
+  ];
+
+  it.each(attempts)('%s', async (_label, attempt) => {
+    const scrypt = vi.spyOn(crypto, 'scrypt');
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      await attempt();
+      expect(scrypt).toHaveBeenCalledTimes(1);
+    } finally {
+      scrypt.mockRestore();
+      error.mockRestore();
+      warn.mockRestore();
+    }
   });
 });
 

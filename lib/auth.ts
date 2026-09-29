@@ -12,7 +12,7 @@ import { getConfig, SubpageConfig } from './config';
 // From the pure schema module, not the config barrel: tests that stub out
 // '@/lib/config' wholesale would otherwise lose this helper.
 import { normalizeSlug } from './config/schema';
-import { verifyScrypt, generateScryptHash, isScryptHash } from './password';
+import { verifyScrypt, generateScryptHash, isScryptHash, burnScrypt } from './password';
 
 const TOKEN_EXPIRY_HOURS = 24;
 
@@ -234,8 +234,13 @@ export async function authenticate(
   type: ProtectedType = 'subpage',
   secure = true,
 ): Promise<string | null> {
+  // Every path below runs exactly one scrypt, so the reply time does not tell a
+  // prober which keys exist, which carry a password, or how it is stored.
   const storedPassword = findPassword(key, type);
-  if (!storedPassword) return null;
+  if (!storedPassword) {
+    await burnScrypt(password);
+    return null;
+  }
 
   let isValid = false;
 
@@ -246,6 +251,7 @@ export async function authenticate(
         `   Please switch temporarily to plaintext in your gallery.yaml, log in again\n` +
         `   to see your new secure "scrypt:..." hash in the logs, and update your file.\n`,
     );
+    await burnScrypt(password);
     return null;
   }
 
@@ -264,7 +270,10 @@ export async function authenticate(
       .digest();
     isValid = crypto.timingSafeEqual(attemptHash, storedHash);
 
-    if (isValid) {
+    if (!isValid) {
+      await burnScrypt(password);
+    } else {
+      // The success path pays its scrypt here, for the recommended hash.
       const recommendedHash = await generateScryptHash(storedPassword);
       console.warn(
         `\n⚠️  SECURITY WARNING: ${TYPE_LABELS[type]} "${key}" is using a plaintext password${type === 'site' ? ' in settings.yaml' : ' in gallery.yaml'}.\n` +
