@@ -72,6 +72,24 @@ async function isLocked(key: string, type: 'subpage' | 'album'): Promise<boolean
   return !isAuthenticated(key, getCookie, type);
 }
 
+/**
+ * Metadata for a path that names nothing this site publishes. The title is
+ * the dictionary's, never the requested slug: generateMetadata runs for any
+ * URL a visitor types, and echoing it would put their text in the `<title>`
+ * and, through a signed share card, in an image served from this domain.
+ * Leaving `openGraph` out keeps the root layout's site card. `robots: null`
+ * drops the layout's `index, follow`, which would otherwise contradict the
+ * `noindex` Next adds to every not-found response.
+ */
+function notFoundMetadata(): Metadata {
+  return { title: getServerDictionary().error.notFoundTitle, robots: null };
+}
+
+/** Metadata for a path behind a password this request has not given. */
+function lockedMetadata(): Metadata {
+  return { title: getServerDictionary().password.protectedPage, robots: { index: false } };
+}
+
 export async function generateMetadata({ params, searchParams }: PathPageProps): Promise<Metadata> {
   // Next hands catch-all segments over percent-encoded, so a non-ASCII slug
   // ("/家族相册") would never match a stored one. Decode once, here, and every
@@ -79,7 +97,7 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
   const { path: rawPath } = await params;
   const path = rawPath?.map(normalizeSlug);
   // Deeper paths are a 404 (see the page below); they name nothing to describe.
-  if (!path || path.length === 0 || path.length > 2) return {};
+  if (!path || path.length === 0 || path.length > 2) return notFoundMetadata();
 
   // A shared photo link's whole point is that it reaches the server — unlike
   // the #photo-N hash it replaces, a `photo` query param is visible here, so
@@ -90,49 +108,51 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
   const photoAssetId = photoToken ? decodeAssetId(photoToken) : null;
   let photoAsset: ImmichAsset | undefined;
 
+  // Each branch follows the page body's order of gates and 404s, and takes
+  // the title only from site-authored text (an album or subpage name). A
+  // branch that finds nothing, or finds it locked, returns early, so the
+  // requested slug never becomes a title or share-card text.
   const slug = path[0];
-  let title = slug;
+  let title: string;
   let subtitle = '';
   let description: string | undefined = undefined;
+  const photoCount = (assets: ImmichAsset[]) =>
+    getServerDictionary().common.photos(
+      assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length,
+    );
+
   if (path.length === 1 && immich.isSubpageSlug(slug)) {
-    const subpageLocked = await isLocked(slug, 'subpage');
+    if (await isLocked(slug, 'subpage')) return lockedMetadata();
     const result = await immich.getSubpageAlbums(slug);
-    if (result) {
-      if (!subpageLocked && result.subpage.subtitle) {
-        description = result.subpage.subtitle;
-      }
-      if (result.albums.length === 1) {
-        const album = await immich.getAlbumBySlug(result.albums[0].slug, slug);
-        if (album && !subpageLocked && !(await isLocked(album.id, 'album'))) {
-          title = album.albumName;
-          const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
-          subtitle = getServerDictionary().common.photos(count);
-          if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
-        }
-      } else if (!subpageLocked) {
-        title = result.subpage.title || result.subpage.name;
-      }
+    if (!result || result.albums.length === 0) return notFoundMetadata();
+    if (result.subpage.subtitle) description = result.subpage.subtitle;
+    if (result.albums.length === 1) {
+      const album = await immich.getAlbumBySlug(result.albums[0].slug, slug);
+      if (!album) return notFoundMetadata();
+      if (await isLocked(album.id, 'album')) return lockedMetadata();
+      title = album.albumName;
+      subtitle = photoCount(album.assets);
+      if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
+    } else {
+      title = result.subpage.title || result.subpage.name;
     }
   } else if (path.length === 2) {
+    if (await isLocked(slug, 'subpage')) return lockedMetadata();
     const album = await immich.getAlbumBySlug(path[1], slug);
-    if (album && !(await isLocked(slug, 'subpage')) && !(await isLocked(album.id, 'album'))) {
-      title = album.albumName;
-      const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
-      subtitle = getServerDictionary().common.photos(count);
-      if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
-    }
+    if (!album) return notFoundMetadata();
+    if (await isLocked(album.id, 'album')) return lockedMetadata();
+    title = album.albumName;
+    subtitle = photoCount(album.assets);
+    if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
   } else {
-    if (path.length === 1) {
-      const pageMeta = await contentPageMetadata(slug);
-      if (pageMeta) return pageMeta;
-    }
+    const pageMeta = await contentPageMetadata(slug);
+    if (pageMeta) return pageMeta;
     const album = await immich.getAlbumBySlug(slug);
-    if (album && !(await isLocked(album.id, 'album'))) {
-      title = album.albumName;
-      const count = album.assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length;
-      subtitle = getServerDictionary().common.photos(count);
-      if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
-    }
+    if (!album) return notFoundMetadata();
+    if (await isLocked(album.id, 'album')) return lockedMetadata();
+    title = album.albumName;
+    subtitle = photoCount(album.assets);
+    if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
   }
 
   // The title stays the album's — it's still the context a reader wants —
