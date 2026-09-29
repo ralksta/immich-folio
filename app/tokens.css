@@ -37,6 +37,31 @@
   --accent-dim: color-mix(in srgb, var(--accent) 12%, transparent);
   --on-accent: var(--on-accent-dark, #ffffff);
 
+  /* Error and destructive text. One value per mode: no single red clears
+     4.5:1 on both a near-black and a near-white page (the fixed reds these
+     replace measured 3.2–3.8:1 on the light presets). #ff6b6b is at least
+     5.6:1 on every dark surface token, #c62828 (below) at least 4.66:1 on
+     every light one. */
+  --error: #ff6b6b;
+
+  /* The lightbox paints its own dark overlay in both modes, so its controls
+     cannot use --text-*: in light mode those are near-black, and the close
+     button, arrows and counter came out at 1.1–2:1. Lightbox.module.css
+     points the text tokens at these inside the overlay in light mode; dark
+     mode keeps each preset's tinted greys. */
+  --lightbox-text: rgba(255, 255, 255, 0.92);
+  --lightbox-text-secondary: rgba(255, 255, 255, 0.72);
+  --lightbox-text-muted: rgba(255, 255, 255, 0.62);
+  --lightbox-border: rgba(255, 255, 255, 0.12);
+  /* Round controls float over the photo on narrow screens; a dark fill keeps
+     them visible on a white sky, where the old white-alpha disc vanished. */
+  --lightbox-control-bg: rgba(0, 0, 0, 0.35);
+  --lightbox-control-bg-hover: rgba(0, 0, 0, 0.55);
+  --lightbox-control-border: rgba(255, 255, 255, 0.18);
+  /* A saved favourite. Not the accent: minimal's is white and a custom one
+     may be dark navy, neither of which marks anything on the overlay. */
+  --lightbox-fav: #ff6b6b;
+
   --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
   --font-caption: 'EB Garamond', Georgia, serif;
@@ -71,6 +96,8 @@
   --accent: var(--accent-light, #c8000f);
   --accent-dim: color-mix(in srgb, var(--accent) 12%, transparent);
   --on-accent: var(--on-accent-light, #ffffff);
+
+  --error: #c62828;
 }
 
 /* ── Studio Modern: Leica Precision Palette ──────── */

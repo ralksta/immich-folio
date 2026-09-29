@@ -41,7 +41,8 @@ const primaryButton: React.CSSProperties = {
   padding: '0.75rem 1rem',
   borderRadius: 'var(--radius-sm, 6px)',
   background: 'var(--accent, #e60012)',
-  color: '#fff',
+  // Black or white, whichever the layout found to carry on this accent.
+  color: 'var(--on-accent, #fff)',
   border: 'none',
   fontWeight: 500,
   // The same for the <button>s and the download <a>s, which would otherwise
@@ -107,7 +108,7 @@ export function ProofSessionControls() {
             aria-pressed={isFilterActive}
             style={{
               background: isFilterActive ? 'var(--accent, #e60012)' : 'var(--bg-card-hover)',
-              color: isFilterActive ? '#fff' : 'var(--text-primary)',
+              color: isFilterActive ? 'var(--on-accent, #fff)' : 'var(--text-primary)',
               border: 'none',
               padding: '6px 14px',
               borderRadius: '20px',
@@ -124,8 +125,9 @@ export function ProofSessionControls() {
           aria-live="polite"
           style={{
             fontSize: '0.8rem',
-            opacity: 0.75,
-            color: session.saveState === 'error' ? 'var(--accent, #e60012)' : undefined,
+            // A failed save is an error, not a brand mark: the accent can be
+            // white (minimal) or pale, and the dimming would halve it again.
+            ...(session.saveState === 'error' ? { color: 'var(--error)' } : { opacity: 0.75 }),
           }}
         >
           {session.submitted ? p.locked : status}

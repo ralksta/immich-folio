@@ -229,13 +229,21 @@ export function ProofingModal() {
               gap: '0.5rem',
               padding: '0.75rem 1rem',
               borderRadius: 'var(--radius-sm, 6px)',
+              // Secondary matches the other buttons below: a white-alpha fill
+              // and border vanished on the light theme's white card. Primary
+              // text takes --on-accent, which the layout computes from the
+              // accent; a fixed white was invisible on minimal's white accent.
               ...(downloadArchiveUrl
                 ? {
-                    background: 'rgba(255,255,255,0.1)',
+                    background: 'var(--bg-card-hover)',
                     color: 'inherit',
-                    border: '1px solid rgba(255,255,255,0.15)',
+                    border: '1px solid var(--border-subtle)',
                   }
-                : { background: 'var(--accent, #e60012)', color: '#fff', border: 'none' }),
+                : {
+                    background: 'var(--accent, #e60012)',
+                    color: 'var(--on-accent, #fff)',
+                    border: 'none',
+                  }),
               fontWeight: 500,
               cursor: 'pointer',
             }}
@@ -340,10 +348,12 @@ export function ProofingModal() {
               marginTop: '0.5rem',
               background: 'none',
               border: 'none',
-              color: '#ff4d4f',
+              // Per-mode token, at full strength: the fixed red at 80% opacity it
+              // replaces measured 2.7:1 on the light card and under 4:1 on the
+              // dark ones.
+              color: 'var(--error)',
               fontSize: '0.85rem',
               cursor: 'pointer',
-              opacity: 0.8,
             }}
           >
             {t.proofing.clearSelection}

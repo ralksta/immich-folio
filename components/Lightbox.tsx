@@ -649,11 +649,7 @@ export function Lightbox({
           {/* Proofing favorite button */}
           {proofing && current && (
             <button
-              className={styles.infoToggle}
-              style={{
-                color: isFav ? '#ff4d4f' : 'inherit',
-                fontWeight: isFav ? 600 : 400,
-              }}
+              className={`${styles.infoToggle}${isFav ? ` ${styles.favActive}` : ''}`}
               onClick={() => proofing.toggleFavorite(current.id)}
               aria-label={isFav ? t.proofing.removeFromFavorites : t.proofing.addToFavorites}
               title={isFav ? t.proofing.removeFromFavorites : t.proofing.addToFavorites}
