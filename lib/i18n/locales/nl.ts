@@ -87,12 +87,17 @@ export const nl: Dictionary = {
     subtitle: 'Deze galerij is met een wachtwoord beveiligd.',
     siteSubtitle: 'Deze site is met een wachtwoord beveiligd.',
     pageSubtitle: 'Deze pagina is met een wachtwoord beveiligd.',
+    journalSubtitle: 'Dit journalverhaal is met een wachtwoord beveiligd.',
     protectedPage: 'Beveiligde pagina',
     placeholder: 'Voer het wachtwoord in',
     submit: 'Binnenkomen',
     verifying: 'Controleren…',
     incorrect: 'Onjuist wachtwoord. Probeer het opnieuw.',
     failed: 'Het wachtwoord kon niet worden gecontroleerd. Probeer het later opnieuw.',
+    tooManyAttempts: (seconds: number | null) =>
+      seconds
+        ? `Te veel pogingen. Probeer het over ${seconds} ${seconds === 1 ? 'seconde' : 'seconden'} opnieuw.`
+        : 'Te veel pogingen. Probeer het later opnieuw.',
   },
 
   about: {

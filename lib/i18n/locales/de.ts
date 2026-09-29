@@ -87,12 +87,17 @@ export const de: Dictionary = {
     subtitle: 'Diese Galerie ist passwortgeschützt.',
     siteSubtitle: 'Diese Website ist passwortgeschützt.',
     pageSubtitle: 'Diese Seite ist passwortgeschützt.',
+    journalSubtitle: 'Dieser Journal-Eintrag ist passwortgeschützt.',
     protectedPage: 'Geschützte Seite',
     placeholder: 'Passwort eingeben',
     submit: 'Öffnen',
     verifying: 'Wird geprüft…',
     incorrect: 'Falsches Passwort. Bitte erneut versuchen.',
     failed: 'Passwort konnte nicht geprüft werden. Bitte später erneut versuchen.',
+    tooManyAttempts: (seconds: number | null) =>
+      seconds
+        ? `Zu viele Versuche – bitte in ${seconds} ${seconds === 1 ? 'Sekunde' : 'Sekunden'} erneut versuchen.`
+        : 'Zu viele Versuche – bitte später erneut versuchen.',
   },
 
   about: {

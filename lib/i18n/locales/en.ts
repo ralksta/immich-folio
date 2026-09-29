@@ -88,12 +88,17 @@ export const en = {
     subtitle: 'This gallery is password-protected.',
     siteSubtitle: 'This site is password-protected.',
     pageSubtitle: 'This page is password-protected.',
+    journalSubtitle: 'This journal entry is password-protected.',
     protectedPage: 'Protected page',
     placeholder: 'Enter password',
     submit: 'Enter',
     verifying: 'Verifying…',
     incorrect: 'Incorrect password. Please try again.',
     failed: 'Unable to verify password. Please try again later.',
+    tooManyAttempts: (seconds: number | null) =>
+      seconds
+        ? `Too many attempts. Please try again in ${seconds} ${seconds === 1 ? 'second' : 'seconds'}.`
+        : 'Too many attempts. Please try again later.',
   },
 
   about: {
