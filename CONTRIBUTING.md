@@ -75,6 +75,12 @@ cheaper to test and stays tested when the markup around it changes. Reach for a
 component test when the behaviour _is_ the rendering: a state that hides a form,
 a control that must stay disabled, a keyboard shortcut.
 
+**Never write into the checkout's `content/`.** On a self-hosted install that
+directory is the live site. Services resolve it from `process.cwd()`, so a test
+that saves or deletes anything points `cwd` at a temp directory first and
+re-imports the service — `lib/__tests__/journal-backup.test.ts` shows how.
+`vitest.content-guard.ts` fails any test that writes there anyway.
+
 ## Code style
 
 - **TypeScript** — strict mode, no `any` without justification

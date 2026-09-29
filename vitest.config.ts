@@ -8,7 +8,7 @@ export default defineConfig({
     // `// @vitest-environment jsdom` in its first docblock (see
     // components/__tests__ for examples), which keeps the fast path fast.
     environment: 'node',
-    setupFiles: ['./vitest.setup.ts'],
+    setupFiles: ['./vitest.setup.ts', './vitest.content-guard.ts'],
     include: [
       'lib/__tests__/**/*.test.{ts,tsx}',
       'app/**/__tests__/**/*.test.{ts,tsx}',
