@@ -92,8 +92,10 @@ export function ProofSessionControls() {
   const downloadsLeft = session.downloadsRemaining;
   const canDownload = session.download !== 'none' && (downloadsLeft === null || downloadsLeft > 0);
   // The selection ZIP is built from what the server has saved, so it is only
-  // offered once there is nothing left to save.
-  const selectionSaved = session.saveState !== 'saving' && session.saveState !== 'error';
+  // offered once there is nothing left to save — a heart still waiting out the
+  // autosave debounce counts, or the ZIP would hold the previous selection.
+  const selectionSaved =
+    !session.unsaved && session.saveState !== 'saving' && session.saveState !== 'error';
 
   return (
     <>
@@ -232,12 +234,20 @@ export function ProofSessionControls() {
               )}
 
               {canDownload && count > 0 && selectionSaved && (
-                <a href={downloadHref('selection')} style={secondaryButton}>
+                <a
+                  href={downloadHref('selection')}
+                  onClick={session.countDownload}
+                  style={secondaryButton}
+                >
                   {p.downloadSelection}
                 </a>
               )}
               {canDownload && session.download === 'album' && (
-                <a href={downloadHref('album')} style={secondaryButton}>
+                <a
+                  href={downloadHref('album')}
+                  onClick={session.countDownload}
+                  style={secondaryButton}
+                >
                   {p.downloadAll}
                 </a>
               )}
