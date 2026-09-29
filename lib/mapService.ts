@@ -1,6 +1,6 @@
 import { immich } from './immich';
 import { getConfig } from './config';
-import { onlineAlbumIds } from './config/schema';
+import { isListedSubpage, listedAlbumIds } from './config/schema';
 import { cache } from './cache';
 
 /**
@@ -46,17 +46,20 @@ export async function getMapData(): Promise<MapLocation[]> {
   pendingMapDataPromise = (async () => {
     try {
       // The allowlist still holds the albums of subpages taken offline with
-      // `enabled: false`. A marker names, links and shows a photo of every
-      // album it counts, so those have to go before anything is aggregated.
-      const online = onlineAlbumIds(config);
-      const albums = (await immich.getAlbums()).filter((a) => online.has(a.id));
+      // `enabled: false`, and those of `hidden` subpages, which are reachable
+      // by direct link only. A marker names, links and shows a photo of every
+      // album it counts — a listing — so both have to go before anything is
+      // aggregated.
+      const listed = listedAlbumIds(config);
+      const albums = (await immich.getAlbums()).filter((a) => listed.has(a.id));
 
       // Build a lookup: album ID → { name, slug, subpageSlug? }
       const albumMeta = new Map<string, { name: string; slug: string; subpageSlug?: string }>();
       for (const a of albums) {
         // The subpage the marker links to, and whose password gates it. Never
-        // an offline one: its URL is a 404 and its password guards nothing.
-        const sp = config.subpages.find((s) => s.enabled !== false && s.albumIds.includes(a.id));
+        // an offline one (its URL is a 404 and its password guards nothing),
+        // and never a hidden one: the marker would publish its address.
+        const sp = config.subpages.find((s) => isListedSubpage(s) && s.albumIds.includes(a.id));
         albumMeta.set(a.id, { name: a.albumName, slug: a.slug, subpageSlug: sp?.slug });
       }
 
