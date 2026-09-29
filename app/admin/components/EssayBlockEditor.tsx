@@ -29,6 +29,7 @@ import {
   IconX,
 } from './Icons';
 import { BlockBadge } from './BlockBadge';
+import { InlineMarkdownField } from './InlineMarkdownField';
 
 interface EssayBlockEditorProps {
   markdown: string;
@@ -291,19 +292,17 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
 
             {/* 2. PARAGRAPH BLOCK
 
-              The textarea shows `html` raw, as the journal editor does. It used
-              to strip the tags for display — `<strong>` to `**`, everything else
-              to nothing — while `onChange` wrote the stripped text straight back
-              into `html`. Italics, links, anything the markdown had produced was
-              destroyed by the act of editing the paragraph, and the two editors
-              disagreed about the same file. serializeJournalMarkdown() turns the
-              HTML back into markdown on save and handles `<em>` too, so there
-              was nothing to convert here in the first place. */}
+              The field shows the markdown source and writes the rendered HTML
+              back, as the journal editor does (InlineMarkdownField). An older
+              version stripped the tags for display and wrote the stripped text
+              straight back into `html`, destroying italics and links; the one
+              after that showed the raw HTML. */}
             {block.type === 'paragraph' && (
-              <textarea
+              <InlineMarkdownField
+                multiline
                 rows={3}
-                value={block.html}
-                onChange={(e) => handleUpdateBlock(idx, { ...block, html: e.target.value })}
+                html={block.html}
+                onChange={(html) => handleUpdateBlock(idx, { ...block, html })}
                 placeholder="Write text paragraph... (**bold**, *italic* markdown supported)"
               />
             )}
@@ -319,10 +318,11 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   paddingLeft: '10px',
                 }}
               >
-                <textarea
+                <InlineMarkdownField
+                  multiline
                   rows={2}
-                  value={block.text}
-                  onChange={(e) => handleUpdateBlock(idx, { ...block, text: e.target.value })}
+                  html={block.text}
+                  onChange={(text) => handleUpdateBlock(idx, { ...block, text })}
                   placeholder="Quote text..."
                   style={{ fontStyle: 'italic', fontFamily: 'serif', fontSize: '1rem' }}
                 />
@@ -411,11 +411,10 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   </div>
                 </div>
 
-                <input
-                  type="text"
-                  value={block.caption || ''}
-                  onChange={(e) =>
-                    handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
+                <InlineMarkdownField
+                  html={block.caption}
+                  onChange={(caption) =>
+                    handleUpdateBlock(idx, { ...block, caption: caption || undefined })
                   }
                   placeholder="Photo caption (optional)"
                 />
@@ -573,11 +572,10 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   </div>
                 </div>
 
-                <input
-                  type="text"
-                  value={block.caption || ''}
-                  onChange={(e) =>
-                    handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
+                <InlineMarkdownField
+                  html={block.caption}
+                  onChange={(caption) =>
+                    handleUpdateBlock(idx, { ...block, caption: caption || undefined })
                   }
                   placeholder="Side-by-side caption (optional)"
                 />
@@ -693,11 +691,10 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   <IconPlus size={12} /> Add photo
                 </button>
 
-                <input
-                  type="text"
-                  value={block.caption || ''}
-                  onChange={(e) =>
-                    handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
+                <InlineMarkdownField
+                  html={block.caption}
+                  onChange={(caption) =>
+                    handleUpdateBlock(idx, { ...block, caption: caption || undefined })
                   }
                   placeholder="Grid caption (optional)"
                 />
@@ -729,16 +726,13 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                         })
                       }
                     />
-                    <input
-                      type="text"
-                      value={item.value}
+                    <InlineMarkdownField
+                      html={item.value}
                       placeholder="Value, e.g. 21 km"
-                      onChange={(e) =>
+                      onChange={(value) =>
                         handleUpdateBlock(idx, {
                           ...block,
-                          items: block.items.map((it, i) =>
-                            i === fIdx ? { ...it, value: e.target.value } : it,
-                          ),
+                          items: block.items.map((it, i) => (i === fIdx ? { ...it, value } : it)),
                         })
                       }
                     />
@@ -828,13 +822,12 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                     <option value="wide">Wide (one per row)</option>
                   </select>
                 </div>
-                <input
-                  type="text"
-                  value={block.caption || ''}
-                  placeholder="Caption for the set (optional)"
-                  onChange={(e) =>
-                    handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
+                <InlineMarkdownField
+                  html={block.caption}
+                  onChange={(caption) =>
+                    handleUpdateBlock(idx, { ...block, caption: caption || undefined })
                   }
+                  placeholder="Caption for the set (optional)"
                 />
                 <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-secondary)' }}>
                   Expanded into photo blocks when the page renders — the album&apos;s order, a
@@ -846,11 +839,10 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
             {/* 8. MAP BLOCK */}
             {block.type === 'map' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <input
-                  type="text"
-                  value={block.caption || ''}
-                  onChange={(e) =>
-                    handleUpdateBlock(idx, { ...block, caption: e.target.value || undefined })
+                <InlineMarkdownField
+                  html={block.caption}
+                  onChange={(caption) =>
+                    handleUpdateBlock(idx, { ...block, caption: caption || undefined })
                   }
                   placeholder="Caption, e.g. Busan → Seoul (optional)"
                 />
