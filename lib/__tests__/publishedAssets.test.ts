@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 /**
  * GHSA-gfh4-6275-9gqv: the media routes serve only assets the site shows. Each
@@ -42,6 +42,9 @@ const state = vi.hoisted(() => ({
   } as Record<string, { albumThumbnailAssetId: string | null; assets: { id: string }[] }>,
   builds: 0,
   mtime: 1,
+  /** While set, a proofing album lookup reads its answer, then waits for it. */
+  gate: null as Promise<void> | null,
+  onGate: null as (() => void) | null,
 }));
 
 vi.mock('../config', () => ({ getConfig: () => state.config }));
@@ -52,7 +55,15 @@ vi.mock('../immich', () => ({
       state.builds += id === 'album-pub' ? 1 : 0;
       return state.albums[id] ?? null;
     },
-    getProofingAlbum: async (id: string) => state.proofAlbums[id] ?? null,
+    getProofingAlbum: async (id: string) => {
+      const album = state.proofAlbums[id];
+      const answer = album ? { ...album, assets: [...album.assets] } : null;
+      if (state.gate) {
+        state.onGate?.();
+        await state.gate;
+      }
+      return answer;
+    },
     getAlbumAssetsRaw: async (id: string) => state.raw[id] ?? [],
   },
 }));
@@ -185,13 +196,97 @@ describe('isPublishedAsset', () => {
     delete state.proofAlbums['album-proof'].assets[0];
     state.proofAlbums['album-proof'].assets = [];
     state.mtime += 1; // proofing.json rewritten by the admin
-    await new Promise((r) => setTimeout(r, 2100));
     try {
       expect(await isPublishedAsset('proof-1')).toBe(false);
     } finally {
       state.proofAlbums['album-proof'].assets = [{ id: 'proof-1' }];
     }
-  }, 10_000);
+  });
+
+  /**
+   * The files used to be checked at most every 2 s. A request in that window
+   * after a save was answered from the set before it — with `immutable`, so
+   * the browser kept the photo.
+   */
+  it('sees a save made milliseconds after the previous check', async () => {
+    expect(await isPublishedAsset('proof-1')).toBe(true);
+    expect(await isPublishedAsset('a1')).toBe(true); // a check a moment ago
+    state.proofAlbums['album-proof'].assets = [];
+    state.mtime += 1;
+    try {
+      expect(await isPublishedAsset('proof-1')).toBe(false);
+    } finally {
+      state.proofAlbums['album-proof'].assets = [{ id: 'proof-1' }];
+    }
+  });
+
+  /**
+   * A request that finds a build already running joins it. When that build
+   * read the content before the save, its set must not answer for a request
+   * that saw the save.
+   */
+  it('does not answer from a build that read the content before the save', async () => {
+    expect(await isPublishedAsset('proof-1')).toBe(true);
+
+    let release!: () => void;
+    state.gate = new Promise<void>((r) => (release = r));
+    const reached = new Promise<void>((r) => (state.onGate = r));
+    state.mtime += 1; // an unrelated save starts a rebuild…
+    const first = isPublishedAsset('a1');
+    await reached; // …which has read the proofing album and is waiting on Immich
+
+    state.proofAlbums['album-proof'].assets = [];
+    state.mtime += 1; // the link is revoked
+    const second = isPublishedAsset('proof-1');
+
+    state.gate = null;
+    state.onGate = null;
+    release();
+    try {
+      expect(await first).toBe(true);
+      expect(await second).toBe(false);
+    } finally {
+      state.proofAlbums['album-proof'].assets = [{ id: 'proof-1' }];
+    }
+  });
+
+  /**
+   * The first view of a newly published album: a burst of image requests for
+   * photos the set has never seen. Only the first one rebuilt; the rest hit
+   * the rebuild throttle and were refused while that rebuild was still
+   * running — 11 of 13 photos broken until a reload.
+   */
+  describe('a burst of requests for a newly published album', () => {
+    const NEW = Array.from({ length: 13 }, (_, i) => ({ id: `fresh-${i}` }));
+
+    beforeEach(async () => {
+      await isPublishedAsset('a1'); // built, and checked a moment ago
+    });
+
+    afterEach(() => {
+      state.albums['album-pub'].assets = [{ id: 'a1' }, { id: 'a2' }];
+    });
+
+    it('serves every photo when the save changed a content file', async () => {
+      state.albums['album-pub'].assets = [{ id: 'a1' }, { id: 'a2' }, ...NEW];
+      state.mtime += 1; // gallery.yaml saved by the admin
+      const answers = await Promise.all(NEW.map((a) => isPublishedAsset(a.id)));
+      expect(answers).toEqual(NEW.map(() => true));
+    });
+
+    it('serves every photo when only Immich changed (misses share one rebuild)', async () => {
+      state.albums['album-pub'].assets = [{ id: 'a1' }, { id: 'a2' }, ...NEW];
+      const before = state.builds;
+      const answers = await Promise.all(NEW.map((a) => isPublishedAsset(a.id)));
+      expect(answers).toEqual(NEW.map(() => true));
+      expect(state.builds - before).toBe(1);
+    });
+
+    it('still refuses what the rebuild did not publish', async () => {
+      const answers = await Promise.all(NEW.map((a) => isPublishedAsset(a.id)));
+      expect(answers).toEqual(NEW.map(() => false));
+    });
+  });
 
   it('picks up an asset published since the last build', async () => {
     await isPublishedAsset('a1');

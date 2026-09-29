@@ -28,6 +28,13 @@
  * the content files it was built from and rebuilds as soon as one changes —
  * so unpublishing an album or revoking a proofing link takes effect at once,
  * not after the TTL. A miss also forces one rebuild before answering "no".
+ *
+ * "At once" means: every answer comes from a set whose build began after the
+ * request looked at the files. The files are stat'ed on every request (they
+ * used to be checked at most every 2 s, and a request in that window was
+ * answered — `immutable` — from the set before the save), and a build reads
+ * the stamp before the content, so a save racing a build leaves the set
+ * stamped older than the files instead of newer.
  */
 
 import fs from 'fs/promises';
@@ -43,8 +50,6 @@ import { isExpired, listSessions } from './proofSessions';
 
 /** A forced rebuild on a miss at most this often, so misses cannot hammer Immich. */
 const MIN_REBUILD_MS = 10_000;
-/** How often the content files are stat'ed for changes. */
-const STAT_EVERY_MS = 2_000;
 
 const CONTENT = path.join(process.cwd(), 'content');
 const WATCHED = [
@@ -57,10 +62,16 @@ const WATCHED = [
   'pages',
 ];
 
-let current: { assets: Set<string>; builtAt: number; stamp: string } | null = null;
-let lastStatAt = 0;
+let current: { assets: Set<string>; builtAt: number; stamp: string; startedAt: number } | null =
+  null;
 let building: Promise<Set<string>> | null = null;
 let lastForcedAt = 0;
+/**
+ * Orders file checks and build starts. A set whose `startedAt` is above a
+ * request's check read the files after that request did, and so answers for
+ * it whatever the stamps say.
+ */
+let clock = 0;
 
 function albumBlockIds(blocks: readonly JournalBlock[]): string[] {
   return blocks.flatMap((b) => (b.type === 'album' && b.albumId ? [b.albumId] : []));
@@ -170,9 +181,14 @@ async function build(): Promise<Set<string>> {
 
 function rebuild(): Promise<Set<string>> {
   if (!building) {
-    building = Promise.all([contentStamp(), build()])
-      .then(([stamp, assets]) => {
-        current = { assets, builtAt: Date.now(), stamp };
+    const startedAt = ++clock;
+    // Stamp first, content second: a save landing mid-build then leaves the
+    // set stamped older than the files, and the next check rebuilds. Read in
+    // parallel, the stamp could come back newer than the content it labels.
+    building = contentStamp()
+      .then(async (stamp) => {
+        const assets = await build();
+        current = { assets, builtAt: Date.now(), stamp, startedAt };
         return assets;
       })
       .finally(() => {
@@ -192,20 +208,29 @@ function rebuild(): Promise<Set<string>> {
 export async function isPublishedAsset(assetId: string): Promise<boolean> {
   const ttlMs = getConfig().cacheTtl * 1000;
   try {
-    let stale = !current || Date.now() - current.builtAt > ttlMs;
-    if (!stale && Date.now() - lastStatAt > STAT_EVERY_MS) {
-      lastStatAt = Date.now();
-      stale = (await contentStamp()) !== current!.stamp;
-    }
-    if (stale) await rebuild();
+    const checkedAt = ++clock;
+    const stamp = await contentStamp();
+    const stale = () =>
+      !current ||
+      Date.now() - current.builtAt > ttlMs ||
+      (current.stamp !== stamp && current.startedAt < checkedAt);
+    // Twice at most: the first rebuild may join a build that started before
+    // this check; any build started after that one finished is recent enough.
+    for (let i = 0; i < 2 && stale(); i++) await rebuild();
   } catch {
     if (!current) return true;
   }
   if (current!.assets.has(assetId)) return true;
 
-  // Not in the set: it may have been published since the last build.
-  if (Date.now() - lastForcedAt < MIN_REBUILD_MS) return false;
-  lastForcedAt = Date.now();
+  // Not in the set: it may have been published since the last build. A miss
+  // while a rebuild is running waits for it — the first view of a new album is
+  // a burst of misses, and refusing all but the one that started the rebuild
+  // broke most of its photos. Only with nothing running does the throttle
+  // decide whether a miss may start one.
+  if (!building) {
+    if (Date.now() - lastForcedAt < MIN_REBUILD_MS) return false;
+    lastForcedAt = Date.now();
+  }
   try {
     return (await rebuild()).has(assetId);
   } catch {
@@ -223,5 +248,5 @@ export function resetPublishedAssetsForTest(): void {
   current = null;
   building = null;
   lastForcedAt = 0;
-  lastStatAt = 0;
+  clock = 0;
 }

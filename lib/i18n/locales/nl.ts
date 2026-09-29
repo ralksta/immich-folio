@@ -197,6 +197,7 @@ export const nl: Dictionary = {
     saved: 'Opgeslagen',
     favorite: 'Favoriet',
     showAll: 'Alles tonen',
+    filterEmpty: "Geen foto's geselecteerd.",
     selected: (n: number) => `❤️ ${n} geselecteerd`,
     shareExport: 'Delen & exporteren',
     modalTitle: (n: number) => `❤️ Selectie (${n})`,
