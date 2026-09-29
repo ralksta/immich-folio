@@ -7,7 +7,7 @@ import fs from 'fs/promises';
 import nodeFs from 'fs';
 import path from 'path';
 import { atomicWrite } from '../atomicWrite';
-import { assertVersion, serializeContentWrite, versionOf } from './contentVersion';
+import { assertVersion, readVersioned, serializeContentWrite, versionOf } from './contentVersion';
 import {
   parseJournalMarkdown,
   calculateReadingTime,
@@ -247,14 +247,16 @@ export async function readJournalEntry(slug: string): Promise<{
   slug: string;
   rawMarkdown: string;
   parsed: ParsedJournal;
+  /** Version of the file's bytes (#601), for the editor's If-Match. */
+  version: string;
 } | null> {
   const filePath = resolveJournalFilePath(slug);
   if (!filePath) return null;
 
   try {
-    const rawMarkdown = await fs.readFile(filePath, 'utf8');
+    const { text: rawMarkdown, version } = await readVersioned(filePath);
     const parsed = parseJournalMarkdown(rawMarkdown);
-    return { slug, rawMarkdown, parsed };
+    return { slug, rawMarkdown, parsed, version };
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') return null;
     throw err;

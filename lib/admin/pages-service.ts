@@ -11,7 +11,7 @@ import fs from 'fs/promises';
 import nodeFs from 'fs';
 import path from 'path';
 import { atomicWrite } from '../atomicWrite';
-import { assertVersion, serializeContentWrite, versionOf } from './contentVersion';
+import { assertVersion, readVersioned, serializeContentWrite, versionOf } from './contentVersion';
 import { isValidSlug, parseJournalMarkdown, type ParsedJournal } from '../journal';
 import type { PageSummary } from '../pages';
 
@@ -144,6 +144,8 @@ export interface PageRecord {
   slug: string;
   rawMarkdown: string;
   parsed: ParsedJournal;
+  /** Version of the file's bytes (#601), for the editor's If-Match. */
+  version: string;
 }
 
 /** One page, or null when there is no such file. */
@@ -151,8 +153,8 @@ export async function readPage(slug: string): Promise<PageRecord | null> {
   const filePath = resolvePageFilePath(slug);
   if (!filePath) return null;
   try {
-    const rawMarkdown = await fs.readFile(filePath, 'utf8');
-    return { slug, rawMarkdown, parsed: parseJournalMarkdown(rawMarkdown) };
+    const { text: rawMarkdown, version } = await readVersioned(filePath);
+    return { slug, rawMarkdown, parsed: parseJournalMarkdown(rawMarkdown), version };
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') return null;
     throw err;
@@ -164,8 +166,14 @@ export function readPageSync(slug: string): PageRecord | null {
   const filePath = resolvePageFilePath(slug);
   if (!filePath) return null;
   try {
-    const rawMarkdown = nodeFs.readFileSync(filePath, 'utf8');
-    return { slug, rawMarkdown, parsed: parseJournalMarkdown(rawMarkdown) };
+    const bytes = nodeFs.readFileSync(filePath);
+    const rawMarkdown = bytes.toString('utf8');
+    return {
+      slug,
+      rawMarkdown,
+      parsed: parseJournalMarkdown(rawMarkdown),
+      version: versionOf(bytes),
+    };
   } catch {
     return null;
   }

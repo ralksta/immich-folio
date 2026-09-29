@@ -11,6 +11,7 @@ import {
   baseVersionFrom,
   conflictResponse,
   etag,
+  readVersioned,
   serializeContentWrite,
   versionOf,
 } from '@/lib/admin/contentVersion';
@@ -35,10 +36,13 @@ export const GET = withAdmin(async () => {
   const filePath = path.join(CONTENT_DIR, FILENAME);
   let meta: AboutMeta = {};
   let body = '';
-  let raw: string | null = null;
+  let version = versionOf(null);
 
   try {
-    raw = await fs.readFile(filePath, 'utf-8');
+    // The version comes from the bytes read, not the decoded text (#601).
+    const read = await readVersioned(filePath);
+    version = read.version;
+    const raw = read.text;
     const match = raw.match(/^(?:---\r?\n)([\s\S]*?)(?:\r?\n---\r?\n)([\s\S]*)$/);
     if (match) {
       try {
@@ -53,7 +57,6 @@ export const GET = withAdmin(async () => {
   }
 
   // `version` goes back in If-Match on save (#601).
-  const version = versionOf(raw);
   return NextResponse.json({ meta, body, version }, { headers: { ETag: etag(version) } });
 });
 
