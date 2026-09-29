@@ -63,6 +63,26 @@ function siteGate(request: NextRequest): NextResponse | null {
 }
 
 /**
+ * The first segments that belong to a fixed route under app/ rather than to
+ * the app/[...path] catch-all. A deep path below one of these is either served
+ * by that route or answered 404 by Next itself, so isKnownMissing() leaves it
+ * alone. lib/__tests__/proxy.test.ts holds this list to the app/ directory.
+ */
+export const TOP_LEVEL_ROUTES: ReadonlySet<string> = new Set([
+  'about',
+  'admin',
+  'api',
+  'contact',
+  'gate',
+  'impressum',
+  'install',
+  'journal',
+  'map',
+  'privacy',
+  'proof',
+]);
+
+/**
  * Pages that are known not to exist before anything renders.
  *
  * app/loading.tsx makes every page stream, and a streamed response has sent
@@ -71,6 +91,10 @@ function siteGate(request: NextRequest): NextResponse | null {
  * For the fixed routes whose existence depends only on settings.yaml or a file
  * in content/journal/, the answer is known here, before streaming starts, so
  * they can get a real 404. Album and subpage slugs need Immich and stay soft.
+ *
+ * The same holds for any path deeper than two segments that lands in the
+ * catch-all: app/[...path] only serves `/<slug>` and `/<subpage>/<album>`, and
+ * calls notFound() for everything longer without asking Immich.
  */
 export function isKnownMissing(
   pathname: string,
@@ -86,13 +110,29 @@ export function isKnownMissing(
 
   const journal = /^\/journal\/([^/]+)\/?$/.exec(pathname);
   if (journal) {
-    const slug = decodeURIComponent(journal[1]);
+    let slug: string;
+    try {
+      slug = decodeURIComponent(journal[1]);
+    } catch {
+      // A malformed escape such as /journal/%E0 names no entry, and must not
+      // throw out of the proxy.
+      return true;
+    }
     if (!isValidSlug(slug)) return true;
     // A draft still has its file, so it stays a soft 404 for visitors and
     // reachable for a signed-in admin, which only the page can tell apart.
     return !['journal', 'essays'].some((dir) =>
       fs.existsSync(path.join(contentDir, dir, `${slug}.md`)),
     );
+  }
+
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length > 2) {
+    const [first] = segments;
+    // Next's own paths (/_next/…, /__nextjs_…) and dotfiles such as
+    // /.well-known/… are not the catch-all's to answer.
+    if (first.startsWith('_') || first.startsWith('.')) return false;
+    return !TOP_LEVEL_ROUTES.has(first);
   }
   return false;
 }
@@ -155,18 +195,19 @@ export function proxy(request: NextRequest) {
   requestHeaders.set('x-pathname', request.nextUrl.pathname);
   requestHeaders.set('Content-Security-Policy', cspDirectives);
 
-  // The page itself still renders and calls notFound(); this only lets the
+  // The page itself still renders and calls notFound(); the 404 only lets the
   // status say so before streaming starts. See isKnownMissing().
-  const response = isKnownMissing(request.nextUrl.pathname)
-    ? NextResponse.rewrite(request.nextUrl, {
-        request: { headers: requestHeaders },
-        status: 404,
-      })
-    : NextResponse.next({
-        request: {
-          headers: requestHeaders,
-        },
-      });
+  //
+  // This is NextResponse.next() carrying a status, not a rewrite to the same
+  // URL. A rewrite destination whose origin differs from the one the server
+  // resolved the request against is proxied as an external URL, and
+  // request.nextUrl reports 127.0.0.1 and ::1 as "localhost". Behind
+  // `next start -H 127.0.0.1` every such rewrite went out to localhost, which
+  // resolved to ::1 where nothing listens: a 30 s hang, then a 500.
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+    ...(isKnownMissing(request.nextUrl.pathname) ? { status: 404 } : {}),
+  });
 
   // Only the CSP is set here. Every other security header comes from
   // next.config.ts, which also covers /api and static assets. Setting a header

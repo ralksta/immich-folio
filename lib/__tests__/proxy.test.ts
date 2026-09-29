@@ -24,7 +24,7 @@ vi.mock('@/lib/config', () => ({
 import { isSiteUnlocked } from '@/lib/auth';
 import { cdnOrigin } from '@/lib/cdn';
 import { tryToParsePath } from 'next/dist/lib/try-to-parse-path';
-import { proxy, config, isKnownMissing } from '@/proxy';
+import { proxy, config, isKnownMissing, TOP_LEVEL_ROUTES } from '@/proxy';
 import { getConfigOrNull } from '@/lib/config';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -307,6 +307,11 @@ describe('isKnownMissing', () => {
     expect(isKnownMissing('/journal/..%2Fsettings', contentDir)).toBe(true);
   });
 
+  it('treats a malformed escape in a journal slug as missing instead of throwing', () => {
+    expect(isKnownMissing('/journal/%E0', contentDir)).toBe(true);
+    expect(proxy(new NextRequest('https://example.com/journal/%E0')).status).toBe(404);
+  });
+
   it('leaves album and subpage slugs to the page, which needs Immich to decide', () => {
     expect(isKnownMissing('/japan', contentDir)).toBe(false);
     expect(isKnownMissing('/japan/tokyo', contentDir)).toBe(false);
@@ -316,6 +321,60 @@ describe('isKnownMissing', () => {
     mockConfig.mockReturnValue(null);
     expect(isKnownMissing('/contact', contentDir)).toBe(false);
   });
+
+  it('knows paths deeper than the catch-all serves', () => {
+    expect(isKnownMissing('/x/y/z', contentDir)).toBe(true);
+    expect(isKnownMissing('/japan/tokyo/extra/', contentDir)).toBe(true);
+    // Deep paths below a fixed route are that route's to answer.
+    expect(isKnownMissing('/admin/settings/general', contentDir)).toBe(false);
+    expect(isKnownMissing('/admin/journal/kyoto', contentDir)).toBe(false);
+    expect(isKnownMissing('/proof/abc/def', contentDir)).toBe(false);
+    // Next's internals and dotfiles are not the catch-all's either.
+    expect(isKnownMissing('/_next/data/build/x.json', contentDir)).toBe(false);
+    expect(isKnownMissing('/.well-known/appspecific/x.json', contentDir)).toBe(false);
+  });
+
+  it('lists every top-level route directory under app/', () => {
+    // A route directory missing from the list would have its deep paths
+    // answered 404 while the page renders normally.
+    const appDir = path.join(process.cwd(), 'app');
+    const hasRoute = (dir: string): boolean =>
+      fs
+        .readdirSync(dir, { withFileTypes: true })
+        .some((entry) =>
+          entry.isDirectory()
+            ? hasRoute(path.join(dir, entry.name))
+            : /^(page|route)\.(tsx?|jsx?)$/.test(entry.name),
+        );
+    const routeDirs = fs
+      .readdirSync(appDir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory() && entry.name !== '[...path]')
+      .filter((entry) => hasRoute(path.join(appDir, entry.name)))
+      .map((entry) => entry.name);
+    expect(routeDirs.length).toBeGreaterThan(5);
+    for (const name of routeDirs) expect(TOP_LEVEL_ROUTES.has(name), name).toBe(true);
+  });
+
+  /*
+   * #704 answered with NextResponse.rewrite(request.nextUrl, { status: 404 }).
+   * NextURL reports 127.0.0.1 as "localhost", so behind `next start -H
+   * 127.0.0.1` the destination's origin no longer matched the server's and
+   * Next proxied it as an external URL to localhost — ::1, where nothing
+   * listened: a 30 s hang and a 500 for every known-missing path.
+   */
+  it.each(['/journal/nope', '/contact', '/x/y/z'])(
+    'answers %s with a 404 on the same request, not a rewrite to another origin',
+    (pathname) => {
+      const res = proxy(new NextRequest(`http://127.0.0.1:3591${pathname}`));
+      expect(res.status).toBe(404);
+      expect(res.headers.get('x-middleware-rewrite')).toBeNull();
+      expect(res.headers.get('x-middleware-next')).toBe('1');
+      // The page still gets its nonce, and the policy still matches it.
+      const nonce = res.headers.get('x-middleware-request-x-nonce');
+      expect(nonce).toBeTruthy();
+      expect(res.headers.get('Content-Security-Policy')).toContain(`'nonce-${nonce}'`);
+    },
+  );
 
   it('makes proxy() answer 404 with the policy still set', () => {
     const res = proxy(new NextRequest('https://example.com/contact'));
