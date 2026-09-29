@@ -31,6 +31,7 @@ import {
   SortableSubpageRow,
 } from './page-builder/SortableTiles';
 import PagePanel from './page-builder/PagePanel';
+import { isValidSlug } from '@/lib/journal';
 import NewPageDialog from './page-builder/NewPageDialog';
 import type { PageSummary, SlugTakenBy } from '@/lib/pages';
 import { findAlbumAddress } from './page-builder/findAlbumAddress';
@@ -267,10 +268,13 @@ export default function PageBuilder() {
   function openPageFromLink() {
     const params = new URLSearchParams(window.location.search);
     const slug = params.get('page');
-    if (!slug) return;
+    if (slug === null) return;
     params.delete('page');
     const query = params.toString();
     window.history.replaceState(null, '', window.location.pathname + (query ? `?${query}` : ''));
+    // The slug comes from the address bar and becomes the page's live link, so
+    // only a real page slug may select a page — `//host` would leave the site.
+    if (!isValidSlug(slug)) return;
     setExpandedSubpage(null);
     setSelectedPage(slug);
   }

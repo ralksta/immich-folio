@@ -279,7 +279,7 @@ export default function PagePanel({
           <IconFileText /> {fm?.title || slug}
         </h2>
         <a
-          href={`/${slug}`}
+          href={`/${encodeURIComponent(slug)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="admin-btn admin-btn-xs admin-btn-ghost"
