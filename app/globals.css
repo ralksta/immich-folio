@@ -1169,11 +1169,19 @@
   }
 }
 
+.album-header__main {
+  /* A flex child defaults to min-width: auto, so one long word in the title
+     would widen the header past the viewport on phones. */
+  min-width: 0;
+}
+
 .album-header__title {
   font-family: var(--font-serif);
   font-size: 2.5rem;
   font-weight: 400;
   letter-spacing: 0.02em;
+  hyphens: auto;
+  overflow-wrap: anywhere;
 }
 
 .album-header__description {
