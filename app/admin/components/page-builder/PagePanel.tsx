@@ -185,6 +185,8 @@ export default function PagePanel({
         page: { slug: string; rawMarkdown: string };
         menuRenamed?: boolean;
         galleryVersion?: GalleryVersionChange | null;
+        /** The page was saved, but its menu entry in gallery.yaml was not updated. */
+        warning?: string;
       };
       const written = parseJournalMarkdown(data.page.rawMarkdown);
       setParsed(written);
@@ -199,7 +201,8 @@ export default function PagePanel({
         data.menuRenamed === true,
         data.galleryVersion,
       );
-      notify('success', 'Page saved.');
+      if (data.warning) notify('error', data.warning);
+      else notify('success', 'Page saved.');
     } catch {
       notify('error', 'Could not save the page. Check the connection and try again.');
     } finally {
@@ -228,7 +231,8 @@ export default function PagePanel({
         return;
       }
       onDeleted(slug, data?.removedFromMenu === true, data?.galleryVersion);
-      notify('success', 'Page deleted.');
+      if (typeof data?.warning === 'string') notify('error', data.warning);
+      else notify('success', 'Page deleted.');
     } catch {
       notify('error', 'Could not delete the page. Check the connection and try again.');
     }

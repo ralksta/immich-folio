@@ -13,10 +13,35 @@ import {
   versionOf,
 } from '@/lib/admin/contentVersion';
 import { takenPageSlugs } from '@/lib/admin/pageSlugs';
-import { updatePageRefs } from '@/lib/admin/pageRefs';
+import { updatePageRefs, type GalleryVersionChange } from '@/lib/admin/pageRefs';
 
 interface RouteContext {
   params: Promise<{ slug: string }>;
+}
+
+/**
+ * Follow a page rename or delete in gallery.yaml's menu. Runs after the page
+ * file already moved, so a failure here (gallery.yaml edited into invalid
+ * YAML, a write error) must not turn the answer into a 500: the admin would be
+ * told nothing was saved, keep the old slug, and hit a 404 on every retry.
+ * The page change stands; the menu is left as it was and the admin is told.
+ */
+async function followInMenu(
+  from: string,
+  to: string | null,
+): Promise<{ galleryVersion: GalleryVersionChange | null; warning?: string }> {
+  try {
+    return { galleryVersion: await updatePageRefs(from, to) };
+  } catch (err) {
+    console.error(`[Admin API] Page "${from}" changed, but gallery.yaml was not updated:`, err);
+    return {
+      galleryVersion: null,
+      warning:
+        to === null
+          ? `Page deleted, but its menu entry could not be removed from gallery.yaml. Remove "page: ${from}" there by hand.`
+          : `Page renamed, but the menu in gallery.yaml could not be updated. Change "page: ${from}" to "page: ${to}" there by hand.`,
+    };
+  }
 }
 
 export const GET = withAdmin(async (_request: Request, context: RouteContext) => {
@@ -86,7 +111,10 @@ export const PUT = withAdmin(async (request: Request, context: RouteContext) => 
       baseVersion: baseVersionFrom(request),
       fromSlug: slug,
     });
-    const galleryVersion = targetSlug !== slug ? await updatePageRefs(slug, targetSlug) : null;
+    const { galleryVersion, warning } =
+      targetSlug !== slug
+        ? await followInMenu(slug, targetSlug)
+        : { galleryVersion: null, warning: undefined };
 
     revalidatePath('/', 'layout');
     return NextResponse.json({
@@ -96,6 +124,7 @@ export const PUT = withAdmin(async (request: Request, context: RouteContext) => 
       // So the open page builder can follow the menu rewrite (#601).
       galleryVersion,
       version,
+      ...(warning ? { warning } : {}),
     });
   } catch (err) {
     if (err instanceof VersionConflictError) return conflictResponse(err.currentVersion);
@@ -117,13 +146,14 @@ export const DELETE = withAdmin(async (_request: Request, context: RouteContext)
   try {
     const deleted = await deletePage(slug);
     if (!deleted) return NextResponse.json({ error: 'Page not found' }, { status: 404 });
-    const galleryVersion = await updatePageRefs(slug, null);
+    const { galleryVersion, warning } = await followInMenu(slug, null);
     revalidatePath('/', 'layout');
     return NextResponse.json({
       success: true,
       deletedSlug: slug,
       removedFromMenu: galleryVersion !== null,
       galleryVersion,
+      ...(warning ? { warning } : {}),
     });
   } catch (err) {
     console.error(`[Admin API] Failed to delete page "${slug}":`, err);
