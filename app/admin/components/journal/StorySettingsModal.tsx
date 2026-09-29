@@ -3,6 +3,7 @@
 import type { ParsedJournal } from '@/lib/journal';
 import type { AssetPickTarget } from './BlockFields';
 import PasswordField from '../fields/PasswordField';
+import { useModalDialog } from '@/hooks/useModalDialog';
 
 type Frontmatter = ParsedJournal['frontmatter'];
 
@@ -20,10 +21,20 @@ export function StorySettingsModal({
   onPickAsset,
   onClose,
 }: StorySettingsModalProps) {
+  const cardRef = useModalDialog(onClose);
+
   return (
     <div className="journal-modal-overlay">
-      <div className="journal-modal-card">
-        <h3 style={{ margin: '0 0 1.25rem' }}>Story Settings &amp; Metadata</h3>
+      <div
+        className="journal-modal-card"
+        ref={cardRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="story-settings-title"
+      >
+        <h3 id="story-settings-title" style={{ margin: '0 0 1.25rem' }}>
+          Story Settings &amp; Metadata
+        </h3>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>

@@ -27,7 +27,21 @@ import { useEffect, useRef } from 'react';
  * have to call the hook — hooks may not run conditionally. Without it the
  * effect would run once against an unmounted card, bail out, and never run
  * again, because `onClose` alone does not change when the modal opens.
+ *
+ * Dialogs nest — the album drawer opens the asset picker, the backup manager
+ * a confirmation. Every open dialog listens on `document`, so only the one
+ * opened last handles a key; otherwise one Escape closed the whole stack.
+ *
+ * Escape is also left alone while the focused element owns it: an expanded
+ * combobox (the admin Listbox closes its popup) or a dnd-kit item picked up
+ * with the keyboard (Escape cancels the move). The listener runs in the
+ * capture phase and stops propagation, so neither would see the key.
  */
+
+/** Open dialogs, innermost last. */
+const openDialogs: object[] = [];
+
+const ESCAPE_OWNERS = '[aria-expanded="true"], [aria-roledescription][aria-pressed="true"]';
 
 const FOCUSABLE = [
   'a[href]',
@@ -67,6 +81,8 @@ export function useModalDialog(onClose: () => void, active = true) {
     if (!active || !card) return;
 
     const previous = document.activeElement as HTMLElement | null;
+    const token = {};
+    openDialogs.push(token);
 
     // React has already applied `autoFocus` by the time the effect runs, so
     // an existing focus inside the card is respected rather than overridden.
@@ -75,7 +91,10 @@ export function useModalDialog(onClose: () => void, active = true) {
     }
 
     function onKeyDown(e: KeyboardEvent) {
+      if (openDialogs[openDialogs.length - 1] !== token) return;
       if (e.key === 'Escape') {
+        const active = document.activeElement;
+        if (active && card?.contains(active) && active.matches(ESCAPE_OWNERS)) return;
         e.stopPropagation();
         onCloseRef.current();
         return;
@@ -105,6 +124,7 @@ export function useModalDialog(onClose: () => void, active = true) {
     document.addEventListener('keydown', onKeyDown, true);
     return () => {
       document.removeEventListener('keydown', onKeyDown, true);
+      openDialogs.splice(openDialogs.indexOf(token), 1);
       // Only take the focus back if it is still inside the closing dialog.
       // Something else may legitimately have claimed it in the meantime.
       if (previous && document.contains(previous)) previous.focus();

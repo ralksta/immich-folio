@@ -74,14 +74,30 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  width: 100%;
   padding: 0.6rem 0.75rem;
+  border: none;
   border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
   cursor: pointer;
   transition: background 0.1s;
 }
 
-.picker-item:hover:not(.used) {
+.picker-item:hover:not(.used),
+.picker-item:focus-visible {
   background: var(--admin-bg-elevated);
+}
+
+.picker-item:focus-visible {
+  outline: var(--admin-focus-ring);
+  outline-offset: -2px;
+}
+
+.picker-item:focus-visible .picker-select-badge {
+  opacity: 1;
 }
 
 .picker-item.used {

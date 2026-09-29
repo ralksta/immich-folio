@@ -19,6 +19,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useScrollLock } from './useScrollLock';
+import { useModalDialog } from '@/hooks/useModalDialog';
 
 interface AssetInfo {
   id: string;
@@ -65,8 +66,10 @@ function SortableAssetTile({
       <img src={`/api/admin/thumbnail/${asset.id}`} alt={asset.originalFileName} loading="lazy" />
       <span className="order-tile-index">{index + 1}</span>
       <button
+        type="button"
         className="order-tile-action"
         title="Unpin — let this photo follow automatically"
+        aria-label={`Unpin ${asset.originalFileName}`}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
@@ -94,6 +97,7 @@ export default function AssetOrderEditor({
   onClose,
 }: Props) {
   useScrollLock(true);
+  const cardRef = useModalDialog(onClose);
   const [assets, setAssets] = useState<AssetInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -164,10 +168,17 @@ export default function AssetOrderEditor({
 
   return (
     <div className="picker-overlay" onClick={onClose}>
-      <div className="asset-picker-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="asset-picker-modal"
+        ref={cardRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="order-editor-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="picker-header">
-          <h3>Photo order — {albumName}</h3>
-          <button className="admin-btn-icon" onClick={onClose}>
+          <h3 id="order-editor-title">Photo order — {albumName}</h3>
+          <button type="button" className="admin-btn-icon" onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
@@ -240,19 +251,19 @@ export default function AssetOrderEditor({
               </p>
               <div className="order-editor-grid">
                 {unpinned.map((asset) => (
-                  <div
+                  <button
+                    type="button"
                     key={asset.id}
                     className="order-tile order-tile-unpinned"
                     title={asset.originalFileName}
+                    aria-label={`Pin ${asset.originalFileName}`}
                     onClick={() => setPinnedIds([...pinnedIds, asset.id])}
                   >
-                    <img
-                      src={`/api/admin/thumbnail/${asset.id}`}
-                      alt={asset.originalFileName}
-                      loading="lazy"
-                    />
-                    <span className="order-tile-action">+</span>
-                  </div>
+                    <img src={`/api/admin/thumbnail/${asset.id}`} alt="" loading="lazy" />
+                    <span className="order-tile-action" aria-hidden="true">
+                      +
+                    </span>
+                  </button>
                 ))}
               </div>
             </div>

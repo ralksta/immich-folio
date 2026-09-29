@@ -6,6 +6,7 @@ import { Listbox } from '../Listbox';
 import { SORT_OPTIONS } from './sortOptions';
 import type { AlbumEntry, HeroPickerTarget, OrderEditorTarget } from './types';
 import PasswordField from '../fields/PasswordField';
+import { useModalDialog } from '@/hooks/useModalDialog';
 
 interface AlbumDrawerProps {
   album: AlbumEntry;
@@ -36,15 +37,29 @@ export default function AlbumDrawer({
   onEditOrder,
 }: AlbumDrawerProps) {
   const heroThumb = album.heroImage || thumbnailId;
+  const cardRef = useModalDialog(onClose);
 
   return (
     <div className="album-drawer-overlay open" onClick={() => onClose()}>
-      <div className="album-drawer" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="album-drawer"
+        ref={cardRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="album-drawer-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="album-drawer-header">
-          <h3>
+          <h3 id="album-drawer-title">
             <IconCamera /> Edit Album Details
           </h3>
-          <button className="admin-btn-icon" onClick={() => onClose()} title="Close details">
+          <button
+            type="button"
+            className="admin-btn-icon"
+            onClick={() => onClose()}
+            title="Close details"
+            aria-label="Close details"
+          >
             <IconX size={14} />
           </button>
         </div>
