@@ -125,8 +125,13 @@ interface InstallFileData {
 
 let cachedInstallFile: { path: string; mtimeMs: number; data: InstallFileData } | null = null;
 
+/** Where install.json lives; getConfig() watches its mtime. */
+export function installFilePath(): string {
+  return path.join(installContentDir(), INSTALL_FILENAME);
+}
+
 function readInstallFile(): InstallFileData {
-  const installPath = path.join(installContentDir(), INSTALL_FILENAME);
+  const installPath = installFilePath();
 
   let mtimeMs = 0;
   try {
