@@ -7,6 +7,466 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [Unreleased]
+
+### Security
+
+- **Photo and video URLs stop working once the photo is no longer on the
+  site** ([#737](https://github.com/ralksta/immich-folio/pull/737),
+  [#787](https://github.com/ralksta/immich-folio/pull/787),
+  [GHSA-gfh4-6275-9gqv](https://github.com/ralksta/immich-folio/security/advisories/GHSA-gfh4-6275-9gqv),
+  low). Asset tokens are deterministic and never expire, so a media URL that
+  was ever served kept working after its album was unpublished or a client
+  proofing link was revoked or expired. `/api/image`, `/api/video` and
+  `/api/exif` now answer `404` (`no-store`) for any asset the site does not
+  currently show; signed-in admins still pass. The check follows content-file
+  changes on the next request, and the first views of a newly published album
+  wait for its rebuild instead of being refused. Copies already held by a
+  browser or CDN are not recalled.
+
+- **Subpages taken offline with `enabled: false` are unpublished everywhere**
+  ([#755](https://github.com/ralksta/immich-folio/pull/755),
+  [GHSA-w3wp-6qff-q96p](https://github.com/ralksta/immich-folio/security/advisories/GHSA-w3wp-6qff-q96p),
+  medium). An offline subpage keeps its configuration, so its albums stayed on
+  the album allowlist: the map still showed them, and the media and download
+  routes still served their photos and ZIPs, while the page itself answered 404. The map, the published-asset check and the download checks now consider
+  only albums that are standalone or on an enabled subpage. `hidden: true`
+  subpages are unchanged: reachable by link, their photos still load.
+
+- **The sitemap no longer lists password-protected journal entries**
+  ([#759](https://github.com/ralksta/immich-folio/pull/759),
+  [GHSA-7c42-5pgh-xppr](https://github.com/ralksta/immich-folio/security/advisories/GHSA-7c42-5pgh-xppr),
+  low). It already left out protected subpages, albums and content pages, but
+  filtered journal entries on `draft` alone. It now matches what the journal
+  index shows a visitor who has not unlocked the entry.
+
+- **Share cards and page titles carry only text the site wrote**
+  ([#767](https://github.com/ralksta/immich-folio/pull/767),
+  [#783](https://github.com/ralksta/immich-folio/pull/783)). `/api/og`
+  rendered any `title` and `subtitle` from its query string, on the site's
+  domain and in its accent colour. Card URLs are now signed with the site
+  secret; an unsigned or altered one gets the plain site-title card, so
+  previews already cached by social networks keep working. Page metadata no
+  longer falls back to the requested path: unknown paths get the not-found
+  title and no card of their own, and locked albums and subpages the generic
+  protected title with `noindex`.
+
+- **A locked journal entry's title stays off its password gate**
+  ([#765](https://github.com/ralksta/immich-folio/pull/765)). The index and
+  the page metadata already hid it; the gate itself printed it. It now shows
+  the generic journal title, and a subpage that embeds a locked entry through
+  `essayFile` shows its own title.
+
+- **Password attempts no longer reveal which pages have a password**
+  ([#769](https://github.com/ralksta/immich-folio/pull/769),
+  [#785](https://github.com/ralksta/immich-folio/pull/785)). `POST /api/auth`
+  answered a key without a password with a different status and message than a
+  wrong password, and much faster than a key with an scrypt hash. That gave
+  away drafts and offline subpages, which otherwise answer 404. Both cases now
+  get the same `401` and run exactly one scrypt verification. Input validation
+  and the rate limit are unchanged.
+
+- **ZIP downloads are capped per visitor, and stalled ones are closed**
+  ([#774](https://github.com/ralksta/immich-folio/pull/774)). The album and
+  proofing ZIP routes limited how often an archive starts, not how long one
+  stays open, so a client that read slowly or stopped reading held an Immich
+  connection and its buffers for as long as it liked. At most two archives per
+  client IP may be open at once, shared between both routes (a third gets
+  `429` with `Retry-After: 30`), and an archive whose client takes nothing for
+  60 seconds is torn down. A download that keeps reading is never cut off,
+  however slowly it reads. See the upgrade notes.
+
+- **The Immich webhook caps its request body before checking the signature**
+  ([#780](https://github.com/ralksta/immich-folio/pull/780)). The body was
+  read in full, at any size, before the HMAC check. It is now limited to 64
+  KiB (`413` above), the signature is computed over the raw bytes, and the
+  signature header must be exactly 64 hex characters; a valid digest followed
+  by junk was accepted before.
+
+- **The ZIP refusal page's back link stays on the site**
+  ([#786](https://github.com/ralksta/immich-folio/pull/786)). A `Referer`
+  whose path started with `//` became a protocol-relative link to another
+  host; such paths are now rejected. The link compares the `Referer` with the
+  `Host` header (and `X-Forwarded-Host` only when `TRUSTED_PROXY_HOPS` is
+  set), so behind a reverse proxy it now leads back to the album instead of
+  always to `/`.
+
+- **Client proofing tokens are never written to the view statistics**
+  ([#748](https://github.com/ralksta/immich-folio/pull/748)). The cookieless
+  counter stored every path as visited, and in `/proof/<token>` the token is
+  the link's only credential. Those visits are counted as `/proof`.
+
+### Added
+
+- **Client proofing links**
+  ([#683](https://github.com/ralksta/immich-folio/pull/683),
+  [#758](https://github.com/ralksta/immich-folio/pull/758)). Under the new
+  _Proofing_ tab the admin creates a private link, `/proof/<token>`, per
+  client and album — any Immich album, published on the site or not — with an
+  optional expiry date, an optional ZIP download (the selection or the whole
+  album) and an optional download limit. The client hearts photos as on a
+  public album; the selection is saved on the server as they go, so they can
+  stop and continue later or on another device, and _Submit selection_ locks
+  it. The photographer watches the picks come in, reopens a submitted
+  selection, resets the download counter or revokes the link, and exports the
+  picks as a Lightroom or Capture One filename filter (which finds the RAW as
+  well as the JPEG), CSV or TXT. `PROOFING_WEBHOOK_URL` gets one JSON POST on
+  the first submit, shaped for Discord, Slack, Gotify and generic receivers.
+  Links are stored in `content/proofing.json` (mode `0600`); proof pages are
+  `noindex`, send no `Referer` and stay out of the sitemap, and a site
+  password still applies. The selection ZIP waits until pending hearts are
+  saved, so it never misses the last pick. The anonymous proofing on public
+  albums is unchanged. See `docs/gallery-config.md#client-proofing-links`.
+
+- **Custom content pages**
+  ([#738](https://github.com/ralksta/immich-folio/pull/738),
+  [#760](https://github.com/ralksta/immich-folio/pull/760),
+  [#764](https://github.com/ralksta/immich-folio/pull/764), closes
+  [#722](https://github.com/ralksta/immich-folio/issues/722)).
+  `content/pages/<slug>.md` — frontmatter plus the journal's block markdown —
+  is served at `/<slug>` and rendered like a journal entry without date or
+  reading time. A `- page: <slug>` line among the subpages in `gallery.yaml`
+  puts it in the menu at that position; a page without one is reachable by
+  link but not listed. Pages can be drafts (visible to signed-in admins only)
+  and can carry a password (cookie `lb_auth_page_<slug>`); public pages appear
+  in the sitemap. In the page builder, pages sit in one _Menu_ group with the
+  subpages, _+ New page_ derives the slug from the title with a collision
+  check, and the content is edited in the journal studio. Renaming or deleting
+  a page updates its menu entry, with a backup first; page backups rotate in
+  `content/pages/.backups/`. A new doctor check, `content-pages`, reports slug
+  collisions and menu entries without a file. A missing or draft page is still
+  a soft 404 (status `200`), like other slugs on this route.
+
+- **The asset picker searches the library and picks several photos at once**
+  ([#740](https://github.com/ralksta/immich-folio/pull/740),
+  [#752](https://github.com/ralksta/immich-folio/pull/752), closes
+  [#602](https://github.com/ralksta/immich-folio/issues/602)). A date (`2024`,
+  `2024-05`, `2024-05-17`) searches by capture date, any other text by file
+  name and Immich description. Tiles are buttons with a numbered badge in pick
+  order, and a bar at the bottom offers _Add N photos_. The homepage hero
+  takes several at once, _+ Photos_ in the journal and page editor adds one
+  photo block per pick, and pairs and grids fill their slots. The search stays
+  read-only against Immich.
+
+- **Admin editors detect concurrent edits**
+  ([#742](https://github.com/ralksta/immich-folio/pull/742),
+  [#757](https://github.com/ralksta/immich-folio/pull/757), closes
+  [#601](https://github.com/ralksta/immich-folio/issues/601)). Every editor
+  that saves a content file — gallery, settings, About, privacy, journal
+  entries and content pages — notices when the file changed since it was
+  loaded, in another tab or on another device, by hand or through a backup
+  restore. Instead of overwriting it silently, it offers _Reload (discard
+  mine)_, _Overwrite anyway_ or _Keep editing_. A save from a tab opened
+  before the upgrade still goes through as before. Deletes are not
+  version-checked.
+
+- **Settings set by the environment are shown as locked**
+  ([#739](https://github.com/ralksta/immich-folio/pull/739), closes
+  [#605](https://github.com/ralksta/immich-folio/issues/605)). `sitePassword`
+  (overridden by `SITE_PASSWORD`) and `contact.notifyUrl`
+  (`CONTACT_NOTIFY_URL`) are disabled in the settings editor with a note
+  naming the variable, and a save keeps what `settings.yaml` holds for them.
+  `SITE_TITLE`, `SITE_SUBTITLE` and `SITE_URL` are fallbacks, not overrides,
+  and stay editable.
+
+- **An accessibility baseline**
+  ([#741](https://github.com/ralksta/immich-folio/pull/741), closes
+  [#696](https://github.com/ralksta/immich-folio/issues/696)). The hero
+  carousel stops auto-advancing under `prefers-reduced-motion` and has a pause
+  button, and one reduced-motion rule covers the site, the admin and
+  `/install`. Theme toggle, menu button and scroll-to-top are 44×44 px
+  targets; EXIF and cover overlays also show on keyboard focus, and always on
+  touch screens. The lightbox keeps Tab inside and returns focus to the photo
+  shown last, the mobile menu moves focus in and back out, and the admin and
+  `/install` have skip links. Photo counts in descriptions and share cards,
+  the lightbox position and the _Gallery_ fallback title are translated.
+  Header and hero navigation now share one order — Home, subpages and content
+  pages in `gallery.yaml` order, standalone albums, Journal, About, Map — with
+  external `navLinks` last.
+
+### Changed
+
+- **Less work per request**
+  ([#753](https://github.com/ralksta/immich-folio/pull/753),
+  [#756](https://github.com/ralksta/immich-folio/pull/756),
+  [#749](https://github.com/ralksta/immich-folio/pull/749),
+  [#761](https://github.com/ralksta/immich-folio/pull/761),
+  [#775](https://github.com/ralksta/immich-folio/pull/775)). The configuration
+  is derived once per content-file change instead of on every read (one
+  `/api/image` request did it seven times), and the Immich client reads it
+  once per operation. Album blocks in journal entries, content pages and
+  essays go through the album cache with request coalescing, and a page's
+  blocks load in parallel instead of one after another. Parsed journal and
+  page listings are kept while their files are unchanged, and the journal and
+  site navigation are read once per request. Content edits still show on the
+  next request; album blocks now follow `CACHE_TTL` like every other album.
+
+- **One image URL per photo and size tier**
+  ([#762](https://github.com/ralksta/immich-folio/pull/762)). The proxy
+  answers every width within a tier with the same bytes, but `next/image`
+  wrote ten widths into each `srcset` and the lightbox asked for an eleventh
+  spelling, so opening a grid photo downloaded the same preview again, and so
+  did rotating a phone. Grid, hero, essay and lightbox now request one URL per
+  tier, and the unused `q` parameter is gone. An album viewed in full in the
+  lightbox transfers each preview once instead of twice, and a CDN sees at
+  most one miss per photo and tier. The URLs change once; see the upgrade
+  notes.
+
+- **Pages ship less code they do not use**
+  ([#770](https://github.com/ralksta/immich-folio/pull/770),
+  [#766](https://github.com/ralksta/immich-folio/pull/766)). The proofing UI
+  loads only on pages where proofing is on, and Leaflet's stylesheet and map
+  wrapper only when an essay contains a map block. Album, subpage and journal
+  pages drop 3–5 KB of gzipped JavaScript and 14% of their render-blocking
+  CSS.
+
+- **Settings the site would ignore are refused on save**
+  ([#795](https://github.com/ralksta/immich-folio/pull/795)). A site URL
+  without a scheme, an accent that is not hex, or grid columns and gap outside
+  their bounds were saved with a success message and then silently replaced
+  when the site rendered. The settings form now marks such fields as you type,
+  the save answers `400` naming them and writes nothing, and a new doctor
+  check, `settings-values`, reports values already in `settings.yaml` that the
+  site ignores.
+
+- **Admin colours: blue accent, amber warnings, readable muted text**
+  ([#795](https://github.com/ralksta/immich-folio/pull/795)). Outside Studio
+  Modern the admin accent was the same amber as its warnings, so every active
+  marker and focus ring read as a warning; it is now blue. The unsaved-changes
+  bar and the order editor's drift notice use the warning colour instead of
+  the accent (red under Studio Modern), the status badge has its own amber
+  tone for doctor warnings, and muted text reaches 4.5:1 on every admin
+  surface in every preset.
+
+### Fixed
+
+- **Public pages follow admin saves on the next request**
+  ([#790](https://github.com/ralksta/immich-folio/pull/790)). After a save,
+  changed album titles, descriptions and slugs, and newly published albums,
+  could take up to `CACHE_TTL` (five minutes by default) to appear, and a new
+  album answered 404 meanwhile: the save cleared a copy of the Immich cache
+  that the public pages never read. The cache now holds only Immich's data and
+  applies `gallery.yaml` on the way out, and it is one store per process, so
+  _Clear cache_ in Diagnostics, the webhook and the status panel act on the
+  cache the pages use. A subpage's cover grid and its albums' previous/next
+  links follow the order from `gallery.yaml` and the page builder instead of
+  Immich's. See the upgrade notes.
+
+- **Photo captions with parentheses no longer break journal entries**
+  ([#788](https://github.com/ralksta/immich-folio/pull/788)). A caption like
+  `Summit (560 m)`, or one with a link, ended the photo block at the first
+  `)`: the public page rendered the line as a paragraph showing raw asset IDs,
+  and the editor turned it into a text block, dropping the photo on the next
+  save. Captions now run to the block's last `)`, with no change to the file
+  format, and existing entries parse as before. Photo lines without a blank
+  line between them or directly under a heading are recognised too, and a link
+  URL may hold one level of parentheses.
+
+- **Journal and essay text fields show Markdown, not stored HTML**
+  ([#789](https://github.com/ralksta/immich-folio/pull/789)). After a reload,
+  text blocks, quotes, captions and fact values showed raw `<strong>` and
+  `<a>` tags, and text typed inside a tag could be lost on save. The fields
+  now show and take inline Markdown, the live preview renders bold, italics
+  and links while you type, and an untouched block saves byte for byte as
+  before.
+
+- **Contact messages from devices with a wrong clock are no longer dropped**
+  ([#771](https://github.com/ralksta/immich-folio/pull/771)). The fill-time
+  check compared the visitor's clock with the server's. A device ten minutes
+  fast, or a day slow, made a genuine message look like spam, which is
+  discarded silently while the sender sees the thank-you page. The form is now
+  stamped with the server's time.
+
+- **Missing pages answer a real 404**
+  ([#781](https://github.com/ralksta/immich-folio/pull/781),
+  [#772](https://github.com/ralksta/immich-folio/pull/772)). Since 0.18.0, a
+  switched-off `/contact`, `/impressum`, `/privacy` or `/map`, or an unknown
+  `/journal/<slug>`, could hang for about 30 seconds and fail with `500` when
+  the server was bound to `127.0.0.1`, because the proxy's rewrite looped back
+  through `localhost`. They now get `404` at once. Paths deeper than two
+  segments, such as `/travel/iceland/anything`, rendered the parent subpage or
+  album with `200` and its title; they answer `404` as well.
+
+- **_Email to photographer_ addresses the photographer**
+  ([#746](https://github.com/ralksta/immich-folio/pull/746) by
+  [@lancetm714](https://github.com/lancetm714), follow-up
+  [#747](https://github.com/ralksta/immich-folio/pull/747); reported in
+  [#736](https://github.com/ralksta/immich-folio/issues/736) by
+  [@RichKidsDev](https://github.com/RichKidsDev)). The proofing dialog opened a
+  mail with an empty _To:_ line. The recipient is now the footer contact
+  email, or the new optional `proofing.email` (Settings → General → _Proofing
+  email_); with neither set, the button is hidden. The address stays out of
+  the served HTML, as the footer's does.
+
+- **Proofing on public albums counts and filters correctly**
+  ([#763](https://github.com/ralksta/immich-folio/pull/763),
+  [#773](https://github.com/ralksta/immich-folio/pull/773),
+  [#787](https://github.com/ralksta/immich-folio/pull/787)). The selection
+  count included favourites stored under the same album key but not in the
+  grid — removed photos, or another album with the same name — so the bar
+  could read "3 selected" over one heart; only this album's photos count now.
+  With the favourites filter on, un-hearting the photo open in the lightbox
+  crashed the page when it was the last in the list, and un-hearting the last
+  favourite left an empty grid with no way back. The viewer now steps to the
+  previous favourite or closes, and an empty filter shows _Show all_.
+
+- **Hidden subpages stay off the map**
+  ([#782](https://github.com/ralksta/immich-folio/pull/782)). `hidden: true`
+  subpages are reachable by link only and were already left out of the
+  sitemap, but `/map` showed markers for albums only they carry — name, link
+  and thumbnail — and counted them in its header. Their photos still load for
+  anyone with the link. The map header also no longer counts an album on two
+  subpages twice.
+
+- **Edits made while an admin save is in flight are kept**
+  ([#768](https://github.com/ralksta/immich-folio/pull/768)). Editors marked
+  themselves clean when the save answered, so edits typed meanwhile showed as
+  saved, were missing from the draft and were lost on leaving; the journal
+  editor and the page builder even replaced them with the written copy.
+  Editors now compare with what they sent and stay unsaved when there is more
+  to save. This covers the journal and page editor, the page builder,
+  Settings, About and the privacy policy.
+
+- **Slug fields take hyphens and keep accented letters**
+  ([#751](https://github.com/ralksta/immich-folio/pull/751)). The new-page,
+  page-URL and new-journal-entry fields stripped a trailing hyphen on every
+  keystroke, so `about-us` could only be pasted. Accented letters became
+  hyphens (`Über mich` → `ber-mich`); they now fold to the base letter and `ß`
+  to `ss`, as subpage slugs already did. Existing slugs do not change.
+
+- **Journal dates show the written day everywhere**
+  ([#776](https://github.com/ralksta/immich-folio/pull/776)). On a server west
+  of Greenwich a date-only `2026-03-15` showed as 14 March on the index,
+  hand-typed dates showed "Invalid Date", and the entry page printed the raw
+  frontmatter. Index and entry now format dates the same way, in the site's
+  language and without a timezone shift; `YYYY-MM` shows month and year,
+  anything else is shown as written. Entries with the same date are ordered by
+  slug, so the index and previous/next links no longer depend on the
+  filesystem.
+
+- **Password gates and refusal pages**
+  ([#786](https://github.com/ralksta/immich-folio/pull/786)). Once the rate
+  limit kicked in, the gate said "wrong password" even for the right one and
+  cleared the field; it now says how many seconds to wait and keeps the input.
+  A locked journal entry has its own gate subtitle instead of the gallery's.
+  The ZIP refusal page uses the preset's colours in the site's colour mode
+  instead of plain white, and an expired proofing link is titled as expired
+  rather than "not found".
+
+- **The lightbox and error messages are readable in light mode**
+  ([#792](https://github.com/ralksta/immich-folio/pull/792)). The lightbox
+  overlay is dark in both modes, but its close button, arrows, counter and
+  focus ring used the page's near-black light-mode text colours, down to
+  1.1:1. They now have their own tokens, the round controls get a dark
+  translucent fill that stays visible over a white sky, and the favourite
+  toggle keeps its colour on hover. A new per-mode `--error` colour brings
+  form and gate errors to 4.5:1, and text on accent-filled buttons in the
+  proofing dialogs and on Studio Modern's 404 page follows `--on-accent`.
+
+- **No sideways scrolling on phones and tablets**
+  ([#791](https://github.com/ralksta/immich-folio/pull/791),
+  [#797](https://github.com/ralksta/immich-folio/pull/797)). The footer's name
+  and legal links made every Studio Modern page 441px wide on a 390px phone,
+  which also pushed the lightbox's close and next buttons off-screen. The
+  footer wraps, the header switches to the menu whenever its links do not fit
+  in one row (not only below 641px), the map loses a second side gutter and
+  its grey bands, and Studio Modern's smaller phone and tablet gutters take
+  effect. Long hero, subpage, privacy and album titles wrap or hyphenate
+  instead of widening the page, and phone content no longer starts under the
+  header.
+
+- **The admin on phones, keyboards and screen readers**
+  ([#793](https://github.com/ralksta/immich-folio/pull/793),
+  [#794](https://github.com/ralksta/immich-folio/pull/794),
+  [#795](https://github.com/ralksta/immich-folio/pull/795)). On a phone the
+  subpage sheet was clipped after one screen, hiding its albums and _Delete_;
+  it now grows with its content and scrolls into view on tap, and the journal
+  list, status dropdown and Story Settings password field fit. The album
+  drawer, order editor, Story Settings and new-entry dialog are modal dialogs
+  with Escape and a focus trap, Escape closes only the innermost of two open
+  dialogs, and album picker rows are buttons reachable from the keyboard. An
+  unsaved privacy policy survives switching settings sections, like About. The
+  admin is marked `lang="en"`, so a screen reader on a German site no longer
+  reads it with a German voice, and the analytics chart shows the last 14
+  calendar days, empty ones included.
+
+- **The admin overview no longer crashes on the older map form of
+  `subpages:`** in `gallery.yaml`
+  ([#754](https://github.com/ralksta/immich-folio/pull/754)).
+
+- **Translations** ([#784](https://github.com/ralksta/immich-folio/pull/784),
+  [#777](https://github.com/ralksta/immich-folio/pull/777)). Navigation, next
+  and back links and the subpage password gate name a subpage by its `title`
+  instead of its `gallery.yaml` key (`south-korea`). The map's zoom buttons
+  and Leaflet credit are translated, the share card no longer lowercases its
+  subtitle ("25 fotos"), German says "Diashow" throughout, French uses the
+  singular for 0, and the proofing mail subject no longer reads "1 items".
+
+### Internal
+
+- **The unit tests no longer write into the checkout's `content/`**
+  ([#778](https://github.com/ralksta/immich-folio/pull/778)).
+  `journal.test.ts` created and deleted a real journal entry there, which in a
+  self-hosted checkout briefly published it and left a
+  `test-journey-nordkap.md.<timestamp>.deleted.bak` in
+  `content/journal/.backups/`; remove any such file by hand. A setup file now
+  fails every test that writes under `content/`.
+- **Every public API route must declare whether the site password gates it**
+  ([#750](https://github.com/ralksta/immich-folio/pull/750)); a test fails on
+  a route that is in neither list.
+- **The standalone build no longer traces the whole project**
+  ([#796](https://github.com/ralksta/immich-folio/pull/796)), which the config
+  memo of [#753](https://github.com/ralksta/immich-folio/pull/753) had caused
+  before release.
+- Admin screenshots in the README and `docs/journal.md` show the redesigned
+  panel ([#735](https://github.com/ralksta/immich-folio/pull/735)).
+
+### Upgrade notes
+
+**Image URLs change once.** Each photo now has one URL per size tier, and the
+`q` parameter is gone
+([#762](https://github.com/ralksta/immich-folio/pull/762)). Browsers and a CDN
+fetch every photo once more after the upgrade, as after an
+`IMAGE_CACHE_VERSION` bump. No `IMAGE_CACHE_VERSION` bump is needed this time.
+
+**At most two ZIP downloads run at once per client IP**
+([#774](https://github.com/ralksta/immich-folio/pull/774)). Behind a reverse
+proxy, `TRUSTED_PROXY_HOPS` must be set correctly; otherwise every visitor has
+the proxy's address and all of them share the same two slots.
+
+**Admin saves no longer clear the Immich album cache**
+([#790](https://github.com/ralksta/immich-folio/pull/790)). Changes to
+`gallery.yaml` and settings show on the next request as before. Changes made
+inside Immich — new photos in an album, a renamed album — appear after
+`CACHE_TTL`, after _Clear cache_ under Diagnostics, or at once when the Immich
+webhook is set up.
+
+**Every password attempt costs one scrypt verification** (about 40 ms),
+including attempts on keys that have no password
+([#785](https://github.com/ralksta/immich-folio/pull/785)). The auth rate
+limit keeps the total small.
+
+**The admin's default accent is blue**
+([#795](https://github.com/ralksta/immich-folio/pull/795)); warnings stay
+amber. Studio Modern keeps its red accent.
+
+**Paths deeper than two segments answer `404`**
+([#781](https://github.com/ralksta/immich-folio/pull/781)), where they used to
+render the parent subpage or album. Links of that shape were never generated
+by the site.
+
+**Header and hero navigation share one order**
+([#741](https://github.com/ralksta/immich-folio/pull/741)): external
+`navLinks` from `settings.yaml` now come after About and Map.
+
+**`content/` gains `proofing.json` and `pages/`**, both created on demand, so
+a writable `content/` is enough, as before. `/proof` is a fixed route now: a
+subpage slugged `proof` is hidden behind it.
+
+**New, optional settings:** `proofing.email` and the `PROOFING_WEBHOOK_URL`
+environment variable. See `content/settings.yaml.example`,
+`.env.local.example` and `docs/gallery-config.md#client-proofing-links`.
+
 ## [0.18.1] — 2026-09-27
 
 ### Fixed
