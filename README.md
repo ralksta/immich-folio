@@ -13,7 +13,7 @@
 
 A self-hosted portfolio powered by [Immich](https://immich.app). It acts as a **secure reverse proxy** between your visitors and your private Immich instance: your Immich server stays on your local network, completely invisible to the outside world, while your albums are published as a gallery you control.
 
-**Latest: v0.18.1** — built-in contact form, privacy page and a reworked admin panel. → [What's New](#whats-new)
+**Latest: v0.19.0** — private proofing links for clients, custom content pages and a round of security fixes. → [What's New](#whats-new)
 
 ## Contents
 
@@ -344,15 +344,15 @@ own password, separate from any album passwords, and writes straight to
 
 ## What's New
 
-v0.18.0 — a contact form, a privacy page and a reworked admin:
+v0.19.0 — client proofing links, content pages and a big quality pass:
 
-- **Built-in contact form** — no SMTP or form service: messages land in a new admin inbox, with an optional ntfy push that carries nothing about the sender
-- **Privacy page and fewer third parties** — `/privacy` with a list of what your installation actually processes; fonts and map styles are served from your own server, and email addresses stay out of the page source
-- **A reworked admin panel** — a collapsible sidebar, an overview page, the page builder as a structure list with Undo, and ON/OFF switches grouped by meaning
-- **Four more languages and a CDN mode** — French, Spanish, Italian and Dutch, and `CDN_URL` to serve photos through a pull CDN
-- **Two security fixes** — draft and password-protected journal entries used as subpage essays, and unescaped Immich descriptions ([advisories](https://github.com/ralksta/immich-folio/security/advisories))
+- **Private proofing links for clients** — one link per client and album, with an optional expiry, download limit and ZIP; the selection is saved on the server, the client submits it, and you export the picks as a Lightroom or Capture One filter
+- **Custom content pages** — `content/pages/<slug>.md` pages (pricing, workshops, anything) written in the journal editor and placed in the menu next to your subpages
+- **A calmer admin** — library search and multi-select in the photo picker, a warning instead of a silent overwrite when a file changed elsewhere, settings from the environment shown as locked, and invalid values refused on save
+- **Better on phones and in light mode** — no sideways scrolling, a menu whenever the navigation does not fit, readable lightbox controls, and an accessibility baseline (reduced motion, focus handling, touch targets)
+- **Security fixes** — media URLs stop working once a photo leaves the site, offline subpages are unpublished everywhere, and the sitemap skips protected journal entries ([advisories](https://github.com/ralksta/immich-folio/security/advisories))
 
-**Upgrade note:** a custom CSP or proxy allowlist must now allow `tile.openstreetmap.org` for map tiles, and `theme.accent` must be a hex colour. Nothing else to migrate.
+**Upgrade note:** image URLs change once (browser and CDN caches refill by themselves), at most two ZIP downloads run at once per visitor — set `TRUSTED_PROXY_HOPS` behind a reverse proxy — and changes made inside Immich now show after `CACHE_TTL` or _Clear cache_. Details in the [changelog](CHANGELOG.md).
 
 Security fixes ship in normal releases, so **running the latest release is the
 recommended baseline**.
@@ -383,12 +383,14 @@ easier to live with.
   picked, as one archive of the originals — streamed, so even a large shoot
   arrives complete. In v0.18.0, kept accent-coloured buttons readable when the
   accent is light, and made a mistyped accent fall back to the theme instead of
-  turning every button invisible.
+  turning every button invisible. In v0.19.0, gave the proofing dialog's
+  _Email to photographer_ an actual recipient.
 - **[@RichKidsDev](https://github.com/RichKidsDev)** — noticed that the
   Impressum still cited the TMG, which the DDG replaced in 2024. That report
   turned into a proper overhaul in v0.18.0: the right law by default, a heading
   you can change for other countries, clickable contacts and a contact form as
-  a second channel.
+  a second channel. In v0.19.0, reported that _Email to photographer_ opened a
+  mail with nobody in the _To:_ line.
 - **[@ImScheinox](https://github.com/ImScheinox)** — found and fixed portrait
   photos rendering as landscape tiles, because the grid ignored the camera's
   EXIF orientation flag. That brought the masonry layout's stagger back for
