@@ -22,6 +22,50 @@ export interface MapAlbumEntry {
   coverAssetId: string;
 }
 
+interface MapConfig {
+  standaloneAlbums?: readonly string[];
+  subpages: ReadonlyArray<{
+    slug: string;
+    albumIds: readonly string[];
+    enabled?: boolean;
+    hidden?: boolean;
+  }>;
+}
+
+/**
+ * The subpage a marker links an album to, and whose password gates it on the
+ * map: the first listed one that carries it. Never an offline subpage (its URL
+ * is a 404 and its password guards nothing), and never a hidden one (the
+ * marker would publish its address).
+ */
+function mapSubpageFor(config: MapConfig, albumId: string) {
+  return config.subpages.find((s) => isListedSubpage(s) && s.albumIds.includes(albumId));
+}
+
+/**
+ * The counts the /map header prints, for this viewer.
+ *
+ * `/api/map` drops every album whose subpage or own password the viewer has
+ * not unlocked; the header counted them anyway, so a visitor read "3
+ * collections · 12 albums" above a map that showed two. Same rule here, the
+ * same subpage per album (`mapSubpageFor`), so the two cannot disagree.
+ * `isAllowed` is `isAuthenticated` bound to the request's cookies.
+ */
+export function visibleMapCounts(
+  config: MapConfig,
+  isAllowed: (key: string, type: 'subpage' | 'album') => boolean,
+): { collections: number; albums: number } {
+  const collections = config.subpages.filter(
+    (sp) => isListedSubpage(sp) && isAllowed(sp.slug, 'subpage'),
+  ).length;
+  let albums = 0;
+  for (const id of listedAlbumIds(config)) {
+    const sp = mapSubpageFor(config, id);
+    if ((!sp || isAllowed(sp.slug, 'subpage')) && isAllowed(id, 'album')) albums++;
+  }
+  return { collections, albums };
+}
+
 /** A clustered map marker — one per unique city/country. */
 export interface MapLocation {
   city: string;
@@ -56,10 +100,7 @@ export async function getMapData(): Promise<MapLocation[]> {
       // Build a lookup: album ID → { name, slug, subpageSlug? }
       const albumMeta = new Map<string, { name: string; slug: string; subpageSlug?: string }>();
       for (const a of albums) {
-        // The subpage the marker links to, and whose password gates it. Never
-        // an offline one (its URL is a 404 and its password guards nothing),
-        // and never a hidden one: the marker would publish its address.
-        const sp = config.subpages.find((s) => isListedSubpage(s) && s.albumIds.includes(a.id));
+        const sp = mapSubpageFor(config, a.id);
         albumMeta.set(a.id, { name: a.albumName, slug: a.slug, subpageSlug: sp?.slug });
       }
 
