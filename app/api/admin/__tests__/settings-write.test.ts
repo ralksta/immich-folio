@@ -95,3 +95,41 @@ describe('PUT /api/admin/settings — site password', () => {
     expect(written.sitePassword).toBe('');
   });
 });
+
+/**
+ * Values the site would ignore used to be written with a success message: the
+ * accent fell back to the preset, the columns were clamped, the sitemap went
+ * out without an address (QA A-14).
+ */
+describe('PUT /api/admin/settings — values the site would ignore', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('refuses them, names each field, and writes nothing', async () => {
+    const res = await put({
+      url: 'folio.example',
+      theme: { preset: 'minimal', accent: 'rot' },
+      grid: { columns: 9, gap: 12 },
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(writeSettingsYaml).not.toHaveBeenCalled();
+    expect(body.fields.map((f: { field: string }) => f.field).sort()).toEqual([
+      'grid.columns',
+      'theme.accent',
+      'url',
+    ]);
+    expect(body.fields.every((f: { message: string }) => f.message.length > 0)).toBe(true);
+  });
+
+  it('writes the same fields once they hold values the site uses', async () => {
+    const res = await put({
+      url: 'https://folio.example',
+      theme: { preset: 'minimal', accent: '#e60012' },
+      grid: { columns: 6, gap: 0 },
+    });
+
+    expect(res.status).toBe(200);
+    expect(writeSettingsYaml).toHaveBeenCalledOnce();
+  });
+});

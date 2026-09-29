@@ -14,6 +14,7 @@ import {
   checkLegal,
   checkPrivacy,
   checkContentPages,
+  checkSettingValues,
   worstLevel,
 } from '../admin/doctor';
 
@@ -479,5 +480,24 @@ describe('checkContentPages (#722)', () => {
     });
     expect(f?.level).toBe('error');
     expect(f?.detail).toContain('/travel is already a subpage.');
+  });
+});
+
+describe('checkSettingValues (QA A-14)', () => {
+  it('is ok when every checked value is used as written', () => {
+    expect(checkSettingValues([]).level).toBe('ok');
+  });
+
+  it('warns and names the fields the site replaces', () => {
+    const f = checkSettingValues([{ field: 'theme.accent' }, { field: 'grid.columns' }]);
+    expect(f.level).toBe('warn');
+    expect(f.title).toBe('2 settings are ignored');
+    expect(f.detail).toContain('accent colour, grid columns');
+  });
+
+  it('points at the settings section of the first field', () => {
+    expect(checkSettingValues([{ field: 'url' }]).settingsSection).toBe('seo');
+    expect(checkSettingValues([{ field: 'grid.gap' }]).settingsSection).toBe('grid');
+    expect(checkSettingValues([{ field: 'theme.accent' }]).settingsSection).toBe('theme');
   });
 });

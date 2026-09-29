@@ -18,8 +18,13 @@
   --admin-border-focus: #777777;
   --admin-text: #f0f0f0;
   --admin-text-secondary: #a0a0a0;
-  --admin-text-muted: #707070;
-  --admin-accent: #f59e0b;
+  /* ≥4.6:1 on every admin surface (#0c0c0c–#222222); #707070 fell to 3.2:1. */
+  --admin-text-muted: #8a8a8a;
+  /* Not amber: that is --admin-warning, and with both the same every active
+     marker and focus ring read as a warning. 7.7:1 on the background. */
+  --admin-accent: #60a5fa;
+  /* Text on an accent fill (counts, badges). */
+  --admin-on-accent: #000000;
   /* Focus used to show only as a border colour change from #2e2e2e to
      #666666, a contrast of 2.37:1 where WCAG 1.4.11 asks for 3:1 against
      adjacent colours, so keyboard users could barely see where they were.
@@ -53,8 +58,10 @@
   --admin-border-focus: #7f7f7f;
   --admin-text: #1a1a1a;
   --admin-text-secondary: #555555;
-  --admin-text-muted: #888888;
-  --admin-accent: #d97706;
+  /* ≥4.6:1 on white and on #efefee; #888888 was 3.1–3.5:1. */
+  --admin-text-muted: #6b6b6b;
+  --admin-accent: #2563eb;
+  --admin-on-accent: #ffffff;
   --admin-success: #16a34a;
   --admin-warning: #b45309;
   --admin-error: #dc2626;
@@ -64,6 +71,20 @@
   --admin-btn-primary-text: #ffffff;
   --admin-btn-primary-hover: #333333;
   --admin-overlay: rgba(0, 0, 0, 0.4);
+}
+
+/* studio-modern restyles the admin in its preset file with a red accent and
+   warm greys. Two of its values are corrected here, one step more specific
+   (html) so the order the sheets load in does not matter: its muted text
+   (#6b6b66 dark, #8a8a84 light) sat at 3.0–3.6:1, and text on its red reads
+   better white (4.8:1) than black (4.4:1). */
+html[data-preset='studio-modern'] .admin-layout {
+  --admin-text-muted: #8c8c86;
+  --admin-on-accent: #ffffff;
+}
+
+html[data-preset='studio-modern'][data-theme='light'] .admin-layout {
+  --admin-text-muted: #6b6b66;
 }
 
 .admin-layout {

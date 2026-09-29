@@ -6,6 +6,7 @@ import { getConfig, slugify } from '@/lib/config';
 import { env } from '@/lib/env';
 import { listJournalEntries } from '@/lib/admin/journal-service';
 import { readSettingsYaml } from '@/lib/admin/yaml-service';
+import { validateSettingValues } from '@/lib/config/settingValues';
 import { readPrivacy } from '@/lib/privacy';
 import { listPageSlugsSync } from '@/lib/admin/pages-service';
 import { takenPageSlugs } from '@/lib/admin/pageSlugs';
@@ -21,6 +22,7 @@ import {
   checkContentPages,
   checkLegal,
   checkPrivacy,
+  checkSettingValues,
   checkPasswords,
   checkProxyHops,
   checkWritable,
@@ -157,6 +159,9 @@ export const GET = withAdmin(async (request: NextRequest) => {
     const settings = await readSettingsYaml();
     rawLegal = settings?.legal ?? rawLegal;
     rawContact = settings?.contact ?? rawContact;
+    // Values the resolvers replaced on the way into `config` — only the raw
+    // file still shows them.
+    findings.push(checkSettingValues(validateSettingValues(settings)));
   } catch {
     // Fall back to the resolved blocks; only a dropped URL goes unseen.
   }

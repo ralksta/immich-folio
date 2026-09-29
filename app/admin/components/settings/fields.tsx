@@ -10,6 +10,20 @@ import type { SettingsYaml } from '@/lib/config/schema';
 import type { Settings } from './types';
 
 /**
+ * The message under an input whose value the site would ignore (`fieldErrors`).
+ * Not a live region: it changes as you type, and announcing every keystroke
+ * would drown the field itself. The input points at it with aria-describedby.
+ */
+export function FieldError({ id, message }: { id: string; message?: string }) {
+  if (!message) return null;
+  return (
+    <p id={id} className="admin-field-hint admin-field-hint--error">
+      {message}
+    </p>
+  );
+}
+
+/**
  * One labelled block of related switches.
  *
  * The features panel was a single flat grid of identical cards, so nothing said

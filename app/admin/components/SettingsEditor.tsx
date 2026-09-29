@@ -20,6 +20,7 @@ import { reportIfSessionExpired } from './sessionExpiry';
 import { useVersionedSave } from './useVersionedSave';
 import type { Settings, SectionProps } from './settings/types';
 import type { EnvLocks } from '@/lib/admin/envLocks';
+import { validateSettingValues } from '@/lib/config/settingValues';
 import GeneralSection from './settings/GeneralSection';
 import ThemeSection from './settings/ThemeSection';
 import GridSection from './settings/GridSection';
@@ -280,10 +281,12 @@ export default function SettingsEditor() {
       } else if (!reportIfSessionExpired(result.res)) {
         const err = result.data ?? {};
         // A rejected save names the fields that caused it. Listing them beats
-        // "could not be saved" over a form with forty inputs; putting the
-        // message next to each input is the job of #600.
+        // "could not be saved" over a form with forty inputs; the value
+        // checks also stand next to their inputs (fieldErrors).
         const fields: string[] = Array.isArray(err.fields)
-          ? err.fields.map((f: { field?: string }) => f.field || 'settings')
+          ? err.fields.map((f: { field?: string; message?: string }) =>
+              f.message ? `${f.field || 'settings'}: ${f.message}` : f.field || 'settings',
+            )
           : [];
         setSaveStatus({
           kind: 'error',
@@ -339,7 +342,10 @@ export default function SettingsEditor() {
   const saveBarStatus: SaveStatus =
     [saveStatus, about.status].find((st) => st?.kind === 'error') ?? saveStatus ?? about.status;
 
-  const props: SectionProps = { settings, update, updateMany, envLocks };
+  const fieldErrors = Object.fromEntries(
+    validateSettingValues(settings).map((e) => [e.field, e.message]),
+  );
+  const props: SectionProps = { settings, update, updateMany, envLocks, fieldErrors };
 
   return (
     <div className="settings-editor">

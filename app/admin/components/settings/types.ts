@@ -97,4 +97,10 @@ export interface SectionProps {
   updateMany: (entries: Record<string, unknown>) => void;
   /** Fields an environment variable overrides; rendered locked (#605). */
   envLocks?: EnvLocks;
+  /**
+   * Dotted path → message, for values the site would ignore (the save route
+   * rejects them). Checked as the form changes, so the message stands next to
+   * the input before a save is tried.
+   */
+  fieldErrors?: Record<string, string>;
 }

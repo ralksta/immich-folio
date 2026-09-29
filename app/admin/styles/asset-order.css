@@ -20,15 +20,16 @@
   padding: 0.75rem;
 }
 
+/* A warning, so --admin-warning: the accent is red under studio-modern. */
 .order-editor-notice {
   margin: 0 0 0.75rem;
   padding: 0.5rem 0.7rem;
   border-radius: 6px;
   font-size: 0.78rem;
   line-height: 1.4;
-  color: var(--admin-accent);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  background: rgba(245, 158, 11, 0.05);
+  color: var(--admin-warning);
+  border: 1px solid color-mix(in srgb, var(--admin-warning) 30%, transparent);
+  background: color-mix(in srgb, var(--admin-warning) 5%, transparent);
 }
 
 .order-editor-section + .order-editor-section {
@@ -122,7 +123,7 @@
   font-size: 0.68rem;
   font-weight: 700;
   text-align: center;
-  color: #000;
+  color: var(--admin-on-accent);
   background: var(--admin-accent);
 }
 

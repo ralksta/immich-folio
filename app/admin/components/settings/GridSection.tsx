@@ -7,6 +7,7 @@ import {
   PHOTO_GRID_COLUMNS_MIN,
   PHOTO_GRID_GAP_MAX,
 } from '@/lib/config/schema';
+import { FieldError } from './fields';
 import type { SectionProps } from './types';
 
 const LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow', 'justified'];
@@ -131,7 +132,7 @@ function AspectRatioPreview({ value }: { value: string }) {
   );
 }
 
-export default function GridSection({ settings, update }: SectionProps) {
+export default function GridSection({ settings, update, fieldErrors }: SectionProps) {
   return (
     <div className="settings-panel">
       <div className="settings-section-header">
@@ -185,7 +186,10 @@ export default function GridSection({ settings, update }: SectionProps) {
             max={PHOTO_GRID_COLUMNS_MAX}
             value={settings.grid?.columns ?? 3}
             onChange={(e) => update('grid.columns', parseInt(e.target.value) || 3)}
+            aria-invalid={fieldErrors?.['grid.columns'] ? true : undefined}
+            aria-describedby={fieldErrors?.['grid.columns'] ? 'grid-columns-error' : undefined}
           />
+          <FieldError id="grid-columns-error" message={fieldErrors?.['grid.columns']} />
         </div>
         <div className="admin-field">
           <label htmlFor="grid-gap-spacing">Gap Spacing (px)</label>
@@ -196,7 +200,10 @@ export default function GridSection({ settings, update }: SectionProps) {
             max={PHOTO_GRID_GAP_MAX}
             value={settings.grid?.gap ?? 12}
             onChange={(e) => update('grid.gap', parseInt(e.target.value) || 0)}
+            aria-invalid={fieldErrors?.['grid.gap'] ? true : undefined}
+            aria-describedby={fieldErrors?.['grid.gap'] ? 'grid-gap-error' : undefined}
           />
+          <FieldError id="grid-gap-error" message={fieldErrors?.['grid.gap']} />
         </div>
       </div>
     </div>

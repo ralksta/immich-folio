@@ -27,8 +27,10 @@
   animation: save-bar-in 0.2s ease-out;
 }
 
+/* Unsaved changes are a warning, never the accent: studio-modern makes the
+   accent red, and the bar read as an error. */
 .floating-save-bar.dirty {
-  border-color: var(--admin-accent);
+  border-color: var(--admin-warning);
 }
 
 /* Keyframes must carry the translateX(-50%) or the bar jumps horizontally. */
@@ -47,7 +49,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ff9800;
+  background: var(--admin-warning);
   display: inline-block;
   margin-right: 6px;
   animation: pulse 1.5s infinite;
@@ -56,15 +58,15 @@
 @keyframes pulse {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--admin-warning) 70%, transparent);
   }
   70% {
     transform: scale(1);
-    box-shadow: 0 0 0 8px rgba(255, 152, 0, 0);
+    box-shadow: 0 0 0 8px transparent;
   }
   100% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
+    box-shadow: 0 0 0 0 transparent;
   }
 }
 

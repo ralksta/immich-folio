@@ -7,8 +7,8 @@ import type { DoctorLevel } from '@/lib/admin/doctor';
  */
 export const DOCTOR_LEVEL_EVENT = 'folio:doctor-level';
 
-/** The three tones `status-badge-btn` is styled for. */
-export type BadgeTone = 'connected' | 'disconnected' | 'unknown';
+/** The tones `status-badge-btn` is styled for. */
+export type BadgeTone = 'connected' | 'warning' | 'disconnected' | 'unknown';
 
 export interface SystemHealthInput {
   statusLoading: boolean;
@@ -49,7 +49,9 @@ export function systemHealth({
   if (setupIncomplete) return { tone: 'unknown', label: 'Setup Incomplete' };
   if (immich === 'error') return { tone: 'disconnected', label: 'System Degraded' };
   if (doctorLevel === 'error') return { tone: 'disconnected', label: 'Needs Attention' };
-  if (doctorLevel === 'warn') return { tone: 'unknown', label: 'Check Diagnostics' };
+  // Amber, like the warnings on the diagnostics page it points to. Grey read
+  // as "no answer", which is what `unknown` means.
+  if (doctorLevel === 'warn') return { tone: 'warning', label: 'Check Diagnostics' };
   if (immich === 'ok') return { tone: 'connected', label: 'System OK' };
   return { tone: 'unknown', label: 'Status Unknown' };
 }
