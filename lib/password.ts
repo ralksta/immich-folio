@@ -49,6 +49,29 @@ export async function verifyScrypt(password: string, stored: string): Promise<bo
   }
 }
 
+/**
+ * A well-formed hash with a random salt and a random digest, drawn once per
+ * process. No password matches it (the odds are 2^-512), so verifying against
+ * it costs exactly what a real verification costs and always fails.
+ */
+const DUMMY_HASH = `${SCRYPT_PREFIX}${crypto.randomBytes(16).toString('hex')}:${crypto
+  .randomBytes(64)
+  .toString('hex')}`;
+
+/**
+ * Spend one scrypt verification on nothing.
+ *
+ * A password check that returns early — no such key, a key without a password,
+ * a plaintext password compared by HMAC — answers in a couple of milliseconds,
+ * while a real scrypt hash takes tens. That gap tells anyone who times the
+ * replies which keys hold a hashed password, even when the reply bodies are
+ * identical. Callers run this on every path that would otherwise skip scrypt,
+ * so every attempt costs the same.
+ */
+export async function burnScrypt(password: string): Promise<void> {
+  await verifyScrypt(password, DUMMY_HASH);
+}
+
 /** Produce a storable `scrypt:salt:hash_hex` string. */
 export async function generateScryptHash(password: string): Promise<string> {
   const salt = crypto.randomBytes(16).toString('hex');
