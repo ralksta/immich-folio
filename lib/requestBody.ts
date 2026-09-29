@@ -8,14 +8,17 @@
 
 import type { NextRequest } from 'next/server';
 
-/** Read a request body as text, aborting once it exceeds `limit` bytes. */
-export async function readBodyCapped(request: NextRequest, limit: number): Promise<string | null> {
+/**
+ * Read a request body as raw bytes, aborting once it exceeds `limit` bytes.
+ * Null when the cap is passed. For callers that need the exact bytes on the
+ * wire, such as an HMAC over the body.
+ */
+export async function readBytesCapped(request: NextRequest, limit: number): Promise<Buffer | null> {
   const stream = request.body;
-  if (!stream) return '';
+  if (!stream) return Buffer.alloc(0);
 
   const reader = stream.getReader();
-  const decoder = new TextDecoder();
-  let text = '';
+  const chunks: Uint8Array[] = [];
   let bytes = 0;
   try {
     for (;;) {
@@ -26,13 +29,18 @@ export async function readBodyCapped(request: NextRequest, limit: number): Promi
         await reader.cancel();
         return null;
       }
-      text += decoder.decode(value, { stream: true });
+      chunks.push(value);
     }
-    text += decoder.decode();
-    return text;
+    return Buffer.concat(chunks, bytes);
   } finally {
     reader.releaseLock();
   }
+}
+
+/** Read a request body as text, aborting once it exceeds `limit` bytes. */
+export async function readBodyCapped(request: NextRequest, limit: number): Promise<string | null> {
+  const bytes = await readBytesCapped(request, limit);
+  return bytes === null ? null : new TextDecoder().decode(bytes);
 }
 
 /**
