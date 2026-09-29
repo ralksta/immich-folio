@@ -11,6 +11,20 @@
   animation: lightbox-fade-in var(--transition-normal) ease forwards;
 }
 
+/* The overlay is dark in both modes — see "Studio-Inspired Lightbox Defaults"
+   below and the studio-modern block, which both paint it near-black. In light
+   mode the page's text tokens are near-black too, so every control that reads
+   them (close, arrows, counter, the bottom-bar buttons, and the focus ring in
+   app/tokens.css, which is var(--text-primary)) sat at 1.1–2:1. Inside the
+   overlay they are pointed at the lightbox tokens instead. Dark mode is left
+   alone: its tokens are already light, and tinted per preset. */
+:global([data-theme='light']) .overlay {
+  --text-primary: var(--lightbox-text);
+  --text-secondary: var(--lightbox-text-secondary);
+  --text-muted: var(--lightbox-text-muted);
+  --border-subtle: var(--lightbox-border);
+}
+
 @keyframes lightbox-fade-in {
   from {
     opacity: 0;
@@ -109,10 +123,10 @@
   top: 50%;
   transform: translateY(-50%);
   z-index: 1001;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--lightbox-control-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--lightbox-control-border);
   border-radius: 50%;
   width: 48px;
   height: 48px;
@@ -127,7 +141,7 @@
 }
 
 .nav:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--lightbox-control-bg-hover);
   color: var(--text-primary);
 }
 
@@ -203,10 +217,10 @@
   align-items: center;
   gap: 6px;
   z-index: 1001;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--lightbox-control-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--lightbox-control-border);
   border-radius: var(--radius-md);
   padding: 8px 12px;
   color: var(--text-secondary);
@@ -219,8 +233,20 @@
 }
 
 .infoToggle:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--lightbox-control-bg-hover);
   color: var(--text-primary);
+}
+
+/* A saved favourite. Set by class rather than inline, so a preset's own
+   colour for the toggle (studio-modern's) still applies to the unsaved state —
+   the inline `inherit` it used to fall back to picked up the page's near-black
+   text in light mode (1.08:1). The extra class outranks that preset block,
+   which comes later in this file, hover included: studio-modern hovers in
+   the accent, which a dark custom accent drops to about 1.3:1. */
+.bottomBar .infoToggle.favActive,
+.bottomBar .infoToggle.favActive:hover {
+  color: var(--lightbox-fav);
+  font-weight: 600;
 }
 
 /* Anchors are not buttons; strip the underline so it matches its neighbours. */

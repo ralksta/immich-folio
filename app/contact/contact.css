@@ -94,7 +94,9 @@ textarea.contact-form__input {
   cursor: wait;
 }
 .contact-form__error {
-  color: #e74c3c;
+  /* Per-mode token; the fixed red it replaces measured 3.5–3.8:1 on the
+     light presets. */
+  color: var(--error);
   font-size: 0.9rem;
 }
 .contact-form__done {
