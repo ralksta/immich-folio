@@ -2120,8 +2120,10 @@
     grid-template-columns: 1fr;
   }
 
+  /* The header is about 37px tall here (the 44px menu button with its
+     negative margins); 32px left the album back link partly under it. */
   .main {
-    padding: 32px 20px 80px;
+    padding: 56px 20px 80px;
   }
 
   .header__nav-link {

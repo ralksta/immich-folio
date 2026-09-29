@@ -1123,8 +1123,12 @@
 }
 
 /* ── Responsive ─────────────────────────────────────────────── */
+/* `html` in front: app/tokens.css sets the 48px default with the same
+   [data-preset] selector and is imported after this file, so without the
+   extra weight neither narrower gutter ever applied — phones kept 48px a
+   side, and the map page was left about 200px wide. */
 @media (max-width: 1024px) {
-  [data-preset='studio-modern'] {
+  html[data-preset='studio-modern'] {
     --sm-gutter: 32px;
   }
 
@@ -1138,7 +1142,7 @@
 }
 
 @media (max-width: 640px) {
-  [data-preset='studio-modern'] {
+  html[data-preset='studio-modern'] {
     --sm-gutter: 20px;
   }
 

@@ -10,6 +10,10 @@
   font-family: var(--font-serif);
   font-size: clamp(2.2rem, 7vw, 3.5rem);
   font-weight: 400;
+  /* "Datenschutzerklärung" is one word wider than a phone's content column
+     at this size; unbroken it made the page scroll sideways. */
+  hyphens: auto;
+  overflow-wrap: break-word;
 }
 .privacy-page__content {
   max-width: 680px;
