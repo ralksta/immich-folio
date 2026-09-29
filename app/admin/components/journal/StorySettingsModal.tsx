@@ -153,6 +153,7 @@ export function StorySettingsModal({
 
           <div>
             <label
+              htmlFor="story-password"
               style={{
                 display: 'block',
                 fontSize: '0.8rem',
@@ -162,11 +163,15 @@ export function StorySettingsModal({
             >
               Password Protection (Optional)
             </label>
-            <PasswordField
-              value={frontmatter.password || undefined}
-              onChange={(password) => onChange({ password: password ?? '' })}
-              label="Entry password"
-            />
+            {/* The input takes its styles from .admin-field, as everywhere else
+                PasswordField is used; without it the lock icon sat on the text. */}
+            <div className="admin-field" style={{ marginBottom: 0 }}>
+              <PasswordField
+                id="story-password"
+                value={frontmatter.password || undefined}
+                onChange={(password) => onChange({ password: password ?? '' })}
+              />
+            </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
