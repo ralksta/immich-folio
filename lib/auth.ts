@@ -119,7 +119,9 @@ export const SITE_AUTH_COOKIE = 'lb_site_auth';
  *
  * An album listed on the home page is published there whatever else lists it,
  * so it stays reachable. Where the only routes are subpages, one of them has
- * to be open — which mirrors what the visitor could actually have clicked.
+ * to be open — which mirrors what the visitor could actually have clicked. A
+ * subpage taken offline with `enabled: false` is no route at all, so an album
+ * listed only there is not reachable, whatever its password.
  */
 export function isAlbumReachable(
   albumId: string,
@@ -133,7 +135,7 @@ export function isAlbumReachable(
   const routes = config.subpages.filter(
     (sp) => sp.enabled !== false && sp.albumIds.includes(albumId),
   );
-  if (routes.length === 0) return true;
+  if (routes.length === 0) return false;
 
   return routes.some((sp) => isAuthenticated(sp.slug, getCookie, 'subpage'));
 }

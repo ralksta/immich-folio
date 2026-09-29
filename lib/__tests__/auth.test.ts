@@ -26,6 +26,13 @@ vi.mock('@/lib/config', () => ({
         // no password
       },
       {
+        // Taken offline with `enabled: false`, and asks for nothing.
+        name: 'Offline',
+        slug: 'offline',
+        albumIds: ['00000000-0000-0000-0000-000000000006'],
+        enabled: false,
+      },
+      {
         name: 'Hashed',
         slug: 'hashed',
         albumIds: ['00000000-0000-0000-0000-000000000003'],
@@ -247,6 +254,11 @@ describe('isAlbumReachable', () => {
   // Listing an album on the home page publishes it, whatever else it is in.
   it('allows a standalone album even when a protected subpage also lists it', () => {
     expect(isAlbumReachable(ALSO_STANDALONE, none)).toBe(true);
+  });
+
+  // `enabled: false` takes the subpage offline; its albums have no route left.
+  it('refuses an album whose only subpage is offline', () => {
+    expect(isAlbumReachable('00000000-0000-0000-0000-000000000006', none)).toBe(false);
   });
 
   it('still refuses an album that carries its own password', async () => {

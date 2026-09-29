@@ -8,18 +8,32 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const state = vi.hoisted(() => ({
   config: {
-    albums: ['album-pub'],
+    albums: ['album-pub', 'album-offline'],
+    standaloneAlbums: ['album-pub'],
     heroImages: ['hero-1'],
-    albumHeroImages: { 'album-pub': 'album-hero' } as Record<string, string>,
-    subpages: [{ essayText: '![album:album-essay](x)' }] as Array<{ essayText?: string }>,
+    albumHeroImages: {
+      'album-pub': 'album-hero',
+      'album-offline': 'offline-hero',
+    } as Record<string, string>,
+    subpages: [
+      { albumIds: [], enabled: true, essayText: '![album:album-essay](x)' },
+      // Taken offline with `enabled: false`: its albums stay on the allowlist.
+      {
+        albumIds: ['album-offline'],
+        enabled: false,
+        essayText: '![album:album-offline-essay](x)',
+      },
+    ] as Array<{ albumIds: string[]; enabled: boolean; essayText?: string }>,
     cacheTtl: 300,
   },
   albums: {
     'album-pub': { albumThumbnailAssetId: 'thumb', assets: [{ id: 'a1' }, { id: 'a2' }] },
+    'album-offline': { albumThumbnailAssetId: 'offline-thumb', assets: [{ id: 'offline-1' }] },
   } as Record<string, { albumThumbnailAssetId: string | null; assets: { id: string }[] }>,
   raw: {
     'album-journal': [{ id: 'j-album-1' }],
     'album-essay': [{ id: 'essay-1' }],
+    'album-offline-essay': [{ id: 'offline-essay-1' }],
     'album-page': [{ id: 'page-album-1' }],
   } as Record<string, { id: string }[]>,
   proofAlbums: {
@@ -85,10 +99,12 @@ vi.mock('../journal', async (orig) => {
   const actual = await orig<typeof import('../journal')>();
   return {
     ...actual,
-    parseJournalMarkdown: (md: string) =>
-      md.includes('album:album-essay')
-        ? { frontmatter: {}, blocks: [{ type: 'album', albumId: 'album-essay', layout: 'grid' }] }
-        : actual.parseJournalMarkdown(md),
+    parseJournalMarkdown: (md: string) => {
+      const albumId = /album:([\w-]+)/.exec(md)?.[1];
+      return albumId
+        ? { frontmatter: {}, blocks: [{ type: 'album', albumId, layout: 'grid' }] }
+        : actual.parseJournalMarkdown(md);
+    },
   };
 });
 
@@ -139,6 +155,15 @@ describe('isPublishedAsset', () => {
 
   it('refuses a photo only a content page map block names (maps do not render on pages)', async () => {
     expect(await isPublishedAsset('page-map-photo')).toBe(false);
+  });
+
+  it.each([
+    ['a photo of its album', 'offline-1'],
+    ['its album thumbnail', 'offline-thumb'],
+    ['its album hero', 'offline-hero'],
+    ["an album block's photo in its inline essay", 'offline-essay-1'],
+  ])('refuses %s once a subpage is offline', async (_label, id) => {
+    expect(await isPublishedAsset(id)).toBe(false);
   });
 
   it('refuses any other asset in the library', async () => {
