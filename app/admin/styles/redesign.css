@@ -214,15 +214,32 @@
   justify-content: flex-start;
 }
 
-/* In the sidebar foot the dropdown opens upwards and to the right. */
+/* In the sidebar foot the dropdown opens upwards, as wide as the foot. The
+   sidebar scrolls (overflow-y: auto), which clips sideways too: a fixed 280px
+   panel lost its values past the 232px column. */
 .admin-sidebar .status-dropdown {
   top: auto;
   bottom: 100%;
   left: 0;
-  right: auto;
+  right: 0;
   margin: 0 0 0.5rem;
-  width: 280px;
+  width: auto;
   border-radius: var(--admin-radius);
+}
+
+.admin-sidebar .status-item {
+  gap: 0.75rem;
+}
+
+.admin-sidebar .status-val {
+  text-align: right;
+}
+
+/* The collapsed sidebar does not clip (overflow: visible below), so the panel
+   keeps its width and opens out of the 64px column. */
+.admin-app.is-collapsed .admin-sidebar .status-dropdown {
+  right: auto;
+  width: 280px;
 }
 
 .admin-sidebar-actions {
@@ -945,6 +962,11 @@
 .subpage-drawer-container--inline {
   max-width: none;
   max-height: none;
+  /* The overlay sheet is 100dvh tall on a phone (subpage-sheet.css). In place,
+     that height clipped everything past the first screen — album list, grid
+     settings, Delete — and the footer slid over the password field. The
+     sheet grows with its content and the page scrolls. */
+  height: auto;
   border-radius: var(--admin-radius);
   box-shadow: none;
   animation: none;
@@ -967,6 +989,11 @@
   .pb-tree {
     position: static;
     max-height: none;
+  }
+
+  /* Picking a row scrolls the stacked panel up (PageBuilder revealPanel). */
+  .pb-panel {
+    scroll-margin-top: 1rem;
   }
 }
 

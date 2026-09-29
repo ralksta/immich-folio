@@ -110,6 +110,8 @@ export default function PageBuilder() {
   const [selectedPage, setSelectedPage] = useState<string | null>(null);
   const [showNewPage, setShowNewPage] = useState(false);
   const [creatingPage, setCreatingPage] = useState(false);
+  /** The edit panel beside (or, on narrow screens, below) the structure list. */
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // Keep the builder still behind either drawer. One combined lock rather than
   // one per drawer: the album drawer opens from inside the subpage drawer, and
@@ -437,11 +439,33 @@ export default function PageBuilder() {
     setExpandedSubpage(null);
     setLinkedAlbumId(null);
     setSelectedPage(slug);
+    revealPanel();
   }
 
   function selectSubpage(index: number) {
     setSelectedPage(null);
     setExpandedSubpage(index);
+    revealPanel();
+  }
+
+  function selectOverview(which: 'hero' | 'albums') {
+    setExpandedSubpage(null);
+    setSelectedPage(null);
+    setOverview(which);
+    revealPanel();
+  }
+
+  /**
+   * Below 1100px the panel stacks under the structure list, so on a phone a
+   * tapped row changed something a screen further down and looked like it
+   * did nothing. Scroll the panel up once it has rendered.
+   */
+  function revealPanel() {
+    if (!window.matchMedia?.('(max-width: 1100px)').matches) return;
+    requestAnimationFrame(() => {
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      panelRef.current?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+    });
   }
 
   const togglePageMenu = (slug: string) =>
@@ -802,11 +826,7 @@ export default function PageBuilder() {
             <button
               type="button"
               className={`pb-row-main pb-row-solo ${expandedSubpage === null && overview === 'hero' ? 'active' : ''}`}
-              onClick={() => {
-                setExpandedSubpage(null);
-                setSelectedPage(null);
-                setOverview('hero');
-              }}
+              onClick={() => selectOverview('hero')}
             >
               <span className="pb-row-thumb">
                 {gallery.hero[0] ? (
@@ -924,11 +944,7 @@ export default function PageBuilder() {
             <button
               type="button"
               className={`pb-row-main pb-row-solo ${expandedSubpage === null && overview === 'albums' ? 'active' : ''}`}
-              onClick={() => {
-                setExpandedSubpage(null);
-                setSelectedPage(null);
-                setOverview('albums');
-              }}
+              onClick={() => selectOverview('albums')}
             >
               <span className="pb-row-thumb">
                 <IconCamera size={14} />
@@ -940,7 +956,7 @@ export default function PageBuilder() {
         </aside>
 
         {/* The selected entry, edited in place instead of in an overlay. */}
-        <div className="pb-panel">
+        <div className="pb-panel" ref={panelRef}>
           {selectedPage !== null ? (
             <PagePanel
               key={selectedPage}

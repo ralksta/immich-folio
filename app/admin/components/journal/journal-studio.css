@@ -104,7 +104,9 @@
 
 .journal-list-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  /* min(): on a phone the column is narrower than 320px, and a fixed minimum
+     pushed every card past the right edge. */
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
   gap: 1.5rem;
   padding: 2rem;
 }
@@ -680,6 +682,12 @@
    Below 700px it wraps: back button and mode toggle, the title on a line of
    its own, then the actions with Save taking the remaining width. */
 @media (max-width: 700px) {
+  /* The workspace already keeps a gutter; a second 2rem one left the cards
+     under 300px wide. */
+  .journal-list-grid {
+    padding: 1.25rem 0;
+  }
+
   .journal-editor-topbar {
     flex-wrap: wrap;
     padding: 0.75rem 1rem;
