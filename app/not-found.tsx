@@ -1,5 +1,20 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { getServerDictionary } from '@/lib/i18n/server';
+
+/**
+ * The head of a 404 that was decided before streaming — by proxy.ts or by a
+ * page calling notFound() outside any Suspense boundary. Next then renders
+ * this file inside the root layout and takes the metadata from the layouts
+ * and from here, never from the page, so without this the tab read the bare
+ * site title while a soft 404 read "Not found".
+ *
+ * `robots: null` drops the layout's `index, follow`, which contradicted the
+ * `noindex` Next adds to every 404 on its own.
+ */
+export function generateMetadata(): Metadata {
+  return { title: getServerDictionary().error.notFoundTitle, robots: null };
+}
 
 /**
  * Rendered when a page calls notFound() — i.e. Immich answered and the album

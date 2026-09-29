@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ReactElement } from 'react';
 
 /**
  * The catch-all answers one segment (subpage, content page, standalone album)
@@ -24,6 +25,7 @@ const immich = vi.hoisted(() => ({
   isSubpageSlug: vi.fn((slug: string) => slug === 'travel'),
   getSubpageAlbums: vi.fn(),
   getAlbumBySlug: vi.fn(),
+  findAlbumBySlug: vi.fn(),
   getStandaloneAlbums: vi.fn(async () => []),
   getSubpages: vi.fn(async () => []),
   getAssetInfo: vi.fn(async () => null),
@@ -49,6 +51,7 @@ const call = (path: string[]) => ({
 beforeEach(() => {
   vi.clearAllMocks();
   immich.getAlbumBySlug.mockResolvedValue(ALBUM);
+  immich.findAlbumBySlug.mockResolvedValue(ALBUM);
   immich.getSubpageAlbums.mockResolvedValue({
     subpage: { slug: 'travel', name: 'Travel', albumIds: ['album-1', 'album-2'] },
     albums: [ALBUM, { ...ALBUM, id: 'album-2', slug: 'norway', albumName: 'Norway' }],
@@ -61,6 +64,7 @@ describe('catch-all path depth', () => {
     async (path) => {
       await expect(PathPage(call(path))).rejects.toBe(NOT_FOUND);
       expect(immich.getAlbumBySlug).not.toHaveBeenCalled();
+      expect(immich.findAlbumBySlug).not.toHaveBeenCalled();
       expect(immich.getSubpageAlbums).not.toHaveBeenCalled();
     },
   );
@@ -72,7 +76,13 @@ describe('catch-all path depth', () => {
   });
 
   it('still renders one and two segments', async () => {
-    await expect(PathPage(call(['iceland']))).resolves.toBeTruthy();
-    await expect(PathPage(call(['travel', 'iceland']))).resolves.toBeTruthy();
+    for (const path of [['iceland'], ['travel', 'iceland']]) {
+      // The page decides, then hands the rendering to the content inside its
+      // Suspense boundary; run that too.
+      const shell = (await PathPage(call(path))) as ReactElement<{ children: ReactElement }>;
+      const content = shell.props.children as ReactElement<object>;
+      const render = content.type as (props: object) => Promise<unknown>;
+      await expect(render(content.props)).resolves.toBeTruthy();
+    }
   });
 });

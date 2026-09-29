@@ -734,7 +734,26 @@ class ImmichClient {
   }
 
   /**
-   * Find an album by its URL slug.
+   * Find an album by its URL slug, with its assets.
+   *
+   * The search set follows the route, never the whole allowlist: see
+   * findAlbumBySlug().
+   */
+  async getAlbumBySlug(
+    slug: string,
+    subpageSlug?: string,
+    forceFresh = false,
+  ): Promise<ImmichAlbum | null> {
+    const match = await this.findAlbumBySlug(slug, subpageSlug, forceFresh);
+    if (!match) return null;
+    return this.getAlbum(match.id, forceFresh);
+  }
+
+  /**
+   * The published album a URL slug names, from the album list alone — no asset
+   * fetch. The catch-all page asks this before it streams, to know whether a
+   * path exists while it can still answer 404; the list is the one the header
+   * nav already waits for, so the question costs no extra Immich request.
    *
    * The search set follows the route, never the whole allowlist: with a
    * subpageSlug it is that subpage's albums, without one it is the standalone
@@ -742,7 +761,7 @@ class ImmichClient {
    * top-level slug would answer for an album whose only route is a subpage —
    * past that subpage's password, and past `enabled: false`.
    */
-  async getAlbumBySlug(
+  async findAlbumBySlug(
     slug: string,
     subpageSlug?: string,
     forceFresh = false,
@@ -764,9 +783,7 @@ class ImmichClient {
     const searchSet = albums.filter((a) => routeIds.has(a.id));
 
     const wanted = normalizeSlug(slug);
-    const match = searchSet.find((a) => a.slug === wanted);
-    if (!match) return null;
-    return this.getAlbum(match.id, forceFresh);
+    return searchSet.find((a) => a.slug === wanted) ?? null;
   }
 
   /**
