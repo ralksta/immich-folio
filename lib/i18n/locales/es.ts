@@ -132,7 +132,6 @@ export const es: Dictionary = {
     title: 'Diario',
     kicker: 'Historias y ensayos',
     subtitle: 'Ensayos fotográficos, historias visuales y notas de campo.',
-    description: 'Ensayos fotográficos, relatos de viaje y diarios entre bastidores.',
     entryDescription: 'Entrada del diario',
     empty: 'Todavía no hay entradas publicadas.',
     readStory: 'Leer historia →',
