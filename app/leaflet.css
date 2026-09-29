@@ -16,6 +16,14 @@
   filter: grayscale(0.85) contrast(0.95);
 }
 
+/* Leaflet paints #ddd behind the tiles, which shows as grey bands above and
+   below the world at low zoom — bright bars on a dark preset. The page's own
+   secondary surface takes its place. Doubled class to outrank Leaflet's
+   stylesheet, which is loaded after this one. */
+.leaflet-container.leaflet-container {
+  background: var(--bg-secondary);
+}
+
 /* ── Popups ────────────────────────────────────────────────── */
 
 .leaflet-popup-content-wrapper {

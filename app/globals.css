@@ -104,24 +104,99 @@
   border-bottom-color: var(--text-primary);
 }
 
-/* The links (Home, subpages, standalone albums, About, Map) live inside
-   MobileNav's wrapper, but `display: contents` erases the wrapper's own box
-   above the mobile breakpoint — the links become direct flex items of
-   `.header__nav`, so desktop keeps the exact layout it always had. */
-.header__nav-links {
-  display: contents;
-}
+/* ── Header menu (MobileNav) ──────────────────────────
+   The links (Home, subpages, standalone albums, About, Map) live inside
+   MobileNav's wrapper. The menu — a button plus a dropdown panel — is the
+   default here, and the inline row is the exception further down: above the
+   phone breakpoint, and only while MobileNav has not marked the links
+   `data-collapsed` because they do not fit (#590).
 
-/* Hidden above the mobile breakpoint — MobileNav renders it unconditionally,
-   but only the CSS decides when it is reachable, same as `.header__wordmark`. */
+   The header used to rely on the breakpoint alone and scroll sideways with a
+   hidden scrollbar between 641px and whatever width the links needed, which
+   put About, Map and the theme toggle off-screen on every tablet. How many
+   links fit depends on the site's own subpages, so the width is measured
+   instead of guessed. */
 .header__menu-btn {
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 44px touch target (20px icon + 12px padding); the negative margins
+     keep the header's height and spacing as before (#696). */
+  margin: -4px -4px -4px auto;
+  align-self: center;
+  padding: 12px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
 }
 
 .header__menu-btn svg {
   width: 20px;
   height: 20px;
   display: block;
+}
+
+.header__nav-links {
+  display: none;
+}
+
+/* `.header` is the nearest positioned ancestor (it's `position: fixed`),
+   so `top: 100%` sits the panel right under it regardless of the actual
+   header height, which differs by preset (plain padding vs. studio-modern's
+   fixed `--header-height`). `left: 50%` + `width: 100vw` + negative margin
+   breaks the panel out to the full viewport width regardless of `.header`'s
+   own horizontal padding, which also differs by preset (`--sm-gutter` for
+   studio-modern vs. a fixed 24px elsewhere). */
+.header__nav-links[data-open='true'] {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  background: rgba(26, 26, 26, 0.98);
+  border-bottom: 1px solid var(--border-subtle);
+  z-index: 101;
+}
+
+[data-theme='light'] .header__nav-links[data-open='true'] {
+  background: rgba(245, 245, 240, 0.98);
+}
+
+.header__nav-links[data-open='true'] .header__nav-link,
+.header__nav-links[data-open='true'] .header__nav-link--external {
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 0.75rem;
+}
+
+/* Covers the full viewport, including the area behind the header — the
+   header's own `z-index: 100` keeps it crisp above the dim, so this does
+   not need to know the header's height either. */
+.header__nav-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 99;
+}
+
+/* The inline row. `display: contents` erases the wrapper's own box, so the
+   links become direct flex items of `.header__nav` and desktop keeps the
+   exact layout it always had. The breakpoint is the CSS half — it holds
+   before hydration, so a phone never paints the row first — and it has to
+   match PHONE_QUERY in MobileNav. */
+@media (min-width: 641px) {
+  .header__menu-btn:not([data-collapsed='true']) {
+    display: none;
+  }
+
+  .header__nav-links:not([data-collapsed='true']) {
+    display: contents;
+  }
 }
 
 /* ── Main Content ─────────────────────────────────── */
@@ -426,7 +501,10 @@
 
 .hero--fullbleed .hero__title {
   color: #fff;
-  font-size: 4rem;
+  /* Scales down on a phone instead of running off the edge; 4rem was cut off
+     at 390px in minimal and noir, whose single long words cannot wrap. */
+  font-size: clamp(2.25rem, 9vw, 4rem);
+  overflow-wrap: break-word;
   text-shadow:
     0 2px 8px rgba(0, 0, 0, 0.7),
     0 8px 48px rgba(0, 0, 0, 0.6);
@@ -1644,8 +1722,14 @@
 
 .footer__left {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 20px;
+  gap: 12px 20px;
+  /* Without wrapping, the name and three legal links in uppercase tracking
+     ran to about 440px on a phone and widened the page itself: the layout
+     viewport grew with it, and the fixed lightbox and menu panel grew along,
+     cutting off the close button and the next arrow. */
+  min-width: 0;
 }
 
 .footer__name {
@@ -2036,72 +2120,10 @@
     grid-template-columns: 1fr;
   }
 
+  /* The header is about 37px tall here (the 44px menu button with its
+     negative margins); 32px left the album back link partly under it. */
   .main {
-    padding: 32px 20px 80px;
-  }
-
-  /* A proper menu replaces the horizontal scroll below this width — see
-     `.header__nav-links` / `.header__menu-btn` above and MobileNav (#590). */
-  .header__menu-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    /* 44px touch target (20px icon + 12px padding); the negative margins
-       keep the header's height and spacing as before (#696). */
-    margin: -4px -4px -4px auto;
-    align-self: center;
-    padding: 12px;
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-  }
-
-  .header__nav-links {
-    display: none;
-  }
-
-  /* `.header` is the nearest positioned ancestor (it's `position: fixed`),
-     so `top: 100%` sits the panel right under it regardless of the actual
-     header height, which differs by preset (plain padding vs. studio-modern's
-     fixed `--header-height`). `left: 50%` + `width: 100vw` + negative margin
-     breaks the panel out to the full viewport width regardless of `.header`'s
-     own horizontal padding, which also differs by preset (`--sm-gutter` for
-     studio-modern vs. a fixed 24px elsewhere). */
-  .header__nav-links[data-open='true'] {
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    width: 100vw;
-    margin-left: -50vw;
-    max-height: calc(100vh - 64px);
-    overflow-y: auto;
-    background: rgba(26, 26, 26, 0.98);
-    border-bottom: 1px solid var(--border-subtle);
-    z-index: 101;
-  }
-
-  [data-theme='light'] .header__nav-links[data-open='true'] {
-    background: rgba(245, 245, 240, 0.98);
-  }
-
-  .header__nav-links[data-open='true'] .header__nav-link,
-  .header__nav-links[data-open='true'] .header__nav-link--external {
-    width: 100%;
-    padding: 16px 24px;
-    font-size: 0.75rem;
-  }
-
-  /* Covers the full viewport, including the area behind the header — the
-     header's own `z-index: 100` keeps it crisp above the dim, so this does
-     not need to know the header's height either. */
-  .header__nav-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 99;
+    padding: 56px 20px 80px;
   }
 
   .header__nav-link {

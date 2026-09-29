@@ -960,8 +960,11 @@
 }
 
 /* ── Map ────────────────────────────────────────────────────── */
+/* No side padding: .main already holds the page to --sm-gutter, and adding it
+   again here put the map page at twice the gutter of every other page (and
+   left a phone a map about 200px wide). */
 [data-preset='studio-modern'] .map-page__header {
-  padding: 64px var(--sm-gutter) 32px;
+  padding: 64px 0 32px;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -1021,7 +1024,7 @@
 }
 
 [data-preset='studio-modern'] .map-container {
-  margin: 0 var(--sm-gutter) var(--sm-gutter);
+  margin: 0 0 var(--sm-gutter);
   border: var(--sm-hairline);
   border-radius: 0;
 }
@@ -1120,8 +1123,12 @@
 }
 
 /* ── Responsive ─────────────────────────────────────────────── */
+/* `html` in front: app/tokens.css sets the 48px default with the same
+   [data-preset] selector and is imported after this file, so without the
+   extra weight neither narrower gutter ever applied — phones kept 48px a
+   side, and the map page was left about 200px wide. */
 @media (max-width: 1024px) {
-  [data-preset='studio-modern'] {
+  html[data-preset='studio-modern'] {
     --sm-gutter: 32px;
   }
 
@@ -1135,12 +1142,15 @@
 }
 
 @media (max-width: 640px) {
-  [data-preset='studio-modern'] {
+  html[data-preset='studio-modern'] {
     --sm-gutter: 20px;
   }
 
+  /* The header stays --header-height (64px) tall on a phone, so a flat 56px
+     tucked the album back link under it. Same 24px breathing room as the
+     88px on desktop. */
   [data-preset='studio-modern'] .main {
-    padding: 56px var(--sm-gutter) 80px;
+    padding: calc(var(--header-height) + 24px) var(--sm-gutter) 80px;
   }
 
   [data-preset='studio-modern'] .header {

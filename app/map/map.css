@@ -8,8 +8,11 @@
   min-height: calc(100vh - var(--header-height, 64px));
 }
 
+/* No horizontal padding or margin on the header and the map: the page sits
+   inside .main, which already provides every preset's side gutter. Adding a
+   second one made the map page narrower than the rest of the site. */
 .map-page__header {
-  padding: 2rem var(--page-padding, 2rem) 1rem;
+  padding: 2rem 0 1rem;
 }
 
 /* Kicker + meta block are rendered for every preset but stay hidden
@@ -39,7 +42,7 @@
 .map-container {
   flex: 1;
   min-height: 500px;
-  margin: 0 var(--page-padding, 2rem) 2rem;
+  margin: 0 0 2rem;
   border-radius: var(--radius-sm, 0);
   overflow: hidden;
   border: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.15));

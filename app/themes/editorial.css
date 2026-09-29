@@ -138,7 +138,10 @@
 [data-preset='editorial'] .album-header__title,
 [data-preset='editorial'] .subpage-title {
   font-family: var(--font-serif);
-  font-size: 5rem;
+  /* A fixed 5rem ran "Deutschland" 80px past a 390px phone and made the
+     whole page scroll sideways. */
+  font-size: clamp(2.5rem, 11vw, 5rem);
+  overflow-wrap: break-word;
   font-weight: 400;
   letter-spacing: -0.02em;
 }
