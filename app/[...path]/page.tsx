@@ -47,6 +47,7 @@ import { strictestPrecision, type LocationPrecision } from '@/lib/mapPrecision';
 import { resolveEssayFile, generatedEssayCaption } from '@/lib/essaySource';
 import { getServerDictionary } from '@/lib/i18n/server';
 import { contentPageMetadata, renderContentPage } from './contentPage';
+import { loadAlbumBlocks } from './essayPayload';
 
 // Render at request time — requires live Immich connection
 export const dynamic = 'force-dynamic';
@@ -425,16 +426,10 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
       // does, from a raw fetch, and add those photos to the page's assets.
       // Their ids are encoded here because this path hands EssayView tokens.
       if (essayParsed?.blocks.some((b) => b.type === 'album')) {
-        const byAlbum = new Map<string, typeof allAssets>();
-        for (const b of essayParsed.blocks) {
-          if (b.type !== 'album' || !b.albumId || byAlbum.has(b.albumId)) continue;
-          try {
-            byAlbum.set(b.albumId, await immich.getAlbumAssetsRaw(b.albumId));
-          } catch (error) {
-            // eslint-disable-next-line no-console
-            console.warn(`[essay] ${slug}: album ${b.albumId} could not be loaded:`, error);
-          }
-        }
+        const byAlbum = await loadAlbumBlocks(essayParsed.blocks, (albumId, error) => {
+          // eslint-disable-next-line no-console
+          console.warn(`[essay] ${slug}: album ${albumId} could not be loaded:`, error);
+        });
         const expanded = expandAlbumBlocks(
           essayParsed.blocks,
           (id) => byAlbum.get(id),

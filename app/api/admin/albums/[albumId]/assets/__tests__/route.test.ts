@@ -81,7 +81,7 @@ describe('GET /api/admin/albums/[albumId]/assets', () => {
   it('reads assets through the Immich client rather than the album endpoint', async () => {
     await call(ALBUM);
 
-    expect(getAlbumAssetsRaw).toHaveBeenCalledWith(ALBUM);
+    expect(getAlbumAssetsRaw).toHaveBeenCalledWith(ALBUM, true);
   });
 
   it('reports an upstream failure as a 500 rather than an empty album', async () => {

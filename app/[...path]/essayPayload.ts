@@ -45,6 +45,31 @@ interface EssayPayloadOptions {
   coverAssetId?: string;
 }
 
+/**
+ * The assets of every album an album block names, keyed by album id, loaded
+ * concurrently. An album that fails is reported and left out, so its block
+ * drops rather than the page.
+ */
+export async function loadAlbumBlocks(
+  blocks: readonly JournalBlock[],
+  onError: (albumId: string, error: unknown) => void,
+): Promise<Map<string, ImmichAsset[]>> {
+  const albumIds = [
+    ...new Set(blocks.flatMap((b) => (b.type === 'album' && b.albumId ? [b.albumId] : []))),
+  ];
+  const loaded = await Promise.all(
+    albumIds.map(async (albumId) => {
+      try {
+        return [albumId, await immich.getAlbumAssetsRaw(albumId)] as const;
+      } catch (error) {
+        onError(albumId, error);
+        return null;
+      }
+    }),
+  );
+  return new Map(loaded.filter((entry) => entry !== null));
+}
+
 export async function buildEssayPayload(
   authoredBlocks: JournalBlock[],
   { logTag, slug, allowMap, coverAssetId }: EssayPayloadOptions,
@@ -66,16 +91,11 @@ export async function buildEssayPayload(
   // allowlist on purpose: an entry may already show any single photo by id,
   // and the author's pick is the gate for a whole album just the same. An
   // album Immich cannot deliver drops its block rather than the page.
-  const albumAssetsById = new Map<string, ImmichAsset[]>();
-  for (const block of sourceBlocks) {
-    if (block.type !== 'album' || !block.albumId || albumAssetsById.has(block.albumId)) continue;
-    try {
-      albumAssetsById.set(block.albumId, await immich.getAlbumAssetsRaw(block.albumId));
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.warn(`[${logTag}] ${slug}: album ${block.albumId} could not be loaded:`, error);
-    }
-  }
+  // All albums at once, not one round trip after the other.
+  const albumAssetsById = await loadAlbumBlocks(sourceBlocks, (albumId, error) => {
+    // eslint-disable-next-line no-console
+    console.warn(`[${logTag}] ${slug}: album ${albumId} could not be loaded:`, error);
+  });
   const { blocks } = expandAlbumBlocks(
     sourceBlocks,
     (albumId) => albumAssetsById.get(albumId),

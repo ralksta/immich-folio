@@ -535,20 +535,23 @@ class ImmichClient {
    * saved config, which is right for the public site but wrong for the page
    * builder: an album just dragged in has not been saved yet, so the picker
    * and the reorder editor would come up empty. Admin auth is the gate here.
+   *
+   * The public site uses it too: album blocks in journal entries, content
+   * pages and essay files, and the published-asset set that covers them. The
+   * author's pick is the gate there, not the allowlist.
+   *
+   * It goes through the same cached, coalesced load as getAlbum(), so those
+   * renders cost no Immich request within CACHE_TTL, and an album that is also
+   * allowlisted is fetched once for both. That load yields exactly this list —
+   * trashed assets dropped, sorted by capture time in the album's own order —
+   * which is the order the site renders under `sort: immich`, and the baseline
+   * the reorder editor has to match. `forceFresh` skips the cached read for
+   * the admin editors, which must show an album as Immich has it now.
    */
-  async getAlbumAssetsRaw(albumId: string): Promise<ImmichAsset[]> {
-    const [album, assets] = await Promise.all([
-      this.request<ImmichAlbum>(`/albums/${encodeURIComponent(albumId)}`),
-      this.fetchAlbumAssets(albumId),
-    ]);
-    if (!album) return [];
-
-    // Same order the site would render under `sort: immich`. The reorder
-    // editor's baseline has to match it exactly, or the assets it shows as
-    // "follows automatically" would not be the ones that actually follow.
-    return assets
-      .filter((a) => !a.isTrashed)
-      .sort(compareByCaptureTime(album.order === 'asc' ? 1 : -1));
+  async getAlbumAssetsRaw(albumId: string, forceFresh = false): Promise<ImmichAsset[]> {
+    const album = await this.loadAlbum(albumId, forceFresh, true);
+    // A copy: the cached entry is shared with every other caller.
+    return album ? [...album.assets] : [];
   }
 
   /**
@@ -598,7 +601,7 @@ class ImmichClient {
   private async loadAlbum(
     albumId: string,
     forceFresh: boolean,
-    /** Only for getProofingAlbum(); see there. */
+    /** Only for getProofingAlbum() and getAlbumAssetsRaw(); see there. */
     bypassAllowlist = false,
   ): Promise<ImmichAlbum | null> {
     // Security: only serve configured albums

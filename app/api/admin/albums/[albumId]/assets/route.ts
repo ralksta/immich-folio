@@ -37,8 +37,9 @@ export const GET = withAdmin(
       // longer embeds assets in that response, so reading `album.assets` returned
       // nothing (and threw outright when the key was absent). getAlbumAssetsRaw()
       // pages through the metadata search and applies the album's own order, so
-      // this list matches what the site renders under `sort: immich`.
-      const all = await immich.getAlbumAssetsRaw(albumId);
+      // this list matches what the site renders under `sort: immich`. Fresh,
+      // not cached: the editors must show the album as Immich has it now.
+      const all = await immich.getAlbumAssetsRaw(albumId, true);
 
       const assets = all
         .filter((a) => a.type === 'IMAGE' || (includeVideos && a.type === 'VIDEO'))
