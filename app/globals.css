@@ -27,7 +27,7 @@
 
 .skip-link:focus {
   top: 0;
-  outline: 2px solid var(--text-primary);
+  outline: 2px solid var(--focus-ring);
 }
 
 /* ── Screen-reader-only text ──────────────────────── */
@@ -2015,7 +2015,7 @@
 
 .hero__nav-link:hover {
   border-bottom-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* Album cards */
@@ -2045,17 +2045,17 @@
 /* Accent hover effects (works with any accent color) */
 .header__nav-link:hover,
 .header__nav-link.active {
-  color: var(--accent);
+  color: var(--accent-text);
   border-bottom-color: var(--accent);
 }
 
 .footer__link:hover {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .scroll-to-top:hover {
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* ── Tablet (iPad, kleine Laptops) ─────────────────── */

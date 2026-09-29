@@ -187,6 +187,50 @@ export function onAccent(accent: string): string {
   return toBlack > toWhite ? '#000000' : '#ffffff';
 }
 
+/**
+ * The surfaces accent-coloured text is checked against, one per mode: the
+ * lightest dark surface (`--bg-card-hover` of the brightest dark preset,
+ * rounded up) and the darkest light one (`--bg-secondary` of the studio
+ * light palette, rounded down). Clearing these clears every other surface of
+ * the same mode.
+ */
+const ACCENT_TEXT_SURFACE = { dark: '#262626', light: '#e8e8e3' } as const;
+const AA_TEXT = 4.5;
+
+function mixHex(a: string, b: string, weightB: number): string {
+  const channel = (hex: string, i: number) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
+  return (
+    '#' +
+    [0, 1, 2]
+      .map((i) => Math.round(channel(a, i) * (1 - weightB) + channel(b, i) * weightB))
+      .map((c) => c.toString(16).padStart(2, '0'))
+      .join('')
+  );
+}
+
+/**
+ * Text in the accent colour (`--accent-text`), lifted to AA. A fill can be any
+ * accent: `--on-accent` picks the text on top of it. Text *in* the accent
+ * cannot choose its background, and the preset reds measured 3.5–3.7:1 on the
+ * dark pages (#e60012 on #121212). The accent is mixed toward white on dark
+ * and toward black on light, in 5% steps (the same mix `color-mix(in srgb)`
+ * makes), until it reaches 4.5:1 on that mode's worst surface — so an accent
+ * that already passes is returned unchanged, and every accent terminates at
+ * white or black at the latest. A non-hex value is returned as it is.
+ */
+export function accentText(accent: string, mode: 'dark' | 'light'): string {
+  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(accent.trim());
+  if (!m) return accent;
+  const hex = '#' + (m[1].length === 3 ? [...m[1]].map((c) => c + c).join('') : m[1]).toLowerCase();
+  const surface = ACCENT_TEXT_SURFACE[mode];
+  const target = mode === 'dark' ? '#ffffff' : '#000000';
+  for (let step = 0; step <= 20; step++) {
+    const candidate = mixHex(hex, target, step / 20);
+    if ((contrastRatio(candidate, surface) ?? 0) >= AA_TEXT) return candidate;
+  }
+  return target;
+}
+
 /** `String(theme.grain)`/`String(theme.headerDot)` become a `data-*` attribute
  * either way, but a non-boolean is a sign the value was never meant for this
  * field at all — a typo'd key one level up, say — so it falls back rather

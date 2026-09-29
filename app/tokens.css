@@ -36,6 +36,28 @@
   --accent: var(--accent-dark, #e60012);
   --accent-dim: color-mix(in srgb, var(--accent) 12%, transparent);
   --on-accent: var(--on-accent-dark, #ffffff);
+  /* The accent as a text colour: the layout lifts it to 4.5:1 per mode
+     (accentText() in lib/config/theme.ts). Fills, borders and underlines keep
+     --accent; anything that is read uses this. The fallbacks are that
+     function's output for the default red. */
+  --accent-text: var(--accent-text-dark, #ef5965);
+
+  /* One focus ring for everything a visitor can focus, inputs included. The
+     contact form and the password field drew an accent ring over an accent
+     border while every link and button drew this one. */
+  --focus-ring: var(--text-primary);
+
+  /* The border that marks an input as an input (WCAG 1.4.11, 3:1). The
+     --border-subtle hairline measured 1.15–1.29:1 against the page;
+     --text-muted is checked at 4.5:1 against both page surfaces in every
+     preset, so borrowing it clears the bar with margin. */
+  --input-border: var(--text-muted);
+
+  /* Status that is not an error: the journal's draft badge. Per mode, like
+     --error; #eab308 read 1.4:1 on the light pages. */
+  --warning: #eab308;
+
+  color-scheme: dark;
 
   /* Error and destructive text. One value per mode: no single red clears
      4.5:1 on both a near-black and a near-white page (the fixed reds these
@@ -96,8 +118,12 @@
   --accent: var(--accent-light, #c8000f);
   --accent-dim: color-mix(in srgb, var(--accent) 12%, transparent);
   --on-accent: var(--on-accent-light, #ffffff);
+  --accent-text: var(--accent-text-light, #c8000f);
 
   --error: #c62828;
+  --warning: #7a5600;
+
+  color-scheme: light;
 }
 
 /* ── Studio Modern: Leica Precision Palette ──────── */
@@ -352,6 +378,6 @@ select:focus-visible,
 summary:focus-visible,
 [role='button']:focus-visible,
 [tabindex]:not([tabindex='-1']):focus-visible {
-  outline: 2px solid var(--text-primary);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }

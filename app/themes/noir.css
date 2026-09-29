@@ -123,7 +123,7 @@
   font-family: var(--font-caption);
   font-size: 0.55rem;
   letter-spacing: 0.12em;
-  color: var(--accent);
+  color: var(--accent-text);
   text-transform: uppercase;
 }
 
@@ -140,7 +140,7 @@
 }
 
 [data-preset='noir'] .subpage-toc__link:hover {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* Section: amber hairline rule */

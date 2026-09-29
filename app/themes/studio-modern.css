@@ -227,7 +227,7 @@
 }
 
 [data-preset='studio-modern'] .hero .hero__nav-link:hover {
-  color: var(--sm-accent);
+  color: var(--accent-text);
   border-bottom-color: var(--border-subtle);
 }
 
@@ -246,7 +246,7 @@
 }
 
 [data-preset='studio-modern'] .hero .hero__nav-link:first-child .hero__nav-index {
-  color: var(--sm-accent);
+  color: var(--accent-text);
 }
 
 [data-preset='studio-modern'] .hero .hero__nav-count {
@@ -353,7 +353,8 @@
 }
 
 [data-preset='studio-modern'] .hero--fullbleed .hero__nav-link:hover {
-  color: var(--sm-accent);
+  /* Dark glass in both modes, so the dark-mode text accent. */
+  color: var(--accent-text-dark, var(--accent-text));
 }
 
 [data-preset='studio-modern'] .hero--fullbleed .hero__nav-index {
@@ -362,7 +363,8 @@
 }
 
 [data-preset='studio-modern'] .hero--fullbleed .hero__nav-link:first-child .hero__nav-index {
-  color: var(--sm-accent);
+  /* Dark glass in both modes, so the dark-mode text accent. */
+  color: var(--accent-text-dark, var(--accent-text));
 }
 
 [data-preset='studio-modern'] .hero--fullbleed .hero__nav-count {
@@ -404,7 +406,7 @@
 }
 
 [data-preset='studio-modern'] .hero--minimal .hero__nav-link:hover {
-  color: var(--sm-accent);
+  color: var(--accent-text);
   border-bottom-color: var(--sm-accent);
 }
 
@@ -462,7 +464,7 @@
 }
 
 [data-preset='studio-modern'] .hero__thumbnail-item:hover .hero__thumbnail-label {
-  color: var(--sm-accent);
+  color: var(--accent-text);
 }
 
 [data-preset='studio-modern'] .hero__thumbnail-index {
@@ -473,7 +475,7 @@
 }
 
 [data-preset='studio-modern'] .hero__thumbnail-item:first-child .hero__thumbnail-index {
-  color: var(--sm-accent);
+  color: var(--accent-text);
 }
 
 [data-preset='studio-modern'] .hero__thumbnail-label {
@@ -588,7 +590,7 @@
 
 [data-preset='studio-modern'] .subpage-header__kicker {
   display: flex;
-  color: var(--sm-accent);
+  color: var(--accent-text);
   margin-bottom: 16px;
 }
 
@@ -657,7 +659,7 @@
   font-family: var(--font-caption);
   font-size: 0.6875rem;
   letter-spacing: 0.06em;
-  color: var(--sm-accent);
+  color: var(--accent-text);
 }
 
 [data-preset='studio-modern'] .subpage-grid__item-caption-title {
@@ -685,7 +687,7 @@
 
 [data-preset='studio-modern'] .subpage-toc__num {
   font-family: var(--font-caption);
-  color: var(--sm-accent);
+  color: var(--accent-text);
 }
 
 [data-preset='studio-modern'] .subpage-toc__label {
@@ -745,7 +747,7 @@
 }
 
 [data-preset='studio-modern'] .album-header__back:hover {
-  color: var(--sm-accent);
+  color: var(--accent-text);
 }
 
 [data-preset='studio-modern'] .album-header__back svg {
@@ -862,7 +864,7 @@
 }
 
 [data-preset='studio-modern'] .footer__legal-link:hover {
-  color: var(--sm-accent);
+  color: var(--accent-text);
 }
 
 [data-preset='studio-modern'] .footer__link {
@@ -955,7 +957,7 @@
   content: counter(sm-gear, decimal-leading-zero);
   font-family: var(--font-caption);
   font-size: 0.625rem;
-  color: var(--sm-accent);
+  color: var(--accent-text);
 }
 
 /* ── Map ────────────────────────────────────────────────────── */
@@ -1081,7 +1083,7 @@
   font-size: 0.6875rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--sm-accent);
+  color: var(--accent-text);
 }
 
 /* ── Admin ──────────────────────────────────────────────────── */

@@ -51,7 +51,7 @@
   display: block;
   margin-top: 20px;
   font-size: 0.5rem;
-  color: var(--accent);
+  color: var(--accent-text);
   letter-spacing: 0;
 }
 
@@ -66,7 +66,7 @@
 }
 
 [data-preset='classic'] .hero__nav-link:hover {
-  color: var(--accent);
+  color: var(--accent-text);
   border-bottom-color: transparent;
 }
 
@@ -135,12 +135,12 @@
 
 [data-preset='classic'] .section-label::before {
   content: '— ';
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 [data-preset='classic'] .section-label::after {
   content: ' —';
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* Album & Subpage header: elegant serif */
@@ -177,7 +177,7 @@
 
 [data-preset='classic'] .scroll-to-top:hover {
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* Subpage grid: warm borders */
@@ -202,7 +202,7 @@
   content: '◆';
   padding: 0 14px;
   font-size: 0.45rem;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 [data-preset='classic'] .subpage-toc__num {
@@ -222,7 +222,7 @@
 }
 
 [data-preset='classic'] .subpage-toc__link:hover {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* Section: ornamental centered divider rule */
@@ -259,5 +259,5 @@
   content: '—◆—';
   font-size: 0.55rem;
   letter-spacing: 0.2em;
-  color: var(--accent);
+  color: var(--accent-text);
 }

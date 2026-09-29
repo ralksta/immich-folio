@@ -45,18 +45,14 @@
   width: 100%;
   padding: 12px 14px;
   background: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--input-border);
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 1rem;
-  transition: border-color var(--transition-fast);
 }
-.contact-form__input:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-color: var(--accent);
-}
+/* The ring itself comes from the global focus rule (app/tokens.css), the
+   same one every link and button draws. */
 textarea.contact-form__input {
   min-height: 10rem;
   resize: vertical;
