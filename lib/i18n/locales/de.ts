@@ -207,7 +207,7 @@ export const de: Dictionary = {
     listEmpty: (albumName: string) => `${albumName}: Keine Fotos ausgewählt.`,
     listSummary: (albumName: string, count: number, indices: string) =>
       `${albumName} — Ausgewählte Fotos (${count}): ${indices}`,
-    mailSubject: (n: number) => `Fotoauswahl (${n} Fotos)`,
+    mailSubject: (n: number) => `Fotoauswahl (${plural(n, 'Foto', 'Fotos')})`,
     mailBody: (list: string, url: string) =>
       `Hallo,\n\nhier ist meine Fotoauswahl:\n\n${list}\n\nLink zur Auswahl: ${url}\n\nViele Grüße,`,
   },
