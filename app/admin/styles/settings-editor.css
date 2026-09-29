@@ -269,6 +269,11 @@
   animation: pulse-red 1.5s infinite;
 }
 
+/* The doctor found something worth a look, nothing broken: amber, still. */
+.status-badge-btn.warning .status-dot {
+  background-color: var(--admin-warning);
+}
+
 /* The diagnostics request itself did not run — deliberately not red, and not
    animated: an unanswered check is not a fault report. */
 .status-badge-btn.unknown .status-dot {

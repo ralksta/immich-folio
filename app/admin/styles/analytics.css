@@ -106,25 +106,32 @@
   align-items: flex-end;
   background: var(--admin-bg-elevated);
   border-radius: 6px;
-  overflow: hidden;
 }
 
+/* --admin-primary never existed, so every bar fell back to a fixed blue;
+   the accent is what the top-pages bars below use. */
 .bar-fill {
   width: 100%;
-  background: var(--admin-primary, #3b82f6);
-  border-radius: 6px 6px 0 0;
+  background: var(--admin-accent);
+  border-radius: 6px;
   transition: height 0.3s ease;
   position: relative;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
 }
 
+/* Above the bar, not inside it: inside, a short bar cut its number in half
+   and an empty day had nowhere to put its 0. The chart's padding-top leaves
+   room above the tallest bar. */
 .bar-val {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 3px;
   font-size: 0.65rem;
   font-weight: 600;
-  color: #fff;
-  margin-top: 4px;
+  line-height: 1;
+  color: var(--admin-text-secondary);
+  white-space: nowrap;
 }
 
 .bar-label {

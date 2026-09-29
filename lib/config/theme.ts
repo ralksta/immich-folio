@@ -130,6 +130,11 @@ function resolveRadius(raw: unknown, fallback: number): number {
  */
 const ACCENT_HEX = /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 
+/** Whether `resolveTheme` keeps an accent rather than falling back to the preset's. */
+export function isAccentHex(value: string): boolean {
+  return ACCENT_HEX.test(value.trim());
+}
+
 /** Trim, case-fold and widen to `#rrggbb`; refuse anything that is not hex. */
 function resolveAccent(raw: unknown, fallback: string): string {
   if (typeof raw !== 'string') return fallback;

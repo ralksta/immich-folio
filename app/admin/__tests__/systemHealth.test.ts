@@ -50,9 +50,9 @@ describe('systemHealth', () => {
     });
   });
 
-  it('reports a doctor warning as neutral', () => {
+  it('reports a doctor warning in the warning tone, not the neutral one', () => {
     expect(health({ doctorLevel: 'warn' })).toEqual({
-      tone: 'unknown',
+      tone: 'warning',
       label: 'Check Diagnostics',
     });
   });
@@ -67,7 +67,7 @@ describe('systemHealth', () => {
       'Setup Incomplete': 'unknown',
       'System Degraded': 'disconnected',
       'Needs Attention': 'disconnected',
-      'Check Diagnostics': 'unknown',
+      'Check Diagnostics': 'warning',
       'System OK': 'connected',
       'Status Unknown': 'unknown',
     };

@@ -53,6 +53,7 @@ const GROUPS: { id: string; title: string; checks: string[] }[] = [
       'legal',
       'contact',
       'privacy',
+      'settings-values',
     ],
   },
 ];
@@ -77,6 +78,8 @@ const FIXES: Record<string, { label: string; href: string }> = {
   legal: { label: 'Open settings', href: '/admin/settings/legal' },
   contact: { label: 'Open settings', href: '/admin/settings/legal' },
   privacy: { label: 'Open settings', href: '/admin/settings/legal' },
+  // The href is replaced by the finding's own settingsSection.
+  'settings-values': { label: 'Open settings', href: '/admin/settings/general' },
   'content-writable': { label: 'How to fix', href: `${DOCS}/docs/admin-panel.md#docker-usage` },
   'immich-api': {
     label: 'API key permissions',
@@ -329,8 +332,12 @@ export default function DiagnosticsView() {
       }
       return null; // The photo list toggle is rendered separately.
     }
-    const fix = FIXES[id];
-    if (!fix) return null;
+    const known = FIXES[id];
+    if (!known) return null;
+    // A finding that knows which settings section holds its fix goes there.
+    const fix = f.settingsSection
+      ? { ...known, href: `/admin/settings/${f.settingsSection}` }
+      : known;
     return fix.href.startsWith('/') ? (
       <Link href={fix.href} className="admin-btn admin-btn-sm">
         {fix.label}

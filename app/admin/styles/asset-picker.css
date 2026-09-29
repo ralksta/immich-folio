@@ -113,7 +113,7 @@
   height: 22px;
   border-radius: 50%;
   background: var(--admin-accent);
-  color: #000;
+  color: var(--admin-on-accent);
   font-size: 0.7rem;
   display: flex;
   align-items: center;
@@ -228,7 +228,7 @@ button.asset-picker-tile {
   padding: 0 6px;
   border-radius: 11px;
   background: var(--admin-accent);
-  color: #000;
+  color: var(--admin-on-accent);
   font-size: 0.72rem;
   font-weight: 700;
   display: flex;

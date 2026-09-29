@@ -37,7 +37,7 @@
 .hover-action-btn {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--admin-on-accent);
   background: var(--admin-accent, #e60012);
   padding: 0.4rem 0.85rem;
   border-radius: 20px;

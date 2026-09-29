@@ -98,7 +98,7 @@
   display: inline-flex;
   align-items: center;
   font-size: 0.75rem;
-  color: var(--admin-accent);
+  color: var(--admin-warning);
   font-weight: 500;
 }
 

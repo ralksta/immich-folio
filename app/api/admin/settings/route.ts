@@ -18,6 +18,7 @@ import { validateSettings } from '@/lib/config/settingsSchema';
 import { hashPasswordKeys } from '@/lib/admin/passwordHashing';
 import { keepLockedValues, resolveEnvLocks } from '@/lib/admin/envLocks';
 import { env } from '@/lib/env';
+import { validateSettingValues } from '@/lib/config/settingValues';
 
 const SITE_PASSWORD_KEY = new Set(['sitePassword']);
 import type { SettingsYaml } from '@/lib/config/schema';
@@ -54,12 +55,15 @@ export const PUT = withAdmin(async (request: Request) => {
 
   // Checked before the write, not after: settings.yaml is read by every public
   // page, so a malformed save is discovered by visitors rather than here.
+  // Then the values the site would silently ignore — an accent that is not
+  // hex, nine columns — which used to be saved with a success message.
   const validation = validateSettings(body.settings);
-  if (!validation.ok) {
+  const fields = validation.ok ? validateSettingValues(body.settings) : validation.errors;
+  if (fields.length > 0) {
     return NextResponse.json(
       {
         error: 'These settings could not be saved.',
-        fields: validation.errors,
+        fields,
       },
       { status: 400 },
     );

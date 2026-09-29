@@ -4,7 +4,7 @@ import { useState, type CSSProperties } from 'react';
 import * as Icons from '../Icons';
 import OptionGrid, { toOptions } from '../fields/OptionGrid';
 import { DEFAULT_PRESET } from '@/lib/config/theme';
-import { effectiveTheme, FeatureRow } from './fields';
+import { effectiveTheme, FeatureRow, FieldError } from './fields';
 import type { SectionProps } from './types';
 
 const PRESETS = ['studio-modern', 'studio', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
@@ -264,7 +264,7 @@ function PresetSpecs({ value }: { value: string }) {
   );
 }
 
-export default function ThemeSection({ settings, update }: SectionProps) {
+export default function ThemeSection({ settings, update, fieldErrors }: SectionProps) {
   // Read off the page on mount: the toggle previews light and dark on the
   // admin itself, and the page may already be in either.
   const [currentMode, setCurrentMode] = useState<'dark' | 'light'>(() =>
@@ -417,8 +417,11 @@ export default function ThemeSection({ settings, update }: SectionProps) {
               value={settings.theme?.accent || ''}
               onChange={(e) => update('theme.accent', e.target.value)}
               placeholder={theme.accent}
+              aria-invalid={fieldErrors?.['theme.accent'] ? true : undefined}
+              aria-describedby={fieldErrors?.['theme.accent'] ? 'theme-accent-error' : undefined}
             />
           </div>
+          <FieldError id="theme-accent-error" message={fieldErrors?.['theme.accent']} />
         </div>
       </div>
 

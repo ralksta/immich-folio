@@ -90,7 +90,7 @@ h3 .svg-icon {
 
 .album-tile-btn:hover {
   background: var(--admin-accent);
-  color: #000;
+  color: var(--admin-on-accent);
   border-color: var(--admin-accent);
 }
 

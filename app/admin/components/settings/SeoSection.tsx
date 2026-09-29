@@ -2,11 +2,13 @@
 
 import * as Icons from '../Icons';
 import ToggleCard from '../fields/ToggleCard';
+import { FieldError } from './fields';
 import type { SectionProps } from './types';
 
 export default function SeoSection({
   settings,
   update,
+  fieldErrors,
   siteUrlInfo,
 }: SectionProps & {
   /** Resolved site URL and its origin, so the panel can name SITE_URL (#472). */
@@ -52,7 +54,10 @@ export default function SeoSection({
           value={settings.url || ''}
           onChange={(e) => update('url', e.target.value)}
           placeholder="https://folio.example"
+          aria-invalid={fieldErrors?.url ? true : undefined}
+          aria-describedby={fieldErrors?.url ? 'seo-site-url-error' : undefined}
         />
+        <FieldError id="seo-site-url-error" message={fieldErrors?.url} />
         <p style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '4px' }}>
           Needed for <code>sitemap.xml</code>, the feed and structured data — those are generated
           without a request, so the address cannot be derived from it. Leave empty and the sitemap

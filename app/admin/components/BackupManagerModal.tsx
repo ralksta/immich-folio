@@ -196,7 +196,7 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
                 const dateObj = item.timestamp ? new Date(item.timestamp) : null;
                 const formattedDate =
                   dateObj && !isNaN(dateObj.getTime())
-                    ? dateObj.toLocaleString('de-DE', {
+                    ? dateObj.toLocaleString(undefined, {
                         dateStyle: 'medium',
                         timeStyle: 'medium',
                       })
@@ -253,8 +253,8 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
                     }}
                   />
                   {showAllBackups
-                    ? 'Ältere Einträge einklappen'
-                    : `Ältere Einträge anzeigen (${hiddenCount} weitere)`}
+                    ? 'Hide older backups'
+                    : `Show ${hiddenCount} older ${hiddenCount === 1 ? 'backup' : 'backups'}`}
                 </button>
               )}
             </div>

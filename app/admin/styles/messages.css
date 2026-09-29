@@ -12,7 +12,7 @@
   padding: 0.1rem 0.5rem;
   border-radius: 999px;
   background: var(--admin-accent);
-  color: #fff;
+  color: var(--admin-on-accent);
   font-size: 0.7rem;
   font-weight: 600;
 }

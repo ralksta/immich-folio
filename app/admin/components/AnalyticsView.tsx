@@ -4,6 +4,7 @@ import * as Icons from './Icons';
 import { useAdminFetch } from './useAdminFetch';
 import AdminLoadState from './AdminLoadState';
 import PageHeader from './PageHeader';
+import { lastDays } from './analyticsDays';
 
 interface AnalyticsData {
   trackingEnabled?: boolean;
@@ -40,10 +41,9 @@ export default function AnalyticsView() {
 
   const totalViews = data.summary?.totalViews || 0;
   const maxPageViews = data.topPages[0]?.count || 1;
-  const daysList = Object.entries(data.days || {})
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .slice(-14); // Last 14 days
-  const maxDayViews = Math.max(...daysList.map(([, d]) => d.pageviews || 0), 1);
+  const hasDays = Object.keys(data.days || {}).length > 0;
+  const daysList = lastDays(data.days || {}, 14, new Date());
+  const maxDayViews = Math.max(...daysList.map((d) => d.pageviews), 1);
 
   const desktopRatio =
     data.devices.desktop + data.devices.mobile > 0
@@ -105,24 +105,24 @@ export default function AnalyticsView() {
             <Icons.IconGrid size={16} /> Daily Traffic Trend (Last 14 Days)
           </h3>
         </div>
-        {daysList.length === 0 ? (
+        {!hasDays ? (
           <p className="analytics-empty">
             No pageviews recorded yet. Visit portfolio pages to start tracking!
           </p>
         ) : (
           <div className="analytics-bar-chart">
-            {daysList.map(([dateStr, dayData]) => {
-              const heightPct = Math.round((dayData.pageviews / maxDayViews) * 100);
-              const formattedDate = dateStr.slice(5); // MM-DD
+            {daysList.map(({ date, pageviews }) => {
+              const heightPct = Math.round((pageviews / maxDayViews) * 100);
+              const formattedDate = date.slice(5); // MM-DD
               return (
-                <div
-                  key={dateStr}
-                  className="bar-col"
-                  title={`${dateStr}: ${dayData.pageviews} views`}
-                >
+                <div key={date} className="bar-col" title={`${date}: ${pageviews} views`}>
                   <div className="bar-wrapper">
-                    <div className="bar-fill" style={{ height: `${Math.max(heightPct, 8)}%` }}>
-                      <span className="bar-val">{dayData.pageviews}</span>
+                    {/* A day with views keeps a sliver of bar; an empty one has none. */}
+                    <div
+                      className="bar-fill"
+                      style={{ height: `${pageviews > 0 ? Math.max(heightPct, 3) : 0}%` }}
+                    >
+                      <span className="bar-val">{pageviews}</span>
                     </div>
                   </div>
                   <span className="bar-label">{formattedDate}</span>
