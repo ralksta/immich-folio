@@ -820,10 +820,12 @@
   transform: none;
 }
 
-/* EXIF-Chip statt Verlaufsband */
+/* EXIF-Chip statt Verlaufsband. A block, not a flex row: text-overflow only
+   applies to a block container, and as flex the line was cut off mid-letter
+   on narrow tiles instead of ending in an ellipsis. The dot is inline-block
+   and vertically centred on its own (.photo-grid__item-exif::before). */
 [data-preset='studio-modern'] .photo-grid__item-exif {
-  display: flex;
-  align-items: center;
+  display: block;
   padding: 8px 12px;
   background: var(--sm-chip-bg);
   backdrop-filter: blur(8px);

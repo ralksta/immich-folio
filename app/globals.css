@@ -207,6 +207,32 @@
   /* 56px header + 48px original padding */
 }
 
+/* Sticky footer: on a short page (a journal with two entries, the 404) the
+   footer used to end wherever the content did, floating mid-viewport. The
+   visitor chrome is a column whose <main> takes the spare height. Scoped to
+   pages that carry that chrome — the admin, the setup screen and the site
+   gate render straight into <body> and keep their own layout. The header,
+   skip link, lightbox and dialogs are fixed or absolute, so they stay out of
+   the column. */
+body:has(> #main-content) {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+body:has(> #main-content) > .main {
+  flex: 1 0 auto;
+  /* A flex item with auto side margins shrinks to its content; the width
+     puts it back to full width, --max-width still caps it. */
+  width: 100%;
+}
+
+body:has(> #main-content) > .footer {
+  flex-shrink: 0;
+  width: 100%;
+}
+
 /* Simple CSS Page Fade-In (Replaces Framer Motion).
  *
  * Opacity only — no `transform`. A transform on `.main` (even the identity
@@ -389,6 +415,12 @@
 /* Camera chip over the hero image — opt-in per preset. */
 .hero__exif-chip {
   display: none;
+}
+
+/* The aperture sign inside EXIF lines (components/ExifText.tsx). Presets that
+   set EXIF in capitals would otherwise print "Ƒ/4". */
+.exif-fsign {
+  text-transform: none;
 }
 
 /* ── Hero: Fullbleed Layout ─────────────────────── */
