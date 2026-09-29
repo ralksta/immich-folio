@@ -5,7 +5,6 @@ import { listBackups, restoreBackup } from '@/lib/admin/yaml-service';
 import { listJournalBackups, restoreJournalBackup } from '@/lib/admin/journal-service';
 import { listPageBackups, restorePageBackup } from '@/lib/admin/pages-service';
 import { invalidateConfigCache } from '@/lib/config';
-import { immich } from '@/lib/immich';
 
 export type BackupTarget = 'gallery' | 'settings' | 'about' | 'privacy' | 'journal' | 'pages';
 
@@ -120,7 +119,10 @@ export const POST = withAdmin(async (req: Request) => {
 
     // Invalidate caches & revalidate pages
     invalidateConfigCache();
-    immich.invalidateAll();
+    // No immich.invalidateAll(): the Immich cache holds Immich's data only, and
+    // the gallery.yaml side (allowlist, titles, order) is applied per request
+    // from the new config. Clearing it made the next visitor refetch every
+    // album although nothing in Immich had changed.
     revalidatePath('/', 'layout');
 
     return NextResponse.json({

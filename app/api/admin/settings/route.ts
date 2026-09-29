@@ -13,7 +13,6 @@ import {
   etag,
 } from '@/lib/admin/contentVersion';
 import { invalidateConfigCache, getConfigOrNull } from '@/lib/config';
-import { immich } from '@/lib/immich';
 import { validateSettings } from '@/lib/config/settingsSchema';
 import { hashPasswordKeys } from '@/lib/admin/passwordHashing';
 import { keepLockedValues, resolveEnvLocks } from '@/lib/admin/envLocks';
@@ -74,7 +73,10 @@ export const PUT = withAdmin(async (request: Request) => {
     const settings = await hashPasswordKeys(incoming, SITE_PASSWORD_KEY, stored);
     const version = await writeSettingsYaml(settings, baseVersionFrom(request));
     invalidateConfigCache();
-    immich.invalidateAll();
+    // No immich.invalidateAll(): the Immich cache holds Immich's data only, and
+    // the gallery.yaml side (allowlist, titles, order) is applied per request
+    // from the new config. Clearing it made the next visitor refetch every
+    // album although nothing in Immich had changed.
     revalidatePath('/', 'layout');
     return NextResponse.json({
       success: true,

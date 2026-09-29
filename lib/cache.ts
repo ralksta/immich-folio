@@ -17,8 +17,28 @@ interface CacheEntry<T> {
 
 const DEFAULT_STALE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
+/**
+ * The entries live on globalThis, not in this module.
+ *
+ * Next bundles each route separately, so every route handler gets its own
+ * instance of this module. A module-level Map meant the admin panel's
+ * "Clear cache", a save's invalidation and the Immich webhook each cleared a
+ * cache no page ever read from, and the diagnostics page reported the size
+ * of its own, always empty, copy ("0 items"). The process is shared, so one
+ * store on globalThis is the cache every instance reads and clears. The key is
+ * versioned so a dev server's hot reload never hands a new build entries in
+ * an older shape.
+ */
+const STORE_KEY = Symbol.for('immich-folio.immich-cache.v2');
+
+function sharedStore(): Map<string, CacheEntry<unknown>> {
+  const holder = globalThis as unknown as Record<symbol, Map<string, CacheEntry<unknown>>>;
+  holder[STORE_KEY] ??= new Map();
+  return holder[STORE_KEY];
+}
+
 class MemoryCache {
-  private store = new Map<string, CacheEntry<unknown>>();
+  private store = sharedStore();
   private maxEntries = 200;
 
   get size(): number {

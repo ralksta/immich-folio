@@ -13,7 +13,6 @@ import {
   etag,
 } from '@/lib/admin/contentVersion';
 import { invalidateConfigCache, deriveGallery } from '@/lib/config';
-import { immich } from '@/lib/immich';
 import type { GalleryYaml } from '@/lib/config/schema';
 import { hashPasswordKeys } from '@/lib/admin/passwordHashing';
 import { listPageSlugsSync } from '@/lib/admin/pages-service';
@@ -80,7 +79,10 @@ export const PUT = withAdmin(async (request: Request) => {
     );
     const version = await writeGalleryYaml(toWrite, baseVersionFrom(request));
     invalidateConfigCache();
-    immich.invalidateAll();
+    // No immich.invalidateAll(): the Immich cache holds Immich's data only, and
+    // the gallery.yaml side (allowlist, titles, order) is applied per request
+    // from the new config. Clearing it made the next visitor refetch every
+    // album although nothing in Immich had changed.
     // Revalidate all pages so the homepage picks up new hero images immediately
     revalidatePath('/', 'layout');
     revalidatePath('/[...path]', 'page');
