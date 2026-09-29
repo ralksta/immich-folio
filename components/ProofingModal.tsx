@@ -28,7 +28,6 @@ export function ProofingModal() {
   if (!proofing || !proofing.isModalOpen) return null;
 
   const {
-    favorites,
     setIsModalOpen,
     getProofingUrl,
     getFormattedList,
@@ -39,10 +38,11 @@ export function ProofingModal() {
     downloadArchiveUrl,
   } = proofing;
 
-  // What the archive would actually receive. Gating on this rather than on
-  // `favorites.size` means a favourite left over from another album (they share
-  // the provider's storage key when no `albumName` is passed) can never light up
-  // a button that would post an empty selection and 404.
+  // What the archive would actually receive, and the only count shown here.
+  // `favorites.size` also counts a favourite left over from another album (they
+  // share a storage key when their names slug alike) or a photo since removed
+  // from this one, so it would light up a button that posts an empty selection
+  // and 404s, and put the wrong number in the title and the email subject.
   const selectedCount = getSelectedTokens().length;
 
   // Decoded in the browser only: the address never travels in the clear. The
@@ -71,7 +71,7 @@ export function ProofingModal() {
   const handleCopyList = () => copy('list', getFormattedList());
 
   const handleMailto = () => {
-    const subject = encodeURIComponent(t.proofing.mailSubject(favorites.size));
+    const subject = encodeURIComponent(t.proofing.mailSubject(getSelectedTokens().length));
     const body = encodeURIComponent(t.proofing.mailBody(getFormattedList(), getProofingUrl()));
     // Percent-encode the address, keeping '@' readable, so a value from the
     // settings cannot smuggle its own `?bcc=`/`&…` header fields into the draft.
@@ -153,7 +153,7 @@ export function ProofingModal() {
           }}
         >
           <h3 id="proofing-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
-            {t.proofing.modalTitle(favorites.size)}
+            {t.proofing.modalTitle(selectedCount)}
           </h3>
           <button
             type="button"
@@ -174,7 +174,7 @@ export function ProofingModal() {
         </div>
 
         <p style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '1rem' }}>
-          {t.proofing.intro(favorites.size)}
+          {t.proofing.intro(selectedCount)}
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>

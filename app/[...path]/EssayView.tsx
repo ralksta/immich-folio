@@ -391,6 +391,9 @@ function EssayViewContent({
     }
   };
 
+  // The story's photos that are selected, not the whole stored set (see PhotoGrid).
+  const selectedCount = proofing ? proofing.getSelectedTokens().length : 0;
+
   return (
     <div className="essay-container">
       <header className="essay-header">
@@ -433,7 +436,7 @@ function EssayViewContent({
 
       <div>{essay.blocks.map(renderBlock)}</div>
 
-      {proofing && proofing.favorites.size > 0 && (
+      {proofing && selectedCount > 0 && (
         <div
           className="proofing-sticky-bar"
           style={{
@@ -456,7 +459,7 @@ function EssayViewContent({
           {/* A count, not the album grid's filter toggle: a story's layout is
               authored, so there is nothing for "show favourites" to narrow. */}
           <span style={{ fontSize: '0.85rem', fontWeight: 500, padding: '6px 4px' }}>
-            {t.proofing.selected(proofing.favorites.size)}
+            {t.proofing.selected(selectedCount)}
           </span>
           <button
             type="button"

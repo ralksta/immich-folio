@@ -298,13 +298,20 @@ function PhotoGridInner({
     });
   }, [displayedAssets, layout, openLightbox, proofing, t]);
 
+  // Photos of this album that are selected. Not `favorites.size`: the stored set
+  // can also hold a photo since removed, or a favourite from another album whose
+  // name slugs the same way (they share `folio_fav_<name>`).
+  const selectedCount = proofing ? proofing.getSelectedTokens().length : 0;
+
   return (
     <>
       <div className={`photo-grid photo-grid--${layout}`} style={gridStyle} data-lightbox-group>
         {gridItems}
       </div>
 
-      {proofing && !proofing.session && proofing.favorites.size > 0 && (
+      {/* Kept while the filter is on: un-hearting the last favourite there
+          empties the grid, and the bar holds the only way back to all photos. */}
+      {proofing && !proofing.session && (selectedCount > 0 || proofing.isFilterActive) && (
         <div
           className="proofing-sticky-bar"
           style={{
@@ -340,9 +347,7 @@ function PhotoGridInner({
               cursor: 'pointer',
             }}
           >
-            {proofing.isFilterActive
-              ? t.proofing.showAll
-              : t.proofing.selected(proofing.favorites.size)}
+            {proofing.isFilterActive ? t.proofing.showAll : t.proofing.selected(selectedCount)}
           </button>
           <button
             type="button"
