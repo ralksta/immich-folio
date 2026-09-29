@@ -393,6 +393,63 @@ export function parseFrontmatter(content: string): {
   return { frontmatter, body };
 }
 
+/**
+ * Split a chunk before every line that starts a photo reference (`![`).
+ *
+ * Paragraphs are separated by blank lines, so two photo lines written without
+ * one, or a heading or sentence directly above a photo, used to arrive as a
+ * single chunk. No block pattern matched it and it fell through to the
+ * paragraph renderer, which printed the raw asset ids on the public page.
+ * Directive chunks (`::map`, `::facts`, `::album`) are left alone: their
+ * lines are key/value pairs, never photo references.
+ */
+function splitAtPhotoLines(chunk: string): string[] {
+  if (chunk.startsWith('::') || !/(?:^|\n)[ \t]*!\[/.test(chunk)) return [chunk];
+  const segments: string[] = [];
+  let current: string[] = [];
+  for (const line of chunk.split(/\r?\n/)) {
+    if (line.trimStart().startsWith('![') && current.length > 0) {
+      segments.push(current.join('\n').trim());
+      current = [];
+    }
+    current.push(line);
+  }
+  segments.push(current.join('\n').trim());
+  return segments.filter(Boolean);
+}
+
+/**
+ * Split a photo line, `![<target>](<caption>)`, into target and caption.
+ *
+ * The target ends at the first `]` on the line: asset ids, layouts and commas
+ * never contain one. The caption is everything after `](` up to the chunk's
+ * **last** `)`, so it may itself contain parentheses and links (`Gipfel
+ * (560 m)`, `see [map](https://…)`) and needs no escaping. The previous
+ * pattern, `\(([^)]*)\)$`, stopped at the first `)`. The serializer wrote such
+ * captions verbatim, the next parse rejected the line, the public page printed
+ * it as a paragraph with the raw asset ids, and the editor turned the photo
+ * into a text block. A line that pattern accepted has no `)` inside its
+ * caption, so it parses exactly as before.
+ *
+ * Every chunk starting with `![` is a photo line, even a malformed one (no
+ * `(`, text after the last `)`): it becomes a photo block whose caption keeps
+ * the stray text, never a paragraph that would print the target.
+ */
+function parsePhotoLine(chunk: string): { target: string; caption: string } | null {
+  if (!chunk.startsWith('![')) return null;
+  const firstLineEnd = chunk.indexOf('\n');
+  const firstLine = firstLineEnd === -1 ? chunk : chunk.slice(0, firstLineEnd);
+  const close = firstLine.indexOf(']');
+  const targetEnd = close === -1 ? firstLine.length : close;
+  const target = chunk.slice(2, targetEnd).trim();
+  let rest = chunk.slice(close === -1 ? targetEnd : targetEnd + 1);
+  if (rest.startsWith('(')) {
+    rest = rest.slice(1);
+    if (rest.endsWith(')')) rest = rest.slice(0, -1);
+  }
+  return { target, caption: rest.trim() };
+}
+
 /** Parse Journal Markdown content into structured blocks */
 export function parseJournalMarkdown(rawContent: string): ParsedJournal {
   const { frontmatter, body } = parseFrontmatter(rawContent);
@@ -402,7 +459,8 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
   const chunks = body
     .split(/\r?\n\s*\r?\n/)
     .map((c) => c.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .flatMap(splitAtPhotoLines);
 
   for (const chunk of chunks) {
     // 0a. Map: `::map Caption`, then one line per pin in drawing order —
@@ -543,10 +601,12 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
     // unfilled placeholder — `assetId: ''`, serialized as `![](Caption)` or
     // `![:wide](Caption)` — still parses back into a `photo` block instead of
     // silently degrading into a text paragraph on the next load.
-    const imgMatch = chunk.match(/^!\[([^\]]*)\]\(([^)]*)\)$/);
-    if (imgMatch) {
-      const rawTarget = imgMatch[1].trim();
-      const caption = imgMatch[2].trim() ? renderInlineMarkdown(imgMatch[2].trim()) : undefined;
+    //
+    // parsePhotoLine() has the caption run to the last `)`, see there.
+    const photoLine = parsePhotoLine(chunk);
+    if (photoLine) {
+      const rawTarget = photoLine.target;
+      const caption = photoLine.caption ? renderInlineMarkdown(photoLine.caption) : undefined;
 
       // Two ids are a side-by-side pair, three or more a grid. The pair used
       // to take the first two of any count and drop the rest on the next save.
@@ -721,7 +781,9 @@ export function serializeJournalMarkdown(journal: ParsedJournal): string {
 export function calculateReadingTime(text: string): { words: number; minutes: number } {
   const plainText = text
     .replace(/<[^>]+>/g, ' ')
-    .replace(/!\[.*?\]\(.*?\)/g, ' ')
+    // A photo line is a reference and its caption, to the end of the line:
+    // the caption may itself contain `)`.
+    .replace(/^[ \t]*!\[.*$/gm, ' ')
     // Directive lines (`::facts`, `::map …`) are structure, not reading.
     .replace(/^::\w+.*$/gm, ' ');
   const words = plainText.trim().split(/\s+/).filter(Boolean).length;
