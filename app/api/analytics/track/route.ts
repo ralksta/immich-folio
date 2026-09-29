@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 import { getConfigOrNull } from '@/lib/config';
+import { siteLockResponse } from '@/lib/auth';
 import { atomicWrite } from '@/lib/atomicWrite';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 
@@ -79,6 +80,13 @@ async function saveAnalytics(data: AnalyticsData) {
 let writeQueue: Promise<void> = Promise.resolve();
 
 export async function POST(req: NextRequest) {
+  // A locked site accepts nothing from strangers, the same rule as
+  // /api/contact: without it anyone could write paths of their choosing into
+  // analytics.json. The gate page itself is not counted — the layout mounts
+  // no tracker there — so a visitor who unlocked the site loses nothing.
+  const locked = siteLockResponse(req);
+  if (locked) return locked;
+
   try {
     const config = getConfigOrNull();
     if (config?.analytics === false) {
