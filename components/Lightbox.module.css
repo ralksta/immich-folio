@@ -241,8 +241,10 @@
    colour for the toggle (studio-modern's) still applies to the unsaved state —
    the inline `inherit` it used to fall back to picked up the page's near-black
    text in light mode (1.08:1). The extra class outranks that preset block,
-   which comes later in this file. */
-.bottomBar .infoToggle.favActive {
+   which comes later in this file, hover included: studio-modern hovers in
+   the accent, which a dark custom accent drops to about 1.3:1. */
+.bottomBar .infoToggle.favActive,
+.bottomBar .infoToggle.favActive:hover {
   color: var(--lightbox-fav);
   font-weight: 600;
 }
