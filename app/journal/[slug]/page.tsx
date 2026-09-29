@@ -118,7 +118,12 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
     const cookieVal = cookieStore.get(`lb_auth_journal_${slug}`)?.value;
 
     if (!isJournalAuthenticated(slug, frontmatter.password, cookieVal)) {
-      return <PasswordGate slug={slug} title={frontmatter.title || slug} type="journal" />;
+      // The generic journal title, like generateMetadata above: the index and
+      // the prev/next links hide a locked entry by name, so its gate must not
+      // print that name either (GHSA-fvgv-97g3-wjr7).
+      return (
+        <PasswordGate slug={slug} title={getServerDictionary().journal.title} type="journal" />
+      );
     }
   }
 

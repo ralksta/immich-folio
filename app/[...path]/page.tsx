@@ -408,7 +408,15 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
           getCookie: (name) => cookieStore.get(name)?.value,
         });
         if (file.status === 'locked') {
-          return <PasswordGate slug={result.subpage.essayFile} title={file.title} type="journal" />;
+          // The subpage's own title, which the nav already shows — not the
+          // borrowed entry's, which the journal index hides while it is locked.
+          return (
+            <PasswordGate
+              slug={result.subpage.essayFile}
+              title={result.subpage.title || result.subpage.name}
+              type="journal"
+            />
+          );
         }
         if (file.status === 'open') essayParsed = file.parsed;
       }
