@@ -112,6 +112,9 @@ export const fr: Dictionary = {
     loading: 'Chargement de la carte…',
     loadFailed: (status: number) => `Échec du chargement des données de la carte (${status})`,
     initFailed: 'Impossible d’initialiser la carte',
+    zoomIn: 'Zoom avant',
+    zoomOut: 'Zoom arrière',
+    leafletTitle: 'Une bibliothèque JavaScript pour cartes interactives',
   },
 
   subpage: {

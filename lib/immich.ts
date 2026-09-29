@@ -88,6 +88,8 @@ export type ImageSize = 'thumbnail' | 'preview' | 'original';
 /** Enriched subpage with album metadata (for rendering cards). */
 export interface SubpageSummary {
   name: string;
+  /** The display title from gallery.yaml; visitors see this, `name` only as fallback. */
+  title?: string;
   slug: string;
   albumCount: number;
   totalAssetCount: number;
@@ -455,6 +457,7 @@ class ImmichClient {
 
       return {
         name: sp.name,
+        ...(sp.title ? { title: sp.title } : {}),
         slug: sp.slug,
         albumCount: spAlbums.length,
         totalAssetCount: spAlbums.reduce((sum, a) => sum + a.assetCount, 0),

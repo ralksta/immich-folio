@@ -110,6 +110,9 @@ export const es: Dictionary = {
     loading: 'Cargando el mapa…',
     loadFailed: (status: number) => `No se pudieron cargar los datos del mapa (${status})`,
     initFailed: 'No se pudo inicializar el mapa',
+    zoomIn: 'Acercar',
+    zoomOut: 'Alejar',
+    leafletTitle: 'Una biblioteca de JavaScript para mapas interactivos',
   },
 
   subpage: {

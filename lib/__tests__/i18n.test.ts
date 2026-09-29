@@ -348,3 +348,31 @@ describe('plural forms at 0, 1 and 2', () => {
     got.forEach((text, i) => expect(text.endsWith(` ${endings[i]}`), text).toBe(true));
   });
 });
+
+describe('German terminology', () => {
+  // The carousel said "Diashow", the lightbox's shortcut panel and live
+  // region "Diaschau" for the same feature.
+  it('calls the slideshow "Diashow" everywhere', () => {
+    const strings = [
+      de.home.pauseSlideshow,
+      de.home.playSlideshow,
+      de.lightbox.shortcutSlideshow,
+      de.lightbox.shortcutSlideshowRunning(5),
+      de.lightbox.slideshowStopped,
+      de.lightbox.slideshowRunning(5),
+    ];
+    for (const s of strings) expect(s).toContain('Diashow');
+  });
+
+  it('leaves no "Diaschau" in any string', () => {
+    const walk = (value: unknown): string[] =>
+      typeof value === 'string'
+        ? [value]
+        : typeof value === 'function'
+          ? [String((value as (n: number) => string)(2))]
+          : value && typeof value === 'object'
+            ? Object.values(value).flatMap(walk)
+            : [];
+    expect(walk(de).filter((s) => s.includes('Diaschau'))).toEqual([]);
+  });
+});

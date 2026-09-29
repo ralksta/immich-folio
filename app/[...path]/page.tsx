@@ -204,7 +204,8 @@ async function gateIfProtected(
   let title = titleOverride || key;
   if (!titleOverride && type === 'subpage') {
     const subpageData = await immich.getSubpageAlbums(key);
-    title = subpageData?.subpage.name ?? key;
+    const sp = subpageData?.subpage;
+    title = sp ? sp.title || sp.name : key;
   }
 
   return <PasswordGate slug={key} title={title} type={type} />;
@@ -322,7 +323,9 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
     // Look up subpage config for grid overrides and back link
     const subpageData = await immich.getSubpageAlbums(subpageSlug, forceFresh);
     const spGrid = subpageData?.subpage.grid;
-    const subpageName = subpageData?.subpage.name ?? subpageSlug;
+    const subpageName = subpageData
+      ? subpageData.subpage.title || subpageData.subpage.name
+      : subpageSlug;
 
     const images = toPhotoItems(
       album.assets,
@@ -629,7 +632,9 @@ export default async function PathPage({ params, searchParams }: PathPageProps) 
         gridStyle={buildCoverGridStyle(result.subpage.coverGrid)}
         {...(subpageIndex >= 0 ? { index: subpageIndex + 1 } : {})}
         {...(nextSubpage
-          ? { nextSubpage: { slug: nextSubpage.slug, name: nextSubpage.name } }
+          ? {
+              nextSubpage: { slug: nextSubpage.slug, name: nextSubpage.title || nextSubpage.name },
+            }
           : {})}
       />
     );

@@ -111,6 +111,10 @@ export const en = {
     loading: 'Loading map…',
     loadFailed: (status: number) => `Failed to load map data (${status})`,
     initFailed: 'Failed to initialize map',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
+    // The title on the Leaflet credit in the map's corner.
+    leafletTitle: 'A JavaScript library for interactive maps',
   },
 
   subpage: {

@@ -114,6 +114,24 @@ describe('resolveMenu (#722)', () => {
       ['/locked', 'locked'],
     ]);
   });
+
+  // `name` is the gallery.yaml key the slug is built from ("south-korea");
+  // `title` is what the page itself shows ("South Korea"). The menu showed
+  // the key.
+  it('labels a subpage with its title, falling back to its name', () => {
+    const menu = resolveMenu(
+      [
+        { type: 'subpage', slug: 'south-korea' },
+        { type: 'subpage', slug: 'travel' },
+      ],
+      [
+        { slug: 'south-korea', name: 'south-korea', title: 'South Korea' },
+        { slug: 'travel', name: 'Travel' },
+      ],
+      [],
+    );
+    expect(menu.map((m) => m.label)).toEqual(['South Korea', 'Travel']);
+  });
 });
 
 describe('rewritePageRefs (#722)', () => {
