@@ -8,6 +8,7 @@ import nodeFs from 'fs';
 import path from 'path';
 import { atomicWrite } from '../atomicWrite';
 import { assertVersion, readVersioned, serializeContentWrite, versionOf } from './contentVersion';
+import { ParsedFileCache } from './parsedFileCache';
 import {
   parseJournalMarkdown,
   calculateReadingTime,
@@ -185,10 +186,30 @@ export function loadEssayFromFile(filename: string): ParsedJournal | null {
   }
 }
 
+/** What a listing needs from one file — everything but the name-derived fields. */
+type EntryFacts = Omit<JournalEntrySummary, 'slug' | 'filename'>;
+
+/**
+ * Parsed listing facts per file, reused while the file is unchanged: every
+ * public page render lists the journal for the header nav (see
+ * parsedFileCache.ts).
+ */
+const summaryCache = new ParsedFileCache<EntryFacts>((content) => {
+  const parsed = parseJournalMarkdown(content);
+  const { words, minutes } = calculateReadingTime(content);
+  return {
+    frontmatter: parsed.frontmatter,
+    excerpt: extractExcerpt(parsed),
+    wordCount: words,
+    readingTimeMinutes: minutes,
+  };
+});
+
 /** List all journal entries */
 export async function listJournalEntries(): Promise<JournalEntrySummary[]> {
   const entries: JournalEntrySummary[] = [];
   const seenSlugs = new Set<string>();
+  const listed = new Set<string>();
 
   const scanDir = async (dir: string) => {
     try {
@@ -206,19 +227,10 @@ export async function listJournalEntries(): Promise<JournalEntrySummary[]> {
         seenSlugs.add(slug);
 
         try {
-          const content = await fs.readFile(path.join(dir, file), 'utf8');
-          const parsed = parseJournalMarkdown(content);
-          const { words, minutes } = calculateReadingTime(content);
-          const excerpt = extractExcerpt(parsed);
-
-          entries.push({
-            slug,
-            filename: file,
-            frontmatter: parsed.frontmatter,
-            excerpt,
-            wordCount: words,
-            readingTimeMinutes: minutes,
-          });
+          const filePath = path.join(dir, file);
+          listed.add(filePath);
+          const summary = await summaryCache.read(filePath);
+          entries.push({ slug, filename: file, ...summary });
         } catch (err) {
           console.error(`[Journal] Failed to parse ${file}:`, err);
         }
@@ -230,6 +242,7 @@ export async function listJournalEntries(): Promise<JournalEntrySummary[]> {
 
   await scanDir(JOURNAL_DIR);
   await scanDir(LEGACY_ESSAYS_DIR);
+  summaryCache.retain(listed);
 
   // Sort: descending by date, fallback to title/slug
   return entries.sort((a, b) => {
