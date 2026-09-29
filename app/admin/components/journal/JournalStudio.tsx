@@ -110,11 +110,12 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
     }
   };
 
-  const handleDelete = async (slug: string) => {
+  const handleDelete = async (slug: string, title?: string) => {
+    // Named by title, as the page delete is; the slug only when there is none.
     const ok = await confirm({
-      title: `Delete “${slug}”?`,
+      title: `Delete “${title || slug}”?`,
       message: 'A copy is kept and can be restored under Backups.',
-      confirmLabel: 'Delete',
+      confirmLabel: 'Delete entry',
       danger: true,
     });
     if (!ok) return;
@@ -244,7 +245,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                   <button
                     type="button"
                     className="admin-btn admin-btn-sm admin-btn-danger"
-                    onClick={() => handleDelete(entry.slug)}
+                    onClick={() => handleDelete(entry.slug, entry.frontmatter.title)}
                     title="Delete entry"
                     style={{ marginLeft: 'auto' }}
                   >

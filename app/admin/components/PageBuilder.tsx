@@ -57,6 +57,7 @@ import DraftNotice from './DraftNotice';
 import { reportIfSessionExpired } from './sessionExpiry';
 import { IconCamera, IconHome, IconPlus, IconSearch } from './Icons';
 import { useNotify } from './Notifications';
+import { dndAnnouncements } from './dndAnnouncements';
 
 /** Drop target id of the "Not in menu" group. */
 const OFF_MENU_ID = 'offmenu-zone';
@@ -639,6 +640,24 @@ export default function PageBuilder() {
     return found?.albumName || id.slice(0, 8) + '...';
   }
 
+  /** A sortable id as the list shows it, for the drag announcements (QA A-20). */
+  function dragLabel(id: string | number): string {
+    const key = String(id);
+    const subpage = /^subpage-(\d+)$/.exec(key);
+    if (subpage) return `page "${gallery.subpages[Number(subpage[1])]?.name || 'Untitled'}"`;
+    const page = /^page-(.+)$/.exec(key);
+    if (page) {
+      const found = pages.find((p) => p.slug === page[1]);
+      return `page "${found?.frontmatter.title || page[1]}"`;
+    }
+    const hero = /^hero-(\d+)$/.exec(key);
+    if (hero) return `homepage hero photo ${Number(hero[1]) + 1}`;
+    const album = /^album-(.+)-\d+$/.exec(key);
+    if (album) return `album "${getAlbumName(album[1])}"`;
+    return 'item';
+  }
+  const announcements = dndAnnouncements(dragLabel);
+
   function getAlbumCount(id: string): number {
     const found = immichAlbums.find((a) => a.id === id);
     return found?.assetCount || 0;
@@ -848,6 +867,7 @@ export default function PageBuilder() {
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleMenuDragEnd}
+            accessibility={{ announcements }}
           >
             <div className="pb-group">
               <div className="pb-group-head">
@@ -1024,6 +1044,7 @@ export default function PageBuilder() {
                   sensors={sensors}
                   collisionDetection={closestCenter}
                   onDragEnd={handleAlbumDragEnd}
+                  accessibility={{ announcements }}
                 >
                   <SortableContext
                     items={filteredAlbums.map((a) => {
@@ -1071,7 +1092,7 @@ export default function PageBuilder() {
               <section className="builder-section">
                 <div className="builder-section-header">
                   <h2>
-                    <IconHome /> Homepage Hero
+                    <IconHome /> Hero photos
                   </h2>
                   <button
                     className="admin-btn admin-btn-sm"
@@ -1090,6 +1111,7 @@ export default function PageBuilder() {
                   sensors={sensors}
                   collisionDetection={closestCenter}
                   onDragEnd={handleHeroDragEnd}
+                  accessibility={{ announcements }}
                 >
                   <SortableContext
                     items={gallery.hero.map((_, i) => `hero-${i}`)}

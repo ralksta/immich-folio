@@ -68,7 +68,7 @@ describe('hero, subpages and sections', () => {
 
   it('names a new subpage after its position and starts it empty', () => {
     const g = ops.addSubpage(state());
-    expect(g.subpages[3]).toEqual({ name: 'New Page 4', albums: [], sections: undefined });
+    expect(g.subpages[3]).toEqual({ name: 'New subpage 4', albums: [], sections: undefined });
   });
 
   it('adds, updates and removes sections', () => {

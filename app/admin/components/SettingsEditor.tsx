@@ -71,6 +71,8 @@ export default function SettingsEditor() {
   } | null>(null);
   /** Fields an environment variable overrides, path to variable name (#605). */
   const [envLocks, setEnvLocks] = useState<EnvLocks>({});
+  /** SITE_TITLE, the first fallback for an empty title (QA A-15). */
+  const [siteTitleEnv, setSiteTitleEnv] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   /**
    * Set when the settings could not be fetched. It blocks saving, because an
@@ -160,7 +162,13 @@ export default function SettingsEditor() {
             : `The server answered ${res.status}.`,
         );
       }
-      const { settings: data, siteUrl, envLocks: locks, version } = await res.json();
+      const {
+        settings: data,
+        siteUrl,
+        envLocks: locks,
+        version,
+        siteTitleEnv: titleEnv,
+      } = await res.json();
       const loaded: Settings = data || {};
       versionRef.current = typeof version === 'string' ? version : null;
       setServerSettings(loaded);
@@ -170,6 +178,7 @@ export default function SettingsEditor() {
       setDirty(restored !== null);
       setSiteUrlInfo(siteUrl ?? null);
       setEnvLocks(locks ?? {});
+      setSiteTitleEnv(typeof titleEnv === 'string' ? titleEnv : null);
     } catch (err) {
       console.error('Failed to load settings:', err);
       setLoadError(err instanceof Error ? err.message : 'The settings could not be loaded.');
@@ -407,7 +416,7 @@ export default function SettingsEditor() {
 
         {/* Content */}
         <div className="settings-content">
-          {activeSection === 'general' && <GeneralSection {...props} />}
+          {activeSection === 'general' && <GeneralSection {...props} siteTitleEnv={siteTitleEnv} />}
           {activeSection === 'theme' && <ThemeSection {...props} />}
           {activeSection === 'grid' && <GridSection {...props} />}
           {activeSection === 'footer' && <FooterSection {...props} />}

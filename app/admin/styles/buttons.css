@@ -85,6 +85,13 @@
   color: #fca5a5;
 }
 
+/* Small buttons carry short action labels ("+ Add Album", "Pick several");
+   broken over two lines in a tight row they read as two buttons. */
+.admin-btn-sm,
+.admin-btn-xs {
+  white-space: nowrap;
+}
+
 .admin-btn-sm {
   padding: 0 0.8rem;
   min-height: 30px;

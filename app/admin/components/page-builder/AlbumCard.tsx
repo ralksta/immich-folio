@@ -38,7 +38,7 @@ export function SortableAlbumCard({
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
+    <div ref={setNodeRef} style={style}>
       <AlbumCard
         album={album}
         name={name}
@@ -46,7 +46,7 @@ export function SortableAlbumCard({
         thumbnailId={thumbnailId}
         onRemove={onRemove}
         onEdit={onEdit}
-        dragListeners={listeners}
+        dragListeners={{ ...attributes, ...listeners }}
         highlighted={highlighted}
       />
     </div>
@@ -86,7 +86,12 @@ export default function AlbumCard({
     >
       <div className="album-tile-cover">
         {dragListeners && (
-          <div className="album-tile-drag" {...dragListeners} title="Drag to reorder">
+          <div
+            className="album-tile-drag"
+            {...dragListeners}
+            aria-label={`Reorder ${name}`}
+            title="Drag to reorder"
+          >
             <IconGripVertical size={18} className="svg-icon svg-drag" />
           </div>
         )}

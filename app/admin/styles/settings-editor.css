@@ -52,6 +52,9 @@
 
 .settings-content {
   min-width: 0;
+  /* Room below the last input for the floating save bar (fixed, ~4rem tall
+     at 1.5rem from the bottom), so it never sits on top of a field. */
+  padding-bottom: 6rem;
 }
 
 .settings-panel h3 {

@@ -115,7 +115,7 @@ export const addSubpage = (g: GalleryState): GalleryState => ({
   ...g,
   subpages: [
     ...g.subpages,
-    { name: `New Page ${g.subpages.length + 1}`, albums: [], sections: undefined },
+    { name: `New subpage ${g.subpages.length + 1}`, albums: [], sections: undefined },
   ],
 });
 
