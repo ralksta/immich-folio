@@ -8,7 +8,13 @@ import path from 'path';
 import yaml from 'js-yaml';
 import { atomicWrite } from '../atomicWrite';
 import type { GalleryYaml, SettingsYaml } from '../config/schema';
-import { assertVersion, readVersioned, serializeContentWrite, versionOf } from './contentVersion';
+import {
+  assertVersion,
+  needsBackup,
+  readVersioned,
+  serializeContentWrite,
+  versionOf,
+} from './contentVersion';
 
 const CONTENT_DIR = path.join(process.cwd(), 'content');
 const MAX_BACKUPS = 10; // Keep last 10 backups per file
@@ -73,32 +79,6 @@ async function writeYamlFileNow(
   // Ensure content directory exists
   await fs.mkdir(CONTENT_DIR, { recursive: true });
 
-  // "No file yet" and "the backup could not be written" used to share one
-  // catch, so a `.backups/` a save couldn't write to (owned by root after a
-  // first start as root, say) looked exactly like a brand-new file: the save
-  // went ahead with no snapshot taken (#630). Only ENOENT means there is
-  // nothing to back up; anything else aborts the save before it overwrites
-  // the live file.
-  let fileExists = true;
-  try {
-    await fs.access(filePath);
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
-    fileExists = false;
-  }
-
-  if (fileExists) {
-    const backupDir = path.join(CONTENT_DIR, '.backups');
-    await fs.mkdir(backupDir, { recursive: true });
-
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupName = `${filename}.${timestamp}.bak`;
-    await fs.copyFile(filePath, path.join(backupDir, backupName));
-
-    // Prune old backups
-    await pruneBackups(backupDir, filename);
-  }
-
   // Generate YAML content with header comment
   const header =
     filename === 'gallery.yaml'
@@ -113,6 +93,25 @@ async function writeYamlFileNow(
       noRefs: true,
       sortKeys: false,
     });
+
+  // "No file yet" and "the backup could not be written" used to share one
+  // catch, so a `.backups/` a save couldn't write to (owned by root after a
+  // first start as root, say) looked exactly like a brand-new file: the save
+  // went ahead with no snapshot taken (#630). Only ENOENT means there is
+  // nothing to back up; anything else aborts the save before it overwrites
+  // the live file.
+  // A save that changes nothing takes no backup either (needsBackup).
+  if (await needsBackup(filePath, content)) {
+    const backupDir = path.join(CONTENT_DIR, '.backups');
+    await fs.mkdir(backupDir, { recursive: true });
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupName = `${filename}.${timestamp}.bak`;
+    await fs.copyFile(filePath, path.join(backupDir, backupName));
+
+    // Prune old backups
+    await pruneBackups(backupDir, filename);
+  }
 
   await atomicWrite(filePath, content);
 

@@ -6,6 +6,7 @@ import path from 'path';
 import yaml from 'js-yaml';
 import { atomicWrite } from '@/lib/atomicWrite';
 import {
+  needsBackup,
   VersionConflictError,
   assertVersion,
   baseVersionFrom,
@@ -90,15 +91,8 @@ export const PUT = withAdmin(async (request: Request) => {
       // brand-new file: the save went ahead with no snapshot taken (#630). Only
       // ENOENT means there is nothing to back up; anything else aborts the save
       // before it overwrites the live file.
-      let fileExists = true;
-      try {
-        await fs.access(filePath);
-      } catch (err) {
-        if ((err as NodeJS.ErrnoException & { code?: string }).code !== 'ENOENT') throw err;
-        fileExists = false;
-      }
-
-      if (fileExists) {
+      // A save that changes nothing takes no backup either (needsBackup).
+      if (await needsBackup(filePath, content)) {
         const backupDir = path.join(CONTENT_DIR, '.backups');
         await fs.mkdir(backupDir, { recursive: true });
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');

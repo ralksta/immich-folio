@@ -54,6 +54,7 @@ import { useLatest } from './useLatest';
 import { useVersionedSave } from './useVersionedSave';
 import type { GalleryVersionChange } from '@/lib/admin/pageRefs';
 import DraftNotice from './DraftNotice';
+import { sameDraft } from './sameDraft';
 import { reportIfSessionExpired } from './sessionExpiry';
 import { IconCamera, IconHome, IconPlus, IconSearch } from './Icons';
 import { useNotify } from './Notifications';
@@ -83,7 +84,12 @@ export default function PageBuilder() {
    */
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
+  /** Set by any edit; `dirty` below also asks whether the edits changed anything. */
+  const [edited, setDirty] = useState(false);
+  /** gallery.yaml as last loaded or saved — `serverState`, as state for the comparison. */
+  const [savedGallery, setSavedGallery] = useState<GalleryState | null>(null);
+  // Putting an edit back the way it was is not an unsaved change (QA A-19).
+  const dirty = edited && !(savedGallery && sameDraft(gallery, savedGallery));
   const [saveStatus, setSaveStatus] = useState<SaveStatus>(null);
   const [expandedSubpage, setExpandedSubpage] = useState<number | null>(null);
   /** What the panel shows while no subpage is selected (UX stage 4). */
@@ -205,6 +211,7 @@ export default function PageBuilder() {
       versionRef.current = typeof version === 'string' ? version : null;
       const parsed = parseGalleryYaml(raw);
       serverState.current = parsed;
+      setSavedGallery(parsed);
       const restored = draft.load(JSON.stringify(parsed));
       setGallery(restored ?? parsed);
       // Not merely "set when restored": on a reload after a backup restore the
@@ -335,6 +342,7 @@ export default function PageBuilder() {
         const written = (data.gallery ?? yamlData) as Record<string, unknown>;
         const asLoaded = parseGalleryYaml(JSON.parse(JSON.stringify(written)));
         serverState.current = asLoaded;
+        setSavedGallery(asLoaded);
         // Edited while the request was out: those edits are not saved yet, so
         // they stay dirty and are not replaced by the file as written.
         const editedMeanwhile = latestGallery.current !== sent;
@@ -490,6 +498,7 @@ export default function PageBuilder() {
     if (change && versionRef.current === change.from) versionRef.current = change.to;
     if (serverState.current) {
       serverState.current = op(serverState.current);
+      setSavedGallery(serverState.current);
       draft.saved(JSON.stringify(serverState.current));
     }
   }

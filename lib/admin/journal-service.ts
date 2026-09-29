@@ -7,7 +7,13 @@ import fs from 'fs/promises';
 import nodeFs from 'fs';
 import path from 'path';
 import { atomicWrite } from '../atomicWrite';
-import { assertVersion, readVersioned, serializeContentWrite, versionOf } from './contentVersion';
+import {
+  assertVersion,
+  needsBackup,
+  readVersioned,
+  serializeContentWrite,
+  versionOf,
+} from './contentVersion';
 import { ParsedFileCache } from './parsedFileCache';
 import {
   parseJournalMarkdown,
@@ -296,16 +302,9 @@ export async function writeJournalEntry(slug: string, rawMarkdown: string): Prom
   // catch, so a `.backups/` a save couldn't write to looked exactly like a
   // brand-new entry: the save went ahead with no snapshot taken (#630). Only
   // ENOENT means there is nothing to back up; anything else aborts the save
-  // before it overwrites the live file.
-  let fileExists = true;
-  try {
-    await fs.access(filePath);
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
-    fileExists = false;
-  }
-
-  if (fileExists) {
+  // before it overwrites the live file. A save that changes nothing takes no
+  // backup either (needsBackup).
+  if (await needsBackup(filePath, rawMarkdown)) {
     await snapshotEntry(filePath, filename);
     await pruneEntryBackups(filename);
   }
@@ -379,11 +378,55 @@ export async function deleteJournalEntry(slug: string): Promise<boolean> {
 }
 
 /**
+ * Move an entry to a new slug with new content: snapshot the old file under
+ * the new name, write the new file, then remove the old one from both
+ * content/journal/ and the legacy content/essays/. The route has already
+ * refused a rename onto an existing entry.
+ */
+async function renameJournalEntry(
+  fromSlug: string,
+  slug: string,
+  rawMarkdown: string,
+): Promise<void> {
+  if (!isValidSlug(fromSlug)) throw new Error(`Invalid journal slug: "${fromSlug}"`);
+  const fromFilename = `${fromSlug}.md`;
+  const fromPaths = [
+    containedPath(JOURNAL_DIR, fromFilename),
+    containedPath(LEGACY_ESSAYS_DIR, fromFilename),
+  ].filter((p): p is string => p !== null);
+  const existing: string[] = [];
+  for (const p of fromPaths) {
+    try {
+      await fs.access(p);
+      existing.push(p);
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+    }
+  }
+  // The copy resolveJournalFilePath reads — content/journal/ over essays/.
+  if (existing.length > 0) {
+    await snapshotEntry(existing[0], `${slug}.md`);
+    await pruneEntryBackups(`${slug}.md`);
+  }
+  await writeJournalEntry(slug, rawMarkdown);
+  for (const p of existing) {
+    await fs.unlink(p).catch((err: NodeJS.ErrnoException) => {
+      if (err.code !== 'ENOENT') throw err;
+    });
+  }
+  if (existing.length > 0) console.log(`[Journal] ✏️ Renamed ${fromFilename} to ${slug}.md`);
+}
+
+/**
  * The editor's save (#601): write `slug`, refusing with a VersionConflictError
  * when the file the editor loaded — `fromSlug`'s, for a rename — is no longer
  * at `baseVersion`. A rename writes the new file and then deletes the old one.
  * Check, write and delete run in the content write queue, so another save
  * cannot land between them. Returns the version of what was written.
+ *
+ * A rename takes the entry's history along: the version before it is kept as
+ * a save backup of the new slug, not as a `.deleted` snapshot of the old one,
+ * which the Backup Manager listed as a deleted entry (QA A-19).
  */
 export function saveJournalEntry(
   slug: string,
@@ -397,8 +440,11 @@ export function saveJournalEntry(
       if (!loaded) throw new Error(`Invalid journal entry slug: "${fromSlug}"`);
       await assertVersion(loaded, options.baseVersion);
     }
-    await writeJournalEntry(slug, rawMarkdown);
-    if (fromSlug !== slug) await deleteJournalEntry(fromSlug);
+    if (fromSlug === slug) {
+      await writeJournalEntry(slug, rawMarkdown);
+    } else {
+      await renameJournalEntry(fromSlug, slug, rawMarkdown);
+    }
     return versionOf(rawMarkdown);
   });
 }

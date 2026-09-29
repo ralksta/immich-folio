@@ -17,9 +17,9 @@ const fsMock = vi.hoisted(() => ({
   copyFile: vi.fn(async () => undefined),
   readdir: vi.fn(async () => []),
   unlink: vi.fn(async () => undefined),
-  writeFile: vi.fn(async () => undefined),
+  writeFile: vi.fn(async (..._args: unknown[]) => undefined),
   rename: vi.fn(async () => undefined),
-  readFile: vi.fn(async () => {
+  readFile: vi.fn(async (..._args: unknown[]): Promise<Buffer> => {
     throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
   }),
 }));
@@ -43,13 +43,14 @@ const put = (body: unknown) =>
  * brand-new file and the save went ahead with no snapshot (#630).
  */
 describe('PUT /api/admin/about backup handling', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    fs.readFile.mockImplementation(async () => {
+      throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    });
+  });
 
   it('saves a brand-new file with no backup', async () => {
-    vi.mocked(fs.access).mockRejectedValueOnce(
-      Object.assign(new Error('ENOENT'), { code: 'ENOENT' }),
-    );
-
     const res = await put({ meta: { name: 'Me' }, body: 'Hello' });
 
     expect(res.status).toBe(200);
@@ -58,11 +59,23 @@ describe('PUT /api/admin/about backup handling', () => {
   });
 
   it('aborts the save when the file exists but the backup copy fails', async () => {
+    vi.mocked(fs.readFile).mockResolvedValue(Buffer.from('---\nname: Old\n---\n'));
     vi.mocked(fs.copyFile).mockRejectedValueOnce(
       Object.assign(new Error('EACCES'), { code: 'EACCES' }),
     );
 
     await expect(put({ meta: { name: 'Me' }, body: 'Hello' })).rejects.toThrow('EACCES');
     expect(fs.writeFile).not.toHaveBeenCalled();
+  });
+
+  it('takes no backup for a save that changes nothing (QA A-19)', async () => {
+    await put({ meta: { name: 'Me' }, body: 'Hello' });
+    const written = vi.mocked(fs.writeFile).mock.calls[0][1] as string;
+    vi.mocked(fs.writeFile).mockClear();
+
+    vi.mocked(fs.readFile).mockResolvedValue(Buffer.from(written));
+    const res = await put({ meta: { name: 'Me' }, body: 'Hello' });
+    expect(res.status).toBe(200);
+    expect(fs.copyFile).not.toHaveBeenCalled();
   });
 });

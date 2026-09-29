@@ -11,7 +11,9 @@ vi.mock('fs/promises', () => ({
     unlink: vi.fn(async () => undefined),
     writeFile: vi.fn(async () => undefined),
     rename: vi.fn(async () => undefined),
-    readFile: vi.fn(),
+    readFile: vi.fn(async () => {
+      throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    }),
   },
 }));
 
@@ -95,7 +97,7 @@ describe('writeYamlFile backup failure', () => {
   });
 
   it('aborts the save when the file exists but the backup copy fails', async () => {
-    vi.mocked(fs.access).mockResolvedValueOnce(undefined);
+    vi.mocked(fs.readFile).mockResolvedValueOnce(Buffer.from('albums: []\n'));
     vi.mocked(fs.copyFile).mockRejectedValueOnce(
       Object.assign(new Error('EACCES'), { code: 'EACCES' }),
     );
@@ -105,11 +107,32 @@ describe('writeYamlFile backup failure', () => {
   });
 
   it('aborts when checking whether the file exists fails for a reason other than ENOENT', async () => {
-    vi.mocked(fs.access).mockRejectedValueOnce(
+    vi.mocked(fs.readFile).mockRejectedValueOnce(
       Object.assign(new Error('EACCES'), { code: 'EACCES' }),
     );
 
     await expect(writeGalleryYaml(gallery)).rejects.toThrow('EACCES');
     expect(fs.writeFile).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * A save that changes nothing used to snapshot anyway; with ten backups kept,
+ * a few of those pushed the real ones out (QA A-19).
+ */
+describe('writeYamlFile no-op save', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('takes no backup when the file already holds exactly these bytes', async () => {
+    await writeGalleryYaml(gallery);
+    const written = vi.mocked(fs.writeFile).mock.calls[0][1] as string;
+
+    vi.mocked(fs.readFile).mockResolvedValueOnce(Buffer.from(written));
+    await writeGalleryYaml(gallery);
+    expect(fs.copyFile).not.toHaveBeenCalled();
+
+    vi.mocked(fs.readFile).mockResolvedValueOnce(Buffer.from(written + '# edited\n'));
+    await writeGalleryYaml(gallery);
+    expect(fs.copyFile).toHaveBeenCalledTimes(1);
   });
 });
