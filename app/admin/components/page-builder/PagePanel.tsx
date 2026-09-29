@@ -6,6 +6,7 @@ import {
   parseJournalMarkdown,
   sanitizeSlug,
   serializeJournalMarkdown,
+  slugFieldValue,
   type ParsedJournal,
 } from '@/lib/journal';
 import {
@@ -115,22 +116,26 @@ export default function PagePanel({
     };
   }, [slug, reloadKey]);
 
+  // The field keeps what is typed, a trailing "-" included; the page moves to
+  // the finished slug.
+  const targetSlug = slugInput ? sanitizeSlug(slugInput) : '';
+
   const fm = parsed?.frontmatter;
   const dirty =
     !!fm &&
     (title !== (fm.title || '') ||
-      slugInput !== slug ||
+      targetSlug !== slug ||
       draft !== !!fm.draft ||
       (password || '') !== (fm.password || '') ||
       description !== (fm.description || ''));
 
-  const renaming = slugInput !== slug;
+  const renaming = targetSlug !== slug;
   const collision = renaming
-    ? otherPageSlugs.includes(slugInput)
-      ? `A page "${slugInput}" already exists.`
+    ? otherPageSlugs.includes(targetSlug)
+      ? `A page "${targetSlug}" already exists.`
       : (() => {
-          const c = pageSlugCollision(slugInput, taken);
-          return c ? describeCollision(slugInput, c) : null;
+          const c = pageSlugCollision(targetSlug, taken);
+          return c ? describeCollision(targetSlug, c) : null;
         })()
     : null;
 
@@ -138,7 +143,7 @@ export default function PagePanel({
     if (!parsed || !dirty || collision || !title.trim()) return;
     if (renaming) {
       const ok = await confirm({
-        title: `Move this page to /${slugInput}?`,
+        title: `Move this page to /${targetSlug}?`,
         message: `Links to /${slug} will stop working. There is no automatic redirect.`,
         confirmLabel: 'Move page',
       });
@@ -158,7 +163,7 @@ export default function PagePanel({
       });
       const result = await versionedSave(
         `/api/admin/pages/${encodeURIComponent(slug)}`,
-        { rawMarkdown: markdown, ...(renaming ? { newSlug: slugInput } : {}) },
+        { rawMarkdown: markdown, ...(renaming ? { newSlug: targetSlug } : {}) },
         versionRef,
         'This page',
       );
@@ -292,10 +297,10 @@ export default function PagePanel({
             id="page-slug"
             className="subpage-name-input"
             value={slugInput}
-            onChange={(e) => setSlugInput(sanitizeSlug(e.target.value))}
+            onChange={(e) => setSlugInput(slugFieldValue(e.target.value))}
             aria-describedby="page-slug-hint"
           />
-          <span className="input-slug-preview">/{slugInput}</span>
+          <span className="input-slug-preview">/{targetSlug}</span>
         </div>
         <span
           id="page-slug-hint"

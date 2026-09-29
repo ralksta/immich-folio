@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { JournalEntrySummary } from '@/lib/journal';
-import { serializeJournalMarkdown, sanitizeSlug } from '@/lib/journal';
+import { serializeJournalMarkdown, sanitizeSlug, slugFieldValue } from '@/lib/journal';
 import { JOURNAL_TEMPLATES } from '@/lib/journalTemplates';
 import {
   IconTrash,
@@ -304,13 +304,13 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                   className="admin-input"
                   placeholder="e.g. expedition-nordkap"
                   value={newSlug}
-                  onChange={(e) => setNewSlug(sanitizeSlug(e.target.value))}
+                  onChange={(e) => setNewSlug(slugFieldValue(e.target.value))}
                   required
                 />
                 <span
                   style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '2px', display: 'block' }}
                 >
-                  Will be accessible at /journal/{newSlug || 'slug'}
+                  Will be accessible at /journal/{newSlug ? sanitizeSlug(newSlug) : 'slug'}
                 </span>
               </div>
 
