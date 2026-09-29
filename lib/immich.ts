@@ -11,7 +11,7 @@
  * cached answer may still be served in ./immichCache (#610).
  */
 
-import { getConfig, albumSlug, normalizeSlug, type SubpageConfig } from './config';
+import { getConfig, albumSlug, normalizeSlug, type AppConfig, type SubpageConfig } from './config';
 import { cache } from './cache';
 import { compareByCaptureTime, sortAlbumAssets, DEFAULT_ALBUM_SORT } from './albumSort';
 import { ImmichUnavailableError, isTimeout, requestJson } from './immichTransport';
@@ -105,6 +105,11 @@ class ImmichClient {
   private pendingAlbumPromises = new Map<string, Promise<ImmichAlbum | null>>();
   private pendingAssetPromises = new Map<string, Promise<ImmichAsset | null>>();
 
+  /**
+   * getConfig() re-checks the content files and hands back a fresh copy on
+   * every call, so a method reads it once into a local and uses that, rather
+   * than going through this getter for each property.
+   */
   private get config() {
     return getConfig();
   }
@@ -118,8 +123,8 @@ class ImmichClient {
    * made every call return null before the fetch, so `ping()` reported the
    * server as disconnected without a single line in the log (#507).
    */
-  private get hasCredentials(): boolean {
-    const { apiUrl, apiKey } = this.config.immich;
+  private hasCredentials(config: AppConfig): boolean {
+    const { apiUrl, apiKey } = config.immich;
     return !!apiUrl && !!apiKey;
   }
 
@@ -134,8 +139,8 @@ class ImmichClient {
   }
 
   /** Cache write that carries the configured stale window. */
-  private cacheSet<T>(key: string, data: T): void {
-    cacheSetWithStale(key, data, this.config.cacheTtl, this.config.staleMaxAge);
+  private cacheSet<T>(key: string, data: T, config: AppConfig = this.config): void {
+    cacheSetWithStale(key, data, config.cacheTtl, config.staleMaxAge);
   }
 
   /** See ./immichCache — the policy lives there, testable on its own. */
@@ -156,15 +161,16 @@ class ImmichClient {
    * deployment rather than about HTTP.
    */
   private async request<T>(endpoint: string, body?: unknown): Promise<T | null> {
-    if (!this.hasCredentials) {
+    const config = this.config;
+    if (!this.hasCredentials(config)) {
       this.warnNoCredentials(endpoint);
       return null;
     }
 
     return requestJson<T>({
-      apiUrl: this.config.immich.apiUrl,
-      apiKey: this.config.immich.apiKey,
-      timeoutMs: this.config.immichTimeoutMs,
+      apiUrl: config.immich.apiUrl,
+      apiKey: config.immich.apiKey,
+      timeoutMs: config.immichTimeoutMs,
       endpoint,
       body,
     });
@@ -184,21 +190,22 @@ class ImmichClient {
     contentRange: string | null;
     status: 200 | 206;
   } | null> {
-    if (!this.hasCredentials) return null;
+    const config = this.config;
+    if (!this.hasCredentials(config)) return null;
 
     const endpoint = `/assets/${encodeURIComponent(assetId)}/video/playback`;
-    const url = `${this.config.immich.apiUrl}${endpoint}`;
+    const url = `${config.immich.apiUrl}${endpoint}`;
 
     // Bound the wait for response *headers* only. The `finally` clears the timer
     // the moment they arrive, so the body may then stream for as long as it
     // needs — a whole-request timeout would truncate playback mid-video and
     // break seeking, since every range request would restart the clock.
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.config.immichTimeoutMs);
+    const timer = setTimeout(() => controller.abort(), config.immichTimeoutMs);
 
     try {
       const headers: Record<string, string> = {
-        'x-api-key': this.config.immich.apiKey,
+        'x-api-key': config.immich.apiKey,
       };
       if (rangeHeader) {
         headers['Range'] = rangeHeader;
@@ -235,13 +242,13 @@ class ImmichClient {
       if (error instanceof ImmichUnavailableError) throw error;
       console.error(
         isTimeout(error)
-          ? `[Immich] Video ${assetId} did not respond within ${this.config.immichTimeoutMs}ms`
+          ? `[Immich] Video ${assetId} did not respond within ${config.immichTimeoutMs}ms`
           : `[Immich] Video stream error for ${assetId}:`,
         error,
       );
       throw new ImmichUnavailableError(
         isTimeout(error)
-          ? `Immich did not respond within ${this.config.immichTimeoutMs}ms for video ${assetId}`
+          ? `Immich did not respond within ${config.immichTimeoutMs}ms for video ${assetId}`
           : `Cannot reach Immich to stream video ${assetId}`,
       );
     } finally {
@@ -256,24 +263,25 @@ class ImmichClient {
     assetId: string,
     size: ImageSize = 'preview',
   ): Promise<{ stream: ReadableStream; contentType: string; contentLength: string | null } | null> {
-    if (!this.hasCredentials) return null;
+    const config = this.config;
+    if (!this.hasCredentials(config)) return null;
 
     const endpoint =
       size === 'original'
         ? `/assets/${encodeURIComponent(assetId)}/original`
         : `/assets/${encodeURIComponent(assetId)}/thumbnail?size=${size}`;
 
-    const url = `${this.config.immich.apiUrl}${endpoint}`;
+    const url = `${config.immich.apiUrl}${endpoint}`;
 
     // Headers-only timeout, same reasoning as streamVideo: an original-size
     // photo is legitimately slow to transfer and must not be capped.
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.config.immichTimeoutMs);
+    const timer = setTimeout(() => controller.abort(), config.immichTimeoutMs);
 
     try {
       const res = await fetch(url, {
         headers: {
-          'x-api-key': this.config.immich.apiKey,
+          'x-api-key': config.immich.apiKey,
         },
         signal: controller.signal,
       });
@@ -305,13 +313,13 @@ class ImmichClient {
       if (error instanceof ImmichUnavailableError) throw error;
       console.error(
         isTimeout(error)
-          ? `[Immich] Asset ${assetId} did not respond within ${this.config.immichTimeoutMs}ms`
+          ? `[Immich] Asset ${assetId} did not respond within ${config.immichTimeoutMs}ms`
           : `[Immich] Stream error for ${assetId}:`,
         error,
       );
       throw new ImmichUnavailableError(
         isTimeout(error)
-          ? `Immich did not respond within ${this.config.immichTimeoutMs}ms for asset ${assetId}`
+          ? `Immich did not respond within ${config.immichTimeoutMs}ms for asset ${assetId}`
           : `Cannot reach Immich to stream asset ${assetId}`,
       );
     } finally {
@@ -343,13 +351,14 @@ class ImmichClient {
       try {
         const all = await this.request<ImmichAlbum[]>('/albums?shared=true');
         if (!all) return [];
+        const config = this.config;
 
-        const allowedIds = new Set(this.config.albums);
+        const allowedIds = new Set(config.albums);
         const filtered = all
           .filter((album) => allowedIds.has(album.id))
           .map((album) => {
-            const name = this.config.albumOverrides[album.id] ?? album.albumName;
-            const description = this.config.albumDescriptions[album.id] ?? album.description ?? '';
+            const name = config.albumOverrides[album.id] ?? album.albumName;
+            const description = config.albumDescriptions[album.id] ?? album.description ?? '';
             return {
               ...album,
               albumName: name,
@@ -365,7 +374,7 @@ class ImmichClient {
           console.log('─'.repeat(80));
 
           // Log standalone albums
-          const standaloneIds = new Set(this.config.standaloneAlbums);
+          const standaloneIds = new Set(config.standaloneAlbums);
           const standalone = filtered.filter((a) => standaloneIds.has(a.id));
           if (standalone.length > 0) {
             console.log('  Standalone:');
@@ -376,7 +385,7 @@ class ImmichClient {
           }
 
           // Log subpage groupings
-          for (const sp of this.config.subpages) {
+          for (const sp of config.subpages) {
             const spAlbums = filtered.filter((a) => sp.albumIds.includes(a.id));
             console.log(`  📁 ${sp.name} (/${sp.slug}):`);
             for (const a of spAlbums) {
@@ -385,7 +394,7 @@ class ImmichClient {
             }
           }
 
-          const missing = this.config.albums.filter((id) => !all.some((a) => a.id === id));
+          const missing = config.albums.filter((id) => !all.some((a) => a.id === id));
           if (missing.length > 0) {
             console.warn(`  ⚠️  Unknown album IDs: ${missing.join(', ')}`);
           }
@@ -398,8 +407,8 @@ class ImmichClient {
         // invalidateAll() runs in the install route's own module instance
         // (Next bundles each route separately; see lib/install.ts). The gallery
         // then looks empty until the server restarts.
-        if (!this.config.needsSetup) {
-          this.cacheSet(cacheKey, filtered);
+        if (!config.needsSetup) {
+          this.cacheSet(cacheKey, filtered, config);
         }
         return filtered;
       } catch (error) {
@@ -555,13 +564,14 @@ class ImmichClient {
    * be sorting the same array.
    */
   private withSort(album: ImmichAlbum): ImmichAlbum {
-    const mode = this.config.albumSortModes[album.id] ?? DEFAULT_ALBUM_SORT;
+    const config = this.config;
+    const mode = config.albumSortModes[album.id] ?? DEFAULT_ALBUM_SORT;
     return {
       ...album,
       assets: sortAlbumAssets(album.assets, {
         mode,
         immichOrder: album.order,
-        manualOrder: this.config.albumManualOrders[album.id],
+        manualOrder: config.albumManualOrders[album.id],
       }),
     };
   }
@@ -645,13 +655,14 @@ class ImmichClient {
         // getAlbum(); see withSort().
         album.assets.sort(compareByCaptureTime(album.order === 'asc' ? 1 : -1));
 
-        const name = this.config.albumOverrides[album.id] ?? album.albumName;
-        const description = this.config.albumDescriptions[album.id] ?? album.description ?? '';
+        const config = this.config;
+        const name = config.albumOverrides[album.id] ?? album.albumName;
+        const description = config.albumDescriptions[album.id] ?? album.description ?? '';
         album.albumName = name;
         album.description = description;
         album.slug = albumSlug(name, album.id);
 
-        this.cacheSet(cacheKey, album);
+        this.cacheSet(cacheKey, album, config);
         return album;
       } catch (error) {
         return this.staleOrMissing<ImmichAlbum>(cacheKey, error, `album ${albumId}`);
@@ -680,16 +691,17 @@ class ImmichClient {
   ): Promise<ImmichAlbum | null> {
     const albums = await this.getAlbums(forceFresh);
 
+    const config = this.config;
     let routeIds: Set<string>;
     if (subpageSlug) {
       const wantedSubpage = normalizeSlug(subpageSlug);
-      const subpage = this.config.subpages.find(
+      const subpage = config.subpages.find(
         (sp) => sp.slug === wantedSubpage && sp.enabled !== false,
       );
       if (!subpage) return null;
       routeIds = new Set(subpage.albumIds);
     } else {
-      routeIds = new Set(this.config.standaloneAlbums);
+      routeIds = new Set(config.standaloneAlbums);
     }
     const searchSet = albums.filter((a) => routeIds.has(a.id));
 
