@@ -108,6 +108,28 @@ describe('POST /api/analytics/track', () => {
     expect(Object.keys(data.days[dateKey].pages)).toEqual(['/journal']);
   });
 
+  it('records a client proofing link without its token', async () => {
+    // The token in /proof/<token> is the client's only credential; the counter
+    // must not copy it into a file that is neither 0600 nor meant to hold one.
+    const token = 'AbCdEfGhIjKlMnOpQrStUvWxYz012345';
+    for (const path of [`/proof/${token}`, `/proof/${token}/`, `/proof/${token}?x=1`]) {
+      await post({ path });
+
+      const data = savedData();
+      const [dateKey] = Object.keys(data.days);
+      expect(JSON.stringify(data), path).not.toContain(token);
+      expect(data.days[dateKey].pages, path).toEqual({ '/proof': 1 });
+    }
+  });
+
+  it('leaves paths that merely start with "proof" alone', async () => {
+    await post({ path: '/proofreading' });
+
+    const data = savedData();
+    const [dateKey] = Object.keys(data.days);
+    expect(Object.keys(data.days[dateKey].pages)).toEqual(['/proofreading']);
+  });
+
   it('caps distinct page keys per day without dropping the pageview itself', async () => {
     const dateKey = new Date().toISOString().split('T')[0];
     const pages: Record<string, number> = {};
