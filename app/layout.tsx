@@ -20,6 +20,7 @@ import { isAdminPath } from '@/lib/admin/paths';
 import { isInstallPath } from '@/lib/install';
 import { isSiteLocked, isSiteUnlocked } from '@/lib/auth';
 import { ogImageUrl } from '@/lib/ogImage';
+import { THEME_INIT_SCRIPT } from '@/lib/themeScript';
 // DevToolbarLoader is a Client Component (ssr: false is only allowed there)
 import { DevToolbarLoader } from '@/components/DevToolbarLoader';
 import AssetProtection from '@/components/AssetProtection';
@@ -81,7 +82,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const config = getConfigOrNull();
-  const pathname = (await headers()).get('x-pathname');
+  const requestHeaders = await headers();
+  const pathname = requestHeaders.get('x-pathname');
 
   // gallery.yaml exists but cannot be derived — an empty gallery, a nameless
   // subpage, a subpage with no albums. The admin page builder can write all
@@ -158,11 +160,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       /* The configured starting mode is rendered server-side so the first paint
          is already right; `auto` deliberately carries no data-theme and lets the
          inline script below decide from the OS. data-default-theme is what
-         ThemeToggle reads for a visitor who has never chosen (#512). */
+         that script and ThemeToggle read for a visitor who has never chosen
+         (#512). */
       {...(config.colorMode === 'auto' ? {} : { 'data-theme': config.colorMode })}
       data-default-theme={config.colorMode}
     >
       <head>
+        {/* Applies a stored or OS-derived mode before the first paint, on
+            every page this layout renders — the gate and /admin included.
+            The nonce is the one proxy.ts put in the CSP; without it the
+            script is blocked silently. */}
+        <script
+          nonce={requestHeaders.get('x-nonce') ?? undefined}
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+        />
         <link rel="stylesheet" href={fontsUrl} />
       </head>
       <body>
