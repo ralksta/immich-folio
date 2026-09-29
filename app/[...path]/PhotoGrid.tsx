@@ -136,6 +136,33 @@ function PhotoGridInner({
     }
   }, [lightboxIndex, displayedAssets]);
 
+  // ── The photo on screen can leave the list ─────────────────────
+  // With "selected only" on, un-hearting the photo in the viewer drops it from
+  // `displayedAssets`. The viewer keeps its position, which now shows the next
+  // favourite; past the end it steps back to the last one, and with nothing
+  // left it closes. `shownIndex` keeps this render valid (it used to hand the
+  // viewer an index past the end, and the page crashed); the effect settles
+  // the state and the URL.
+  const shownIndex =
+    lightboxIndex === null || displayedAssets.length === 0
+      ? null
+      : Math.min(lightboxIndex, displayedAssets.length - 1);
+
+  useEffect(() => {
+    if (lightboxIndex === null || lightboxIndex < displayedAssets.length) return;
+    if (displayedAssets.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLightboxIndex(displayedAssets.length - 1);
+      return;
+    }
+    setLightboxIndex(null);
+    window.history.replaceState(
+      null,
+      '',
+      window.location.pathname + buildPhotoQuery(window.location.search, null),
+    );
+  }, [lightboxIndex, displayedAssets.length]);
+
   // ── Listen for browser back/forward ────────────────────────────
   useEffect(() => {
     const handlePopState = () => {
@@ -370,10 +397,10 @@ function PhotoGridInner({
       {proofing && !proofing.session && <ProofingModal />}
       {proofing?.session && <ProofSessionControls />}
 
-      {lightboxIndex !== null && (
+      {shownIndex !== null && (
         <Lightbox
           assets={displayedAssets}
-          currentIndex={lightboxIndex}
+          currentIndex={shownIndex}
           onClose={closeLightbox}
           onNext={goNext}
           onPrev={goPrev}
