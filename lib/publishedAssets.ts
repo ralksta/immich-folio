@@ -222,9 +222,15 @@ export async function isPublishedAsset(assetId: string): Promise<boolean> {
   }
   if (current!.assets.has(assetId)) return true;
 
-  // Not in the set: it may have been published since the last build.
-  if (Date.now() - lastForcedAt < MIN_REBUILD_MS) return false;
-  lastForcedAt = Date.now();
+  // Not in the set: it may have been published since the last build. A miss
+  // while a rebuild is running waits for it — the first view of a new album is
+  // a burst of misses, and refusing all but the one that started the rebuild
+  // broke most of its photos. Only with nothing running does the throttle
+  // decide whether a miss may start one.
+  if (!building) {
+    if (Date.now() - lastForcedAt < MIN_REBUILD_MS) return false;
+    lastForcedAt = Date.now();
+  }
   try {
     return (await rebuild()).has(assetId);
   } catch {

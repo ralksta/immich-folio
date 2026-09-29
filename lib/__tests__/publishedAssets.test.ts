@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 /**
  * GHSA-gfh4-6275-9gqv: the media routes serve only assets the site shows. Each
@@ -248,6 +248,44 @@ describe('isPublishedAsset', () => {
     } finally {
       state.proofAlbums['album-proof'].assets = [{ id: 'proof-1' }];
     }
+  });
+
+  /**
+   * The first view of a newly published album: a burst of image requests for
+   * photos the set has never seen. Only the first one rebuilt; the rest hit
+   * the rebuild throttle and were refused while that rebuild was still
+   * running — 11 of 13 photos broken until a reload.
+   */
+  describe('a burst of requests for a newly published album', () => {
+    const NEW = Array.from({ length: 13 }, (_, i) => ({ id: `fresh-${i}` }));
+
+    beforeEach(async () => {
+      await isPublishedAsset('a1'); // built, and checked a moment ago
+    });
+
+    afterEach(() => {
+      state.albums['album-pub'].assets = [{ id: 'a1' }, { id: 'a2' }];
+    });
+
+    it('serves every photo when the save changed a content file', async () => {
+      state.albums['album-pub'].assets = [{ id: 'a1' }, { id: 'a2' }, ...NEW];
+      state.mtime += 1; // gallery.yaml saved by the admin
+      const answers = await Promise.all(NEW.map((a) => isPublishedAsset(a.id)));
+      expect(answers).toEqual(NEW.map(() => true));
+    });
+
+    it('serves every photo when only Immich changed (misses share one rebuild)', async () => {
+      state.albums['album-pub'].assets = [{ id: 'a1' }, { id: 'a2' }, ...NEW];
+      const before = state.builds;
+      const answers = await Promise.all(NEW.map((a) => isPublishedAsset(a.id)));
+      expect(answers).toEqual(NEW.map(() => true));
+      expect(state.builds - before).toBe(1);
+    });
+
+    it('still refuses what the rebuild did not publish', async () => {
+      const answers = await Promise.all(NEW.map((a) => isPublishedAsset(a.id)));
+      expect(answers).toEqual(NEW.map(() => false));
+    });
   });
 
   it('picks up an asset published since the last build', async () => {
