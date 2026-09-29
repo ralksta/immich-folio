@@ -80,9 +80,11 @@ describe('ImmichClient — install state', () => {
    * The setup config carries an empty allowlist, so the filtered list is [] no
    * matter what Immich returned. Caching that made the gallery look empty until
    * the server restarted, because the wizard's invalidateAll() runs in another
-   * bundle's module instance and never reached this cache.
+   * bundle's module instance and never reached this cache. The cache now holds
+   * Immich's list as sent and the allowlist is applied per call, so the album
+   * shows up from the cached list without a second request.
    */
-  it('does not cache the empty album list while setup is unfinished', async () => {
+  it('does not keep the empty album list of the setup config after setup', async () => {
     const album = {
       id: 'album-1',
       albumName: 'Japan',
@@ -106,10 +108,9 @@ describe('ImmichClient — install state', () => {
     state.needsGallery = false;
     state.albums = ['album-1'];
 
-    mockFetch.mockResolvedValueOnce(respond());
     const after = await immich.getAlbums();
     expect(after.map((a) => a.id)).toEqual(['album-1']);
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
   it('makes no request at all when credentials are absent', async () => {
