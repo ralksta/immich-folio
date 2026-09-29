@@ -19,6 +19,7 @@ import { immich, type ImmichAsset } from '@/lib/immich';
 import { notFound } from 'next/navigation';
 import { toPhotoItems } from './photoItems';
 import { imageUrl, assetPlaceholder, archiveUrl } from '@/lib/urls';
+import { ogImageUrl } from '@/lib/ogImage';
 import { encodeAssetId, decodeAssetId } from '@/lib/tokens';
 import { encodeEmail } from '@/lib/emailObfuscation';
 import {
@@ -141,9 +142,7 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
     photoAsset?.exifInfo?.description?.trim() ||
     description ||
     (subtitle ? `${title} — ${subtitle}` : undefined);
-  const ogImage = photoAsset
-    ? imageUrl(photoAsset.id, 'preview')
-    : `/api/og?title=${encodeURIComponent(title)}${subtitle ? `&subtitle=${encodeURIComponent(subtitle)}` : ''}`;
+  const ogImage = photoAsset ? imageUrl(photoAsset.id, 'preview') : ogImageUrl(title, subtitle);
 
   return {
     title,

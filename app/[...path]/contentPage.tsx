@@ -15,6 +15,7 @@ import { isAdminAuthenticated } from '@/lib/admin/auth';
 import { isAuthenticated } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getServerDictionary } from '@/lib/i18n/server';
+import { ogImageUrl } from '@/lib/ogImage';
 import PasswordGate from '@/components/PasswordGate';
 import { EssayView } from './EssayView';
 import { buildEssayPayload } from './essayPayload';
@@ -51,7 +52,7 @@ export async function contentPageMetadata(slug: string): Promise<Metadata | null
   }
   const { title: rawTitle, description } = page.parsed.frontmatter;
   const title = rawTitle || slug;
-  const ogImage = `/api/og?title=${encodeURIComponent(title)}`;
+  const ogImage = ogImageUrl(title);
   return {
     title,
     ...(description ? { description } : {}),

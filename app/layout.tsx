@@ -19,6 +19,7 @@ import { accentForMode, onAccent } from '@/lib/config/theme';
 import { isAdminPath } from '@/lib/admin/paths';
 import { isInstallPath } from '@/lib/install';
 import { isSiteLocked, isSiteUnlocked } from '@/lib/auth';
+import { ogImageUrl } from '@/lib/ogImage';
 // DevToolbarLoader is a Client Component (ssr: false is only allowed there)
 import { DevToolbarLoader } from '@/components/DevToolbarLoader';
 import AssetProtection from '@/components/AssetProtection';
@@ -67,13 +68,13 @@ export async function generateMetadata(): Promise<Metadata> {
       title: siteTitle,
       description: siteDescription,
       type: 'website',
-      images: [`/api/og?title=${encodeURIComponent(siteTitle)}`],
+      images: [ogImageUrl(siteTitle)],
     },
     twitter: {
       card: 'summary_large_image',
       title: siteTitle,
       description: siteDescription,
-      images: [`/api/og?title=${encodeURIComponent(siteTitle)}`],
+      images: [ogImageUrl(siteTitle)],
     },
   };
 }
