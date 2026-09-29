@@ -191,6 +191,7 @@ export const fr: Dictionary = {
     saved: 'Enregistré',
     favorite: 'Favori',
     showAll: 'Tout afficher',
+    filterEmpty: 'Aucune photo sélectionnée.',
     selected: (n: number) => `❤️ ${n} ${isOne(n) ? 'sélectionnée' : 'sélectionnées'}`,
     shareExport: 'Partager & exporter',
     modalTitle: (n: number) => `❤️ Sélection (${n})`,

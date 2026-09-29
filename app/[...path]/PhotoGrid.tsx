@@ -332,9 +332,27 @@ function PhotoGridInner({
 
   return (
     <>
-      <div className={`photo-grid photo-grid--${layout}`} style={gridStyle} data-lightbox-group>
-        {gridItems}
-      </div>
+      {proofing?.isFilterActive && displayedAssets.length === 0 ? (
+        // Un-hearting the last favourite with the filter on left a blank page
+        // between the header and the footer. Say why, and offer the way back
+        // here as well as in the bar in the corner.
+        <div className="empty-state" role="status">
+          <p className="empty-state__text">{t.proofing.filterEmpty}</p>
+          <div className="empty-state__actions">
+            <button
+              type="button"
+              className="empty-state__button"
+              onClick={() => proofing.setIsFilterActive(false)}
+            >
+              {t.proofing.showAll}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className={`photo-grid photo-grid--${layout}`} style={gridStyle} data-lightbox-group>
+          {gridItems}
+        </div>
+      )}
 
       {/* Kept while the filter is on: un-hearting the last favourite there
           empties the grid, and the bar holds the only way back to all photos. */}

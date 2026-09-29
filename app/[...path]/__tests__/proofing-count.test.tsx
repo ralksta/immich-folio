@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, within } from '@testing-library/react';
 import { PhotoGrid, type PhotoItem } from '../PhotoGrid';
 import { EssayView } from '../EssayView';
 import { parseEssayMarkdown } from '@/lib/essay';
@@ -86,7 +86,9 @@ describe('proofing counts in the album grid', () => {
     // Filtered to the one favourite; un-heart it and the grid is empty.
     fireEvent.click(screen.getByLabelText('Remove favorite'));
     expect(screen.queryByLabelText('Add favorite')).toBeNull();
-    fireEvent.click(screen.getByText('Show All'));
+    // The empty state offers "Show All" too; this is about the bar's own.
+    const bar = document.querySelector<HTMLElement>('.proofing-sticky-bar')!;
+    fireEvent.click(within(bar).getByText('Show All'));
     expect(screen.getAllByLabelText('Add favorite')).toHaveLength(3);
   });
 

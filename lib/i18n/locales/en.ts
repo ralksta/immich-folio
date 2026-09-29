@@ -190,6 +190,8 @@ export const en = {
     saved: 'Saved',
     favorite: 'Favorite',
     showAll: 'Show All',
+    /** Shown in place of the grid when the filter is on and nothing is selected. */
+    filterEmpty: 'No photos selected.',
     selected: (n: number) => `❤️ ${n} Selected`,
     shareExport: 'Share & Export',
     modalTitle: (n: number) => `❤️ Selection (${n})`,

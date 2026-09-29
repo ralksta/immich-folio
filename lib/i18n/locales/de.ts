@@ -188,6 +188,7 @@ export const de: Dictionary = {
     saved: 'Gemerkt',
     favorite: 'Merken',
     showAll: 'Alle anzeigen',
+    filterEmpty: 'Keine Fotos ausgewählt.',
     selected: (n: number) => `❤️ ${n} ausgewählt`,
     shareExport: 'Teilen & Export',
     modalTitle: (n: number) => `❤️ Auswahl (${n})`,
