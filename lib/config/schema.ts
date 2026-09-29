@@ -697,3 +697,26 @@ export function onlineAlbumIds(config: {
     ...config.subpages.filter((sp) => sp.enabled !== false).flatMap((sp) => sp.albumIds),
   ]);
 }
+
+/** A subpage that appears in listings: online and not `hidden`. */
+export function isListedSubpage(sp: { enabled?: boolean; hidden?: boolean }): boolean {
+  return sp.enabled !== false && sp.hidden !== true;
+}
+
+/**
+ * The albums a public listing may name: the standalone ones and those of
+ * every subpage that is online and not `hidden`. Narrower than
+ * {@link onlineAlbumIds} — a hidden subpage is reachable by direct link only,
+ * so its photos are still served (publishedAssets asks `onlineAlbumIds`), but
+ * an overview such as the map must not advertise them. An album that a listed
+ * subpage or the standalone list also carries stays.
+ */
+export function listedAlbumIds(config: {
+  standaloneAlbums?: readonly string[];
+  subpages: ReadonlyArray<{ albumIds: readonly string[]; enabled?: boolean; hidden?: boolean }>;
+}): Set<string> {
+  return new Set([
+    ...(config.standaloneAlbums ?? []),
+    ...config.subpages.filter(isListedSubpage).flatMap((sp) => sp.albumIds),
+  ]);
+}

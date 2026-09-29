@@ -4,6 +4,7 @@
  */
 
 import { getConfig } from '@/lib/config';
+import { isListedSubpage, listedAlbumIds } from '@/lib/config/schema';
 import { notFound } from 'next/navigation';
 import { MapView } from '@/components/MapView';
 import { BackLink } from '@/components/BackLink';
@@ -28,11 +29,10 @@ export default function MapPage() {
     notFound();
   }
 
-  const enabledSubpages = config.subpages.filter((sp) => sp.enabled !== false);
-  const collectionCount = enabledSubpages.length;
-  const albumCount =
-    enabledSubpages.reduce((sum, sp) => sum + sp.albumIds.length, 0) +
-    config.standaloneAlbums.length;
+  // Counts what the map may show: a hidden subpage is reachable by direct
+  // link only, so neither it nor an album only it carries is counted.
+  const collectionCount = config.subpages.filter(isListedSubpage).length;
+  const albumCount = listedAlbumIds(config).size;
 
   return (
     <>

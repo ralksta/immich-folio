@@ -16,7 +16,7 @@ vi.mock('@/lib/immich', () => ({
 const config = vi.hoisted(() => ({
   value: {
     standaloneAlbums: ['album-1'] as string[],
-    subpages: [] as Array<{ slug: string; albumIds: string[]; enabled: boolean }>,
+    subpages: [] as Array<{ slug: string; albumIds: string[]; enabled: boolean; hidden?: boolean }>,
     cacheTtl: 60_000,
   },
 }));
@@ -29,6 +29,7 @@ vi.mock('@/lib/cache', () => ({
 }));
 
 import { getMapData } from '@/lib/mapService';
+import { listedAlbumIds } from '@/lib/config/schema';
 
 const ALBUM = { id: 'album-1', albumName: 'Trip', slug: 'trip' };
 
@@ -123,5 +124,70 @@ describe('getMapData and offline subpages', () => {
 
     expect(locations).toHaveLength(1);
     expect(locations[0].albums[0].subpageSlug).toBe('travel');
+  });
+});
+
+/**
+ * `hidden: true` keeps a subpage reachable by direct link only. The map is a
+ * listing: a marker names the album, links it under the subpage's address and
+ * shows one of its photos, so an album only a hidden subpage carries must not
+ * appear on it. Its photos stay reachable through the link (publishedAssets
+ * still asks onlineAlbumIds, which is not narrowed).
+ */
+describe('getMapData and hidden subpages', () => {
+  const berlin = { latitude: 52.5, longitude: 13.4, city: 'Berlin', country: 'Germany' };
+
+  beforeEach(() => {
+    getAlbum.mockResolvedValue({ id: ALBUM.id, assets: [asset('a', berlin)] });
+  });
+
+  it('leaves out an album whose only subpage is hidden', async () => {
+    config.value.standaloneAlbums = [];
+    config.value.subpages = [
+      { slug: 'private', albumIds: [ALBUM.id], enabled: true, hidden: true },
+    ];
+
+    expect(await getMapData()).toEqual([]);
+    expect(getAlbum).not.toHaveBeenCalled();
+  });
+
+  it('keeps it when a listed subpage carries it too, and links it there', async () => {
+    config.value.standaloneAlbums = [];
+    config.value.subpages = [
+      { slug: 'private', albumIds: [ALBUM.id], enabled: true, hidden: true },
+      { slug: 'travel', albumIds: [ALBUM.id], enabled: true },
+    ];
+
+    const locations = await getMapData();
+
+    expect(locations).toHaveLength(1);
+    expect(locations[0].albums[0].subpageSlug).toBe('travel');
+  });
+
+  it('keeps a standalone album that a hidden subpage also carries, linked standalone', async () => {
+    config.value.standaloneAlbums = [ALBUM.id];
+    config.value.subpages = [
+      { slug: 'private', albumIds: [ALBUM.id], enabled: true, hidden: true },
+    ];
+
+    const locations = await getMapData();
+
+    expect(locations).toHaveLength(1);
+    expect(locations[0].albums[0].subpageSlug).toBeUndefined();
+  });
+});
+
+describe('listedAlbumIds', () => {
+  it('drops albums of offline and hidden subpages, keeps standalone and listed ones', () => {
+    const ids = listedAlbumIds({
+      standaloneAlbums: ['s'],
+      subpages: [
+        { albumIds: ['v', 'shared'], enabled: true },
+        { albumIds: ['off'], enabled: false },
+        { albumIds: ['h', 'shared'], enabled: true, hidden: true },
+      ],
+    });
+
+    expect([...ids].sort()).toEqual(['s', 'shared', 'v']);
   });
 });
