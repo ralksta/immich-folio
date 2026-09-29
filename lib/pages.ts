@@ -115,7 +115,7 @@ export interface MenuItem {
  */
 export function resolveMenu(
   nav: readonly NavEntry[],
-  visibleSubpages: ReadonlyArray<{ slug: string; name: string }>,
+  visibleSubpages: ReadonlyArray<{ slug: string; name: string; title?: string }>,
   pages: readonly PageSummary[],
 ): MenuItem[] {
   const subpageBySlug = new Map(visibleSubpages.map((sp) => [sp.slug, sp]));
@@ -123,7 +123,9 @@ export function resolveMenu(
   return nav.flatMap((entry): MenuItem[] => {
     if (entry.type === 'subpage') {
       const sp = subpageBySlug.get(entry.slug);
-      return sp ? [{ key: `sp-${sp.slug}`, href: `/${sp.slug}`, label: sp.name }] : [];
+      // The title a visitor sees on the page itself; `name` is the key the
+      // slug is made from, and only stands in when no title is set.
+      return sp ? [{ key: `sp-${sp.slug}`, href: `/${sp.slug}`, label: sp.title || sp.name }] : [];
     }
     const page = pageBySlug.get(entry.slug);
     if (!page || page.frontmatter.draft) return [];

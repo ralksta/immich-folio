@@ -110,6 +110,9 @@ export const nl: Dictionary = {
     loading: 'Kaart laden…',
     loadFailed: (status: number) => `Kaartgegevens konden niet worden geladen (${status})`,
     initFailed: 'De kaart kon niet worden gestart',
+    zoomIn: 'Inzoomen',
+    zoomOut: 'Uitzoomen',
+    leafletTitle: 'Een JavaScript-bibliotheek voor interactieve kaarten',
   },
 
   subpage: {

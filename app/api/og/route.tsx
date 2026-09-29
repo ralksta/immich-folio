@@ -91,7 +91,8 @@ export async function GET(request: NextRequest) {
         {title}
       </div>
 
-      {/* Subtitle */}
+      {/* Subtitle — printed as the locale spells it. A lowercase transform
+          turned German "25 Fotos" into "25 fotos". */}
       {subtitle && (
         <div
           style={{
@@ -100,7 +101,6 @@ export async function GET(request: NextRequest) {
             fontWeight: 300,
             marginTop: '16px',
             letterSpacing: '0.08em',
-            textTransform: 'lowercase',
           }}
         >
           {subtitle}

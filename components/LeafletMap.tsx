@@ -13,6 +13,8 @@
 
 import { useEffect, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
+import { useDictionary } from './I18nProvider';
+import { escapeHtml } from '@/lib/escapeHtml';
 
 export interface LeafletMarker {
   lat: number;
@@ -35,6 +37,14 @@ interface LeafletMapProps {
 
 export { escapeHtml } from '@/lib/escapeHtml';
 
+/**
+ * Leaflet's attribution prefix with its English link title swapped for
+ * `title`. The rest — link, flag, name — is Leaflet's own markup, kept as is.
+ */
+export function localizedLeafletPrefix(prefix: string, title: string): string {
+  return prefix.replace(/title="[^"]*"/, `title="${escapeHtml(title)}"`);
+}
+
 export function LeafletMap({
   markers,
   line = false,
@@ -45,6 +55,11 @@ export function LeafletMap({
 }: LeafletMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  // Read inside the effect through a ref: the locale never changes on a
+  // mounted page, and a new dictionary object must not rebuild the map.
+  const t = useDictionary();
+  const labelsRef = useRef(t.map);
+  labelsRef.current = t.map;
 
   // Callers rebuild the markers array on every render; the map is only
   // rebuilt when its content changes.
@@ -63,8 +78,17 @@ export function LeafletMap({
       const L = (await import('leaflet')).default;
       if (cancelled || !containerRef.current || mapRef.current) return;
 
-      const map = L.map(containerRef.current, { zoomControl: true, attributionControl: true });
+      // The zoom buttons' titles (which Leaflet also uses as their aria-label)
+      // and the credit's link title are English in Leaflet; the site's
+      // dictionary supplies them instead.
+      const labels = labelsRef.current;
+      const map = L.map(containerRef.current, { zoomControl: false, attributionControl: true });
       mapRef.current = map;
+      L.control.zoom({ zoomInTitle: labels.zoomIn, zoomOutTitle: labels.zoomOut }).addTo(map);
+      const prefix = map.attributionControl.options.prefix;
+      if (typeof prefix === 'string') {
+        map.attributionControl.setPrefix(localizedLeafletPrefix(prefix, labels.leafletTitle));
+      }
 
       // OpenStreetMap's own tiles: free to use with attribution and a Referer,
       // which the Referrer-Policy sends. CARTO's Dark Matter, used before,
