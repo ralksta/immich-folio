@@ -87,12 +87,17 @@ export const es: Dictionary = {
     subtitle: 'Esta galería está protegida con contraseña.',
     siteSubtitle: 'Este sitio está protegido con contraseña.',
     pageSubtitle: 'Esta página está protegida con contraseña.',
+    journalSubtitle: 'Esta entrada del diario está protegida con contraseña.',
     protectedPage: 'Página protegida',
     placeholder: 'Introduce la contraseña',
     submit: 'Entrar',
     verifying: 'Verificando…',
     incorrect: 'Contraseña incorrecta. Inténtalo de nuevo.',
     failed: 'No se ha podido verificar la contraseña. Inténtalo más tarde.',
+    tooManyAttempts: (seconds: number | null) =>
+      seconds
+        ? `Demasiados intentos. Inténtalo de nuevo en ${seconds} ${seconds === 1 ? 'segundo' : 'segundos'}.`
+        : 'Demasiados intentos. Inténtalo más tarde.',
   },
 
   about: {

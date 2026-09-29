@@ -29,11 +29,13 @@ export async function generateMetadata({ params }: ProofPageProps): Promise<Meta
   const session = await findSessionByToken(token);
   const t = getServerDictionary();
   return {
-    // An expired link names nobody, not even in the tab title.
-    title:
-      session && !isExpired(session)
-        ? t.proofSession.greeting(session.clientName)
-        : t.error.notFoundTitle,
+    // An expired link names nobody, not even in the tab title — but the tab
+    // says the same as the page, rather than "not found" over "expired".
+    title: !session
+      ? t.error.notFoundTitle
+      : isExpired(session)
+        ? t.proofSession.expiredTitle
+        : t.proofSession.greeting(session.clientName),
     robots: { index: false, follow: false },
     // Never let the link travel as a Referer, not even to our own font host.
     referrer: 'no-referrer',

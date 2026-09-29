@@ -14,6 +14,9 @@ import { contentDisposition, safeDownloadName } from '@/lib/downloadName';
 import { getClientIp } from '@/lib/rate-limit';
 import { getDictionary } from '@/lib/i18n';
 import { getLocale, getServerDictionary } from '@/lib/i18n/server';
+import { getConfigOrNull } from '@/lib/config';
+import { accentForMode, resolveTheme } from '@/lib/config/theme';
+import { env } from '@/lib/env';
 
 /** Escape a value interpolated into the refusal page. */
 function escapeHtml(value: string): string {
@@ -58,17 +61,96 @@ export function refusal(
 
   const t = getServerDictionary().download;
   headers['Content-Type'] = 'text/html; charset=utf-8';
+  // Route handlers are outside proxy.ts, so this page gets no site policy. It
+  // needs nothing but its own inline <style>: no script, no image, no form.
+  headers['Content-Security-Policy'] =
+    "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'";
   return new NextResponse(
     `<!doctype html><html lang="${getLocale()}"><head><meta charset="utf-8">` +
       '<meta name="viewport" content="width=device-width, initial-scale=1">' +
-      `<title>${escapeHtml(t.unavailableTitle)}</title></head>` +
-      '<body style="font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 1.5rem;line-height:1.6">' +
-      `<h1 style="font-size:1.25rem">${escapeHtml(t.unavailableTitle)}</h1>` +
+      `<title>${escapeHtml(t.unavailableTitle)}</title><style>${refusalCss()}</style></head>` +
+      `<body><main><h1>${escapeHtml(t.unavailableTitle)}</h1>` +
       `<p>${escapeHtml(t[reason])}</p>` +
       `<p><a href="${escapeHtml(backHref(request))}">${escapeHtml(t.back)}</a></p>` +
-      '</body></html>',
+      '</main></body></html>',
     { status, headers },
   );
+}
+
+type Palette = { bg: string; text: string; muted: string };
+
+/**
+ * Each preset's `--bg-primary`, `--text-primary` and `--text-secondary` per
+ * colour mode, as app/tokens.css defines them (`default` is its `:root` and
+ * `[data-theme='light']`, which `studio` uses unchanged). The stylesheets are
+ * bundled into hashed chunks a route handler cannot name, so the values are
+ * repeated here; lib/__tests__/refusal-palette.test.ts fails when they drift.
+ * The accent comes from the configured theme.
+ */
+export const REFUSAL_PALETTES: Record<string, { dark: Palette; light: Palette }> = {
+  default: {
+    dark: { bg: '#1a1a1a', text: '#f5f5f0', muted: '#a0a09a' },
+    light: { bg: '#f5f5f0', text: '#1a1a18', muted: '#4a4a45' },
+  },
+  'studio-modern': {
+    dark: { bg: '#121212', text: '#f4f4f2', muted: '#9c9c96' },
+    light: { bg: '#fafaf8', text: '#161614', muted: '#5a5a55' },
+  },
+  minimal: {
+    dark: { bg: '#000000', text: '#ffffff', muted: '#9e9e9e' },
+    light: { bg: '#ffffff', text: '#000000', muted: '#475569' },
+  },
+  editorial: {
+    dark: { bg: '#1a1714', text: '#ede8e0', muted: '#9a9086' },
+    light: { bg: '#faf8f4', text: '#1a1714', muted: '#4a4540' },
+  },
+  classic: {
+    dark: { bg: '#121210', text: '#f0ece4', muted: '#a09888' },
+    light: { bg: '#fdfbf5', text: '#1a1810', muted: '#4a4535' },
+  },
+  noir: {
+    dark: { bg: '#111014', text: '#f0ebe0', muted: '#998f80' },
+    light: { bg: '#faf5ef', text: '#1a1610', muted: '#4a4538' },
+  },
+  monograph: {
+    dark: { bg: '#151515', text: '#e8e8e8', muted: '#a5a5a5' },
+    light: { bg: '#fafafa', text: '#111111', muted: '#475569' },
+  },
+};
+
+const HEX_COLOUR = /^#[0-9a-f]{3,8}$/i;
+
+/**
+ * The refusal page's stylesheet, in the site's colour mode and accent, so a
+ * visitor bounced from a dark gallery does not land on a white system page.
+ * `auto` follows the visitor's OS, as the site does before its script runs.
+ */
+function refusalCss(): string {
+  const config = getConfigOrNull();
+  const theme = config?.theme ?? resolveTheme();
+  const mode = config?.colorMode ?? 'dark';
+  const palette = REFUSAL_PALETTES[theme.preset] ?? REFUSAL_PALETTES.default;
+  const vars = (m: 'dark' | 'light') => {
+    const c = palette[m];
+    const accent = accentForMode(theme, m);
+    return (
+      `color-scheme:${m};--bg:${c.bg};--text:${c.text};--muted:${c.muted};` +
+      `--accent:${HEX_COLOUR.test(accent) ? accent : c.text}`
+    );
+  };
+  const base =
+    'body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;' +
+    'padding:0 1.5rem;box-sizing:border-box;background:var(--bg);color:var(--text);' +
+    'font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.6}' +
+    'main{max-width:32rem}h1{font-size:1.25rem;font-weight:500;margin:0 0 .75rem}' +
+    'p{margin:0 0 1rem;color:var(--muted)}' +
+    'a{color:var(--text);text-decoration-color:var(--accent);' +
+    'text-decoration-thickness:2px;text-underline-offset:.25em}';
+  const root =
+    mode === 'auto'
+      ? `:root{${vars('dark')}}@media (prefers-color-scheme: light){:root{${vars('light')}}}`
+      : `:root{${vars(mode)}}`;
+  return root + base;
 }
 
 export type RefusalReason = 'notAvailable' | 'rateLimited' | 'immichUnavailable' | 'limitReached';
@@ -76,19 +158,45 @@ export type RefusalReason = 'notAvailable' | 'rateLimited' | 'immichUnavailable'
 /**
  * Where the refusal page's link leads: the page the download was started from,
  * so a visitor lands back on the album rather than the home page. Only a
- * same-origin `Referer` is followed — anything else would turn this page into an
- * open redirect with our name on it.
+ * same-origin `Referer` is followed, and only its path — anything else would
+ * turn this page into an open redirect with our name on it.
+ *
+ * "Same origin" is judged by the host the visitor addressed. It used to be
+ * `request.nextUrl.origin`, which Next rebuilds from its own bind address —
+ * `localhost` behind `-H 127.0.0.1` or a reverse proxy — so no real Referer
+ * ever matched and the link always led home.
  */
 function backHref(request: NextRequest): string {
   const referer = request.headers.get('referer');
   if (!referer) return '/';
   try {
     const url = new URL(referer);
-    if (url.origin !== request.nextUrl.origin) return '/';
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return '/';
+    if (!requestHosts(request).has(url.host.toLowerCase())) return '/';
+    // `//evil.example/x` is a path to URL, but a host to the browser.
+    if (url.pathname.startsWith('//')) return '/';
     return `${url.pathname}${url.search}`;
   } catch {
     return '/';
   }
+}
+
+/**
+ * The hosts this request may have been addressed to: the `Host` header and,
+ * only with `TRUSTED_PROXY_HOPS` set (the same trust lib/rate-limit.ts needs),
+ * the proxy's `X-Forwarded-Host`. A forged header can at most make a Referer
+ * match; the link that results is still a path on this site.
+ */
+function requestHosts(request: NextRequest): Set<string> {
+  const hosts = new Set<string>([request.nextUrl.host.toLowerCase()]);
+  const host = request.headers.get('host');
+  if (host) hosts.add(host.trim().toLowerCase());
+  if (env.TRUSTED_PROXY_HOPS > 0) {
+    for (const h of (request.headers.get('x-forwarded-host') ?? '').split(',')) {
+      if (h.trim()) hosts.add(h.trim().toLowerCase());
+    }
+  }
+  return hosts;
 }
 
 /**

@@ -89,12 +89,17 @@ export const fr: Dictionary = {
     subtitle: 'Cette galerie est protégée par un mot de passe.',
     siteSubtitle: 'Ce site est protégé par un mot de passe.',
     pageSubtitle: 'Cette page est protégée par un mot de passe.',
+    journalSubtitle: 'Cet article du journal est protégé par un mot de passe.',
     protectedPage: 'Page protégée',
     placeholder: 'Saisissez le mot de passe',
     submit: 'Entrer',
     verifying: 'Vérification…',
     incorrect: 'Mot de passe incorrect. Veuillez réessayer.',
     failed: 'Impossible de vérifier le mot de passe. Veuillez réessayer plus tard.',
+    tooManyAttempts: (seconds: number | null) =>
+      seconds
+        ? `Trop de tentatives. Veuillez réessayer dans ${seconds} ${seconds === 1 ? 'seconde' : 'secondes'}.`
+        : 'Trop de tentatives. Veuillez réessayer plus tard.',
   },
 
   about: {

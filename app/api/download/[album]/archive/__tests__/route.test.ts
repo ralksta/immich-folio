@@ -271,6 +271,75 @@ describe('refusals', () => {
     expect(html).not.toContain('evil.example');
   });
 
+  /**
+   * Next rebuilds `nextUrl` from its own bind address, so behind
+   * `next start -H 127.0.0.1` or a reverse proxy it reads `localhost` while
+   * the visitor's Referer names the host they typed. Comparing against
+   * `nextUrl.origin` sent every visitor home.
+   */
+  it('follows the Referer when Next knows itself as localhost but was asked as another host', async () => {
+    mockConfig.mockReturnValue({ albums: ['album-uuid'], albumDownloads: {} });
+    const req = new NextRequest('http://localhost:3598/api/download/album-token/archive', {
+      headers: {
+        Accept: 'text/html',
+        Host: '127.0.0.1:3598',
+        Referer: 'http://127.0.0.1:3598/polen/krakau',
+      },
+    });
+    const html = await (await GET(req, params)).text();
+    expect(html).toContain('href="/polen/krakau"');
+  });
+
+  it('does not follow a Referer whose path would read as a host', async () => {
+    mockConfig.mockReturnValue({ albums: ['album-uuid'], albumDownloads: {} });
+    const html = await (await GET(browsesHtml('http://localhost//evil.example/x'), params)).text();
+    expect(html).toContain('href="/"');
+    expect(html).not.toContain('evil.example');
+  });
+
+  it('ignores X-Forwarded-Host unless a proxy is trusted', async () => {
+    mockConfig.mockReturnValue({ albums: ['album-uuid'], albumDownloads: {} });
+    const req = new NextRequest('http://localhost/api/download/album-token/archive', {
+      headers: {
+        Accept: 'text/html',
+        'X-Forwarded-Host': 'evil.example',
+        Referer: 'https://evil.example/phish',
+      },
+    });
+    const html = await (await GET(req, params)).text();
+    expect(html).toContain('href="/"');
+  });
+
+  /**
+   * The page used to be browser-default: white, blue link, system font — in
+   * the middle of a dark gallery. It now carries the site's colour mode and
+   * accent in an inline stylesheet, and a policy that allows nothing else.
+   */
+  it("wears the site's colour mode and accent, under a policy that allows only its style", async () => {
+    mockConfig.mockReturnValue({ albums: ['album-uuid'], albumDownloads: {} });
+    mockConfigOrNull.mockReturnValue({
+      lang: 'de',
+      colorMode: 'dark',
+      theme: { preset: 'studio-modern', accent: '#e60012' },
+    });
+    const res = await GET(browsesHtml(), params);
+    const html = await res.text();
+    expect(html).toContain('<style>');
+    expect(html).toContain('color-scheme:dark;--bg:#121212');
+    expect(html).toContain('--accent:#e60012');
+    expect(html).not.toContain('style="');
+    expect(res.headers.get('content-security-policy')).toBe(
+      "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'",
+    );
+  });
+
+  it("follows the visitor's OS when the site's mode is auto", async () => {
+    mockConfig.mockReturnValue({ albums: ['album-uuid'], albumDownloads: {} });
+    mockConfigOrNull.mockReturnValue({ colorMode: 'auto' });
+    const html = await (await GET(browsesHtml(), params)).text();
+    expect(html).toContain('@media (prefers-color-scheme: light){:root{color-scheme:light;');
+  });
+
   it('keeps JSON for an API caller', async () => {
     mockConfig.mockReturnValue({ albums: ['album-uuid'], albumDownloads: {} });
     const res = await GET(getReq(), params);

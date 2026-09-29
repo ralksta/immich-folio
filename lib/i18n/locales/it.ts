@@ -87,12 +87,17 @@ export const it: Dictionary = {
     subtitle: 'Questa galleria è protetta da password.',
     siteSubtitle: 'Questo sito è protetto da password.',
     pageSubtitle: 'Questa pagina è protetta da password.',
+    journalSubtitle: 'Questo articolo del diario è protetto da password.',
     protectedPage: 'Pagina protetta',
     placeholder: 'Inserisci la password',
     submit: 'Entra',
     verifying: 'Verifica in corso…',
     incorrect: 'Password errata. Riprova.',
     failed: 'Impossibile verificare la password. Riprova più tardi.',
+    tooManyAttempts: (seconds: number | null) =>
+      seconds
+        ? `Troppi tentativi. Riprova tra ${seconds} ${seconds === 1 ? 'secondo' : 'secondi'}.`
+        : 'Troppi tentativi. Riprova più tardi.',
   },
 
   about: {
