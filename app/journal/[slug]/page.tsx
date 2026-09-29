@@ -26,7 +26,10 @@ export async function generateMetadata({ params }: JournalDetailPageProps): Prom
   const { slug } = await params;
   const entry = await readJournalEntryForRequest(slug);
   const t = getServerDictionary();
-  if (!entry) return { title: t.journal.notFound };
+  // Nothing to describe: the requested slug is not echoed, and `robots: null`
+  // drops the layout's `index, follow`, which would contradict the noindex
+  // Next adds to the 404 below.
+  if (!entry) return { title: t.journal.notFound, robots: null };
 
   const { frontmatter } = entry.parsed;
 
@@ -35,14 +38,15 @@ export async function generateMetadata({ params }: JournalDetailPageProps): Prom
   // entry's real title, subtitle and cover image reached the <head> of a
   // 200 response no authentication was ever asked for (GHSA-fvgv-97g3-wjr7).
   const isAuthedAdmin = await isAdminAuthenticated();
+  // A draft is a 404 for everyone but an admin; describe it as one.
+  if (frontmatter.draft && !isAuthedAdmin) return { title: t.journal.notFound, robots: null };
   const blocked =
-    (frontmatter.draft && !isAuthedAdmin) ||
-    (!!frontmatter.password &&
-      !isJournalAuthenticated(
-        slug,
-        frontmatter.password,
-        (await cookies()).get(`lb_auth_journal_${slug}`)?.value,
-      ));
+    !!frontmatter.password &&
+    !isJournalAuthenticated(
+      slug,
+      frontmatter.password,
+      (await cookies()).get(`lb_auth_journal_${slug}`)?.value,
+    );
 
   const title = blocked ? t.journal.title : frontmatter.title || slug;
   const description = blocked

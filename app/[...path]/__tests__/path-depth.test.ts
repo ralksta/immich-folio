@@ -39,6 +39,7 @@ const ALBUM = {
 };
 
 import PathPage, { generateMetadata } from '../page';
+import { getServerDictionary } from '@/lib/i18n/server';
 
 const call = (path: string[]) => ({
   params: Promise.resolve({ path }),
@@ -64,9 +65,9 @@ describe('catch-all path depth', () => {
     },
   );
 
-  it('gives a three-segment path no album metadata', async () => {
+  it('gives a three-segment path no album metadata, only the not-found title', async () => {
     const meta = await generateMetadata(call(['iceland', 'x', 'y']));
-    expect(meta.title).toBeUndefined();
+    expect(meta.title).toBe(getServerDictionary().error.notFoundTitle);
     expect(immich.getAlbumBySlug).not.toHaveBeenCalled();
   });
 

@@ -37,7 +37,7 @@ async function accessFor(page: PageRecord): Promise<Access> {
 /**
  * Metadata for `/<slug>` when it is a page, or null when it is not.
  *
- * A draft is described as nothing at all, and a locked page by a generic
+ * A draft is described as not found, and a locked page by a generic
  * title only: generateMetadata runs ahead of the page's own gate, so the real
  * title and description must not reach the `<head>` (GHSA-fvgv-97g3-wjr7).
  */
@@ -45,8 +45,10 @@ export async function contentPageMetadata(slug: string): Promise<Metadata | null
   const page = await readPage(slug).catch(() => null);
   if (!page) return null;
   const access = await accessFor(page);
-  if (access === 'draft') return {};
   const t = getServerDictionary();
+  // A draft answers 404 to everyone but an admin, so it gets the not-found
+  // title, and no robots tag that would contradict Next's own noindex.
+  if (access === 'draft') return { title: t.error.notFoundTitle, robots: null };
   if (access === 'locked') {
     return { title: t.password.protectedPage, robots: { index: false } };
   }

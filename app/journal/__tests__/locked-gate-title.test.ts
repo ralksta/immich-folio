@@ -61,3 +61,36 @@ describe('journal entry password gate', () => {
     expect(el.props.title).not.toContain('Lisbon');
   });
 });
+
+/**
+ * A missing entry and a draft both answer 404. Their metadata used to keep the
+ * root layout's `index, follow` next to the noindex Next adds to a 404, and a
+ * draft was titled like a live entry.
+ */
+describe('journal entry metadata on a 404', () => {
+  const meta = async (slug: string) => {
+    const { generateMetadata } = await import('../[slug]/page');
+    return generateMetadata({ params: Promise.resolve({ slug }) });
+  };
+
+  it('describes a missing entry as not found, with no robots tag of its own', async () => {
+    readJournalEntry.mockResolvedValue(null);
+    const m = await meta('no-such-entry');
+
+    expect(m.title).toBe(getServerDictionary().journal.notFound);
+    expect(m.robots).toBeNull();
+    expect(JSON.stringify(m)).not.toContain('no-such-entry');
+  });
+
+  it('describes a draft as not found, not by its title', async () => {
+    readJournalEntry.mockResolvedValue({
+      slug: 'draft-trip',
+      parsed: { frontmatter: { title: 'Unpublished Draft', draft: true }, blocks: [] },
+    });
+    const m = await meta('draft-trip');
+
+    expect(m.title).toBe(getServerDictionary().journal.notFound);
+    expect(m.robots).toBeNull();
+    expect(JSON.stringify(m)).not.toContain('Unpublished');
+  });
+});
