@@ -14,7 +14,7 @@ import { essayPhotoSequence } from '@/lib/essaySequence';
 import type { PhotoItem } from './PhotoGrid';
 import './essay.css';
 import { useDictionary } from '@/components/I18nProvider';
-import { formatJournalDate } from '@/lib/journalDate';
+import { formatJournalDate, journalDateTime } from '@/lib/journalDate';
 
 /**
  * The map block is the only thing in an essay that needs Leaflet, and most
@@ -409,16 +409,19 @@ function EssayViewContent({
   // The story's photos that are selected, not the whole stored set (see PhotoGrid).
   const selectedCount = proofing ? proofing.getSelectedTokens().length : 0;
 
+  const dateText = formatJournalDate(essay.frontmatter.date, t.dateLocale);
+  const dateTime = journalDateTime(essay.frontmatter.date);
+
   return (
     <div className="essay-container">
       <header className="essay-header">
         {displayTitle && <h1 className="essay-header__title">{displayTitle}</h1>}
         {displaySubtitle && <p className="essay-header__subtitle">{displaySubtitle}</p>}
-        {(essay.frontmatter.author || essay.frontmatter.date) && (
+        {(essay.frontmatter.author || dateText) && (
           <div className="essay-header__meta">
-            {[essay.frontmatter.author, formatJournalDate(essay.frontmatter.date, t.dateLocale)]
-              .filter(Boolean)
-              .join(' • ')}
+            {essay.frontmatter.author}
+            {essay.frontmatter.author && dateText && ' • '}
+            {dateText && (dateTime ? <time dateTime={dateTime}>{dateText}</time> : dateText)}
           </div>
         )}
       </header>

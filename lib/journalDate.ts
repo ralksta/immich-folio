@@ -47,3 +47,26 @@ export function formatJournalDate(raw: string | undefined, locale: string): stri
 
   return value;
 }
+
+/**
+ * The `datetime` attribute for a `<time>` around that display form: the
+ * calendar date (`2026-03-15`) or month (`2026-03`) it names, or null when
+ * the value is free text — `Spring 2026` has no machine-readable form, and a
+ * `<time>` carrying one would claim its text is a valid date string.
+ */
+export function journalDateTime(raw: string | undefined): string | null {
+  const value = raw?.trim();
+  if (!value) return null;
+  const day = DAY.exec(value);
+  if (day) {
+    // An impossible date (2026-02-30) is displayed as typed; the attribute
+    // must not claim it either.
+    return formatJournalDate(value, 'en') === value ? null : `${day[1]}-${day[2]}-${day[3]}`;
+  }
+  const month = MONTH.exec(value);
+  if (month) {
+    const m = Number(month[2]);
+    return m >= 1 && m <= 12 ? `${month[1]}-${month[2]}` : null;
+  }
+  return null;
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { formatJournalDate } from '../journalDate';
+import { formatJournalDate, journalDateTime } from '../journalDate';
 
 /**
  * The /journal index formatted `new Date(frontmatter.date)` in the server's
@@ -48,4 +48,23 @@ describe('formatJournalDate', () => {
     expect(formatJournalDate(undefined, 'en-US')).toBeNull();
     expect(formatJournalDate('   ', 'en-US')).toBeNull();
   });
+});
+
+/** The `datetime` of the `<time>` the index and the entry header render (P-21). */
+describe('journalDateTime', () => {
+  it('gives the calendar day, without the time a value may carry', () => {
+    expect(journalDateTime('2026-03-15')).toBe('2026-03-15');
+    expect(journalDateTime(' 2026-03-15T23:30:00+01:00 ')).toBe('2026-03-15');
+  });
+
+  it('gives a year-month value as a month', () => {
+    expect(journalDateTime('2026-03')).toBe('2026-03');
+  });
+
+  it.each(['15.03.2026', 'Spring 2026', '2026-02-30', '2026-13', '', undefined])(
+    'has no machine-readable form for %s',
+    (raw) => {
+      expect(journalDateTime(raw)).toBeNull();
+    },
+  );
 });
