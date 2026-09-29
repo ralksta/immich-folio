@@ -84,6 +84,13 @@
      may be dark navy, neither of which marks anything on the overlay. */
   --lightbox-fav: #ff6b6b;
 
+  /* The passepartout photo frame: the mat board, its edge, and the EXIF line
+     printed on it. --mat-text is checked at 4.5:1 against --mat-bg for every
+     preset and mode (lib/__tests__/passepartout-mat.test.ts). */
+  --mat-bg: #111111;
+  --mat-border: rgba(255, 255, 255, 0.12);
+  --mat-text: var(--text-muted);
+
   --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
   --font-caption: 'EB Garamond', Georgia, serif;
@@ -122,6 +129,9 @@
 
   --error: #c62828;
   --warning: #7a5600;
+
+  --mat-bg: #ffffff;
+  --mat-border: rgba(0, 0, 0, 0.1);
 
   color-scheme: light;
 }
@@ -251,6 +261,13 @@
 
   --border-subtle: #2a2822;
   --border-hover: #3a3830;
+
+  /* A warm mat. Both modes set it: this block comes after the generic light
+     one, so a light value left out here would lose to the dark one. */
+  --mat-bg: #1a1816;
+  --mat-border: rgba(196, 154, 60, 0.12);
+  /* --text-muted, a step lighter: it is 4.48:1 on this mat. */
+  --mat-text: #8c826f;
 }
 
 [data-preset='classic'][data-theme='light'] {
@@ -266,6 +283,10 @@
 
   --border-subtle: #e5dfcf;
   --border-hover: #d0c8b5;
+
+  --mat-bg: #fffdf5;
+  --mat-border: rgba(196, 154, 60, 0.2);
+  --mat-text: var(--text-muted);
 }
 
 /* ── Noir: Darkroom Analog Palette ───────────────── */

@@ -20,6 +20,7 @@ import { useProofing } from '@/components/useProofing';
 import { ProofingProvider, ProofingModal, ProofSessionControls } from '@/components/ProofingLazy';
 import { useDictionary } from '@/components/I18nProvider';
 import { parsePhotoHash, parsePhotoQuery, buildPhotoQuery } from '@/lib/photoHash';
+import { justifiedTileStyle } from '@/lib/justifiedRow';
 
 export interface PhotoItem {
   id: string;
@@ -231,16 +232,8 @@ function PhotoGridInner({
 
       // Justified rows: the flex sizing must sit on the outermost grid child,
       // which is the FadeIn wrapper — not the .photo-grid__item inside it.
-      // Aspect ratio drives both grow factor and basis; ~3:2 fallback for
-      // assets without dimensions (e.g. videos) keeps the row math sane.
-      const justifiedAr = asset.aspectRatio || 1.5;
       const justifiedStyle: React.CSSProperties | undefined =
-        layout === 'justified'
-          ? {
-              flexGrow: justifiedAr,
-              flexBasis: `calc(var(--grid-row-height, 300px) * ${justifiedAr})`,
-            }
-          : undefined;
+        layout === 'justified' ? justifiedTileStyle(asset.aspectRatio) : undefined;
 
       return (
         <FadeIn key={asset.id} delay={index < 12 ? index * 50 : 0} style={justifiedStyle}>
@@ -261,23 +254,30 @@ function PhotoGridInner({
             aria-label={t.lightbox.openPhoto(index + 1)}
             aria-haspopup="dialog"
             style={{
-              ...(asset.dominantColor ? { backgroundColor: asset.dominantColor } : {}),
               ...((layout === 'masonry' || layout === 'showcase') && asset.aspectRatio
                 ? { aspectRatio: `${asset.aspectRatio}` }
                 : {}),
               position: 'relative',
             }}
           >
-            <Image
-              src={asset.thumbUrl}
-              alt={asset.caption ?? ''}
-              fill
-              sizes="(max-width: 600px) 50vw, (max-width: 1000px) 33vw, 25vw"
-              loading={index < 6 ? 'eager' : 'lazy'}
-              {...(asset.blurDataURL
-                ? { placeholder: 'blur' as const, blurDataURL: asset.blurDataURL }
-                : {})}
-            />
+            {/* The photo's own box. Without a frame it covers the whole tile;
+                under passepartout globals.css insets it by the mat, so `fill`
+                and the placeholder colour stay on the photo, not on the mat. */}
+            <div
+              className="photo-grid__media"
+              style={asset.dominantColor ? { backgroundColor: asset.dominantColor } : undefined}
+            >
+              <Image
+                src={asset.thumbUrl}
+                alt={asset.caption ?? ''}
+                fill
+                sizes="(max-width: 600px) 50vw, (max-width: 1000px) 33vw, 25vw"
+                loading={index < 6 ? 'eager' : 'lazy'}
+                {...(asset.blurDataURL
+                  ? { placeholder: 'blur' as const, blurDataURL: asset.blurDataURL }
+                  : {})}
+              />
+            </div>
 
             {proofing && (
               <button
