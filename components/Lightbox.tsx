@@ -19,7 +19,7 @@ import type { PhotoItem } from '@/app/[...path]/PhotoGrid';
 import { useExif } from '@/hooks/useExif';
 import { useSwipe } from '@/hooks/useSwipe';
 import styles from './Lightbox.module.css';
-import { useProofing } from './ProofingContext';
+import { useProofing } from './useProofing';
 import { IconHeart } from './Icons';
 import { useDictionary } from './I18nProvider';
 // From lib/config/schema directly: lib/config/index.ts pulls in `fs`, which a

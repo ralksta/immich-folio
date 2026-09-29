@@ -15,9 +15,9 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Lightbox, type LightboxWatermark } from '@/components/Lightbox';
 import { FadeIn } from '@/components/FadeIn';
-import { ProofingProvider, useProofing, type ProofSessionInit } from '@/components/ProofingContext';
-import { ProofingModal } from '@/components/ProofingModal';
-import { ProofSessionControls } from '@/components/ProofSessionControls';
+import type { ProofSessionInit } from '@/components/ProofingContext';
+import { useProofing } from '@/components/useProofing';
+import { ProofingProvider, ProofingModal, ProofSessionControls } from '@/components/ProofingLazy';
 import { useDictionary } from '@/components/I18nProvider';
 import { parsePhotoHash, parsePhotoQuery, buildPhotoQuery } from '@/lib/photoHash';
 

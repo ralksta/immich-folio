@@ -3,8 +3,8 @@
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Lightbox, type LightboxWatermark } from '@/components/Lightbox';
-import { ProofingProvider, useProofing } from '@/components/ProofingContext';
-import { ProofingModal } from '@/components/ProofingModal';
+import { useProofing } from '@/components/useProofing';
+import { ProofingProvider, ProofingModal } from '@/components/ProofingLazy';
 import { FadeIn } from '@/components/FadeIn';
 import { LeafletMap, escapeHtml } from '@/components/LeafletMap';
 import type { ParsedEssay, EssayBlock } from '@/lib/essay';
