@@ -28,6 +28,7 @@ import { resolveWatermarkOpacity } from '@/lib/config/schema';
 import { formatCamera } from '@/lib/exif';
 import { buildPhotoPermalink } from '@/lib/photoHash';
 import { trapTabKey } from '@/lib/focusTrap';
+import { canonicalImageUrl } from '@/lib/imageSize';
 import { nextSlideshowSpeed, type SlideshowSpeed } from '@/lib/slideshow';
 import {
   LIGHTBOX_SHORTCUTS,
@@ -289,7 +290,7 @@ export function Lightbox({
     const preload = (index: number) => {
       if (index >= 0 && index < assets.length && assets[index].type !== 'video') {
         const img = new Image();
-        img.src = assets[index].previewUrl;
+        img.src = canonicalImageUrl(assets[index].previewUrl);
       }
     };
     preload(currentIndex + 1);
@@ -516,7 +517,7 @@ export function Lightbox({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             className={`${styles.image}${imageLoaded ? ` ${styles.imageLoaded}` : ''}`}
-            src={current.previewUrl}
+            src={canonicalImageUrl(current.previewUrl)}
             alt={current.caption ?? ''}
             draggable={false}
             onLoad={() => setImageLoaded(true)}

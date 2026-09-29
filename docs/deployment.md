@@ -215,7 +215,7 @@ CDN_URL=https://cdn.example.com
 ```
 
 ```
-https://cdn.example.com/api/image/v2:…?size=preview&w=1080&q=75
+https://cdn.example.com/api/image/v2:…?size=preview&w=1440
 ```
 
 The CDN uses Immich Folio as its origin. The first request for a photo is a
@@ -230,7 +230,7 @@ Folio URL, then:
 
 - **Cache `/api/image/*` and `/api/video/*`**, and nothing else. Pages are
   rendered per request, and other routes check cookies.
-- **Include the full query string in the cache key.** `size`, `w`, `q` and the
+- **Include the full query string in the cache key.** `size`, `w` and the
   `IMAGE_CACHE_VERSION` buster `v` all select a different file.
 - **Respect the origin's `Cache-Control`.** Photos come back
   `public, max-age=31536000, immutable`; errors (429, 503, 404) come back
