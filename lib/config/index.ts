@@ -645,8 +645,12 @@ function configInputs(): string {
   ];
   // throwIfNoEntry: a missing file is the normal case for install.json and
   // about.md, and building an ENOENT error costs more than the stat.
+  // turbopackIgnore: `file` is not statically resolvable, so without the
+  // comment Turbopack traces the whole project into .next/standalone. Only
+  // the mtime is read here; the files themselves are loaded elsewhere.
   const stamps = files.map(
-    (file) => `${file}@${fs.statSync(file, { throwIfNoEntry: false })?.mtimeMs ?? '-'}`,
+    (file) =>
+      `${file}@${fs.statSync(/* turbopackIgnore: true */ file, { throwIfNoEntry: false })?.mtimeMs ?? '-'}`,
   );
   return `${stamps.join('|')}|${JSON.stringify(env)}`;
 }
