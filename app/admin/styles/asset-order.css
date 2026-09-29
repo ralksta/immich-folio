@@ -91,13 +91,25 @@
   cursor: grabbing;
 }
 
+/* A button, so the tail can be pinned from the keyboard. */
 .order-tile-unpinned {
+  display: block;
+  width: 100%;
+  padding: 0;
+  font: inherit;
+  color: inherit;
   opacity: 0.55;
 }
 
-.order-tile-unpinned:hover {
+.order-tile-unpinned:hover,
+.order-tile-unpinned:focus-visible {
   opacity: 1;
   border-color: var(--admin-border);
+}
+
+.order-tile:focus-visible {
+  outline: var(--admin-focus-ring);
+  outline-offset: 2px;
 }
 
 .order-tile-index {

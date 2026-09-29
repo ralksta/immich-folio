@@ -52,7 +52,7 @@ export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }:
       >
         <div className="picker-header">
           <h3 id="album-picker-title">Select Album</h3>
-          <button className="admin-btn-icon" onClick={onClose}>
+          <button type="button" className="admin-btn-icon" onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
@@ -76,12 +76,16 @@ export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }:
           {filtered.map((album) => {
             const isUsed = usedAlbumIds.has(album.id);
             return (
-              <div
+              // A button, not a div: the list has to work from the keyboard.
+              // An album already on the site is disabled rather than inert.
+              <button
+                type="button"
                 key={album.id}
                 className={`picker-item ${isUsed ? 'used' : ''}`}
-                onClick={() => !isUsed && onSelect(album.id)}
+                disabled={isUsed}
+                onClick={() => onSelect(album.id)}
               >
-                <div className="picker-item-thumb">
+                <span className="picker-item-thumb">
                   {album.thumbnailAssetId ? (
                     <img
                       className="picker-thumb-img"
@@ -90,12 +94,12 @@ export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }:
                       loading="lazy"
                     />
                   ) : (
-                    <div className="picker-thumb-placeholder">
+                    <span className="picker-thumb-placeholder">
                       <IconFolder size={20} />
-                    </div>
+                    </span>
                   )}
-                </div>
-                <div className="picker-item-info">
+                </span>
+                <span className="picker-item-info">
                   <span className="picker-item-name">{album.albumName}</span>
                   <span className="picker-item-meta">
                     {album.assetCount} photos
@@ -108,15 +112,15 @@ export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }:
                   {album.shared === false && (
                     <span className="picker-item-note">Not shared in Immich</span>
                   )}
-                </div>
-                <div className="picker-item-action">
+                </span>
+                <span className="picker-item-action">
                   {isUsed ? (
                     <span className="picker-used-badge">In use</span>
                   ) : (
                     <span className="picker-select-badge">Select</span>
                   )}
-                </div>
-              </div>
+                </span>
+              </button>
             );
           })}
         </div>

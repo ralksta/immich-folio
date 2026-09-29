@@ -16,9 +16,15 @@ export const metadata: Metadata = {
  */
 export const dynamic = 'force-dynamic';
 
+/**
+ * `lang="en"`: `<html lang>` follows the site language (settings.yaml `lang`),
+ * but the admin is deliberately untranslated. Without this a screen reader
+ * read the English interface with a German voice on a `lang: de` site.
+ * The Listbox popup is portalled to <body> and still inherits the root value.
+ */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="admin-layout">
+    <div className="admin-layout" lang="en">
       <AdminShell>{children}</AdminShell>
     </div>
   );

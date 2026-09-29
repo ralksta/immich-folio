@@ -22,6 +22,7 @@ import { useContentRestored } from '../contentRestored';
 import AdminLoadState from '../AdminLoadState';
 import PageHeader from '../PageHeader';
 import { useConfirm } from '../ConfirmDialog';
+import { useModalDialog } from '@/hooks/useModalDialog';
 
 interface JournalStudioProps {
   /** Entry to open, taken from the /admin/journal/[slug] route. */
@@ -50,6 +51,11 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
   const [creating, setCreating] = useState(false);
   /** null = start blank, matching the previous (only) behavior. */
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const closeCreateModal = () => {
+    setShowCreateModal(false);
+    setSelectedTemplateId(null);
+  };
+  const createCardRef = useModalDialog(closeCreateModal, showCreateModal);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -254,8 +260,16 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
       {/* Create Modal */}
       {showCreateModal && (
         <div className="journal-modal-overlay">
-          <div className="journal-modal-card">
-            <h3 style={{ margin: '0 0 1rem' }}>Create New Journal Entry</h3>
+          <div
+            className="journal-modal-card"
+            ref={createCardRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="journal-new-dialog-title"
+          >
+            <h3 id="journal-new-dialog-title" style={{ margin: '0 0 1rem' }}>
+              Create New Journal Entry
+            </h3>
             <form onSubmit={handleCreate}>
               <div style={{ marginBottom: '1rem' }}>
                 <label
@@ -352,10 +366,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                 <button
                   type="button"
                   className="admin-btn admin-btn-secondary"
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setSelectedTemplateId(null);
-                  }}
+                  onClick={closeCreateModal}
                 >
                   Cancel
                 </button>
