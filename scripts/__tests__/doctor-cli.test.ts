@@ -2,6 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import yaml from 'js-yaml';
 import type { CliFinding } from '../doctor.mts';
 import {
@@ -488,5 +490,46 @@ describe('gatherFindings — album checks (#629)', () => {
       vi.unstubAllGlobals();
       fs.rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+/**
+ * `npm run doctor` runs the settings-values check the panel runs (QA A-14).
+ * Under Vitest an extensionless import resolves fine, so the second test
+ * loads the script in a real Node process: that is the runtime which refuses
+ * one, and the reason the CLI could not run this check before.
+ */
+describe('gatherFindings — setting values (QA A-14)', () => {
+  it('warns about values the resolvers would clamp or replace', async () => {
+    const dir = tmpdir();
+    try {
+      fs.writeFileSync(
+        path.join(dir, 'settings.yaml'),
+        'theme:\n  accent: rot\ncontact:\n  retentionDays: 400\n',
+      );
+      const findings = await gatherFindings(dir, { INSTALL_CONTENT_DIR: dir });
+      const finding = findings.find((f) => f.id === 'settings-values');
+      expect(finding?.level).toBe('warn');
+      expect(finding?.detail).toContain('accent colour, message retention');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('loads under Node type stripping, without a bundler resolving paths', () => {
+    const script = path.resolve(__dirname, '../doctor.mts');
+    const result = spawnSync(
+      process.execPath,
+      [
+        '--disable-warning=MODULE_TYPELESS_PACKAGE_JSON',
+        '--input-type=module',
+        '-e',
+        `const m = await import(${JSON.stringify(pathToFileURL(script).href)});` +
+          'process.stdout.write(typeof m.gatherFindings);',
+      ],
+      { encoding: 'utf8' },
+    );
+    expect(result.stderr).toBe('');
+    expect(result.stdout).toBe('function');
   });
 });

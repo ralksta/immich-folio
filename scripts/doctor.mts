@@ -21,11 +21,16 @@
  * Node 22.18 unflagged native type stripping, so `node scripts/doctor.mts`
  * runs the TypeScript directly with no runner at all. It has one constraint:
  * no path aliases, and every relative import needs its file extension. That
- * rules out importing `lib/config` — but `lib/admin/doctor.ts` has no imports
- * whatsoever (it is pure functions over gathered inputs, written that way in
- * #491 precisely so a CLI could reuse it), so the entire TypeScript module
- * graph of this script is two files. Nothing is duplicated that judges: the
- * checks all come from `lib/admin/doctor.ts`.
+ * rules out importing `lib/config/index.ts` and most of its neighbours — but
+ * `lib/admin/doctor.ts` has no imports whatsoever (it is pure functions over
+ * gathered inputs, written that way in #491 precisely so a CLI could reuse
+ * it), and `lib/config/settingValues.ts` writes its few imports with the
+ * extension, onto modules that only `import type` further. So the TypeScript
+ * module graph of this script stays small, and nothing is duplicated that
+ * judges: the checks all come from `lib/admin/doctor.ts`, the setting values
+ * are judged by the same function the save route runs. A test in
+ * scripts/__tests__/doctor-cli.test.ts loads the graph in a real Node process,
+ * because Vitest resolves extensionless imports and would not notice.
  *
  * What *is* repeated here is the gathering — reading the filesystem and the
  * environment instead of a request, exactly as the issue described. It is
@@ -58,6 +63,7 @@ import {
   checkLegal,
   checkPrivacy,
   checkPasswords,
+  checkSettingValues,
   worstLevel,
   type AlbumRef,
   type DoctorFinding,
@@ -66,6 +72,7 @@ import {
   type LegalRef,
   type PasswordRef,
 } from '../lib/admin/doctor.ts';
+import { validateSettingValues } from '../lib/config/settingValues.ts';
 
 /**
  * `process.env`, minus the `NODE_ENV`-is-required augmentation Next adds to
@@ -707,7 +714,7 @@ export async function gatherFindings(cwd: string, env: EnvLike): Promise<CliFind
 
   findings.push(checkPasswords(passwords));
 
-  // ── Impressum ───────────────────────────────────────────────────────
+  // ── Impressum, privacy and setting values ───────────────────────────
   const settingsNode = settings.node;
   if (settingsNode && typeof settingsNode === 'object' && !Array.isArray(settingsNode)) {
     const node = settingsNode as Record<string, unknown>;
@@ -730,6 +737,9 @@ export async function gatherFindings(cwd: string, env: EnvLike): Promise<CliFind
       hasText: privacyText !== '',
     });
     if (privacy) findings.push(privacy);
+    // Values the resolvers would clamp or replace — the same check the panel's
+    // Diagnostics runs over the raw file.
+    findings.push(checkSettingValues(validateSettingValues(node)));
   }
 
   // ── Writability of the content volume ───────────────────────────────

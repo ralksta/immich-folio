@@ -109,7 +109,7 @@ export const VALID_LAYOUTS = [
  * side of this field, are already checked against an allowlist; this is the
  * same treatment for the one numeric scalar in ThemeConfig.
  */
-const THEME_RADIUS_MAX = 64; // Presets top out at 16; generous but not unbounded.
+export const THEME_RADIUS_MAX = 64; // Presets top out at 16; generous but not unbounded.
 function resolveRadius(raw: unknown, fallback: number): number {
   if (typeof raw !== 'number' || !Number.isFinite(raw)) return fallback;
   return Math.min(THEME_RADIUS_MAX, Math.max(0, raw));

@@ -1,9 +1,10 @@
 'use client';
 
 import * as Icons from '../Icons';
+import { FieldError } from './fields';
 import type { SectionProps } from './types';
 
-export default function FooterSection({ settings, update }: SectionProps) {
+export default function FooterSection({ settings, update, fieldErrors }: SectionProps) {
   return (
     <div className="settings-panel">
       <div className="settings-section-header">
@@ -67,9 +68,13 @@ export default function FooterSection({ settings, update }: SectionProps) {
       {(settings.navLinks || []).map((link, i) => (
         <div className="admin-field-row" key={i}>
           <div className="admin-field">
-            <label htmlFor="footer-label">Label</label>
+            <label htmlFor={`navlink-${i}-label`}>Label</label>
             <input
-              id="footer-label"
+              id={`navlink-${i}-label`}
+              aria-invalid={fieldErrors?.[`navLinks.${i}.label`] ? true : undefined}
+              aria-describedby={
+                fieldErrors?.[`navLinks.${i}.label`] ? `navlink-${i}-label-error` : undefined
+              }
               value={link.label || ''}
               onChange={(e) => {
                 const next = [...(settings.navLinks || [])];
@@ -78,11 +83,19 @@ export default function FooterSection({ settings, update }: SectionProps) {
               }}
               placeholder="Shop"
             />
+            <FieldError
+              id={`navlink-${i}-label-error`}
+              message={fieldErrors?.[`navLinks.${i}.label`]}
+            />
           </div>
           <div className="admin-field">
-            <label htmlFor="footer-url">URL</label>
+            <label htmlFor={`navlink-${i}-url`}>URL</label>
             <input
-              id="footer-url"
+              id={`navlink-${i}-url`}
+              aria-invalid={fieldErrors?.[`navLinks.${i}.url`] ? true : undefined}
+              aria-describedby={
+                fieldErrors?.[`navLinks.${i}.url`] ? `navlink-${i}-url-error` : undefined
+              }
               value={link.url || ''}
               onChange={(e) => {
                 const next = [...(settings.navLinks || [])];
@@ -90,6 +103,10 @@ export default function FooterSection({ settings, update }: SectionProps) {
                 update('navLinks', next);
               }}
               placeholder="https://shop.example.com"
+            />
+            <FieldError
+              id={`navlink-${i}-url-error`}
+              message={fieldErrors?.[`navLinks.${i}.url`]}
             />
           </div>
           <button
