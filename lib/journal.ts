@@ -232,8 +232,11 @@ export function renderInlineMarkdown(text: string): string {
   // Italic: *text* or _text_, same intraword rule for `_`.
   html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
   html = html.replace(/(?<![\w])_(.*?)_(?![\w])/g, '<em>$1</em>');
-  // Links: [label](url)
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, url) => {
+  // Links: [label](url). The URL may hold one level of balanced parentheses,
+  // as Wikipedia-style URLs do (`…/Foo_(bar)`); it used to end at the first
+  // `)` and leave the rest as text. The two alternatives start on disjoint
+  // characters, so this stays linear.
+  html = html.replace(/\[([^\]]+)\]\(((?:[^()]|\([^()]*\))+)\)/g, (match, label, url) => {
     const trimmed = url.trim();
     if (!isSafeUrl(trimmed)) return label;
     return `<a href="${trimmed}" target="_blank" rel="noopener noreferrer">${label}</a>`;

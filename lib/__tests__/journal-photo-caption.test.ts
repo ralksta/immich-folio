@@ -92,6 +92,21 @@ describe('photo captions with parentheses (A-1)', () => {
     });
   });
 
+  it('keeps balanced parentheses inside a link URL', () => {
+    const source = `![${ID}:wide](Gipfel (560 m), siehe [Karte](https://example.com/map_(1)))`;
+    const parsed = parseJournalMarkdown(source);
+    expect(parsed.blocks[0]).toMatchObject({
+      type: 'photo',
+      caption:
+        'Gipfel (560 m), siehe <a href="https://example.com/map_(1)" target="_blank" rel="noopener noreferrer">Karte</a>',
+    });
+    expect(roundTrip(source)).toBe(source);
+    // Outside a link, a parenthesis after the URL is still text.
+    expect(renderInlineMarkdown('[a](https://x.y) (b)')).toBe(
+      '<a href="https://x.y" target="_blank" rel="noopener noreferrer">a</a> (b)',
+    );
+  });
+
   for (const caption of TRICKY_CAPTIONS) {
     it(`round-trips the caption ${JSON.stringify(caption)} for every photo block type`, () => {
       const html = renderInlineMarkdown(caption);
