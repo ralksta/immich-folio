@@ -23,7 +23,7 @@ import { decodeAssetId } from '@/lib/tokens';
 import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 import { isAlbumReachable, siteLockResponse } from '@/lib/auth';
-import { refusal, streamArchive } from '@/lib/zipArchive';
+import { refusal, withArchiveSlot, type ArchiveStreamer } from '@/lib/zipArchive';
 import { readBodyCapped } from '@/lib/requestBody';
 
 export const dynamic = 'force-dynamic';
@@ -148,9 +148,11 @@ export async function GET(
   { params }: { params: Promise<{ album: string }> },
 ) {
   const { album } = await params;
-  const resolved = await resolveAlbum(request, { album });
-  if ('error' in resolved) return resolved.error;
-  return streamArchive(resolved.albumName, resolved.assets);
+  return withArchiveSlot(request, async (stream) => {
+    const resolved = await resolveAlbum(request, { album });
+    if ('error' in resolved) return resolved.error;
+    return stream(resolved.albumName, resolved.assets);
+  });
 }
 
 export async function POST(
@@ -158,6 +160,15 @@ export async function POST(
   { params }: { params: Promise<{ album: string }> },
 ) {
   const { album } = await params;
+  return withArchiveSlot(request, (stream) => streamSelection(request, album, stream));
+}
+
+/** The POST handler's body, run inside the client's archive slot. */
+async function streamSelection(
+  request: NextRequest,
+  album: string,
+  stream: ArchiveStreamer,
+): Promise<Response> {
   const resolved = await resolveAlbum(request, { album });
   if ('error' in resolved) return resolved.error;
 
@@ -192,5 +203,5 @@ export async function POST(
     return refusal(request, 404, 'notAvailable');
   }
 
-  return streamArchive(resolved.albumName, selected);
+  return stream(resolved.albumName, selected);
 }

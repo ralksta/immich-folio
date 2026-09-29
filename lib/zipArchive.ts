@@ -11,6 +11,7 @@ import { Readable } from 'node:stream';
 import archiver from 'archiver';
 import { immich, type ImmichAsset } from '@/lib/immich';
 import { contentDisposition, safeDownloadName } from '@/lib/downloadName';
+import { getClientIp } from '@/lib/rate-limit';
 import { getDictionary } from '@/lib/i18n';
 import { getLocale, getServerDictionary } from '@/lib/i18n/server';
 
@@ -155,13 +156,109 @@ function appendEntry(archive: archiver.Archiver, source: Readable, name: string)
 }
 
 /**
+ * Archives one client may have open at the same time, the album archive and
+ * the proofing archive counted together.
+ *
+ * The 5-per-minute rate limit bounds how often an archive starts, not how long
+ * it lives. Each open archive holds an Immich socket and a few MB of buffers
+ * for as long as the client keeps its connection, so a client that reads
+ * slowly could otherwise stack them up minute after minute. Two leaves room
+ * for the proofing modal's selection and album ZIPs side by side.
+ */
+export const MAX_CONCURRENT_ARCHIVES = 2;
+
+/** `Retry-After` for a refusal at the concurrency cap. */
+const ARCHIVE_SLOT_RETRY_AFTER = 30;
+
+/**
+ * How long an archive waits for the client to take the next bytes before it
+ * is torn down, upstream Immich stream included.
+ *
+ * Counted from the last pull, and only while data is waiting for the client: a
+ * slow download that keeps reading never trips it, and neither does a slow
+ * Immich (the pull is then still pending, and the upstream request has its own
+ * timeouts). It is needed because backpressure pauses undici's body timeout,
+ * so a client that stopped reading kept the archive and its Immich socket for
+ * as long as it held the TCP connection open.
+ */
+export const ARCHIVE_STALL_TIMEOUT_MS = 60_000;
+
+/** Open archives per client IP. An entry is removed when it drops to 0. */
+const inFlight = new Map<string, number>();
+
+/**
+ * Take one of the client's archive slots. Returns the release function (safe
+ * to call more than once), or `null` when the client is at the cap.
+ */
+function acquireArchiveSlot(ip: string): (() => void) | null {
+  const current = inFlight.get(ip) ?? 0;
+  if (current >= MAX_CONCURRENT_ARCHIVES) return null;
+  inFlight.set(ip, current + 1);
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    const remaining = (inFlight.get(ip) ?? 1) - 1;
+    if (remaining > 0) inFlight.set(ip, remaining);
+    else inFlight.delete(ip);
+  };
+}
+
+/** Test seam: archives currently holding a slot for `ip`. */
+export function __archivesInFlight(ip: string): number {
+  return inFlight.get(ip) ?? 0;
+}
+
+export type ArchiveStreamer = (albumName: string, assets: ImmichAsset[]) => Response;
+
+/**
+ * Run an archive route's handler inside one of the client's archive slots.
+ *
+ * The slot is taken before the handler runs, so before any Immich request, and
+ * a client that already has `MAX_CONCURRENT_ARCHIVES` open gets a 429. The
+ * handler receives a `stream` function to use instead of `streamArchive`: an
+ * archive started through it owns the slot and gives it back when it ends,
+ * fails, is cancelled or stalls. If the handler answers any other way (a
+ * refusal, a throw), the slot is given back here.
+ *
+ * The client key is `getClientIp()`, so it honours `TRUSTED_PROXY_HOPS` like
+ * the rate limiter.
+ */
+export async function withArchiveSlot(
+  request: NextRequest,
+  handler: (stream: ArchiveStreamer) => Promise<Response>,
+): Promise<Response> {
+  const release = acquireArchiveSlot(getClientIp(request));
+  if (!release) return refusal(request, 429, 'rateLimited', ARCHIVE_SLOT_RETRY_AFTER);
+
+  let handedOver = false;
+  try {
+    return await handler((albumName, assets) => {
+      const response = streamArchive(albumName, assets, release);
+      handedOver = true;
+      return response;
+    });
+  } finally {
+    if (!handedOver) release();
+  }
+}
+
+/**
  * Stream `assets` as a ZIP of originals.
  *
  * archiver writes data descriptors, so entry sizes are never known up front and
  * memory stays flat no matter how large the album is. The loop pulls one
  * original at a time and stops as soon as the response is gone.
+ *
+ * `onDone` runs exactly once, when the archive has been read to the end,
+ * failed, been cancelled or stalled; `withArchiveSlot` hands its slot release
+ * in here.
  */
-export function streamArchive(albumName: string, assets: ImmichAsset[]): NextResponse {
+export function streamArchive(
+  albumName: string,
+  assets: ImmichAsset[],
+  onDone: () => void = () => {},
+): NextResponse {
   const archive = archiver('zip', { store: true });
   archive.on('error', (err) => {
     // A visitor cancelling the download is not a failure worth a log line.
@@ -169,7 +266,65 @@ export function streamArchive(albumName: string, assets: ImmichAsset[]): NextRes
     console.error(`[Download] Archive stream failed:`, err);
   });
 
-  const body = Readable.toWeb(archive) as unknown as ReadableStream;
+  let stallTimer: ReturnType<typeof setTimeout> | undefined;
+  let done = false;
+  const finish = () => {
+    clearTimeout(stallTimer);
+    if (done) return;
+    done = true;
+    onDone();
+  };
+  // Every way an archive ends passes through `close`: read to the end,
+  // destroyed by an error, by a cancel, or by the stall timer below.
+  archive.once('close', finish);
+
+  // A pull-based body rather than `Readable.toWeb()`: `pull` runs only once
+  // the client has taken what was queued, which is the signal the stall timer
+  // needs. The queue holds a single chunk; archiver's own buffer and
+  // backpressure do the rest, as before.
+  const chunks = archive[Symbol.asyncIterator]() as AsyncIterator<Buffer>;
+  const body = new ReadableStream<Uint8Array>(
+    {
+      async pull(controller) {
+        clearTimeout(stallTimer);
+        try {
+          const next = await chunks.next();
+          if (next.done) {
+            controller.close();
+            finish();
+            return;
+          }
+          // A Buffer is a Uint8Array: handed on as is, not copied.
+          controller.enqueue(next.value);
+        } catch (err) {
+          // Also reached when a cancel won the race: erroring a cancelled
+          // stream is a no-op.
+          controller.error(err);
+          finish();
+          return;
+        }
+        if (done) return;
+        // The chunk is queued; the next move is the client's.
+        stallTimer = setTimeout(() => {
+          console.warn(
+            `[Download] Archive closed: nothing read for ${ARCHIVE_STALL_TIMEOUT_MS / 1000}s`,
+          );
+          controller.error(new Error('Archive download stalled'));
+          // Destroys the entry in flight and with it the upstream body
+          // (appendEntry), and stops the fill loop.
+          archive.destroy();
+          finish();
+        }, ARCHIVE_STALL_TIMEOUT_MS);
+        stallTimer.unref?.();
+      },
+      cancel() {
+        // The visitor left: tear the archive down, upstream body included.
+        archive.destroy();
+        finish();
+      },
+    },
+    { highWaterMark: 1 },
+  );
 
   // Fill the archive in the background: the response has to go out first so the
   // browser starts reading, and each originals fetch is awaited in turn.
