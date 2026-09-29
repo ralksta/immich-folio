@@ -248,10 +248,13 @@ export async function listJournalEntries(): Promise<JournalEntrySummary[]> {
   return entries.sort((a, b) => {
     const dateA = a.frontmatter.date || '';
     const dateB = b.frontmatter.date || '';
-    if (dateA && dateB) return dateB.localeCompare(dateA);
+    if (dateA && dateB) return dateB.localeCompare(dateA) || a.slug.localeCompare(b.slug);
     if (dateA) return -1;
     if (dateB) return 1;
-    return (a.frontmatter.title || a.slug).localeCompare(b.frontmatter.title || b.slug);
+    return (
+      (a.frontmatter.title || a.slug).localeCompare(b.frontmatter.title || b.slug) ||
+      a.slug.localeCompare(b.slug)
+    );
   });
 }
 
