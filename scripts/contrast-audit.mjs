@@ -39,6 +39,7 @@ const PRESETS = [
   'kunsthalle',
   'ma',
   'cyanotype',
+  'salon',
 ];
 const FIXED_PAGES = ['/about', '/map', '/impressum'];
 

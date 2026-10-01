@@ -27,6 +27,7 @@ you get `studio-modern`, the default.
 | **kunsthalle**    | Grey gallery wall, wall labels | 🔵 `#1d545c` | Libre Franklin                    | Mosaic      | Shadow       | ✗     |
 | **ma**            | Japanese restraint, washi/sumi | 🔴 `#b0381f` | Cormorant + Hanken Grotesk        | Split       | None         | ✗     |
 | **cyanotype**     | Prussian blue, drawing sheet   | 🔵 `#1a4d88` | Jost + DM Mono                    | Split       | None         | ✗     |
+| **salon**         | Oxblood salon, fine fillet     | 🟤 `#7d1f2c` | Gloock + Work Sans                | Fullbleed   | None         | ✗     |
 
 **`studio-modern` is the default** if no theme is specified.
 
@@ -90,6 +91,8 @@ their accent, fonts and framing in both modes.
 **Ma** — Japanese restraint: negative space as the material. Warm washi-grey paper in light mode (not cream), sumi ink in dark, and a single vermilion accent shaped as a square hanko seal in the header, before the active link and the hero kicker. Cormorant Garamond 300 titles stand in for a Mincho, Hanken Grotesk 300 carries the text; the hero subtitle runs vertically (tategaki) on desktop, the split hero sits asymmetric with the photo inset in the paper, and album pages are offset to the right with 64px of air between photos. No EXIF in the grid, no hover transforms, slow fades. Suits landscape, film and black and white. Pairs best with `layout: masonry` and `columns: 2`; the washi look needs `mode: light`.
 
 **Cyanotype** — A Prussian-blue print: ink-blue night in dark mode, and in light mode every piece of text in Prussian ink on cool paper instead of black. Set like an architectural drawing sheet: Jost (geometric, Bauhaus line) for type, DM Mono 300 for EXIF and numbers, a ruled title block for the hero EXIF chip and the album metadata, registration marks on the photo corners on hover, and hero links and album covers indexed as sheets (A-01, A-02). Suits architecture, urban and night work, blue hour and interiors. Pairs best with `layout: uniform` and `aspectRatio: "3/2"`.
+
+**Salon** — The oxblood picture gallery of a 19th-century museum, done quietly: velvet-dark and plaster-rose walls, Gloock titles (never italic), Work Sans text, and a fine fillet line floating 6px outside every photo that brightens to the accent on hover. The fullbleed hero uses a scrim tinted from the wall colour instead of black, with the title bottom left. A tinted surround changes how colour is judged: right for portrait, wedding and fashion work, wrong for colour-critical landscape work. Pairs best with `layout: showcase`.
 
 ## Custom Theme
 

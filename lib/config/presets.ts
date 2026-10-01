@@ -216,6 +216,25 @@ export const PRESET_REGISTRY: readonly PresetDefinition[] = [
     card: { bg: '#0e1621', tile: '#192839', accent: '#8ccbeb', type: 'sans', gap: 4 },
     ownStyles: true,
   },
+  {
+    id: 'salon',
+    label: 'Salon',
+    tagline: 'Oxblood salon, fine fillet',
+    description:
+      'A 19th-century oxblood picture gallery with modern restraint: Gloock, Work Sans, a fillet round every photo.',
+    theme: {
+      accent: '#7d1f2c',
+      accentDark: '#e3a39a',
+      fonts: { heading: 'Gloock', body: 'Work Sans', caption: 'Work Sans' },
+      radius: 0,
+      photoFrame: 'none',
+      grain: false,
+      headerDot: false,
+      heroStyle: 'fullbleed',
+    },
+    card: { bg: '#1c1315', tile: '#2c2023', accent: '#e3a39a', type: 'serif', gap: 5 },
+    ownStyles: true,
+  },
 ];
 
 /** Preset ids in registry order: the order every picker shows them in. */

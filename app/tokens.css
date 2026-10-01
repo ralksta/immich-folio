@@ -450,6 +450,39 @@
   --border-hover: #b3c3cd;
 }
 
+/* ── Salon: Velvet / Plaster Palette ───────────── */
+[data-preset='salon'] {
+  --bg-primary: #1c1315;
+  --bg-secondary: #160f11;
+  --bg-card: #241a1c;
+  --bg-card-hover: #2c2023;
+  --bg-overlay: rgba(22, 15, 17, 0.98);
+
+  --text-primary: #f3eae7;
+  --text-secondary: #c5b1ad;
+  --text-muted: #aa938f;
+
+  --border-subtle: #34262a;
+  --border-hover: #4a383c;
+
+  --max-width: 1320px;
+}
+
+[data-preset='salon'][data-theme='light'] {
+  --bg-primary: #f5efec;
+  --bg-secondary: #ece3df;
+  --bg-card: #fbf8f6;
+  --bg-card-hover: #f1e9e5;
+  --bg-overlay: rgba(245, 239, 236, 0.96);
+
+  --text-primary: #271618;
+  --text-secondary: #573f42;
+  --text-muted: #6f5659;
+
+  --border-subtle: #e3d5d1;
+  --border-hover: #ccb8b3;
+}
+
 /* ── Reset ────────────────────────────────────────── */
 *,
 *::before,
