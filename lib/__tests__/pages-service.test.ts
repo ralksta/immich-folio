@@ -90,6 +90,30 @@ describe('pages-service', () => {
     expect((await service.readPage('workshops'))?.parsed.frontmatter.title).toBe('Workshops');
   });
 
+  it('takes no backup for a save that changes nothing (QA A-19)', async () => {
+    await service.writePage('pricing', page('v0'));
+    await service.writePage('pricing', page('v1'));
+    expect(await readdir(backupDir)).toHaveLength(1);
+    await service.writePage('pricing', page('v1'));
+    await service.writePage('pricing', page('v1'));
+    expect(await readdir(backupDir)).toHaveLength(1);
+  });
+
+  it("keeps a renamed page's history under its new slug, not as a deleted page (QA A-19)", async () => {
+    await service.writePage('pricing', page('Pricing'));
+    await service.savePage('rates', page('Rates'), { fromSlug: 'pricing' });
+
+    expect(await service.readPage('pricing')).toBeNull();
+    expect((await service.readPage('rates'))?.parsed.frontmatter.title).toBe('Rates');
+    const backups = await service.listPageBackups();
+    expect(backups).toEqual([expect.objectContaining({ slug: 'rates', kind: 'save' })]);
+
+    // Restoring it rolls the renamed page back instead of reviving the old slug.
+    await service.restorePageBackup(backups[0].filename);
+    expect((await service.readPage('rates'))?.parsed.frontmatter.title).toBe('Pricing');
+    expect(await service.readPage('pricing')).toBeNull();
+  });
+
   it('refuses to restore from a name it did not write', async () => {
     await expect(service.restorePageBackup('../gallery.yaml')).rejects.toThrow(/unrecognised/);
     await expect(service.restorePageBackup('pricing.md')).rejects.toThrow(/unrecognised/);

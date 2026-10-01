@@ -60,6 +60,19 @@ export async function fileVersion(filePath: string): Promise<string> {
   }
 }
 
+/**
+ * Whether a save of `content` has to back up the file at `filePath` first:
+ * not when there is no file yet, and not when the file already holds exactly
+ * these bytes. A save that changes nothing used to snapshot anyway, and with
+ * ten backups kept per file, a few no-op saves pushed out the real ones
+ * (QA A-19). Only ENOENT counts as "no file"; any other failure to read it
+ * throws, so the save stops before it overwrites the live file (#630).
+ */
+export async function needsBackup(filePath: string, content: string): Promise<boolean> {
+  const onDisk = await fileVersion(filePath);
+  return onDisk !== ABSENT_VERSION && onDisk !== versionOf(content);
+}
+
 /** The file changed on disk since the editor loaded it. */
 export class VersionConflictError extends Error {
   constructor(readonly currentVersion: string) {

@@ -11,7 +11,13 @@ import fs from 'fs/promises';
 import nodeFs from 'fs';
 import path from 'path';
 import { atomicWrite } from '../atomicWrite';
-import { assertVersion, readVersioned, serializeContentWrite, versionOf } from './contentVersion';
+import {
+  assertVersion,
+  needsBackup,
+  readVersioned,
+  serializeContentWrite,
+  versionOf,
+} from './contentVersion';
 import { isValidSlug, parseJournalMarkdown, type ParsedJournal } from '../journal';
 import type { PageSummary } from '../pages';
 import { ParsedFileCache } from './parsedFileCache';
@@ -199,15 +205,9 @@ export async function writePage(slug: string, rawMarkdown: string): Promise<void
   await fs.mkdir(pagesDir(), { recursive: true });
 
   // Only ENOENT means "nothing to back up"; any other failure aborts the save
-  // before it overwrites the live file (the journal's #630).
-  let exists = true;
-  try {
-    await fs.access(filePath);
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
-    exists = false;
-  }
-  if (exists) {
+  // before it overwrites the live file (the journal's #630). A save that
+  // changes nothing takes no backup either (needsBackup).
+  if (await needsBackup(filePath, rawMarkdown)) {
     await snapshotPage(filePath, filename);
     await prunePageBackups(filename);
   }
@@ -232,6 +232,33 @@ export async function deletePage(slug: string): Promise<boolean> {
   await fs.unlink(filePath);
   console.log(`[Pages] 🗑️ Deleted ${slug}.md`);
   return true;
+}
+
+/**
+ * Move a page to a new slug with new content. The old file is snapshotted
+ * under the new name first, then the new file is written, then the old one
+ * removed — a failure part way leaves the old page in place. The route has
+ * already refused a rename onto an existing page.
+ */
+async function renamePage(fromSlug: string, slug: string, rawMarkdown: string): Promise<void> {
+  const fromPath = resolvePageFilePath(fromSlug);
+  if (!fromPath) throw new Error(`Invalid page slug: "${fromSlug}"`);
+  let fromExists = true;
+  try {
+    await fs.access(fromPath);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+    fromExists = false;
+  }
+  if (fromExists) {
+    await snapshotPage(fromPath, `${slug}.md`);
+    await prunePageBackups(`${slug}.md`);
+  }
+  await writePage(slug, rawMarkdown);
+  if (fromExists) {
+    await fs.unlink(fromPath);
+    console.log(`[Pages] ✏️ Renamed ${fromSlug}.md to ${slug}.md`);
+  }
 }
 
 /** Restore a page from one of its backups, returning the restored slug. */
@@ -265,6 +292,11 @@ export async function restorePageBackup(backupFilename: string): Promise<string>
  * at `baseVersion`. A rename writes the new file and then deletes the old one.
  * Check, write and delete run in the content write queue, so another save
  * cannot land between them. Returns the version of what was written.
+ *
+ * A rename takes the page's history along: the version before it is kept as
+ * a save backup of the new slug, not as a `.deleted` snapshot of the old one.
+ * The Backup Manager used to list every rename as a deleted page, whose
+ * restore brought the old slug back next to the renamed page (QA A-19).
  */
 export function savePage(
   slug: string,
@@ -278,8 +310,11 @@ export function savePage(
       if (!loaded) throw new Error(`Invalid page slug: "${fromSlug}"`);
       await assertVersion(loaded, options.baseVersion);
     }
-    await writePage(slug, rawMarkdown);
-    if (fromSlug !== slug) await deletePage(fromSlug);
+    if (fromSlug === slug) {
+      await writePage(slug, rawMarkdown);
+    } else {
+      await renamePage(fromSlug, slug, rawMarkdown);
+    }
     return versionOf(rawMarkdown);
   });
 }

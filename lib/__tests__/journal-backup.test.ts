@@ -36,6 +36,39 @@ afterEach(async () => {
 
 const entry = (title: string) => `---\ntitle: "${title}"\n---\n\nBody of ${title}\n`;
 
+describe('saveJournalEntry (QA A-19)', () => {
+  it('takes no backup for a save that changes nothing', async () => {
+    await service.writeJournalEntry('trip', entry('v0'));
+    await service.writeJournalEntry('trip', entry('v1'));
+    expect(await readdir(backupDir)).toHaveLength(1);
+    await service.writeJournalEntry('trip', entry('v1'));
+    expect(await readdir(backupDir)).toHaveLength(1);
+  });
+
+  it("keeps a renamed entry's history under its new slug, not as a deleted entry", async () => {
+    await writeFile(path.join(journalDir, 'trip.md'), entry('Trip'));
+    await service.saveJournalEntry('journey', entry('Journey'), { fromSlug: 'trip' });
+
+    const files = await readdir(journalDir);
+    expect(files).toContain('journey.md');
+    expect(files).not.toContain('trip.md');
+    const backups = await service.listJournalBackups();
+    expect(backups).toEqual([expect.objectContaining({ slug: 'journey', kind: 'save' })]);
+    await expect(readFile(path.join(backupDir, backups[0].filename), 'utf8')).resolves.toBe(
+      entry('Trip'),
+    );
+  });
+
+  it('retires a legacy copy of the renamed entry too', async () => {
+    await mkdir(essaysDir, { recursive: true });
+    await writeFile(path.join(essaysDir, 'trip.md'), entry('Trip'));
+    await service.saveJournalEntry('journey', entry('Journey'), { fromSlug: 'trip' });
+
+    await expect(readdir(essaysDir)).resolves.not.toContain('trip.md');
+    expect((await service.listJournalBackups()).map((b) => b.slug)).toEqual(['journey']);
+  });
+});
+
 describe('deleteJournalEntry', () => {
   it('keeps a .deleted.bak copy before removing the file', async () => {
     await writeFile(path.join(journalDir, 'trip.md'), entry('Trip'));

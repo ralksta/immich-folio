@@ -453,6 +453,32 @@ function parsePhotoLine(chunk: string): { target: string; caption: string } | nu
   return { target, caption: rest.trim() };
 }
 
+/**
+ * A text line that begins like a photo reference. The serializer escapes it
+ * so a paragraph reading `![draft]` is not reloaded as a photo block — the
+ * parser splits a chunk at every line that starts with `![` and turns it into
+ * one (splitAtPhotoLines, parsePhotoLine). The escape is one backslash in
+ * front of whatever backslashes are already there, so a line that really
+ * starts with `\![` round-trips too. Only a line start needs it: elsewhere
+ * in a paragraph `![` means nothing to the parser.
+ */
+const PHOTO_LIKE_LINE = /^([ \t]*)(\\*)!\[/;
+const ESCAPED_PHOTO_LIKE_LINE = /^([ \t]*)\\(\\*)!\[/;
+
+function escapePhotoLikeLines(markdown: string): string {
+  return markdown
+    .split('\n')
+    .map((line) => line.replace(PHOTO_LIKE_LINE, '$1\\$2!['))
+    .join('\n');
+}
+
+function unescapePhotoLikeLines(markdown: string): string {
+  return markdown
+    .split(/\r?\n/)
+    .map((line) => line.replace(ESCAPED_PHOTO_LIKE_LINE, '$1$2!['))
+    .join('\n');
+}
+
 /** Parse Journal Markdown content into structured blocks */
 export function parseJournalMarkdown(rawContent: string): ParsedJournal {
   const { frontmatter, body } = parseFrontmatter(rawContent);
@@ -653,7 +679,7 @@ export function parseJournalMarkdown(rawContent: string): ParsedJournal {
     // 4. Standard Text Paragraph
     blocks.push({
       type: 'paragraph',
-      html: renderInlineMarkdown(chunk.replace(/\r?\n/g, ' ')),
+      html: renderInlineMarkdown(unescapePhotoLikeLines(chunk).replace(/\r?\n/g, ' ')),
     });
   }
 
@@ -703,7 +729,7 @@ export function serializeJournalMarkdown(journal: ParsedJournal): string {
         break;
       }
       case 'paragraph': {
-        lines.push(inlineHtmlToMarkdown(block.html));
+        lines.push(escapePhotoLikeLines(inlineHtmlToMarkdown(block.html)));
         break;
       }
       case 'quote': {
