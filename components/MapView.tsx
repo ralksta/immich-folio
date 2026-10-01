@@ -83,6 +83,8 @@ export function MapView() {
           lat: loc.lat,
           lng: loc.lng,
           html: `<div class="map-marker">${loc.photoCount}</div>`,
+          // "Dźwirzyno, Polen, 12 Fotos" instead of a bare "12".
+          label: [heading, subheading, t.common.photos(loc.photoCount)].filter(Boolean).join(', '),
           popupHtml: `
           <div class="map-popup">
             <img src="${escapeHtml(loc.coverUrl)}" alt="${escapeHtml(heading)}" class="map-popup__cover" loading="lazy" />

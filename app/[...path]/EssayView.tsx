@@ -145,7 +145,7 @@ function EssayViewContent({
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: isFav ? '#ff4d4f' : 'rgba(255,255,255,0.85)',
+              color: isFav ? 'var(--lightbox-fav)' : 'rgba(255,255,255,0.85)',
               filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))',
             }}
           >
@@ -253,7 +253,7 @@ function EssayViewContent({
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      color: isFav ? '#ff4d4f' : 'rgba(255,255,255,0.85)',
+                      color: isFav ? 'var(--lightbox-fav)' : 'rgba(255,255,255,0.85)',
                       filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))',
                     }}
                   >
@@ -465,7 +465,7 @@ function EssayViewContent({
             alignItems: 'center',
             gap: '12px',
             padding: '8px 16px',
-            borderRadius: '30px',
+            borderRadius: 'var(--radius-lg)',
             background: 'var(--bg-card, #1e1e1e)',
             color: 'var(--text-primary, #ffffff)',
             border: '1px solid var(--border-subtle, rgba(255,255,255,0.15))',

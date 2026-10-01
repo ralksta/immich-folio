@@ -21,6 +21,12 @@ export interface LeafletMarker {
   lng: number;
   /** Inner HTML of the marker icon — already escaped by the caller. */
   html: string;
+  /**
+   * The marker's accessible name and hover title (plain text, not HTML).
+   * Without it a screen reader announces only what the icon shows — for the
+   * location map, a bare photo count like "12".
+   */
+  label?: string;
   popupHtml?: string;
 }
 
@@ -115,7 +121,14 @@ export function LeafletMap({
                 iconAnchor: [16, 16],
                 popupAnchor: [0, -20],
               }),
+              ...(m.label ? { title: m.label } : {}),
             });
+            // Leaflet makes the icon a focusable role="button"; the label
+            // becomes its name once the element exists.
+            if (m.label) {
+              const label = m.label;
+              marker.on('add', () => marker.getElement()?.setAttribute('aria-label', label));
+            }
             if (m.popupHtml) marker.bindPopup(m.popupHtml, { maxWidth: 260, minWidth: 200 });
             return marker;
           }),

@@ -11,6 +11,17 @@
   animation: lightbox-fade-in var(--transition-normal) ease forwards;
 }
 
+/* The overlay is translucent (0.85–0.92), so the fixed page chrome under it
+   showed through: the header's wordmark and red dot, and the proofing bar,
+   as ghosts beside the photo. They cannot be used while the viewer is open,
+   so they are hidden for as long as it is mounted (it is portaled straight
+   into <body>). */
+:global(body):has(> .overlay) :global(.header),
+:global(body):has(> .overlay) :global(.proofing-sticky-bar),
+:global(body):has(> .overlay) :global(.scroll-to-top) {
+  visibility: hidden;
+}
+
 /* The overlay is dark in both modes — see "Studio-Inspired Lightbox Defaults"
    below and the studio-modern block, which both paint it near-black. In light
    mode the page's text tokens are near-black too, so every control that reads
