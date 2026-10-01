@@ -15,7 +15,7 @@
 
 'use client';
 
-import { useSyncExternalStore, useCallback } from 'react';
+import { useSyncExternalStore, useCallback, useEffect } from 'react';
 import { useDictionary } from './I18nProvider';
 
 type Theme = 'dark' | 'light';
@@ -57,22 +57,73 @@ function applyTheme(theme: Theme) {
   currentTheme = theme;
   if (typeof document !== 'undefined') {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+    try {
+      localStorage.setItem('theme', theme);
+    } catch {
+      // Blocked site data: the switch still applies for this page view.
+    }
   }
   listeners.forEach((cb) => cb());
 }
 
-// Initialize from localStorage on module load (client-side only)
-if (typeof window !== 'undefined') {
-  const stored = localStorage.getItem('theme');
-  currentTheme = stored === 'light' || stored === 'dark' ? stored : configuredTheme();
+/** The visitor's own choice, if they made one and storage is readable. */
+function storedTheme(): Theme | null {
+  try {
+    const stored = localStorage.getItem('theme');
+    return stored === 'light' || stored === 'dark' ? stored : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * `mode: auto` follows the OS while the page is open, not only at load: a
+ * visitor whose system switches to dark at sunset sees the site follow.
+ * Nothing is stored, so the site keeps following — a stored choice (or a fixed
+ * configured mode) takes it out of the loop. Exported for the test.
+ */
+export function followSystemTheme() {
+  if (storedTheme() !== null) return;
+  const mode = document.documentElement.getAttribute('data-default-theme');
+  if (mode === 'light' || mode === 'dark') return;
+  currentTheme = systemTheme();
   document.documentElement.setAttribute('data-theme', currentTheme);
+  listeners.forEach((cb) => cb());
+}
+
+/**
+ * Re-resolve the mode once the component is mounted and write it back onto
+ * <html>. A hard 404 is served as Next's bare error shell: the inline script
+ * never runs there, the module above loaded before the layout's attributes
+ * existed, and the client render then writes the server's data-theme over
+ * whatever was applied. Without this, a visitor who stored light got a dark
+ * 404 page. Exported for the test.
+ */
+export function syncThemeFromDom() {
+  currentTheme = storedTheme() ?? configuredTheme();
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  listeners.forEach((cb) => cb());
+}
+
+// Initialize on module load (client-side only). The inline script in the root
+// layout (lib/themeScript.ts) has already set data-theme by the same rules;
+// this brings the module state in line with it.
+if (typeof window !== 'undefined') {
+  currentTheme = storedTheme() ?? configuredTheme();
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  window
+    .matchMedia?.('(prefers-color-scheme: light)')
+    ?.addEventListener?.('change', followSystemTheme);
 }
 
 export function ThemeToggle() {
   const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const t = useDictionary();
   const label = theme === 'dark' ? t.theme.switchToLight : t.theme.switchToDark;
+
+  useEffect(() => {
+    syncThemeFromDom();
+  }, []);
 
   const toggle = useCallback(() => {
     applyTheme(theme === 'dark' ? 'light' : 'dark');
