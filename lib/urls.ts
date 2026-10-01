@@ -8,6 +8,7 @@ import { env } from './env';
 import { cdnBase } from './cdn';
 import { thumbHashToBlurDataUrl, thumbHashToDominantHex } from './thumbhash';
 import type { ImmichAsset } from './immich';
+import { formatLens } from './exif';
 
 /**
  * Optional cache-buster, appended to every image and video URL.
@@ -92,7 +93,8 @@ export function assetExifSummary(asset: Pick<ImmichAsset, 'exifInfo'>): ExifSumm
   if (!exif) return undefined;
 
   const camera = exif.model || undefined;
-  const lens = exif.lensModel || undefined;
+  // A phone's lens names the phone again; the camera is already on the tile.
+  const lens = formatLens(exif.lensModel, exif.model) || undefined;
   const focalLength = exif.focalLength ? `${exif.focalLength}mm` : undefined;
 
   if (!camera && !lens && !focalLength) return undefined;

@@ -31,3 +31,31 @@ export function formatCamera(make?: string | null, model?: string | null): strin
 
   return namesBrand ? cleanModel : `${cleanMake} ${cleanModel}`;
 }
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * The lens, without the camera it is built into.
+ *
+ * Phones report the whole device as the lens: an iPhone gives
+ * `model: "iPhone 14 Pro"` and `lensModel: "iPhone 14 Pro back triple camera
+ * 6.86mm f/1.78"`, so the tile and the lightbox strip read the model twice
+ * ("IPHONE 14 PRO · IPHONE 14 PRO BACK TRIPLE CAMERA …"). When the camera is
+ * shown next to it, the model is removed from the lens as a whole phrase
+ * (case-insensitive, never inside another word). A lens that is nothing but
+ * the model says nothing the camera does not, and becomes empty.
+ */
+export function formatLens(lens?: string | null, model?: string | null): string {
+  const cleanLens = lens?.trim() ?? '';
+  const cleanModel = model?.trim() ?? '';
+  if (!cleanLens || !cleanModel) return cleanLens;
+
+  const phrase = new RegExp(`(^|\\s)${escapeRegExp(cleanModel)}(?=\\s|$)`, 'i');
+  if (!phrase.test(cleanLens)) return cleanLens;
+  return cleanLens.replace(phrase, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/** The aperture sign. `text-transform: uppercase` turns it into "Ƒ". */
+export const APERTURE_SIGN = 'ƒ';

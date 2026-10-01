@@ -25,7 +25,7 @@ import { useDictionary } from './I18nProvider';
 // From lib/config/schema directly: lib/config/index.ts pulls in `fs`, which a
 // client component cannot import.
 import { resolveWatermarkOpacity } from '@/lib/config/schema';
-import { formatCamera } from '@/lib/exif';
+import { APERTURE_SIGN, formatCamera, formatLens } from '@/lib/exif';
 import { buildPhotoPermalink } from '@/lib/photoHash';
 import { trapTabKey } from '@/lib/focusTrap';
 import { canonicalImageUrl } from '@/lib/imageSize';
@@ -711,10 +711,12 @@ export function Lightbox({
                   </span>
                 </div>
               )}
-              {exifData.lensModel && (
+              {formatLens(exifData.lensModel, exifData.model) && (
                 <div className={styles.exifRow}>
                   <span className={styles.exifLabel}>{t.lightbox.lens}</span>
-                  <span className={styles.exifValue}>{exifData.lensModel}</span>
+                  <span className={styles.exifValue}>
+                    {formatLens(exifData.lensModel, exifData.model)}
+                  </span>
                 </div>
               )}
               {exifData.focalLength && (
@@ -726,7 +728,9 @@ export function Lightbox({
               {exifData.fNumber && (
                 <div className={styles.exifRow}>
                   <span className={styles.exifLabel}>{t.lightbox.aperture}</span>
-                  <span className={styles.exifValue}>ƒ/{exifData.fNumber}</span>
+                  <span className={styles.exifValue}>
+                    <span className="exif-fsign">{APERTURE_SIGN}</span>/{exifData.fNumber}
+                  </span>
                 </div>
               )}
               {exifData.exposureTime && (

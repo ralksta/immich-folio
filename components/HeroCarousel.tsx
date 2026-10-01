@@ -13,6 +13,7 @@
 import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import Image from 'next/image';
 import { useDictionary } from './I18nProvider';
+import ExifText from './ExifText';
 
 interface HeroImage {
   src: string;
@@ -138,7 +139,7 @@ function HeroExifChip({ text }: { text?: string }) {
   if (!text) return null;
   return (
     <span className="hero__exif-chip" aria-hidden="true">
-      {text}
+      <ExifText text={text} />
     </span>
   );
 }
