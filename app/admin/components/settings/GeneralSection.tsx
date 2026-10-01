@@ -4,13 +4,21 @@ import { useState } from 'react';
 import * as Icons from '../Icons';
 import type { SaveStatus } from '../SaveBar';
 import { resolveExifDisplay } from '@/lib/config/schema';
-import { SUPPORTED_LOCALES } from '@/lib/i18n';
+import { SUPPORTED_LOCALES, getDictionary, resolveLocale } from '@/lib/i18n';
 import { FeatureGroup, FeatureRow, SettingRow } from './fields';
 import type { SectionProps } from './types';
 import { useConfirm } from '../ConfirmDialog';
 
-export default function GeneralSection({ settings, update, updateMany }: SectionProps) {
+export default function GeneralSection({
+  settings,
+  update,
+  updateMany,
+  siteTitleEnv,
+}: SectionProps & { siteTitleEnv?: string | null }) {
   const confirm = useConfirm();
+  // What the site shows while the field is empty, resolved as getConfig does:
+  // SITE_TITLE, else the site language's word for a gallery (QA A-15).
+  const fallbackTitle = siteTitleEnv || getDictionary(resolveLocale(settings.lang)).common.gallery;
   // Collapsed by default: the four metadata switches are a detail of one
   // decision, and showing them permanently is what made the section a wall (#510).
   const [metadataOpen, setMetadataOpen] = useState(false);
@@ -62,8 +70,14 @@ export default function GeneralSection({ settings, update, updateMany }: Section
           id="general-site-title"
           value={settings.title || ''}
           onChange={(e) => update('title', e.target.value)}
-          placeholder="My Portfolio"
+          placeholder={fallbackTitle}
+          aria-describedby="general-site-title-hint"
         />
+        <p id="general-site-title-hint" className="admin-field-hint">
+          {settings.title
+            ? 'Shown in the header, the browser tab and link previews.'
+            : `Empty, so the site shows “${fallbackTitle}”${siteTitleEnv ? ', from SITE_TITLE' : ''}.`}
+        </p>
       </div>
       <div className="admin-field">
         <label htmlFor="general-subtitle">Subtitle</label>

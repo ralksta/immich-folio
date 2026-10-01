@@ -124,7 +124,7 @@ const THEME_INFO: Record<
 > = {
   studio: {
     label: 'Studio',
-    desc: 'Clean, high-contrast grid with sans-serif type.',
+    desc: 'Playfair Display serif headings over DM Sans, matted photos on black.',
     bg: '#141414',
     tile: '#242424',
     accent: '#e60012',
@@ -172,7 +172,7 @@ const THEME_INFO: Record<
   },
   classic: {
     label: 'Classic',
-    desc: 'Soft traditional photographer portfolio with shadows.',
+    desc: 'Soft traditional portfolio: Cinzel capitals, rounded matted photos.',
     bg: '#f7f7f7',
     tile: '#ffffff',
     accent: '#444444',
@@ -196,12 +196,12 @@ const THEME_INFO: Record<
   },
   monograph: {
     label: 'Monograph',
-    desc: 'Typewriter monospace font, grid borders and document feel.',
+    desc: 'Instrument Serif headlines, Inter text, mono captions: a quiet document feel.',
     bg: '#f4f4f6',
     tile: '#ffffff',
     accent: '#555555',
     font: 'Instrument Serif',
-    type: 'mono',
+    type: 'serif',
     radius: 0,
     frame: 'none',
     gap: 5,

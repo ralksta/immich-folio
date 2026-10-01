@@ -249,11 +249,11 @@ describe('PageBuilder: edits made while a save is in flight', () => {
         </ConfirmProvider>
       </NotificationProvider>,
     );
-    fireEvent.click(await screen.findByRole('button', { name: /New subpage/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'New subpage' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
     await waitFor(() => expect(releasePut).not.toBeNull());
 
-    fireEvent.click(screen.getByRole('button', { name: /New subpage/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'New subpage' }));
     await act(async () => releasePut!());
 
     await screen.findByText('Saved successfully!');

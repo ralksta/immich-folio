@@ -116,12 +116,19 @@ export function BlockFields({
 
       {block.type === 'photo' && (
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div
+          {/* A button, not a clickable div, so the keyboard reaches it. */}
+          <button
+            type="button"
+            aria-label={block.assetId ? 'Change photo' : 'Pick a photo'}
             style={{
               width: '140px',
               height: '96px',
               flexShrink: 0,
               background: 'rgba(0,0,0,0.3)',
+              border: 'none',
+              padding: 0,
+              color: 'inherit',
+              font: 'inherit',
               borderRadius: '6px',
               overflow: 'hidden',
               display: 'flex',
@@ -140,13 +147,13 @@ export function BlockFields({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={`/api/admin/thumbnail/${block.assetId}`}
-                alt="Thumb"
+                alt=""
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
             ) : (
               <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>+ Pick</span>
             )}
-          </div>
+          </button>
 
           <div
             style={{
@@ -213,10 +220,16 @@ export function BlockFields({
             }}
           >
             {[0, 1].map((pIdx) => (
-              <div
+              <button
+                type="button"
                 key={pIdx}
+                aria-label={`${block.assetIds[pIdx] ? 'Change' : 'Pick'} photo ${pIdx + 1} of the pair`}
                 style={{
                   height: '90px',
+                  width: '100%',
+                  padding: 0,
+                  color: 'inherit',
+                  font: 'inherit',
                   background: 'rgba(0,0,0,0.3)',
                   borderRadius: '6px',
                   overflow: 'hidden',
@@ -241,13 +254,13 @@ export function BlockFields({
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={`/api/admin/thumbnail/${block.assetIds[pIdx]}`}
-                    alt="Thumb"
+                    alt=""
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
                   <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>+ Pick Photo #{pIdx + 1}</span>
                 )}
-              </div>
+              </button>
             ))}
           </div>
           <div>

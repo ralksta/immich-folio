@@ -40,6 +40,9 @@ export const GET = withAdmin(async () => {
       // Fields an environment variable overrides, as path → variable name. Only
       // the names: the values are secrets (a password, an ntfy topic) (#605).
       envLocks: resolveEnvLocks(env),
+      // What an empty title falls back to before the language default, so the
+      // General section can show the title the site really uses (QA A-15).
+      siteTitleEnv: env.SITE_TITLE || null,
     },
     { headers: { ETag: etag(version) } },
   );

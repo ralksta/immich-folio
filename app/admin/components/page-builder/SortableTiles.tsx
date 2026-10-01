@@ -35,8 +35,17 @@ export function SortableHeroTile({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="hero-tile" {...attributes}>
-      <div className="hero-tile-drag" {...listeners} title="Drag to reorder">
+    <div ref={setNodeRef} style={style} className="hero-tile">
+      {/* The handle, not the tile, is the sortable control: the tile holds a
+          remove button, and a button inside role="button" is nested
+          interactive content (QA A-20). */}
+      <div
+        className="hero-tile-drag"
+        {...attributes}
+        {...listeners}
+        aria-label={`Reorder hero photo ${index + 1}`}
+        title="Drag to reorder"
+      >
         <IconGripVertical size={18} className="svg-icon svg-drag" />
       </div>
       <img src={`/api/admin/thumbnail/${id}`} alt="" loading="lazy" />
@@ -88,9 +97,14 @@ export function SortableSubpageTile({
       style={style}
       className={`subpage-tile ${isActive ? 'active' : ''}`}
       onClick={onClick}
-      {...attributes}
     >
-      <div className="subpage-tile-drag" {...listeners} title="Drag to reorder">
+      <div
+        className="subpage-tile-drag"
+        {...attributes}
+        {...listeners}
+        aria-label={`Reorder ${sp.name || 'page'}`}
+        title="Drag to reorder"
+      >
         <IconGripVertical size={18} className="svg-icon svg-drag" />
       </div>
 
@@ -185,9 +199,14 @@ export function SortableSubpageRow({
         zIndex: isDragging ? 10 : undefined,
       }}
       className={`pb-row ${isActive ? 'active' : ''} ${sp.enabled === false ? 'is-off' : ''}`}
-      {...attributes}
     >
-      <span className="pb-row-grip" {...listeners} title="Drag to reorder">
+      <span
+        className="pb-row-grip"
+        {...attributes}
+        {...listeners}
+        aria-label={`Reorder ${sp.name || 'page'}`}
+        title="Drag to reorder"
+      >
         <IconGripVertical size={14} />
       </span>
       <button type="button" className="pb-row-main" onClick={onClick} aria-current={isActive}>
@@ -252,9 +271,14 @@ export function SortablePageRow({
         zIndex: isDragging ? 10 : undefined,
       }}
       className={`pb-row ${isActive ? 'active' : ''} ${draft || missing ? 'is-off' : ''}`}
-      {...attributes}
     >
-      <span className="pb-row-grip" {...listeners} title="Drag to reorder">
+      <span
+        className="pb-row-grip"
+        {...attributes}
+        {...listeners}
+        aria-label={`Reorder ${title}`}
+        title="Drag to reorder"
+      >
         <IconGripVertical size={14} />
       </span>
       <button type="button" className="pb-row-main" onClick={onClick} aria-current={isActive}>
