@@ -2,7 +2,13 @@ import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import { PRESET_REGISTRY, PRESET_IDS } from '../config/presets';
-import { THEME_PRESETS, DEFAULT_PRESET, resolveTheme, contrastRatio } from '../config/theme';
+import {
+  THEME_PRESETS,
+  DEFAULT_PRESET,
+  resolveTheme,
+  contrastRatio,
+  accentForMode,
+} from '../config/theme';
 import { parseFamilies, MAX_FAMILIES } from '../fonts';
 
 /**
@@ -47,6 +53,21 @@ const PALETTE_TOKENS = [
  * changing it is out of scope here; every other surface is held to 4.5:1.
  */
 const SECONDARY_SURFACE_EXEMPT = new Set(['studio-modern']);
+
+/**
+ * The first seven presets use their accent for dots, rules and fills, held to
+ * 3:1 by preset-contrast.test.ts. Presets added since also set links and
+ * labels in it, so their accent has to read as text: 4.5:1 on every surface.
+ */
+const ACCENT_AS_DECORATION_ONLY = new Set([
+  'studio-modern',
+  'studio',
+  'minimal',
+  'editorial',
+  'classic',
+  'noir',
+  'monograph',
+]);
 
 describe('preset registry', () => {
   it('has unique ids and contains the default preset', () => {
@@ -126,6 +147,22 @@ describe('preset registry', () => {
               if (ratio === null) continue;
               expect(ratio, `${mode} ${text} on ${surface}`).toBeGreaterThanOrEqual(4.5);
             }
+          }
+        }
+      });
+
+      if (ACCENT_AS_DECORATION_ONLY.has(preset.id)) return;
+
+      it('keeps its accent readable as text on every surface, in both modes', () => {
+        for (const mode of ['dark', 'light'] as const) {
+          const vars = {
+            ...block(`[data-preset='${preset.id}']`),
+            ...(mode === 'light' ? block(`[data-preset='${preset.id}'][data-theme='light']`) : {}),
+          };
+          const accent = accentForMode(resolveTheme(preset.id), mode);
+          for (const surface of ['--bg-primary', '--bg-secondary', '--bg-card']) {
+            const ratio = contrastRatio(accent, vars[surface]);
+            expect(ratio, `${mode} accent on ${surface}`).toBeGreaterThanOrEqual(4.5);
           }
         }
       });

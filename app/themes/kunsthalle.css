@@ -1,0 +1,336 @@
+/* ══════════════════════════════════════════════════════
+   THEME: Kunsthalle — photographs hung on a grey gallery wall
+   ══════════════════════════════════════════════════════
+
+   The grey surround (tokens.css) is the point: lighter than every dark
+   preset, darker than every light one, as in an ISO 3664 viewing booth.
+   Everything else is a museum signage system: one family (Libre Franklin),
+   sentence-case titles, small tracked labels, and petrol reserved for
+   wayfinding — links and hover, never decoration. */
+
+[data-preset='kunsthalle'] {
+  /* The hung shadow: a tight contact shadow plus a soft drop below. */
+  --kh-hang: 0 1px 2px rgba(0, 0, 0, 0.14), 0 14px 28px -14px rgba(0, 0, 0, 0.28);
+  --kh-hang-hover: 0 2px 4px rgba(0, 0, 0, 0.18), 0 20px 36px -16px rgba(0, 0, 0, 0.36);
+}
+
+[data-preset='kunsthalle'][data-theme='light'] {
+  --kh-hang: 0 1px 2px rgba(0, 0, 0, 0.1), 0 14px 28px -16px rgba(0, 0, 0, 0.22);
+  --kh-hang-hover: 0 2px 4px rgba(0, 0, 0, 0.12), 0 20px 36px -16px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Header: wall colour, no rule ─────────────────── */
+[data-preset='kunsthalle'] .header {
+  background: color-mix(in srgb, var(--bg-primary) 94%, transparent);
+  border-bottom-color: transparent;
+}
+
+[data-preset='kunsthalle'] .header__wordmark {
+  display: flex;
+  align-items: center;
+  margin-right: 24px;
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+[data-preset='kunsthalle'] .header__nav-link {
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[data-preset='kunsthalle'] .header__nav-link:hover {
+  color: var(--accent);
+  border-bottom-color: transparent;
+}
+
+[data-preset='kunsthalle'] .header__nav-link.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--text-primary);
+}
+
+/* ── Titles: sentence case, Franklin 500 ──────────── */
+[data-preset='kunsthalle'] .hero__title,
+[data-preset='kunsthalle'] .album-header__title,
+[data-preset='kunsthalle'] .subpage-title {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+
+[data-preset='kunsthalle'] .hero__subtitle,
+[data-preset='kunsthalle'] .album-header__meta,
+[data-preset='kunsthalle'] .subpage-subtitle {
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Labels: the small caps line on a wall text. */
+[data-preset='kunsthalle'] .section-label,
+[data-preset='kunsthalle'] .subpage-section__desc {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* ── Photo grid: hung works with wall between them ── */
+[data-preset='kunsthalle'] .photo-grid {
+  --grid-gap: 56px;
+  counter-reset: kh-work;
+}
+
+[data-preset='kunsthalle'] .photo-grid__item {
+  counter-increment: kh-work;
+  transition: box-shadow var(--transition-fast);
+}
+
+/* The wall label hangs in the gap below each photo, so the vertical gap
+   never drops below what the label needs — even when settings.yaml sets a
+   tighter grid.gap, which lands inline and beats the preset's 56px. */
+[data-preset='kunsthalle'] .photo-grid {
+  row-gap: max(var(--grid-gap), 48px);
+}
+
+[data-preset='kunsthalle'] .photo-grid--masonry .photo-grid__item {
+  margin-bottom: max(var(--grid-gap), 48px);
+}
+
+/* The shadow frame, retuned from a soft halo to a hung shadow. The label
+   below the photo needs the item to stop clipping; the image itself has
+   square corners, so nothing else depends on the clip. */
+[data-preset='kunsthalle'][data-photo-frame='shadow'] .photo-grid__item {
+  box-shadow: var(--kh-hang);
+  overflow: visible;
+}
+
+[data-preset='kunsthalle'][data-photo-frame='shadow'] .photo-grid__item:hover {
+  box-shadow: var(--kh-hang-hover);
+}
+
+/* Still photos: no zoom, no dimming. */
+[data-preset='kunsthalle'] .photo-grid__item:hover img {
+  transform: none;
+  filter: none;
+}
+
+/* Wall label: catalogue number plus camera and lens, under the photo. It
+   sits in the gap (56px) rather than on the image, so the photo stays clean
+   and the label is always visible. */
+[data-preset='kunsthalle'] .photo-grid__item-exif {
+  top: calc(100% + 10px);
+  bottom: auto;
+  padding: 0;
+  background: none;
+  color: var(--text-muted);
+  font-family: var(--font-caption);
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.45;
+  opacity: 1;
+  transition: color var(--transition-fast);
+}
+
+[data-preset='kunsthalle'] .photo-grid__item-exif::before {
+  content: 'No. ' counter(kh-work, decimal-leading-zero);
+  display: block;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+[data-preset='kunsthalle'] .photo-grid__item:hover .photo-grid__item-exif {
+  color: var(--text-secondary);
+}
+
+/* Without the shadow frame the item still clips; let the label out. */
+[data-preset='kunsthalle'] .photo-grid__item:has(.photo-grid__item-exif) {
+  overflow: visible;
+}
+
+/* ── Album covers: hung, with a wall label below ──── */
+[data-preset='kunsthalle'] .subpage-grid {
+  --subpage-gap: 40px;
+}
+
+[data-preset='kunsthalle'] .subpage-grid__item {
+  aspect-ratio: auto;
+  overflow: visible;
+}
+
+[data-preset='kunsthalle'] .subpage-grid__item-media {
+  aspect-ratio: 3 / 2;
+  height: auto;
+  box-shadow: var(--kh-hang);
+  transition: box-shadow var(--transition-fast);
+}
+
+[data-preset='kunsthalle'] .subpage-grid__item:hover .subpage-grid__item-media {
+  box-shadow: var(--kh-hang-hover);
+}
+
+[data-preset='kunsthalle'] .subpage-grid__item:hover img {
+  transform: none;
+  filter: none;
+}
+
+[data-preset='kunsthalle'] .subpage-grid__item-overlay,
+[data-preset='kunsthalle'] .subpage-grid__item-badge {
+  display: none;
+}
+
+[data-preset='kunsthalle'] .subpage-grid__item-caption {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 12px;
+  padding: 14px 0 0;
+  line-height: 1.4;
+}
+
+[data-preset='kunsthalle'] .subpage-grid__item-index {
+  grid-row: span 2;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-preset='kunsthalle'] .subpage-grid__item-index::before {
+  content: 'No. ';
+}
+
+[data-preset='kunsthalle'] .subpage-grid__item-caption-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: color var(--transition-fast);
+}
+
+[data-preset='kunsthalle'] .subpage-grid__item:hover .subpage-grid__item-caption-title {
+  color: var(--accent);
+}
+
+[data-preset='kunsthalle'] .subpage-grid__item-caption-count {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* Standalone album cards on the home page */
+[data-preset='kunsthalle'] .album-card {
+  border: none;
+  box-shadow: var(--kh-hang);
+}
+
+[data-preset='kunsthalle'] .album-card:hover {
+  transform: none;
+  box-shadow: var(--kh-hang-hover);
+}
+
+[data-preset='kunsthalle'] .album-card:hover .album-card__image {
+  transform: none;
+}
+
+/* ── Mosaic hero: a wall of works, the title below ── */
+[data-preset='kunsthalle'] .hero--mosaic {
+  min-height: 0;
+}
+
+[data-preset='kunsthalle'] .hero__mosaic-grid {
+  gap: 28px;
+  min-height: 0;
+  height: clamp(360px, 64vh, 760px);
+  padding: 40px 40px 0;
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+[data-preset='kunsthalle'] .hero__mosaic-cell {
+  box-shadow: var(--kh-hang);
+}
+
+[data-preset='kunsthalle'] .hero__mosaic-overlay {
+  position: static;
+  transform: none;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 32px 40px 72px;
+  text-align: left;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  border-radius: 0;
+}
+
+[data-preset='kunsthalle'] .hero--mosaic .hero__title {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
+[data-preset='kunsthalle'] .hero--mosaic .hero__subtitle {
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+[data-preset='kunsthalle'] .hero--mosaic .hero__nav {
+  justify-content: flex-start;
+  gap: 8px 24px;
+}
+
+[data-preset='kunsthalle'] .hero--mosaic .hero__nav-link {
+  font-size: 0.85rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-secondary);
+}
+
+[data-preset='kunsthalle'] .hero--mosaic .hero__nav-link:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* The other hero styles keep their own layout; only the type follows. */
+[data-preset='kunsthalle'] .hero__nav-link {
+  text-decoration-color: var(--border-hover);
+}
+
+/* ── Footer ───────────────────────────────────────── */
+[data-preset='kunsthalle'] .footer {
+  border-top-color: transparent;
+}
+
+@media (max-width: 640px) {
+  [data-preset='kunsthalle'] .header__wordmark {
+    display: none;
+  }
+
+  [data-preset='kunsthalle'] .photo-grid {
+    --grid-gap: 44px;
+  }
+
+  [data-preset='kunsthalle'] .hero__mosaic-grid {
+    gap: 16px;
+    height: 72vh;
+    height: 72svh;
+    padding: 24px 20px 0;
+  }
+
+  [data-preset='kunsthalle'] .hero__mosaic-overlay {
+    padding: 24px 20px 56px;
+  }
+}

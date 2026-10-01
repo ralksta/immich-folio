@@ -351,6 +351,39 @@
   --border-hover: #cccccc;
 }
 
+/* ── Kunsthalle: Gallery Wall Palette ──────────── */
+[data-preset='kunsthalle'] {
+  --bg-primary: #2b2b29;
+  --bg-secondary: #242422;
+  --bg-card: #323230;
+  --bg-card-hover: #393937;
+  --bg-overlay: rgba(36, 36, 34, 0.98);
+
+  --text-primary: #f0efeb;
+  --text-secondary: #c6c4bd;
+  --text-muted: #aba9a2;
+
+  --border-subtle: #3d3d3a;
+  --border-hover: #55554f;
+
+  --max-width: 1240px;
+}
+
+[data-preset='kunsthalle'][data-theme='light'] {
+  --bg-primary: #dddcd8;
+  --bg-secondary: #d4d3ce;
+  --bg-card: #e8e7e3;
+  --bg-card-hover: #e2e1dd;
+  --bg-overlay: rgba(221, 220, 216, 0.96);
+
+  --text-primary: #1b1b19;
+  --text-secondary: #3f3e3a;
+  --text-muted: #52514c;
+
+  --border-subtle: #c9c8c3;
+  --border-hover: #aeada7;
+}
+
 /* ── Reset ────────────────────────────────────────── */
 *,
 *::before,

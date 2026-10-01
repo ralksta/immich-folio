@@ -24,6 +24,7 @@ you get `studio-modern`, the default.
 | **classic**       | Gilded gallery, warm luxury    | 🟡 `#c49a3c` | Cinzel + Crimson Pro              | Minimal     | Passepartout | ✗     |
 | **noir**          | Darkroom analog, film noir     | 🟠 `#ff6b35` | Libre Baskerville + Source Sans 3 | Fullbleed   | Passepartout | ✓     |
 | **monograph**     | Typographic, book-like         | ⬛ `#333333` | Instrument Serif + Inter          | Typographic | None         | ✗     |
+| **kunsthalle**    | Grey gallery wall, wall labels | 🔵 `#1d545c` | Libre Franklin                    | Mosaic      | Shadow       | ✗     |
 
 **`studio-modern` is the default** if no theme is specified.
 
@@ -81,6 +82,8 @@ their accent, fonts and framing in both modes.
 **Noir** — Darkroom analog aesthetic with warm amber accents on a deep cool-black base. Sepia-tinted photos with vignette hover effects, film-edge EXIF labels in monospace, and a grain overlay. Inspired by wet-plate photography and film noir cinematography.
 
 **Monograph** — Type-first book design with no hero image. Features an 8rem serif title, numbered photo indices via CSS counters, slide-up EXIF captions, hairline dividers, and generous whitespace. Feels like an artist monograph.
+
+**Kunsthalle** — Photographs hung on a neutral grey gallery wall, the surround ISO 3664 viewing booths use because white pushes photos darker and black pushes them lighter: lighter than every dark preset, darker than every light one. Libre Franklin in all three slots like museum signage, sentence-case titles, a numbered wall label (“No. 07”, camera · lens) under every photo, a tight hung shadow and 56px of wall between works. The mosaic hero is a wall of works with the exhibition title below it; petrol is kept for wayfinding (links and hover). Suits fine-art series, documentary and black and white. Pairs best with `layout: masonry`.
 
 ## Custom Theme
 

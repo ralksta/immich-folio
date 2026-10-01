@@ -159,6 +159,25 @@ export const PRESET_REGISTRY: readonly PresetDefinition[] = [
     card: { bg: '#f4f4f6', tile: '#ffffff', accent: '#555555', type: 'serif', gap: 5 },
     ownStyles: true,
   },
+  {
+    id: 'kunsthalle',
+    label: 'Kunsthalle',
+    tagline: 'Grey gallery wall, wall labels',
+    description:
+      'Photos hung on a neutral grey wall with museum wall labels. Libre Franklin, petrol links.',
+    theme: {
+      accent: '#1d545c',
+      accentDark: '#8cc3ca',
+      fonts: { heading: 'Libre Franklin', body: 'Libre Franklin', caption: 'Libre Franklin' },
+      radius: 0,
+      photoFrame: 'shadow',
+      grain: false,
+      headerDot: false,
+      heroStyle: 'mosaic',
+    },
+    card: { bg: '#2b2b29', tile: '#393937', accent: '#8cc3ca', type: 'sans', gap: 8 },
+    ownStyles: true,
+  },
 ];
 
 /** Preset ids in registry order: the order every picker shows them in. */
