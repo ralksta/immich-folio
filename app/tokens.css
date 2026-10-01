@@ -367,6 +367,9 @@
   --border-hover: #55554f;
 
   --max-width: 1240px;
+
+  /* The default #ff6b6b reaches only 4.2:1 on the lighter grey card; this is 5.1:1 on every surface. */
+  --error: #ff8a80;
 }
 
 [data-preset='kunsthalle'][data-theme='light'] {
@@ -382,6 +385,9 @@
 
   --border-subtle: #c9c8c3;
   --border-hover: #aeada7;
+
+  /* The default #c62828 reaches only 4.1:1 on the grey wall; this is 5.0:1 on every surface. */
+  --error: #a61b1b;
 }
 
 /* ── Ma: Washi / Sumi Palette ──────────────────── */
@@ -415,6 +421,9 @@
 
   --border-subtle: #dcd7cc;
   --border-hover: #c5bfb2;
+
+  /* The default #c62828 reaches only 4.4:1 on the washi secondary; this is 5.3:1 on every surface. */
+  --error: #b02020;
 }
 
 /* ── Cyanotype: Prussian Blue Palette ──────────── */
@@ -481,6 +490,9 @@
 
   --border-subtle: #e3d5d1;
   --border-hover: #ccb8b3;
+
+  /* The default #c62828 reaches only 4.4:1 on the plaster secondary; this is 5.4:1 on every surface. */
+  --error: #b02020;
 }
 
 /* ── Birch: Birch / Pine Palette ───────────────── */

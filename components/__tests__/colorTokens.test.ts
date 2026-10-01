@@ -69,6 +69,19 @@ function surfaces(preset: string, mode: 'dark' | 'light'): string[] {
   return SURFACES.map((s) => token(own, s) ?? token(base, s)!).filter((v) => v.startsWith('#'));
 }
 
+/**
+ * The --error a preset resolves to in one mode, in cascade order: a preset
+ * may set its own where the default red misses 4.5:1 on its surfaces. The
+ * preset's dark block comes after `[data-theme='light']` in tokens.css with
+ * the same specificity, so in light mode it beats the global light value.
+ */
+function errorToken(preset: string, mode: 'dark' | 'light'): string | undefined {
+  const dark = token(block(`[data-preset='${preset}']`), 'error');
+  if (mode === 'dark') return dark ?? token(ROOT, 'error');
+  const light = token(block(`[data-preset='${preset}'][data-theme='light']`), 'error');
+  return light ?? dark ?? token(LIGHT, 'error');
+}
+
 describe('--error (T-8)', () => {
   it('is defined for both modes', () => {
     expect(token(ROOT, 'error')).toBeDefined();
@@ -78,7 +91,7 @@ describe('--error (T-8)', () => {
   for (const preset of Object.keys(THEME_PRESETS)) {
     for (const mode of ['dark', 'light'] as const) {
       it(`${preset} (${mode}): clears 4.5:1 on every surface`, () => {
-        const error = parse(token(mode === 'dark' ? ROOT : LIGHT, 'error')!);
+        const error = parse(errorToken(preset, mode)!);
         for (const surface of surfaces(preset, mode)) {
           expect(ratio(error, parse(surface)), surface).toBeGreaterThanOrEqual(4.5);
         }
