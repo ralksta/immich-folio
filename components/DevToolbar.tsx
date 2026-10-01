@@ -17,8 +17,9 @@
 import React, { useState, useEffect, useCallback, useLayoutEffect } from 'react';
 import { IconPalette, IconX } from './Icons';
 import { getFontsCssUrl } from '@/lib/config/theme';
+import { PRESET_IDS, PRESET_REGISTRY } from '@/lib/config/presets';
 
-const PRESETS = ['studio', 'studio-modern', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
+const PRESETS = [...PRESET_IDS];
 const FRAMES = ['none', 'passepartout', 'shadow'];
 const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic'];
 const GRID_LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow'];
@@ -26,26 +27,13 @@ const ASPECT_RATIOS = ['1', '3/2', '2/3', '4/3', '16/9', 'auto'];
 
 type Tab = 'theme' | 'grid' | 'server';
 
-// Font stacks for each preset (must match THEME_PRESETS in config.ts)
-const PRESET_FONTS: Record<string, { heading: string; body: string; caption: string }> = {
-  studio: { heading: 'Playfair Display', body: 'DM Sans', caption: 'EB Garamond' },
-  'studio-modern': { heading: 'Archivo', body: 'Archivo', caption: 'IBM Plex Mono' },
-  minimal: { heading: 'Geist', body: 'Geist', caption: 'IBM Plex Mono' },
-  editorial: { heading: 'Bodoni Moda', body: 'Newsreader', caption: 'Spectral' },
-  classic: { heading: 'Cinzel', body: 'Crimson Pro', caption: 'Crimson Pro' },
-  noir: { heading: 'Libre Baskerville', body: 'Source Sans 3', caption: 'Space Mono' },
-  monograph: { heading: 'Instrument Serif', body: 'Inter', caption: 'IBM Plex Mono' },
-};
+// Font stacks and accents for each preset, from the preset registry.
+const PRESET_FONTS: Record<string, { heading: string; body: string; caption: string }> =
+  Object.fromEntries(PRESET_REGISTRY.map((p) => [p.id, p.theme.fonts]));
 
-const PRESET_ACCENTS: Record<string, string> = {
-  studio: 'var(--accent-studio, #e60012)',
-  'studio-modern': 'var(--accent-studio-modern, #e60012)',
-  minimal: 'var(--accent-minimal, #000000)',
-  editorial: 'var(--accent-editorial, #8B2500)',
-  classic: 'var(--accent-classic, #c49a3c)',
-  noir: 'var(--accent-noir, #ff6b35)',
-  monograph: 'var(--accent-monograph, #333333)',
-};
+const PRESET_ACCENTS: Record<string, string> = Object.fromEntries(
+  PRESET_REGISTRY.map((p) => [p.id, `var(--accent-${p.id}, ${p.theme.accent})`]),
+);
 
 function getAttr(attr: string): string {
   return document.documentElement.getAttribute(attr) ?? '';

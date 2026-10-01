@@ -26,7 +26,8 @@ import { chromium } from '@playwright/test';
 const require = createRequire(import.meta.url);
 const axeSource = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 
-// Keep in sync with the presets in lib/config/theme.ts.
+// Keep in sync with PRESET_REGISTRY in lib/config/presets.ts
+// (lib/__tests__/preset-registry.test.ts fails when they drift).
 const PRESETS = ['studio-modern', 'studio', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
 const FIXED_PAGES = ['/about', '/map', '/impressum'];
 

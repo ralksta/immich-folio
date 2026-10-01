@@ -56,13 +56,14 @@ import { spawn, type ChildProcess } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
+import { PRESET_IDS } from '../lib/config/presets';
 import type { Browser, Page } from '@playwright/test';
 
 // Next reads .env.local itself; this script runs outside Next, so ADMIN_PASSWORD
 // and friends have to be pulled in explicitly. Must run before the constants below.
 loadEnvLocal();
 
-const THEMES = ['studio', 'studio-modern', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
+const THEMES = [...PRESET_IDS];
 const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic'];
 const GRID_LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow'];
 /** Preset used for everything that is not itself a theme comparison. */

@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 // Direct import from the theme module, not from '@/lib/config': the config
 // index pulls in `fs` and cannot be bundled into a client component.
 import { DEFAULT_PRESET } from '@/lib/config/theme';
+import { PRESET_REGISTRY } from '@/lib/config/presets';
 import '../admin/admin.css';
 import './install.css';
 
@@ -22,19 +23,11 @@ interface Props {
 
 const STEPS = ['Connect', 'Albums', 'Site', 'Finish'] as const;
 
-const THEME_OPTIONS = [
-  {
-    value: 'studio-modern',
-    label: 'Studio Modern',
-    description: 'Precision grotesque, hairline rules',
-  },
-  { value: 'studio', label: 'Studio', description: 'Classic portfolio, red accent' },
-  { value: 'minimal', label: 'Minimal', description: 'Bare-bones, monochrome' },
-  { value: 'editorial', label: 'Editorial', description: 'Magazine-style serif' },
-  { value: 'classic', label: 'Classic', description: 'Warm gold, traditional' },
-  { value: 'noir', label: 'Noir', description: 'Dark, high-contrast' },
-  { value: 'monograph', label: 'Monograph', description: 'Typographic, text-first' },
-];
+const THEME_OPTIONS = PRESET_REGISTRY.map((p) => ({
+  value: p.id,
+  label: p.label,
+  description: p.tagline,
+}));
 
 export function InstallWizard({ initialApiUrl, setupToken }: Props) {
   const [step, setStep] = useState(0);

@@ -3,21 +3,13 @@ import { revalidatePath } from 'next/cache';
 import { completeInstall, isInstalled, normalizeApiBase, validateSetupToken } from '@/lib/install';
 import { invalidateConfigCache } from '@/lib/config';
 import { DEFAULT_PRESET } from '@/lib/config/theme';
+import { PRESET_IDS } from '@/lib/config/presets';
 import { immich } from '@/lib/immich';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 
 /** Install submissions per minute per IP — only live before install. */
 const INSTALL_RPM = 10;
 
-const THEME_PRESETS = [
-  'studio-modern',
-  'studio',
-  'minimal',
-  'editorial',
-  'classic',
-  'noir',
-  'monograph',
-];
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** POST: run the install wizard's final step — verify, then write config. */
@@ -59,7 +51,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid Immich URL' }, { status: 400 });
   }
 
-  const theme = THEME_PRESETS.includes(body.theme) ? body.theme : DEFAULT_PRESET;
+  const theme = PRESET_IDS.includes(body.theme) ? body.theme : DEFAULT_PRESET;
 
   // Album selection is optional: an empty gallery is a valid install.
   const rawAlbums: unknown[] = Array.isArray(body.albums) ? (body.albums as unknown[]) : [];

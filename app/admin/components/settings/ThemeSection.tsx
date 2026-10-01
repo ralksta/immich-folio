@@ -4,10 +4,10 @@ import { useState, type CSSProperties } from 'react';
 import * as Icons from '../Icons';
 import OptionGrid, { toOptions } from '../fields/OptionGrid';
 import { DEFAULT_PRESET } from '@/lib/config/theme';
+import { PRESET_IDS, PRESET_REGISTRY } from '@/lib/config/presets';
 import { effectiveTheme, FeatureRow, FieldError } from './fields';
 import type { SectionProps } from './types';
 
-const PRESETS = ['studio-modern', 'studio', 'minimal', 'editorial', 'classic', 'noir', 'monograph'];
 const PHOTO_FRAMES = ['none', 'passepartout', 'shadow'];
 const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic', 'cover'];
 
@@ -103,9 +103,10 @@ function HeroStylePreview({ value }: { value: string }) {
 }
 
 /**
- * Card metadata for the theme picker. `font`, `radius` and `frame` mirror the
- * real preset definitions in lib/config/theme.ts so the mini mockups show what
- * the preset actually does; `gap` is the visual density of its gallery grid.
+ * Card metadata for the theme picker, from the preset registry
+ * (lib/config/presets.ts). `font`, `radius` and `frame` are the preset's own
+ * values so the mini mockups show what the preset actually does; `gap` is the
+ * visual density of its gallery grid.
  */
 const THEME_INFO: Record<
   string,
@@ -121,92 +122,19 @@ const THEME_INFO: Record<
     frame: 'none' | 'passepartout' | 'shadow';
     gap: number;
   }
-> = {
-  studio: {
-    label: 'Studio',
-    desc: 'Playfair Display serif headings over DM Sans, matted photos on black.',
-    bg: '#141414',
-    tile: '#242424',
-    accent: '#e60012',
-    font: 'Playfair Display',
-    type: 'serif',
-    radius: 0,
-    frame: 'passepartout',
-    gap: 4,
-  },
-  'studio-modern': {
-    label: 'Studio Modern',
-    desc: 'Leica precision: Archivo grotesque, mono EXIF, red signal accents.',
-    bg: '#121212',
-    tile: '#191919',
-    accent: '#e60012',
-    font: 'Archivo',
-    type: 'sans',
-    radius: 0,
-    frame: 'none',
-    gap: 3,
-  },
-  minimal: {
-    label: 'Minimal',
-    desc: 'Pure raw layouts with tiny gaps and high whitespace.',
-    bg: '#ffffff',
-    tile: '#f3f3f3',
-    accent: '#111111',
-    font: 'Geist',
-    type: 'sans',
-    radius: 0,
-    frame: 'none',
-    gap: 2,
-  },
-  editorial: {
-    label: 'Editorial',
-    desc: 'Warm backgrounds, elegant serifs and large headers.',
-    bg: '#fbf9f4',
-    tile: '#e5dfd4',
-    accent: '#b89053',
-    font: 'Bodoni Moda',
-    type: 'serif',
-    radius: 0,
-    frame: 'shadow',
-    gap: 8,
-  },
-  classic: {
-    label: 'Classic',
-    desc: 'Soft traditional portfolio: Cinzel capitals, rounded matted photos.',
-    bg: '#f7f7f7',
-    tile: '#ffffff',
-    accent: '#444444',
-    font: 'Cinzel',
-    type: 'serif',
-    radius: 12,
-    frame: 'passepartout',
-    gap: 7,
-  },
-  noir: {
-    label: 'Noir',
-    desc: 'High drama absolute pitch black, stark high-fashion look.',
-    bg: '#000000',
-    tile: '#151515',
-    accent: '#ffffff',
-    font: 'Libre Baskerville',
-    type: 'serif',
-    radius: 0,
-    frame: 'passepartout',
-    gap: 6,
-  },
-  monograph: {
-    label: 'Monograph',
-    desc: 'Instrument Serif headlines, Inter text, mono captions: a quiet document feel.',
-    bg: '#f4f4f6',
-    tile: '#ffffff',
-    accent: '#555555',
-    font: 'Instrument Serif',
-    type: 'serif',
-    radius: 0,
-    frame: 'none',
-    gap: 5,
-  },
-};
+> = Object.fromEntries(
+  PRESET_REGISTRY.map((p) => [
+    p.id,
+    {
+      label: p.label,
+      desc: p.description,
+      ...p.card,
+      font: p.theme.fonts.heading,
+      radius: p.theme.radius,
+      frame: p.theme.photoFrame,
+    },
+  ]),
+);
 
 /* The preset group sits below THEME_INFO on purpose. PRESET_OPTIONS is built
    at module evaluation and reads it through themeInfo(); declared above, it
@@ -232,7 +160,7 @@ function themeInfo(value: string) {
   );
 }
 
-const PRESET_OPTIONS = PRESETS.map((value) => ({
+const PRESET_OPTIONS = PRESET_IDS.map((value) => ({
   value,
   label: themeInfo(value).label,
   desc: themeInfo(value).desc,

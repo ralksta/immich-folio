@@ -1,85 +1,13 @@
 import type { ThemeConfig, SettingsYaml } from './schema';
+import { PRESET_REGISTRY } from './presets';
 
 /** The preset used when none is configured. */
 export const DEFAULT_PRESET = 'studio-modern';
 
-export const THEME_PRESETS: Record<string, ThemeConfig> = {
-  'studio-modern': {
-    preset: 'studio-modern',
-    accent: '#e60012',
-    fonts: { heading: 'Archivo', body: 'Archivo', caption: 'IBM Plex Mono' },
-    radius: 0,
-    photoFrame: 'none',
-    grain: false,
-    headerDot: true,
-    heroStyle: 'split',
-  },
-  studio: {
-    preset: 'studio',
-    accent: '#e60012',
-    fonts: { heading: 'Playfair Display', body: 'DM Sans', caption: 'EB Garamond' },
-    radius: 0,
-    photoFrame: 'passepartout',
-    grain: true,
-    headerDot: true,
-    heroStyle: 'split',
-  },
-  minimal: {
-    preset: 'minimal',
-    accent: '#000000',
-    accentDark: '#ffffff',
-    fonts: { heading: 'Geist', body: 'Geist', caption: 'IBM Plex Mono' },
-    radius: 0,
-    photoFrame: 'none',
-    grain: false,
-    headerDot: false,
-    heroStyle: 'fullbleed',
-  },
-  editorial: {
-    preset: 'editorial',
-    accent: '#8B2500',
-    accentDark: '#d9602a',
-    fonts: { heading: 'Bodoni Moda', body: 'Newsreader', caption: 'Spectral' },
-    radius: 0,
-    photoFrame: 'shadow',
-    grain: false,
-    headerDot: false,
-    heroStyle: 'split',
-  },
-  classic: {
-    preset: 'classic',
-    accent: '#c49a3c',
-    accentLight: '#8d6f2b',
-    fonts: { heading: 'Cinzel', body: 'Crimson Pro', caption: 'Crimson Pro' },
-    radius: 12,
-    photoFrame: 'passepartout',
-    grain: false,
-    headerDot: true,
-    heroStyle: 'minimal',
-  },
-  noir: {
-    preset: 'noir',
-    accent: '#ff6b35',
-    accentLight: '#c2410c',
-    fonts: { heading: 'Libre Baskerville', body: 'Source Sans 3', caption: 'Space Mono' },
-    radius: 0,
-    photoFrame: 'passepartout',
-    grain: true,
-    headerDot: false,
-    heroStyle: 'fullbleed',
-  },
-  monograph: {
-    preset: 'monograph',
-    accent: '#333333',
-    accentDark: '#c8c8c8',
-    fonts: { heading: 'Instrument Serif', body: 'Inter', caption: 'IBM Plex Mono' },
-    radius: 0,
-    photoFrame: 'none',
-    grain: false,
-    headerDot: false,
-    heroStyle: 'typographic',
-  },
-};
+/** Every built-in preset by id, derived from PRESET_REGISTRY (lib/config/presets.ts). */
+export const THEME_PRESETS: Record<string, ThemeConfig> = Object.fromEntries(
+  PRESET_REGISTRY.map((p) => [p.id, { preset: p.id, ...p.theme }]),
+);
 
 export const VALID_PHOTO_FRAMES = ['none', 'passepartout', 'shadow'];
 export const VALID_HERO_STYLES = [
