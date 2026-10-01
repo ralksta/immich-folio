@@ -30,3 +30,14 @@ eslint.config.mjs
 
 # OS metadata
 .DS_Store
+
+# Site content — gallery.yaml, settings.yaml, pages, journal entries,
+# credentials (install.json, .setup-token), contact messages, proofing links,
+# analytics and backups. The container mounts content/ as a volume, so none of
+# it belongs in the build context: a local build from a checkout with a live
+# content/ would otherwise bake all of it into the image layers, where the
+# mounted volume hides it but `docker save` or a push hands it out. Only the
+# tracked templates are let through; the Dockerfile copies them by name.
+content
+!content/*.example
+!content/journal/*.example

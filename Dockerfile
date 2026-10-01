@@ -24,6 +24,13 @@ ENV AUTH_SECRET="build-placeholder"
 
 RUN npm run build
 
+# The standalone trace copies content/ along: proxy.ts and instrumentation.ts
+# read it through runtime paths, which the tracer resolves to the whole
+# directory. .dockerignore already keeps a checkout's content out of this
+# stage; dropping the traced copy makes sure the runner below gets content/
+# from nowhere but the templates it copies by name.
+RUN rm -rf .next/standalone/content
+
 # ── Runtime ───────────────────────────────────────
 FROM base AS runner
 WORKDIR /app
@@ -38,7 +45,16 @@ RUN adduser --system --uid 1001 nextjs
 RUN apk add --no-cache su-exec
 
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/content ./content
+
+# content/ ships with the templates only. The site's own files come from the
+# volume mounted at /app/content; with an empty volume the app shows the setup
+# screen and the wizard writes into it. Copying the templates by name rather
+# than the whole directory keeps a checkout's real content (credentials,
+# contact messages, proofing links, backups) out of the image even if a build
+# context ever includes it — .dockerignore is the first line of that.
+RUN mkdir -p content/journal
+COPY --from=builder /app/content/*.example ./content/
+COPY --from=builder /app/content/journal/*.example ./content/journal/
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --chmod=755 docker-entrypoint.sh ./docker-entrypoint.sh

@@ -92,6 +92,9 @@ content/.setup-token
 content/messages/
 # Google Fonts cached by /api/fonts (lib/fonts.ts)
 content/.fonts/
+# Content pages (lib/admin/pages-service.ts) and the uploaded favicon
+content/pages/
+content/favicon.svg
 
 # ── Internal Dev Docs ────────────────────────────────
 docs/dev/
