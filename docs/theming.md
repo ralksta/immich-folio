@@ -257,6 +257,8 @@ The album-cover grid on a subpage is sized by two CSS custom properties on
 The column count follows the configuration, the spacing belongs to the look.
 `monograph` sets 1px, `minimal` and `editorial` 2px, `studio-modern` 20px;
 `classic` and `noir` set nothing and get the 4px default from `globals.css`.
+Of the later presets, `kunsthalle` sets 40px, `ma` 48px, `cyanotype` 24px,
+`salon` 32px and `birch` 16px.
 A custom preset does the same:
 
 ```css

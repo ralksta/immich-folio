@@ -8,7 +8,7 @@ a quick start.
 | Guide                                          | Covers                                                                                                                  |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | **[Gallery Configuration](gallery-config.md)** | `gallery.yaml` and `settings.yaml` — albums, subpages, sections, photo order, passwords, grid, SEO, proofing, watermark |
-| **[Theming](theming.md)**                      | The seven presets, custom colours and fonts, hero styles, grid layouts, with screenshots                                |
+| **[Theming](theming.md)**                      | The twelve presets, custom colours and fonts, hero styles, grid layouts, with screenshots                               |
 | **[Journal & Photo Essays](journal.md)**       | Long-form storytelling — file format, block syntax, drafts, per-entry passwords, Journal Studio                         |
 | **[Admin Panel](admin-panel.md)**              | The visual editor at `/admin` — pages, journal, settings, analytics, backups, security                                  |
 | **[Deployment](deployment.md)**                | Setup wizard internals, Docker, health check, reverse proxy, behaviour during an Immich outage                          |
