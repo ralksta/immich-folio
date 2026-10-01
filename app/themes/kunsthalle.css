@@ -93,13 +93,14 @@
 
 /* The wall label hangs in the gap below each photo, so the vertical gap
    never drops below what the label needs — even when settings.yaml sets a
-   tighter grid.gap, which lands inline and beats the preset's 56px. */
+   tighter grid.gap, which lands inline and beats the preset's 56px. The
+   extra 32px keeps air between a label and the next work. */
 [data-preset='kunsthalle'] .photo-grid {
-  row-gap: max(var(--grid-gap), 48px);
+  row-gap: calc(max(var(--grid-gap), 16px) + 32px);
 }
 
 [data-preset='kunsthalle'] .photo-grid--masonry .photo-grid__item {
-  margin-bottom: max(var(--grid-gap), 48px);
+  margin-bottom: calc(max(var(--grid-gap), 16px) + 32px);
 }
 
 /* The shadow frame, retuned from a soft halo to a hung shadow. The label
