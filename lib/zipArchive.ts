@@ -116,6 +116,26 @@ export const REFUSAL_PALETTES: Record<string, { dark: Palette; light: Palette }>
     dark: { bg: '#151515', text: '#e8e8e8', muted: '#a5a5a5' },
     light: { bg: '#fafafa', text: '#111111', muted: '#475569' },
   },
+  kunsthalle: {
+    dark: { bg: '#2b2b29', text: '#f0efeb', muted: '#c6c4bd' },
+    light: { bg: '#dddcd8', text: '#1b1b19', muted: '#3f3e3a' },
+  },
+  ma: {
+    dark: { bg: '#1a1917', text: '#ece7dd', muted: '#b5ad9f' },
+    light: { bg: '#f0ede6', text: '#1f1d1a', muted: '#4d4943' },
+  },
+  cyanotype: {
+    dark: { bg: '#0e1621', text: '#e3eaf0', muted: '#a8b7c6' },
+    light: { bg: '#eef2f4', text: '#10243a', muted: '#34495f' },
+  },
+  salon: {
+    dark: { bg: '#1c1315', text: '#f3eae7', muted: '#c5b1ad' },
+    light: { bg: '#f5efec', text: '#271618', muted: '#573f42' },
+  },
+  birch: {
+    dark: { bg: '#121613', text: '#e9eee9', muted: '#aab5ac' },
+    light: { bg: '#f3f5f1', text: '#19201b', muted: '#434e46' },
+  },
 };
 
 const HEX_COLOUR = /^#[0-9a-f]{3,8}$/i;

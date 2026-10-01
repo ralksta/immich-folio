@@ -351,6 +351,186 @@
   --border-hover: #cccccc;
 }
 
+/* ── Kunsthalle: Gallery Wall Palette ──────────── */
+[data-preset='kunsthalle'] {
+  --bg-primary: #2b2b29;
+  --bg-secondary: #242422;
+  --bg-card: #323230;
+  --bg-card-hover: #393937;
+  --bg-overlay: rgba(36, 36, 34, 0.98);
+
+  --text-primary: #f0efeb;
+  --text-secondary: #c6c4bd;
+  --text-muted: #aba9a2;
+
+  --border-subtle: #3d3d3a;
+  --border-hover: #55554f;
+
+  --max-width: 1240px;
+
+  /* The default #ff6b6b reaches only 4.2:1 on the lighter grey card; this is 5.1:1 on every surface. */
+  --error: #ff8a80;
+}
+
+[data-preset='kunsthalle'][data-theme='light'] {
+  --bg-primary: #dddcd8;
+  --bg-secondary: #d4d3ce;
+  --bg-card: #e8e7e3;
+  --bg-card-hover: #e2e1dd;
+  --bg-overlay: rgba(221, 220, 216, 0.96);
+
+  --text-primary: #1b1b19;
+  --text-secondary: #3f3e3a;
+  --text-muted: #52514c;
+
+  --border-subtle: #c9c8c3;
+  --border-hover: #aeada7;
+
+  /* The default #c62828 reaches only 4.1:1 on the grey wall; this is 5.0:1 on every surface. */
+  --error: #a61b1b;
+
+  /* Warning text on the grey wall: 5.3:1, where an amber of #7a5600 is 4.4:1. */
+  --warning: #6b4b00;
+}
+
+/* ── Ma: Washi / Sumi Palette ──────────────────── */
+[data-preset='ma'] {
+  --bg-primary: #1a1917;
+  --bg-secondary: #141311;
+  --bg-card: #21201d;
+  --bg-card-hover: #282623;
+  --bg-overlay: rgba(20, 19, 17, 0.98);
+
+  --text-primary: #ece7dd;
+  --text-secondary: #b5ad9f;
+  --text-muted: #978f82;
+
+  --border-subtle: #2c2a26;
+  --border-hover: #403d37;
+
+  --max-width: 1120px;
+}
+
+[data-preset='ma'][data-theme='light'] {
+  --bg-primary: #f0ede6;
+  --bg-secondary: #e7e3da;
+  --bg-card: #f6f4ef;
+  --bg-card-hover: #ebe7df;
+  --bg-overlay: rgba(240, 237, 230, 0.96);
+
+  --text-primary: #1f1d1a;
+  --text-secondary: #4d4943;
+  --text-muted: #66615a;
+
+  --border-subtle: #dcd7cc;
+  --border-hover: #c5bfb2;
+
+  /* The default #c62828 reaches only 4.4:1 on the washi secondary; this is 5.3:1 on every surface. */
+  --error: #b02020;
+}
+
+/* ── Cyanotype: Prussian Blue Palette ──────────── */
+[data-preset='cyanotype'] {
+  --bg-primary: #0e1621;
+  --bg-secondary: #0a111a;
+  --bg-card: #132030;
+  --bg-card-hover: #192839;
+  --bg-overlay: rgba(10, 17, 26, 0.98);
+
+  --text-primary: #e3eaf0;
+  --text-secondary: #a8b7c6;
+  --text-muted: #8898ab;
+
+  --border-subtle: #1d2a3a;
+  --border-hover: #2e4056;
+
+  --max-width: 1440px;
+}
+
+[data-preset='cyanotype'][data-theme='light'] {
+  --bg-primary: #eef2f4;
+  --bg-secondary: #e3e9ec;
+  --bg-card: #f7f9fa;
+  --bg-card-hover: #e9eef1;
+  --bg-overlay: rgba(238, 242, 244, 0.96);
+
+  --text-primary: #10243a;
+  --text-secondary: #34495f;
+  --text-muted: #4f6379;
+
+  --border-subtle: #d2dce2;
+  --border-hover: #b3c3cd;
+}
+
+/* ── Salon: Velvet / Plaster Palette ───────────── */
+[data-preset='salon'] {
+  --bg-primary: #1c1315;
+  --bg-secondary: #160f11;
+  --bg-card: #241a1c;
+  --bg-card-hover: #2c2023;
+  --bg-overlay: rgba(22, 15, 17, 0.98);
+
+  --text-primary: #f3eae7;
+  --text-secondary: #c5b1ad;
+  --text-muted: #aa938f;
+
+  --border-subtle: #34262a;
+  --border-hover: #4a383c;
+
+  --max-width: 1320px;
+}
+
+[data-preset='salon'][data-theme='light'] {
+  --bg-primary: #f5efec;
+  --bg-secondary: #ece3df;
+  --bg-card: #fbf8f6;
+  --bg-card-hover: #f1e9e5;
+  --bg-overlay: rgba(245, 239, 236, 0.96);
+
+  --text-primary: #271618;
+  --text-secondary: #573f42;
+  --text-muted: #6f5659;
+
+  --border-subtle: #e3d5d1;
+  --border-hover: #ccb8b3;
+
+  /* The default #c62828 reaches only 4.4:1 on the plaster secondary; this is 5.4:1 on every surface. */
+  --error: #b02020;
+}
+
+/* ── Birch: Birch / Pine Palette ───────────────── */
+[data-preset='birch'] {
+  --bg-primary: #121613;
+  --bg-secondary: #0e110f;
+  --bg-card: #181d19;
+  --bg-card-hover: #1f2520;
+  --bg-overlay: rgba(14, 17, 15, 0.98);
+
+  --text-primary: #e9eee9;
+  --text-secondary: #aab5ac;
+  --text-muted: #8d9a90;
+
+  --border-subtle: #232b25;
+  --border-hover: #364039;
+
+  --max-width: 1400px;
+}
+
+[data-preset='birch'][data-theme='light'] {
+  --bg-primary: #f3f5f1;
+  --bg-secondary: #e9ece6;
+  --bg-card: #fbfcfa;
+  --bg-card-hover: #eef1eb;
+  --bg-overlay: rgba(243, 245, 241, 0.96);
+
+  --text-primary: #19201b;
+  --text-secondary: #434e46;
+  --text-muted: #5b675e;
+
+  --border-subtle: #dce1d9;
+  --border-hover: #c1c8be;
+}
+
 /* ── Reset ────────────────────────────────────────── */
 *,
 *::before,

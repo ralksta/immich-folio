@@ -261,7 +261,7 @@ Long-form storytelling with fullbleed photos, side-by-side pairs and grids, quot
 
 ### Theming
 
-Seven built-in presets with distinct visual identities — or mix and match with fine-grained control over colors, fonts, corners, photo frames, hero layout, and grid style.
+Twelve built-in presets with distinct visual identities — or mix and match with fine-grained control over colors, fonts, corners, photo frames, hero layout, and grid style.
 
 **Studio Modern** is the default: Leica precision rebuilt around the Archivo grotesque, with IBM Plex Mono for every piece of photographic metadata, hairline rules, zero radius, and red as signal only.
 
@@ -272,7 +272,8 @@ Seven built-in presets with distinct visual identities — or mix and match with
 <p align="center"><em>Studio Modern, dark and light — every preset ships both, and visitors switch with a toggle in the navigation bar.</em></p>
 
 ```yaml
-theme: studio-modern # or: studio, minimal, editorial, classic, noir, monograph
+theme: studio-modern # or: studio, minimal, editorial, classic, noir, monograph,
+#   kunsthalle, ma, cyanotype, salon, birch
 ```
 
 → **[View all Themes & Configuration Guide](docs/theming.md)**

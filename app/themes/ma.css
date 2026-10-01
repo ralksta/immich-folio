@@ -1,0 +1,243 @@
+/* ══════════════════════════════════════════════════════
+   THEME: Ma — negative space as the material
+   ══════════════════════════════════════════════════════
+
+   Washi-grey paper (light) or sumi (dark), one vermilion seal. Space does
+   the work: two columns, 64px between photos, an asymmetric offset, slow
+   fades and no hover transforms. The only Japanese device is tategaki —
+   the hero subtitle set vertically on desktop. */
+
+/* ── Header: transparent, no rule ─────────────────── */
+[data-preset='ma'] .header {
+  background: color-mix(in srgb, var(--bg-primary) 92%, transparent);
+  border-bottom-color: transparent;
+}
+
+/* The hanko: the header dot as a small square seal. */
+[data-preset='ma'][data-header-dot='true'] .header__nav::before {
+  width: 9px;
+  height: 9px;
+  border-radius: 0;
+  margin-right: 14px;
+}
+
+[data-preset='ma'] .header__nav-link {
+  font-size: 0.78rem;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  text-transform: none;
+  border-bottom-color: transparent;
+}
+
+[data-preset='ma'] .header__nav-link:hover,
+[data-preset='ma'] .header__nav-link.active {
+  border-bottom-color: transparent;
+}
+
+/* The active link carries the seal instead of an underline. */
+[data-preset='ma'] .header__nav-link.active::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 8px;
+  vertical-align: 0.15em;
+  background: var(--accent);
+}
+
+/* ── Type ─────────────────────────────────────────── */
+[data-preset='ma'] body {
+  line-height: 1.8;
+}
+
+[data-preset='ma'] .hero__title,
+[data-preset='ma'] .album-header__title,
+[data-preset='ma'] .subpage-title {
+  font-weight: 300;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[data-preset='ma'] .album-header__title,
+[data-preset='ma'] .subpage-title {
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  line-height: 1.05;
+}
+
+[data-preset='ma'] .hero__subtitle,
+[data-preset='ma'] .album-header__meta,
+[data-preset='ma'] .subpage-subtitle {
+  font-style: normal;
+  font-weight: 300;
+  text-transform: none;
+}
+
+[data-preset='ma'] .section-label,
+[data-preset='ma'] .subpage-section__desc {
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  color: var(--text-secondary);
+}
+
+/* Light mode: a faint paper fibre on the page, never on the photos. */
+[data-preset='ma'][data-theme='light'] body {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
+/* ── Photo grid: air, stillness ───────────────────── */
+[data-preset='ma'] .photo-grid {
+  --grid-gap: 64px;
+}
+
+[data-preset='ma'] .fade-in {
+  transition-duration: 900ms;
+  transition-timing-function: ease-out;
+}
+
+[data-preset='ma'] .photo-grid__item img {
+  transition: opacity 900ms ease-out;
+}
+
+[data-preset='ma'] .photo-grid__item:hover img {
+  transform: none;
+  filter: none;
+  opacity: 0.94;
+}
+
+/* Captions belong to the lightbox; the grid stays silent. */
+[data-preset='ma'] .photo-grid__item-exif {
+  display: none;
+}
+
+/* ── Covers ───────────────────────────────────────── */
+[data-preset='ma'] .subpage-grid {
+  --subpage-gap: 48px;
+}
+
+[data-preset='ma'] .subpage-grid__item:hover img,
+[data-preset='ma'] .album-card:hover .album-card__image {
+  transform: none;
+  filter: brightness(0.9);
+}
+
+[data-preset='ma'] .subpage-grid__item-title,
+[data-preset='ma'] .album-card__title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+[data-preset='ma'] .album-card {
+  border: none;
+}
+
+[data-preset='ma'] .album-card:hover {
+  transform: none;
+}
+
+[data-preset='ma'] .footer {
+  border-top-color: transparent;
+}
+
+/* ── Desktop: asymmetry and tategaki ──────────────── */
+@media (min-width: 1025px) {
+  /* Album and subpage content sits right of centre, a sixth of the width
+     left empty. The home hero is full width and keeps its own layout. */
+  [data-preset='ma'] .main:not(:has(.hero)) {
+    padding-left: max(40px, 14vw);
+  }
+}
+
+@media (min-width: 641px) {
+  /* Split hero: a narrow text column, the title set low, the photo inset
+     into the paper rather than running to the edges. */
+  [data-preset='ma'] .hero--split {
+    grid-template-columns: 1fr 2fr;
+  }
+
+  [data-preset='ma'] .hero--split .hero__left {
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding: 64px 40px 96px max(40px, 6vw);
+  }
+
+  [data-preset='ma'] .hero--split .hero__content {
+    text-align: left;
+  }
+
+  [data-preset='ma'] .hero--split .hero__title {
+    font-size: clamp(2.6rem, 4.6vw, 4rem);
+    line-height: 0.98;
+    margin-bottom: 20px;
+  }
+
+  [data-preset='ma'] .hero--split .hero__nav {
+    align-items: flex-start;
+  }
+
+  [data-preset='ma'] .hero--split .hero__right {
+    margin: 56px 56px 56px 0;
+  }
+
+  /* Tategaki: the subtitle runs down a column of its own beside the title
+     and the links. Each line of the hero text sits in a FadeIn wrapper whose
+     transform would capture an absolutely positioned subtitle, so this is a
+     grid, not a position. */
+  [data-preset='ma'] .hero--split .hero__content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 40px;
+    align-items: start;
+  }
+
+  [data-preset='ma'] .hero--split .hero__content > * {
+    grid-column: 1;
+  }
+
+  [data-preset='ma'] .hero--split .hero__content > :has(> .hero__subtitle) {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  [data-preset='ma'] .hero--split .hero__subtitle {
+    margin: 0;
+    writing-mode: vertical-rl;
+    white-space: nowrap;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: var(--text-muted);
+  }
+
+  [data-preset='ma'] .hero--split .hero__subtitle::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-bottom: 12px;
+    background: var(--accent);
+  }
+}
+
+[data-preset='ma'] .hero__nav-link {
+  font-size: 0.85rem;
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  text-transform: none;
+}
+
+[data-preset='ma'] .hero__nav-link:hover {
+  border-bottom-color: transparent;
+}
+
+@media (max-width: 640px) {
+  [data-preset='ma'] .photo-grid {
+    --grid-gap: 24px;
+  }
+
+  [data-preset='ma'] .subpage-grid {
+    --subpage-gap: 32px;
+  }
+}

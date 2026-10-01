@@ -1,0 +1,278 @@
+/* ══════════════════════════════════════════════════════
+   THEME: Cyanotype — a Prussian-blue print, set like a drawing sheet
+   ══════════════════════════════════════════════════════
+
+   Ink-blue night in dark mode; in light mode every piece of text is
+   Prussian ink on cool paper (tokens.css). Jost for type, DM Mono 300 for
+   numbers and EXIF, ruled title blocks, registration marks, and sheets
+   indexed A-01, A-02. */
+
+[data-preset='cyanotype'] {
+  /* Registration marks sit on the photo, so they are light in both modes. */
+  --cy-reg: rgba(255, 255, 255, 0.75);
+}
+
+/* ── Header: one ruled line ───────────────────────── */
+[data-preset='cyanotype'] .header {
+  background: color-mix(in srgb, var(--bg-primary) 94%, transparent);
+  border-bottom: 1px solid var(--border-hover);
+}
+
+[data-preset='cyanotype'] .header__nav-link {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border-bottom-color: transparent;
+}
+
+[data-preset='cyanotype'] .header__nav-link:hover {
+  border-bottom-color: transparent;
+}
+
+[data-preset='cyanotype'] .header__nav-link.active {
+  color: var(--accent-text, var(--accent));
+  border-bottom-color: transparent;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+
+/* ── Type ─────────────────────────────────────────── */
+[data-preset='cyanotype'] .hero__title,
+[data-preset='cyanotype'] .album-header__title,
+[data-preset='cyanotype'] .subpage-title {
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+
+[data-preset='cyanotype'] .hero__subtitle,
+[data-preset='cyanotype'] .subpage-subtitle {
+  font-style: normal;
+}
+
+[data-preset='cyanotype'] .section-label,
+[data-preset='cyanotype'] .subpage-section__desc {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Title block: the album metadata as a ruled cell, in DM Mono. */
+[data-preset='cyanotype'] .album-header__meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--border-hover);
+  font-family: var(--font-caption);
+  font-size: 0.7rem;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+[data-preset='cyanotype'] .album-header__meta > span {
+  padding: 6px 12px;
+}
+
+[data-preset='cyanotype'] .album-header__meta > span + span {
+  border-left: 1px solid var(--border-hover);
+}
+
+/* ── Photo grid: the architectural module ─────────── */
+[data-preset='cyanotype'] .photo-grid {
+  --grid-gap: 24px;
+}
+
+[data-preset='cyanotype'] .photo-grid__item:hover img {
+  transform: none;
+  filter: none;
+}
+
+/* Registration marks: four 12px corner ticks, faded in on hover and focus.
+   ::after belongs to the grain overlay, so they use ::before. */
+[data-preset='cyanotype'] .photo-grid__item::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  background:
+    linear-gradient(var(--cy-reg), var(--cy-reg)) left top / 12px 1px no-repeat,
+    linear-gradient(var(--cy-reg), var(--cy-reg)) left top / 1px 12px no-repeat,
+    linear-gradient(var(--cy-reg), var(--cy-reg)) right top / 12px 1px no-repeat,
+    linear-gradient(var(--cy-reg), var(--cy-reg)) right top / 1px 12px no-repeat,
+    linear-gradient(var(--cy-reg), var(--cy-reg)) left bottom / 12px 1px no-repeat,
+    linear-gradient(var(--cy-reg), var(--cy-reg)) left bottom / 1px 12px no-repeat,
+    linear-gradient(var(--cy-reg), var(--cy-reg)) right bottom / 12px 1px no-repeat,
+    linear-gradient(var(--cy-reg), var(--cy-reg)) right bottom / 1px 12px no-repeat;
+}
+
+[data-preset='cyanotype'] .photo-grid__item:hover::before,
+[data-preset='cyanotype'] .photo-grid__item:focus-visible::before {
+  opacity: 1;
+}
+
+[data-preset='cyanotype'] .photo-grid__item-exif {
+  font-family: var(--font-caption);
+  font-size: 0.65rem;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition-duration: 200ms;
+}
+
+/* ── Covers: sheets with a caption bar ────────────── */
+[data-preset='cyanotype'] .subpage-grid {
+  --subpage-gap: 24px;
+}
+
+[data-preset='cyanotype'] .subpage-grid__item {
+  aspect-ratio: auto;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  transition: border-color var(--transition-fast);
+}
+
+[data-preset='cyanotype'] .subpage-grid__item:hover {
+  border-color: var(--border-hover);
+}
+
+[data-preset='cyanotype'] .subpage-grid__item-media {
+  aspect-ratio: 3 / 2;
+  height: auto;
+}
+
+[data-preset='cyanotype'] .subpage-grid__item:hover img {
+  transform: none;
+  filter: none;
+}
+
+[data-preset='cyanotype'] .subpage-grid__item-overlay,
+[data-preset='cyanotype'] .subpage-grid__item-badge {
+  display: none;
+}
+
+[data-preset='cyanotype'] .subpage-grid__item-caption {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+[data-preset='cyanotype'] .subpage-grid__item-index,
+[data-preset='cyanotype'] .subpage-grid__item-caption-count {
+  font-family: var(--font-caption);
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+[data-preset='cyanotype'] .subpage-grid__item-index {
+  color: var(--accent-text, var(--accent));
+}
+
+[data-preset='cyanotype'] .subpage-grid__item-index::before,
+[data-preset='cyanotype'] .hero__nav-index::before {
+  content: 'A-';
+}
+
+[data-preset='cyanotype'] .subpage-grid__item-caption-title {
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+[data-preset='cyanotype'] .subpage-grid__item-caption-count {
+  margin-left: auto;
+  color: var(--text-muted);
+}
+
+[data-preset='cyanotype'] .album-card {
+  border: 1px solid var(--border-subtle);
+}
+
+[data-preset='cyanotype'] .album-card:hover {
+  transform: none;
+  border-color: var(--border-hover);
+}
+
+/* ── Split hero: sheet list and title block ───────── */
+[data-preset='cyanotype'] .hero--split .hero__content {
+  text-align: left;
+}
+
+[data-preset='cyanotype'] .hero--split .hero__nav {
+  align-items: stretch;
+  gap: 0;
+  border-top: 1px solid var(--border-hover);
+}
+
+[data-preset='cyanotype'] .hero--split .hero__nav-link {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-weight: 400;
+  text-decoration: none;
+}
+
+[data-preset='cyanotype'] .hero--split .hero__nav-link:hover {
+  color: var(--accent-text, var(--accent));
+}
+
+[data-preset='cyanotype'] .hero .hero__nav-index {
+  display: inline-block;
+  font-family: var(--font-caption);
+  font-size: 0.68rem;
+  font-weight: 300;
+  color: var(--accent-text, var(--accent));
+}
+
+/* The hero EXIF chip, drawn as a cell of a drawing's title block. */
+[data-preset='cyanotype'] .hero--split .hero__exif-chip {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  z-index: 3;
+  display: inline-flex;
+  max-width: calc(100% - 96px);
+  padding: 6px 10px;
+  border: 1px solid var(--border-hover);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-family: var(--font-caption);
+  font-size: 0.68rem;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+[data-preset='cyanotype'] .footer {
+  border-top: 1px solid var(--border-hover);
+}
+
+@media (max-width: 640px) {
+  [data-preset='cyanotype'] .photo-grid {
+    --grid-gap: 12px;
+  }
+
+  [data-preset='cyanotype'] .hero--split .hero__exif-chip {
+    left: 12px;
+    bottom: 12px;
+    max-width: calc(100% - 80px);
+  }
+}

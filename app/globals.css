@@ -5,6 +5,11 @@
 @import url('./themes/noir.css');
 @import url('./themes/monograph.css');
 @import url('./themes/studio-modern.css');
+@import url('./themes/kunsthalle.css');
+@import url('./themes/ma.css');
+@import url('./themes/cyanotype.css');
+@import url('./themes/salon.css');
+@import url('./themes/birch.css');
 
 @import url('./tokens.css');
 @import url('./leaflet.css');

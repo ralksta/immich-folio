@@ -73,6 +73,7 @@ COPY --from=builder /app/lib/admin/doctor.ts ./lib/admin/doctor.ts
 COPY --from=builder /app/lib/config/settingValues.ts ./lib/config/settingValues.ts
 COPY --from=builder /app/lib/config/schema.ts ./lib/config/schema.ts
 COPY --from=builder /app/lib/config/theme.ts ./lib/config/theme.ts
+COPY --from=builder /app/lib/config/presets.ts ./lib/config/presets.ts
 COPY --from=builder /app/lib/siteUrl.ts ./lib/siteUrl.ts
 COPY --from=deps /app/node_modules/js-yaml ./node_modules/js-yaml
 

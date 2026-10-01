@@ -1,0 +1,246 @@
+/* ══════════════════════════════════════════════════════
+   THEME: Salon — the oxblood picture gallery, done quietly
+   ══════════════════════════════════════════════════════
+
+   Velvet-dark and plaster-rose walls (tokens.css), Gloock titles that are
+   never italic, Work Sans text, and a fine fillet floating 6px outside each
+   photo. An outline is not clipped by the item's `overflow: hidden`, so
+   the fillet needs no extra markup. */
+
+/* ── Header ───────────────────────────────────────── */
+[data-preset='salon'] .header {
+  background: color-mix(in srgb, var(--bg-primary) 94%, transparent);
+  border-bottom-color: var(--border-subtle);
+}
+
+[data-preset='salon'] .header__wordmark {
+  display: flex;
+  align-items: center;
+  margin-right: 28px;
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+[data-preset='salon'] .header__nav-link {
+  font-size: 0.72rem;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  border-bottom-color: transparent;
+}
+
+[data-preset='salon'] .header__nav-link:hover {
+  border-bottom-color: transparent;
+}
+
+[data-preset='salon'] .header__nav-link.active {
+  color: var(--accent-text, var(--accent));
+  border-bottom-color: transparent;
+}
+
+/* ── Type: Gloock, never italic ───────────────────── */
+[data-preset='salon'] .hero__title,
+[data-preset='salon'] .album-header__title,
+[data-preset='salon'] .subpage-title,
+[data-preset='salon'] .subpage-section__title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[data-preset='salon'] .album-header__title,
+[data-preset='salon'] .subpage-title {
+  font-size: clamp(2rem, 3.6vw, 3rem);
+  line-height: 1.08;
+}
+
+[data-preset='salon'] .hero__subtitle,
+[data-preset='salon'] .album-header__meta,
+[data-preset='salon'] .subpage-subtitle {
+  font-style: normal;
+}
+
+[data-preset='salon'] .section-label,
+[data-preset='salon'] .subpage-section__desc {
+  font-family: var(--font-caption);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* ── Photo grid: the fillet ───────────────────────── */
+[data-preset='salon'] .photo-grid {
+  --grid-gap: 24px;
+}
+
+[data-preset='salon'] .photo-grid__item {
+  outline: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline-offset: 6px;
+  transition: outline-color 600ms ease;
+}
+
+[data-preset='salon'] .photo-grid__item:hover {
+  outline-color: var(--accent);
+}
+
+/* Only the fillet reacts. */
+[data-preset='salon'] .photo-grid__item:hover img {
+  transform: none;
+  filter: none;
+}
+
+/* Captions stay out of the grid. */
+[data-preset='salon'] .photo-grid__item-exif {
+  display: none;
+}
+
+/* ── Covers: Gloock titles beneath ────────────────── */
+[data-preset='salon'] .subpage-grid {
+  --subpage-gap: 32px;
+}
+
+[data-preset='salon'] .subpage-grid__item {
+  aspect-ratio: auto;
+  overflow: visible;
+}
+
+[data-preset='salon'] .subpage-grid__item-media {
+  aspect-ratio: 4 / 3;
+  height: auto;
+  outline: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline-offset: 6px;
+  transition: outline-color 600ms ease;
+}
+
+[data-preset='salon'] .subpage-grid__item:hover .subpage-grid__item-media {
+  outline-color: var(--accent);
+}
+
+[data-preset='salon'] .subpage-grid__item:hover img {
+  transform: none;
+  filter: none;
+}
+
+[data-preset='salon'] .subpage-grid__item-overlay,
+[data-preset='salon'] .subpage-grid__item-badge,
+[data-preset='salon'] .subpage-grid__item-index {
+  display: none;
+}
+
+[data-preset='salon'] .subpage-grid__item-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px 0 0;
+}
+
+[data-preset='salon'] .subpage-grid__item-caption-title {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+[data-preset='salon'] .subpage-grid__item-caption-count {
+  font-family: var(--font-caption);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+[data-preset='salon'] .album-card {
+  border: none;
+  overflow: visible;
+  outline: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline-offset: 6px;
+  transition: outline-color 600ms ease;
+}
+
+[data-preset='salon'] .album-card:hover {
+  transform: none;
+  outline-color: var(--accent);
+}
+
+[data-preset='salon'] .album-card__title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ── Fullbleed hero: a scrim tinted from the wall ─── */
+[data-preset='salon'] .hero__fullbleed-overlay {
+  align-items: flex-start;
+  justify-content: flex-end;
+  text-align: left;
+  padding: 64px clamp(24px, 5vw, 72px);
+  background: linear-gradient(
+    0deg,
+    color-mix(in srgb, var(--bg-primary) 94%, transparent) 0%,
+    color-mix(in srgb, var(--bg-primary) 70%, transparent) 28%,
+    color-mix(in srgb, var(--bg-primary) 20%, transparent) 55%,
+    transparent 75%
+  );
+}
+
+[data-preset='salon'] .hero--fullbleed .hero__title {
+  color: var(--text-primary);
+  font-size: clamp(2.25rem, 6vw, 4.5rem);
+  line-height: 1.02;
+  text-shadow: none;
+}
+
+[data-preset='salon'] .hero--fullbleed .hero__subtitle {
+  color: var(--text-secondary);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  text-shadow: none;
+  margin-bottom: 24px;
+}
+
+[data-preset='salon'] .hero--fullbleed .hero__nav {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 6px 24px;
+  align-items: baseline;
+  padding: 0;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  border-radius: 0;
+}
+
+[data-preset='salon'] .hero--fullbleed .hero__nav-link {
+  color: var(--text-secondary);
+  text-decoration-color: color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+[data-preset='salon'] .hero--fullbleed .hero__nav-link:hover {
+  color: var(--accent-text, var(--accent));
+  text-decoration-color: var(--accent);
+}
+
+[data-preset='salon'] .footer {
+  border-top-color: var(--border-subtle);
+}
+
+@media (max-width: 640px) {
+  [data-preset='salon'] .header__wordmark {
+    display: none;
+  }
+
+  [data-preset='salon'] .photo-grid {
+    --grid-gap: 18px;
+  }
+}

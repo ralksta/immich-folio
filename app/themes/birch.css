@@ -1,0 +1,195 @@
+/* ══════════════════════════════════════════════════════
+   THEME: Birch — Scandinavian daylight
+   ══════════════════════════════════════════════════════
+
+   Birch-white and pine-night over green-tinted greys (tokens.css), pine
+   and lichen as the only accent, Albert Sans throughout. The signature is
+   what is missing: no uppercase and no letter-spacing anywhere in the
+   interface, where every other preset uses tracked caps. Corners come from
+   the theme radius (6px). */
+
+/* ── Sentence case everywhere ─────────────────────── */
+/* :is() takes its most specific argument, so one rule outranks every base
+   and hero-specific caps rule it lists. */
+[data-preset='birch']
+  :is(
+    .header__nav-link,
+    .header__wordmark,
+    .hero__title,
+    .hero__subtitle,
+    .hero__nav-link,
+    .hero--stacked .hero__title,
+    .hero--stacked .hero__subtitle,
+    .hero--fullbleed .hero__subtitle,
+    .hero--mosaic .hero__title,
+    .hero--mosaic .hero__subtitle,
+    .hero--mosaic .hero__nav-link,
+    .hero__thumbnail-label,
+    .hero__thumbnail-index,
+    .hero__nav-index,
+    .section-label,
+    .album-header__title,
+    .album-header__meta,
+    .album-header__download,
+    .subpage-title,
+    .subpage-subtitle,
+    .subpage-section__title,
+    .subpage-section__desc,
+    .subpage-toc__num,
+    .subpage-toc__label,
+    .subpage-grid__item-title,
+    .subpage-grid__item-count,
+    .subpage-grid__item-badge,
+    .album-card__title,
+    .album-card__count,
+    .photo-grid__item-exif,
+    .footer__name,
+    .footer__legal-link,
+    .back-link
+  ) {
+  text-transform: none;
+  letter-spacing: 0;
+  font-style: normal;
+}
+
+/* ── Header ───────────────────────────────────────── */
+[data-preset='birch'] .header {
+  background: color-mix(in srgb, var(--bg-primary) 92%, transparent);
+  border-bottom-color: var(--border-subtle);
+}
+
+[data-preset='birch'] .header__nav-link {
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-bottom-color: transparent;
+}
+
+[data-preset='birch'] .header__nav-link:hover {
+  border-bottom-color: transparent;
+}
+
+/* The active link sits in a soft pill rather than on an underline. */
+[data-preset='birch'] .header__nav-link.active {
+  border-bottom-color: transparent;
+  background: var(--bg-card-hover);
+  border-radius: 999px;
+}
+
+/* ── Type ─────────────────────────────────────────── */
+[data-preset='birch'] .hero__title,
+[data-preset='birch'] .album-header__title,
+[data-preset='birch'] .subpage-title {
+  font-weight: 500;
+}
+
+[data-preset='birch'] .section-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* ── Photo grid: soft corners, pill EXIF ──────────── */
+[data-preset='birch'] .photo-grid {
+  --grid-gap: 10px;
+}
+
+[data-preset='birch'] .photo-grid__item img {
+  transition: filter 300ms ease;
+}
+
+[data-preset='birch'] .photo-grid__item:hover img {
+  transform: none;
+  filter: brightness(1.03);
+}
+
+[data-preset='birch'] .photo-grid__item-exif {
+  left: 10px;
+  right: auto;
+  bottom: 10px;
+  max-width: calc(100% - 20px);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-card) 88%, transparent);
+  color: var(--text-primary);
+  font-size: 0.7rem;
+  font-weight: 500;
+  transition-duration: 300ms;
+}
+
+/* ── Covers: soft corners, a 2px lift ─────────────── */
+[data-preset='birch'] .subpage-grid {
+  --subpage-gap: 16px;
+}
+
+[data-preset='birch'] .subpage-grid__item,
+[data-preset='birch'] .album-card {
+  border-radius: var(--radius-sm);
+  transition: transform 300ms ease;
+}
+
+[data-preset='birch'] .subpage-grid__item:hover,
+[data-preset='birch'] .album-card:hover {
+  transform: translateY(-2px);
+}
+
+[data-preset='birch'] .subpage-grid__item:hover img {
+  transform: none;
+  filter: brightness(0.8);
+}
+
+[data-preset='birch'] .subpage-grid__item-title,
+[data-preset='birch'] .album-card__title {
+  font-weight: 500;
+}
+
+/* ── Stacked hero: the photo inset with soft corners ─ */
+[data-preset='birch'] .hero--stacked {
+  gap: 12px;
+  padding: 16px 24px 24px;
+}
+
+[data-preset='birch'] .hero__stacked-image {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+[data-preset='birch'] .hero--stacked .hero__title {
+  font-family: var(--font-serif);
+  font-weight: 500;
+}
+
+[data-preset='birch'] .hero--stacked .hero__subtitle {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+[data-preset='birch'] .hero__thumbnail-strip {
+  gap: 8px;
+  background: none;
+}
+
+[data-preset='birch'] .hero__thumbnail-item {
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+}
+
+[data-preset='birch'] .hero__thumbnail-item:hover {
+  background: var(--bg-card-hover);
+}
+
+[data-preset='birch'] .hero__thumbnail-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  [data-preset='birch'] .hero--stacked {
+    padding: 8px 12px 16px;
+  }
+
+  [data-preset='birch'] .hero__stacked-overlay {
+    padding: 32px 20px;
+  }
+}
