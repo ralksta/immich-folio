@@ -13,7 +13,7 @@
 
 A self-hosted portfolio powered by [Immich](https://immich.app). It acts as a **secure reverse proxy** between your visitors and your private Immich instance: your Immich server stays on your local network, completely invisible to the outside world, while your albums are published as a gallery you control.
 
-**Latest: v0.19.0** — private proofing links for clients, custom content pages and a round of security fixes. → [What's New](#whats-new)
+**Latest: v0.19.1** — private proofing links for clients, custom content pages and a round of security fixes. → [What's New](#whats-new)
 
 ## Contents
 

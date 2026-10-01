@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [0.19.1] — 2026-10-01
+
+### Security
+
+- **Next.js 16.3.6** ([#743](https://github.com/ralksta/immich-folio/pull/743)).
+  Next.js 16.2.0 to 16.3.5 carry
+  [GHSA-vcvr-r3jv-pc5j](https://github.com/vercel/next.js/security/advisories/GHSA-vcvr-r3jv-pc5j)
+  (critical): the Node.js `ImageResponse` from `next/og` can execute code when
+  attacker-controlled values reach the SVG it renders. Folio renders its share
+  cards with it in `/api/og`. The title and subtitle there are HMAC-signed by
+  the site since v0.19.0 ([#767](https://github.com/ralksta/immich-folio/pull/767)),
+  and an unsigned request falls back to the site title, so a visitor could not
+  put text of their choosing on the card. Upgrade anyway: the signed values
+  include album names from Immich.
+
+### Changed
+
+- Prettier 3.9.9 ([#744](https://github.com/ralksta/immich-folio/pull/744)),
+  development only.
+
 ## [0.19.0] — 2026-09-29
 
 ### Security
