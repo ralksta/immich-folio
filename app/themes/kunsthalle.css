@@ -44,7 +44,7 @@
 }
 
 [data-preset='kunsthalle'] .header__nav-link:hover {
-  color: var(--accent);
+  color: var(--accent-text, var(--accent));
   border-bottom-color: transparent;
 }
 
@@ -216,7 +216,7 @@
 }
 
 [data-preset='kunsthalle'] .subpage-grid__item:hover .subpage-grid__item-caption-title {
-  color: var(--accent);
+  color: var(--accent-text, var(--accent));
 }
 
 [data-preset='kunsthalle'] .subpage-grid__item-caption-count {
@@ -301,7 +301,7 @@
 }
 
 [data-preset='kunsthalle'] .hero--mosaic .hero__nav-link:hover {
-  color: var(--accent);
+  color: var(--accent-text, var(--accent));
   border-bottom-color: var(--accent);
 }
 

@@ -37,7 +37,7 @@
 }
 
 [data-preset='salon'] .header__nav-link.active {
-  color: var(--accent);
+  color: var(--accent-text, var(--accent));
   border-bottom-color: transparent;
 }
 
@@ -227,7 +227,7 @@
 }
 
 [data-preset='salon'] .hero--fullbleed .hero__nav-link:hover {
-  color: var(--accent);
+  color: var(--accent-text, var(--accent));
   text-decoration-color: var(--accent);
 }
 

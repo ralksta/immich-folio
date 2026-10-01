@@ -388,6 +388,9 @@
 
   /* The default #c62828 reaches only 4.1:1 on the grey wall; this is 5.0:1 on every surface. */
   --error: #a61b1b;
+
+  /* Warning text on the grey wall: 5.3:1, where an amber of #7a5600 is 4.4:1. */
+  --warning: #6b4b00;
 }
 
 /* ── Ma: Washi / Sumi Palette ──────────────────── */

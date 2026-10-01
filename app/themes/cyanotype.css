@@ -31,7 +31,7 @@
 }
 
 [data-preset='cyanotype'] .header__nav-link.active {
-  color: var(--accent);
+  color: var(--accent-text, var(--accent));
   border-bottom-color: transparent;
   text-decoration: underline;
   text-decoration-thickness: 1px;
@@ -177,7 +177,7 @@
 }
 
 [data-preset='cyanotype'] .subpage-grid__item-index {
-  color: var(--accent);
+  color: var(--accent-text, var(--accent));
 }
 
 [data-preset='cyanotype'] .subpage-grid__item-index::before,
@@ -227,7 +227,7 @@
 }
 
 [data-preset='cyanotype'] .hero--split .hero__nav-link:hover {
-  color: var(--accent);
+  color: var(--accent-text, var(--accent));
 }
 
 [data-preset='cyanotype'] .hero .hero__nav-index {
@@ -235,7 +235,7 @@
   font-family: var(--font-caption);
   font-size: 0.68rem;
   font-weight: 300;
-  color: var(--accent);
+  color: var(--accent-text, var(--accent));
 }
 
 /* The hero EXIF chip, drawn as a cell of a drawing's title block. */
