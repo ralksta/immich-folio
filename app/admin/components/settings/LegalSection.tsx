@@ -5,9 +5,10 @@ import ToggleCard from '../fields/ToggleCard';
 import PrivacyEditor from '../PrivacyEditor';
 import EnvLockNote from '../fields/EnvLockNote';
 import { CONTACT_RETENTION_DEFAULT, CONTACT_RETENTION_MAX, isHttpUrl } from '@/lib/config/schema';
+import { FieldError } from './fields';
 import type { SectionProps } from './types';
 
-export default function LegalSection({ settings, update, envLocks }: SectionProps) {
+export default function LegalSection({ settings, update, envLocks, fieldErrors }: SectionProps) {
   const notifyLock = envLocks?.['contact.notifyUrl'];
   // The Impressum drops a non-http(s) contact URL with a warning in the server
   // log, where nobody looks; say it here instead.
@@ -237,6 +238,14 @@ export default function LegalSection({ settings, update, envLocks }: SectionProp
                   parseInt(e.target.value) || CONTACT_RETENTION_DEFAULT,
                 )
               }
+              aria-invalid={fieldErrors?.['contact.retentionDays'] ? true : undefined}
+              aria-describedby={
+                fieldErrors?.['contact.retentionDays'] ? 'contact-retention-error' : undefined
+              }
+            />
+            <FieldError
+              id="contact-retention-error"
+              message={fieldErrors?.['contact.retentionDays']}
             />
           </div>
         </div>

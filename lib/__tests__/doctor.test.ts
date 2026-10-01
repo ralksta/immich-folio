@@ -499,5 +499,17 @@ describe('checkSettingValues (QA A-14)', () => {
     expect(checkSettingValues([{ field: 'url' }]).settingsSection).toBe('seo');
     expect(checkSettingValues([{ field: 'grid.gap' }]).settingsSection).toBe('grid');
     expect(checkSettingValues([{ field: 'theme.accent' }]).settingsSection).toBe('theme');
+    expect(checkSettingValues([{ field: 'theme.radius' }]).settingsSection).toBe('theme');
+    expect(checkSettingValues([{ field: 'contact.retentionDays' }]).settingsSection).toBe('legal');
+    expect(checkSettingValues([{ field: 'navLinks.3.url' }]).settingsSection).toBe('footer');
+  });
+
+  it('counts the header links as one setting however many entries fail', () => {
+    const f = checkSettingValues([
+      { field: 'navLinks.0.label' },
+      { field: 'navLinks.0.url' },
+      { field: 'navLinks.2.url' },
+    ]);
+    expect(f.title).toBe('The header links setting is ignored');
   });
 });

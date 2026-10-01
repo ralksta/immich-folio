@@ -62,13 +62,18 @@ COPY --chmod=755 docker-entrypoint.sh ./docker-entrypoint.sh
 # `npm run doctor` — the config doctor for the terminal (#521). It is the tool
 # for the case where the app will not start, so it has to be in the runtime
 # image rather than only in a checkout. Node 22.18+ strips the types itself,
-# so this is the whole of it: the entry point, the pure checks it imports, and
-# js-yaml, which the standalone bundle inlines rather than leaving on disk.
-# The standalone build copies package.json verbatim, so the script entry is
-# already there.
+# so this is the whole of it: the entry point, every module it imports at
+# runtime, and js-yaml, which the standalone bundle inlines rather than leaving
+# on disk. The standalone build copies package.json verbatim, so the script
+# entry is already there. scripts/__tests__/doctor-image.test.ts walks the
+# import graph and fails when a module of it is missing from this list.
 COPY --from=builder /app/scripts/doctor.mjs ./scripts/doctor.mjs
 COPY --from=builder /app/scripts/doctor.mts ./scripts/doctor.mts
 COPY --from=builder /app/lib/admin/doctor.ts ./lib/admin/doctor.ts
+COPY --from=builder /app/lib/config/settingValues.ts ./lib/config/settingValues.ts
+COPY --from=builder /app/lib/config/schema.ts ./lib/config/schema.ts
+COPY --from=builder /app/lib/config/theme.ts ./lib/config/theme.ts
+COPY --from=builder /app/lib/siteUrl.ts ./lib/siteUrl.ts
 COPY --from=deps /app/node_modules/js-yaml ./node_modules/js-yaml
 
 # Content dir must be writable for admin saves (ownership fixed at runtime)

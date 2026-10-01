@@ -567,17 +567,28 @@ export function checkContact(
 const SETTING_SECTIONS: Record<string, string> = {
   url: 'seo',
   'theme.accent': 'theme',
+  'theme.radius': 'theme',
   'grid.columns': 'grid',
   'grid.gap': 'grid',
+  'contact.retentionDays': 'legal',
+  navLinks: 'footer',
 };
 
 /** Human names for the same fields, for the finding's text. */
 const SETTING_LABELS: Record<string, string> = {
   url: 'Site URL',
   'theme.accent': 'accent colour',
+  'theme.radius': 'corner radius',
   'grid.columns': 'grid columns',
   'grid.gap': 'grid gap',
+  'contact.retentionDays': 'message retention',
+  navLinks: 'header links',
 };
+
+/** `navLinks.2.url` → `navLinks`: every header-link error is one setting. */
+function settingKey(field: string): string {
+  return field.startsWith('navLinks.') ? 'navLinks' : field;
+}
 
 /**
  * Values in settings.yaml the site does not use as written — an accent that is
@@ -592,21 +603,23 @@ export function checkSettingValues(errors: Array<{ field: string }>): DoctorFind
       id: 'settings-values',
       level: 'ok',
       title: 'Settings are used as written',
-      detail: 'Site URL, accent colour and grid values in settings.yaml are all valid.',
+      detail:
+        'Site URL, theme, grid, message retention and header links in settings.yaml are all valid.',
     };
   }
-  const names = errors.map((e) => SETTING_LABELS[e.field] ?? e.field);
+  const keys = [...new Set(errors.map((e) => settingKey(e.field)))];
+  const names = keys.map((key) => SETTING_LABELS[key] ?? key);
   return {
     id: 'settings-values',
     level: 'warn',
     title:
-      errors.length === 1
+      names.length === 1
         ? `The ${names[0]} setting is ignored`
-        : `${errors.length} settings are ignored`,
+        : `${names.length} settings are ignored`,
     detail:
       `settings.yaml holds a value the site cannot use for: ${names.join(', ')}. ` +
-      'It falls back to the default instead. Open the setting to see what it expects.',
-    settingsSection: SETTING_SECTIONS[errors[0].field],
+      'The site uses a default or the nearest allowed value instead. Open the setting to see what it expects.',
+    settingsSection: SETTING_SECTIONS[keys[0]],
   };
 }
 
