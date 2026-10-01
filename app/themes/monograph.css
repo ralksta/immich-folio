@@ -329,10 +329,6 @@
     opacity: 1;
   }
 
-  [data-photo-frame='passepartout'] .photo-grid__item {
-    padding: 6px 6px 18px;
-  }
-
   /* Minimal: adjust fullbleed hero for mobile */
   [data-preset='minimal'] .hero__left {
     padding: 20px 24px;

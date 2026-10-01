@@ -45,6 +45,11 @@
   box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.4);
 }
 
+/* Under passepartout the vignette darkens the photo, not the mat. */
+[data-preset='noir'][data-photo-frame='passepartout'] .photo-grid .photo-grid__item::before {
+  inset: var(--photo-mat) var(--photo-mat) var(--photo-mat-caption);
+}
+
 /* Film-edge EXIF labels */
 [data-preset='noir'] .photo-grid__item-exif {
   font-family: var(--font-caption);

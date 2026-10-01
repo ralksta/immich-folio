@@ -84,17 +84,6 @@
   transform: scale(1.01);
 }
 
-/* Warm passepartout override */
-[data-preset='classic'][data-photo-frame='passepartout'] .photo-grid__item {
-  background: #1a1816;
-  border-color: rgba(196, 154, 60, 0.12);
-}
-
-[data-preset='classic'][data-photo-frame='passepartout'][data-theme='light'] .photo-grid__item {
-  background: #fffdf5;
-  border-color: rgba(196, 154, 60, 0.2);
-}
-
 /* Album cards: warm rounded, gold hover */
 [data-preset='classic'] .album-card {
   border-radius: 12px;

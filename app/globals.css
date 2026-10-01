@@ -1913,38 +1913,94 @@ body:has(> #main-content) > .footer {
   flex-shrink: 0;
 }
 
-/* ─ Passepartout photo frame ─ */
-[data-photo-frame='passepartout'] .photo-grid__item {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 8px 8px 24px;
-  margin-bottom: var(--grid-gap, 24px);
-  background: #111;
+/* ─ Photo box inside a grid tile ─ */
+/* Covers the tile (the box next/image `fill` used to take from the tile
+   itself) unless a frame sets the mat variables. Clips the hover zoom to the
+   photo, so it cannot spill onto a mat. */
+.photo-grid__media {
+  position: absolute;
+  inset: var(--photo-mat, 0px) var(--photo-mat, 0px) var(--photo-mat-caption, 0px);
   overflow: hidden;
 }
 
-[data-photo-frame='passepartout'][data-theme='light'] .photo-grid__item {
-  border-color: rgba(0, 0, 0, 0.1);
-  background: #fff;
+/* ─ Passepartout photo frame ─ */
+/* A mat board around each photo, with the EXIF line printed in the wider
+   bottom band like the caption under a print: always shown, never over the
+   photo. The tile is the mat; PhotoGrid's .photo-grid__media holds the photo
+   and is inset by the mat below (without a frame it covers the tile, the
+   variables being unset). The geometry lives in these variables so the grain
+   overlay and the justified row math (lib/justifiedRow.ts) inset by exactly
+   the same amounts. Colours are the --mat-* tokens in tokens.css. */
+[data-photo-frame='passepartout'] .photo-grid {
+  --photo-mat: 8px;
+  --photo-mat-caption: 32px;
+  --photo-mat-border: 1px;
+  /* Everything around the photo, border included, across and down. */
+  --photo-mat-x: calc(2 * (var(--photo-mat) + var(--photo-mat-border)));
+  --photo-mat-y: calc(var(--photo-mat) + var(--photo-mat-caption) + 2 * var(--photo-mat-border));
 }
 
-[data-photo-frame='passepartout'] .photo-grid__item-exif {
-  position: relative;
-  bottom: auto;
-  left: auto;
-  right: auto;
+/* Also reaches the essay images, which share the class but have no mat. */
+[data-photo-frame='passepartout'] .photo-grid__item {
+  border: 1px solid var(--mat-border);
+  padding: 8px 8px 24px;
+  margin-bottom: var(--grid-gap, 24px);
+  background: var(--mat-bg);
+  overflow: hidden;
+}
+
+[data-photo-frame='passepartout'] .photo-grid .photo-grid__item {
+  /* The aspect ratio a layout gives the tile (the photo's own in masonry) has
+     to size the photo, not the photo plus its mat. */
+  box-sizing: content-box;
+  border-width: var(--photo-mat-border);
+  padding: var(--photo-mat) var(--photo-mat) var(--photo-mat-caption);
+}
+
+/* The rule above re-adds the masonry row spacing; these layouts space their
+   rows with the grid or flex gap, and doubled it under this frame. */
+[data-photo-frame='passepartout'] .photo-grid--uniform .photo-grid__item,
+[data-photo-frame='passepartout'] .photo-grid--showcase .photo-grid__item,
+[data-photo-frame='passepartout'] .photo-grid--filmstrip .photo-grid__item,
+[data-photo-frame='passepartout'] .photo-grid--editorial-flow .photo-grid__item,
+[data-photo-frame='passepartout'] .photo-grid--justified .photo-grid__item {
+  margin-bottom: 0;
+}
+
+/* Justified tiles fill a wrapper whose size already counts the mat. */
+[data-photo-frame='passepartout'] .photo-grid--justified .photo-grid__item {
+  box-sizing: border-box;
+}
+
+[data-photo-frame='passepartout'] .photo-grid .photo-grid__item-play {
+  inset: var(--photo-mat) var(--photo-mat) var(--photo-mat-caption);
+}
+
+/* Specific enough to beat the presets' own EXIF styles (noir, monograph,
+   studio-modern), which are overlays meant for a frameless tile. */
+[data-photo-frame='passepartout'] .photo-grid .photo-grid__item-exif {
+  display: block;
+  position: absolute;
+  top: auto;
+  left: var(--photo-mat);
+  right: var(--photo-mat);
+  bottom: 0;
+  height: var(--photo-mat-caption);
+  line-height: var(--photo-mat-caption);
+  padding: 0;
   background: none;
-  padding: 8px 0 0;
-  color: var(--text-muted);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  transform: none;
+  color: var(--mat-text);
   font-family: var(--font-caption);
   font-style: italic;
   font-size: 0.75rem;
   letter-spacing: 0.02em;
-  white-space: normal;
-  opacity: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-align: center;
-}
-
-[data-photo-frame='passepartout'] .photo-grid__item:hover .photo-grid__item-exif {
   opacity: 1;
 }
 
@@ -1960,27 +2016,19 @@ body:has(> #main-content) > .footer {
 }
 
 /* ─ Film grain overlay ─ */
+/* Over the photo only: the passepartout mat variables, 0 without a frame. */
 [data-grain='true'] .photo-grid__item::after {
   content: '';
   position: absolute;
-  top: 8px;
-  left: 8px;
-  right: 8px;
-  bottom: 24px;
+  top: var(--photo-mat, 0px);
+  left: var(--photo-mat, 0px);
+  right: var(--photo-mat, 0px);
+  bottom: var(--photo-mat-caption, 0px);
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
   background-size: 128px 128px;
   pointer-events: none;
   z-index: 1;
   mix-blend-mode: overlay;
-}
-
-/* Grain without passepartout — fill the whole item */
-[data-grain='true'][data-photo-frame='none'] .photo-grid__item::after,
-[data-grain='true'][data-photo-frame='shadow'] .photo-grid__item::after {
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
 }
 
 /* ── Gallery Aesthetics (all themes) ─────────────── */
@@ -2183,8 +2231,13 @@ body:has(> #main-content) > .footer {
     opacity: 1;
   }
 
-  [data-photo-frame='passepartout'] .photo-grid__item {
-    padding: 6px 6px 18px;
+  [data-photo-frame='passepartout'] .photo-grid {
+    --photo-mat: 6px;
+    --photo-mat-caption: 26px;
+  }
+
+  [data-photo-frame='passepartout'] .photo-grid .photo-grid__item-exif {
+    font-size: 0.6875rem;
   }
 
   /* Minimal: adjust fullbleed hero for mobile */
