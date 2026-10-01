@@ -159,7 +159,6 @@
   }
 
   [data-preset='ma'] .hero--split .hero__left {
-    position: relative;
     align-items: flex-end;
     justify-content: flex-start;
     padding: 64px 40px 96px max(40px, 6vw);
@@ -183,14 +182,30 @@
     margin: 56px 56px 56px 0;
   }
 
-  /* Tategaki: the subtitle runs down the edge of the text column. */
+  /* Tategaki: the subtitle runs down a column of its own beside the title
+     and the links. Each line of the hero text sits in a FadeIn wrapper whose
+     transform would capture an absolutely positioned subtitle, so this is a
+     grid, not a position. */
+  [data-preset='ma'] .hero--split .hero__content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 40px;
+    align-items: start;
+  }
+
+  [data-preset='ma'] .hero--split .hero__content > * {
+    grid-column: 1;
+  }
+
+  [data-preset='ma'] .hero--split .hero__content > :has(> .hero__subtitle) {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
   [data-preset='ma'] .hero--split .hero__subtitle {
-    position: absolute;
-    top: 64px;
-    right: 16px;
-    max-height: calc(100% - 128px);
     margin: 0;
     writing-mode: vertical-rl;
+    white-space: nowrap;
     font-size: 0.7rem;
     letter-spacing: 0.3em;
     color: var(--text-muted);
@@ -207,8 +222,14 @@
 }
 
 [data-preset='ma'] .hero__nav-link {
+  font-size: 0.85rem;
   font-weight: 300;
-  text-decoration-color: var(--border-hover);
+  letter-spacing: 0.06em;
+  text-transform: none;
+}
+
+[data-preset='ma'] .hero__nav-link:hover {
+  border-bottom-color: transparent;
 }
 
 @media (max-width: 640px) {
