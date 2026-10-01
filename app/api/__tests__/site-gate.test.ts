@@ -39,6 +39,10 @@ const config = {
   theme: { accent: '#e60012', fonts: { heading: 'Inter', body: 'Inter', caption: 'Inter' } },
   contact: { enabled: true, retentionDays: 90 },
   siteUrl: null,
+  // Past the gate, /api/analytics/track would write content/analytics.json in
+  // the checkout; turned off, it answers without writing. The gate runs first,
+  // so the locked-site rows still exercise it.
+  analytics: false,
 };
 
 vi.mock('@/lib/config', () => ({
@@ -135,6 +139,18 @@ const GATED: { name: string; call: () => Promise<Response> }[] = [
         new NextRequest('http://localhost/api/contact', { method: 'POST', body: '{}' }) as never,
       ),
   },
+  {
+    // Writes visitor-chosen paths into content/analytics.json. It used to be
+    // OPEN "to count the gate", but the layout mounts no tracker on the gate.
+    name: 'POST /api/analytics/track',
+    call: async () =>
+      (await import('../analytics/track/route')).POST(
+        new NextRequest('http://localhost/api/analytics/track', {
+          method: 'POST',
+          body: '{"path":"/"}',
+        }) as never,
+      ),
+  },
 ];
 
 /**
@@ -152,7 +168,6 @@ const OPEN: Record<string, string> = {
   install: 'the first-run wizard; setup-token gated, refuses once installed',
   'install/albums': 'the first-run wizard; setup-token gated, refuses once installed',
   webhook: 'server-to-server from Immich, HMAC-verified',
-  'analytics/track': 'counts a view of the gate itself; returns no content',
 };
 
 /** `GET /api/download/[album]/[id]` → `download/[album]/[id]`. */

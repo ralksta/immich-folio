@@ -17,6 +17,7 @@ import {
   ARCHIVE_STALL_TIMEOUT_MS,
   MAX_CONCURRENT_ARCHIVES,
   __archivesInFlight,
+  entryDate,
   withArchiveSlot,
 } from '@/lib/zipArchive';
 import { immich, type ImmichAsset } from '@/lib/immich';
@@ -209,5 +210,57 @@ describe('archive stall timeout', () => {
     expect(bytes).toBeGreaterThan(128 * 64 * 1024);
     expect(origin.state.cancelled).toBe(false);
     await vi.waitFor(() => expect(__archivesInFlight(ip)).toBe(0));
+  });
+});
+
+/**
+ * F-16: every entry carried the time the ZIP was built. Each now carries the
+ * capture time, as the wall clock of the camera.
+ */
+describe('archive entry timestamps', () => {
+  /** The DOS date/time of every local file header, as `YYYY-MM-DD HH:MM:SS`. */
+  function entryTimes(bytes: Uint8Array): string[] {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const out: string[] = [];
+    for (let i = 0; i + 30 <= bytes.length; i++) {
+      if (view.getUint32(i, true) !== 0x04034b50) continue;
+      const time = view.getUint16(i + 10, true);
+      const date = view.getUint16(i + 12, true);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      out.push(
+        `${(date >> 9) + 1980}-${pad((date >> 5) & 15)}-${pad(date & 31)} ` +
+          `${pad(time >> 11)}:${pad((time >> 5) & 63)}:${pad((time & 31) * 2)}`,
+      );
+    }
+    return out;
+  }
+
+  it('dates each entry by when the photo was taken, on the camera clock', async () => {
+    const assets = [
+      {
+        id: 'a1',
+        originalFileName: 'a1.jpg',
+        // 14:30 in Berlin; the instant is 12:30 UTC.
+        localDateTime: '2024-05-01T14:30:10.000Z',
+        exifInfo: { dateTimeOriginal: '2024-05-01T12:30:10.000Z' },
+        fileCreatedAt: '2024-05-01T12:30:10.000Z',
+      },
+      {
+        id: 'a2',
+        originalFileName: 'a2.jpg',
+        exifInfo: { dateTimeOriginal: '2019-12-24T18:00:00.000Z' },
+        fileCreatedAt: '2020-01-01T00:00:00.000Z',
+      },
+      { id: 'a3', originalFileName: 'a3.jpg', fileCreatedAt: '2021-07-04T09:15:00.000Z' },
+    ] as unknown as ImmichAsset[];
+
+    const res = await start(freshIp(), assets);
+    const times = entryTimes(new Uint8Array(await res.arrayBuffer()));
+
+    expect(times).toEqual(['2024-05-01 14:30:10', '2019-12-24 18:00:00', '2021-07-04 09:15:00']);
+  });
+
+  it('falls back to the default for an asset with no usable date', () => {
+    expect(entryDate({ fileCreatedAt: 'not a date' } as unknown as ImmichAsset)).toBeUndefined();
   });
 });

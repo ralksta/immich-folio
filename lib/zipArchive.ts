@@ -217,6 +217,28 @@ function uniqueEntryName(raw: string | undefined, used: Set<string>): string {
 }
 
 /**
+ * The timestamp an entry carries: when the photo was taken, not when the ZIP
+ * was built. Without it every file unpacked with the download time, so a
+ * folder sorted by date lost the album's order.
+ *
+ * A ZIP stores a wall-clock time with no zone, and archiver writes the UTC
+ * fields of the Date it is given. Immich's `localDateTime` is exactly that
+ * shape — the capture time in the photographer's zone, written as if it were
+ * UTC — so it lands in the archive as the time on the camera, whatever zone
+ * the server runs in. `dateTimeOriginal` and `fileCreatedAt` are real instants
+ * and only the fallbacks. All three come with the album response: no extra
+ * Immich request. Undefined leaves archiver's default (now).
+ */
+export function entryDate(asset: ImmichAsset): Date | undefined {
+  for (const raw of [asset.localDateTime, asset.exifInfo?.dateTimeOriginal, asset.fileCreatedAt]) {
+    if (!raw) continue;
+    const date = new Date(raw);
+    if (!Number.isNaN(date.getTime())) return date;
+  }
+  return undefined;
+}
+
+/**
  * Append one entry, resolving once it has been written (or the archive has been
  * torn down because the visitor left).
  *
@@ -232,7 +254,12 @@ function uniqueEntryName(raw: string | undefined, used: Set<string>): string {
  * that for a queued or half-read entry, and the upstream body would otherwise
  * hold its socket out of undici's pool until GC finalises it (#635).
  */
-function appendEntry(archive: archiver.Archiver, source: Readable, name: string): Promise<void> {
+function appendEntry(
+  archive: archiver.Archiver,
+  source: Readable,
+  name: string,
+  date?: Date,
+): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const cleanup = () => {
       archive.off('entry', onEntry);
@@ -259,7 +286,7 @@ function appendEntry(archive: archiver.Archiver, source: Readable, name: string)
     archive.once('entry', onEntry);
     archive.once('error', onError);
     archive.once('close', onClose);
-    archive.append(source, { name });
+    archive.append(source, date ? { name, date } : { name });
   });
 }
 
@@ -452,7 +479,12 @@ export function streamArchive(
         const nodeStream = Readable.fromWeb(
           result.stream as unknown as import('node:stream/web').ReadableStream,
         );
-        await appendEntry(archive, nodeStream, uniqueEntryName(asset.originalFileName, used));
+        await appendEntry(
+          archive,
+          nodeStream,
+          uniqueEntryName(asset.originalFileName, used),
+          entryDate(asset),
+        );
       }
       if (!archive.destroyed) await archive.finalize();
     } catch (err) {

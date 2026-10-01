@@ -10,6 +10,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@/lib/config', () => ({
   getConfigOrNull: vi.fn(() => ({ analytics: true })),
+  // The site gate reads it; no sitePassword, so the site is open.
+  getConfig: () => ({ analytics: true }),
 }));
 
 const checkRateLimit = vi.fn(

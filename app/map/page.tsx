@@ -4,7 +4,9 @@
  */
 
 import { getConfig } from '@/lib/config';
-import { isListedSubpage, listedAlbumIds } from '@/lib/config/schema';
+import { visibleMapCounts } from '@/lib/mapService';
+import { isAuthenticated } from '@/lib/auth';
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { MapView } from '@/components/MapView';
 import { BackLink } from '@/components/BackLink';
@@ -21,7 +23,7 @@ export function generateMetadata(): Metadata {
   return { title: getServerDictionary().map.title };
 }
 
-export default function MapPage() {
+export default async function MapPage() {
   const config = getConfig();
   const t = getServerDictionary();
 
@@ -29,10 +31,14 @@ export default function MapPage() {
     notFound();
   }
 
-  // Counts what the map may show: a hidden subpage is reachable by direct
-  // link only, so neither it nor an album only it carries is counted.
-  const collectionCount = config.subpages.filter(isListedSubpage).length;
-  const albumCount = listedAlbumIds(config).size;
+  // Counts what the map may show this viewer: a hidden subpage is reachable
+  // by direct link only, and a password-protected subpage or album the
+  // viewer has not unlocked is dropped by /api/map — neither is counted.
+  const cookieStore = await cookies();
+  const { collections: collectionCount, albums: albumCount } = visibleMapCounts(
+    config,
+    (key, type) => isAuthenticated(key, (name) => cookieStore.get(name)?.value, type),
+  );
 
   return (
     <>
