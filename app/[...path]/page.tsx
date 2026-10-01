@@ -13,6 +13,7 @@
  * Three or more segments: 404.
  */
 
+import { Suspense } from 'react';
 import { cookies } from 'next/headers';
 import type { Metadata } from 'next';
 import { immich, type ImmichAsset } from '@/lib/immich';
@@ -49,6 +50,8 @@ import { resolveEssayFile, generatedEssayCaption } from '@/lib/essaySource';
 import { getServerDictionary } from '@/lib/i18n/server';
 import { contentPageMetadata, renderContentPage } from './contentPage';
 import { loadAlbumBlocks } from './essayPayload';
+import { isLocked, routeExists } from './routeExists';
+import { PathSkeleton } from './PathSkeleton';
 
 // Render at request time — requires live Immich connection
 export const dynamic = 'force-dynamic';
@@ -56,20 +59,6 @@ export const dynamic = 'force-dynamic';
 interface PathPageProps {
   params: Promise<{ path: string[] }>;
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
-}
-
-/**
- * Whether `key` is password-protected and this request has not unlocked it.
- * generateMetadata runs unconditionally — unlike the page body, nothing
- * downstream of it stops a real title, photo count or cover image from
- * reaching an unauthenticated `<head>` unless this is checked first
- * (GHSA-fvgv-97g3-wjr7).
- */
-async function isLocked(key: string, type: 'subpage' | 'album'): Promise<boolean> {
-  if (!isProtected(key, type)) return false;
-  const cookieStore = await cookies();
-  const getCookie = (name: string) => cookieStore.get(name)?.value;
-  return !isAuthenticated(key, getCookie, type);
 }
 
 /**
@@ -111,15 +100,17 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
   // Each branch follows the page body's order of gates and 404s, and takes
   // the title only from site-authored text (an album or subpage name). A
   // branch that finds nothing, or finds it locked, returns early, so the
-  // requested slug never becomes a title or share-card text.
+  // requested slug never becomes a title or share-card text. isLocked() comes
+  // first because generateMetadata runs unconditionally: nothing downstream
+  // stops a real title, photo count or cover image from reaching an
+  // unauthenticated `<head>` otherwise (GHSA-fvgv-97g3-wjr7).
   const slug = path[0];
+  const t = getServerDictionary();
   let title: string;
   let subtitle = '';
   let description: string | undefined = undefined;
   const photoCount = (assets: ImmichAsset[]) =>
-    getServerDictionary().common.photos(
-      assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length,
-    );
+    t.common.photos(assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length);
 
   if (path.length === 1 && immich.isSubpageSlug(slug)) {
     if (await isLocked(slug, 'subpage')) return lockedMetadata();
@@ -135,6 +126,9 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
       if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
     } else {
       title = result.subpage.title || result.subpage.name;
+      // A cover grid has no photo count to describe it by; without this it
+      // inherited the site-wide description.
+      description ??= `${title} — ${t.common.albums(result.albums.length)}`;
     }
   } else if (path.length === 2) {
     if (await isLocked(slug, 'subpage')) return lockedMetadata();
@@ -164,9 +158,17 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
     (subtitle ? `${title} — ${subtitle}` : undefined);
   const ogImage = photoAsset ? imageUrl(photoAsset.id, 'preview') : ogImageUrl(title, subtitle);
 
+  // A hidden subpage is reachable by link only: out of the nav, the home page
+  // and the sitemap. Indexing it, or an album below it, would undo that.
+  const config = getConfig();
+  const hidden =
+    (path.length === 2 || immich.isSubpageSlug(slug)) &&
+    config.subpages.some((sp) => sp.slug === slug && sp.hidden === true);
+
   return {
     title,
     description: ogDescription,
+    ...(hidden ? { robots: { index: false, follow: !config.seo.noFollow } } : {}),
     openGraph: {
       title,
       description: ogDescription,
@@ -246,7 +248,34 @@ async function getAlbumHeroData(
   };
 }
 
-export default async function PathPage({ params, searchParams }: PathPageProps) {
+/**
+ * Decides whether the path exists before anything streams, then renders the
+ * content behind the skeleton.
+ *
+ * The order is the point. Next sends the status with the first byte, and the
+ * first byte goes out as soon as a Suspense fallback renders. A notFound()
+ * thrown after that can only add a noindex tag to a 200 (a "soft 404"), which
+ * is what every unknown slug got while this page sat inside a loading.tsx
+ * boundary. routeExists() needs only the config and the album list the header
+ * nav already waited for, so the check costs no time; the album's photos, the
+ * slow part, still load behind the skeleton.
+ *
+ * PathContent keeps its own notFound() calls as the backstop for what the
+ * check cannot see, such as an album removed from Immich since the list was
+ * cached. Those are still soft.
+ */
+export default async function PathPage(props: PathPageProps) {
+  const { path: rawPath } = await props.params;
+  if (!(await routeExists(rawPath?.map(normalizeSlug)))) notFound();
+
+  return (
+    <Suspense fallback={<PathSkeleton />}>
+      <PathContent {...props} />
+    </Suspense>
+  );
+}
+
+async function PathContent({ params, searchParams }: PathPageProps) {
   // Next hands catch-all segments over percent-encoded, so a non-ASCII slug
   // ("/家族相册") would never match a stored one. Decode once, here, and every
   // comparison downstream works on the same form (#522).

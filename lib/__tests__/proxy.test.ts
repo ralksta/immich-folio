@@ -346,11 +346,20 @@ describe('isKnownMissing', () => {
             ? hasRoute(path.join(dir, entry.name))
             : /^(page|route)\.(tsx?|jsx?)$/.test(entry.name),
         );
-    const routeDirs = fs
-      .readdirSync(appDir, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory() && entry.name !== '[...path]')
-      .filter((entry) => hasRoute(path.join(appDir, entry.name)))
-      .map((entry) => entry.name);
+    // A route group such as app/(home) adds no URL segment: its children are
+    // top-level routes themselves.
+    const topLevelDirs = (dir: string): string[] =>
+      fs
+        .readdirSync(dir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory() && entry.name !== '[...path]')
+        .flatMap((entry) =>
+          /^\(.*\)$/.test(entry.name)
+            ? topLevelDirs(path.join(dir, entry.name))
+            : hasRoute(path.join(dir, entry.name))
+              ? [entry.name]
+              : [],
+        );
+    const routeDirs = topLevelDirs(appDir);
     expect(routeDirs.length).toBeGreaterThan(5);
     for (const name of routeDirs) expect(TOP_LEVEL_ROUTES.has(name), name).toBe(true);
   });

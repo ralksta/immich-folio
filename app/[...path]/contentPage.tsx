@@ -20,7 +20,7 @@ import PasswordGate from '@/components/PasswordGate';
 import { EssayView } from './EssayView';
 import { buildEssayPayload } from './essayPayload';
 
-type Access = 'open' | 'draft' | 'locked';
+export type Access = 'open' | 'draft' | 'locked';
 
 async function accessFor(page: PageRecord): Promise<Access> {
   const { draft, password } = page.parsed.frontmatter;
@@ -32,6 +32,16 @@ async function accessFor(page: PageRecord): Promise<Access> {
     }
   }
   return 'open';
+}
+
+/**
+ * How this request may see the page `slug`, or null when there is none. Read
+ * by routeExists() before the catch-all streams: a draft is a 404 to everyone
+ * but an admin, and that has to be known while the status can still say so.
+ */
+export async function contentPageAccess(slug: string): Promise<Access | null> {
+  const page = await readPage(slug).catch(() => null);
+  return page ? accessFor(page) : null;
 }
 
 /**
