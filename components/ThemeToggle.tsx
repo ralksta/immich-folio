@@ -15,7 +15,7 @@
 
 'use client';
 
-import { useSyncExternalStore, useCallback } from 'react';
+import { useSyncExternalStore, useCallback, useEffect } from 'react';
 import { useDictionary } from './I18nProvider';
 
 type Theme = 'dark' | 'light';
@@ -91,6 +91,20 @@ export function followSystemTheme() {
   listeners.forEach((cb) => cb());
 }
 
+/**
+ * Re-resolve the mode once the component is mounted and write it back onto
+ * <html>. A hard 404 is served as Next's bare error shell: the inline script
+ * never runs there, the module above loaded before the layout's attributes
+ * existed, and the client render then writes the server's data-theme over
+ * whatever was applied. Without this, a visitor who stored light got a dark
+ * 404 page. Exported for the test.
+ */
+export function syncThemeFromDom() {
+  currentTheme = storedTheme() ?? configuredTheme();
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  listeners.forEach((cb) => cb());
+}
+
 // Initialize on module load (client-side only). The inline script in the root
 // layout (lib/themeScript.ts) has already set data-theme by the same rules;
 // this brings the module state in line with it.
@@ -106,6 +120,10 @@ export function ThemeToggle() {
   const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const t = useDictionary();
   const label = theme === 'dark' ? t.theme.switchToLight : t.theme.switchToDark;
+
+  useEffect(() => {
+    syncThemeFromDom();
+  }, []);
 
   const toggle = useCallback(() => {
     applyTheme(theme === 'dark' ? 'light' : 'dark');

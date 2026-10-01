@@ -73,3 +73,25 @@ describe('ThemeToggle under mode: auto', () => {
     expect(html.getAttribute('data-theme')).toBe('dark');
   });
 });
+
+describe('ThemeToggle on a page rendered from the error shell', () => {
+  it('re-applies the stored mode after the client render overwrote it', async () => {
+    localStorage.setItem('theme', 'light');
+    const html = await load();
+    // The 404 shell's client render writes the server default back onto <html>.
+    html.setAttribute('data-theme', 'dark');
+    const { syncThemeFromDom } = await import('../ThemeToggle');
+    syncThemeFromDom();
+    expect(html.getAttribute('data-theme')).toBe('light');
+  });
+
+  it('picks up a configured mode that only appeared after the module loaded', async () => {
+    document.documentElement.removeAttribute('data-default-theme');
+    const html = await load();
+    expect(html.getAttribute('data-theme')).toBe('dark');
+    html.setAttribute('data-default-theme', 'light');
+    const { syncThemeFromDom } = await import('../ThemeToggle');
+    syncThemeFromDom();
+    expect(html.getAttribute('data-theme')).toBe('light');
+  });
+});
