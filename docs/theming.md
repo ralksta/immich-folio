@@ -26,6 +26,7 @@ you get `studio-modern`, the default.
 | **monograph**     | Typographic, book-like         | ⬛ `#333333` | Instrument Serif + Inter          | Typographic | None         | ✗     |
 | **kunsthalle**    | Grey gallery wall, wall labels | 🔵 `#1d545c` | Libre Franklin                    | Mosaic      | Shadow       | ✗     |
 | **ma**            | Japanese restraint, washi/sumi | 🔴 `#b0381f` | Cormorant + Hanken Grotesk        | Split       | None         | ✗     |
+| **cyanotype**     | Prussian blue, drawing sheet   | 🔵 `#1a4d88` | Jost + DM Mono                    | Split       | None         | ✗     |
 
 **`studio-modern` is the default** if no theme is specified.
 
@@ -87,6 +88,8 @@ their accent, fonts and framing in both modes.
 **Kunsthalle** — Photographs hung on a neutral grey gallery wall, the surround ISO 3664 viewing booths use because white pushes photos darker and black pushes them lighter: lighter than every dark preset, darker than every light one. Libre Franklin in all three slots like museum signage, sentence-case titles, a numbered wall label (“No. 07”, camera · lens) under every photo, a tight hung shadow and 56px of wall between works. The mosaic hero is a wall of works with the exhibition title below it; petrol is kept for wayfinding (links and hover). Suits fine-art series, documentary and black and white. Pairs best with `layout: masonry`.
 
 **Ma** — Japanese restraint: negative space as the material. Warm washi-grey paper in light mode (not cream), sumi ink in dark, and a single vermilion accent shaped as a square hanko seal in the header, before the active link and the hero kicker. Cormorant Garamond 300 titles stand in for a Mincho, Hanken Grotesk 300 carries the text; the hero subtitle runs vertically (tategaki) on desktop, the split hero sits asymmetric with the photo inset in the paper, and album pages are offset to the right with 64px of air between photos. No EXIF in the grid, no hover transforms, slow fades. Suits landscape, film and black and white. Pairs best with `layout: masonry` and `columns: 2`; the washi look needs `mode: light`.
+
+**Cyanotype** — A Prussian-blue print: ink-blue night in dark mode, and in light mode every piece of text in Prussian ink on cool paper instead of black. Set like an architectural drawing sheet: Jost (geometric, Bauhaus line) for type, DM Mono 300 for EXIF and numbers, a ruled title block for the hero EXIF chip and the album metadata, registration marks on the photo corners on hover, and hero links and album covers indexed as sheets (A-01, A-02). Suits architecture, urban and night work, blue hour and interiors. Pairs best with `layout: uniform` and `aspectRatio: "3/2"`.
 
 ## Custom Theme
 

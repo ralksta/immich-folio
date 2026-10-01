@@ -124,6 +124,10 @@ export const REFUSAL_PALETTES: Record<string, { dark: Palette; light: Palette }>
     dark: { bg: '#1a1917', text: '#ece7dd', muted: '#b5ad9f' },
     light: { bg: '#f0ede6', text: '#1f1d1a', muted: '#4d4943' },
   },
+  cyanotype: {
+    dark: { bg: '#0e1621', text: '#e3eaf0', muted: '#a8b7c6' },
+    light: { bg: '#eef2f4', text: '#10243a', muted: '#34495f' },
+  },
 };
 
 const HEX_COLOUR = /^#[0-9a-f]{3,8}$/i;

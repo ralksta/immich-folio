@@ -417,6 +417,39 @@
   --border-hover: #c5bfb2;
 }
 
+/* ── Cyanotype: Prussian Blue Palette ──────────── */
+[data-preset='cyanotype'] {
+  --bg-primary: #0e1621;
+  --bg-secondary: #0a111a;
+  --bg-card: #132030;
+  --bg-card-hover: #192839;
+  --bg-overlay: rgba(10, 17, 26, 0.98);
+
+  --text-primary: #e3eaf0;
+  --text-secondary: #a8b7c6;
+  --text-muted: #8898ab;
+
+  --border-subtle: #1d2a3a;
+  --border-hover: #2e4056;
+
+  --max-width: 1440px;
+}
+
+[data-preset='cyanotype'][data-theme='light'] {
+  --bg-primary: #eef2f4;
+  --bg-secondary: #e3e9ec;
+  --bg-card: #f7f9fa;
+  --bg-card-hover: #e9eef1;
+  --bg-overlay: rgba(238, 242, 244, 0.96);
+
+  --text-primary: #10243a;
+  --text-secondary: #34495f;
+  --text-muted: #4f6379;
+
+  --border-subtle: #d2dce2;
+  --border-hover: #b3c3cd;
+}
+
 /* ── Reset ────────────────────────────────────────── */
 *,
 *::before,

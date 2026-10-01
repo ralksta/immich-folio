@@ -197,6 +197,25 @@ export const PRESET_REGISTRY: readonly PresetDefinition[] = [
     card: { bg: '#f0ede6', tile: '#e7e3da', accent: '#b0381f', type: 'serif', gap: 9 },
     ownStyles: true,
   },
+  {
+    id: 'cyanotype',
+    label: 'Cyanotype',
+    tagline: 'Prussian blue, drawing sheet',
+    description:
+      'A Prussian-blue print set like an architectural drawing: Jost, DM Mono, registration marks.',
+    theme: {
+      accent: '#1a4d88',
+      accentDark: '#8ccbeb',
+      fonts: { heading: 'Jost', body: 'Jost', caption: 'DM Mono' },
+      radius: 0,
+      photoFrame: 'none',
+      grain: false,
+      headerDot: false,
+      heroStyle: 'split',
+    },
+    card: { bg: '#0e1621', tile: '#192839', accent: '#8ccbeb', type: 'sans', gap: 4 },
+    ownStyles: true,
+  },
 ];
 
 /** Preset ids in registry order: the order every picker shows them in. */

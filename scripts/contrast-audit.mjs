@@ -38,6 +38,7 @@ const PRESETS = [
   'monograph',
   'kunsthalle',
   'ma',
+  'cyanotype',
 ];
 const FIXED_PAGES = ['/about', '/map', '/impressum'];
 
