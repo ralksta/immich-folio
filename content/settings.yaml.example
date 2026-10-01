@@ -71,7 +71,7 @@ scrollToTop: true
 
 # ── Theme configuration ──────────────────────────────────────────
 # Presets: studio-modern (default), studio, minimal, editorial, classic,
-#          noir, monograph, kunsthalle
+#          noir, monograph, kunsthalle, ma
 theme:
   preset: "studio-modern"
   # accent: "#e60012"

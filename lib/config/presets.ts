@@ -178,6 +178,25 @@ export const PRESET_REGISTRY: readonly PresetDefinition[] = [
     card: { bg: '#2b2b29', tile: '#393937', accent: '#8cc3ca', type: 'sans', gap: 8 },
     ownStyles: true,
   },
+  {
+    id: 'ma',
+    label: 'Ma',
+    tagline: 'Japanese restraint, washi and sumi',
+    description:
+      'Negative space, washi-grey paper, sumi ink and one vermilion seal. Cormorant Garamond and Hanken Grotesk.',
+    theme: {
+      accent: '#b0381f',
+      accentDark: '#e8674c',
+      fonts: { heading: 'Cormorant Garamond', body: 'Hanken Grotesk', caption: 'Hanken Grotesk' },
+      radius: 0,
+      photoFrame: 'none',
+      grain: false,
+      headerDot: true,
+      heroStyle: 'split',
+    },
+    card: { bg: '#f0ede6', tile: '#e7e3da', accent: '#b0381f', type: 'serif', gap: 9 },
+    ownStyles: true,
+  },
 ];
 
 /** Preset ids in registry order: the order every picker shows them in. */

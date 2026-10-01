@@ -37,6 +37,7 @@ const PRESETS = [
   'noir',
   'monograph',
   'kunsthalle',
+  'ma',
 ];
 const FIXED_PAGES = ['/about', '/map', '/impressum'];
 

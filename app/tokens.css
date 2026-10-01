@@ -384,6 +384,39 @@
   --border-hover: #aeada7;
 }
 
+/* ── Ma: Washi / Sumi Palette ──────────────────── */
+[data-preset='ma'] {
+  --bg-primary: #1a1917;
+  --bg-secondary: #141311;
+  --bg-card: #21201d;
+  --bg-card-hover: #282623;
+  --bg-overlay: rgba(20, 19, 17, 0.98);
+
+  --text-primary: #ece7dd;
+  --text-secondary: #b5ad9f;
+  --text-muted: #978f82;
+
+  --border-subtle: #2c2a26;
+  --border-hover: #403d37;
+
+  --max-width: 1120px;
+}
+
+[data-preset='ma'][data-theme='light'] {
+  --bg-primary: #f0ede6;
+  --bg-secondary: #e7e3da;
+  --bg-card: #f6f4ef;
+  --bg-card-hover: #ebe7df;
+  --bg-overlay: rgba(240, 237, 230, 0.96);
+
+  --text-primary: #1f1d1a;
+  --text-secondary: #4d4943;
+  --text-muted: #66615a;
+
+  --border-subtle: #dcd7cc;
+  --border-hover: #c5bfb2;
+}
+
 /* ── Reset ────────────────────────────────────────── */
 *,
 *::before,
