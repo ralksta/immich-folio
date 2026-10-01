@@ -483,6 +483,39 @@
   --border-hover: #ccb8b3;
 }
 
+/* ── Birch: Birch / Pine Palette ───────────────── */
+[data-preset='birch'] {
+  --bg-primary: #121613;
+  --bg-secondary: #0e110f;
+  --bg-card: #181d19;
+  --bg-card-hover: #1f2520;
+  --bg-overlay: rgba(14, 17, 15, 0.98);
+
+  --text-primary: #e9eee9;
+  --text-secondary: #aab5ac;
+  --text-muted: #8d9a90;
+
+  --border-subtle: #232b25;
+  --border-hover: #364039;
+
+  --max-width: 1400px;
+}
+
+[data-preset='birch'][data-theme='light'] {
+  --bg-primary: #f3f5f1;
+  --bg-secondary: #e9ece6;
+  --bg-card: #fbfcfa;
+  --bg-card-hover: #eef1eb;
+  --bg-overlay: rgba(243, 245, 241, 0.96);
+
+  --text-primary: #19201b;
+  --text-secondary: #434e46;
+  --text-muted: #5b675e;
+
+  --border-subtle: #dce1d9;
+  --border-hover: #c1c8be;
+}
+
 /* ── Reset ────────────────────────────────────────── */
 *,
 *::before,

@@ -40,6 +40,7 @@ const PRESETS = [
   'ma',
   'cyanotype',
   'salon',
+  'birch',
 ];
 const FIXED_PAGES = ['/about', '/map', '/impressum'];
 

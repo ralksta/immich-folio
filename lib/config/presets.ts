@@ -235,6 +235,25 @@ export const PRESET_REGISTRY: readonly PresetDefinition[] = [
     card: { bg: '#1c1315', tile: '#2c2023', accent: '#e3a39a', type: 'serif', gap: 5 },
     ownStyles: true,
   },
+  {
+    id: 'birch',
+    label: 'Birch',
+    tagline: 'Nordic daylight, soft corners',
+    description:
+      'Scandinavian daylight: birch-white and pine-night, soft corners, sentence case, lichen green.',
+    theme: {
+      accent: '#2c5d44',
+      accentDark: '#9fc9a9',
+      fonts: { heading: 'Albert Sans', body: 'Albert Sans', caption: 'Albert Sans' },
+      radius: 6,
+      photoFrame: 'none',
+      grain: false,
+      headerDot: false,
+      heroStyle: 'stacked',
+    },
+    card: { bg: '#f3f5f1', tile: '#e9ece6', accent: '#2c5d44', type: 'sans', gap: 3 },
+    ownStyles: true,
+  },
 ];
 
 /** Preset ids in registry order: the order every picker shows them in. */

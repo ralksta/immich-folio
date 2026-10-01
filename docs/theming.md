@@ -28,6 +28,7 @@ you get `studio-modern`, the default.
 | **ma**            | Japanese restraint, washi/sumi | 🔴 `#b0381f` | Cormorant + Hanken Grotesk        | Split       | None         | ✗     |
 | **cyanotype**     | Prussian blue, drawing sheet   | 🔵 `#1a4d88` | Jost + DM Mono                    | Split       | None         | ✗     |
 | **salon**         | Oxblood salon, fine fillet     | 🟤 `#7d1f2c` | Gloock + Work Sans                | Fullbleed   | None         | ✗     |
+| **birch**         | Nordic daylight, soft corners  | 🟢 `#2c5d44` | Albert Sans                       | Stacked     | None         | ✗     |
 
 **`studio-modern` is the default** if no theme is specified.
 
@@ -93,6 +94,8 @@ their accent, fonts and framing in both modes.
 **Cyanotype** — A Prussian-blue print: ink-blue night in dark mode, and in light mode every piece of text in Prussian ink on cool paper instead of black. Set like an architectural drawing sheet: Jost (geometric, Bauhaus line) for type, DM Mono 300 for EXIF and numbers, a ruled title block for the hero EXIF chip and the album metadata, registration marks on the photo corners on hover, and hero links and album covers indexed as sheets (A-01, A-02). Suits architecture, urban and night work, blue hour and interiors. Pairs best with `layout: uniform` and `aspectRatio: "3/2"`.
 
 **Salon** — The oxblood picture gallery of a 19th-century museum, done quietly: velvet-dark and plaster-rose walls, Gloock titles (never italic), Work Sans text, and a fine fillet line floating 6px outside every photo that brightens to the accent on hover. The fullbleed hero uses a scrim tinted from the wall colour instead of black, with the title bottom left. A tinted surround changes how colour is judged: right for portrait, wedding and fashion work, wrong for colour-critical landscape work. Pairs best with `layout: showcase`.
+
+**Birch** — Scandinavian daylight: birch-white and pine-night over green-tinted greys, with pine and lichen as the only accent. Albert Sans throughout and no uppercase or letter-spacing anywhere in the interface, where every other preset uses tracked caps. Soft 6px corners on photos and covers, EXIF as a pill chip on hover, a stacked hero with the photo inset and sentence-case strip labels. Suits landscape, outdoor, hiking, travel and family work. Pairs best with `layout: justified` (experimental) or `masonry`.
 
 ## Custom Theme
 
