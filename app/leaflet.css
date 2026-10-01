@@ -95,7 +95,7 @@
 
 .map-popup__album-link {
   font-size: 0.8125rem;
-  color: var(--accent, #e60012);
+  color: var(--accent-text);
   text-decoration: none;
   transition: opacity 0.15s;
 }

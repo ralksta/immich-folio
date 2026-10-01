@@ -47,7 +47,7 @@
 }
 
 [data-preset='editorial'] .hero__nav-link:hover {
-  color: var(--accent);
+  color: var(--accent-text);
   border-bottom-color: transparent;
 }
 
@@ -213,7 +213,7 @@
 }
 
 [data-preset='editorial'] .subpage-toc__link:hover {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* Section: pull-quote accent border, large cinematic title */

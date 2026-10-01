@@ -634,7 +634,7 @@
 }
 
 :global([data-preset='studio-modern']) .close:hover {
-  color: var(--accent);
+  color: var(--accent-text-dark, var(--accent));
 }
 
 :global([data-preset='studio-modern']) .close svg {
@@ -660,7 +660,7 @@
 :global([data-preset='studio-modern']) .nav:hover {
   background: none;
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-text-dark, var(--accent));
 }
 
 :global([data-preset='studio-modern']) .navPrev {
@@ -689,7 +689,7 @@
 :global([data-preset='studio-modern']) .infoToggle:hover {
   background: none;
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-text-dark, var(--accent));
 }
 
 /* The EXIF strip owns the bottom edge in this preset, so the panel opens from

@@ -15,7 +15,7 @@ import { ScrollToTop } from '@/components/ScrollToTop';
 import { Footer } from '@/components/Footer';
 import { SetupScreen } from '@/components/SetupScreen';
 import { getConfigOrNull, getThemeFontsUrl, AppConfig } from '@/lib/config';
-import { accentForMode, onAccent } from '@/lib/config/theme';
+import { accentForMode, accentText, onAccent } from '@/lib/config/theme';
 import { isAdminPath } from '@/lib/admin/paths';
 import { isInstallPath } from '@/lib/install';
 import { isSiteLocked, isSiteUnlocked } from '@/lib/auth';
@@ -106,6 +106,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     '--accent-light': accentForMode(theme, 'light'),
     '--on-accent-dark': onAccent(accentForMode(theme, 'dark')),
     '--on-accent-light': onAccent(accentForMode(theme, 'light')),
+    '--accent-text-dark': accentText(accentForMode(theme, 'dark'), 'dark'),
+    '--accent-text-light': accentText(accentForMode(theme, 'light'), 'light'),
     '--font-serif': `'${theme.fonts.heading}', Georgia, 'Times New Roman', serif`,
     '--font-sans': `'${theme.fonts.body}', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`,
     '--font-caption': `'${theme.fonts.caption}', Georgia, serif`,

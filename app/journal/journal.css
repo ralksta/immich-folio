@@ -54,7 +54,7 @@
   color: inherit;
   background: var(--bg-card, rgba(255, 255, 255, 0.03));
   border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   transition:
     transform 0.25s ease,
@@ -157,7 +157,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
   transition: gap 0.2s ease;
 }
 
@@ -168,9 +168,9 @@
 .journal-card__draft-badge {
   display: inline-block;
   padding: 2px 8px;
-  background: rgba(234, 179, 8, 0.15);
-  color: #eab308;
-  border-radius: 4px;
+  background: color-mix(in srgb, var(--warning) 15%, transparent);
+  color: var(--warning);
+  border-radius: var(--radius-sm);
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;

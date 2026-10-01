@@ -81,6 +81,27 @@
   color: var(--text-primary);
 }
 
+/* Over the photo the dimmed links sit on dark glass in both modes, so they
+   cannot take the page colours: half-opacity white came out near 3:1, and in
+   light mode the hover turned them --text-primary black on the dark glass.
+   Near-white on a denser glass (0.55 keeps 4.5:1 even over a white sky),
+   with the hover marked by an underline instead. */
+[data-preset='minimal'] .hero--fullbleed .hero__nav {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+[data-preset='minimal'] .hero--fullbleed .hero__nav-link {
+  opacity: 1;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+[data-preset='minimal'] .hero--fullbleed .hero__nav-link:hover {
+  color: #fff;
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-underline-offset: 4px;
+}
+
 [data-preset='minimal'] .hero__right {
   grid-column: 1;
   grid-row: 1;
