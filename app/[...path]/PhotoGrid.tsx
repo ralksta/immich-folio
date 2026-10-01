@@ -114,11 +114,25 @@ function PhotoGridInner({
       setLightboxIndex(byToken);
       return;
     }
+    // A `photo` that names no photo in this album — mistyped, truncated by a
+    // messenger, or a position like `?photo=5` (that was never a format) —
+    // opens nothing, so it should not stay in the address bar to be copied
+    // and shared on. Checked against the whole album, not `displayedAssets`:
+    // a real photo that the "selected only" filter hides is still a valid link.
+    if (token !== null && !assets.some((a) => a.id === token)) {
+      window.history.replaceState(
+        null,
+        '',
+        window.location.pathname +
+          buildPhotoQuery(window.location.search, null) +
+          window.location.hash,
+      );
+    }
     const idx = parsePhotoHash(window.location.hash);
     if (idx !== null && idx < displayedAssets.length) {
       setLightboxIndex(idx);
     }
-  }, [displayedAssets]);
+  }, [assets, displayedAssets]);
 
   // ── Sync the URL's `photo` param when the lightbox state changes ──
   useEffect(() => {

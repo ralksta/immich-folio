@@ -134,7 +134,6 @@ export const fr: Dictionary = {
     title: 'Journal',
     kicker: 'Récits & essais',
     subtitle: 'Essais photographiques, récits visuels et notes de terrain.',
-    description: 'Essais photographiques, récits de voyage et coulisses.',
     entryDescription: 'Article du journal',
     empty: 'Aucun article publié pour le moment.',
     readStory: 'Lire le récit →',

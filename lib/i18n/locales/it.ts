@@ -132,7 +132,6 @@ export const it: Dictionary = {
     title: 'Diario',
     kicker: 'Storie e saggi',
     subtitle: 'Saggi fotografici, racconti visivi e appunti sul campo.',
-    description: 'Saggi fotografici, racconti di viaggio e diari dietro le quinte.',
     entryDescription: 'Articolo del diario',
     empty: 'Nessun articolo pubblicato per ora.',
     readStory: 'Leggi la storia →',

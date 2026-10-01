@@ -3,12 +3,13 @@ import Image from 'next/image';
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { type JournalEntrySummary } from '@/lib/journal';
-import { formatJournalDate } from '@/lib/journalDate';
+import { formatJournalDate, journalDateTime } from '@/lib/journalDate';
 import { listJournalEntriesForRequest } from '@/lib/journal.server';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import { isAuthenticated } from '@/lib/auth';
 import { immich } from '@/lib/immich';
 import { imageUrl, assetPlaceholder } from '@/lib/urls';
+import { ogImageUrl } from '@/lib/ogImage';
 import { BackLink } from '@/components/BackLink';
 import { IconBook } from '@/components/Icons';
 import { getServerDictionary } from '@/lib/i18n/server';
@@ -16,9 +17,22 @@ import './journal.css';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Without an openGraph of its own the index inherited the layout's, so a
+ * shared /journal link previewed as the site's home page. The description is
+ * the subtitle the page shows, not a second sentence found nowhere on it.
+ */
 export function generateMetadata(): Metadata {
   const t = getServerDictionary();
-  return { title: t.journal.title, description: t.journal.description };
+  const title = t.journal.title;
+  const description = t.journal.subtitle;
+  const ogImage = ogImageUrl(title);
+  return {
+    title,
+    description,
+    openGraph: { title, description, images: [ogImage] },
+    twitter: { card: 'summary_large_image', title, description, images: [ogImage] },
+  };
 }
 
 interface EnrichedJournalEntry extends JournalEntrySummary {
@@ -90,6 +104,7 @@ export default async function JournalIndexPage() {
         <div className="journal-grid">
           {enrichedEntries.map((entry) => {
             const dateStr = formatJournalDate(entry.frontmatter.date, t.dateLocale);
+            const dateTime = journalDateTime(entry.frontmatter.date);
 
             return (
               <Link key={entry.slug} href={`/journal/${entry.slug}`} className="journal-card">
@@ -117,7 +132,12 @@ export default async function JournalIndexPage() {
 
                 <div className="journal-card__content">
                   <div className="journal-card__meta">
-                    {dateStr && <span>{dateStr}</span>}
+                    {dateStr &&
+                      (dateTime ? (
+                        <time dateTime={dateTime}>{dateStr}</time>
+                      ) : (
+                        <span>{dateStr}</span>
+                      ))}
                     {dateStr && entry.readingTimeMinutes && <span>•</span>}
                     {entry.readingTimeMinutes && (
                       <span>{t.journal.minRead(entry.readingTimeMinutes)}</span>

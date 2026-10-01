@@ -134,7 +134,6 @@ export const en = {
     title: 'Journal',
     kicker: 'Stories & Essays',
     subtitle: 'Photo essays, visual stories, and field notes.',
-    description: 'Photo essays, travel stories, and behind-the-scenes journals.',
     entryDescription: 'Journal entry',
     empty: 'No journal entries published yet.',
     readStory: 'Read Story →',

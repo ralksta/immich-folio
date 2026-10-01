@@ -9,6 +9,7 @@ import yaml from 'js-yaml';
 import Image from 'next/image';
 import type { Metadata } from 'next';
 import { imageUrl, assetPlaceholder } from '@/lib/urls';
+import { ogImageUrl } from '@/lib/ogImage';
 import { immich } from '@/lib/immich';
 import { getConfig } from '@/lib/config';
 import { getServerDictionary } from '@/lib/i18n/server';
@@ -56,6 +57,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = getServerDictionary();
   const title = meta.name ? t.about.metaTitle(meta.name) : t.about.title;
   const description = body ? body.slice(0, 160).replace(/\s+/g, ' ').trim() : undefined;
+  // A page's openGraph replaces the layout's whole, images included, so
+  // leaving them out shared /about with no picture at all. The portrait is the
+  // obvious one (it is a published asset); without it, the generated card.
+  const ogImage = meta.portrait ? imageUrl(meta.portrait, 'preview') : ogImageUrl(title);
 
   return {
     title,
@@ -63,11 +68,13 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title,
       description,
+      images: [ogImage],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
+      images: [ogImage],
     },
   };
 }

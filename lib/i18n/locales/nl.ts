@@ -132,7 +132,6 @@ export const nl: Dictionary = {
     title: 'Journal',
     kicker: 'Verhalen & essays',
     subtitle: 'Fotoessays, beeldverhalen en veldnotities.',
-    description: 'Fotoessays, reisverhalen en een kijkje achter de schermen.',
     entryDescription: 'Journalverhaal',
     empty: 'Er zijn nog geen verhalen gepubliceerd.',
     readStory: 'Lees het verhaal →',

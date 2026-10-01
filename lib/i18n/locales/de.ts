@@ -132,7 +132,6 @@ export const de: Dictionary = {
     title: 'Journal',
     kicker: 'Geschichten & Essays',
     subtitle: 'Fotoessays, visuelle Geschichten und Notizen von unterwegs.',
-    description: 'Fotoessays, Reisegeschichten und Journale hinter den Kulissen.',
     entryDescription: 'Journal-Eintrag',
     empty: 'Noch keine Journal-Einträge veröffentlicht.',
     readStory: 'Geschichte lesen →',

@@ -15,6 +15,7 @@ import PasswordGate from '@/components/PasswordGate';
 import { BackLink } from '@/components/BackLink';
 import { getServerDictionary } from '@/lib/i18n/server';
 import crypto from 'crypto';
+import '../journal.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,7 +51,7 @@ export async function generateMetadata({ params }: JournalDetailPageProps): Prom
 
   const title = blocked ? t.journal.title : frontmatter.title || slug;
   const description = blocked
-    ? t.journal.description
+    ? t.journal.subtitle
     : frontmatter.subtitle || t.journal.entryDescription;
 
   const ogImages =
@@ -178,6 +179,14 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
     <div style={{ paddingTop: '2rem' }}>
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 1.5rem 1rem' }}>
         <BackLink href="/journal" label={getServerDictionary().common.backToJournal} />
+        {/* Only an admin gets this far with a draft. The index marks it; the
+            entry itself looked published, which is exactly what a draft
+            preview must not look like. */}
+        {frontmatter.draft && (
+          <span className="journal-card__draft-badge" style={{ marginLeft: '1rem' }}>
+            {getServerDictionary().journal.draft}
+          </span>
+        )}
       </div>
       <EssayView
         essay={essayForClient}
