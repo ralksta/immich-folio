@@ -1,5 +1,5 @@
 import type { ThemeConfig, SettingsYaml } from './schema';
-import { PRESET_REGISTRY } from './presets';
+import { PRESET_REGISTRY } from './presets.ts';
 
 /** The preset used when none is configured. */
 export const DEFAULT_PRESET = 'studio-modern';
