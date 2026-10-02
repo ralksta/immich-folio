@@ -66,7 +66,7 @@ A self-hosted portfolio powered by [Immich](https://immich.app). It acts as a **
 - **Unlisted subpages** _(experimental)_ — reachable by direct link, absent from the navigation
 - **Subpage on/off toggle** — take a page offline without deleting it
 - **External navigation links** _(experimental)_ — point the header at a shop, a blog, or a social profile
-- **Client proofing** — clients favorite photos and export the selection; picks are encoded in the URL, nothing is stored server-side
+- **Client proofing** — clients favorite photos and export the selection; picks stay in the visitor's browser and the URL, with nothing stored server-side (proofing links, below, do save them)
 - **Client proofing links** — a private link per client and album, picks saved server-side, a submit that locks the selection and pings you via webhook, expiry dates, download limits, and a Lightroom-ready export of the chosen file names ([guide](docs/gallery-config.md#client-proofing-links))
 - **Originals delivery** — per-album opt-in lets visitors download a whole album or their proofing selection as a ZIP of the originals
 - **Lightbox watermark** — configurable overlay on fullscreen images

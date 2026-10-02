@@ -35,13 +35,16 @@ const config = (over: Partial<AppConfig> = {}) =>
     analytics: false,
     contact: { enabled: false, retentionDays: 90 },
     proofing: { enabled: false },
+    subpages: [],
     privacy: { enabled: true },
     ...over,
   }) as unknown as AppConfig;
 
 describe('processingFacts', () => {
   it('lists only what this installation actually does', () => {
-    const topics = processingFacts(config(), { hasPasswords: false }).map((f) => f.topic);
+    const topics = processingFacts(config(), { hasPasswords: false, hasProofingLinks: false }).map(
+      (f) => f.topic,
+    );
     expect(topics).toEqual(['Photos', 'Server log', 'Fonts', 'Browser storage']);
   });
 
@@ -51,7 +54,7 @@ describe('processingFacts', () => {
         map: true,
         contact: { enabled: true, retentionDays: 30, notifyUrl: 'https://ntfy.sh/secret' },
       }),
-      { hasPasswords: true, CDN_URL: 'https://cdn.example.net' },
+      { hasPasswords: true, hasProofingLinks: false, CDN_URL: 'https://cdn.example.net' },
     );
     const third = facts.filter((f) => f.thirdParty).map((f) => f.topic);
     // The notification carries nothing about the sender (#702), so the
@@ -65,8 +68,58 @@ describe('processingFacts', () => {
     expect(facts.some((f) => f.topic === 'Cookies')).toBe(true);
   });
 
+  it('keeps anonymous favourites in the browser, also when only a subpage turns them on', () => {
+    const storage = (c: AppConfig) =>
+      processingFacts(c, { hasPasswords: false, hasProofingLinks: false }).find(
+        (f) => f.topic === 'Browser storage',
+      )!.detail;
+    expect(storage(config())).not.toContain('favourites');
+    expect(storage(config({ proofing: { enabled: true } } as Partial<AppConfig>))).toContain(
+      'favourites',
+    );
+    const subpageOnly = config({
+      subpages: [{ proofing: true }],
+    } as unknown as Partial<AppConfig>);
+    expect(storage(subpageOnly)).toContain('favourites');
+    expect(storage(subpageOnly)).toContain('localStorage');
+  });
+
+  it('says that proofing links store the client’s selection on this server', () => {
+    const none = processingFacts(config({ proofing: { enabled: true } } as Partial<AppConfig>), {
+      hasPasswords: false,
+      hasProofingLinks: false,
+    });
+    expect(none.some((f) => f.topic === 'Proofing links')).toBe(false);
+
+    // Links do not depend on the proofing switch, so the fact does not either.
+    const facts = processingFacts(config(), { hasPasswords: false, hasProofingLinks: true });
+    const links = facts.find((f) => f.topic === 'Proofing links')!;
+    expect(links.detail).toContain('content/proofing.json');
+    expect(links.detail).toContain('client name');
+    expect(links.detail).toContain('until you delete the link');
+    expect(links.thirdParty).toBe(false);
+    expect(starterHeadings('de', facts)).toContain('## Bildauswahl durch Kunden');
+    expect(facts.find((f) => f.topic === 'Browser storage')!.detail).not.toContain(
+      'never sent to the server',
+    );
+  });
+
+  it('names the proofing webhook host, since its notification carries the client name', () => {
+    const links = processingFacts(config(), {
+      hasPasswords: false,
+      hasProofingLinks: true,
+      proofingWebhookUrl: 'https://discord.com/api/webhooks/123/secret',
+    }).find((f) => f.topic === 'Proofing links')!;
+    expect(links.thirdParty).toBe(true);
+    expect(links.detail).toContain('discord.com');
+    expect(links.detail).not.toContain('secret');
+  });
+
   it('turns the facts into headings in the site language, and nothing else', () => {
-    const facts = processingFacts(config({ map: true }), { hasPasswords: false });
+    const facts = processingFacts(config({ map: true }), {
+      hasPasswords: false,
+      hasProofingLinks: false,
+    });
     const de = starterHeadings('de', facts);
     expect(de).toContain('## Kartendienst');
     expect(de).not.toContain('Kontaktformular');

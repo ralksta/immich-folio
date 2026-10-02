@@ -18,6 +18,8 @@ import {
 import { getConfig } from '@/lib/config';
 import { env } from '@/lib/env';
 import { PRIVACY_FILENAME, processingFacts, readPrivacy, starterHeadings } from '@/lib/privacy';
+import { listSessions } from '@/lib/proofSessions';
+import { webhookUrl } from '@/lib/proofWebhook';
 
 const CONTENT_DIR = path.resolve(process.cwd(), 'content');
 const MAX_BACKUPS = 10;
@@ -36,6 +38,12 @@ export const GET = withAdmin(async () => {
       !!config.sitePassword ||
       config.subpages.some((sp) => !!sp.password) ||
       Object.values(config.albumPasswords).some(Boolean),
+    // An unreadable proofing.json may still hold client data: report it.
+    hasProofingLinks: await listSessions().then(
+      (sessions) => sessions.length > 0,
+      () => true,
+    ),
+    proofingWebhookUrl: webhookUrl(),
   });
   // Read before the text: a save landing between the two then makes the
   // version stale, which costs a spurious conflict, never a missed one.

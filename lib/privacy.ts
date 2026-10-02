@@ -57,7 +57,18 @@ export interface ProcessingFact {
  */
 export function processingFacts(
   config: AppConfig,
-  env: { CDN_URL?: string; hasPasswords: boolean },
+  env: {
+    CDN_URL?: string;
+    hasPasswords: boolean;
+    /**
+     * At least one proofing link exists in content/proofing.json. Links are
+     * created in the admin panel whatever `proofing.enabled` says, so the
+     * setting cannot stand in for this.
+     */
+    hasProofingLinks: boolean;
+    /** PROOFING_WEBHOOK_URL, already parsed (lib/proofWebhook.ts). */
+    proofingWebhookUrl?: string | null;
+  },
 ): ProcessingFact[] {
   const facts: ProcessingFact[] = [
     {
@@ -115,13 +126,27 @@ export function processingFacts(
       thirdParty: false,
     });
   }
+  // A subpage's own `proofing: true` turns the hearts on even with the global
+  // switch off (resolveProofing), so the global flag alone would under-report.
+  const favourites = config.proofing.enabled || config.subpages.some((sp) => sp.proofing);
   facts.push({
     topic: 'Browser storage',
-    detail: `The colour-mode choice${
-      config.proofing.enabled ? ' and photo selections (proofing)' : ''
-    } are kept in the visitor’s own browser (localStorage) and never sent to the server.`,
+    detail: favourites
+      ? 'The colour-mode choice and the photos a visitor marks as favourites on an album are kept in the visitor’s own browser (localStorage). Folio does not store them on the server.'
+      : 'The colour-mode choice is kept in the visitor’s own browser (localStorage). Folio does not store it on the server.',
     thirdParty: false,
   });
+  if (env.hasProofingLinks) {
+    facts.push({
+      topic: 'Proofing links',
+      detail: `Each client proofing link (/proof/…) is stored on this server in content/proofing.json: the client name you entered, the photos the client selects, when the selection was last changed and submitted, and how many ZIP downloads were used. The data stays until you delete the link in the admin panel; an expired link stops working but keeps its data.${
+        env.proofingWebhookUrl
+          ? ` When the client submits, a notification with the client name, the album name and the number of selected photos goes to ${hostOf(env.proofingWebhookUrl)}.`
+          : ''
+      }`,
+      thirdParty: !!env.proofingWebhookUrl,
+    });
+  }
   if (env.CDN_URL) {
     facts.push({
       topic: 'CDN',
@@ -152,6 +177,7 @@ export function starterHeadings(lang: string, facts: ProcessingFact[]): string {
     topics.has('Map') ? h('Map', 'Kartendienst') : '',
     topics.has('Visitor statistics') ? h('Visitor statistics', 'Besucherstatistik') : '',
     topics.has('Contact form') ? h('Contact form', 'Kontaktformular') : '',
+    topics.has('Proofing links') ? h('Client proofing', 'Bildauswahl durch Kunden') : '',
     h('Cookies and browser storage', 'Cookies und lokaler Speicher'),
     topics.has('CDN') ? h('Content delivery network', 'Content Delivery Network') : '',
     h('Your rights', 'Ihre Rechte'),
