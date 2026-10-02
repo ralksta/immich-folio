@@ -87,4 +87,14 @@ describe('passepartout mat tokens', () => {
     expect(token('classic', 'light', 'mat-bg')).toBe('#fffdf5');
     expect(token('classic', 'dark', 'mat-bg')).toBe('#1a1816');
   });
+
+  it('tones the mat to the wall in the gallery presets', () => {
+    // kunsthalle hangs on grey, salon on oxblood and plaster rose; the default
+    // black and white boards cut a hole in either wall.
+    for (const preset of ['kunsthalle', 'salon']) {
+      expect(token(preset, 'dark', 'mat-bg')).not.toBe(token('studio', 'dark', 'mat-bg'));
+      expect(token(preset, 'light', 'mat-bg')).not.toBe(token('studio', 'light', 'mat-bg'));
+      expect(token(preset, 'dark', 'mat-bg')).not.toBe(token(preset, 'light', 'mat-bg'));
+    }
+  });
 });
