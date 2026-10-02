@@ -260,3 +260,34 @@ changes every URL at once, or purge the CDN.
 
 The Content-Security-Policy allows the CDN's origin for `img-src` and
 `media-src` automatically.
+
+## Colour Profiles
+
+Visitors only ever get Immich's own renditions: the `thumbnail` for grid tiles
+and the `preview` for everything larger. Folio streams those bytes unchanged.
+It never decodes or re-encodes a photo, so whatever colour profile Immich
+embeds is what the browser sees, and colour fidelity is decided by how Immich
+builds its renditions.
+
+Immich's relevant setting is `image.colorspace` (Administration → Settings →
+Image Settings), `p3` by default. Measured on Immich 3.2.0 with `p3`, thumbnail
+as WebP and preview as JPEG:
+
+| Original                                         | Thumbnail                    | Preview                      | Colours                  |
+| ------------------------------------------------ | ---------------------------- | ---------------------------- | ------------------------ |
+| JPEG, sRGB ICC profile                           | sRGB                         | sRGB                         | correct                  |
+| HEIC from an iPhone, Display P3 ICC profile      | Display P3                   | Display P3                   | correct, wide gamut kept |
+| AVIF, no ICC profile, CICP (`nclx`) BT.2020 tags | sRGB (P3 for an iPhone shot) | sRGB (P3 for an iPhone shot) | 13–37% less saturated    |
+
+The last row is a loss in Immich, not in Folio. Immich ignores the CICP colour
+description of these AVIF files and labels the BT.2020 pixel values as sRGB (or
+Display P3) without converting them, so the browser shows them flatter than the
+original (mean chroma, compared with the decoded original). The files measured
+were AVIF exports, two of them confirmably from Lightroom. Exporting with an
+embedded ICC profile, or as JPEG or HEIC, should avoid it, since ICC-tagged
+originals came through correctly, but that has not been tested. Adobe RGB
+originals were not part of the measurement.
+
+After changing `image.colorspace` or replacing originals, regenerate thumbnails
+in Immich and bump `IMAGE_CACHE_VERSION`, since browsers and CDNs keep the old
+renditions as `immutable`.
