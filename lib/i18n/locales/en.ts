@@ -99,6 +99,7 @@ export const en = {
       seconds
         ? `Too many attempts. Please try again in ${seconds} ${seconds === 1 ? 'second' : 'seconds'}.`
         : 'Too many attempts. Please try again later.',
+    legalNavAria: 'Legal information',
   },
 
   about: {

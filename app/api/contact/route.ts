@@ -8,7 +8,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config';
-import { siteLockResponse } from '@/lib/auth';
 import { notifyNewMessage, saveMessage, validateContact } from '@/lib/contact';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 
@@ -24,9 +23,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  // The page sits behind the site password; so does the endpoint it posts to.
-  const locked = siteLockResponse(request);
-  if (locked) return locked;
+  // No site-lock check, on purpose: proxy.ts serves /contact to a locked site,
+  // because the Impressum links the form as its second contact channel. The
+  // honeypot, the fill-time check, the rate limit and the inbox cap below are
+  // what stand between a stranger and content/messages/, locked or not.
 
   const ip = getClientIp(request);
   const { success, resetAt } = checkRateLimit(`contact:${ip}`, CONTACT_RPM);

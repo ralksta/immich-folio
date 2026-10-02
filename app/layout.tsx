@@ -144,6 +144,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
    * (`app/gate/page.tsx`) that `proxy.ts` rewrites to; all the layout does is
    * strip the chrome around it, because a header listing every subpage would
    * give away the shape of a site that is supposed to be shut.
+   *
+   * The same holds for the pages the proxy serves to a locked site
+   * (`UNGATED_PAGES` in proxy.ts): /impressum, /privacy and /contact render
+   * bare here until the visitor has unlocked the site.
    */
   const cookieStore = await cookies();
   const siteGated =

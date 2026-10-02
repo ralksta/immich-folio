@@ -98,6 +98,7 @@ export const it: Dictionary = {
       seconds
         ? `Troppi tentativi. Riprova tra ${seconds} ${seconds === 1 ? 'secondo' : 'secondi'}.`
         : 'Troppi tentativi. Riprova più tardi.',
+    legalNavAria: 'Note legali',
   },
 
   about: {

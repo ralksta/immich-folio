@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import Link from 'next/link';
 import styles from './PasswordGate.module.css';
 import { useDictionary } from './I18nProvider';
 
@@ -13,6 +14,11 @@ interface PasswordGateProps {
   slug: string;
   title: string;
   type?: 'subpage' | 'album' | 'journal' | 'page' | 'site';
+  /**
+   * Links shown under the card. The site gate passes its legal pages here,
+   * which a locked site still serves (proxy.ts, UNGATED_PAGES).
+   */
+  legalLinks?: { href: string; label: string }[];
 }
 
 /** Whole seconds from a `Retry-After` header, or null when there is none. */
@@ -21,7 +27,12 @@ function retryAfterSeconds(res: Response): number | null {
   return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
 }
 
-export default function PasswordGate({ slug, title, type = 'subpage' }: PasswordGateProps) {
+export default function PasswordGate({
+  slug,
+  title,
+  type = 'subpage',
+  legalLinks = [],
+}: PasswordGateProps) {
   const t = useDictionary();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -119,6 +130,15 @@ export default function PasswordGate({ slug, title, type = 'subpage' }: Password
           </p>
         )}
       </div>
+      {legalLinks.length > 0 && (
+        <nav className={styles.legal} aria-label={t.password.legalNavAria}>
+          {legalLinks.map(({ href, label }) => (
+            <Link key={href} href={href} className="footer__legal-link">
+              {label}
+            </Link>
+          ))}
+        </nav>
+      )}
     </div>
   );
 }
