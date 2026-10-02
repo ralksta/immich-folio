@@ -488,6 +488,9 @@ export function streamArchive(
   void (async () => {
     try {
       const used = new Set<string>();
+      // Originals refused by the location scrubber. The ZIP carries on without
+      // them, so the count is the only trace a visitor's archive came up short.
+      let dropped = 0;
       for (const asset of assets) {
         // The visitor left (or the archive failed): stop pulling originals.
         if (archive.destroyed) break;
@@ -502,8 +505,9 @@ export function streamArchive(
         // original is held while its metadata is found, so memory stays flat.
         const scrubbed = await scrubLocationStream(result.stream as ReadableStream<Uint8Array>);
         if (!scrubbed.ok) {
+          dropped++;
           console.warn(
-            `[Download] Left ${asset.id} out of the archive: its location metadata could not be removed (${scrubbed.reason}).`,
+            `[Download] Left asset ${asset.id} out of the archive "${albumName}": its location metadata could not be removed (${scrubbed.reason}).`,
           );
           continue;
         }
@@ -519,6 +523,11 @@ export function streamArchive(
           nodeStream,
           uniqueEntryName(asset.originalFileName, used),
           entryDate(asset),
+        );
+      }
+      if (dropped) {
+        console.warn(
+          `[Download] Archive "${albumName}" is missing ${dropped} of ${assets.length} originals; see the lines above for the asset IDs.`,
         );
       }
       if (!archive.destroyed) await archive.finalize();

@@ -474,7 +474,13 @@ describe('location metadata', () => {
           : originStream('second-original'),
       ),
     );
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const zip = latin1(new Uint8Array(await (await GET(getReq(), params)).arrayBuffer()));
+    // Visible in the server log: which asset, which album, and how many.
+    const logged = warn.mock.calls.map((args) => String(args[0]));
+    expect(logged.some((l) => l.includes('asset-1') && l.includes('Test Album'))).toBe(true);
+    expect(logged.some((l) => l.includes('missing 1 of 2'))).toBe(true);
+    warn.mockRestore();
     expect(zip).not.toContain('photo-1.jpg');
     expect(zip).toContain('photo-2.jpg');
     expect(zip).toContain('second-original');

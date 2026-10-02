@@ -20,13 +20,21 @@
  *   - XMP (JPEG APP1, HEIF/AVIF `mime` item, TIFF tag 700, Photoshop IRB):
  *     every property whose name starts with `GPS` or contains `Latitude` or
  *     `Longitude`, in any namespace (`exif:GPS*`, `Iptc4xmpExt:GPS*`,
- *     `drone-dji:GpsLatitude`, …), is overwritten with spaces, element and
- *     attribute forms alike. City, state and country stay.
- *   - Extended XMP, C2PA/JUMBF manifests and unknown APP1 segments in the
- *     primary JPEG are zeroed whole. A manifest can carry an EXIF assertion
- *     with coordinates, and changing any byte breaks its hash binding anyway.
- *   - JPEGs embedded further down the file (MPF secondary images, EXIF
- *     thumbnails) get the same EXIF/XMP treatment.
+ *     `drone-dji:GpsLatitude`, …), and every place name below city level
+ *     (`Location`, `Sublocation`, `shotLocation`, `LocationName`,
+ *     `LocationId`) is overwritten with spaces, element and attribute forms
+ *     alike. City, state and country stay.
+ *   - IPTC IIM (Photoshop APP13): the sub-location (2:92) is overwritten with
+ *     spaces. The rest of the record stays.
+ *   - APPn segments not on a short allowlist (JFIF, ICC, MPF, FlashPix,
+ *     Adobe, EXIF/XMP, Photoshop, non-C2PA APP11) are zeroed whole: vendor
+ *     segments such as GoPro's GPMF carry their own GPS records. So are
+ *     extended XMP and C2PA/JUMBF manifests: a manifest can carry an EXIF
+ *     assertion with coordinates, and changing any byte breaks its hash
+ *     binding anyway.
+ *   - APPn segments between the scans of a progressive JPEG, and JPEGs
+ *     embedded further down the file (MPF secondary images, EXIF thumbnails),
+ *     get the same treatment as the primary image's head.
  *
  * If parsing EXIF or XMP runs into anything unexpected, that whole segment or
  * item is zeroed: losing the camera data is better than keeping the location.
@@ -226,18 +234,40 @@ function scrubTiff(b: Uint8Array, start: number, end: number): boolean {
 
 // ── XMP ──────────────────────────────────────────────────────────────────────
 
+/**
+ * Place names below city level. The site shows city and country at most, so
+ * `Iptc4xmpCore:Location`, `Iptc4xmpExt:Sublocation`, `xmpDM:shotLocation` and
+ * the name/ID of a location structure go; City, ProvinceState, CountryName and
+ * CountryCode stay.
+ */
+const PLACE_NAMES = new Set([
+  'location',
+  'sublocation',
+  'shotlocation',
+  'locationname',
+  'locationid',
+]);
+
 /** A property that pins down a place more precisely than city/country. */
 function isLocationName(local: string): boolean {
-  return /^gps/i.test(local) || /latitude|longitude/i.test(local);
+  return (
+    /^gps/i.test(local) || /latitude|longitude/i.test(local) || PLACE_NAMES.has(local.toLowerCase())
+  );
 }
 
 const NAME = '[A-Za-z_][\\w.\\-]*';
+/**
+ * A prefixed name must start where no name character precedes it. Without
+ * this anchor `matchAll` retries at every character of a long name run, which
+ * is quadratic in the length of the packet.
+ */
+const QNAME_START = '(?<![\\w.:\\-])';
 /** Start tag, prefix optional: `<exif:GPSLatitude`, `<GPSLatitude`. */
 const START_TAG = new RegExp(`<(?:(${NAME}):)?(${NAME})(?=[\\s/>])`, 'g');
 /** Prefixed attribute with its quoted value. */
-const ATTRIBUTE = new RegExp(`(${NAME}):(${NAME})\\s*=\\s*("[^"]*"|'[^']*')`, 'g');
+const ATTRIBUTE = new RegExp(`${QNAME_START}(${NAME}):(${NAME})\\s*=\\s*("[^"]*"|'[^']*')`, 'g');
 /** Any prefixed name, for the final check. */
-const QNAME = new RegExp(`(${NAME}):(${NAME})`, 'g');
+const QNAME = new RegExp(`${QNAME_START}(${NAME}):(${NAME})`, 'g');
 
 /** Index just past the `>` closing the tag whose name ends at `from`, or -1. */
 function endOfTag(s: string, from: number): number {
@@ -291,18 +321,25 @@ export function scrubXmpLocation(b: Uint8Array, start: number, end: number): boo
   const s = Buffer.from(b.buffer, b.byteOffset + start, contentEnd - start).toString('latin1');
   const blanks: Array<[number, number]> = [];
 
+  // Start tags inside an element already blanked are skipped: its range
+  // covers them, and walking each nested one to its end tag again would be
+  // quadratic in the nesting depth.
+  let blankedUntil = 0;
   for (const m of s.matchAll(START_TAG)) {
     const [, prefix, local] = m;
+    if (m.index < blankedUntil) continue;
     if (prefix === 'xmlns' || !isLocationName(local)) continue;
     const tagEnd = endOfTag(s, m.index + m[0].length);
     if (tagEnd < 0) return false;
     if (s[tagEnd - 2] === '/') {
       blanks.push([m.index, tagEnd]);
+      blankedUntil = tagEnd;
       continue;
     }
     const close = endOfElement(s, prefix ? `${prefix}:${local}` : local, tagEnd);
     if (close < 0) return false;
     blanks.push([m.index, close]);
+    blankedUntil = close;
   }
   for (const m of s.matchAll(ATTRIBUTE)) {
     if (m[1] === 'xmlns' || !isLocationName(m[2])) continue;
@@ -322,14 +359,49 @@ export function scrubXmpLocation(b: Uint8Array, start: number, end: number): boo
   return true;
 }
 
+// ── IPTC IIM ─────────────────────────────────────────────────────────────────
+
+/**
+ * IIM carries no coordinates, but dataset 2:92 (Sub-location) names the place
+ * below city level. Its value is overwritten with spaces; the record keeps its
+ * length, so every following dataset stays where it is. City (2:90), state
+ * (2:95) and country (2:100/2:101) stay.
+ */
+function scrubIim(b: Uint8Array, start: number, end: number): void {
+  let p = start;
+  while (p + 5 <= end && b[p] === 0x1c) {
+    const record = b[p + 1];
+    const dataset = b[p + 2];
+    let length = u16be(b, p + 3);
+    let value = p + 5;
+    if (length & 0x8000) {
+      const n = length & 0x7fff; // extended dataset: n bytes of length follow
+      if (n > 4 || value + n > end) break;
+      length = readUint(b, value, n, end);
+      value += n;
+    }
+    if (value + length > end) break;
+    if (record === 2 && dataset === 92) b.fill(0x20, value, value + length);
+    p = value + length;
+  }
+  // A layout we could not follow to the end: if a sub-location might be in
+  // the rest, the rest goes.
+  for (let i = p; i + 3 <= end; i++) {
+    if (b[i] === 0x1c && b[i + 1] === 0x02 && b[i + 2] === 92) {
+      zero(b, p, end);
+      return;
+    }
+  }
+}
+
 // ── Photoshop IRB (JPEG APP13) ───────────────────────────────────────────────
 
 const PHOTOSHOP_HEADER = 'Photoshop 3.0\0';
 
 /**
- * APP13 keeps its IPTC record (IIM has no coordinates). It can also carry an
- * EXIF block (resources 0x0422/0x0423) or XMP (0x0424), which are treated like
- * their APP1 counterparts.
+ * APP13 keeps its IPTC record (IIM has no coordinates), minus the
+ * sub-location. It can also carry an EXIF block (resources 0x0422/0x0423) or
+ * XMP (0x0424), which are treated like their APP1 counterparts.
  */
 function scrubPhotoshop(b: Uint8Array, start: number, end: number): void {
   let p = start;
@@ -342,7 +414,9 @@ function scrubPhotoshop(b: Uint8Array, start: number, end: number): void {
     const size = u32be(b, sizeAt);
     const dataStart = sizeAt + 4;
     const dataEnd = Math.min(dataStart + size, end);
-    if (id === 0x0422 || id === 0x0423) {
+    if (id === 0x0404) {
+      scrubIim(b, dataStart, dataEnd);
+    } else if (id === 0x0422 || id === 0x0423) {
       if (!scrubTiffGps(b, dataStart, dataEnd)) zero(b, dataStart, dataEnd);
     } else if (id === 0x0424) {
       if (!scrubXmpLocation(b, dataStart, dataEnd)) zero(b, dataStart, dataEnd);
@@ -372,24 +446,16 @@ const XMP_HEADER = 'http://ns.adobe.com/xap/1.0/\0';
 type HeadWalk = { status: 'more' } | { status: 'done'; end: number } | { status: 'error' };
 
 /**
- * Walk the marker segments of the JPEG whose SOI is at `soi`, up to SOS.
- *
- * `strict` is for the primary image: an APP1 we do not recognise and a C2PA
- * manifest are zeroed. A JPEG found further down the file only has its EXIF
- * and XMP scrubbed, so that bytes that merely look like a JPEG (inside a
- * colour profile, say) are not damaged.
- *
- * With `scrub` false it only reports whether the head is complete.
+ * Walk the marker segments of the JPEG whose SOI is at `soi`, up to SOS (or
+ * EOI), scrubbing each APPn segment on the way when `scrub` is set. With
+ * `scrub` false it only reports whether the head is complete.
  */
-function walkJpegHead(
-  b: Uint8Array,
-  soi: number,
-  limit: number,
-  scrub: false | 'strict' | 'lenient',
-): HeadWalk {
+function walkJpegHead(b: Uint8Array, soi: number, limit: number, scrub: boolean): HeadWalk {
   let pos = soi + 2;
   for (;;) {
-    // Any number of 0xFF fill bytes may precede a marker.
+    // Stray NUL padding between segments is skipped, as decoders do, and any
+    // number of 0xFF fill bytes may precede a marker.
+    while (pos < limit && b[pos] === 0x00) pos++;
     while (pos + 1 < limit && b[pos] === 0xff && b[pos + 1] === 0xff) pos++;
     if (pos + 1 >= limit) return { status: 'more' };
     if (b[pos] !== 0xff) return { status: 'error' };
@@ -408,33 +474,56 @@ function walkJpegHead(
     const payload = pos + 4;
     const segmentEnd = pos + 2 + len;
     if (segmentEnd > limit) return { status: 'more' };
-    if (scrub) scrubJpegSegment(b, marker, payload, segmentEnd, scrub === 'strict');
+    if (scrub) scrubJpegSegment(b, marker, payload, segmentEnd);
     pos = segmentEnd;
   }
 }
 
-function scrubJpegSegment(
-  b: Uint8Array,
-  marker: number,
-  start: number,
-  end: number,
-  strict: boolean,
-): void {
+/**
+ * APPn segments that are kept as they are, by marker and payload signature.
+ * Vendor segments outside this list (GoPro APP6 GPMF, Kodak APP3 `Meta`, FLIR,
+ * …) can carry their own GPS records and are zeroed whole. MPF stays: it
+ * indexes the secondary images.
+ */
+const KEPT_APP_SEGMENTS: Record<number, string[]> = {
+  0xe0: ['JFIF\0', 'JFXX\0'],
+  0xe2: ['ICC_PROFILE\0', 'MPF\0', 'FPXR\0'],
+  0xee: ['Adobe'],
+};
+
+/** Scrub one marker segment's payload `b[start, end)`. Non-APPn markers are left alone. */
+function scrubJpegSegment(b: Uint8Array, marker: number, start: number, end: number): void {
+  if (marker < 0xe0 || marker > 0xef) return;
   if (marker === 0xe1) {
     if (startsWith(b, start, EXIF_HEADER) && end - start >= 6) {
       if (!scrubTiffGps(b, start + 6, end)) zero(b, start, end);
     } else if (startsWith(b, start, XMP_HEADER)) {
       if (!scrubXmpLocation(b, start + XMP_HEADER.length, end)) zero(b, start, end);
-    } else if (startsWith(b, start, 'http://ns.adobe.com/xmp/extension/\0')) {
-      zero(b, start, end); // extended XMP: chunks of a packet we cannot edit piecewise
-    } else if (strict) {
-      zero(b, start, end); // unknown APP1 (FLIR, Casio, …): cannot vouch for it
+    } else {
+      // Extended XMP (chunks of a packet we cannot edit piecewise), or an
+      // APP1 we cannot vouch for.
+      zero(b, start, end);
     }
   } else if (marker === 0xed) {
     scrubPhotoshop(b, start, end);
-  } else if (marker === 0xeb && strict) {
+  } else if (marker === 0xeb) {
     // JUMBF (C2PA): "JP", box instance, sequence number, then the superbox.
+    // Other APP11 content (JPEG XT) is image data and stays.
     if (startsWith(b, start, 'JP') && startsWith(b, start + 12, 'jumb')) zero(b, start, end);
+  } else if (!(KEPT_APP_SEGMENTS[marker] ?? []).some((sig) => startsWith(b, start, sig))) {
+    zero(b, start, end);
+  }
+}
+
+/**
+ * Scrub the JPEGs nested inside `b[from, to)` (EXIF and Photoshop thumbnails).
+ * Bytes that only look like an SOI are left alone unless a valid run of
+ * segments follows them.
+ */
+function scrubNestedHeads(b: Uint8Array, from: number, to: number): void {
+  const view = b.subarray(0, to);
+  for (let hit = findSoi(view, from); hit >= 0; hit = findSoi(view, hit + 2)) {
+    if (walkJpegHead(view, hit, to, false).status !== 'error') walkJpegHead(view, hit, to, true);
   }
 }
 
@@ -724,18 +813,30 @@ interface Scrubber {
   advance(buf: Uint8Array, base: number, eof: boolean): number;
 }
 
-/** A growable byte buffer the stream holds back while a scrubber waits. */
-class Pending {
+/**
+ * A growable byte buffer the stream holds back while a scrubber waits.
+ * Exported for tests.
+ */
+export class Pending {
   private buf = new Uint8Array(0);
   length = 0;
+
+  /** Bytes allocated, for tests. */
+  get capacity(): number {
+    return this.buf.length;
+  }
 
   view(): Uint8Array {
     return this.buf.subarray(0, this.length);
   }
 
   push(chunk: Uint8Array): void {
-    if (this.length + chunk.length > this.buf.length) {
-      const grown = new Uint8Array(Math.max(64 * 1024, (this.length + chunk.length) * 2));
+    const needed = this.length + chunk.length;
+    if (needed > this.buf.length) {
+      // Doubling, but never past what a head may hold plus the chunk that
+      // crossed the cap: doubling alone ends near twice HEAD_CAP.
+      const target = Math.min(Math.max(64 * 1024, needed * 2), HEAD_CAP + chunk.length);
+      const grown = new Uint8Array(Math.max(needed, target));
       grown.set(this.view());
       this.buf = grown;
     }
@@ -818,17 +919,74 @@ function scrubbedStream(
   );
 }
 
-/** JPEG: scrub every embedded JPEG head found from `scanFrom` on. */
+/**
+ * JPEG, from the primary image's first SOS on.
+ *
+ * Inside an image (`inScan`), markers are followed to its EOI: entropy-coded
+ * data cannot contain 0xFF followed by anything but 0x00 or a restart marker,
+ * so every other marker is a real segment. An APPn segment between the scans
+ * of a progressive JPEG is scrubbed like one in the head.
+ *
+ * After EOI, the trailer is searched for further JPEGs (MPF secondary images
+ * and the like), whose heads are held until complete, scrubbed, and followed
+ * to their own EOI in turn.
+ */
 class JpegScrubber implements Scrubber {
-  private scanFrom: number;
+  /** Absolute offset of the next byte to examine. */
+  private pos: number;
+  private inScan = true;
 
-  constructor(scanFrom: number) {
-    this.scanFrom = scanFrom;
+  constructor(sos: number) {
+    this.pos = sos;
   }
 
   advance(buf: Uint8Array, base: number, eof: boolean): number {
-    let i = Math.max(0, this.scanFrom - base);
+    const end = base + buf.length;
     for (;;) {
+      const i = this.pos - base;
+      if (this.inScan) {
+        const ff = buf.indexOf(0xff, i);
+        if (ff < 0) {
+          this.pos = end;
+          return end;
+        }
+        // Hold a marker until its bytes are here.
+        const hold = () => {
+          this.pos = eof ? end : base + ff;
+          return eof ? end : base + ff;
+        };
+        if (ff + 1 >= buf.length) return hold();
+        const marker = buf[ff + 1];
+        if (marker === 0xff) {
+          this.pos = base + ff + 1; // fill byte
+        } else if (marker === 0x00 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+          this.pos = base + ff + 2; // stuffed byte, TEM or restart marker
+        } else if (marker === 0xd9) {
+          this.inScan = false;
+          this.pos = base + ff + 2;
+        } else if (marker === 0xd8) {
+          this.inScan = false; // an SOI without EOI before it: treat as trailer
+          this.pos = base + ff;
+        } else {
+          if (ff + 4 > buf.length) return hold();
+          const length = u16be(buf, ff + 2);
+          const segmentEnd = ff + 2 + length;
+          if (length < 2) {
+            this.pos = base + ff + 2;
+            continue;
+          }
+          if (segmentEnd > buf.length) {
+            if (!eof) return hold();
+            if (marker >= 0xe0 && marker <= 0xef) zero(buf, ff + 4, buf.length); // truncated
+            this.pos = end;
+            return end;
+          }
+          scrubJpegSegment(buf, marker, ff + 4, segmentEnd);
+          this.pos = base + segmentEnd;
+        }
+        continue;
+      }
+
       const hit = findSoi(buf, i);
       if (hit < 0) {
         // Hold back a trailing FF or FF D8 that may start a pattern.
@@ -839,18 +997,28 @@ class JpegScrubber implements Scrubber {
             : n >= 1 && buf[n - 1] === 0xff
               ? 1
               : 0;
-        const safe = eof ? base + n : base + n - keep;
-        this.scanFrom = Math.max(this.scanFrom, base + Math.max(i, n - keep));
-        return safe;
+        this.pos = base + Math.max(i, n - keep);
+        return eof ? end : base + n - keep;
       }
       const head = walkJpegHead(buf, hit, buf.length, false);
       if (head.status === 'more' && !eof && buf.length - hit < EMBEDDED_HEAD_CAP) {
-        this.scanFrom = base + hit;
+        this.pos = base + hit;
         return base + hit; // hold from here until the head is complete
       }
-      walkJpegHead(buf, hit, buf.length, 'lenient');
-      i = hit + 2;
-      this.scanFrom = base + i;
+      if (head.status === 'error') {
+        this.pos = base + hit + 2; // only looked like a JPEG
+        continue;
+      }
+      walkJpegHead(buf, hit, buf.length, true);
+      if (head.status === 'done') {
+        scrubNestedHeads(buf, hit + 2, head.end);
+        this.inScan = true;
+        this.pos = base + head.end;
+      } else {
+        // Over the cap, or the file ended: scrubbed what is here, move on.
+        scrubNestedHeads(buf, hit + 2, buf.length);
+        this.pos = base + hit + 2;
+      }
     }
   }
 }
@@ -987,19 +1155,24 @@ export async function scrubLocationStream(
   let b = pending.view();
 
   if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) {
+    let sos = 0;
     for (;;) {
       b = pending.view();
       const head = walkJpegHead(b, 0, b.length, false);
-      if (head.status === 'done') break;
+      if (head.status === 'done') {
+        sos = head.end;
+        break;
+      }
       if (head.status === 'error' || eof) return refuse('JPEG head could not be parsed');
       if (pending.length > HEAD_CAP) return refuse('JPEG head exceeds the cap');
       await fill(pending.length + 1);
     }
-    walkJpegHead(b, 0, b.length, 'strict');
+    walkJpegHead(b, 0, b.length, true);
+    scrubNestedHeads(b, 2, sos);
     return {
       ok: true,
       format: 'jpeg',
-      stream: scrubbedStream(reader, pending, new JpegScrubber(2), eof),
+      stream: scrubbedStream(reader, pending, new JpegScrubber(sos), eof),
     };
   }
 

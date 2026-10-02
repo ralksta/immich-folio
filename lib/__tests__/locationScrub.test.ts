@@ -5,6 +5,8 @@ import {
   scrubTiffGps,
   scrubXmpLocation,
   isLocationScrubbable,
+  Pending,
+  HEAD_CAP,
 } from '../locationScrub';
 import {
   ALT,
@@ -37,6 +39,7 @@ import {
   EOI,
   utf8,
   xmpSegment,
+  be16,
 } from './fixtures/location';
 
 const LAT_BYTES = (le: boolean) => LAT.value(le);
@@ -398,5 +401,212 @@ describe('isLocationScrubbable', () => {
     expect(isLocationScrubbable({ type: 'VIDEO', originalMimeType: 'video/mp4' })).toBe(false);
     expect(isLocationScrubbable({ type: 'IMAGE', originalFileName: 'IMG_0001.HEIC' })).toBe(true);
     expect(isLocationScrubbable({ type: 'IMAGE', originalFileName: 'DSC_0001.NEF' })).toBe(false);
+  });
+});
+
+describe('XMP matching stays linear', () => {
+  const time = (packet: string) => {
+    const b = utf8(packet);
+    const started = performance.now();
+    const ok = scrubXmpLocation(b, 0, b.length);
+    return { ok, ms: performance.now() - started, text: latin1(b) };
+  };
+
+  it('scans long name runs without retrying at every character', () => {
+    for (const size of [64 * 1024, 1024 * 1024]) {
+      const run = time(`<x:xmpmeta exif:GPSLatitude="1">${'a'.repeat(size)}</x:xmpmeta>`);
+      expect(run.ok).toBe(true);
+      expect(run.text).not.toContain('GPS');
+      expect(run.ms).toBeLessThan(100);
+
+      const colons = time(`<x:xmpmeta exif:GPSLatitude="1">${'a:'.repeat(size / 2)}</x:xmpmeta>`);
+      expect(colons.ok).toBe(true);
+      expect(colons.ms).toBeLessThan(100);
+    }
+  });
+
+  it('blanks deeply nested location elements in one pass', () => {
+    const depth = 20000;
+    const nested = time(
+      `<x:xmpmeta>${'<exif:GPSArea>'.repeat(depth)}${'</exif:GPSArea>'.repeat(depth)}</x:xmpmeta>`,
+    );
+    expect(nested.ok).toBe(true);
+    expect(nested.text).not.toContain('GPS');
+    expect(nested.ms).toBeLessThan(100);
+  });
+});
+
+describe('place names below city level', () => {
+  const STREET = 'Hauptstrasse 12';
+
+  it('blanks sub-city XMP place names and keeps city, state and country', () => {
+    const packet = `<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF><rdf:Description rdf:about=""
+      Iptc4xmpCore:Location="${STREET}"
+      Iptc4xmpCore:CountryCode="DE"
+      photoshop:City="Berlin" photoshop:State="Berlin" photoshop:Country="Germany">
+     <xmpDM:shotLocation>${STREET}</xmpDM:shotLocation>
+     <Iptc4xmpExt:LocationShown><rdf:Bag><rdf:li rdf:parseType="Resource">
+      <Iptc4xmpExt:Sublocation>${STREET}</Iptc4xmpExt:Sublocation>
+      <Iptc4xmpExt:LocationName>Café am Markt</Iptc4xmpExt:LocationName>
+      <Iptc4xmpExt:City>Berlin</Iptc4xmpExt:City>
+      <Iptc4xmpExt:ProvinceState>Berlin</Iptc4xmpExt:ProvinceState>
+      <Iptc4xmpExt:CountryName>Germany</Iptc4xmpExt:CountryName>
+      <Iptc4xmpExt:CountryCode>DE</Iptc4xmpExt:CountryCode>
+     </rdf:li></rdf:Bag></Iptc4xmpExt:LocationShown>
+    </rdf:Description></rdf:RDF></x:xmpmeta>`;
+    const b = utf8(packet);
+    expect(scrubXmpLocation(b, 0, b.length)).toBe(true);
+    const text = Buffer.from(b).toString('utf8');
+    expect(b.length).toBe(utf8(packet).length);
+    expect(text).not.toContain(STREET);
+    expect(text).not.toContain('Café am Markt');
+    expect(text).not.toMatch(/:(Sub)?[Ll]ocation\b|shotLocation|LocationName/);
+    for (const kept of [
+      'Iptc4xmpCore:CountryCode="DE"',
+      'photoshop:City="Berlin"',
+      'photoshop:State="Berlin"',
+      'photoshop:Country="Germany"',
+      '<Iptc4xmpExt:City>Berlin</Iptc4xmpExt:City>',
+      '<Iptc4xmpExt:ProvinceState>Berlin</Iptc4xmpExt:ProvinceState>',
+      '<Iptc4xmpExt:CountryName>Germany</Iptc4xmpExt:CountryName>',
+      '<Iptc4xmpExt:CountryCode>DE</Iptc4xmpExt:CountryCode>',
+      '<Iptc4xmpExt:LocationShown>',
+    ]) {
+      expect(text).toContain(kept);
+    }
+  });
+
+  it('blanks the IIM sub-location (2:92) in place and keeps the rest of the record', async () => {
+    const dataset = (n: number, value: string) =>
+      cat(bytes(0x1c, 0x02, n), be16(value.length), ascii(value));
+    const iim = cat(
+      dataset(90, 'Berlin'),
+      dataset(92, STREET),
+      dataset(101, 'Germany'),
+      dataset(116, 'Copyright Jane Doe'),
+    );
+    const irb = cat(
+      ascii('Photoshop 3.0\0'),
+      ascii('8BIM'),
+      be16(0x0404),
+      bytes(0, 0),
+      be32(iim.length),
+      iim,
+      iim.length % 2 ? bytes(0) : bytes(),
+    );
+    const file = cat(bytes(0xff, 0xd8), seg(0xed, irb), SOS, SCAN, EOI);
+    const out = (await scrubLocation(file))!;
+    expect(out.length).toBe(file.length);
+    const text = latin1(out);
+    expect(text).not.toContain(STREET);
+    expect(text).toContain(`\x1c\x02\x5c\x00\x0f${' '.repeat(STREET.length)}`);
+    for (const kept of ['Berlin', 'Germany', 'Copyright Jane Doe']) expect(text).toContain(kept);
+  });
+});
+
+describe('vendor APPn segments', () => {
+  const GOPRO = cat(ascii('GoPro\0'), ascii('GPS5 52.520095 13.401577'));
+  const KODAK = cat(ascii('Meta\0\0'), ascii('GPS 52.520095'));
+  const MPF = cat(ascii('MPF\0'), ascii('MM'), bytes(0, 42), be32(8), ascii('mp-index'));
+  const ADOBE = cat(ascii('Adobe'), bytes(0, 100, 0, 0, 0, 0, 1));
+
+  const head = () =>
+    cat(
+      seg(0xe0, JFIF),
+      seg(0xe2, MPF),
+      seg(0xe2, ICC),
+      seg(0xe3, KODAK),
+      seg(0xe6, GOPRO),
+      seg(0xe0, ascii('AVI1\0GPS 52.520095')),
+      seg(0xee, ADOBE),
+    );
+
+  const check = (out: Uint8Array, soi: number) => {
+    const segs = jpegSegments(out, soi);
+    const payload = (marker: number, n = 0) => segs.filter((x) => x.marker === marker)[n].payload;
+    expect(payload(0xe0)).toEqual(JFIF);
+    expect(payload(0xe2, 0)).toEqual(MPF);
+    expect(payload(0xe2, 1)).toEqual(ICC);
+    expect(payload(0xee)).toEqual(ADOBE);
+    for (const zeroed of [payload(0xe3), payload(0xe6), payload(0xe0, 1)]) {
+      expect(zeroed.every((x) => x === 0)).toBe(true);
+    }
+  };
+
+  it('zeroes APPn segments off the allowlist and keeps JFIF, ICC, MPF and Adobe', async () => {
+    const primary = cat(bytes(0xff, 0xd8), head(), SOS, SCAN, EOI);
+    const secondary = cat(bytes(0xff, 0xd8), head(), SOS, SCAN, EOI);
+    const file = cat(primary, secondary);
+    const out = (await scrubLocation(file))!;
+    expect(out.length).toBe(file.length);
+    expect(latin1(out)).not.toContain('52.520095');
+    check(out, 0);
+    check(out, primary.length);
+    for (const size of [1, 9, 100]) expect(await viaStream(file, size)).toEqual(out);
+  });
+});
+
+describe('progressive JPEG', () => {
+  const DHT = seg(0xc4, bytes(0x10, ...new Array(16).fill(0), 0));
+
+  it('scrubs an APPn segment between scans, and only inside the image', async () => {
+    const trailer = cat(ascii('TRAILER'), bytes(0xff, 0xe1, 0x00, 0x10), ascii('not a segment!'));
+    const file = cat(
+      bytes(0xff, 0xd8),
+      seg(0xe0, JFIF),
+      SOS,
+      SCAN,
+      exifSegment(cameraTiff(true)),
+      xmpSegment(XMP_PACKET),
+      seg(0xe6, ascii('GoPro\0GPS5')),
+      DHT,
+      SOS,
+      SCAN,
+      EOI,
+      trailer,
+    );
+    const out = (await scrubLocation(file))!;
+    expect(out.length).toBe(file.length);
+    const between = indexOf(out, ascii('Exif\0\0'));
+    const tiff = parseTiff(out.slice(between + 6));
+    expect(tiff.gps).toBeNull();
+    expect(asciiOf(tiff.ifd0.get(0x010f))).toBe('Canon');
+    expect(latin1(out)).not.toMatch(/exif:GPS|GoPro/);
+    // Bytes after EOI that merely look like a marker are not touched.
+    expect(out.slice(out.length - trailer.length)).toEqual(trailer);
+    for (const size of [1, 3, 50, 777]) expect(await viaStream(file, size)).toEqual(out);
+  });
+});
+
+describe('padding between segments', () => {
+  it('accepts NUL padding and FF fill bytes between segments', async () => {
+    const file = cat(
+      bytes(0xff, 0xd8),
+      seg(0xe0, JFIF),
+      bytes(0, 0, 0),
+      exifSegment(cameraTiff(false)),
+      bytes(0xff, 0xff, 0xff),
+      seg(0xe2, ICC),
+      bytes(0x00),
+      SOS,
+      SCAN,
+      EOI,
+    );
+    const out = (await scrubLocation(file))!;
+    expect(out).not.toBeNull();
+    expect(out.length).toBe(file.length);
+    expect(contains(out, LAT_BYTES(false))).toBe(false);
+    expect(latin1(out)).toContain('Canon EOS R5');
+    expect(contains(out, ICC)).toBe(true);
+  });
+});
+
+describe('Pending', () => {
+  it('never allocates more than the head cap plus one chunk', () => {
+    const pending = new Pending();
+    const chunk = new Uint8Array(1024 * 1024);
+    while (pending.length < HEAD_CAP) pending.push(chunk);
+    pending.push(chunk);
+    expect(pending.capacity).toBeLessThanOrEqual(HEAD_CAP + chunk.length);
   });
 });
