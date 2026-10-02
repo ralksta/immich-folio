@@ -179,7 +179,10 @@
 
   --text-primary: #161614;
   --text-secondary: #5a5a55;
-  --text-muted: #73736e;
+  /* #73736e passed on the page and on cards but not on --bg-secondary
+     (4.17:1) or --bg-card-hover (4.36:1). Darkened in equal steps so the
+     warm tint stays: 4.55:1 on --bg-secondary now. */
+  --text-muted: #6d6d68;
 
   --border-subtle: rgba(0, 0, 0, 0.09);
   --border-hover: rgba(0, 0, 0, 0.25);
