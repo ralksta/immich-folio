@@ -762,13 +762,15 @@ In the admin panel the switch is under **Settings › General › Portfolio
 Features**, and the page and album drawers in the page builder have an
 _Inherit / On / Off_ choice.
 
-**Using it.** Double-click (or double-tap) zooms to 1:1 around the point
-clicked and back to fit; so does the magnifier button in the lightbox bar.
-Pinch, or Ctrl + scroll wheel / trackpad pinch, zooms continuously between fit
-and 1:1 — never further, since enlarging past 1:1 only interpolates pixels and
-makes good focus look soft. Drag (or one finger) pans; `+` / `-` step, `0` and
-`Esc` go back to fit (a second `Esc` closes the viewer). Swiping to the next
-photo is off while zoomed, and changing photos resets the zoom.
+**Using it.** A click on the photo zooms in by half (1.5× the fit size)
+around the point clicked, and a second click goes back to fit. Double-tap on a
+touch screen, or the magnifier button in the lightbox bar, zooms straight to
+1:1 and back. Pinch, or Ctrl + scroll wheel / trackpad pinch, zooms
+continuously between fit and 1:1 — never further, since enlarging past 1:1
+only interpolates pixels and makes good focus look soft. Drag (or one finger)
+pans; `+` / `-` step, `0` and `Esc` go back to fit (a second `Esc` closes the
+viewer). Swiping to the next photo is off while zoomed, and changing photos
+resets the zoom.
 
 **What is shown.** The full-resolution file is requested only when a visitor
 zooms — never on opening the viewer, and never for the neighbouring photos.
