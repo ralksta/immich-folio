@@ -81,34 +81,41 @@
 }
 
 /* ── Photo grid: hung works with wall between them ── */
+/* Each photo hangs with a wall label below it: PhotoGrid's figcaption
+   (.photo-grid__label), in flow under the tile, so a long caption pushes the
+   next row down instead of running into it. The rows and columns between the
+   works are wall: at least 16px even when settings.yaml sets a tighter
+   grid.gap, which lands inline and beats the preset's 56px. */
 [data-preset='kunsthalle'] .photo-grid {
   --grid-gap: 56px;
-  counter-reset: kh-work;
+  row-gap: max(var(--grid-gap), 16px);
 }
 
-[data-preset='kunsthalle'] .photo-grid__item {
-  counter-increment: kh-work;
+[data-preset='kunsthalle'] .photo-grid .photo-grid__item {
+  margin-bottom: 0;
   transition: box-shadow var(--transition-fast);
 }
 
-/* The wall label hangs in the gap below each photo, so the vertical gap
-   never drops below what the label needs — even when settings.yaml sets a
-   tighter grid.gap, which lands inline and beats the preset's 56px. The
-   extra 32px keeps air between a label and the next work. */
-[data-preset='kunsthalle'] .photo-grid {
-  row-gap: calc(max(var(--grid-gap), 16px) + 32px);
+/* Masonry: the work and its label stay together in one column, and the
+   wall below them is the figure's, not the tile's. */
+[data-preset='kunsthalle'] .photo-grid--masonry > .fade-in {
+  break-inside: avoid;
+  margin-bottom: max(var(--grid-gap), 16px);
 }
 
-[data-preset='kunsthalle'] .photo-grid--masonry .photo-grid__item {
-  margin-bottom: calc(max(var(--grid-gap), 16px) + 32px);
+/* Justified: the tile keeps the row height and the label hangs below it,
+   so the figure grows rather than the photo shrinking. */
+[data-preset='kunsthalle'] .photo-grid--justified > .fade-in {
+  height: auto;
 }
 
-/* The shadow frame, retuned from a soft halo to a hung shadow. The label
-   below the photo needs the item to stop clipping; the image itself has
-   square corners, so nothing else depends on the clip. */
+[data-preset='kunsthalle'] .photo-grid--justified .photo-grid__item {
+  height: var(--grid-row-height);
+}
+
+/* The shadow frame, retuned from a soft halo to a hung shadow. */
 [data-preset='kunsthalle'][data-photo-frame='shadow'] .photo-grid__item {
   box-shadow: var(--kh-hang);
-  overflow: visible;
 }
 
 [data-preset='kunsthalle'][data-photo-frame='shadow'] .photo-grid__item:hover {
@@ -121,39 +128,65 @@
   filter: none;
 }
 
-/* Wall label: catalogue number plus camera and lens, under the photo. It
-   sits in the gap (56px) rather than on the image, so the photo stays clean
-   and the label is always visible. */
+/* The EXIF line moves from the photo to the wall label. Under passepartout
+   it stays printed on the mat (that frame's rule outranks this one), and the
+   label drops its copy below. */
 [data-preset='kunsthalle'] .photo-grid__item-exif {
-  top: calc(100% + 10px);
-  bottom: auto;
-  padding: 0;
-  background: none;
-  color: var(--text-muted);
+  display: none;
+}
+
+[data-preset='kunsthalle'][data-photo-frame='passepartout'] .photo-grid__label-exif {
+  display: none;
+}
+
+/* Wall label: catalogue number, the photo's caption when the site publishes
+   one, then camera and lens, in small Franklin on the wall. */
+[data-preset='kunsthalle'] .photo-grid__label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  /* As wide as the photo and never wider: a filmstrip frame sizes to its
+     content, and a long caption must not stretch it. */
+  width: 0;
+  min-width: 100%;
+  padding-top: 12px;
   font-family: var(--font-caption);
   font-size: 0.68rem;
   font-weight: 400;
   letter-spacing: 0.01em;
   line-height: 1.45;
-  opacity: 1;
+  color: var(--text-muted);
   transition: color var(--transition-fast);
 }
 
-[data-preset='kunsthalle'] .photo-grid__item-exif::before {
-  content: 'No. ' counter(kh-work, decimal-leading-zero);
-  display: block;
+[data-preset='kunsthalle'] .photo-grid__label-no {
   font-weight: 600;
   letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
   color: var(--text-secondary);
 }
 
-[data-preset='kunsthalle'] .photo-grid__item:hover .photo-grid__item-exif {
-  color: var(--text-secondary);
+[data-preset='kunsthalle'] .photo-grid__label-no::before {
+  content: 'No. ';
 }
 
-/* Without the shadow frame the item still clips; let the label out. */
-[data-preset='kunsthalle'] .photo-grid__item:has(.photo-grid__item-exif) {
-  overflow: visible;
+/* The caption reads as the work's title; three lines at most on the wall,
+   the lightbox has the rest. */
+[data-preset='kunsthalle'] .photo-grid__label-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--text-primary);
+}
+
+[data-preset='kunsthalle'] .photo-grid__item:is(:hover, :focus-visible) + .photo-grid__label {
+  color: var(--text-secondary);
 }
 
 /* ── Album covers: hung, with a wall label below ──── */

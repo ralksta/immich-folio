@@ -373,6 +373,12 @@
 
   /* The default #ff6b6b reaches only 4.2:1 on the lighter grey card; this is 5.1:1 on every surface. */
   --error: #ff8a80;
+
+  /* A grey board a step lighter than the wall, not the default black mat.
+     Both modes set it: this block comes after the generic light one. The
+     caption on it is --text-muted, 5.07:1. */
+  --mat-bg: #373735;
+  --mat-border: rgba(255, 255, 255, 0.08);
 }
 
 [data-preset='kunsthalle'][data-theme='light'] {
@@ -394,6 +400,10 @@
 
   /* Warning text on the grey wall: 5.3:1, where an amber of #7a5600 is 4.4:1. */
   --warning: #6b4b00;
+
+  /* A pale grey board on the grey wall. Caption (--text-muted): 6.79:1. */
+  --mat-bg: #eeede9;
+  --mat-border: rgba(0, 0, 0, 0.12);
 }
 
 /* ── Ma: Washi / Sumi Palette ──────────────────── */
@@ -481,6 +491,12 @@
   --border-hover: #4a383c;
 
   --max-width: 1320px;
+
+  /* An oxblood board on the velvet wall, edged in the blush accent. Both
+     modes set it: this block comes after the generic light one. Caption
+     (--text-muted): 5.68:1. */
+  --mat-bg: #2e1a1e;
+  --mat-border: rgba(227, 163, 154, 0.16);
 }
 
 [data-preset='salon'][data-theme='light'] {
@@ -499,6 +515,11 @@
 
   /* The default #c62828 reaches only 4.4:1 on the plaster secondary; this is 5.4:1 on every surface. */
   --error: #b02020;
+
+  /* A plaster-rose board, rosier than the wall, edged in oxblood. Caption
+     (--text-muted): 5.38:1. */
+  --mat-bg: #f2e4df;
+  --mat-border: rgba(125, 31, 44, 0.16);
 }
 
 /* ── Birch: Birch / Pine Palette ───────────────── */
