@@ -401,25 +401,26 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
             onChange={(e) => handleFrontmatterChange({ title: e.target.value })}
           />
 
+          {/* The admin's segmented control (QA A-18). As `admin-btn-xs` buttons the
+              active one never showed: `.admin-btn-xs` sets its own background
+              after `.admin-btn-primary`, so both modes looked identical. */}
           <div
-            style={{
-              display: 'flex',
-              gap: '4px',
-              background: 'rgba(255,255,255,0.06)',
-              borderRadius: '6px',
-              padding: '2px',
-            }}
+            className="segmented-control segmented-control--sm"
+            role="group"
+            aria-label="Editor mode"
           >
             <button
               type="button"
-              className={`admin-btn admin-btn-xs ${editorMode === 'blocks' ? 'admin-btn-primary' : ''}`}
+              className={`segment-btn ${editorMode === 'blocks' ? 'active' : ''}`}
+              aria-pressed={editorMode === 'blocks'}
               onClick={() => setEditorMode('blocks')}
             >
               Visual Blocks
             </button>
             <button
               type="button"
-              className={`admin-btn admin-btn-xs ${editorMode === 'markdown' ? 'admin-btn-primary' : ''}`}
+              className={`segment-btn ${editorMode === 'markdown' ? 'active' : ''}`}
+              aria-pressed={editorMode === 'markdown'}
               onClick={() => setEditorMode('markdown')}
             >
               Raw Markdown

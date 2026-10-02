@@ -24,6 +24,8 @@ export default function GeneralSection({
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [faviconUploading, setFaviconUploading] = useState(false);
   const [faviconStatus, setFaviconStatus] = useState<SaveStatus>(null);
+  /** Bumped after an upload or reset so the preview fetches the new icon. */
+  const [faviconVersion, setFaviconVersion] = useState(0);
 
   // Resolved the same way the site resolves it, so the switches show what a
   // visitor actually sees — including a config that only ever set the older
@@ -263,12 +265,30 @@ export default function GeneralSection({
       </FeatureGroup>
 
       <div className="admin-field favicon-field">
-        <span className="admin-field-label">Favicon</span>
+        <span className="admin-field-label" id="favicon-label">
+          Favicon
+        </span>
         <div className="favicon-row">
+          {/* eslint-disable-next-line @next/next/no-img-element -- the site's own icon route, a 32px preview */}
+          <img
+            className="favicon-preview"
+            src={`/api/favicon?v=${faviconVersion}`}
+            alt="Current favicon"
+            width={32}
+            height={32}
+          />
+          {/* The native file input stays the control — focusable, keyboard
+              operable, announced as a file picker — but is visually hidden;
+              its label is drawn as the admin's secondary button, with the
+              focus ring passed through (QA A-18). */}
           <input
+            id="favicon-file"
+            className="favicon-file-input"
             type="file"
             accept=".svg,.png,.ico,.jpg,.jpeg"
             disabled={faviconUploading}
+            aria-labelledby="favicon-label favicon-file-button"
+            aria-describedby="favicon-hint"
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
@@ -287,6 +307,7 @@ export default function GeneralSection({
                     ? { kind: 'success', message: data.message }
                     : { kind: 'error', message: `Error: ${data.error}` },
                 );
+                if (res.ok) setFaviconVersion((v) => v + 1);
               } catch {
                 setFaviconStatus({ kind: 'error', message: 'Error: Upload failed' });
               } finally {
@@ -295,9 +316,16 @@ export default function GeneralSection({
               }
             }}
           />
+          <label
+            htmlFor="favicon-file"
+            id="favicon-file-button"
+            className="admin-btn admin-btn-sm admin-btn-secondary favicon-upload-btn"
+          >
+            <Icons.IconImage size={14} /> Upload icon
+          </label>
           <button
             type="button"
-            className="admin-btn"
+            className="admin-btn admin-btn-sm admin-btn-secondary"
             disabled={faviconUploading}
             onClick={async () => {
               // Deletes the uploaded file at once, outside the staged form.
@@ -318,6 +346,7 @@ export default function GeneralSection({
                     ? { kind: 'success', message: data.message }
                     : { kind: 'error', message: `Error: ${data.error}` },
                 );
+                if (res.ok) setFaviconVersion((v) => v + 1);
               } catch {
                 setFaviconStatus({ kind: 'error', message: 'Error: Reset failed' });
               } finally {
@@ -332,7 +361,7 @@ export default function GeneralSection({
         {faviconStatus && (
           <p className={`save-message ${faviconStatus.kind}`}>{faviconStatus.message}</p>
         )}
-        <span className="admin-field-hint">
+        <span id="favicon-hint" className="admin-field-hint">
           SVG, PNG, ICO, or JPEG — max 512 kB. Stored in the content volume. Reset restores the
           bundled default.
         </span>

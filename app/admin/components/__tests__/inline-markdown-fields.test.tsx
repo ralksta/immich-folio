@@ -146,6 +146,26 @@ describe('journal editor: text blocks as markdown (A-5)', () => {
   });
 });
 
+describe('journal editor: mode toggles (A-18)', () => {
+  // Rendered as admin-btn-xs, the active mode carried admin-btn-primary, whose
+  // background the size class overrode: both modes looked the same.
+  it('mark the active mode, starting on Visual Blocks and Desktop', async () => {
+    await renderJournal();
+    const pressed = (name: string) =>
+      screen.getByRole('button', { name }).getAttribute('aria-pressed');
+
+    expect(pressed('Visual Blocks')).toBe('true');
+    expect(pressed('Raw Markdown')).toBe('false');
+    expect(pressed('Desktop')).toBe('true');
+    expect(pressed('Mobile')).toBe('false');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Raw Markdown' }));
+    expect(pressed('Visual Blocks')).toBe('false');
+    expect(pressed('Raw Markdown')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Raw Markdown' }).className).toContain('active');
+  });
+});
+
 describe('InlineMarkdownField', () => {
   function Harness({ initial }: { initial: string }) {
     const [html, setHtml] = useState(initial);

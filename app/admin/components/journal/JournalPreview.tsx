@@ -92,17 +92,24 @@ export function JournalPreview({ parsed, albumAssets }: JournalPreviewProps) {
         <span className="journal-preview-bar-label">
           <IconEye size={13} /> Realtime Theme Preview
         </span>
-        <div style={{ display: 'flex', gap: '4px' }}>
+        {/* Same control and same fix as the editor's mode toggle. */}
+        <div
+          className="segmented-control segmented-control--sm"
+          role="group"
+          aria-label="Preview width"
+        >
           <button
             type="button"
-            className={`admin-btn admin-btn-xs ${viewport === 'desktop' ? 'admin-btn-primary' : ''}`}
+            className={`segment-btn ${viewport === 'desktop' ? 'active' : ''}`}
+            aria-pressed={viewport === 'desktop'}
             onClick={() => setViewport('desktop')}
           >
             Desktop
           </button>
           <button
             type="button"
-            className={`admin-btn admin-btn-xs ${viewport === 'mobile' ? 'admin-btn-primary' : ''}`}
+            className={`segment-btn ${viewport === 'mobile' ? 'active' : ''}`}
+            aria-pressed={viewport === 'mobile'}
             onClick={() => setViewport('mobile')}
           >
             Mobile

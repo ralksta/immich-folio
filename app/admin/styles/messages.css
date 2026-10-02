@@ -4,7 +4,6 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  max-width: 900px;
 }
 
 .messages-count {
@@ -113,6 +112,7 @@
 }
 
 .messages-text {
+  max-width: 70ch;
   margin: 0 0 1rem;
   white-space: pre-wrap;
   line-height: 1.55;

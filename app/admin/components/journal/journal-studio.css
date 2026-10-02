@@ -1,8 +1,9 @@
 /* ── Journal Studio & Editor CSS ──────────────────────────────────── */
 
 /*
- * The studio is a full-width workspace: it breaks out of the 1120px
- * `.admin-main` column so the split view has room for editor *and* preview.
+ * The studio is a full-width workspace: it breaks out of the shared
+ * `--admin-content-width` column so the split view has room for editor *and*
+ * preview.
  */
 .admin-main:has(> .journal-studio),
 .admin-main:has(> .journal-editor-container) {

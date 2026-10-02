@@ -3,9 +3,9 @@
 /* Each check is one line with a severity dot: the point is scanning a list for
    the ones that are not green, not reading prose. Green ones recede. */
 
+/* Fills the shared content column (--admin-content-width); the check details
+   keep their own 70ch measure below. */
 .diag-page {
-  max-width: 880px;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
