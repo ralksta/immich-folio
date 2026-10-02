@@ -27,6 +27,14 @@
   --admin-sidebar-bg: #090909;
   --admin-radius: 4px;
   --admin-sidebar-width: 232px;
+  /* The one outer content column every workspace screen shares. Pages,
+     Overview and Diagnostics used to end at three different right edges
+     (QA A-18). Up to a 1592px window every screen simply fills the
+     workspace; wider, they all stop here instead of each at its own cap.
+     Text inside keeps its own narrower measure (the 70ch details). Only the
+     split editors (journal, content pages) break out of it. */
+  --admin-content-width: 1280px;
+  --admin-workspace-pad-x: 2.5rem;
   font-family: var(--admin-font);
 }
 
@@ -276,8 +284,8 @@
 }
 
 .admin-workspace {
-  max-width: 1180px;
-  padding: 2.25rem 2.5rem 6rem;
+  max-width: calc(var(--admin-content-width) + 2 * var(--admin-workspace-pad-x));
+  padding: 2.25rem var(--admin-workspace-pad-x) 6rem;
   margin: 0;
 }
 
@@ -338,21 +346,26 @@
 
 /* Section and field labels in the site's caption voice. */
 .admin-layout .admin-field > label,
-.admin-layout .settings-group-title,
-.admin-layout .analytics-section-title h3 {
+.admin-layout .settings-group-title {
   font-family: var(--admin-font-label);
   letter-spacing: 0.12em;
 }
 
+/* Panel headings are headings, not captions: the caption font made the
+   analytics titles a mixed-case line of monospace (QA A-18). They read like
+   the settings section headings; monospace stays with the paths. */
 .admin-layout .settings-section-header h3,
-.admin-layout .analytics-header h2 {
+.admin-layout .analytics-header h2,
+.admin-layout .analytics-section-title h3 {
+  font-family: var(--admin-font);
   font-weight: 500;
   letter-spacing: -0.01em;
 }
 
 /* Section icons stay neutral; the accent is not decoration. */
 .admin-layout .settings-section-header h3 svg,
-.admin-layout .analytics-header h2 svg {
+.admin-layout .analytics-header h2 svg,
+.admin-layout .analytics-section-title h3 svg {
   color: var(--admin-text-muted);
 }
 
@@ -463,6 +476,7 @@
 
 .overview-attention-detail {
   display: block;
+  max-width: 70ch;
   margin-top: 0.15rem;
   color: var(--admin-text-muted);
   font-size: 0.8rem;
@@ -625,8 +639,8 @@
 /* The journal list is an ordinary screen and gets the workspace column; only
    the editor (split view) needs the full width journal-studio.css gives it. */
 .admin-app .admin-main:has(> .journal-studio) {
-  max-width: 1180px;
-  padding: 2.25rem 2.5rem 6rem;
+  max-width: calc(var(--admin-content-width) + 2 * var(--admin-workspace-pad-x));
+  padding: 2.25rem var(--admin-workspace-pad-x) 6rem;
 }
 
 @media (max-width: 860px) {
@@ -700,12 +714,6 @@
 }
 
 /* ── Page builder: structure list + panel (stage 4) ────────── */
-
-/* The builder uses the full workspace width: the list and the panel both
-   need room, and the panel carries the live preview. */
-.admin-app .admin-main:has(.pb-split) {
-  max-width: none;
-}
 
 .pb-split {
   display: grid;

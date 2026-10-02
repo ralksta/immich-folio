@@ -113,7 +113,8 @@ export default function AnalyticsView() {
           <div className="analytics-bar-chart">
             {daysList.map(({ date, pageviews }) => {
               const heightPct = Math.round((pageviews / maxDayViews) * 100);
-              const formattedDate = date.slice(5); // MM-DD
+              const month = date.slice(5, 8); // "MM-"
+              const day = date.slice(8); // "DD"
               return (
                 <div key={date} className="bar-col" title={`${date}: ${pageviews} views`}>
                   <div className="bar-wrapper">
@@ -125,7 +126,11 @@ export default function AnalyticsView() {
                       <span className="bar-val">{pageviews}</span>
                     </div>
                   </div>
-                  <span className="bar-label">{formattedDate}</span>
+                  <span className="bar-label">
+                    {/* Hidden at phone width, where only the day fits (A-18). */}
+                    <span className="bar-label-month">{month}</span>
+                    {day}
+                  </span>
                 </div>
               );
             })}

@@ -356,6 +356,31 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
+.segment-btn:focus-visible {
+  outline: var(--admin-focus-ring);
+  outline-offset: 1px;
+}
+
+/* Compact size for toolbars: the editor's Visual Blocks / Raw Markdown, its
+   preview's Desktop / Mobile and the subpage drawer's Edit / Live Preview.
+   Replaces the inline padding the drawer used to carry. */
+.segmented-control--sm {
+  padding: 2px;
+  gap: 2px;
+  border-radius: 8px;
+}
+
+.segmented-control--sm .segment-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  min-height: 24px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
 /* Accent Color Swatches */
 .accent-picker-wrapper {
   display: flex;

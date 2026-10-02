@@ -7,7 +7,6 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  max-width: 1100px;
 }
 
 .analytics-header {
@@ -54,11 +53,15 @@
   color: var(--admin-text-muted);
 }
 
+/* Set like the Overview's stat numbers. `--font-mono` was never defined, so
+   these fell through to the browser's bare `monospace`. Tabular figures keep
+   the digits aligned without it. */
 .metric-value {
   font-size: 1.8rem;
-  font-weight: 700;
+  font-weight: 500;
+  letter-spacing: -0.02em;
   color: var(--admin-text);
-  font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
 }
 
 .metric-sub {
@@ -138,7 +141,8 @@
   font-size: 0.68rem;
   color: var(--admin-text-muted);
   margin-top: 0.5rem;
-  font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .analytics-top-pages {
@@ -154,14 +158,17 @@
 }
 
 .page-rank {
+  flex-shrink: 0;
   font-size: 0.8rem;
-  font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
   color: var(--admin-text-muted);
   width: 24px;
 }
 
+/* min-width: 0 lets a long path wrap instead of pushing the page sideways. */
 .page-info {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -169,17 +176,23 @@
 
 .page-path-line {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
+  gap: 0.75rem;
   font-size: 0.85rem;
 }
 
+/* Paths are the one thing here set in monospace, as slugs are elsewhere. */
 .page-path {
-  font-family: var(--font-mono, monospace);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono, ui-monospace, 'SF Mono', Menlo, monospace);
   color: var(--admin-text);
 }
 
 .page-count {
+  flex-shrink: 0;
+  white-space: nowrap;
   font-size: 0.75rem;
   color: var(--admin-text-muted);
 }
@@ -200,6 +213,32 @@
   border-radius: 3px;
   background: var(--admin-accent);
   transition: width 0.3s ease;
+}
+
+/* Phone width (QA A-18). The page was 513px wide at 390: a long path could
+   not wrap (fixed above), and fourteen "09-19" labels broke over two lines
+   under bars squeezed by 12px gaps. Panel padding and gaps tighten, and the
+   label drops the month, which every bar's title still carries. */
+@media (max-width: 640px) {
+  .analytics-panel {
+    padding: 1.25rem 1rem;
+  }
+
+  .analytics-bar-chart {
+    gap: 0.2rem;
+  }
+
+  .bar-col {
+    min-width: 0;
+  }
+
+  .bar-label-month {
+    display: none;
+  }
+
+  .top-page-row {
+    gap: 0.6rem;
+  }
 }
 
 .analytics-empty {

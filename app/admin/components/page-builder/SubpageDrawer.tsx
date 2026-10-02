@@ -120,20 +120,20 @@ export default function SubpageDrawer({
           <h3 className="subpage-drawer-title">{sp.title || sp.name || 'Untitled Page'}</h3>
         </div>
         <div className="subpage-drawer-header-actions">
-          <div className="segmented-control" style={{ padding: '2px' }}>
+          <div className="segmented-control segmented-control--sm" role="group" aria-label="View">
             <button
               type="button"
               className={`segment-btn ${drawerMode === 'edit' ? 'active' : ''}`}
+              aria-pressed={drawerMode === 'edit'}
               onClick={() => onDrawerModeChange('edit')}
-              style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
             >
               <IconPencil size={14} /> Edit
             </button>
             <button
               type="button"
               className={`segment-btn ${drawerMode === 'preview' ? 'active' : ''}`}
+              aria-pressed={drawerMode === 'preview'}
               onClick={() => onDrawerModeChange('preview')}
-              style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
             >
               <IconSearch size={14} /> Live Preview
             </button>
@@ -189,7 +189,9 @@ export default function SubpageDrawer({
                       onChange={(e) =>
                         updateSubpage(spIndex, { title: e.target.value || undefined })
                       }
-                      placeholder="Display title (defaults to name)"
+                      // Short enough for the half-width column at any size; the
+                      // old "Display title (defaults to name)" was cut off (A-18).
+                      placeholder="Same as page name"
                     />
                   </div>
                   <div className="admin-field">
