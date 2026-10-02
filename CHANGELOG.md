@@ -7,6 +7,289 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [0.20.0] — 2026-10-02
+
+### Security
+
+- **Original downloads no longer carry the photo's location**
+  ([#828](https://github.com/ralksta/immich-folio/pull/828),
+  [GHSA-g4xf-4285-4cv4](https://github.com/ralksta/immich-folio/security/advisories/GHSA-g4xf-4285-4cv4),
+  low). The rest of the site never shows more than city and country, but the
+  single download, the album ZIP and the proofing ZIP handed out originals with
+  their GPS coordinates. JPEG, HEIC/HEIF and AVIF originals are now edited in
+  place as they stream: the GPS block in EXIF, every GPS or latitude/longitude
+  property in XMP, and place names below city level (XMP `Location`,
+  `Sublocation` and similar, IPTC 2:92) are overwritten. Camera, lens,
+  exposure, dates, copyright and IPTC, the ICC profile and the image data stay
+  exactly as they were, and so does the file length; nothing is re-encoded.
+  Extended XMP, C2PA manifests and unknown vendor segments, which can hold
+  their own location records, are blanked whole, and a file whose metadata
+  cannot be read safely is refused (`404`, or left out of the ZIP and logged)
+  rather than sent. RAW/DNG, PNG, TIFF, WebP and video are delivered as Immich
+  stores them, GPS included; a new doctor check, `download-metadata`, names the
+  download albums that contain such files and how many of them Immich has a
+  location for.
+
+- **Locally built Docker images no longer contain the checkout's `content/`**
+  ([#805](https://github.com/ralksta/immich-folio/pull/805)). A `docker build`
+  from a live checkout copied `content/` into the image three ways, so its
+  layers held `install.json` (Immich API key, site secret, admin password
+  hash), `.setup-token`, contact messages, proofing links, journal entries and
+  every backup. The running container hid them behind the mounted volume, but
+  `docker save` or a push to a registry handed them out. `.dockerignore` now
+  excludes `content/`, the builder drops the copy the standalone trace makes,
+  and the image ships only the `*.example` templates. The GHCR images are
+  built from a clean clone and were never affected. See the upgrade notes.
+
+- **View statistics are gated on a password-locked site**
+  ([#810](https://github.com/ralksta/immich-folio/pull/810)).
+  `POST /api/analytics/track` accepted hits while the site password was set,
+  so anyone could write paths of their choosing into `content/analytics.json`.
+  It now answers like every other gated route. Visitors who unlocked the site
+  are counted as before.
+
+### Added
+
+- **1:1 zoom in the lightbox**
+  ([#830](https://github.com/ralksta/immich-folio/pull/830), closes
+  [#467](https://github.com/ralksta/immich-folio/issues/467); requested in
+  [#587](https://github.com/ralksta/immich-folio/issues/587) by
+  [@ImScheinox](https://github.com/ImScheinox)). Visitors can zoom a photo to
+  one image pixel per screen pixel to judge sharpness: double-click or
+  double-tap, the magnifier button, pinch, Ctrl + scroll wheel, or `+`, `-`
+  and `0`. Zoom stops at 1:1, dragging pans, `Esc` returns to fit before it
+  closes the viewer, and swiping to the next photo is off while zoomed. The
+  full-resolution file is fetched on the first zoom gesture only, never on
+  opening the viewer or for neighbouring photos. JPEG and AVIF zoom into the
+  original, HEIC, RAW and other formats a browser cannot show into Immich's
+  full-size rendition, both with the location removed as for downloads; PNG,
+  WebP, GIF and video are not zoomable. On touch devices photos above 50
+  megapixels get no zoom control, since decoding them takes 200 MB or more.
+  Zoom is off by default: `zoom: true` in `settings.yaml` (Settings → General
+  → _Photo zoom_) turns it on, and a subpage or album can override it either
+  way (album → subpage → site; _Inherit / On / Off_ in the page builder). It
+  is offered on album pages, not in essays, journal entries or proofing links.
+  `GET /api/zoom/…` re-checks the allowlist, every password gate and the zoom
+  setting of the route, is limited to 20 files a minute per visitor and is
+  never cached by a CDN. A new doctor check, `zoom-renditions`, warns when
+  Immich has no full-size previews for zoomable photos. See
+  `docs/gallery-config.md#photo-zoom` and the upgrade notes.
+
+- **Five new theme presets: Kunsthalle, Ma, Cyanotype, Salon and Birch**
+  ([#816](https://github.com/ralksta/immich-folio/pull/816),
+  [#824](https://github.com/ralksta/immich-folio/pull/824)). _Kunsthalle_ hangs
+  photos on a neutral grey gallery wall with a numbered wall label under each
+  work (album number, the Immich description where captions are published,
+  and camera · lens). _Ma_ is washi paper, sumi ink and one vermilion seal,
+  with wide negative space and a vertical hero subtitle. _Cyanotype_ sets the
+  site like a Prussian-blue drawing sheet with registration marks and ruled
+  title blocks. _Salon_ is an oxblood picture gallery with a fine fillet round
+  each work. _Birch_ is Scandinavian daylight in green-tinted greys, with no
+  uppercase anywhere. Each has a dark and a light palette whose text reaches
+  4.5:1 on every surface, including the accent used as text. Under
+  `photoFrame: passepartout`, Kunsthalle and Salon get mats toned to their
+  wall instead of black or white. Recommended grid layouts per preset are in
+  `docs/theming.md`. Presets are now declared once in
+  `lib/config/presets.ts`, and a test checks every place that cannot import
+  it.
+
+- **Photos edited in Immich are shown as edited**
+  ([#832](https://github.com/ralksta/immich-folio/pull/832), closes
+  [#831](https://github.com/ralksta/immich-folio/issues/831)). Crops and
+  rotations made in Immich's editor were ignored everywhere: Immich keeps an
+  edit apart from the file and applies it only when asked. Folio now asks for
+  the edited rendition in the grid, the lightbox, the zoom, share images, the
+  map and downloads, and lays the grid out with the edited proportions. An
+  edited photo is downloaded as Immich renders the edit, a full-resolution
+  JPEG without EXIF, named `.jpg`. Only edited photos get a new image URL; see
+  the upgrade notes and `docs/deployment.md#edits-made-in-immich`.
+
+### Changed
+
+- **The Impressum, the privacy page and the contact form are reachable on a
+  password-locked site**
+  ([#819](https://github.com/ralksta/immich-folio/pull/819)). The site
+  password rewrote every page to the gate, but a German Impressum has to be
+  reachable directly. `/impressum`, `/privacy` and `/contact` now pass the
+  gate, render without header, navigation or footer, and contain no album
+  names or asset tokens; `POST /api/contact` accepts messages with its rate
+  limit, honeypot and validation unchanged. The gate page links the Impressum
+  and the privacy page when they exist. A page that is switched off still
+  answers `404`, and every other path stays gated.
+
+- **Unknown pages answer a real 404**
+  ([#812](https://github.com/ralksta/immich-folio/pull/812)). An unknown slug,
+  a subpage with `enabled: false`, a draft content page and an unknown album
+  under a subpage rendered the not-found page with status `200`, because the
+  loading skeleton was streamed before the page could decide. The decision is
+  now made first, with no extra Immich request, and the skeleton still covers
+  the slow album load. A locked subpage shows its gate for any album slug below
+  it, so a 404 does not reveal which albums sit behind the password. Every 404
+  has the translated not-found title and a single `noindex`. Hidden subpages
+  and their albums are now `noindex`, and a subpage with several albums gets
+  its own description. On a client-side navigation to a subpage or album, the
+  skeleton now appears after one server round trip instead of at once.
+
+- **Grid photos show their passepartout mat**
+  ([#814](https://github.com/ralksta/immich-folio/pull/814)).
+  `photoFrame: passepartout`, the default frame of Studio, Classic and Noir,
+  never showed its mat: the photo covered it, and the EXIF line meant for the
+  mat sat on top of the photo. The photo now sits inside the mat, uncropped in
+  masonry, with the EXIF line printed in the band below it. Justified rows stay
+  aligned, and the row spacing is no longer doubled in the uniform, showcase,
+  filmstrip, editorial-flow and justified layouts. Mat colours are tokens per
+  mode and reach 4.5:1 for the caption in every preset. The `shadow` and
+  `none` frames are pixel-identical to before.
+
+- **Text and controls reach WCAG contrast**
+  ([#804](https://github.com/ralksta/immich-folio/pull/804),
+  [#818](https://github.com/ralksta/immich-folio/pull/818)). The accent is a
+  fill colour, and as text it fell below 4.5:1 on dark pages (Studio Modern's
+  red at 3.66:1). Accent-coloured text now uses a variant lightened or
+  darkened just until it passes on the mode's surfaces; an accent that already
+  passes, your own included, is unchanged, and fills and underlines keep the
+  accent itself. Form inputs have visible borders, every control shows the
+  same focus ring, the Minimal hero navigation is readable over the photo, the
+  journal draft badge reaches 4.5:1 in light mode, and scrollbars and form
+  controls follow the colour mode. Studio Modern's light muted text moves from
+  `#73736e` to `#6d6d68`.
+
+- **Settings the site would bend are refused on save**
+  ([#803](https://github.com/ralksta/immich-folio/pull/803)). Like the site
+  URL, accent and grid values in 0.19.0, `contact.retentionDays` outside
+  1–365, `theme.radius` outside 0–64 and header links without a label or an
+  http(s) URL are now marked in the form and refused with `400`, instead of
+  being clamped or dropped silently when the site renders. `npm run doctor`
+  now runs the `settings-values` check, which it skipped before.
+
+- **The privacy facts cover proofing links**
+  ([#826](https://github.com/ralksta/immich-folio/pull/826)). The facts next to
+  the privacy editor said proofing selections are never sent to the server,
+  which has not been true since proofing links. A new _Proofing links_ fact
+  lists what a link stores in `content/proofing.json` and for how long, and
+  names the webhook host as a third party when `PROOFING_WEBHOOK_URL` is set.
+
+- **The admin has one content width**
+  ([#820](https://github.com/ralksta/immich-folio/pull/820)). Pages, Overview,
+  Diagnostics, Analytics and Messages ended at different edges; they now share
+  one 1280px column. The analytics headings and numbers use the admin font and
+  fit a phone, the favicon upload is a styled, keyboard-reachable button with a
+  preview, and the _Visual Blocks / Raw Markdown_ and _Desktop / Mobile_
+  toggles show which mode is active.
+
+- **How colour profiles reach visitors is documented**
+  ([#823](https://github.com/ralksta/immich-folio/pull/823), closes
+  [#468](https://github.com/ralksta/immich-folio/issues/468)). Folio streams
+  Immich's renditions unchanged, and sRGB and Display P3 photos arrive
+  correctly. AVIF originals tagged only with a BT.2020 colour tag, typical of
+  Lightroom AVIF exports, are shown 13–37% less saturated, because Immich
+  ignores that tag when it builds its renditions; this is tracked in
+  [#827](https://github.com/ralksta/immich-folio/issues/827). See
+  `docs/deployment.md#colour-profiles`.
+
+### Fixed
+
+- **The colour mode is right on the first paint**
+  ([#808](https://github.com/ralksta/immich-folio/pull/808)). A visitor who
+  chose light mode, or a light OS with `mode: auto`, saw a dark page until the
+  scripts loaded. A small inline script now applies the stored choice or the
+  OS setting before the first paint, on every page including the password gate
+  and the admin, and `mode: auto` follows an OS switch while the page is open.
+
+- **Admin backups and unsaved-changes markers**
+  ([#807](https://github.com/ralksta/immich-folio/pull/807)). Renaming a page
+  or journal entry listed it in Backups as a deleted entry, and restoring that
+  brought the old slug back; the history now follows the renamed file. A save
+  that changes nothing no longer takes a backup and pushes out a real one.
+  _Unsaved changes_ in the settings and the page builder clears when an edit is
+  reverted. A journal text paragraph whose line starts with `![` is escaped,
+  so it is no longer turned into a broken photo block on the next load.
+
+- **The admin for keyboards and screen readers**
+  ([#813](https://github.com/ralksta/immich-folio/pull/813),
+  [#817](https://github.com/ralksta/immich-folio/pull/817)). Drag handles in
+  the page builder carry the sortable role and a name (_Reorder Pricing_), so
+  rows no longer nest a button inside a button, and drag announcements name
+  pages, albums and hero photos instead of internal IDs. The journal's
+  _+ Pick_ slot is a button. The site title field shows what an empty title
+  really falls back to. Theme card descriptions match the presets, the
+  _Typographic_ hero card no longer shows photos the hero never renders, and
+  _Cover_ has a preview.
+
+- **Map, proofing and lightbox details**
+  ([#811](https://github.com/ralksta/immich-folio/pull/811),
+  [#810](https://github.com/ralksta/immich-folio/pull/810)). Map markers are
+  named for screen readers ("Yufu, Japan, 46 photos"), and the map header
+  counts only the albums the viewer can open. Proofing bars follow the preset's
+  corner radius, grid hearts use the lightbox's favourite colour, and the
+  header and proofing bar no longer show through the lightbox. ZIP entries are
+  dated with the photo's capture time instead of the time the archive was
+  built.
+
+- **Share previews, journal and photo links**
+  ([#809](https://github.com/ralksta/immich-folio/pull/809)). `/about` shared
+  no image and now uses the portrait; `/journal` previewed as the home page and
+  now has its own card. A draft entry shows its _Draft_ badge to the admin, and
+  machine-readable journal dates are marked up as `<time>`. A `?photo=` link
+  that matches no photo is removed from the address bar.
+
+- **Footer and EXIF lines**
+  ([#806](https://github.com/ralksta/immich-folio/pull/806)). On short pages
+  the footer sits at the bottom of the window instead of mid-screen. The
+  aperture sign stays `ƒ` under presets that set EXIF in capitals, a phone's
+  lens no longer repeats the camera model ("iPhone 14 Pro back triple camera"),
+  and long EXIF lines on Studio Modern tiles are cut with an ellipsis instead
+  of mid-letter.
+
+### Upgrade notes
+
+**Zoom is opt-in.** Nothing changes until `zoom: true` is set for the site, a
+subpage or an album ([#830](https://github.com/ralksta/immich-folio/pull/830)).
+Every zoom sends a full-resolution file (commonly 5–25 MB) from Immich through
+Folio and is never cached by a CDN, so on a slow or metered uplink switch it on
+only where it is needed. For HEIC and RAW photos, turn on Immich's
+_Administration → Settings → Image Settings → Full-size image_ in JPEG format
+and run _Generate Thumbnails_; without it those photos show the zoom button but
+answer "Full resolution is not available for this photo". The doctor's
+`zoom-renditions` check tells you.
+
+**Edited photos get a new image URL once**
+([#832](https://github.com/ralksta/immich-folio/pull/832)). Only photos edited
+in Immich carry the new `e` parameter; every other URL is unchanged, so no
+`IMAGE_CACHE_VERSION` bump is needed. A CDN keyed on the full query string,
+as `docs/deployment.md#cdn-mode` asks, picks it up; one keyed on selected
+parameters must add `e`. After a fresh edit in Immich the photo shows
+edited once Folio's album cache refreshes (`CACHE_TTL`, _Clear cache_, or the
+webhook).
+
+**Docker images built from a checkout**
+([#805](https://github.com/ralksta/immich-folio/pull/805)). With
+`./content:/app/content` mounted, as in the documented `docker-compose.yml`,
+there is nothing to do. If you ran a self-built image without that mount,
+mount it now; content is no longer in the image. If you ever pushed or shared
+an image built from a checkout with live content, rebuild it, delete the old
+tags and stop distributing them, and treat what was in `content/` as exposed:
+rotate the Immich API key and `AUTH_SECRET` and change the admin password.
+
+**On a password-locked site, `/impressum`, `/privacy` and `/contact` are
+public** ([#819](https://github.com/ralksta/immich-folio/pull/819)), and the
+contact form accepts messages. Switch a page off (`legal.enabled`,
+`privacy.enabled`, `contact.enabled`) if it should not be reachable.
+
+**Grids with `photoFrame: passepartout` look different**
+([#814](https://github.com/ralksta/immich-folio/pull/814)): the mat and the
+EXIF band below each photo are now visible, which makes tiles slightly taller.
+This is the default frame of Studio, Classic and Noir.
+
+**Review your privacy policy if you use proofing links**
+([#826](https://github.com/ralksta/immich-folio/pull/826)); the new fact under
+Settings → Legal says what they store.
+
+**The Immich API key stays read-only.** Zoom and edited photos read the same
+kinds of Immich endpoints as before (renditions and originals); the key needs
+no new permission and no write access, as documented under _Immich API Key
+Permissions_ in the README.
+
 ## [0.19.1] — 2026-10-01
 
 ### Security
