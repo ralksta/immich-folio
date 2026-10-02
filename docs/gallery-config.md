@@ -737,7 +737,10 @@ zoom: true
 ```
 
 A subpage and an album can each override it, in either direction. The most
-specific setting wins: **album → subpage → site**.
+specific setting wins: **album → subpage → site**. An album's `zoom:` belongs to
+the entry it is written on: an album listed on two pages can have zoom on one
+and off on the other, and each page keeps its own choice. Listed twice on the
+same page (in two sections), `false` wins.
 
 ```yaml
 # gallery.yaml
@@ -771,6 +774,7 @@ zoom button.
 | JPEG, AVIF                         | The original, with its location removed        |
 | HEIC/HEIF, RAW/DNG, TIFF, JPEG XL… | Immich's full-size rendition, location removed |
 | PNG, WebP, GIF                     | Not zoomable — their metadata is not scrubbed  |
+| Edited in Immich (crop, rotate)    | Not zoomable — Immich's original is unedited   |
 | Video                              | Not zoomable                                   |
 
 Location is removed the same way as for [originals download](#originals-download):
@@ -791,13 +795,30 @@ exports) can look more saturated at 1:1 than in the preview: Immich's preview
 ignores that tag and comes out desaturated (#827), while the browser shows the
 original as tagged. The original is the accurate one.
 
-Zoom is offered on album pages. Photo essays, journal entries and client
+A photo edited in Immich's own editor is never zoomed. Immich keeps the edit
+apart from the file: its original is the unedited photo, so whatever a crop
+removed would come back at 1:1.
+
+On touch devices, photos above **50 megapixels** get no zoom control. Showing a
+photo at 1:1 means decoding all of it — 200 MB of memory at 50 MP, 240 MB for a
+60 MP frame — which phones and tablets do not reliably survive. With a mouse or
+trackpad there is no limit.
+
+Zoom is offered on album pages, including the album pages under a photo-essay
+subpage (`/<page>/<album>`). The essay itself, journal entries and client
 proofing links do not have it.
 
 The zoom route re-checks the album allowlist, every password gate on a route to
 the album, the zoom setting for that route, and that the photo is published and
 belongs to the album. Answers are `Cache-Control: private` (browser only, one
 hour, never a CDN), and each visitor can open 20 full-resolution files a minute.
+
+**Bandwidth.** Every zoom sends a full-resolution file from Immich through
+Folio to the visitor — commonly 5–25 MB per photo (a 60 MP JPEG is about
+20 MB). At the rate limit of 20 a minute, one visitor can pull several hundred
+megabytes a minute, and none of it is cached at a CDN. That is why zoom is off
+by default; on a metered or slow uplink, switch it on only for the pages that
+need it.
 
 ## Image Protection & Watermark
 
