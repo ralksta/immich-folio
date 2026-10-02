@@ -149,7 +149,13 @@ export function isAlbumReachable(
  * shown on, and an album listed on two subpages can have it on one and off on
  * the other. Asking "is zoom on anywhere" and "can the visitor get in
  * anywhere" separately would let a visitor through an open subpage that has
- * zoom off, on the strength of a locked one that has it on.
+ * zoom off, on the strength of a locked one that has it on. The album entry's
+ * own override is per route too (resolveZoom).
+ *
+ * Essay subpages are not excluded. The essay itself offers no zoom, but each
+ * of its albums is still reachable as an album page at /<subpage>/<album>,
+ * which offers zoom by exactly this rule. The route answers what that page
+ * offers; refusing it here would break zoom there.
  */
 export function isAlbumZoomReachable(
   albumId: string,

@@ -277,7 +277,8 @@ export interface GalleryDerivation {
   albumGrids: Record<string, Partial<GridConfig>>;
   albumCoverPositions: Record<string, string>;
   albumDownloads: Record<string, boolean>;
-  albumZoom: Record<string, boolean>;
+  /** Album zoom overrides on the standalone entries; subpages carry their own. */
+  standaloneAlbumZoom: Record<string, boolean>;
   albumLocationPrecision: Record<string, LocationPrecision>;
 }
 
@@ -303,7 +304,13 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   const albumGrids: Record<string, Partial<GridConfig>> = {};
   const albumCoverPositions: Record<string, string> = {};
   const albumDownloads: Record<string, boolean> = {};
-  const albumZoom: Record<string, boolean> = {};
+  /**
+   * Per-album zoom overrides (#467), one map per route: the standalone entries
+   * here, each subpage's (sections included) on the subpage. An album listed on
+   * two pages can be zoomable on one and not the other; a single map would let
+   * whichever entry came last decide for both.
+   */
+  const standaloneAlbumZoom: Record<string, boolean> = {};
   const albumLocationPrecision: Record<string, LocationPrecision> = {};
 
   /** Returns null for an entry whose album ID is not a UUID; callers drop it. */
@@ -311,6 +318,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
     entry: string | Record<string, string | AlbumEntryObject>,
     context: string,
     inheritedLocation?: LocationPrecision,
+    zoomSink?: Record<string, boolean>,
   ): string | null {
     if (typeof entry === 'string') {
       if (inheritedLocation) albumLocationPrecision[entry] = inheritedLocation;
@@ -400,7 +408,11 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
       if (value.download === true) albumDownloads[validatedUuid] = true;
       // Both values mean something: `false` switches zoom off here even where
       // the subpage or the site has it on (#467). Anything else is ignored.
-      if (typeof value.zoom === 'boolean') albumZoom[validatedUuid] = value.zoom;
+      // Written to the route this entry is on. Listed twice on one route (two
+      // sections of a page), the cautious answer wins: `false` stays `false`.
+      if (zoomSink && typeof value.zoom === 'boolean') {
+        zoomSink[validatedUuid] = zoomSink[validatedUuid] !== false && value.zoom;
+      }
       const location = parseLocation(value.location, `${context}: album ${validatedUuid} location`);
       if (location) albumLocationPrecision[validatedUuid] = location;
     }
@@ -412,9 +424,10 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
     entries: Array<string | Record<string, string | AlbumEntryObject>>,
     context: string,
     inheritedLocation?: LocationPrecision,
+    zoomSink?: Record<string, boolean>,
   ): string[] {
     return entries
-      .map((entry) => processAlbumEntry(entry, context, inheritedLocation))
+      .map((entry) => processAlbumEntry(entry, context, inheritedLocation, zoomSink))
       .filter((id): id is string => id !== null);
   }
 
@@ -434,7 +447,12 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
     return raw;
   }
 
-  const standaloneAlbumIds = processAlbumEntries(gallery.albums ?? [], 'gallery.yaml albums');
+  const standaloneAlbumIds = processAlbumEntries(
+    gallery.albums ?? [],
+    'gallery.yaml albums',
+    undefined,
+    standaloneAlbumZoom,
+  );
 
   let subpages: SubpageConfig[] = [];
   /** Menu order, subpages and `- page:` references interleaved (#722). */
@@ -470,6 +488,9 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         throw new Error(`Subpage "(unnamed)" must have a name`);
       }
 
+      // This page's own album zoom overrides, sections included (#467).
+      const albumZoom: Record<string, boolean> = {};
+
       // Parse sections if present
       let sections: SubpageSectionConfig[] | undefined;
       let albumIds: string[];
@@ -483,6 +504,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
             sec.albums,
             `subpage "${sp.name}" section "${sec.title}"`,
             parseLocation(sp.location, `subpage "${sp.name}" location`),
+            albumZoom,
           ),
         }));
         // flat union of all section albums
@@ -492,6 +514,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
           sp.albums ?? [],
           `subpage "${sp.name}"`,
           parseLocation(sp.location, `subpage "${sp.name}" location`),
+          albumZoom,
         );
         albumIds = [...topLevel, ...albumIds];
       } else {
@@ -503,6 +526,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
           albums,
           `subpage "${sp.name}"`,
           parseLocation(sp.location, `subpage "${sp.name}" location`),
+          albumZoom,
         );
       }
 
@@ -516,6 +540,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         password: sp.password,
         proofing: sp.proofing,
         zoom: typeof sp.zoom === 'boolean' ? sp.zoom : undefined,
+        ...(Object.keys(albumZoom).length ? { albumZoom } : {}),
         essayFile: sp.essayFile,
         essayText: sp.essayText,
         enabled: sp.enabled !== false,
@@ -539,6 +564,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
       }
       const sp = value as SubpageObjectValue;
       const albumEntries = sp.albums || [];
+      const albumZoom: Record<string, boolean> = {};
       return {
         name,
         slug: slugify(name),
@@ -548,10 +574,12 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
           albumEntries,
           `subpage "${name}"`,
           parseLocation(sp.location, `subpage "${name}" location`),
+          albumZoom,
         ),
         password: sp.password,
         proofing: sp.proofing,
         zoom: typeof sp.zoom === 'boolean' ? sp.zoom : undefined,
+        ...(Object.keys(albumZoom).length ? { albumZoom } : {}),
         essayFile: sp.essayFile,
         essayText: sp.essayText,
         enabled: sp.enabled !== false,
@@ -625,7 +653,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
     albumGrids,
     albumCoverPositions,
     albumDownloads,
-    albumZoom,
+    standaloneAlbumZoom,
     albumLocationPrecision,
   };
 }
@@ -758,7 +786,7 @@ function deriveConfig(): AppConfig {
       albumGrids: {},
       albumCoverPositions: {},
       albumDownloads: {},
-      albumZoom: {},
+      standaloneAlbumZoom: {},
       albumLocationPrecision: {},
       navLinks: [],
       cacheTtl: env.CACHE_TTL * 1000,
@@ -788,7 +816,7 @@ function deriveConfig(): AppConfig {
     albumGrids,
     albumCoverPositions,
     albumDownloads,
-    albumZoom,
+    standaloneAlbumZoom,
     albumLocationPrecision,
   } = deriveGallery(gallery);
 
@@ -887,7 +915,7 @@ function deriveConfig(): AppConfig {
     albumGrids,
     albumCoverPositions,
     albumDownloads,
-    albumZoom,
+    standaloneAlbumZoom,
     albumLocationPrecision,
     navLinks: sanitizeNavLinks(settings.navLinks),
     cacheTtl: env.CACHE_TTL * 1000,

@@ -34,7 +34,10 @@ const B = '22222222-2222-2222-2222-222222222222';
  * overridden by a subpage and then by an album, each in either direction.
  */
 describe('resolveZoom', () => {
-  const config = (zoom: boolean, albumZoom: Record<string, boolean> = {}) => ({ zoom, albumZoom });
+  const config = (zoom: boolean, standaloneAlbumZoom: Record<string, boolean> = {}) => ({
+    zoom,
+    standaloneAlbumZoom,
+  });
 
   it('follows the site setting when nothing more specific is set', () => {
     expect(resolveZoom(config(false), A)).toBe(false);
@@ -47,25 +50,72 @@ describe('resolveZoom', () => {
     expect(resolveZoom(config(true), A, { zoom: false })).toBe(false);
   });
 
-  it('lets an album override its subpage and the site, both ways', () => {
-    expect(resolveZoom(config(false, { [A]: true }), A, { zoom: false })).toBe(true);
-    expect(resolveZoom(config(true, { [A]: false }), A, { zoom: true })).toBe(false);
+  it('lets an album entry override its subpage and the site, both ways', () => {
+    expect(resolveZoom(config(false), A, { zoom: false, albumZoom: { [A]: true } })).toBe(true);
+    expect(resolveZoom(config(true), A, { zoom: true, albumZoom: { [A]: false } })).toBe(false);
     // Only that album.
-    expect(resolveZoom(config(true, { [A]: false }), B, { zoom: true })).toBe(true);
+    expect(resolveZoom(config(true), B, { zoom: true, albumZoom: { [A]: false } })).toBe(true);
+  });
+
+  it('reads the standalone override only for the standalone route', () => {
+    const c = config(true, { [A]: false });
+    expect(resolveZoom(c, A)).toBe(false);
+    // On a subpage the standalone entry has no say.
+    expect(resolveZoom(c, A, {})).toBe(true);
   });
 });
 
-describe('deriveGallery reads zoom', () => {
-  it('keeps an album’s zoom in either direction, and only booleans', () => {
-    const derived = deriveGallery({
-      albums: [{ [A]: { zoom: true } }, { [B]: { zoom: false } }],
-    } as GalleryYaml);
-    expect(derived.albumZoom).toEqual({ [A]: true, [B]: false });
+describe('deriveGallery keeps album zoom per route (review of #830)', () => {
+  /*
+   * The reported leak: one album on an open page with zoom off and on a
+   * password page with zoom on. A single map let the last entry decide for
+   * both, so the open page served zoom its owner had switched off.
+   */
+  const pages = (first: boolean) => {
+    const open = { name: 'Public', albums: [{ [A]: { zoom: false } }] };
+    const locked = { name: 'Client', password: 'pw', albums: [{ [A]: { zoom: true } }] };
+    return deriveGallery({ subpages: first ? [open, locked] : [locked, open] } as GalleryYaml);
+  };
 
-    const odd = deriveGallery({
-      albums: [{ [A]: { zoom: 'yes' } }],
-    } as unknown as GalleryYaml);
-    expect(odd.albumZoom).toEqual({});
+  it.each([true, false])('keeps each page’s own value (open page first: %s)', (openFirst) => {
+    const derived = pages(openFirst);
+    const open = derived.subpages.find((sp) => sp.slug === 'public')!;
+    const locked = derived.subpages.find((sp) => sp.slug === 'client')!;
+    const cfg = { zoom: false, standaloneAlbumZoom: derived.standaloneAlbumZoom };
+    expect(resolveZoom(cfg, A, open)).toBe(false);
+    expect(resolveZoom(cfg, A, locked)).toBe(true);
+  });
+
+  it('keeps a standalone entry apart from a subpage entry for the same album', () => {
+    const derived = deriveGallery({
+      albums: [{ [A]: { zoom: true } }],
+      subpages: [{ name: 'S', albums: [{ [A]: { zoom: false } }] }],
+    } as GalleryYaml);
+    expect(derived.standaloneAlbumZoom).toEqual({ [A]: true });
+    expect(derived.subpages[0].albumZoom).toEqual({ [A]: false });
+  });
+
+  it('collects section entries on their subpage, and false wins within one page', () => {
+    const derived = deriveGallery({
+      subpages: [
+        {
+          name: 'S',
+          albums: [{ [B]: { zoom: true } }],
+          sections: [
+            { title: 'One', albums: [{ [A]: { zoom: true } }] },
+            { title: 'Two', albums: [{ [A]: { zoom: false } }] },
+          ],
+        },
+        { name: 'T', albums: [A] },
+      ],
+    } as GalleryYaml);
+    expect(derived.subpages[0].albumZoom).toEqual({ [A]: false, [B]: true });
+    expect(derived.subpages[1].albumZoom).toBeUndefined();
+  });
+
+  it('ignores anything but a boolean', () => {
+    const odd = deriveGallery({ albums: [{ [A]: { zoom: 'yes' } }] } as unknown as GalleryYaml);
+    expect(odd.standaloneAlbumZoom).toEqual({});
   });
 
   it('keeps a subpage’s zoom in both gallery.yaml shapes', () => {
@@ -79,9 +129,10 @@ describe('deriveGallery reads zoom', () => {
     expect(list.subpages.map((sp) => sp.zoom)).toEqual([true, false, undefined]);
 
     const record = deriveGallery({
-      subpages: { Travel: { albums: [A], zoom: true } },
+      subpages: { Travel: { albums: [{ [A]: { zoom: false } }], zoom: true } },
     } as unknown as GalleryYaml);
     expect(record.subpages[0].zoom).toBe(true);
+    expect(record.subpages[0].albumZoom).toEqual({ [A]: false });
   });
 });
 
@@ -106,8 +157,8 @@ describe('the site setting', () => {
     expect(getConfig().zoom).toBe(true);
   });
 
-  it('carries the album overrides into the config', () => {
+  it('carries the standalone album overrides into the config', () => {
     withSettings({ zoom: true });
-    expect(getConfig().albumZoom).toEqual({ [A]: false });
+    expect(getConfig().standaloneAlbumZoom).toEqual({ [A]: false });
   });
 });

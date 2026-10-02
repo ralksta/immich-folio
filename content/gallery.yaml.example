@@ -86,7 +86,8 @@ subpages:
           #
           # zoom: false
           #   1:1 zoom in the lightbox for this album, overriding the subpage
-          #   and `zoom` in settings.yaml in either direction.
+          #   and `zoom` in settings.yaml in either direction. Applies where
+          #   this entry is: the same album on another page keeps its own.
           #
           # location: city
           #   How precisely this album's photographs may be placed — on the

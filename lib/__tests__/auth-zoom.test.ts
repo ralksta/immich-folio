@@ -12,7 +12,7 @@ const config = vi.hoisted(() => ({
   immich: { apiKey: 'k' },
   authSecret: 'test-auth-secret-32-chars-long-min',
   zoom: false,
-  albumZoom: {} as Record<string, boolean>,
+  standaloneAlbumZoom: {} as Record<string, boolean>,
   standaloneAlbums: [] as string[],
   albumPasswords: {} as Record<string, string>,
   subpages: [] as Array<Record<string, unknown>>,
@@ -34,7 +34,7 @@ async function cookieFor(key: string, password: string, type: 'subpage' | 'album
 function setup(partial: Partial<typeof config>) {
   Object.assign(config, {
     zoom: false,
-    albumZoom: {},
+    standaloneAlbumZoom: {},
     standaloneAlbums: [],
     albumPasswords: {},
     subpages: [],
@@ -59,7 +59,7 @@ describe('isAlbumZoomReachable', () => {
   });
 
   it('lets an album switch it off against the site', () => {
-    setup({ zoom: true, standaloneAlbums: [ID(1)], albumZoom: { [ID(1)]: false } });
+    setup({ zoom: true, standaloneAlbums: [ID(1)], standaloneAlbumZoom: { [ID(1)]: false } });
     expect(isAlbumZoomReachable(ID(1), none)).toBe(false);
   });
 
@@ -94,6 +94,34 @@ describe('isAlbumZoomReachable', () => {
     setup({ zoom: true, standaloneAlbums: [ID(1)], albumPasswords: { [ID(1)]: 'apw' } });
     expect(isAlbumZoomReachable(ID(1), none)).toBe(false);
     expect(isAlbumZoomReachable(ID(1), await cookieFor(ID(1), 'apw', 'album'))).toBe(true);
+  });
+
+  it('reads the album entry’s zoom on the route it is written on (review of #830)', async () => {
+    // Open page: album entry says off. Password page: album entry says on.
+    setup({
+      subpages: [
+        { name: 'Public', slug: 'public', albumIds: [ID(1)], albumZoom: { [ID(1)]: false } },
+        {
+          name: 'Client',
+          slug: 'client',
+          albumIds: [ID(1)],
+          password: 'pw',
+          albumZoom: { [ID(1)]: true },
+        },
+      ],
+    });
+    expect(isAlbumZoomReachable(ID(1), none)).toBe(false);
+    expect(isAlbumZoomReachable(ID(1), await cookieFor('client', 'pw'))).toBe(true);
+  });
+
+  it('answers for an essay subpage’s albums like for any other page', () => {
+    // Their album page, /<subpage>/<album>, offers zoom by the same rule.
+    setup({
+      subpages: [
+        { name: 'E', slug: 'e', albumIds: [ID(1)], zoom: true, grid: { layout: 'essay' } },
+      ],
+    });
+    expect(isAlbumZoomReachable(ID(1), none)).toBe(true);
   });
 
   it('does not combine an open route without zoom with a locked one that has it', async () => {

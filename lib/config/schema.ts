@@ -27,6 +27,11 @@ export interface SubpageConfig {
   proofing?: boolean;
   /** Lightbox zoom for the albums here, over the site setting (#467). */
   zoom?: boolean;
+  /**
+   * Album zoom overrides written on this page's album entries (sections
+   * included). They apply on this page only; see resolveZoom().
+   */
+  albumZoom?: Record<string, boolean>;
   essayFile?: string;
   essayText?: string;
   enabled?: boolean;
@@ -302,8 +307,12 @@ export interface AppConfig {
   albumCoverPositions: Record<string, string>;
   /** Albums whose originals may be downloaded. Absent means no (#475). */
   albumDownloads: Record<string, boolean>;
-  /** Per-album lightbox zoom, either way. Absent means inherit (#467). */
-  albumZoom: Record<string, boolean>;
+  /**
+   * Lightbox zoom overrides on the standalone album entries, either way.
+   * Absent means inherit (#467). Entries inside a subpage are kept on that
+   * subpage (`SubpageConfig.albumZoom`), so each route answers for itself.
+   */
+  standaloneAlbumZoom: Record<string, boolean>;
   /** Per-album map precision. Absent means `exact` (#469). */
   albumLocationPrecision: Record<string, LocationPrecision>;
   /** EXPERIMENTAL: external links appended to the header navigation. */
@@ -350,26 +359,30 @@ export interface AppConfig {
 }
 
 /**
- * Whether the lightbox offers zoom to full resolution for an album on a page
- * (#467).
+ * Whether the lightbox offers zoom to full resolution for an album on one
+ * route (#467): the album standalone (no subpage), or on a given subpage.
  *
- * Most specific wins, in either direction: the album's own `zoom:`, then the
- * subpage it is shown on, then `zoom` in settings.yaml (off by default). The
- * same `??` chain as resolveProofing(), one level deeper — `zoom: false` on an
- * album has to beat a subpage's `true`.
+ * Most specific wins, in either direction: the album entry's own `zoom:` on
+ * that route, then the subpage, then `zoom` in settings.yaml (off by default).
+ * The same `??` chain as resolveProofing(), one level deeper — `zoom: false` on
+ * an album has to beat a subpage's `true`.
  *
- * The zoom route has no page to ask, so it asks this for every route the
- * visitor can reach the album through (isAlbumZoomReachable in lib/auth.ts).
+ * The album override is per route on purpose. An album listed on an open page
+ * with `zoom: false` and on a password page with `zoom: true` must not become
+ * zoomable on the open one because the other entry happened to be read last.
  *
+ * The page, the zoom route (isAlbumZoomReachable in lib/auth.ts) and the
+ * admin drawer (which edits the entry in its place) all read the same value.
  * Lives here rather than in lib/config/index.ts so client-safe and test code
  * that stubs the config barrel can still reach it.
  */
 export function resolveZoom(
-  config: Pick<AppConfig, 'zoom' | 'albumZoom'>,
+  config: Pick<AppConfig, 'zoom' | 'standaloneAlbumZoom'>,
   albumId: string,
-  subpage?: { zoom?: boolean },
+  subpage?: { zoom?: boolean; albumZoom?: Record<string, boolean> },
 ): boolean {
-  return config.albumZoom[albumId] ?? subpage?.zoom ?? config.zoom;
+  if (subpage) return subpage.albumZoom?.[albumId] ?? subpage.zoom ?? config.zoom;
+  return config.standaloneAlbumZoom?.[albumId] ?? config.zoom;
 }
 
 export interface AlbumEntryObject {
