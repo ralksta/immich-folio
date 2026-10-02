@@ -267,18 +267,20 @@ describe('proxy', () => {
       });
       // The gate page is public and links both; an Impressum behind a password
       // is not "unmittelbar erreichbar". The pages still get their CSP.
-      for (const pathname of ['/impressum', '/privacy']) {
+      // The contact form goes with them: the Impressum links it as its second
+      // contact channel.
+      for (const pathname of ['/impressum', '/privacy', '/contact']) {
         const res = run(pathname);
         expect(rewrittenTo(res)).toBeNull();
         expect(res.headers.get('Content-Security-Policy')).toBeTruthy();
       }
       // Exact paths only: nothing below or beside them slips through.
-      for (const pathname of ['/', '/contact', '/impressum/x', '/privacy-trip', '/japan']) {
+      for (const pathname of ['/', '/contact/x', '/impressum/x', '/privacy-trip', '/japan']) {
         expect(rewrittenTo(run(pathname))).toContain('/gate');
       }
     });
 
-    it('still answers 404 for a legal page that is switched off on a locked site', () => {
+    it('still answers 404 for a legal or contact page that is switched off on a locked site', () => {
       mockUnlocked.mockReturnValue(false);
       mockConfig.mockReturnValue({
         contact: { enabled: false },
@@ -286,7 +288,7 @@ describe('proxy', () => {
         map: false,
         privacy: { enabled: false },
       });
-      for (const pathname of ['/impressum', '/privacy']) {
+      for (const pathname of ['/impressum', '/privacy', '/contact']) {
         const res = run(pathname);
         expect(rewrittenTo(res)).toBeNull();
         expect(res.status).toBe(404);

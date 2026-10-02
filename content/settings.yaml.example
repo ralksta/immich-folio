@@ -30,6 +30,7 @@ lang: "en"
 # The SITE_PASSWORD environment variable overrides this value.
 # /admin keeps its own password and is never behind this gate. The legal
 # notice and the privacy page stay reachable too; the password page links them.
+# So does the contact form, which the legal notice links as a contact channel.
 # sitePassword: "scrypt:..."
 
 # What a first-time visitor sees: dark (default), light, or auto to follow

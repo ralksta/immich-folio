@@ -47,6 +47,21 @@ const config = {
   analytics: false,
 };
 
+/*
+ * The contact route stores what it accepts under content/messages/ and pushes
+ * to contact.notifyUrl. Both are replaced here, so an accepted submission
+ * touches neither the checkout's content/ directory nor the network;
+ * validateContact stays real, honeypot and fill-time check included.
+ */
+const contactStore = vi.hoisted(() => ({
+  saveMessage: vi.fn(async (fields: Record<string, string>) => ({ id: 'x', ...fields })),
+  notifyNewMessage: vi.fn(async () => {}),
+}));
+vi.mock('@/lib/contact', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/contact')>()),
+  ...contactStore,
+}));
+
 vi.mock('@/lib/config', () => ({
   getConfig: () => config,
   getConfigOrNull: () => config,
@@ -134,14 +149,6 @@ const GATED: { name: string; call: () => Promise<Response> }[] = [
       ),
   },
   {
-    // Stores whatever a visitor sends; a locked site accepts nothing from strangers.
-    name: 'POST /api/contact',
-    call: async () =>
-      (await import('../contact/route')).POST(
-        new NextRequest('http://localhost/api/contact', { method: 'POST', body: '{}' }) as never,
-      ),
-  },
-  {
     // Writes visitor-chosen paths into content/analytics.json. It used to be
     // OPEN "to count the gate", but the layout mounts no tracker on the gate.
     name: 'POST /api/analytics/track',
@@ -170,6 +177,8 @@ const OPEN: Record<string, string> = {
   install: 'the first-run wizard; setup-token gated, refuses once installed',
   'install/albums': 'the first-run wizard; setup-token gated, refuses once installed',
   webhook: 'server-to-server from Immich, HMAC-verified',
+  contact:
+    'the Impressum links the form as its second contact channel, and /contact is served to a locked site',
 };
 
 /** `GET /api/download/[album]/[id]` → `download/[album]/[id]`. */
@@ -270,6 +279,58 @@ describe('routes that must stay open', () => {
 
   // The password gate is set in the theme's fonts; locking them would render
   // the gate itself in fallback fonts. Three public font names give nothing away.
+  describe('POST /api/contact on a locked site', () => {
+    /** Own rate-limit bucket per case: the route allows three a minute per IP. */
+    const submit = (ip: string, fields: Record<string, unknown>) =>
+      import('../contact/route').then(({ POST }) =>
+        POST(
+          new NextRequest('http://localhost/api/contact', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', 'x-real-ip': ip },
+            body: JSON.stringify(fields),
+          }) as never,
+        ),
+      );
+    const valid = () => ({
+      name: 'Erika',
+      email: 'erika@example.com',
+      message: 'Wer betreibt diese Seite?',
+      website: '',
+      startedAt: Date.now() - 10_000,
+    });
+
+    beforeEach(() => {
+      config.sitePassword = 'letmein';
+      contactStore.saveMessage.mockClear();
+    });
+
+    // The Impressum links the form as its second contact channel, and the
+    // proxy serves /contact to a locked site; the endpoint has to take the post.
+    it('accepts a valid message without a session', async () => {
+      const res = await submit('10.0.0.1', valid());
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ ok: true });
+      expect(contactStore.saveMessage).toHaveBeenCalledTimes(1);
+    });
+
+    it('still drops a filled honeypot and a form sent too fast, unsaved', async () => {
+      expect((await submit('10.0.0.2', { ...valid(), website: 'spam.example' })).status).toBe(200);
+      expect((await submit('10.0.0.2', { ...valid(), startedAt: Date.now() })).status).toBe(200);
+      expect(contactStore.saveMessage).not.toHaveBeenCalled();
+    });
+
+    it('still refuses an invalid message', async () => {
+      const res = await submit('10.0.0.3', { ...valid(), email: 'not-an-address' });
+      expect(res.status).toBe(400);
+      expect(contactStore.saveMessage).not.toHaveBeenCalled();
+    });
+
+    it('still rate-limits at three a minute', async () => {
+      for (let i = 0; i < 3; i++) expect((await submit('10.0.0.4', valid())).status).toBe(200);
+      expect((await submit('10.0.0.4', valid())).status).toBe(429);
+    });
+  });
+
   it('GET /api/fonts/css answers a locked site', async () => {
     config.sitePassword = 'letmein';
     const res = await (
@@ -294,7 +355,7 @@ describe('routes that must stay open', () => {
  * real lib/auth here, with the password set, rather than through a mocked
  * isSiteUnlocked() as in lib/__tests__/proxy.test.ts.
  */
-describe('legal pages on a locked site', () => {
+describe('legal and contact pages on a locked site', () => {
   const page = async (path: string, cookie?: string) =>
     (await import('@/proxy')).proxy(
       new NextRequest(`http://localhost${path}`, cookie ? { headers: { cookie } } : {}),
@@ -305,24 +366,29 @@ describe('legal pages on a locked site', () => {
     config.sitePassword = 'letmein';
     config.legal.enabled = true;
     config.privacy.enabled = true;
+    config.contact.enabled = true;
   });
 
   // The gate page is public and links both. A German Impressum has to be
   // reachable directly, and neither page carries an album name or asset token.
-  it.each(['/impressum', '/privacy'])('%s is served without the password', async (path) => {
-    expect(rewrittenTo(await page(path))).toBeNull();
-  });
+  it.each(['/impressum', '/privacy', '/contact'])(
+    '%s is served without the password',
+    async (path) => {
+      expect(rewrittenTo(await page(path))).toBeNull();
+    },
+  );
 
   it('every other page is still rewritten to the gate', async () => {
-    for (const path of ['/', '/japan', '/journal', '/about', '/contact', '/impressum/x']) {
+    for (const path of ['/', '/japan', '/journal', '/about', '/contact/x', '/impressum/x']) {
       expect(rewrittenTo(await page(path)), path).toContain('/gate');
     }
   });
 
-  it('a switched-off legal page is still a 404, not the gate', async () => {
+  it('a switched-off legal or contact page is still a 404, not the gate', async () => {
     config.legal.enabled = false;
     config.privacy.enabled = false;
-    for (const path of ['/impressum', '/privacy']) {
+    config.contact.enabled = false;
+    for (const path of ['/impressum', '/privacy', '/contact']) {
       const res = await page(path);
       expect(rewrittenTo(res), path).toBeNull();
       expect(res.status, path).toBe(404);

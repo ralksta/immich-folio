@@ -9,6 +9,10 @@
  * The legal notice and the privacy policy are the exception: the proxy serves
  * them to a locked site, and this page links them, so a visitor who cannot get
  * in can still see who runs the site.
+ *
+ * /contact is served to a locked site as well, but not linked from here: it is
+ * open because the Impressum names it as a contact channel, and the Impressum
+ * links it. A form under the password field would read as "ask for access".
  */
 
 import type { Metadata } from 'next';
