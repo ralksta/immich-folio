@@ -36,6 +36,7 @@ cp content/settings.yaml.example content/settings.yaml
 - [Navigation Links](#navigation-links)
 - [Client Proofing](#client-proofing)
 - [Client Proofing Links](#client-proofing-links)
+- [Photo Zoom](#photo-zoom)
 - [Image Protection & Watermark](#image-protection--watermark)
 - [SEO](#seo)
 - [Footer](#footer)
@@ -122,6 +123,7 @@ subpages:
 | `grid`      | object  | Grid override for the photos on this page — see [Grid Layout](#grid-layout)                      |
 | `coverGrid` | object  | Grid override for the album covers on this page — see [Album covers](#album-covers-on-a-subpage) |
 | `proofing`  | boolean | Enables [client proofing](#client-proofing) on this page                                         |
+| `zoom`      | boolean | [Photo zoom](#photo-zoom) for the albums on this page, over the site setting                     |
 | `essayFile` | string  | Render a Markdown essay instead of a grid — see [Journal & Photo Essays](journal.md)             |
 | `essayText` | string  | Essay Markdown inline; written by the admin block editor                                         |
 | `enabled`   | boolean | `false` takes the page offline without deleting it                                               |
@@ -218,6 +220,7 @@ albums:
 | `grid`          | **Experimental.** Grid override for this album only                           |
 | `coverPosition` | **Experimental.** Focal point for the cover crop                              |
 | `download`      | Offer originals for download — see [Originals download](#originals-download)  |
+| `zoom`          | [Photo zoom](#photo-zoom) for this album, over its page and the site setting  |
 
 ### Per-album grid (experimental)
 
@@ -491,6 +494,7 @@ map: true # the interactive world map at /map
 transitions: true # smooth page transitions between routes
 scrollToTop: true # floating back-to-top arrow on long pages
 analytics: true # cookieless view counts, see below
+zoom: false # 1:1 zoom in the lightbox, see Photo Zoom
 
 about:
   enabled: true # the /about page, rendered from content/about.md
@@ -506,6 +510,7 @@ about:
 | `transitions`   | on      |                                             |
 | `scrollToTop`   | on      |                                             |
 | `analytics`     | on      |                                             |
+| `zoom`          | **off** | Opt-in, see [Photo Zoom](#photo-zoom)       |
 | `about.enabled` | on      | Needs a `content/about.md` to show anything |
 
 ### Colour mode
@@ -720,6 +725,101 @@ PROOFING_WEBHOOK_URL=https://discord.com/api/webhooks/…
   `Referer`.
 - A subpage slugged `proof` would be hidden behind this route.
 
+## Photo Zoom
+
+Visitors can zoom into a photo in the lightbox to full resolution — one image
+pixel per screen pixel, which is what judging sharpness takes. Off by default:
+it hands out the full-resolution file, so it is switched on deliberately.
+
+```yaml
+# settings.yaml — the site-wide default
+zoom: true
+```
+
+A subpage and an album can each override it, in either direction. The most
+specific setting wins: **album → subpage → site**. An album's `zoom:` belongs to
+the entry it is written on: an album listed on two pages can have zoom on one
+and off on the other, and each page keeps its own choice. Listed twice on the
+same page (in two sections), `false` wins.
+
+```yaml
+# gallery.yaml
+subpages:
+  - name: Clients
+    zoom: true # every album on this page, unless it says otherwise
+    albums:
+      - 'album-uuid':
+          zoom: false # not this one
+```
+
+In the admin panel the switch is under **Settings › General › Portfolio
+Features**, and the page and album drawers in the page builder have an
+_Inherit / On / Off_ choice.
+
+**Using it.** Double-click (or double-tap) zooms to 1:1 around the point
+clicked and back to fit; so does the magnifier button in the lightbox bar.
+Pinch, or Ctrl + scroll wheel / trackpad pinch, zooms continuously between fit
+and 1:1 — never further, since enlarging past 1:1 only interpolates pixels and
+makes good focus look soft. Drag (or one finger) pans; `+` / `-` step, `0` and
+`Esc` go back to fit (a second `Esc` closes the viewer). Swiping to the next
+photo is off while zoomed, and changing photos resets the zoom.
+
+**What is shown.** The full-resolution file is requested only when a visitor
+zooms — never on opening the viewer, and never for the neighbouring photos.
+Until it arrives the preview is shown enlarged, with a small spinner on the
+zoom button.
+
+| Original                           | Zoom shows                                     |
+| ---------------------------------- | ---------------------------------------------- |
+| JPEG, AVIF                         | The original, with its location removed        |
+| HEIC/HEIF, RAW/DNG, TIFF, JPEG XL… | Immich's full-size rendition, location removed |
+| PNG, WebP, GIF                     | Not zoomable — their metadata is not scrubbed  |
+| Edited in Immich (crop, rotate)    | Not zoomable — Immich's original is unedited   |
+| Video                              | Not zoomable                                   |
+
+Location is removed the same way as for [originals download](#originals-download):
+GPS coordinates and place names below city level are overwritten in place;
+camera data and colour profile stay. A file whose metadata cannot be read is
+refused rather than sent.
+
+Formats a browser cannot display need Immich's **full-size preview**
+(_Administration › Settings › Image Settings › Full-size image_, JPEG format).
+Immich generates it only while that setting is on, so turn it on and run the
+_Generate Thumbnails_ job for existing photos. Without it, those photos show
+the zoom button but answer "Full resolution is not available for this photo",
+and the viewer stays on the preview. Immich does not say whether a rendition
+exists until it is asked, so Folio cannot hide the button in advance.
+
+AVIF originals tagged only with a BT.2020 colour tag (typical of Lightroom AVIF
+exports) can look more saturated at 1:1 than in the preview: Immich's preview
+ignores that tag and comes out desaturated (#827), while the browser shows the
+original as tagged. The original is the accurate one.
+
+A photo edited in Immich's own editor is never zoomed. Immich keeps the edit
+apart from the file: its original is the unedited photo, so whatever a crop
+removed would come back at 1:1.
+
+On touch devices, photos above **50 megapixels** get no zoom control. Showing a
+photo at 1:1 means decoding all of it — 200 MB of memory at 50 MP, 240 MB for a
+60 MP frame — which phones and tablets do not reliably survive. With a mouse or
+trackpad there is no limit.
+
+Zoom is offered on album pages, including the album pages under a photo-essay
+subpage (`/<page>/<album>`). The essay itself, journal entries and client
+proofing links do not have it.
+
+The zoom route re-checks the album allowlist, every password gate on a route to
+the album, the zoom setting for that route, and that the photo is published and
+belongs to the album. Answers are `Cache-Control: private` (browser only, one
+hour, never a CDN), and each visitor can open 20 full-resolution files a minute.
+
+**Bandwidth.** Every zoom sends a full-resolution file from Immich through
+Folio to the visitor — commonly 5–25 MB per photo (a 60 MP JPEG is about
+20 MB). At the rate limit of 20 a minute, one visitor can pull several hundred
+megabytes a minute, and none of it is cached at a CDN. That is why zoom is off
+by default; on a metered or slow uplink, switch it on only for the pages that
+need it.
+
 ## Image Protection & Watermark
 
 ```yaml
@@ -926,6 +1026,7 @@ The endpoints where a high limit would be the wrong default are fixed and not co
 | `POST /api/admin/auth` | 5                  |
 | `POST /api/auth`       | 10                 |
 | `/api/install`         | 10                 |
+| `/api/zoom`            | 20                 |
 | `/api/og`              | 30                 |
 | `/api/install/albums`  | 30                 |
 | `/api/webhook`         | 60                 |

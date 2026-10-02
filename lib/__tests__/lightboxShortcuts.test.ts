@@ -93,6 +93,13 @@ describe('lightboxActionFor', () => {
     expect(lightboxActionFor('H')).toBe('shortcutList');
   });
 
+  it('zooms with + (or = without Shift), - and 0 (#467)', () => {
+    expect(lightboxActionFor('+')).toBe('zoomIn');
+    expect(lightboxActionFor('=')).toBe('zoomIn');
+    expect(lightboxActionFor('-')).toBe('zoomOut');
+    expect(lightboxActionFor('0')).toBe('zoomReset');
+  });
+
   it('takes both cases of every letter key, since Shift must not matter', () => {
     for (const [lower, upper] of [
       ['i', 'I'],

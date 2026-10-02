@@ -2,22 +2,25 @@
  * Lightbox — fullscreen image viewer with navigation and EXIF info.
  *
  * Features:
- * - Full-resolution image display
+ * - The 1440px preview, and — where zoom is on — the full-resolution file,
+ *   fetched only when the visitor zooms (#467; gestures in hooks/useZoom.ts)
  * - Previous/Next navigation (arrows + swipe)
  * - Close (Esc, click outside, X button)
  * - EXIF metadata panel (fetched on demand)
  * - Keyboard shortcut list (`?` or `h`), deliberately unadvertised
  * - Real fullscreen (`f`), where the browser offers it
- * - Preloads adjacent images
+ * - Preloads adjacent previews (never the full-resolution files)
  */
 
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import type { PhotoItem } from '@/app/[...path]/PhotoGrid';
 import { useExif } from '@/hooks/useExif';
 import { useSwipe } from '@/hooks/useSwipe';
+import { useZoom } from '@/hooks/useZoom';
+import { zoomFitsDevice } from '@/lib/zoom';
 import styles from './Lightbox.module.css';
 import { useProofing } from './useProofing';
 import { IconHeart } from './Icons';
@@ -57,6 +60,23 @@ interface LightboxProps {
   showExifToggle?: boolean;
 }
 
+const COARSE_POINTER = '(pointer: coarse)';
+
+function subscribeCoarsePointer(onChange: () => void): () => void {
+  const query = window.matchMedia?.(COARSE_POINTER);
+  query?.addEventListener?.('change', onChange);
+  return () => query?.removeEventListener?.('change', onChange);
+}
+
+/** A touch device, where very large images are not offered for zoom. */
+function useCoarsePointer(): boolean {
+  return useSyncExternalStore(
+    subscribeCoarsePointer,
+    () => !!window.matchMedia?.(COARSE_POINTER)?.matches,
+    () => false,
+  );
+}
+
 export function Lightbox({
   assets,
   currentIndex,
@@ -89,8 +109,26 @@ export function Lightbox({
   const [slideshowSeconds, setSlideshowSeconds] = useState<SlideshowSpeed>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
+  // State, not a ref: useZoom attaches its listeners when this element
+  // appears, which is after the portal mounts.
+  const [imageContainer, setImageContainer] = useState<HTMLDivElement | null>(null);
+  const previewRef = useRef<HTMLImageElement>(null);
 
   const current = assets[currentIndex];
+  const coarsePointer = useCoarsePointer();
+  const zoomable =
+    current.type === 'image' &&
+    !!current.zoomUrl &&
+    zoomFitsDevice(current.zoomWidth, current.zoomHeight, coarsePointer);
+  const zoom = useZoom({
+    photoKey: current.id,
+    naturalWidth: zoomable ? current.zoomWidth : undefined,
+    imageRef: previewRef,
+    surface: imageContainer,
+  });
+  const { zoomed, reset: resetZoom, zoomIn, zoomOut } = zoom;
+  /** The zoom control and keys are offered for this photo. */
+  const canZoom = zoomable && zoom.enabled;
   const proofing = useProofing();
   const isFav = proofing && current ? proofing.isFavorite(current.id) : false;
   const [mounted, setMounted] = useState(false);
@@ -199,11 +237,13 @@ export function Lightbox({
     setSlideshowSeconds((current) => nextSlideshowSpeed(current));
   }, []);
 
+  // Paused, not stopped, while zoomed: advancing would throw away the view
+  // someone is inspecting. Back at fit, the slideshow carries on.
   useEffect(() => {
-    if (slideshowSeconds === null) return;
+    if (slideshowSeconds === null || zoom.zoomed) return;
     const timer = setInterval(onNext, slideshowSeconds * 1000);
     return () => clearInterval(timer);
-  }, [slideshowSeconds, onNext]);
+  }, [slideshowSeconds, onNext, zoom.zoomed]);
 
   /*
    * Any deliberate move through the album stops the slideshow. Someone
@@ -297,9 +337,11 @@ export function Lightbox({
     preload(currentIndex - 1);
   }, [currentIndex, assets]);
 
+  // While zoomed one finger pans the photo, so it must not also navigate.
   const { handleTouchStart, handleTouchEnd } = useSwipe({
     onSwipeLeft: manualNext,
     onSwipeRight: manualPrev,
+    enabled: !zoom.zoomed,
   });
 
   /*
@@ -334,12 +376,13 @@ export function Lightbox({
       switch (action) {
         case 'close':
           // Innermost layer first: Esc dismisses the shortcut list, then leaves
-          // fullscreen, and only closes the viewer once nothing is stacked on
-          // top of it. Most browsers swallow this Esc to exit fullscreen
-          // themselves and never dispatch it — the middle branch is for the
-          // ones that do dispatch it, which would otherwise close the lightbox
-          // and leave the page behind it fullscreen.
+          // the zoom, then fullscreen, and only closes the viewer once nothing
+          // is stacked on top of it. Most browsers swallow this Esc to exit
+          // fullscreen themselves and never dispatch it — that branch is for
+          // the ones that do dispatch it, which would otherwise close the
+          // lightbox and leave the page behind it fullscreen.
           if (showShortcuts) setShowShortcuts(false);
+          else if (zoomed) resetZoom();
           else if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
           else onClose();
           break;
@@ -366,6 +409,15 @@ export function Lightbox({
           e.preventDefault();
           handleCopyLink();
           break;
+        case 'zoomIn':
+          if (canZoom) zoomIn();
+          break;
+        case 'zoomOut':
+          if (canZoom) zoomOut();
+          break;
+        case 'zoomReset':
+          if (zoomed) resetZoom();
+          break;
         case 'shortcutList':
           toggleShortcuts();
           break;
@@ -390,6 +442,11 @@ export function Lightbox({
     };
   }, [
     canFullscreen,
+    canZoom,
+    zoomed,
+    resetZoom,
+    zoomIn,
+    zoomOut,
     current,
     cycleSlideshow,
     handleCopyLink,
@@ -424,6 +481,7 @@ export function Lightbox({
     if (shortcut.availability === 'exifPanel') return showExifToggle;
     if (shortcut.availability === 'fullscreen') return canFullscreen;
     if (shortcut.availability === 'download') return Boolean(current?.downloadUrl);
+    if (shortcut.availability === 'zoom') return canZoom;
     return true;
   }).map((shortcut) => {
     let label: string = t.lightbox[shortcut.labelKey];
@@ -438,7 +496,7 @@ export function Lightbox({
 
   const lightboxJsx = (
     <div
-      className={styles.overlay}
+      className={`${styles.overlay}${zoom.requested ? ` ${styles.overlayZoom}` : ''}`}
       ref={overlayRef}
       onClick={handleOverlayClick}
       onTouchStart={handleTouchStart}
@@ -491,7 +549,15 @@ export function Lightbox({
 
       {/* Image or Video */}
       <div
-        className={styles.imageContainer}
+        ref={setImageContainer}
+        className={[
+          styles.imageContainer,
+          canZoom ? styles.zoomable : '',
+          zoom.zoomed ? styles.zoomed : '',
+          zoom.requested ? styles.zoomEngaged : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         style={{
           backgroundColor: current.dominantColor || '#000',
           backgroundImage:
@@ -516,14 +582,40 @@ export function Lightbox({
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img
+            ref={previewRef}
             className={`${styles.image}${imageLoaded ? ` ${styles.imageLoaded}` : ''}`}
             src={canonicalImageUrl(current.previewUrl)}
             alt={current.caption ?? ''}
             draggable={false}
+            style={zoom.imageStyle}
             onLoad={() => setImageLoaded(true)}
             onError={() => console.error(`[Lightbox] Failed to load image: ${current.previewUrl}`)}
           />
         )}
+
+        {/*
+          The full-resolution file, mounted on the first zoom and not before.
+          It covers the preview's own box under the same transform, so when it
+          arrives it replaces the scaled-up preview without moving. Keyed by
+          the photo, so a new photo never shows the last one's file.
+        */}
+        {current.type === 'image' &&
+          current.zoomUrl &&
+          zoom.requested &&
+          zoom.status !== 'failed' && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={current.id}
+              className={`${styles.zoomImage}${zoom.status === 'loaded' ? ` ${styles.zoomImageLoaded}` : ''}`}
+              src={current.zoomUrl}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              style={zoom.imageStyle}
+              onLoad={(e) => zoom.onFullLoad(e.currentTarget)}
+              onError={zoom.onFullError}
+            />
+          )}
 
         {watermark?.enabled && watermark.text && (
           <div
@@ -571,6 +663,19 @@ export function Lightbox({
           ? t.lightbox.slideshowStopped
           : t.lightbox.slideshowRunning(slideshowSeconds)}
       </p>
+
+      {/* Zoom loading, for screen readers; sighted visitors see the spinner
+          in the zoom button. */}
+      <p className="sr-only" role="status">
+        {zoom.zoomed && zoom.status === 'loading' ? t.lightbox.zoomLoading : ''}
+      </p>
+
+      {/* No full-resolution file: say so once, and stay on the preview. */}
+      {zoom.status === 'failed' && (
+        <div key={current.id} className={styles.zoomNotice} role="status">
+          {t.lightbox.zoomUnavailable}
+        </div>
+      )}
 
       {/*
         One bottom bar rather than five separately anchored controls.
@@ -646,6 +751,40 @@ export function Lightbox({
         </div>
 
         <div className={`${styles.bottomBarGroup} ${styles.bottomBarRight}`}>
+          {/* Zoom to 1:1 and back (#467). Icon only: the bar is already full at
+              phone width, and the magnifier says what it does. */}
+          {canZoom && (
+            <button
+              className={`${styles.infoToggle} ${styles.zoomToggle}`}
+              onClick={() => zoom.toggle()}
+              aria-pressed={zoom.zoomed}
+              aria-busy={zoom.zoomed && zoom.status === 'loading'}
+              aria-label={zoom.zoomed ? t.lightbox.zoomOut : t.lightbox.zoomIn}
+              title={zoom.zoomed ? t.lightbox.zoomOutTitle : t.lightbox.zoomInTitle}
+            >
+              {zoom.zoomed && zoom.status === 'loading' ? (
+                <span className={styles.zoomSpinner} aria-hidden="true" />
+              ) : (
+                <svg
+                  aria-hidden="true"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <line x1="21" y1="21" x2="16" y2="16" />
+                  <line x1="8" y1="11" x2="14" y2="11" />
+                  {!zoom.zoomed && <line x1="11" y1="8" x2="11" y2="14" />}
+                </svg>
+              )}
+            </button>
+          )}
+
           {/* Proofing favorite button */}
           {proofing && current && (
             <button

@@ -35,6 +35,7 @@ const everyOption: Required<Omit<AlbumEntryObject, 'grid'>> & Pick<AlbumEntryObj
   assetOrder: ['33333333-3333-3333-3333-333333333333'],
   coverPosition: '50% 25%',
   download: true,
+  zoom: false,
   location: 'hidden',
   grid: { columns: 4, gap: 8, aspectRatio: '3/2', layout: 'masonry' },
 };
@@ -45,6 +46,17 @@ describe('album entry round trip', () => {
     const [serialized] = serializeAlbumEntries(parsed);
 
     expect(serialized).toEqual({ [uuid]: everyOption });
+  });
+
+  it('keeps zoom: false, which switches zoom off for the album (#467)', () => {
+    const parsed = parseAlbumEntries([{ [uuid]: { zoom: false } }]);
+    expect(parsed[0].zoom).toBe(false);
+    expect(hasAlbumOptions(parsed[0])).toBe(true);
+    expect(serializeAlbumEntries(parsed)).toEqual([{ [uuid]: { zoom: false } }]);
+  });
+
+  it('writes no zoom key while the album inherits', () => {
+    expect(serializeAlbumEntries([{ id: uuid, zoom: undefined }])).toEqual([uuid]);
   });
 
   it('keeps map precision across a save', () => {

@@ -56,6 +56,7 @@ subpages:
     subtitle: "A collection of 2026 highlights in 35mm film." # Optional: Sub-text for headers
     password: "your-password" # Optional protection
     # hidden: true # EXPERIMENTAL: reachable by direct link, but not shown in navigation
+    # zoom: true # 1:1 zoom in the lightbox for this page's albums (overrides settings.yaml)
     # coverGrid: # Optional: the album covers on this page (nothing else)
     #   columns: 3 # how many album covers per row on this page
     #   gap: 8 # spacing between the covers, in px — omit to keep the theme's own
@@ -82,6 +83,11 @@ subpages:
           #   The download route checks the allowlist, this switch, the
           #   album's password and that the asset really belongs to the
           #   album, so an edited URL cannot reach anything else.
+          #
+          # zoom: false
+          #   1:1 zoom in the lightbox for this album, overriding the subpage
+          #   and `zoom` in settings.yaml in either direction. Applies where
+          #   this entry is: the same album on another page keeps its own.
           #
           # location: city
           #   How precisely this album's photographs may be placed — on the

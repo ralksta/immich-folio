@@ -11,7 +11,7 @@ import crypto from 'crypto';
 import { getConfig, SubpageConfig } from './config';
 // From the pure schema module, not the config barrel: tests that stub out
 // '@/lib/config' wholesale would otherwise lose this helper.
-import { normalizeSlug } from './config/schema';
+import { normalizeSlug, resolveZoom } from './config/schema';
 import { verifyScrypt, generateScryptHash, isScryptHash, burnScrypt } from './password';
 
 const TOKEN_EXPIRY_HOURS = 24;
@@ -138,6 +138,41 @@ export function isAlbumReachable(
   if (routes.length === 0) return false;
 
   return routes.some((sp) => isAuthenticated(sp.slug, getCookie, 'subpage'));
+}
+
+/**
+ * Whether this visitor may zoom into the album's photos (#467): there is a
+ * route to the album they could have taken — every gate on it satisfied, as in
+ * isAlbumReachable() — on which zoom resolves on.
+ *
+ * Per route, not per album: zoom is resolved against the subpage an album is
+ * shown on, and an album listed on two subpages can have it on one and off on
+ * the other. Asking "is zoom on anywhere" and "can the visitor get in
+ * anywhere" separately would let a visitor through an open subpage that has
+ * zoom off, on the strength of a locked one that has it on. The album entry's
+ * own override is per route too (resolveZoom).
+ *
+ * Essay subpages are not excluded. The essay itself offers no zoom, but each
+ * of its albums is still reachable as an album page at /<subpage>/<album>,
+ * which offers zoom by exactly this rule. The route answers what that page
+ * offers; refusing it here would break zoom there.
+ */
+export function isAlbumZoomReachable(
+  albumId: string,
+  getCookie: (name: string) => string | undefined,
+): boolean {
+  if (!isAuthenticated(albumId, getCookie, 'album')) return false;
+
+  const config = getConfig();
+  if (config.standaloneAlbums?.includes(albumId) && resolveZoom(config, albumId)) return true;
+
+  return config.subpages.some(
+    (sp) =>
+      sp.enabled !== false &&
+      sp.albumIds.includes(albumId) &&
+      resolveZoom(config, albumId, sp) &&
+      isAuthenticated(sp.slug, getCookie, 'subpage'),
+  );
 }
 
 /**

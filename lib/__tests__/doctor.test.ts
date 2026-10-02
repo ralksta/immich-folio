@@ -16,6 +16,7 @@ import {
   checkContentPages,
   checkSettingValues,
   checkDownloadMetadata,
+  checkZoomRenditions,
   worstLevel,
 } from '../admin/doctor';
 
@@ -548,5 +549,35 @@ describe('checkDownloadMetadata', () => {
     const f = checkDownloadMetadata([album('a', 1)])!;
     expect(f.title).toBe('1 downloadable original keeps all metadata');
     expect(f.detail).not.toContain('Immich has a location');
+  });
+});
+
+describe('checkZoomRenditions (#467)', () => {
+  const album = (id: string, needRendition: number) => ({ id, albumName: id, needRendition });
+
+  it('says nothing while no zoom album needs a rendition, or nothing is known', () => {
+    expect(checkZoomRenditions([], 'missing')).toBeNull();
+    expect(checkZoomRenditions([album('a', 0)], 'missing')).toBeNull();
+    expect(checkZoomRenditions([album('a', 3)], null)).toBeNull();
+  });
+
+  it('is fine when Immich has JPEG renditions', () => {
+    expect(checkZoomRenditions([album('a', 3)], 'ok')?.level).toBe('ok');
+  });
+
+  it('warns, naming the albums, when Immich has none', () => {
+    const finding = checkZoomRenditions([album('a', 3), album('b', 0), album('c', 1)], 'missing')!;
+    expect(finding.level).toBe('warn');
+    expect(finding.title).toMatch(/^4 photos cannot be zoomed/);
+    expect(finding.detail).toContain('Full-size');
+    expect(finding.albumIds).toEqual(['a', 'c']);
+  });
+
+  it('warns about a WebP rendition, which the zoom route refuses (review of #830)', () => {
+    const finding = checkZoomRenditions([album('a', 2)], { contentType: 'image/webp' })!;
+    expect(finding.level).toBe('warn');
+    expect(finding.title).toMatch(/not JPEG/);
+    expect(finding.detail).toContain('image/webp');
+    expect(finding.detail).toMatch(/Format to JPEG/);
   });
 });

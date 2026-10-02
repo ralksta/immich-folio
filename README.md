@@ -40,7 +40,7 @@ A self-hosted portfolio powered by [Immich](https://immich.app). It acts as a **
 - **Justified rows** _(experimental)_ — every row fills the width at one shared height, aspect ratios intact, nothing cropped
 - **Per-subpage grid overrides** — each subpage can define its own columns, gap, aspect ratio, and layout mode, and individual albums can override that again _(experimental)_
 - **Cover focal points** _(experimental)_ — decide which part of a cover survives the crop
-- **Fullscreen lightbox** — keyboard and swipe navigation, EXIF panel, adjacent image preloading
+- **Fullscreen lightbox** — keyboard and swipe navigation, EXIF panel, adjacent image preloading, and opt-in 1:1 zoom to full resolution for checking sharpness ([guide](docs/gallery-config.md#photo-zoom))
 - **EXIF metadata on hover** — camera body, lens, focal length, aperture, shutter speed, ISO shown directly on the grid
 - **ThumbHash placeholders** — instant blurred previews while full images load
 

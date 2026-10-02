@@ -251,6 +251,41 @@ describe('ImmichClient', () => {
       await expect(immich.streamAsset('asset-1')).rejects.toBeInstanceOf(ImmichUnavailableError);
     });
 
+    // #467: Immich answers a missing full-size rendition with a redirect — to
+    // the preview, or to the original for a web format. Neither may be passed
+    // off as the rendition, so the redirect is not followed.
+    it('streamFullsize does not follow Immich’s redirect, and reports no rendition', async () => {
+      const cancel = vi.fn(async () => {});
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 302,
+        body: { cancel },
+        headers: { get: () => '/api/assets/asset-1/thumbnail?size=preview' },
+      });
+      await expect(immich.streamFullsize('asset-1')).resolves.toBeNull();
+      const [url, init] = mockFetch.mock.calls.at(-1)!;
+      expect(url).toMatch(/\/assets\/asset-1\/thumbnail\?size=fullsize$/);
+      expect(init.redirect).toBe('manual');
+      expect(cancel).toHaveBeenCalled();
+    });
+
+    it('streamFullsize streams a rendition Immich has', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        body: new ReadableStream(),
+        headers: { get: (h: string) => (h === 'Content-Type' ? 'image/jpeg' : '42') },
+      });
+      const result = await immich.streamFullsize('asset-1');
+      expect(result?.contentType).toBe('image/jpeg');
+    });
+
+    it('streamAsset still follows redirects', async () => {
+      mockFetch.mockResolvedValueOnce(streamRes(404));
+      await immich.streamAsset('asset-1', 'original');
+      expect(mockFetch.mock.calls.at(-1)![1].redirect).toBe('follow');
+    });
+
     it('streamVideo returns null for a genuinely missing video', async () => {
       mockFetch.mockResolvedValueOnce(streamRes(404));
       await expect(immich.streamVideo('asset-1')).resolves.toBeNull();

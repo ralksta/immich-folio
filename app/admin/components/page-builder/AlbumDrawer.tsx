@@ -6,6 +6,7 @@ import { Listbox } from '../Listbox';
 import { SORT_OPTIONS } from './sortOptions';
 import type { AlbumEntry, HeroPickerTarget, OrderEditorTarget } from './types';
 import PasswordField from '../fields/PasswordField';
+import ZoomOverrideField from '../fields/ZoomOverrideField';
 import { useModalDialog } from '@/hooks/useModalDialog';
 
 interface AlbumDrawerProps {
@@ -153,6 +154,14 @@ export default function AlbumDrawer({
                   </div>
                 </button>
               </div>
+
+              <ZoomOverrideField
+                id="album-zoom"
+                value={album.zoom}
+                onChange={(zoom) => onUpdate({ zoom })}
+                inheritLabel="Inherit from page / site settings"
+                hint="Lets visitors zoom into a photo in the viewer to check sharpness. JPEG and AVIF originals are shown without their GPS data; HEIC and RAW need Immich's full-size previews. PNG, WebP, GIF and photos edited in Immich are never zoomed. Applies where the album is listed here."
+              />
             </div>
 
             <div className="admin-sheet-col admin-sheet-col--divided">

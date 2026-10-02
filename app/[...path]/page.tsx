@@ -29,6 +29,7 @@ import {
   hasExifPanelContent,
   normalizeSlug,
   resolveProofing,
+  resolveZoom,
   type GridConfig,
 } from '@/lib/config';
 import { isProtected, isAuthenticated, withoutLockedAlbums } from '@/lib/auth';
@@ -328,6 +329,10 @@ async function PathContent({ params, searchParams }: PathPageProps) {
   // reached without a subpage follow the global setting.
   const proofingFor = (subpage?: { proofing?: boolean }) =>
     resolveProofing(subpage, config.proofing.enabled);
+  // Lightbox zoom (#467): album, then the subpage it is shown on, then the
+  // site setting. The album id goes to toPhotoItems() when it resolves on.
+  const zoomAlbumFor = (albumId: string, subpage?: { zoom?: boolean }) =>
+    resolveZoom(config, albumId, subpage) ? albumId : undefined;
 
   // EXPERIMENTAL: per-album grid override — merged over the subpage grid so
   // the precedence is global < subpage < album.
@@ -381,6 +386,7 @@ async function PathContent({ params, searchParams }: PathPageProps) {
       config.exif.onHover && config.exif.camera,
       config.exif.caption,
       config.albumDownloads[album.id] ? album.id : undefined,
+      zoomAlbumFor(album.id, subpageData?.subpage),
     );
 
     // Password gate for protected albums
@@ -604,6 +610,7 @@ async function PathContent({ params, searchParams }: PathPageProps) {
         config.exif.onHover && config.exif.camera,
         config.exif.caption,
         config.albumDownloads[album.id] ? album.id : undefined,
+        zoomAlbumFor(album.id, result.subpage),
       );
 
       // Password gate for protected albums
@@ -716,6 +723,7 @@ async function PathContent({ params, searchParams }: PathPageProps) {
     config.exif.onHover && config.exif.camera,
     config.exif.caption,
     config.albumDownloads[album.id] ? album.id : undefined,
+    zoomAlbumFor(album.id),
   );
 
   // Password gate for protected albums

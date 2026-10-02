@@ -30,7 +30,9 @@ export function hasAlbumOptions(entry: AlbumEntry): boolean {
     entry.grid ||
     entry.coverPosition ||
     entry.location ||
-    entry.download,
+    entry.download ||
+    // `zoom: false` is an option too: it switches zoom off for this album.
+    entry.zoom !== undefined,
   );
 }
 
@@ -52,6 +54,7 @@ export function parseAlbumEntries(raw: RawAlbumEntry[] | undefined): AlbumEntry[
       coverPosition: value.coverPosition,
       location: value.location,
       download: value.download,
+      zoom: typeof value.zoom === 'boolean' ? value.zoom : undefined,
     };
   });
 }
@@ -82,6 +85,8 @@ export function serializeAlbumEntries(entries: AlbumEntry[]): RawAlbumEntry[] {
     // Same story as location: set by hand in YAML since #475, with no UI, so
     // the builder was turning original downloads back off on the next save.
     if (entry.download) val.download = entry.download;
+    // Both values mean something: false switches zoom off for this album.
+    if (entry.zoom !== undefined) val.zoom = entry.zoom;
     return { [entry.id]: val };
   });
 }

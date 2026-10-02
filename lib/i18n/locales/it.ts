@@ -186,6 +186,14 @@ export const it: Dictionary = {
     shortcutCopyLink: 'Copia il link a questa foto',
     shortcutList: 'Questo elenco',
     shortcutClose: 'Chiudi il visualizzatore',
+    zoomIn: 'Ingrandisci alla risoluzione piena',
+    zoomInTitle: 'Ingrandisci alla risoluzione piena (+ o doppio clic)',
+    zoomOut: 'Adatta la foto allo schermo',
+    zoomOutTitle: 'Adatta allo schermo (0 o Esc)',
+    zoomLoading: 'Caricamento della risoluzione piena…',
+    zoomUnavailable: 'La risoluzione piena non è disponibile per questa foto.',
+    shortcutZoom: 'Ingrandisci / riduci',
+    shortcutZoomReset: 'Adatta allo schermo',
   },
 
   proofing: {

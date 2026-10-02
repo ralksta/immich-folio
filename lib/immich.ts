@@ -48,11 +48,23 @@ export interface ImmichAsset {
   originalFileName: string;
   originalMimeType: string;
   thumbhash: string | null;
+  /**
+   * Pixel size as displayed, EXIF orientation already applied. Optional:
+   * older Immich responses omit it, and EXIF dimensions are the fallback.
+   */
+  width?: number | null;
+  height?: number | null;
   fileCreatedAt: string;
   /** Capture time in the photographer's local zone — Immich's timeline sort key. */
   localDateTime?: string;
   exifInfo?: ImmichExifInfo;
   isTrashed: boolean;
+  /**
+   * Edited in Immich's editor (crop, rotate, …). Immich still answers
+   * `/original` and the default thumbnail sizes with the *unedited* file; only
+   * `?edited=true` applies the edit. Optional: older Immich has no editor.
+   */
+  isEdited?: boolean;
   /** Only surfaced in the admin pickers. Optional: older Immich responses omit it. */
   isFavorite?: boolean;
 }
@@ -275,13 +287,41 @@ class ImmichClient {
     assetId: string,
     size: ImageSize = 'preview',
   ): Promise<{ stream: ReadableStream; contentType: string; contentLength: string | null } | null> {
-    const config = this.config;
-    if (!this.hasCredentials(config)) return null;
-
     const endpoint =
       size === 'original'
         ? `/assets/${encodeURIComponent(assetId)}/original`
         : `/assets/${encodeURIComponent(assetId)}/thumbnail?size=${size}`;
+    return this.streamBinary(assetId, endpoint, 'follow');
+  }
+
+  /**
+   * Immich's full-size rendition of an asset, or null when there is none (#467).
+   *
+   * `GET /assets/:id/thumbnail?size=fullsize` never 404s for a missing
+   * rendition: measured against Immich 3.2, it answers 302 to the original for
+   * a web-compatible format, and 302 to the 1440px preview when full-size
+   * previews are switched off or the asset has not been processed since they
+   * were switched on. Following either redirect would pass a preview off as
+   * full resolution, or hand out an original the caller did not choose — so
+   * redirects are not followed, and any 3xx means "no rendition".
+   */
+  async streamFullsize(
+    assetId: string,
+  ): Promise<{ stream: ReadableStream; contentType: string; contentLength: string | null } | null> {
+    return this.streamBinary(
+      assetId,
+      `/assets/${encodeURIComponent(assetId)}/thumbnail?size=fullsize`,
+      'manual',
+    );
+  }
+
+  private async streamBinary(
+    assetId: string,
+    endpoint: string,
+    redirect: 'follow' | 'manual',
+  ): Promise<{ stream: ReadableStream; contentType: string; contentLength: string | null } | null> {
+    const config = this.config;
+    if (!this.hasCredentials(config)) return null;
 
     const url = `${config.immich.apiUrl}${endpoint}`;
 
@@ -296,7 +336,14 @@ class ImmichClient {
           'x-api-key': config.immich.apiKey,
         },
         signal: controller.signal,
+        redirect,
       });
+
+      // Only reachable with `redirect: 'manual'`: Immich has no such file.
+      if (res.status >= 300 && res.status < 400) {
+        await res.body?.cancel();
+        return null;
+      }
 
       if (!res.ok) {
         console.error(`[Immich] Failed to stream ${assetId}: ${res.status}`);

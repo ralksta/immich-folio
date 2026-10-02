@@ -808,3 +808,123 @@
     right: 8px;
   }
 }
+
+/* ══ Zoom (#467) ═════════════════════════════════════════════════
+   The photo keeps its fit-size box; zooming is a transform on the images in
+   it (hooks/useZoom.ts), so the layout never moves. */
+
+/* The viewer owns every touch on a zoomable photo: a pinch zooms the photo,
+   not the page. Swipes still arrive as touch events (hooks/useSwipe.ts). */
+.zoomable {
+  touch-action: none;
+  cursor: zoom-in;
+}
+
+.zoomable.zoomed {
+  cursor: grab;
+}
+
+.zoomable.zoomed:active {
+  cursor: grabbing;
+}
+
+/* Once zoom has been used the photo may outgrow its box; the overlay, which
+   covers the viewport, does the clipping instead. */
+.zoomEngaged {
+  overflow: visible;
+}
+
+.overlayZoom {
+  overflow: hidden;
+}
+
+/* The full-resolution file sits exactly on the preview's box. It takes no
+   pointer events, so gestures always land on the same element. */
+.zoomImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.zoomImageLoaded {
+  opacity: 1;
+}
+
+.zoomToggle {
+  padding: 8px 10px;
+}
+
+.zoomSpinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: zoom-spin 800ms linear infinite;
+}
+
+@keyframes zoom-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* "Not available" — a toast that fades on its own. */
+.zoomNotice {
+  position: fixed;
+  left: 50%;
+  bottom: 76px;
+  z-index: 1001;
+  max-width: min(28rem, calc(100vw - 32px));
+  padding: 8px 14px;
+  transform: translateX(-50%);
+  background: rgba(20, 20, 20, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  text-align: center;
+  pointer-events: none;
+  animation: zoom-notice 4s ease forwards;
+}
+
+@keyframes zoom-notice {
+  0%,
+  80% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+:global([data-preset='studio-modern']) .zoomNotice {
+  top: 76px;
+  bottom: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Still shown long enough to read, then gone without a fade. */
+  .zoomNotice {
+    animation: zoom-notice-static 4s steps(1, end) forwards;
+  }
+
+  .zoomSpinner {
+    animation-duration: 2s;
+  }
+}
+
+@keyframes zoom-notice-static {
+  to {
+    opacity: 0;
+  }
+}

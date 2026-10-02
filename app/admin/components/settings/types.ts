@@ -25,6 +25,8 @@ export interface Settings {
   transitions?: boolean;
   scrollToTop?: boolean;
   analytics?: boolean;
+  /** Lightbox zoom to full resolution (#467); off unless true. */
+  zoom?: boolean;
   theme?: {
     preset?: string;
     accent?: string;

@@ -88,6 +88,7 @@ export const settingsSchema = z.looseObject({
   transitions: bool,
   scrollToTop: bool,
   analytics: bool,
+  zoom: bool,
 
   proofing: z.looseObject({ enabled: bool, allowMailto: bool, email: str }).optional(),
 
