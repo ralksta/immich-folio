@@ -100,6 +100,7 @@ export const fr: Dictionary = {
       seconds
         ? `Trop de tentatives. Veuillez réessayer dans ${seconds} ${seconds === 1 ? 'seconde' : 'secondes'}.`
         : 'Trop de tentatives. Veuillez réessayer plus tard.',
+    legalNavAria: 'Informations légales',
   },
 
   about: {

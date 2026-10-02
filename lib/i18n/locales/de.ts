@@ -98,6 +98,7 @@ export const de: Dictionary = {
       seconds
         ? `Zu viele Versuche – bitte in ${seconds} ${seconds === 1 ? 'Sekunde' : 'Sekunden'} erneut versuchen.`
         : 'Zu viele Versuche – bitte später erneut versuchen.',
+    legalNavAria: 'Rechtliche Hinweise',
   },
 
   about: {

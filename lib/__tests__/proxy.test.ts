@@ -44,6 +44,7 @@ describe('proxy', () => {
   beforeEach(() => {
     mockUnlocked.mockReturnValue(true);
     mockCdnOrigin.mockReturnValue(null);
+    mockConfig.mockReturnValue(null);
   });
 
   describe('CDN mode', () => {
@@ -254,6 +255,42 @@ describe('proxy', () => {
       expect(rewrittenTo(run('/admin'))).toBeNull();
       expect(rewrittenTo(run('/admin/settings/general'))).toBeNull();
       expect(rewrittenTo(run('/install'))).toBeNull();
+    });
+
+    it('serves the legal notice and the privacy policy to a locked site', () => {
+      mockUnlocked.mockReturnValue(false);
+      mockConfig.mockReturnValue({
+        contact: { enabled: true },
+        legal: { enabled: true },
+        map: true,
+        privacy: { enabled: true },
+      });
+      // The gate page is public and links both; an Impressum behind a password
+      // is not "unmittelbar erreichbar". The pages still get their CSP.
+      for (const pathname of ['/impressum', '/privacy']) {
+        const res = run(pathname);
+        expect(rewrittenTo(res)).toBeNull();
+        expect(res.headers.get('Content-Security-Policy')).toBeTruthy();
+      }
+      // Exact paths only: nothing below or beside them slips through.
+      for (const pathname of ['/', '/contact', '/impressum/x', '/privacy-trip', '/japan']) {
+        expect(rewrittenTo(run(pathname))).toContain('/gate');
+      }
+    });
+
+    it('still answers 404 for a legal page that is switched off on a locked site', () => {
+      mockUnlocked.mockReturnValue(false);
+      mockConfig.mockReturnValue({
+        contact: { enabled: false },
+        legal: { enabled: false },
+        map: false,
+        privacy: { enabled: false },
+      });
+      for (const pathname of ['/impressum', '/privacy']) {
+        const res = run(pathname);
+        expect(rewrittenTo(res)).toBeNull();
+        expect(res.status).toBe(404);
+      }
     });
 
     it('does not rewrite the gate to itself', () => {

@@ -38,6 +38,8 @@ const config = {
   albumPasswords: {},
   theme: { accent: '#e60012', fonts: { heading: 'Inter', body: 'Inter', caption: 'Inter' } },
   contact: { enabled: true, retentionDays: 90 },
+  legal: { enabled: true },
+  privacy: { enabled: true },
   siteUrl: null,
   // Past the gate, /api/analytics/track would write content/analytics.json in
   // the checkout; turned off, it answers without writing. The gate runs first,
@@ -284,5 +286,46 @@ describe('routes that must stay open', () => {
       params: Promise.resolve({ name: 'x.woff2' }),
     });
     expect(res.status).not.toBe(401);
+  });
+});
+
+/*
+ * The pages, not the route handlers: proxy.ts gates those. Driven through the
+ * real lib/auth here, with the password set, rather than through a mocked
+ * isSiteUnlocked() as in lib/__tests__/proxy.test.ts.
+ */
+describe('legal pages on a locked site', () => {
+  const page = async (path: string, cookie?: string) =>
+    (await import('@/proxy')).proxy(
+      new NextRequest(`http://localhost${path}`, cookie ? { headers: { cookie } } : {}),
+    );
+  const rewrittenTo = (res: Response) => res.headers.get('x-middleware-rewrite');
+
+  beforeEach(() => {
+    config.sitePassword = 'letmein';
+    config.legal.enabled = true;
+    config.privacy.enabled = true;
+  });
+
+  // The gate page is public and links both. A German Impressum has to be
+  // reachable directly, and neither page carries an album name or asset token.
+  it.each(['/impressum', '/privacy'])('%s is served without the password', async (path) => {
+    expect(rewrittenTo(await page(path))).toBeNull();
+  });
+
+  it('every other page is still rewritten to the gate', async () => {
+    for (const path of ['/', '/japan', '/journal', '/about', '/contact', '/impressum/x']) {
+      expect(rewrittenTo(await page(path)), path).toContain('/gate');
+    }
+  });
+
+  it('a switched-off legal page is still a 404, not the gate', async () => {
+    config.legal.enabled = false;
+    config.privacy.enabled = false;
+    for (const path of ['/impressum', '/privacy']) {
+      const res = await page(path);
+      expect(rewrittenTo(res), path).toBeNull();
+      expect(res.status, path).toBe(404);
+    }
   });
 });

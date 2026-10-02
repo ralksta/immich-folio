@@ -323,13 +323,16 @@ for a login form would still have let the page produce its payload, album names
 and image tokens included. The public API routes carry the same check
 themselves, since route handlers do not pass through the proxy.
 
-Three things stay reachable on a locked site:
+These stay reachable on a locked site:
 
-| Path          | Why                                                                      |
-| ------------- | ------------------------------------------------------------------------ |
-| `/api/health` | A health probe runs without cookies; gating it takes the container down. |
-| `/admin`      | It has its own password, and it is where `sitePassword` is set.          |
-| `/install`    | A fresh deployment has to be configurable before it can be locked.       |
+| Path                     | Why                                                                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/health`            | A health probe runs without cookies; gating it takes the container down.                                                              |
+| `/admin`                 | It has its own password, and it is where `sitePassword` is set.                                                                       |
+| `/install`               | A fresh deployment has to be configurable before it can be locked.                                                                    |
+| `/impressum`, `/privacy` | The password page is public and links them; a German Impressum must be reachable directly. Neither shows an album or the site's menu. |
+
+A legal page that is switched off is still a 404 on a locked site.
 
 A locked site also serves `noindex, nofollow` regardless of the SEO settings —
 there is nothing there for a crawler.

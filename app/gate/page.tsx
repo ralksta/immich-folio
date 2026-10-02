@@ -5,12 +5,18 @@
  * the site is locked, which is what keeps the requested page from rendering
  * at all — a gate in the layout would still let the page produce its RSC
  * payload, album names and asset tokens included.
+ *
+ * The legal notice and the privacy policy are the exception: the proxy serves
+ * them to a locked site, and this page links them, so a visitor who cannot get
+ * in can still see who runs the site.
  */
 
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getConfig } from '@/lib/config';
 import { isSiteLocked, SITE_AUTH_KEY } from '@/lib/auth';
+import { privacyAvailable } from '@/lib/privacy';
+import { getServerDictionary } from '@/lib/i18n/server';
 import PasswordGate from '@/components/PasswordGate';
 
 export const dynamic = 'force-dynamic';
@@ -24,5 +30,20 @@ export default function GatePage() {
   // password configured there is no gate to show.
   if (!isSiteLocked()) notFound();
 
-  return <PasswordGate slug={SITE_AUTH_KEY} title={getConfig().siteTitle} type="site" />;
+  const config = getConfig();
+  const t = getServerDictionary();
+  // Only the pages that exist: a link to a switched-off one would be a 404.
+  const legalLinks = [
+    ...(config.legal.enabled ? [{ href: '/impressum', label: t.legal.navLabel }] : []),
+    ...(privacyAvailable(config) ? [{ href: '/privacy', label: t.privacy.navLabel }] : []),
+  ];
+
+  return (
+    <PasswordGate
+      slug={SITE_AUTH_KEY}
+      title={config.siteTitle}
+      type="site"
+      legalLinks={legalLinks}
+    />
+  );
 }

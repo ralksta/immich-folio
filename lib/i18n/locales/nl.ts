@@ -98,6 +98,7 @@ export const nl: Dictionary = {
       seconds
         ? `Te veel pogingen. Probeer het over ${seconds} ${seconds === 1 ? 'seconde' : 'seconden'} opnieuw.`
         : 'Te veel pogingen. Probeer het later opnieuw.',
+    legalNavAria: 'Juridische informatie',
   },
 
   about: {
