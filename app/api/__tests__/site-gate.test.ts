@@ -120,6 +120,15 @@ const GATED: { name: string; call: () => Promise<Response> }[] = [
         { params: Promise.resolve({ album: 'tok', id: 'tok' }) } as never,
       ),
   },
+  {
+    // The lightbox zoom's full-resolution file (#467).
+    name: 'GET /api/zoom/[album]/[id]',
+    call: async () =>
+      (await import('../zoom/[album]/[id]/route')).GET(
+        request('/api/zoom/tok/tok') as never,
+        { params: Promise.resolve({ album: 'tok', id: 'tok' }) } as never,
+      ),
+  },
   // Client proofing links: the site password applies to clients as well.
   {
     name: 'PUT /api/proof/[token]/selection',

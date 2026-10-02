@@ -113,6 +113,19 @@ export function downloadUrl(albumId: string, assetId: string): string {
 }
 
 /**
+ * The full-resolution image the lightbox zooms into (#467).
+ *
+ * Shaped like downloadUrl() for the same reason: the route authorises the
+ * zoom against the album that offered it — allowlist, every password gate,
+ * zoom resolved on — and checks the asset belongs to it. Relative even in CDN
+ * mode: the answer depends on the visitor's cookies and is `private`, so it
+ * must not be cached at the edge.
+ */
+export function zoomUrl(albumId: string, assetId: string): string {
+  return `/api/zoom/${encodeAssetId(albumId)}/${encodeAssetId(assetId)}`;
+}
+
+/**
  * The endpoint that streams an album (or a selection of its assets) as a ZIP.
  *
  * Carries only the album: the route re-checks the allowlist, the `download`

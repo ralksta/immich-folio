@@ -43,6 +43,14 @@ export interface PhotoItem {
   caption?: string;
   /** Present only when the surrounding album offers its originals (#475). */
   downloadUrl?: string;
+  /**
+   * The full-resolution image for the lightbox zoom, fetched only when the
+   * visitor zooms (#467). Present only where zoom resolves on and the photo
+   * has a zoomable source; the size is the image's pixel size, upright.
+   */
+  zoomUrl?: string;
+  zoomWidth?: number;
+  zoomHeight?: number;
 }
 
 interface PhotoGridProps {

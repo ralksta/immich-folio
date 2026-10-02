@@ -58,6 +58,7 @@ const GROUPS: { id: string; title: string; checks: string[] }[] = [
       'contact',
       'privacy',
       'settings-values',
+      'zoom-renditions',
     ],
   },
 ];
@@ -86,6 +87,10 @@ const FIXES: Record<string, { label: string; href: string }> = {
   // The href is replaced by the finding's own settingsSection.
   'settings-values': { label: 'Open settings', href: '/admin/settings/general' },
   'content-writable': { label: 'How to fix', href: `${DOCS}/docs/admin-panel.md#docker-usage` },
+  'zoom-renditions': {
+    label: 'How to set it up',
+    href: `${DOCS}/docs/gallery-config.md#photo-zoom`,
+  },
   'immich-api': {
     label: 'API key permissions',
     href: `${DOCS}/README.md#immich-api-key-permissions`,

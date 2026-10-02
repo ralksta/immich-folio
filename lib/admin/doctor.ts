@@ -360,6 +360,54 @@ export function checkDownloadMetadata(albums: DownloadAlbumRef[]): DoctorFinding
   };
 }
 
+/** What the doctor needs to know about one album with lightbox zoom on (#467). */
+export interface ZoomAlbumRef {
+  id: string;
+  albumName: string;
+  /** Photos zoomed through Immich's full-size rendition (HEIC, RAW, TIFF, …). */
+  needRendition: number;
+}
+
+/**
+ * Zoom shows JPEG and AVIF originals directly, but everything a browser cannot
+ * display needs Immich's full-size rendition, which Immich only generates while
+ * "Full-size image" is on in its image settings. Immich does not say whether a
+ * rendition exists until one is asked for, so the route samples one photo and
+ * passes the answer in `available` (null when it could not ask).
+ *
+ * Returns null when no zoom album holds such photos, or nothing is known.
+ */
+export function checkZoomRenditions(
+  albums: ZoomAlbumRef[],
+  available: boolean | null,
+): DoctorFinding | null {
+  const affected = albums.filter((a) => a.needRendition > 0);
+  if (!affected.length || available === null) return null;
+  const photos = affected.reduce((n, a) => n + a.needRendition, 0);
+  const noun = photos === 1 ? 'photo' : 'photos';
+
+  if (available) {
+    return {
+      id: 'zoom-renditions',
+      level: 'ok',
+      title: 'Immich has full-size previews for zoom',
+      detail: `${photos} HEIC, RAW or similar ${noun} in zoom albums are zoomed through Immich's full-size rendition, with the location removed.`,
+    };
+  }
+  return {
+    id: 'zoom-renditions',
+    level: 'warn',
+    title: `${photos} ${noun} cannot be zoomed: Immich has no full-size preview`,
+    detail:
+      'HEIC, RAW and other formats a browser cannot show are zoomed through Immich’s full-size ' +
+      'rendition, and Immich has none (one photo sampled). Visitors see the zoom button and then ' +
+      '"not available". In Immich, turn on Administration › Settings › Image Settings › Full-size ' +
+      'image (JPEG), then run the Generate Thumbnails job for missing assets. Albums: ' +
+      affected.map((a) => `${a.albumName} (${a.needRendition})`).join(', '),
+    albumIds: affected.map((a) => a.id),
+  };
+}
+
 /** One set of albums that will all be reachable under the same URL prefix. */
 export interface AlbumSlugGroup {
   /** e.g. "gallery.yaml albums" or `subpage "Trips"` */
