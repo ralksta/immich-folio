@@ -36,7 +36,7 @@ const HERO_STYLE_INFO: Record<string, { label: string; desc: string }> = {
   fullbleed: { label: 'Fullbleed', desc: 'Edge-to-edge full width banner' },
   minimal: { label: 'Minimal', desc: 'Centered title with subtle photo' },
   stacked: { label: 'Stacked', desc: 'Title stacked directly over photo' },
-  typographic: { label: 'Typographic', desc: 'Oversized magazine masthead' },
+  typographic: { label: 'Typographic', desc: 'Oversized text masthead, no photos' },
   mosaic: { label: 'Mosaic', desc: 'Dynamic photo collage layout' },
   cover: {
     label: 'Cover (Experimental)',
@@ -79,14 +79,25 @@ function HeroStylePreview({ value }: { value: string }) {
             <div className="hero-demo-photo banner" />
           </>
         )}
+        {/* Text only, like the hero it stands for: the typographic hero
+            renders no photo, so the card must not promise any. */}
         {value === 'typographic' && (
           <>
             <div className="demo-line title giant" />
-            <div className="hero-demo-grid2">
-              <div className="hero-demo-photo" />
-              <div className="hero-demo-photo" />
+            <div className="demo-line sub" />
+            <div className="hero-demo-divider" />
+            <div className="hero-demo-nav">
+              <div className="demo-line" />
+              <div className="demo-line" />
+              <div className="demo-line" />
             </div>
           </>
+        )}
+        {value === 'cover' && (
+          <div className="hero-demo-full hero-demo-cover-splash">
+            <div className="demo-line title light" />
+            <div className="hero-demo-enter" />
+          </div>
         )}
         {value === 'mosaic' && (
           <div className="hero-demo-mosaic">
