@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
+  CLICK_ZOOM_SCALE,
   FIT_VIEW,
   canZoom,
   clampView,
   isZoomed,
   maxZoomScale,
   oneToOneScale,
+  onFitBox,
   panBy,
   pinchView,
   stepView,
@@ -127,7 +129,26 @@ describe('zooming around a point', () => {
     expect(fit.cx + next.x - (fit.width * 6) / 2).toBeCloseTo(0);
   });
 
-  it('double-click goes to 1:1 at the point, and back to fit', () => {
+  it('toggles to a given scale at the point, clamped to 1:1', () => {
+    const point = { x: 650, y: 420 };
+    const closer = toggleView(FIT_VIEW, point, fit, viewport, max, CLICK_ZOOM_SCALE);
+    expect(closer.scale).toBe(1.5);
+    const after = screenOf(closer, point.x - fit.cx, point.y - fit.cy);
+    expect(after.x).toBeCloseTo(point.x);
+    expect(after.y).toBeCloseTo(point.y);
+    expect(toggleView(closer, point, fit, viewport, max, CLICK_ZOOM_SCALE)).toEqual(FIT_VIEW);
+    // A photo with less to give than the click asks for stops at 1:1.
+    expect(toggleView(FIT_VIEW, point, fit, viewport, 1.2, CLICK_ZOOM_SCALE).scale).toBe(1.2);
+  });
+
+  it('knows the photo from the band beside it', () => {
+    expect(onFitBox({ x: fit.cx, y: fit.cy }, fit)).toBe(true);
+    expect(onFitBox({ x: fit.cx + fit.width / 2, y: fit.cy }, fit)).toBe(true);
+    expect(onFitBox({ x: fit.cx + fit.width / 2 + 1, y: fit.cy }, fit)).toBe(false);
+    expect(onFitBox({ x: fit.cx, y: fit.cy - fit.height / 2 - 1 }, fit)).toBe(false);
+  });
+
+  it('double-tap and the button go to 1:1 at the point, and back to fit', () => {
     const point = { x: 650, y: 420 };
     const zoomed = toggleView(FIT_VIEW, point, fit, viewport, max);
     expect(zoomed.scale).toBe(max);

@@ -7,7 +7,7 @@ import type { PhotoItem } from '@/app/[...path]/PhotoGrid';
 
 /**
  * The lightbox zoom (#467), wired up: the control, the keys, Esc order,
- * double-click, swipe while zoomed, and that the full-resolution file is
+ * mouse click and pan, swipe while zoomed, and that the full-resolution file is
  * requested only when the visitor zooms.
  *
  * jsdom does no layout, so the fit box is stubbed: every image is laid out at
@@ -229,14 +229,44 @@ describe('keys', () => {
 });
 
 describe('gestures', () => {
-  it('double-click goes to 1:1 around the cursor, and back', () => {
+  /** A mouse press at a point, released `moveBy` px further on. */
+  const press = (surface: HTMLElement, x: number, y: number, moveBy = 0) => {
+    const at = { pointerId: 1, pointerType: 'mouse', button: 0, clientY: y };
+    fireEvent.pointerDown(surface, { ...at, clientX: x });
+    if (moveBy) fireEvent.pointerMove(surface, { ...at, clientX: x + moveBy });
+    fireEvent.pointerUp(surface, { ...at, clientX: x + moveBy });
+  };
+
+  it('a click on the photo zooms in by half around the cursor, and back', () => {
+    render(<Harness assets={[ZOOMABLE]} />);
+    const surface = preview().parentElement!;
+    press(surface, 600, 300);
+    // Fit box centre (500, 300); the cursor 100px right of it stays put at
+    // 1.5×, and the top edge is clamped to the 768px jsdom viewport.
+    expect(preview().style.transform).toBe('translate3d(-50px, 18px, 0) scale(1.5)');
+    press(surface, 600, 300);
+    expect(preview().style.transform).toContain('scale(1)');
+  });
+
+  it('a drag pans the zoomed photo instead of leaving the zoom', () => {
+    render(<Harness assets={[ZOOMABLE]} />);
+    const surface = preview().parentElement!;
+    press(surface, 600, 300);
+    press(surface, 600, 300, 100);
+    expect(preview().style.transform).toBe('translate3d(50px, 18px, 0) scale(1.5)');
+  });
+
+  it('a click beside the photo does not zoom', () => {
+    render(<Harness assets={[ZOOMABLE]} />);
+    press(preview().parentElement!, 1010, 300);
+    expect(preview().style.transform).toBe('');
+  });
+
+  it('the dblclick event itself no longer zooms', () => {
     render(<Harness assets={[ZOOMABLE]} />);
     const surface = preview().parentElement!;
     fireEvent.doubleClick(surface, { clientX: 600, clientY: 300 });
-    // Fit box centre (500, 300); the cursor 100px right of it stays put at 6×.
-    expect(preview().style.transform).toBe('translate3d(-500px, 0px, 0) scale(6)');
-    fireEvent.doubleClick(surface, { clientX: 600, clientY: 300 });
-    expect(preview().style.transform).toContain('scale(1)');
+    expect(preview().style.transform).toBe('');
   });
 
   it('no swipe navigation while zoomed', () => {

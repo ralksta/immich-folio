@@ -187,7 +187,7 @@ export const es: Dictionary = {
     shortcutList: 'Esta lista',
     shortcutClose: 'Cerrar el visor',
     zoomIn: 'Ampliar a resolución completa',
-    zoomInTitle: 'Ampliar a resolución completa (+ o doble clic)',
+    zoomInTitle: 'Ampliar a resolución completa (+)',
     zoomOut: 'Ajustar la foto a la pantalla',
     zoomOutTitle: 'Ajustar a la pantalla (0 o Esc)',
     zoomLoading: 'Cargando la resolución completa…',

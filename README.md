@@ -347,7 +347,7 @@ own password, separate from any album passwords, and writes straight to
 
 v0.20.0 — zoom, five new presets and photos as you edited them:
 
-- **1:1 zoom in the lightbox** — double-click, pinch or press `+` to see a photo at full resolution and judge its sharpness; off by default, switched on for the site, a page or a single album ([guide](docs/gallery-config.md#photo-zoom))
+- **1:1 zoom in the lightbox** — click, pinch, Ctrl + scroll or press `+` to see a photo at full resolution and judge its sharpness; off by default, switched on for the site, a page or a single album ([guide](docs/gallery-config.md#photo-zoom))
 - **Five new theme presets** — Kunsthalle (a grey gallery wall with numbered wall labels), Ma, Cyanotype, Salon and Birch, each in dark and light; the passepartout mat of Studio, Classic and Noir is finally visible too
 - **Edits made in Immich show up** — crops and rotations from Immich's editor appear in the grid, the lightbox, share images and downloads
 - **No GPS in downloads** — original downloads and ZIPs keep camera data and colour profile but lose the coordinates and sub-city place names ([advisory](https://github.com/ralksta/immich-folio/security/advisories/GHSA-g4xf-4285-4cv4))

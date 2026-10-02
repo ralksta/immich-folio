@@ -134,7 +134,7 @@ export function clampView(
 
 /**
  * Change the scale while the photo point under `point` stays under it — the
- * cursor for a wheel or a double-click, the midpoint of two fingers for a
+ * cursor for a wheel or a click, the midpoint of two fingers for a
  * pinch. Clamping can still move it at the edges, which is the price of never
  * showing an empty band.
  */
@@ -198,16 +198,34 @@ export function panBy(
   return clampView({ ...view, x: view.x + dx, y: view.y + dy }, fit, viewport, maxScale);
 }
 
-/** Double-click / double-tap: fit ↔ 1:1, around the point. */
+/**
+ * How far a mouse click zooms: half again the fit size, a closer look rather
+ * than the jump to 1:1, which on a large file is several times the screen.
+ * Ctrl + wheel goes the rest of the way.
+ */
+export const CLICK_ZOOM_SCALE = 1.5;
+
+/**
+ * Fit ↔ zoomed, around the point: to `target` (clamped to 1:1), or to 1:1
+ * itself without one — the double-tap and the magnifier button.
+ */
 export function toggleView(
   view: ZoomView,
   point: Point,
   fit: FitBox,
   viewport: Viewport,
   maxScale: number,
+  target: number = maxScale,
 ): ZoomView {
   if (isZoomed(view)) return { ...FIT_VIEW };
-  return zoomAround(view, maxScale, point, fit, viewport, maxScale);
+  return zoomAround(view, target, point, fit, viewport, maxScale);
+}
+
+/** Whether a point lies on the photo at fit — not on the band beside it. */
+export function onFitBox(point: Point, fit: FitBox): boolean {
+  return (
+    Math.abs(point.x - fit.cx) <= fit.width / 2 && Math.abs(point.y - fit.cy) <= fit.height / 2
+  );
 }
 
 /**

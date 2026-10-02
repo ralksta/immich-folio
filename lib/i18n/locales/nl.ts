@@ -188,7 +188,7 @@ export const nl: Dictionary = {
     shortcutList: 'Deze lijst',
     shortcutClose: 'De viewer sluiten',
     zoomIn: 'Inzoomen op volledige resolutie',
-    zoomInTitle: 'Inzoomen op volledige resolutie (+ of dubbelklik)',
+    zoomInTitle: 'Inzoomen op volledige resolutie (+)',
     zoomOut: 'Foto aan het scherm aanpassen',
     zoomOutTitle: 'Aan scherm aanpassen (0 of Esc)',
     zoomLoading: 'Volledige resolutie laden…',

@@ -18,11 +18,13 @@
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import {
+  CLICK_ZOOM_SCALE,
   FIT_VIEW,
   canZoom,
   clampView,
   isZoomed,
   maxZoomScale,
+  onFitBox,
   panBy,
   pinchView,
   stepView,
@@ -61,6 +63,8 @@ const DOUBLE_TAP_MS = 300;
 const DOUBLE_TAP_PX = 30;
 /** A pointer that moved further than this was a drag, not a tap. */
 const TAP_SLOP_PX = 10;
+/** A mouse press held longer than this was not a click. */
+const CLICK_MS = 500;
 /** The `+` / `-` step. */
 const KEY_STEP = 2;
 /** Wheel delta per e-fold of zoom; see onWheel. */
@@ -163,6 +167,26 @@ export function useZoom({ photoKey, naturalWidth, imageRef, surface }: UseZoomOp
     [apply, usable],
   );
 
+  /**
+   * A mouse click: on the photo at fit, a closer look around the cursor;
+   * anywhere while zoomed, back to fit. A click beside the photo does nothing.
+   */
+  const click = useCallback(
+    (point: Point) => {
+      if (isZoomed(viewRef.current)) {
+        apply(FIT_VIEW, true);
+        return;
+      }
+      const m = usable();
+      if (!m || !onFitBox(point, m.fit)) return;
+      apply(
+        toggleView(viewRef.current, point, m.fit, m.viewport, m.maxScale, CLICK_ZOOM_SCALE),
+        true,
+      );
+    },
+    [apply, usable],
+  );
+
   const step = useCallback(
     (factor: number) => {
       const m = usable();
@@ -231,7 +255,6 @@ export function useZoom({ photoKey, naturalWidth, imageRef, surface }: UseZoomOp
     /** Two fingers were down at some point of the current touch sequence. */
     let multi = false;
     let lastTap: { t: number; x: number; y: number } | null = null;
-    let lastPointerType = '';
 
     const midAndDistance = () => {
       const [a, b] = [...pointers.values()];
@@ -246,7 +269,6 @@ export function useZoom({ photoKey, naturalWidth, imageRef, surface }: UseZoomOp
     };
 
     const onPointerDown = (e: PointerEvent) => {
-      lastPointerType = e.pointerType;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       if (statusRef.current === 'failed') return;
       const at = { x: e.clientX, y: e.clientY };
@@ -329,6 +351,19 @@ export function useZoom({ photoKey, naturalWidth, imageRef, surface }: UseZoomOp
         gesture = { kind: 'none' };
       }
 
+      // A mouse press that neither moved nor lingered is a click; one that
+      // moved was a pan and leaves the view where the pan put it.
+      const wasClick =
+        e.type === 'pointerup' &&
+        e.pointerType === 'mouse' &&
+        down &&
+        !down.moved &&
+        e.timeStamp - down.t < CLICK_MS;
+      if (wasClick) {
+        click({ x: e.clientX, y: e.clientY });
+        return;
+      }
+
       const wasTap =
         e.type === 'pointerup' &&
         e.pointerType !== 'mouse' &&
@@ -350,14 +385,6 @@ export function useZoom({ photoKey, naturalWidth, imageRef, surface }: UseZoomOp
       } else {
         lastTap = { t: e.timeStamp, x: e.clientX, y: e.clientY };
       }
-    };
-
-    // Mouse only: touch has its own double-tap above, and some browsers also
-    // synthesise a dblclick from it, which would toggle straight back.
-    const onDoubleClick = (e: MouseEvent) => {
-      if (lastPointerType && lastPointerType !== 'mouse') return;
-      e.preventDefault();
-      toggle({ x: e.clientX, y: e.clientY });
     };
 
     // Ctrl+wheel is how Chrome, Firefox and Edge report a trackpad pinch (and
@@ -435,7 +462,6 @@ export function useZoom({ photoKey, naturalWidth, imageRef, surface }: UseZoomOp
     surface.addEventListener('pointermove', onPointerMove);
     surface.addEventListener('pointerup', onPointerEnd);
     surface.addEventListener('pointercancel', onPointerEnd);
-    surface.addEventListener('dblclick', onDoubleClick);
     surface.addEventListener('wheel', onWheel, { passive: false });
     surface.addEventListener('gesturestart', onGestureStart);
     surface.addEventListener('gesturechange', onGestureChange);
@@ -445,13 +471,12 @@ export function useZoom({ photoKey, naturalWidth, imageRef, surface }: UseZoomOp
       surface.removeEventListener('pointermove', onPointerMove);
       surface.removeEventListener('pointerup', onPointerEnd);
       surface.removeEventListener('pointercancel', onPointerEnd);
-      surface.removeEventListener('dblclick', onDoubleClick);
       surface.removeEventListener('wheel', onWheel);
       surface.removeEventListener('gesturestart', onGestureStart);
       surface.removeEventListener('gesturechange', onGestureChange);
       surface.removeEventListener('gestureend', onGestureEnd);
     };
-  }, [enabled, photoKey, surface, measure, apply, toggle]);
+  }, [enabled, photoKey, surface, measure, apply, toggle, click]);
 
   const zoomed = isZoomed(view);
   /** The full-resolution image is in the page (requested, loading or shown). */
