@@ -48,11 +48,16 @@ const PALETTE_TOKENS = [
 ];
 
 /**
- * studio-modern's light --text-muted measures 4.17:1 on its --bg-secondary
- * (#73736e on #f0f0ec), the footer band. The palette predates this check and
- * changing it is out of scope here; every other surface is held to 4.5:1.
+ * Surfaces the text tokens are held to 4.5:1 on. Light mode includes
+ * --bg-card-hover: studio-modern's light --text-muted (#73736e) measured 4.17:1
+ * on --bg-secondary and 4.36:1 on --bg-card-hover before it was darkened.
+ * Dark mode leaves --bg-card-hover out, where muted text sits at 4.1–4.3:1 in
+ * several presets.
  */
-const SECONDARY_SURFACE_EXEMPT = new Set(['studio-modern']);
+const TEXT_SURFACES = {
+  dark: ['--bg-primary', '--bg-secondary', '--bg-card'],
+  light: ['--bg-primary', '--bg-secondary', '--bg-card', '--bg-card-hover'],
+} as const;
 
 /**
  * The first seven presets use their accent for dots, rules and fills, held to
@@ -137,10 +142,7 @@ describe('preset registry', () => {
             ...(mode === 'light' ? block(`[data-preset='${preset.id}'][data-theme='light']`) : {}),
           };
           for (const text of ['--text-primary', '--text-secondary', '--text-muted']) {
-            const surfaces = SECONDARY_SURFACE_EXEMPT.has(preset.id)
-              ? ['--bg-primary', '--bg-card']
-              : ['--bg-primary', '--bg-secondary', '--bg-card'];
-            for (const surface of surfaces) {
+            for (const surface of TEXT_SURFACES[mode]) {
               const ratio = contrastRatio(vars[text], vars[surface]);
               // Palettes written as rgba() are measured by the browser audit
               // (npm run audit:contrast), not here.
