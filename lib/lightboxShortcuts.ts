@@ -27,7 +27,9 @@ export type ShortcutAvailability =
   /** Absent where the browser has no element fullscreen to give (iPhone). */
   | 'fullscreen'
   /** Only where the album offers its originals. */
-  | 'download';
+  | 'download'
+  /** Only where the photo on screen can be zoomed (#467). */
+  | 'zoom';
 
 /**
  * What a key does. Closed on purpose: the viewer switches over this union
@@ -42,6 +44,9 @@ export type LightboxAction =
   | 'slideshow'
   | 'copyLink'
   | 'download'
+  | 'zoomIn'
+  | 'zoomOut'
+  | 'zoomReset'
   | 'shortcutList';
 
 export interface ShortcutBinding {
@@ -70,6 +75,8 @@ export interface LightboxShortcut {
     | 'shortcutSlideshow'
     | 'shortcutCopyLink'
     | 'shortcutDownload'
+    | 'shortcutZoom'
+    | 'shortcutZoomReset'
     | 'shortcutList'
     | 'shortcutClose';
   availability: ShortcutAvailability;
@@ -118,6 +125,24 @@ export const LIGHTBOX_SHORTCUTS: readonly LightboxShortcut[] = [
     labelKey: 'shortcutDownload',
     availability: 'download',
     note: 'Only for albums with download: true in gallery.yaml.',
+  },
+  {
+    // `=` is `+` without Shift on US and many other layouts; the numpad sends
+    // `+` and `-` directly. Ctrl/Cmd with these stays the browser's own zoom:
+    // the viewer only listens to bare keys.
+    bindings: [
+      { display: '+', eventKeys: ['+', '='], action: 'zoomIn' },
+      { display: '-', eventKeys: ['-'], action: 'zoomOut' },
+    ],
+    labelKey: 'shortcutZoom',
+    availability: 'zoom',
+    note: 'Only where zoom is on (settings, page or album) and the photo has a full-resolution source.',
+  },
+  {
+    bindings: [{ display: '0', eventKeys: ['0'], action: 'zoomReset' }],
+    labelKey: 'shortcutZoomReset',
+    availability: 'zoom',
+    note: 'Back to the whole photo. Esc does the same before it closes the viewer.',
   },
   {
     // `h` is the escape hatch for layouts where `?` is awkward — and the one

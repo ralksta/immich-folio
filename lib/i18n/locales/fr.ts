@@ -189,6 +189,14 @@ export const fr: Dictionary = {
     shortcutCopyLink: 'Copier le lien de cette photo',
     shortcutList: 'Cette liste',
     shortcutClose: 'Fermer la visionneuse',
+    zoomIn: 'Zoomer en pleine résolution',
+    zoomInTitle: 'Zoomer en pleine résolution (+ ou double-clic)',
+    zoomOut: 'Ajuster la photo à l’écran',
+    zoomOutTitle: 'Ajuster à l’écran (0 ou Échap)',
+    zoomLoading: 'Chargement de la pleine résolution…',
+    zoomUnavailable: 'La pleine résolution n’est pas disponible pour cette photo.',
+    shortcutZoom: 'Zoom avant / arrière',
+    shortcutZoomReset: 'Ajuster à l’écran',
   },
 
   proofing: {

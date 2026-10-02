@@ -187,6 +187,14 @@ export const nl: Dictionary = {
     shortcutCopyLink: 'Link naar deze foto kopiëren',
     shortcutList: 'Deze lijst',
     shortcutClose: 'De viewer sluiten',
+    zoomIn: 'Inzoomen op volledige resolutie',
+    zoomInTitle: 'Inzoomen op volledige resolutie (+ of dubbelklik)',
+    zoomOut: 'Foto aan het scherm aanpassen',
+    zoomOutTitle: 'Aan scherm aanpassen (0 of Esc)',
+    zoomLoading: 'Volledige resolutie laden…',
+    zoomUnavailable: 'Voor deze foto is geen volledige resolutie beschikbaar.',
+    shortcutZoom: 'In- / uitzoomen',
+    shortcutZoomReset: 'Aan scherm aanpassen',
   },
 
   proofing: {
