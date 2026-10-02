@@ -40,6 +40,26 @@ export interface Point {
   y: number;
 }
 
+/**
+ * The largest image offered for zoom on a touch device (coarse pointer), in
+ * pixels. Showing a photo at 1:1 means decoding all of it: 50 MP is 200 MB of
+ * RGBA, about what phones and tablets cope with alongside the page. Larger
+ * files (a 60 MP Leica Q3 frame, 240 MB decoded) get no zoom control there,
+ * rather than one that crashes the tab. Mouse and trackpad devices are not
+ * limited.
+ */
+export const TOUCH_ZOOM_MAX_PIXELS = 50_000_000;
+
+/** Whether a photo of this pixel size may be zoomed on this kind of device. */
+export function zoomFitsDevice(
+  width: number | undefined,
+  height: number | undefined,
+  coarsePointer: boolean,
+): boolean {
+  if (!width || !height) return false;
+  return !coarsePointer || width * height <= TOUCH_ZOOM_MAX_PIXELS;
+}
+
 /** The untouched view. */
 export const FIT_VIEW: ZoomView = Object.freeze({ scale: 1, x: 0, y: 0 });
 

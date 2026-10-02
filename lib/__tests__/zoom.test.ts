@@ -10,6 +10,8 @@ import {
   pinchView,
   stepView,
   toggleView,
+  TOUCH_ZOOM_MAX_PIXELS,
+  zoomFitsDevice,
   zoomAround,
   type FitBox,
   type ZoomView,
@@ -173,6 +175,22 @@ describe('pinch', () => {
   it('cannot pinch beyond 1:1', () => {
     const mid = { x: 600, y: 400 };
     expect(pinchView(FIT_VIEW, mid, 10, mid, 1000, fit, viewport, max).scale).toBe(max);
+  });
+});
+
+describe('zoomFitsDevice (review of #830)', () => {
+  it('limits touch devices to 50 MP', () => {
+    expect(TOUCH_ZOOM_MAX_PIXELS).toBe(50_000_000);
+    // Leica Q3, 60 MP: not on a phone, fine with a mouse.
+    expect(zoomFitsDevice(9520, 6336, true)).toBe(false);
+    expect(zoomFitsDevice(9520, 6336, false)).toBe(true);
+    // iPhone, 12 MP; and exactly at the limit.
+    expect(zoomFitsDevice(4032, 3024, true)).toBe(true);
+    expect(zoomFitsDevice(10000, 5000, true)).toBe(true);
+  });
+
+  it('needs a size', () => {
+    expect(zoomFitsDevice(undefined, 100, false)).toBe(false);
   });
 });
 

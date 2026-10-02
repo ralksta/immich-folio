@@ -14,7 +14,11 @@
  *     processed since. Whether it exists is not in the album response, so the
  *     zoom route asks Immich when the visitor zooms and answers 404 when there
  *     is none; the lightbox then says so and stays on the preview.
- *   - `null`: not zoomable. Videos, and PNG, WebP and GIF: the browser could
+ *   - `null`: not zoomable. Photos edited in Immich's editor (crop, rotate):
+ *     measured against Immich 3.2, `/original` is the unedited file — whatever
+ *     a crop removed is still in it — and the full-size rendition carries the
+ *     edit while the preview Folio shows does not, so neither fits. Videos.
+ *     And PNG, WebP and GIF: the browser could
  *     show those originals, but the scrubber does not edit their metadata
  *     (eXIf/iTXt chunks, RIFF EXIF/XMP chunks), so they would go out with any
  *     GPS they carry. Immich has no rendition to fall back on either — its
@@ -46,8 +50,10 @@ export function zoomSourceFor(asset: {
   type?: string;
   originalMimeType?: string | null;
   originalFileName?: string | null;
+  isEdited?: boolean | null;
 }): ZoomSource | null {
   if (asset.type !== 'IMAGE') return null;
+  if (asset.isEdited === true) return null;
   const mime = asset.originalMimeType?.toLowerCase().split(';')[0].trim();
   if (mime) {
     if (ORIGINAL_MIME.has(mime)) return 'original';

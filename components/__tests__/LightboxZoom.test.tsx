@@ -117,6 +117,38 @@ describe('the zoom control', () => {
   });
 });
 
+describe('on a touch device (review of #830)', () => {
+  const coarse = () => {
+    window.matchMedia = vi.fn((q: string) => ({
+      matches: q === '(pointer: coarse)',
+    })) as unknown as typeof window.matchMedia;
+  };
+  const HUGE = photo('h1', { zoomUrl: '/api/zoom/a/h1', zoomWidth: 9520, zoomHeight: 6336 });
+
+  it('offers no zoom above 50 MP', () => {
+    coarse();
+    render(<Harness assets={[HUGE]} />);
+    expect(zoomButton()).toBeNull();
+    key('+');
+    expect(fullImage()).toBeNull();
+  });
+
+  it('still offers it for a smaller photo', () => {
+    coarse();
+    render(
+      <Harness
+        assets={[photo('s1', { zoomUrl: '/api/zoom/a/s1', zoomWidth: 4032, zoomHeight: 3024 })]}
+      />,
+    );
+    expect(zoomButton()).not.toBeNull();
+  });
+
+  it('keeps the large photo zoomable with a mouse', () => {
+    render(<Harness assets={[HUGE]} />);
+    expect(zoomButton()).not.toBeNull();
+  });
+});
+
 describe('the full-resolution file', () => {
   it('is not requested on open or on the next photo', () => {
     render(<Harness assets={[ZOOMABLE, ZOOMABLE_2]} />);

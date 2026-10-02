@@ -67,6 +67,7 @@ const ALBUM = {
     asset('png', 'image/png'),
     asset('webp', 'image/webp'),
     asset('mov', 'video/quicktime', 'VIDEO'),
+    { ...asset('edited', 'image/jpeg'), isEdited: true },
   ],
 };
 
@@ -150,7 +151,7 @@ describe('refusals', () => {
     expect(immich.streamAsset).not.toHaveBeenCalled();
   });
 
-  it.each(['png', 'webp', 'mov'])('never streams a %s', async (id) => {
+  it.each(['png', 'webp', 'mov', 'edited'])('never streams a %s', async (id) => {
     expect((await zoom(`tok-${id}`)).status).toBe(404);
     expect(immich.streamAsset).not.toHaveBeenCalled();
     expect(immich.streamFullsize).not.toHaveBeenCalled();

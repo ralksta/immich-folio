@@ -60,6 +60,13 @@ describe('zoomSourceFor', () => {
     expect(zoomSourceFor(image(null, 'no-extension'))).toBeNull();
   });
 
+  it('never zooms a photo edited in Immich (review of #830)', () => {
+    // Immich serves the unedited file as the original: a crop would come undone.
+    expect(zoomSourceFor({ ...image('image/jpeg'), isEdited: true })).toBeNull();
+    expect(zoomSourceFor({ ...image('image/heic'), isEdited: true })).toBeNull();
+    expect(zoomSourceFor({ ...image('image/jpeg'), isEdited: false })).toBe('original');
+  });
+
   it('refuses a non-image MIME type on an image asset', () => {
     expect(zoomSourceFor(image('application/octet-stream'))).toBeNull();
   });

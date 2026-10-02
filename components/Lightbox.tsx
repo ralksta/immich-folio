@@ -14,12 +14,13 @@
 
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import type { PhotoItem } from '@/app/[...path]/PhotoGrid';
 import { useExif } from '@/hooks/useExif';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useZoom } from '@/hooks/useZoom';
+import { zoomFitsDevice } from '@/lib/zoom';
 import styles from './Lightbox.module.css';
 import { useProofing } from './useProofing';
 import { IconHeart } from './Icons';
@@ -57,6 +58,23 @@ interface LightboxProps {
    * entries, where a technical data panel interrupts the story.
    */
   showExifToggle?: boolean;
+}
+
+const COARSE_POINTER = '(pointer: coarse)';
+
+function subscribeCoarsePointer(onChange: () => void): () => void {
+  const query = window.matchMedia?.(COARSE_POINTER);
+  query?.addEventListener?.('change', onChange);
+  return () => query?.removeEventListener?.('change', onChange);
+}
+
+/** A touch device, where very large images are not offered for zoom. */
+function useCoarsePointer(): boolean {
+  return useSyncExternalStore(
+    subscribeCoarsePointer,
+    () => !!window.matchMedia?.(COARSE_POINTER)?.matches,
+    () => false,
+  );
 }
 
 export function Lightbox({
@@ -97,15 +115,20 @@ export function Lightbox({
   const previewRef = useRef<HTMLImageElement>(null);
 
   const current = assets[currentIndex];
+  const coarsePointer = useCoarsePointer();
+  const zoomable =
+    current.type === 'image' &&
+    !!current.zoomUrl &&
+    zoomFitsDevice(current.zoomWidth, current.zoomHeight, coarsePointer);
   const zoom = useZoom({
     photoKey: current.id,
-    naturalWidth: current.type === 'image' && current.zoomUrl ? current.zoomWidth : undefined,
+    naturalWidth: zoomable ? current.zoomWidth : undefined,
     imageRef: previewRef,
     surface: imageContainer,
   });
   const { zoomed, reset: resetZoom, zoomIn, zoomOut } = zoom;
   /** The zoom control and keys are offered for this photo. */
-  const canZoom = current.type === 'image' && !!current.zoomUrl && zoom.enabled;
+  const canZoom = zoomable && zoom.enabled;
   const proofing = useProofing();
   const isFav = proofing && current ? proofing.isFavorite(current.id) : false;
   const [mounted, setMounted] = useState(false);

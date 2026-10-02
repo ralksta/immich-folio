@@ -160,7 +160,7 @@ export default function AlbumDrawer({
                 value={album.zoom}
                 onChange={(zoom) => onUpdate({ zoom })}
                 inheritLabel="Inherit from page / site settings"
-                hint="Lets visitors zoom into a photo in the viewer to check sharpness. JPEG and AVIF originals are shown without their GPS data; HEIC and RAW need Immich's full-size previews. PNG, WebP and GIF are never zoomed."
+                hint="Lets visitors zoom into a photo in the viewer to check sharpness. JPEG and AVIF originals are shown without their GPS data; HEIC and RAW need Immich's full-size previews. PNG, WebP, GIF and photos edited in Immich are never zoomed. Applies where the album is listed here."
               />
             </div>
 

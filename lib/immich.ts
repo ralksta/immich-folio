@@ -59,6 +59,12 @@ export interface ImmichAsset {
   localDateTime?: string;
   exifInfo?: ImmichExifInfo;
   isTrashed: boolean;
+  /**
+   * Edited in Immich's editor (crop, rotate, …). Immich still answers
+   * `/original` and the default thumbnail sizes with the *unedited* file; only
+   * `?edited=true` applies the edit. Optional: older Immich has no editor.
+   */
+  isEdited?: boolean;
   /** Only surfaced in the admin pickers. Optional: older Immich responses omit it. */
   isFavorite?: boolean;
 }
