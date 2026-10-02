@@ -126,4 +126,60 @@ describe('GET /api/download/[album]/[id]', () => {
     expect(res.status).toBe(404);
     expect(res.headers.get('cache-control')).toBe('no-store');
   });
+
+  describe('a photo edited in Immich (#831)', () => {
+    const EDITED = {
+      id: 'album',
+      albumName: 'Album',
+      assets: [{ id: 'asset', type: 'IMAGE', originalFileName: 'IMG_9262.HEIC', isEdited: true }],
+    };
+
+    it('serves the edited rendition, named as the JPEG it is, without GPS', async () => {
+      mockGetAlbum.mockResolvedValue(EDITED);
+      // Immich's edited rendition carries no EXIF; one that did must still
+      // lose its GPS on the way through.
+      const { file } = cameraJpeg(true);
+      mockStream.mockResolvedValue(original(file, 'image/jpeg'));
+
+      const res = await download();
+      expect(res.status).toBe(200);
+      expect(mockStream).toHaveBeenCalledWith('asset', 'original', true);
+      expect(res.headers.get('content-type')).toBe('image/jpeg');
+      expect(res.headers.get('content-disposition')).toContain('IMG_9262.jpg');
+      expect(res.headers.get('content-disposition')).not.toContain('HEIC');
+      const body = new Uint8Array(await res.arrayBuffer());
+      expect(parseTiff(exifOf(body)!).gps).toBeNull();
+      expect(contains(body, LAT.value(true))).toBe(false);
+    });
+
+    it('keeps the name of an edited JPEG', async () => {
+      mockGetAlbum.mockResolvedValue({
+        ...EDITED,
+        assets: [{ ...EDITED.assets[0], originalFileName: 'scan.jpeg' }],
+      });
+      mockStream.mockResolvedValue(original(cameraJpeg(true).file, 'image/jpeg'));
+      const res = await download();
+      expect(res.headers.get('content-disposition')).toContain('scan.jpeg');
+    });
+
+    it('refuses an edited rendition the scrubber would pass through (review of #832)', async () => {
+      mockGetAlbum.mockResolvedValue(EDITED);
+      const webp = new TextEncoder().encode('RIFF\x10\x00\x00\x00WEBPVP8 ');
+      mockStream.mockResolvedValue(original(webp, 'image/webp'));
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const res = await download();
+      expect(res.status).toBe(404);
+      expect(res.headers.get('cache-control')).toBe('no-store');
+      expect(warn.mock.calls.some((args) => String(args[0]).includes('Refused edited asset'))).toBe(
+        true,
+      );
+      warn.mockRestore();
+    });
+
+    it('asks for the original of a photo that is not edited exactly as before', async () => {
+      mockStream.mockResolvedValue(original(cameraJpeg(true).file, 'image/jpeg'));
+      await download();
+      expect(mockStream).toHaveBeenCalledWith('asset', 'original', false);
+    });
+  });
 });

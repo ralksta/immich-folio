@@ -19,6 +19,11 @@
  * The file goes out as Immich stores it, minus its location: GPS coordinates
  * are removed from JPEG, HEIC/HEIF and AVIF originals on the way through
  * (lib/locationScrub.ts). Camera data, copyright and colour profile stay.
+ *
+ * A photo edited in Immich's editor is the exception (#831): it goes out as
+ * edited, which is Immich's full-resolution rendition of the edit — a JPEG
+ * without EXIF — named with a matching extension. It passes the same
+ * scrubber.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -28,7 +33,7 @@ import { decodeAssetId } from '@/lib/tokens';
 import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 import { isAlbumReachable, siteLockResponse } from '@/lib/auth';
-import { contentDisposition } from '@/lib/downloadName';
+import { contentDisposition, editedDownloadName } from '@/lib/downloadName';
 import { scrubLocationStream } from '@/lib/locationScrub';
 
 export const dynamic = 'force-dynamic';
@@ -109,7 +114,9 @@ export async function GET(
 
   let result;
   try {
-    result = await immich.streamAsset(assetId, 'original');
+    // A photo edited in Immich goes out as edited (#831): Immich's
+    // full-resolution edited rendition rather than the unedited camera file.
+    result = await immich.streamAsset(assetId, 'original', asset.isEdited === true);
   } catch (error) {
     if (error instanceof ImmichUnavailableError) {
       return NextResponse.json(
@@ -139,10 +146,25 @@ export async function GET(
     );
     return notFound();
   }
+  // An edited photo is a rendition Immich made, which Folio expects as JPEG
+  // (#831). One in a format the scrubber passes through untouched (WebP,
+  // PNG) is not what was measured, and is refused rather than sent with
+  // whatever metadata it carries — as the zoom route does.
+  if (asset.isEdited === true && scrubbed.format === 'passthrough') {
+    await scrubbed.stream.cancel().catch(() => {});
+    console.warn(
+      `[Download] Refused edited asset ${assetId}: Immich sent ${result.contentType || 'no type'}, which is not a JPEG or HEIF-family file.`,
+    );
+    return notFound();
+  }
 
   const headers: Record<string, string> = {
     'Content-Type': result.contentType || 'application/octet-stream',
-    'Content-Disposition': contentDisposition(asset.originalFileName),
+    'Content-Disposition': contentDisposition(
+      asset.isEdited === true
+        ? editedDownloadName(asset.originalFileName, result.contentType)
+        : asset.originalFileName,
+    ),
     // Private: a download is authorised per visitor, so a shared cache must
     // not hand the file to the next one.
     'Cache-Control': 'private, no-store',

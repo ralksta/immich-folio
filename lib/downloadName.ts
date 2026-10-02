@@ -67,3 +67,34 @@ export function contentDisposition(name: string | undefined): string {
       .join('') || 'photo';
   return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(safe)}`;
 }
+
+/** The extensions a rendition's content type is saved under; the first is used. */
+const EXTENSIONS: Record<string, readonly string[]> = {
+  'image/jpeg': ['jpg', 'jpeg', 'jpe', 'jfif'],
+  'image/webp': ['webp'],
+  'image/avif': ['avif'],
+  'image/png': ['png'],
+};
+
+/**
+ * The filename for a photo downloaded as edited in Immich (#831).
+ *
+ * Immich hands out an edited photo as a new rendition — a JPEG, measured
+ * against Immich 3.2 — not as the stored file, so an iPhone's `IMG_0001.HEIC`
+ * arrives as JPEG bytes. Keeping the name would leave a file the system opens
+ * with the wrong program, or not at all; the extension is changed to match
+ * what was sent. A name that already fits, or a type not listed here, is
+ * left alone.
+ */
+export function editedDownloadName(
+  name: string | undefined,
+  contentType: string | null | undefined,
+): string | undefined {
+  const type = (contentType ?? '').toLowerCase().split(';')[0].trim();
+  const extensions = EXTENSIONS[type];
+  if (!name || !extensions) return name;
+  const dot = name.lastIndexOf('.');
+  const stem = dot > 0 ? name.slice(0, dot) : name;
+  const current = dot > 0 ? name.slice(dot + 1).toLowerCase() : '';
+  return extensions.includes(current) ? name : `${stem}.${extensions[0]}`;
+}

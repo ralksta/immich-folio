@@ -14,11 +14,14 @@
  *     processed since. Whether it exists is not in the album response, so the
  *     zoom route asks Immich when the visitor zooms and answers 404 when there
  *     is none; the lightbox then says so and stays on the preview.
- *   - `null`: not zoomable. Photos edited in Immich's editor (crop, rotate):
- *     measured against Immich 3.2, `/original` is the unedited file — whatever
- *     a crop removed is still in it — and the full-size rendition carries the
- *     edit while the preview Folio shows does not, so neither fits. Videos.
- *     And PNG, WebP and GIF: the browser could
+ *   - `edited`: photos edited in Immich's editor (crop, rotate), whatever
+ *     their format (#831). Their original is the unedited file — whatever a
+ *     crop removed is still in it — so it is never used. Measured against
+ *     Immich 3.2, `thumbnail?size=fullsize&edited=true` is the edited photo at
+ *     full resolution, a JPEG without EXIF, and it exists whether or not
+ *     full-size previews are switched on. The preview Folio shows carries the
+ *     same edit, so the two share their geometry.
+ *   - `null`: not zoomable. Videos. And PNG, WebP and GIF: the browser could
  *     show those originals, but the scrubber does not edit their metadata
  *     (eXIf/iTXt chunks, RIFF EXIF/XMP chunks), so they would go out with any
  *     GPS they carry. Immich has no rendition to fall back on either — its
@@ -27,7 +30,7 @@
  * Client-safe: no `fs`, no Immich client.
  */
 
-export type ZoomSource = 'original' | 'fullsize';
+export type ZoomSource = 'original' | 'fullsize' | 'edited';
 
 /** Originals served as they are (after scrubbing). */
 const ORIGINAL_MIME = new Set(['image/jpeg', 'image/jpg', 'image/pjpeg', 'image/avif']);
@@ -53,7 +56,7 @@ export function zoomSourceFor(asset: {
   isEdited?: boolean | null;
 }): ZoomSource | null {
   if (asset.type !== 'IMAGE') return null;
-  if (asset.isEdited === true) return null;
+  if (asset.isEdited === true) return 'edited';
   const mime = asset.originalMimeType?.toLowerCase().split(';')[0].trim();
   if (mime) {
     if (ORIGINAL_MIME.has(mime)) return 'original';
@@ -74,11 +77,13 @@ const ROTATED_ORIENTATIONS = new Set([5, 6, 7, 8]);
  * the EXIF orientation is applied. The lightbox needs it before the file has
  * loaded, so the first gesture can go straight to 1:1.
  *
- * Immich's top-level `width`/`height` are already upright; EXIF dimensions are
- * as stored and are turned here. Undefined when neither is known — the asset
+ * Immich's top-level `width`/`height` are already upright, and for a photo
+ * edited in Immich they are the edited size — the size of the `edited`
+ * source; EXIF dimensions are as stored and are turned here. Undefined when neither is known — the asset
  * is then not offered for zoom.
  */
 export function zoomDimensions(asset: {
+  isEdited?: boolean | null;
   width?: number | null;
   height?: number | null;
   exifInfo?: {
@@ -90,6 +95,10 @@ export function zoomDimensions(asset: {
   if (asset.width && asset.height && asset.width > 0 && asset.height > 0) {
     return { width: asset.width, height: asset.height };
   }
+  // An edited photo (#831) has no fallback: EXIF describes the unedited file,
+  // and a wrong size would put the zoom image off the preview's box. No size,
+  // no zoom.
+  if (asset.isEdited === true) return undefined;
   const w = asset.exifInfo?.exifImageWidth;
   const h = asset.exifInfo?.exifImageHeight;
   if (!w || !h || w <= 0 || h <= 0) return undefined;

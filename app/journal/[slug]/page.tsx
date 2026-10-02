@@ -9,6 +9,7 @@ import { isAuthenticated } from '@/lib/auth';
 import { journalNeighbours } from '@/lib/journalNav';
 import { getConfig } from '@/lib/config';
 import { imageUrl } from '@/lib/urls';
+import { immich } from '@/lib/immich';
 import { EssayView } from '@/app/[...path]/EssayView';
 import { JournalNav } from '@/components/JournalNav';
 import PasswordGate from '@/components/PasswordGate';
@@ -54,9 +55,15 @@ export async function generateMetadata({ params }: JournalDetailPageProps): Prom
     ? t.journal.subtitle
     : frontmatter.subtitle || t.journal.entryDescription;
 
+  // The cover's asset for its edit marker (#831); the page body asks for the
+  // same one, from the same cache.
+  const coverAsset =
+    !blocked && frontmatter.coverAssetId
+      ? await immich.getAssetInfo(frontmatter.coverAssetId).catch(() => null)
+      : null;
   const ogImages =
     !blocked && frontmatter.coverAssetId
-      ? [{ url: imageUrl(frontmatter.coverAssetId, 'preview') }]
+      ? [{ url: imageUrl(coverAsset ?? frontmatter.coverAssetId, 'preview') }]
       : [];
 
   return {

@@ -71,6 +71,24 @@ describe('getMapData coordinate filtering (#635)', () => {
     expect(locations[0].albums[0].photoCount).toBe(1);
   });
 
+  it('carries the cover’s edit state for its image URL (#831)', async () => {
+    const place = { latitude: 52.5, longitude: 13.4, city: 'Berlin', country: 'Germany' };
+    getAlbum.mockResolvedValue({
+      id: ALBUM.id,
+      assets: [{ ...asset('a', place), isEdited: true, updatedAt: '2026-09-04T19:22:09.220Z' }],
+    });
+    const [edited] = await getMapData();
+    expect(edited.albums[0].coverAssetId).toBe('a');
+    expect(edited.albums[0].coverEdit).toEqual({
+      isEdited: true,
+      updatedAt: '2026-09-04T19:22:09.220Z',
+    });
+
+    getAlbum.mockResolvedValue({ id: ALBUM.id, assets: [asset('b', place)] });
+    const [plain] = await getMapData();
+    expect(plain.albums[0].coverEdit).toBeUndefined();
+  });
+
   it('still excludes a photo with no coordinates at all', async () => {
     getAlbum.mockResolvedValue({
       id: ALBUM.id,

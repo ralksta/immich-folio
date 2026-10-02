@@ -26,7 +26,10 @@ export const GET = withAdmin(
 
     try {
       const res = await fetch(
-        `${config.immich.apiUrl}/assets/${assetId}/thumbnail?size=thumbnail`,
+        // `edited=true`: the pickers show a photo as edited in Immich, like
+        // the site does (#831). For a photo that is not edited Immich returns
+        // the same bytes, so it needs no lookup first.
+        `${config.immich.apiUrl}/assets/${assetId}/thumbnail?size=thumbnail&edited=true`,
         {
           headers: {
             'x-api-key': config.immich.apiKey,

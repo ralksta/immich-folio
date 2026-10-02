@@ -68,6 +68,7 @@ const ALBUM = {
     asset('webp', 'image/webp'),
     asset('mov', 'video/quicktime', 'VIDEO'),
     { ...asset('edited', 'image/jpeg'), isEdited: true },
+    { ...asset('edited-heic', 'image/heic'), isEdited: true },
   ],
 };
 
@@ -151,7 +152,7 @@ describe('refusals', () => {
     expect(immich.streamAsset).not.toHaveBeenCalled();
   });
 
-  it.each(['png', 'webp', 'mov', 'edited'])('never streams a %s', async (id) => {
+  it.each(['png', 'webp', 'mov'])('never streams a %s', async (id) => {
     expect((await zoom(`tok-${id}`)).status).toBe(404);
     expect(immich.streamAsset).not.toHaveBeenCalled();
     expect(immich.streamFullsize).not.toHaveBeenCalled();
@@ -226,7 +227,7 @@ describe('a HEIC (not browser-displayable)', () => {
     mocked(immich.streamFullsize).mockResolvedValue(upstream(file, 'image/jpeg'));
     const res = await zoom('tok-heic');
     expect(res.status).toBe(200);
-    expect(immich.streamFullsize).toHaveBeenCalledWith('heic');
+    expect(immich.streamFullsize).toHaveBeenCalledWith('heic', false);
     expect(immich.streamAsset).not.toHaveBeenCalled();
     const body = new Uint8Array(await res.arrayBuffer());
     expect(parseTiff(exifOf(body)!).gps).toBeNull();
@@ -248,5 +249,31 @@ describe('a HEIC (not browser-displayable)', () => {
     const webp = new TextEncoder().encode('RIFF\x10\x00\x00\x00WEBPVP8 ');
     mocked(immich.streamFullsize).mockResolvedValue(upstream(webp, 'image/webp'));
     expect((await zoom('tok-heic')).status).toBe(404);
+  });
+});
+
+describe('a photo edited in Immich (#831)', () => {
+  it.each(['edited', 'edited-heic'])(
+    'zooms a %s into the edited full-size rendition, never the original',
+    async (id) => {
+      // Immich's edited rendition is a JPEG; given one with GPS here, the
+      // scrubber still has to take it out.
+      const { file } = cameraJpeg(true);
+      mocked(immich.streamFullsize).mockResolvedValue(upstream(file, 'image/jpeg'));
+      const res = await zoom(`tok-${id}`);
+      expect(res.status).toBe(200);
+      expect(immich.streamFullsize).toHaveBeenCalledWith(id, true);
+      expect(immich.streamAsset).not.toHaveBeenCalled();
+      const body = new Uint8Array(await res.arrayBuffer());
+      expect(parseTiff(exifOf(body)!).gps).toBeNull();
+      expect(contains(body, LAT.value(true))).toBe(false);
+    },
+  );
+
+  it('is 404 when Immich has no edited rendition', async () => {
+    mocked(immich.streamFullsize).mockResolvedValue(null);
+    const res = await zoom('tok-edited');
+    expect(res.status).toBe(404);
+    expect(res.headers.get('cache-control')).toBe('no-store');
   });
 });

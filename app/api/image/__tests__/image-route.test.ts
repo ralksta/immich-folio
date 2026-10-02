@@ -4,9 +4,12 @@ import { GET } from '../[id]/route';
 import { encodeAssetId } from '@/lib/tokens';
 import { immich, ImmichUnavailableError } from '@/lib/immich';
 
-const published = vi.hoisted(() => ({ value: true }));
+const published = vi.hoisted(() => ({ value: true, asked: [] as string[] }));
 vi.mock('@/lib/publishedAssets', () => ({
-  isPublishedAsset: async () => published.value,
+  isPublishedAsset: async (id: string) => {
+    published.asked.push(id);
+    return published.value;
+  },
 }));
 vi.mock('@/lib/admin/auth', () => ({
   isAdminAuthenticated: async () => false,
@@ -77,7 +80,72 @@ describe('GET /api/image/[id]', () => {
     mockStream.mockResolvedValue(fakeBody('image/jpeg'));
     const res = await call(encodeAssetId(ASSET_ID));
     expect(res.status).toBe(200);
-    expect(mockStream).toHaveBeenCalledWith(ASSET_ID, 'preview');
+    expect(mockStream).toHaveBeenCalledWith(ASSET_ID, 'preview', true);
+  });
+
+  describe('photos edited in Immich (#831)', () => {
+    beforeEach(() => {
+      published.asked = [];
+    });
+
+    it('asks Immich for the edit when the URL carries the edit marker', async () => {
+      mockStream.mockResolvedValue(fakeBody('image/jpeg'));
+      const res = await call(encodeAssetId(ASSET_ID), '?size=preview&e=mf3k2abc');
+      expect(res.status).toBe(200);
+      expect(mockStream).toHaveBeenCalledWith(ASSET_ID, 'preview', true);
+    });
+
+    it('asks for the edited thumbnail too', async () => {
+      mockStream.mockResolvedValue(fakeBody('image/webp'));
+      await call(encodeAssetId(ASSET_ID), '?size=thumbnail&e=mf3k2abc');
+      expect(mockStream).toHaveBeenCalledWith(ASSET_ID, 'thumbnail', true);
+    });
+
+    it('shows the edit to a URL stripped of its marker: the server decides, not the URL', async () => {
+      // Review of #832: with the marker as the switch, dropping `&e=` from a
+      // URL brought back what the photographer had cropped out.
+      mockStream.mockResolvedValue(fakeBody('image/jpeg'));
+      await call(encodeAssetId(ASSET_ID), '?size=preview&w=1440');
+      expect(mockStream).toHaveBeenCalledWith(ASSET_ID, 'preview', true);
+      mockStream.mockResolvedValue(fakeBody('image/webp'));
+      await call(encodeAssetId(ASSET_ID), '?size=thumbnail');
+      expect(mockStream).toHaveBeenCalledWith(ASSET_ID, 'thumbnail', true);
+      expect(mockStream).not.toHaveBeenCalledWith(ASSET_ID, expect.anything(), false);
+    });
+
+    it('is still gated by the published-asset check, which goes by the asset alone', async () => {
+      mockStream.mockResolvedValue(fakeBody('image/jpeg'));
+      const res = await call(encodeAssetId(ASSET_ID), '?size=preview&e=mf3k2abc&w=1440');
+      expect(res.status).toBe(200);
+      expect(published.asked).toEqual([ASSET_ID]);
+
+      published.value = false;
+      try {
+        const refused = await call(encodeAssetId(ASSET_ID), '?size=preview&e=mf3k2abc');
+        expect(refused.status).toBe(404);
+      } finally {
+        published.value = true;
+      }
+    });
+
+    it('gives the edited rendition its own ETag', async () => {
+      mockStream.mockResolvedValue(fakeBody('image/jpeg'));
+      const token = encodeAssetId(ASSET_ID);
+      const plain = (await call(token, '?size=preview')).headers.get('ETag');
+      mockStream.mockResolvedValue(fakeBody('image/jpeg'));
+      const edited = (await call(token, '?size=preview&e=mf3k2abc')).headers.get('ETag');
+      mockStream.mockResolvedValue(fakeBody('image/jpeg'));
+      const reEdited = (await call(token, '?size=preview&e=mf9zz001')).headers.get('ETag');
+      expect(new Set([plain, edited, reEdited]).size).toBe(3);
+    });
+
+    it('ignores a marker that is not one, and keeps it out of the ETag', async () => {
+      mockStream.mockResolvedValue(fakeBody('image/jpeg'));
+      const token = encodeAssetId(ASSET_ID);
+      const res = await call(token, `?size=preview&e=${encodeURIComponent('"x", W/"y')}`);
+      expect(mockStream).toHaveBeenCalledWith(ASSET_ID, 'preview', true);
+      expect(res.headers.get('ETag')).not.toContain('y');
+    });
   });
 
   // Regression guard for the stored-XSS fix in c2fa8e7. An SVG served as

@@ -140,7 +140,10 @@ export async function GET(request: NextRequest) {
         lat: position.lat,
         lng: position.lng,
         photoCount,
-        coverUrl: imageUrl(allowedAlbums[0].coverAssetId, 'thumbnail'),
+        coverUrl: imageUrl(
+          { id: allowedAlbums[0].coverAssetId, ...allowedAlbums[0].coverEdit },
+          'thumbnail',
+        ),
         albums: allowedAlbums.map((a) => ({
           name: a.name,
           url: a.subpageSlug ? `/${a.subpageSlug}/${a.slug}` : `/${a.slug}`,

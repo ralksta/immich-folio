@@ -280,6 +280,49 @@ describe('ImmichClient', () => {
       expect(result?.contentType).toBe('image/jpeg');
     });
 
+    // #831: Immich applies an edit made in its editor only when asked.
+    describe('edited photos (#831)', () => {
+      const ok = () => ({
+        ok: true,
+        status: 200,
+        body: new ReadableStream(),
+        headers: { get: () => 'image/jpeg' },
+      });
+      const lastUrl = () => mockFetch.mock.calls.at(-1)![0] as string;
+
+      it.each([
+        ['thumbnail', '/assets/asset-1/thumbnail?size=thumbnail&edited=true'],
+        ['preview', '/assets/asset-1/thumbnail?size=preview&edited=true'],
+        ['original', '/assets/asset-1/original?edited=true'],
+      ] as const)('asks for the edited %s', async (size, path) => {
+        mockFetch.mockResolvedValueOnce(ok());
+        await immich.streamAsset('asset-1', size, true);
+        expect(lastUrl()).toBe(`http://immich.test/api${path}`);
+      });
+
+      it.each([
+        ['thumbnail', '/assets/asset-1/thumbnail?size=thumbnail'],
+        ['preview', '/assets/asset-1/thumbnail?size=preview'],
+        ['original', '/assets/asset-1/original'],
+      ] as const)('requests a %s that is not edited exactly as before', async (size, path) => {
+        mockFetch.mockResolvedValueOnce(ok());
+        await immich.streamAsset('asset-1', size);
+        expect(lastUrl()).toBe(`http://immich.test/api${path}`);
+        mockFetch.mockResolvedValueOnce(ok());
+        await immich.streamAsset('asset-1', size, false);
+        expect(lastUrl()).toBe(`http://immich.test/api${path}`);
+      });
+
+      it('asks for the edited full-size rendition, still without following redirects', async () => {
+        mockFetch.mockResolvedValueOnce(ok());
+        await immich.streamFullsize('asset-1', true);
+        expect(lastUrl()).toBe(
+          'http://immich.test/api/assets/asset-1/thumbnail?size=fullsize&edited=true',
+        );
+        expect(mockFetch.mock.calls.at(-1)![1].redirect).toBe('manual');
+      });
+    });
+
     it('streamAsset still follows redirects', async () => {
       mockFetch.mockResolvedValueOnce(streamRes(404));
       await immich.streamAsset('asset-1', 'original');

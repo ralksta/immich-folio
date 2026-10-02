@@ -72,7 +72,7 @@ export default async function JournalIndexPage() {
         const ph = asset ? assetPlaceholder(asset) : null;
         return {
           ...entry,
-          coverUrl: imageUrl(entry.frontmatter.coverAssetId, 'preview'),
+          coverUrl: imageUrl(asset ?? entry.frontmatter.coverAssetId, 'preview'),
           blurDataURL: ph?.blurDataURL,
           dominantColor: ph?.dominantColor,
         };
