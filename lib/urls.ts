@@ -35,15 +35,15 @@ export interface ImageRef {
  * that is not edited (#831).
  *
  * Immich applies an edit made in its editor (crop, rotate) only when asked
- * with `edited=true`; the image route asks exactly when the URL carries this
- * marker. So the URL names the rendition: without `e` it is the photo as
- * stored, with it the edited one. That keeps `immutable` caching honest —
- * the asset ID does not change when a photo is edited, so without a marker a
- * browser or CDN that cached the unedited preview would keep showing it for a
- * year. Only edited photos get a new URL; every other URL stays as it was,
- * which is why this is not a bump of IMAGE_CACHE_VERSION.
+ * with `edited=true`. The image route always asks — the server decides that
+ * an edit is shown, not the URL. The marker is purely a cache key: the asset
+ * ID does not change when a photo is edited, so without it a browser or CDN
+ * that cached the unedited preview under the same URL would keep showing it
+ * for a year (`immutable`). Only edited photos get a new URL; every other URL
+ * stays as it was, which is why this is not a bump of IMAGE_CACHE_VERSION.
  *
- * The value is the asset's `updatedAt`, compacted. Immich regenerates an
+ * The value is the asset's `updatedAt` in whole seconds, base 36 — precise
+ * enough to tell two edits apart, without publishing the millisecond. Immich regenerates an
  * asset's thumbnails and ThumbHash (and, for a crop or a quarter turn, its
  * dimensions) when an edit is applied or changed, which writes the asset and
  * moves `updatedAt` — so a re-edit produces a new URL once the album cache
@@ -53,7 +53,7 @@ export interface ImageRef {
 export function editMarker(asset: Omit<ImageRef, 'id'>): string | null {
   if (asset.isEdited !== true) return null;
   const time = asset.updatedAt ? Date.parse(asset.updatedAt) : NaN;
-  return Number.isFinite(time) && time > 0 ? time.toString(36) : '1';
+  return Number.isFinite(time) && time >= 1000 ? Math.floor(time / 1000).toString(36) : '1';
 }
 
 /**
@@ -61,8 +61,9 @@ export function editMarker(asset: Omit<ImageRef, 'id'>): string | null {
  * CDN mode is on (lib/cdn.ts); relative otherwise.
  *
  * Pass the asset rather than its ID wherever it is at hand: only then can an
- * edited photo get its edit marker (see editMarker()). A bare ID always means
- * the photo as stored.
+ * edited photo get its edit marker (see editMarker()). A bare ID still shows
+ * the edit — the route always asks for it — but under the same URL as before
+ * the edit, so a copy cached earlier can outlive it.
  */
 export function imageUrl(
   asset: string | ImageRef,
@@ -224,14 +225,12 @@ const ROTATED_ORIENTATIONS = new Set([5, 6, 7, 8]);
 export function assetAspectRatio(
   asset: Pick<ImmichAsset, 'exifInfo' | 'isEdited' | 'width' | 'height'>,
 ): number | undefined {
-  if (
-    asset.isEdited === true &&
-    asset.width &&
-    asset.height &&
-    asset.width > 0 &&
-    asset.height > 0
-  ) {
-    return asset.width / asset.height;
+  if (asset.isEdited === true) {
+    // Without the edited size there is nothing right to say: EXIF would give
+    // the unedited proportions. Undefined leaves the layout's default ratio.
+    return asset.width && asset.height && asset.width > 0 && asset.height > 0
+      ? asset.width / asset.height
+      : undefined;
   }
   const w = asset.exifInfo?.exifImageWidth;
   const h = asset.exifInfo?.exifImageHeight;

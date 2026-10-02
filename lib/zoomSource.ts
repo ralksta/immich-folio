@@ -83,6 +83,7 @@ const ROTATED_ORIENTATIONS = new Set([5, 6, 7, 8]);
  * is then not offered for zoom.
  */
 export function zoomDimensions(asset: {
+  isEdited?: boolean | null;
   width?: number | null;
   height?: number | null;
   exifInfo?: {
@@ -94,6 +95,10 @@ export function zoomDimensions(asset: {
   if (asset.width && asset.height && asset.width > 0 && asset.height > 0) {
     return { width: asset.width, height: asset.height };
   }
+  // An edited photo (#831) has no fallback: EXIF describes the unedited file,
+  // and a wrong size would put the zoom image off the preview's box. No size,
+  // no zoom.
+  if (asset.isEdited === true) return undefined;
   const w = asset.exifInfo?.exifImageWidth;
   const h = asset.exifInfo?.exifImageHeight;
   if (!w || !h || w <= 0 || h <= 0) return undefined;

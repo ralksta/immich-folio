@@ -146,6 +146,17 @@ export async function GET(
     );
     return notFound();
   }
+  // An edited photo is a rendition Immich made, which Folio expects as JPEG
+  // (#831). One in a format the scrubber passes through untouched (WebP,
+  // PNG) is not what was measured, and is refused rather than sent with
+  // whatever metadata it carries — as the zoom route does.
+  if (asset.isEdited === true && scrubbed.format === 'passthrough') {
+    await scrubbed.stream.cancel().catch(() => {});
+    console.warn(
+      `[Download] Refused edited asset ${assetId}: Immich sent ${result.contentType || 'no type'}, which is not a JPEG or HEIF-family file.`,
+    );
+    return notFound();
+  }
 
   const headers: Record<string, string> = {
     'Content-Type': result.contentType || 'application/octet-stream',

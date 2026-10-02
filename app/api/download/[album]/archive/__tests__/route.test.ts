@@ -511,4 +511,30 @@ describe('location metadata', () => {
     expect(text).not.toContain('IMG_9262.HEIC');
     expect(contains(zip, LAT.value(true))).toBe(false);
   });
+
+  it('leaves out an edited rendition the scrubber would pass through (review of #832)', async () => {
+    mockGetAlbum.mockResolvedValue({
+      ...ALBUM,
+      assets: [
+        { id: 'asset-1', type: 'IMAGE', originalFileName: 'IMG_9262.HEIC', isEdited: true },
+        { id: 'asset-2', type: 'IMAGE', originalFileName: 'photo-2.jpg' },
+      ],
+    });
+    const webp = new TextEncoder().encode('RIFF\x10\x00\x00\x00WEBPVP8 edited-webp');
+    mockStream.mockImplementation((id: string) =>
+      Promise.resolve(
+        id === 'asset-1'
+          ? { stream: chunked(webp, 64), contentType: 'image/webp', contentLength: null }
+          : originStream('second-original'),
+      ),
+    );
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const zip = latin1(new Uint8Array(await (await GET(getReq(), params)).arrayBuffer()));
+    const logged = warn.mock.calls.map((args) => String(args[0]));
+    expect(logged.some((l) => l.includes('edited asset asset-1'))).toBe(true);
+    warn.mockRestore();
+    expect(zip).not.toContain('edited-webp');
+    expect(zip).not.toContain('IMG_9262');
+    expect(zip).toContain('second-original');
+  });
 });

@@ -89,11 +89,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     request.nextUrl.searchParams.get('w'),
   );
 
-  // The edit marker (#831): lib/urls.ts writes `e` for a photo edited in
-  // Immich, and only then is the edit asked for. The URL thereby names the
-  // rendition, which is what makes the `immutable` caching below safe across
-  // an edit. A value outside the marker's shape is ignored, so it cannot carry
-  // anything into the ETag.
+  // Photos edited in Immich (#831) are always served as edited: the server
+  // asks for `edited=true` on every request, whatever the URL says, so a URL
+  // stripped of its marker cannot bring back what a crop removed. For a photo
+  // that is not edited Immich returns the same bytes (measured on 3.2), and
+  // the parameter exists in every supported Immich (since 2.5; Folio needs
+  // 3.0). The marker `e` that lib/urls.ts writes for edited photos is only a
+  // cache key: it gives the edited rendition a URL (and ETag) of its own, so
+  // an `immutable` copy of the unedited one is never reused. A value outside
+  // the marker's shape is ignored, so it cannot carry anything into the ETag.
   const editParam = request.nextUrl.searchParams.get('e');
   const edit = editParam && EDIT_MARKER.test(editParam) ? editParam : null;
 
@@ -118,7 +122,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   let result;
   try {
-    result = await immich.streamAsset(assetId, size, edit !== null);
+    result = await immich.streamAsset(assetId, size, true);
   } catch (error) {
     // An outage must not look like a deleted photo. These URLs are served with
     // `immutable` on success, and a bare 404 is heuristically cacheable — so
@@ -188,7 +192,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       console.warn(
         `[Image API] Original von ${assetId} (${contentType}) nicht strippbar — liefere Preview.`,
       );
-      const preview = await immich.streamAsset(assetId, 'preview', edit !== null);
+      const preview = await immich.streamAsset(assetId, 'preview', true);
       if (!preview) {
         return NextResponse.json(
           { error: 'Asset not found' },

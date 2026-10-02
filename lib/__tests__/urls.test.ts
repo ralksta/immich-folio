@@ -37,7 +37,7 @@ describe('imageUrl for photos edited in Immich (#831)', () => {
   const UPDATED = '2026-09-04T19:22:09.220Z';
 
   it('adds the edit marker only for an edited photo', () => {
-    const marker = Date.parse(UPDATED).toString(36);
+    const marker = Math.floor(Date.parse(UPDATED) / 1000).toString(36);
     expect(imageUrl({ id: 'id', isEdited: true, updatedAt: UPDATED })).toBe(
       `/api/image/ENCODED_id?size=preview&e=${marker}`,
     );
@@ -60,6 +60,13 @@ describe('imageUrl for photos edited in Immich (#831)', () => {
     expect(first).toMatch(/^[0-9a-z]{1,16}$/);
     expect(again).toMatch(/^[0-9a-z]{1,16}$/);
     expect(again).not.toBe(first);
+  });
+
+  it('reveals the update time to the second only (review of #832)', () => {
+    const marker = editMarker({ isEdited: true, updatedAt: UPDATED });
+    expect(marker).toBe((Date.parse('2026-09-04T19:22:09Z') / 1000).toString(36));
+    expect(editMarker({ isEdited: true, updatedAt: '2026-09-04T19:22:09.999Z' })).toBe(marker);
+    expect(editMarker({ isEdited: true, updatedAt: '2026-09-04T19:22:10.000Z' })).not.toBe(marker);
   });
 
   it('still marks an edited photo whose update time is unknown', () => {
@@ -236,8 +243,11 @@ describe('assetAspectRatio', () => {
       ).toBe(1.5);
     });
 
-    it('falls back to EXIF when Immich sent no edited size', () => {
-      expect(assetAspectRatio({ isEdited: true, exifInfo: exif(3000, 2000) })).toBe(1.5);
+    it('does not fall back to EXIF, which describes the unedited file (review of #832)', () => {
+      expect(assetAspectRatio({ isEdited: true, exifInfo: exif(3000, 2000) })).toBeUndefined();
+      expect(
+        assetAspectRatio({ isEdited: true, width: null, height: 0, exifInfo: exif(3000, 2000) }),
+      ).toBeUndefined();
     });
   });
 

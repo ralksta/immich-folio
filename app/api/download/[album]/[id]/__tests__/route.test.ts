@@ -162,6 +162,20 @@ describe('GET /api/download/[album]/[id]', () => {
       expect(res.headers.get('content-disposition')).toContain('scan.jpeg');
     });
 
+    it('refuses an edited rendition the scrubber would pass through (review of #832)', async () => {
+      mockGetAlbum.mockResolvedValue(EDITED);
+      const webp = new TextEncoder().encode('RIFF\x10\x00\x00\x00WEBPVP8 ');
+      mockStream.mockResolvedValue(original(webp, 'image/webp'));
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const res = await download();
+      expect(res.status).toBe(404);
+      expect(res.headers.get('cache-control')).toBe('no-store');
+      expect(warn.mock.calls.some((args) => String(args[0]).includes('Refused edited asset'))).toBe(
+        true,
+      );
+      warn.mockRestore();
+    });
+
     it('asks for the original of a photo that is not edited exactly as before', async () => {
       mockStream.mockResolvedValue(original(cameraJpeg(true).file, 'image/jpeg'));
       await download();

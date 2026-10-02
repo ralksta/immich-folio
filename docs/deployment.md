@@ -270,11 +270,13 @@ The Content-Security-Policy allows the CDN's origin for `img-src` and
 Photos edited in Immich's own editor (crop, rotate) appear as edited
 everywhere: in the grid, the lightbox, the zoom, share images, the map and
 downloads. Immich keeps an edit apart from the file and applies it only when
-asked to, so Folio asks for the edited rendition of every photo Immich marks as
-edited, and lays the grid out with the edited proportions.
+asked to, so Folio always asks for the edited rendition (for a photo that is
+not edited, Immich returns the same file either way; the parameter exists
+since Immich 2.5, below the 3.0 that Folio requires), and lays the grid out
+with the edited proportions.
 
 The image URL of an edited photo carries an extra `e` parameter, derived from
-when the photo last changed in Immich. Image responses are cached as
+when the photo last changed in Immich, to the second. Image responses are cached as
 `immutable` for a year and the asset ID stays the same through an edit, so
 without it browsers and CDNs would keep showing the photo as it was before.
 Only edited photos get a new URL; all other URLs stay as they are. A later
@@ -282,7 +284,10 @@ edit changes the parameter again, once Folio's album cache has picked it up
 (`CACHE_TTL`).
 
 Downloads of an edited photo are Immich's rendition of the edit: a
-full-resolution JPEG without EXIF, named `.jpg`.
+full-resolution JPEG without EXIF, named `.jpg`. Should Immich hand out the
+edit in a format the location scrubber does not handle (WebP, PNG), the photo
+is not downloaded rather than sent unchecked; a ZIP goes on without it and the
+server log names it.
 
 ## Colour Profiles
 

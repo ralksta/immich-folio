@@ -513,6 +513,17 @@ export function streamArchive(
           );
           continue;
         }
+        // An edited photo's rendition is expected as JPEG (#831); one the
+        // scrubber passes through untouched stays out, as for the single
+        // download.
+        if (edited && scrubbed.format === 'passthrough') {
+          dropped++;
+          await scrubbed.stream.cancel().catch(() => {});
+          console.warn(
+            `[Download] Left edited asset ${asset.id} out of the archive "${albumName}": Immich sent ${result.contentType || 'no type'}, which is not a JPEG or HEIF-family file.`,
+          );
+          continue;
+        }
         if (archive.destroyed) {
           await scrubbed.stream.cancel();
           break;

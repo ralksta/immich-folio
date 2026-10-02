@@ -79,6 +79,17 @@ describe('zoomSourceFor', () => {
 });
 
 describe('zoomDimensions', () => {
+  it('gives an edited photo without its edited size no size at all (review of #832)', () => {
+    // EXIF describes the unedited file; a rotated photo would get the box of
+    // the unrotated one. No size means no zoom.
+    expect(
+      zoomDimensions({
+        isEdited: true,
+        exifInfo: { exifImageWidth: 1076, exifImageHeight: 723, orientation: null },
+      }),
+    ).toBeUndefined();
+  });
+
   it('gives an edited photo its edited size, which is what its rendition has (#831)', () => {
     // Measured on Immich 3.2: an iPhone HEIC stored 5712×4284 with
     // orientation 6, turned back to landscape in Immich's editor. The edited

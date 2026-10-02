@@ -80,7 +80,7 @@ describe('GET /api/image/[id]', () => {
     mockStream.mockResolvedValue(fakeBody('image/jpeg'));
     const res = await call(encodeAssetId(ASSET_ID));
     expect(res.status).toBe(200);
-    expect(mockStream).toHaveBeenCalledWith(ASSET_ID, 'preview', false);
+    expect(mockStream).toHaveBeenCalledWith(ASSET_ID, 'preview', true);
   });
 
   describe('photos edited in Immich (#831)', () => {
@@ -101,10 +101,16 @@ describe('GET /api/image/[id]', () => {
       expect(mockStream).toHaveBeenCalledWith(ASSET_ID, 'thumbnail', true);
     });
 
-    it('leaves a URL without the marker exactly as it was', async () => {
+    it('shows the edit to a URL stripped of its marker: the server decides, not the URL', async () => {
+      // Review of #832: with the marker as the switch, dropping `&e=` from a
+      // URL brought back what the photographer had cropped out.
       mockStream.mockResolvedValue(fakeBody('image/jpeg'));
       await call(encodeAssetId(ASSET_ID), '?size=preview&w=1440');
-      expect(mockStream).toHaveBeenCalledWith(ASSET_ID, 'preview', false);
+      expect(mockStream).toHaveBeenCalledWith(ASSET_ID, 'preview', true);
+      mockStream.mockResolvedValue(fakeBody('image/webp'));
+      await call(encodeAssetId(ASSET_ID), '?size=thumbnail');
+      expect(mockStream).toHaveBeenCalledWith(ASSET_ID, 'thumbnail', true);
+      expect(mockStream).not.toHaveBeenCalledWith(ASSET_ID, expect.anything(), false);
     });
 
     it('is still gated by the published-asset check, which goes by the asset alone', async () => {
@@ -137,7 +143,7 @@ describe('GET /api/image/[id]', () => {
       mockStream.mockResolvedValue(fakeBody('image/jpeg'));
       const token = encodeAssetId(ASSET_ID);
       const res = await call(token, `?size=preview&e=${encodeURIComponent('"x", W/"y')}`);
-      expect(mockStream).toHaveBeenCalledWith(ASSET_ID, 'preview', false);
+      expect(mockStream).toHaveBeenCalledWith(ASSET_ID, 'preview', true);
       expect(res.headers.get('ETag')).not.toContain('y');
     });
   });
