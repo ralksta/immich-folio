@@ -5,7 +5,7 @@ import path from 'node:path';
 import { getConfig, slugify } from '@/lib/config';
 // From the pure schema module, like lib/auth.ts: tests stub the config barrel.
 import { resolveZoom } from '@/lib/config/schema';
-import { zoomSourceFor } from '@/lib/zoomSource';
+import { ZOOM_CONTENT_TYPES, zoomSourceFor } from '@/lib/zoomSource';
 import { env } from '@/lib/env';
 import { listJournalEntries } from '@/lib/admin/journal-service';
 import { readSettingsYaml } from '@/lib/admin/yaml-service';
@@ -44,6 +44,7 @@ import {
   type LegalRef,
   type PasswordRef,
   type ZoomAlbumRef,
+  type ZoomRenditionSample,
 } from '@/lib/admin/doctor';
 
 /**
@@ -169,7 +170,7 @@ export const GET = withAdmin(async (request: NextRequest) => {
       // so one such photo is sampled. "On" here means on for any route to the
       // album, standalone or through an enabled subpage.
       const zoomAlbums: ZoomAlbumRef[] = [];
-      let renditionAvailable: boolean | null = null;
+      let renditionSample: ZoomRenditionSample | null = null;
       try {
         const zoomOn = (albumId: string) =>
           (config.standaloneAlbums.includes(albumId) && resolveZoom(config, albumId)) ||
@@ -196,8 +197,15 @@ export const GET = withAdmin(async (request: NextRequest) => {
         if (sample) {
           try {
             const rendition = await immich.streamFullsize(sample);
-            renditionAvailable = rendition !== null;
-            await (rendition?.stream as ReadableStream | undefined)?.cancel().catch(() => {});
+            if (!rendition) {
+              renditionSample = 'missing';
+            } else {
+              await (rendition.stream as ReadableStream).cancel().catch(() => {});
+              // The zoom route serves only what it can scrub: a WebP rendition
+              // exists, and is still refused.
+              const type = rendition.contentType.toLowerCase().split(';')[0].trim();
+              renditionSample = ZOOM_CONTENT_TYPES.has(type) ? 'ok' : { contentType: type };
+            }
           } catch {
             // Unknown; reported as nothing rather than as a false alarm.
           }
@@ -205,7 +213,7 @@ export const GET = withAdmin(async (request: NextRequest) => {
       } catch {
         // Best-effort, like every check here: no finding rather than no report.
       }
-      const zoomFinding = checkZoomRenditions(zoomAlbums, renditionAvailable);
+      const zoomFinding = checkZoomRenditions(zoomAlbums, renditionSample);
       if (zoomFinding) findings.push(zoomFinding);
     }
   }

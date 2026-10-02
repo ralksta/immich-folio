@@ -369,24 +369,34 @@ export interface ZoomAlbumRef {
 }
 
 /**
+ * What the sampled full-size rendition turned out to be: `ok` (JPEG, which the
+ * zoom route serves), `missing` (Immich has none), or the content type of one
+ * the route refuses — a WebP rendition, when Immich's full-size format is set
+ * to WebP, since the location scrubber cannot clean WebP.
+ */
+export type ZoomRenditionSample = 'ok' | 'missing' | { contentType: string };
+
+/**
  * Zoom shows JPEG and AVIF originals directly, but everything a browser cannot
  * display needs Immich's full-size rendition, which Immich only generates while
- * "Full-size image" is on in its image settings. Immich does not say whether a
- * rendition exists until one is asked for, so the route samples one photo and
- * passes the answer in `available` (null when it could not ask).
+ * "Full-size image" is on in its image settings, and which the zoom route only
+ * serves as JPEG. Immich does not say whether a rendition exists until one is
+ * asked for, so the route samples one photo and passes what it found (null
+ * when it could not ask).
  *
  * Returns null when no zoom album holds such photos, or nothing is known.
  */
 export function checkZoomRenditions(
   albums: ZoomAlbumRef[],
-  available: boolean | null,
+  sample: ZoomRenditionSample | null,
 ): DoctorFinding | null {
   const affected = albums.filter((a) => a.needRendition > 0);
-  if (!affected.length || available === null) return null;
+  if (!affected.length || sample === null) return null;
   const photos = affected.reduce((n, a) => n + a.needRendition, 0);
   const noun = photos === 1 ? 'photo' : 'photos';
+  const albumList = affected.map((a) => `${a.albumName} (${a.needRendition})`).join(', ');
 
-  if (available) {
+  if (sample === 'ok') {
     return {
       id: 'zoom-renditions',
       level: 'ok',
@@ -394,16 +404,30 @@ export function checkZoomRenditions(
       detail: `${photos} HEIC, RAW or similar ${noun} in zoom albums are zoomed through Immich's full-size rendition, with the location removed.`,
     };
   }
+  if (sample === 'missing') {
+    return {
+      id: 'zoom-renditions',
+      level: 'warn',
+      title: `${photos} ${noun} cannot be zoomed: Immich has no full-size preview`,
+      detail:
+        'HEIC, RAW and other formats a browser cannot show are zoomed through Immich’s full-size ' +
+        'rendition, and Immich has none (one photo sampled). Visitors see the zoom button and then ' +
+        '"not available". In Immich, turn on Administration › Settings › Image Settings › Full-size ' +
+        'image (JPEG), then run the Generate Thumbnails job for missing assets. Albums: ' +
+        albumList,
+      albumIds: affected.map((a) => a.id),
+    };
+  }
   return {
     id: 'zoom-renditions',
     level: 'warn',
-    title: `${photos} ${noun} cannot be zoomed: Immich has no full-size preview`,
+    title: `${photos} ${noun} cannot be zoomed: Immich's full-size format is not JPEG`,
     detail:
-      'HEIC, RAW and other formats a browser cannot show are zoomed through Immich’s full-size ' +
-      'rendition, and Immich has none (one photo sampled). Visitors see the zoom button and then ' +
-      '"not available". In Immich, turn on Administration › Settings › Image Settings › Full-size ' +
-      'image (JPEG), then run the Generate Thumbnails job for missing assets. Albums: ' +
-      affected.map((a) => `${a.albumName} (${a.needRendition})`).join(', '),
+      `Immich renders its full-size previews as ${sample.contentType || 'an unknown type'}, and ` +
+      'zoom only serves JPEG renditions — their location metadata is removed on the way out, which ' +
+      'Folio cannot do for WebP. Set Administration › Settings › Image Settings › Full-size image ' +
+      '› Format to JPEG, then run the Generate Thumbnails job. Albums: ' +
+      albumList,
     albumIds: affected.map((a) => a.id),
   };
 }
