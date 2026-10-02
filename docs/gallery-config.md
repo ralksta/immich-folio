@@ -270,6 +270,13 @@ so an edited URL cannot reach anything else. The ZIP keeps the original
 filenames (deduplicated on collision) and is streamed, so album size does not
 drive memory use.
 
+Originals keep their metadata except their location. JPEG, HEIC/HEIF and AVIF
+files are delivered with camera, lens, exposure, copyright/IPTC and colour
+profile intact, but with GPS coordinates removed from EXIF and XMP; the image
+data itself is not touched. Other formats (RAW, DNG, PNG, TIFF, WebP, video) are
+delivered exactly as Immich stores them, including any GPS. The diagnostics page
+warns when a download album contains such files.
+
 One visitor (by client IP, see `TRUSTED_PROXY_HOPS`) can have at most two ZIPs
 downloading at once, album and proofing downloads counted together; a third
 gets a "too many requests" page until one finishes. A ZIP whose download stops

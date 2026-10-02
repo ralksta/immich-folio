@@ -314,6 +314,52 @@ export function checkAlbumsShared(configured: string[], known: AlbumRef[]): Doct
   };
 }
 
+/** What the doctor needs to know about one album that offers downloads. */
+export interface DownloadAlbumRef {
+  id: string;
+  albumName: string;
+  /** Assets in a format whose metadata the download cannot clean (RAW, PNG, video, …). */
+  uncleanable: number;
+  /** Of those, how many Immich has coordinates for. */
+  uncleanableWithLocation: number;
+}
+
+/**
+ * Downloads remove GPS from JPEG, HEIC/HEIF and AVIF originals
+ * (lib/locationScrub.ts). Every other format is served exactly as Immich
+ * stores it, so an album that offers downloads and holds such files hands out
+ * whatever location they carry. The route decides which assets are cleanable;
+ * this module stays import-free for `npm run doctor`. Returns null while no
+ * album offers downloads.
+ */
+export function checkDownloadMetadata(albums: DownloadAlbumRef[]): DoctorFinding | null {
+  if (!albums.length) return null;
+  const affected = albums.filter((a) => a.uncleanable > 0);
+
+  if (!affected.length) {
+    return {
+      id: 'download-metadata',
+      level: 'ok',
+      title: 'Downloads go out without GPS',
+      detail: `Every original in the ${albums.length === 1 ? 'download album' : `${albums.length} download albums`} is JPEG, HEIC or AVIF, and is served with its location removed.`,
+    };
+  }
+
+  const files = affected.reduce((n, a) => n + a.uncleanable, 0);
+  const located = affected.reduce((n, a) => n + a.uncleanableWithLocation, 0);
+  return {
+    id: 'download-metadata',
+    level: 'warn',
+    title: `${files} downloadable ${files === 1 ? 'original keeps' : 'originals keep'} all metadata`,
+    detail:
+      'RAW, DNG, PNG, TIFF, WebP and video files are served exactly as stored, with any GPS ' +
+      `coordinates${located ? ` (Immich has a location for ${located} of them)` : ''}. ` +
+      'Turn off downloads or remove these files if their location should stay private: ' +
+      affected.map((a) => `${a.albumName} (${a.uncleanable})`).join(', '),
+    albumIds: affected.map((a) => a.id),
+  };
+}
+
 /** One set of albums that will all be reachable under the same URL prefix. */
 export interface AlbumSlugGroup {
   /** e.g. "gallery.yaml albums" or `subpage "Trips"` */

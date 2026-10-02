@@ -15,6 +15,7 @@ import {
   checkPrivacy,
   checkContentPages,
   checkSettingValues,
+  checkDownloadMetadata,
   worstLevel,
 } from '../admin/doctor';
 
@@ -511,5 +512,41 @@ describe('checkSettingValues (QA A-14)', () => {
       { field: 'navLinks.2.url' },
     ]);
     expect(f.title).toBe('The header links setting is ignored');
+  });
+});
+
+describe('checkDownloadMetadata', () => {
+  const album = (id: string, uncleanable: number, uncleanableWithLocation = 0) => ({
+    id,
+    albumName: `Album ${id}`,
+    uncleanable,
+    uncleanableWithLocation,
+  });
+
+  it('says nothing while no album offers downloads', () => {
+    expect(checkDownloadMetadata([])).toBeNull();
+  });
+
+  it('is ok when every original can be cleaned', () => {
+    const f = checkDownloadMetadata([album('a', 0), album('b', 0)])!;
+    expect(f.level).toBe('ok');
+    expect(f.id).toBe('download-metadata');
+    expect(f.detail).toContain('2 download albums');
+  });
+
+  it('warns about originals served with all their metadata, and names the albums', () => {
+    const f = checkDownloadMetadata([album('a', 0), album('b', 3, 2), album('c', 1)])!;
+    expect(f.level).toBe('warn');
+    expect(f.title).toBe('4 downloadable originals keep all metadata');
+    expect(f.detail).toContain('GPS');
+    expect(f.detail).toContain('Immich has a location for 2 of them');
+    expect(f.detail).toContain('Album b (3)');
+    expect(f.albumIds).toEqual(['b', 'c']);
+  });
+
+  it('leaves out the location count when Immich knows none', () => {
+    const f = checkDownloadMetadata([album('a', 1)])!;
+    expect(f.title).toBe('1 downloadable original keeps all metadata');
+    expect(f.detail).not.toContain('Immich has a location');
   });
 });

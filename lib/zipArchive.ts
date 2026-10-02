@@ -17,6 +17,7 @@ import { getLocale, getServerDictionary } from '@/lib/i18n/server';
 import { getConfigOrNull } from '@/lib/config';
 import { accentForMode, resolveTheme } from '@/lib/config/theme';
 import { env } from '@/lib/env';
+import { scrubLocationStream } from '@/lib/locationScrub';
 
 /** Escape a value interpolated into the refusal page. */
 function escapeHtml(value: string): string {
@@ -399,7 +400,8 @@ export async function withArchiveSlot(
 }
 
 /**
- * Stream `assets` as a ZIP of originals.
+ * Stream `assets` as a ZIP of originals, without their location metadata
+ * (lib/locationScrub.ts).
  *
  * archiver writes data descriptors, so entry sizes are never known up front and
  * memory stays flat no matter how large the album is. The loop pulls one
@@ -486,6 +488,9 @@ export function streamArchive(
   void (async () => {
     try {
       const used = new Set<string>();
+      // Originals refused by the location scrubber. The ZIP carries on without
+      // them, so the count is the only trace a visitor's archive came up short.
+      let dropped = 0;
       for (const asset of assets) {
         // The visitor left (or the archive failed): stop pulling originals.
         if (archive.destroyed) break;
@@ -496,14 +501,33 @@ export function streamArchive(
           await result.stream.cancel();
           break;
         }
+        // Location out, as for the single download. Only the head of each
+        // original is held while its metadata is found, so memory stays flat.
+        const scrubbed = await scrubLocationStream(result.stream as ReadableStream<Uint8Array>);
+        if (!scrubbed.ok) {
+          dropped++;
+          console.warn(
+            `[Download] Left asset ${asset.id} out of the archive "${albumName}": its location metadata could not be removed (${scrubbed.reason}).`,
+          );
+          continue;
+        }
+        if (archive.destroyed) {
+          await scrubbed.stream.cancel();
+          break;
+        }
         const nodeStream = Readable.fromWeb(
-          result.stream as unknown as import('node:stream/web').ReadableStream,
+          scrubbed.stream as unknown as import('node:stream/web').ReadableStream,
         );
         await appendEntry(
           archive,
           nodeStream,
           uniqueEntryName(asset.originalFileName, used),
           entryDate(asset),
+        );
+      }
+      if (dropped) {
+        console.warn(
+          `[Download] Archive "${albumName}" is missing ${dropped} of ${assets.length} originals; see the lines above for the asset IDs.`,
         );
       }
       if (!archive.destroyed) await archive.finalize();
