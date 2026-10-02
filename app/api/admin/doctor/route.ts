@@ -11,6 +11,8 @@ import { readPrivacy } from '@/lib/privacy';
 import { listPageSlugsSync } from '@/lib/admin/pages-service';
 import { takenPageSlugs } from '@/lib/admin/pageSlugs';
 import { describeCollision, menuPageSlugs, pageSlugCollision } from '@/lib/pages';
+import { immich } from '@/lib/immich';
+import { isLocationScrubbable } from '@/lib/locationScrub';
 import {
   checkAlbumIds,
   checkAlbumSlugCollisions,
@@ -20,6 +22,7 @@ import {
   checkImmichCalls,
   checkContact,
   checkContentPages,
+  checkDownloadMetadata,
   checkLegal,
   checkPrivacy,
   checkSettingValues,
@@ -32,6 +35,7 @@ import {
   type AlbumRef,
   type AlbumSlugGroup,
   type DoctorFinding,
+  type DownloadAlbumRef,
   type ContactRef,
   type LegalRef,
   type PasswordRef,
@@ -130,6 +134,30 @@ export const GET = withAdmin(async (request: NextRequest) => {
         })),
       ];
       findings.push(checkAlbumSlugCollisions(slugGroups, config.albumOverrides, albums, slugify));
+
+      // Originals whose metadata a download cannot clean. Through the album
+      // cache, like the alt-text report; an album that cannot be read is
+      // already reported above and is skipped here.
+      const downloadAlbums: DownloadAlbumRef[] = [];
+      for (const id of config.albums.filter((albumId) => config.albumDownloads?.[albumId])) {
+        try {
+          const album = await immich.getAlbum(id);
+          if (!album) continue;
+          const uncleanable = album.assets.filter((asset) => !isLocationScrubbable(asset));
+          downloadAlbums.push({
+            id,
+            albumName: album.albumName,
+            uncleanable: uncleanable.length,
+            uncleanableWithLocation: uncleanable.filter(
+              (asset) => asset.exifInfo?.latitude != null && asset.exifInfo?.longitude != null,
+            ).length,
+          });
+        } catch {
+          // Immich unreachable: the connection check says so.
+        }
+      }
+      const downloads = checkDownloadMetadata(downloadAlbums);
+      if (downloads) findings.push(downloads);
     }
   }
 

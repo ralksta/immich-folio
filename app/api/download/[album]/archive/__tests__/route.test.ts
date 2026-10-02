@@ -1,5 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import {
+  LAT,
+  cameraHeic,
+  cameraJpeg,
+  chunked,
+  contains,
+  latin1,
+} from '@/lib/__tests__/fixtures/location';
 
 /**
  * The archive route streams originals as a ZIP for either the whole album
@@ -428,5 +436,47 @@ describe('concurrent archives', () => {
     });
     await second.body!.cancel();
     mockClientIp.mockReturnValue('127.0.0.1');
+  });
+});
+
+/**
+ * The ZIP is stored uncompressed, so each entry's bytes appear in it as they
+ * are: what the scrubber left is exactly what a visitor unpacks.
+ */
+describe('location metadata', () => {
+  it('leaves GPS out of every original in the archive and keeps camera data', async () => {
+    const jpeg = cameraJpeg(false).file;
+    const heic = cameraHeic({ le: true }).file;
+    mockStream.mockImplementation((id: string) =>
+      Promise.resolve({
+        stream: chunked(id === 'asset-1' ? jpeg : heic, 512),
+        contentType: id === 'asset-1' ? 'image/jpeg' : 'image/heic',
+        contentLength: null,
+      }),
+    );
+
+    const zip = new Uint8Array(await (await GET(getReq(), params)).arrayBuffer());
+    expect(contains(zip, LAT.value(false))).toBe(false);
+    expect(contains(zip, LAT.value(true))).toBe(false);
+    const text = latin1(zip);
+    expect(text).not.toMatch(/exif:GPS/);
+    expect(text).not.toContain('52.520095');
+    expect(text.split('Canon EOS R5').length - 1).toBeGreaterThanOrEqual(2);
+    expect(text).toContain('photoshop:City="Berlin"');
+  });
+
+  it('leaves out an original whose metadata cannot be located, and goes on', async () => {
+    const broken = new Uint8Array([0xff, 0xd8, 0xff, 0xe1, 0x40, 0x00, 0x45, 0x78]);
+    mockStream.mockImplementation((id: string) =>
+      Promise.resolve(
+        id === 'asset-1'
+          ? { stream: chunked(broken, 8), contentType: 'image/jpeg', contentLength: null }
+          : originStream('second-original'),
+      ),
+    );
+    const zip = latin1(new Uint8Array(await (await GET(getReq(), params)).arrayBuffer()));
+    expect(zip).not.toContain('photo-1.jpg');
+    expect(zip).toContain('photo-2.jpg');
+    expect(zip).toContain('second-original');
   });
 });

@@ -41,7 +41,11 @@ type AltTextData = AltTextReport & {
 /** Which group a doctor check belongs to. An unknown id lands in Content. */
 const GROUPS: { id: string; title: string; checks: string[] }[] = [
   { id: 'connection', title: 'Connection', checks: ['immich-api', 'album-ids'] },
-  { id: 'security', title: 'Security', checks: ['auth-secret', 'passwords', 'proxy-hops', 'cdn'] },
+  {
+    id: 'security',
+    title: 'Security',
+    checks: ['auth-secret', 'passwords', 'proxy-hops', 'cdn', 'download-metadata'],
+  },
   {
     id: 'content',
     title: 'Content',
@@ -75,6 +79,7 @@ const FIXES: Record<string, { label: string; href: string }> = {
   'album-ids': { label: 'Open pages', href: '/admin/pages' },
   'albums-shared': { label: 'Open pages', href: '/admin/pages' },
   'content-pages': { label: 'Open pages', href: '/admin/pages' },
+  'download-metadata': { label: 'Open pages', href: '/admin/pages' },
   legal: { label: 'Open settings', href: '/admin/settings/legal' },
   contact: { label: 'Open settings', href: '/admin/settings/legal' },
   privacy: { label: 'Open settings', href: '/admin/settings/legal' },

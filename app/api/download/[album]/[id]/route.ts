@@ -15,6 +15,10 @@
  *
  * The last one is what stops one enabled album's URL being edited into a
  * download of any asset in the Immich instance.
+ *
+ * The file goes out as Immich stores it, minus its location: GPS coordinates
+ * are removed from JPEG, HEIC/HEIF and AVIF originals on the way through
+ * (lib/locationScrub.ts). Camera data, copyright and colour profile stay.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -25,6 +29,7 @@ import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 import { isAlbumReachable, siteLockResponse } from '@/lib/auth';
 import { contentDisposition } from '@/lib/downloadName';
+import { scrubLocationStream } from '@/lib/locationScrub';
 
 export const dynamic = 'force-dynamic';
 
@@ -116,6 +121,25 @@ export async function GET(
   }
   if (!result) return notFound();
 
+  // Location out, everything else in. The head is read before a byte is sent,
+  // so a file whose metadata cannot be located is refused rather than leaked.
+  let scrubbed;
+  try {
+    scrubbed = await scrubLocationStream(result.stream as ReadableStream<Uint8Array>);
+  } catch (error) {
+    console.error(`[Download] Reading original ${assetId} failed:`, error);
+    return NextResponse.json(
+      { error: 'Immich is currently unavailable' },
+      { status: 503, headers: { 'Retry-After': '30', 'Cache-Control': 'no-store' } },
+    );
+  }
+  if (!scrubbed.ok) {
+    console.warn(
+      `[Download] Refused original ${assetId}: its location metadata could not be removed (${scrubbed.reason}).`,
+    );
+    return notFound();
+  }
+
   const headers: Record<string, string> = {
     'Content-Type': result.contentType || 'application/octet-stream',
     'Content-Disposition': contentDisposition(asset.originalFileName),
@@ -124,7 +148,8 @@ export async function GET(
     'Cache-Control': 'private, no-store',
     'X-Content-Type-Options': 'nosniff',
   };
+  // Scrubbing overwrites in place, so the upstream length still holds.
   if (result.contentLength) headers['Content-Length'] = result.contentLength;
 
-  return new NextResponse(result.stream, { headers });
+  return new NextResponse(scrubbed.stream, { headers });
 }
