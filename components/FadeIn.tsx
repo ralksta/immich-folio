@@ -20,10 +20,28 @@ interface FadeInProps {
   className?: string;
   /** Extra inline styles for the wrapper (e.g. flex sizing in justified grids) */
   style?: React.CSSProperties;
+  /**
+   * The wrapper element. `figure` lets a photo grid hang a figcaption next to
+   * the photo; the reset in tokens.css removes its default margins, so it
+   * lays out exactly like the div.
+   */
+  as?: 'div' | 'figure';
 }
 
-export function FadeIn({ children, delay = 0, direction = 'up', className, style }: FadeInProps) {
-  const ref = useRef<HTMLDivElement>(null);
+export function FadeIn({
+  children,
+  delay = 0,
+  direction = 'up',
+  className,
+  style,
+  as: Wrapper = 'div',
+}: FadeInProps) {
+  // HTMLElement, not HTMLDivElement: the wrapper may be a <figure>. Set
+  // through a callback, which either element's ref accepts.
+  const ref = useRef<HTMLElement | null>(null);
+  const setRef = useCallback((el: HTMLElement | null) => {
+    ref.current = el;
+  }, []);
 
   const reveal = useCallback(() => {
     ref.current?.classList.add('fade-in--visible');
@@ -54,12 +72,12 @@ export function FadeIn({ children, delay = 0, direction = 'up', className, style
   }, [reveal]);
 
   return (
-    <div
-      ref={ref}
+    <Wrapper
+      ref={setRef}
       className={`fade-in ${direction === 'up' ? 'fade-in--up' : ''} ${className ?? ''}`}
       style={{ ...style, transitionDelay: `${delay}ms` }}
     >
       {children}
-    </div>
+    </Wrapper>
   );
 }

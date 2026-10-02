@@ -22,6 +22,8 @@ import { useDictionary } from '@/components/I18nProvider';
 import { parsePhotoHash, parsePhotoQuery, buildPhotoQuery } from '@/lib/photoHash';
 import { justifiedTileStyle } from '@/lib/justifiedRow';
 
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
 export interface PhotoItem {
   id: string;
   type: 'image' | 'video';
@@ -226,9 +228,18 @@ function PhotoGridInner({
 
   // Keyboard navigation and the scroll lock live in <Lightbox/>.
 
+  // A work's catalogue number on the wall label is its place in the album,
+  // not in the current view: the "selected only" filter must not renumber it.
+  const albumPosition = useMemo(() => new Map(assets.map((a, i) => [a.id, i + 1])), [assets]);
+
   const gridItems = useMemo(() => {
     return displayedAssets.map((asset, index) => {
       const isFav = proofing ? proofing.isFavorite(asset.id) : false;
+      // A focal length alone is not a label, as before.
+      const exifLine =
+        asset.camera || asset.lens
+          ? [asset.camera, asset.lens, asset.focalLength].filter(Boolean).join(' · ')
+          : '';
 
       // Justified rows: the flex sizing must sit on the outermost grid child,
       // which is the FadeIn wrapper — not the .photo-grid__item inside it.
@@ -236,7 +247,12 @@ function PhotoGridInner({
         layout === 'justified' ? justifiedTileStyle(asset.aspectRatio) : undefined;
 
       return (
-        <FadeIn key={asset.id} delay={index < 12 ? index * 50 : 0} style={justifiedStyle}>
+        <FadeIn
+          key={asset.id}
+          as="figure"
+          delay={index < 12 ? index * 50 : 0}
+          style={justifiedStyle}
+        >
           <div
             className={`photo-grid__item${
               layout === 'showcase' && index === 0 ? ' photo-grid__featured' : ''
@@ -328,16 +344,35 @@ function PhotoGridInner({
                 </svg>
               </div>
             )}
-            {(asset.camera || asset.lens) && (
+            {exifLine && (
               <div className="photo-grid__item-exif" aria-hidden="true">
-                {[asset.camera, asset.lens, asset.focalLength].filter(Boolean).join(' · ')}
+                {exifLine}
               </div>
             )}
           </div>
+
+          {/* The wall label under the photo, outside the tile and its clip.
+              globals.css hides it; a preset that hangs its photos as works
+              (kunsthalle) shows it. It carries only what the site already
+              publishes for the photo: its number, the caption that is the
+              image's alt text (absent unless the `caption` EXIF group is on),
+              and the EXIF line. The number and EXIF repeat the tile's own
+              label and the lightbox, so they stay out of the figure's name. */}
+          <figcaption className="photo-grid__label">
+            <span className="photo-grid__label-no" aria-hidden="true">
+              {pad2(albumPosition.get(asset.id) ?? index + 1)}
+            </span>
+            {asset.caption && <span className="photo-grid__label-title">{asset.caption}</span>}
+            {exifLine && (
+              <span className="photo-grid__label-exif" aria-hidden="true">
+                {exifLine}
+              </span>
+            )}
+          </figcaption>
         </FadeIn>
       );
     });
-  }, [displayedAssets, layout, openLightbox, proofing, t]);
+  }, [albumPosition, displayedAssets, layout, openLightbox, proofing, t]);
 
   // Photos of this album that are selected. Not `favorites.size`: the stored set
   // can also hold a photo since removed, or a favourite from another album whose

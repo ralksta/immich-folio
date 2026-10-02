@@ -1574,6 +1574,13 @@ body:has(> #main-content) > .footer {
   opacity: 1;
 }
 
+/* The wall label (PhotoGrid's figcaption): number, caption, EXIF under the
+   photo. Hidden unless a preset hangs its photos with one (kunsthalle), so
+   every other preset lays out as if it were not there. */
+.photo-grid__label {
+  display: none;
+}
+
 /* Hover-only overlays leave keyboard and touch visitors out (#696). A tile
    with keyboard focus shows its overlay like a hovered one, and on devices
    without hover — phones, and tablets wider than the 640px mobile rules — the
