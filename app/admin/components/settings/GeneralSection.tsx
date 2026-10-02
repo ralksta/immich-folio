@@ -152,6 +152,13 @@ export default function GeneralSection({
             checked={settings.proofing?.enabled !== false}
             onToggle={() => update('proofing.enabled', settings.proofing?.enabled === false)}
           />
+          <FeatureRow
+            icon={<Icons.IconSearch size={15} />}
+            title="Photo zoom"
+            description="Visitors zoom into a photo to full resolution (1:1) to check sharpness. Pages and albums can override this"
+            checked={settings.zoom === true}
+            onToggle={() => update('zoom', !settings.zoom)}
+          />
         </div>
         {/* Shown even while proofing is off globally: a subpage can switch it
             on for itself (`proofing: true`), so the address still has to be

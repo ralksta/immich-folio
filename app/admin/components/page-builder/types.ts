@@ -24,6 +24,11 @@ export interface AlbumEntry {
   location?: string;
   /** Whether visitors may download the originals from this album (#475). */
   download?: boolean;
+  /**
+   * Lightbox zoom for this album: true/false override the page and the site,
+   * undefined inherits (#467).
+   */
+  zoom?: boolean;
 }
 
 export interface Section {
@@ -43,6 +48,11 @@ export interface Subpage {
    * direction. No control in the builder yet; carried so a save keeps it.
    */
   proofing?: boolean;
+  /**
+   * Lightbox zoom for the albums on this page, over the site setting in either
+   * direction; undefined inherits (#467).
+   */
+  zoom?: boolean;
   /** EXPERIMENTAL: reachable by direct link, but not shown in navigation */
   hidden?: boolean;
   essayText?: string;

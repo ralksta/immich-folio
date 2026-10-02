@@ -23,6 +23,7 @@ import {
 import AlbumCard, { SortableAlbumCard } from './AlbumCard';
 import SubpagePreview from './SubpagePreview';
 import PasswordField from '../fields/PasswordField';
+import ZoomOverrideField from '../fields/ZoomOverrideField';
 import {
   normalizeSubpageGrid,
   type ActiveEditAlbumAddress,
@@ -344,6 +345,19 @@ export default function SubpageDrawer({
                     <option value="essay">Photo Essay Mode (Storytelling Editor)</option>
                   </select>
                 </div>
+
+                {/* Zoom belongs to the album viewer; a photo essay has none. */}
+                {sp.grid?.layout !== 'essay' && sp.essayText == null && !sp.essayFile && (
+                  <div style={{ marginTop: '1rem' }}>
+                    <ZoomOverrideField
+                      id="subpage-zoom"
+                      value={sp.zoom}
+                      onChange={(zoom) => updateSubpage(spIndex, { zoom })}
+                      inheritLabel="Inherit from site settings"
+                      hint="Applies to every album on this page that does not set its own. Settings › General has the site-wide switch."
+                    />
+                  </div>
+                )}
 
                 {/* Album cover grid — hidden in essay mode, which
                                   renders a story instead of a cover grid. The

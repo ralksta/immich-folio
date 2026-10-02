@@ -25,6 +25,8 @@ export interface SubpageConfig {
    */
   coverGrid?: Partial<GridConfig>;
   proofing?: boolean;
+  /** Lightbox zoom for the albums here, over the site setting (#467). */
+  zoom?: boolean;
   essayFile?: string;
   essayText?: string;
   enabled?: boolean;
@@ -40,6 +42,8 @@ export interface SubpageObjectValue {
   /** Album-cover tiles only; falls back to `grid` when unset (#523). */
   coverGrid?: Partial<GridConfig>;
   proofing?: boolean;
+  /** Lightbox zoom for the albums here, over the site setting (#467). */
+  zoom?: boolean;
   essayFile?: string;
   essayText?: string;
   enabled?: boolean;
@@ -279,6 +283,11 @@ export interface AppConfig {
     email?: string;
   };
   aboutEnabled: boolean;
+  /**
+   * Lightbox zoom to full resolution, site-wide (`zoom` in settings.yaml,
+   * off by default). Subpages and albums override it; see resolveZoom() (#467).
+   */
+  zoom: boolean;
   albumOverrides: Record<string, string>;
   albumDescriptions: Record<string, string>;
   albumPasswords: Record<string, string>;
@@ -293,6 +302,8 @@ export interface AppConfig {
   albumCoverPositions: Record<string, string>;
   /** Albums whose originals may be downloaded. Absent means no (#475). */
   albumDownloads: Record<string, boolean>;
+  /** Per-album lightbox zoom, either way. Absent means inherit (#467). */
+  albumZoom: Record<string, boolean>;
   /** Per-album map precision. Absent means `exact` (#469). */
   albumLocationPrecision: Record<string, LocationPrecision>;
   /** EXPERIMENTAL: external links appended to the header navigation. */
@@ -338,6 +349,29 @@ export interface AppConfig {
   };
 }
 
+/**
+ * Whether the lightbox offers zoom to full resolution for an album on a page
+ * (#467).
+ *
+ * Most specific wins, in either direction: the album's own `zoom:`, then the
+ * subpage it is shown on, then `zoom` in settings.yaml (off by default). The
+ * same `??` chain as resolveProofing(), one level deeper — `zoom: false` on an
+ * album has to beat a subpage's `true`.
+ *
+ * The zoom route has no page to ask, so it asks this for every route the
+ * visitor can reach the album through (isAlbumZoomReachable in lib/auth.ts).
+ *
+ * Lives here rather than in lib/config/index.ts so client-safe and test code
+ * that stubs the config barrel can still reach it.
+ */
+export function resolveZoom(
+  config: Pick<AppConfig, 'zoom' | 'albumZoom'>,
+  albumId: string,
+  subpage?: { zoom?: boolean },
+): boolean {
+  return config.albumZoom[albumId] ?? subpage?.zoom ?? config.zoom;
+}
+
 export interface AlbumEntryObject {
   /** Optional: an entry may carry only a sort mode and no title override. */
   title?: string;
@@ -357,6 +391,11 @@ export interface AlbumEntryObject {
   coverPosition?: string;
   /** Offer the original file for download from the lightbox (#475). Off by default. */
   download?: boolean;
+  /**
+   * Lightbox zoom to full resolution for this album, over the subpage and
+   * site setting in either direction (#467). Absent inherits.
+   */
+  zoom?: boolean;
   /**
    * How precisely this album's photographs may be placed on the map:
    * `exact` (default), `city`, `country` or `hidden`. Narrowed to
@@ -403,6 +442,8 @@ export interface GallerySubpageYaml {
   }>;
   password?: string;
   proofing?: boolean;
+  /** Lightbox zoom for every album here that does not set its own (#467). */
+  zoom?: boolean;
   essayFile?: string;
   essayText?: string;
   enabled?: boolean;
@@ -447,6 +488,8 @@ export interface SettingsYaml {
   transitions?: boolean;
   scrollToTop?: boolean;
   analytics?: boolean;
+  /** Lightbox zoom to full resolution; off unless set (#467). */
+  zoom?: boolean;
   proofing?: {
     enabled?: boolean;
     allowMailto?: boolean;

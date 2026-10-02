@@ -277,6 +277,7 @@ export interface GalleryDerivation {
   albumGrids: Record<string, Partial<GridConfig>>;
   albumCoverPositions: Record<string, string>;
   albumDownloads: Record<string, boolean>;
+  albumZoom: Record<string, boolean>;
   albumLocationPrecision: Record<string, LocationPrecision>;
 }
 
@@ -302,6 +303,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
   const albumGrids: Record<string, Partial<GridConfig>> = {};
   const albumCoverPositions: Record<string, string> = {};
   const albumDownloads: Record<string, boolean> = {};
+  const albumZoom: Record<string, boolean> = {};
   const albumLocationPrecision: Record<string, LocationPrecision> = {};
 
   /** Returns null for an entry whose album ID is not a UUID; callers drop it. */
@@ -396,6 +398,9 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
       // handing out full-resolution originals because one client gallery
       // needed to (#475).
       if (value.download === true) albumDownloads[validatedUuid] = true;
+      // Both values mean something: `false` switches zoom off here even where
+      // the subpage or the site has it on (#467). Anything else is ignored.
+      if (typeof value.zoom === 'boolean') albumZoom[validatedUuid] = value.zoom;
       const location = parseLocation(value.location, `${context}: album ${validatedUuid} location`);
       if (location) albumLocationPrecision[validatedUuid] = location;
     }
@@ -510,6 +515,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         sections,
         password: sp.password,
         proofing: sp.proofing,
+        zoom: typeof sp.zoom === 'boolean' ? sp.zoom : undefined,
         essayFile: sp.essayFile,
         essayText: sp.essayText,
         enabled: sp.enabled !== false,
@@ -545,6 +551,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
         ),
         password: sp.password,
         proofing: sp.proofing,
+        zoom: typeof sp.zoom === 'boolean' ? sp.zoom : undefined,
         essayFile: sp.essayFile,
         essayText: sp.essayText,
         enabled: sp.enabled !== false,
@@ -618,6 +625,7 @@ export function deriveGallery(gallery: GalleryYaml): GalleryDerivation {
     albumGrids,
     albumCoverPositions,
     albumDownloads,
+    albumZoom,
     albumLocationPrecision,
   };
 }
@@ -740,6 +748,7 @@ function deriveConfig(): AppConfig {
       analytics: true,
       proofing: { enabled: false, allowMailto: false },
       aboutEnabled: true,
+      zoom: false,
       albumOverrides: {},
       albumDescriptions: {},
       albumPasswords: {},
@@ -749,6 +758,7 @@ function deriveConfig(): AppConfig {
       albumGrids: {},
       albumCoverPositions: {},
       albumDownloads: {},
+      albumZoom: {},
       albumLocationPrecision: {},
       navLinks: [],
       cacheTtl: env.CACHE_TTL * 1000,
@@ -778,6 +788,7 @@ function deriveConfig(): AppConfig {
     albumGrids,
     albumCoverPositions,
     albumDownloads,
+    albumZoom,
     albumLocationPrecision,
   } = deriveGallery(gallery);
 
@@ -864,6 +875,9 @@ function deriveConfig(): AppConfig {
     // writes it, so a fresh install put a nav link in front of an empty page
     // (#518). `enabled: false` still hides it even when the file is there.
     aboutEnabled: settings.about?.enabled !== false && aboutContentExists(),
+    // Opt-in: zoom serves originals, which a portfolio must not start doing
+    // because an upgrade added the feature (#467).
+    zoom: settings.zoom === true,
     albumOverrides,
     albumDescriptions,
     albumPasswords,
@@ -873,6 +887,7 @@ function deriveConfig(): AppConfig {
     albumGrids,
     albumCoverPositions,
     albumDownloads,
+    albumZoom,
     albumLocationPrecision,
     navLinks: sanitizeNavLinks(settings.navLinks),
     cacheTtl: env.CACHE_TTL * 1000,

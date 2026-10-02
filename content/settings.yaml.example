@@ -64,6 +64,11 @@ scrollToTop: true
 #   enabled: true
 #   allowMailto: true
 
+# Lightbox zoom to full resolution (1:1), for checking sharpness. Off unless
+# set: it serves the full-resolution file (location removed). gallery.yaml can
+# switch it per subpage and per album, either way.
+# zoom: true
+
 # Watermark overlay on the lightbox. opacity is a fraction: 0.5 = 50%.
 # watermark:
 #   enabled: true

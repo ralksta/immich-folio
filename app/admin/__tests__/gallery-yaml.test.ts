@@ -138,6 +138,7 @@ const everySubpageKey: Required<SubpageYaml> = {
   sections: [{ title: 'North', description: 'Cold', albums: [B] }],
   password: 'scrypt:aa:bb',
   proofing: false,
+  zoom: true,
   essayFile: 'story',
   essayText: 'Text',
   enabled: false,
@@ -157,6 +158,18 @@ describe('subpage keys', () => {
     expect(roundTrip({ subpages: [on] })).toEqual({ subpages: [on] });
     expect(roundTrip({ subpages: [{ name: 'P', albums: [A] }] })).toEqual({
       subpages: [{ name: 'P', albums: [A] }],
+    });
+  });
+});
+
+describe('subpage zoom (#467)', () => {
+  it('keeps zoom in either direction, and writes nothing when unset', () => {
+    const off = { name: 'Z', zoom: false, albums: [A] };
+    const on = { name: 'Z', zoom: true, albums: [A] };
+    expect(roundTrip({ subpages: [off] })).toEqual({ subpages: [off] });
+    expect(roundTrip({ subpages: [on] })).toEqual({ subpages: [on] });
+    expect(roundTrip({ subpages: [{ name: 'Z', albums: [A] }] })).toEqual({
+      subpages: [{ name: 'Z', albums: [A] }],
     });
   });
 });
