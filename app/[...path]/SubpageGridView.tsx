@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { imageUrl } from '@/lib/urls';
+import { imageUrl, type ImageRef } from '@/lib/urls';
 import { SubpageSectionConfig } from '@/lib/config';
 import { getServerDictionary } from '@/lib/i18n/server';
 import { BackLink } from '@/components/BackLink';
@@ -11,6 +11,8 @@ interface SubpageAlbum {
   albumName: string;
   assetCount: number;
   albumThumbnailAssetId: string | null;
+  /** The cover asset as Immich has it, so an edited cover gets its edit marker (#831). */
+  cover?: ImageRef;
   /** EXPERIMENTAL: focal point for the cover crop (CSS object-position) */
   coverPosition?: string;
 }
@@ -73,7 +75,7 @@ function AlbumGrid({
             >
               {album.albumThumbnailAssetId ? (
                 <Image
-                  src={imageUrl(album.albumThumbnailAssetId, 'preview')}
+                  src={imageUrl(album.cover ?? album.albumThumbnailAssetId, 'preview')}
                   alt=""
                   fill
                   sizes="(max-width: 600px) 100vw, (max-width: 1000px) 50vw, 33vw"

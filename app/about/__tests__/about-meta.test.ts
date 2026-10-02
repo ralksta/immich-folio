@@ -25,16 +25,30 @@ vi.mock('@/lib/config', () => ({
   getConfigOrNull: () => ({ lang: 'en' }),
 }));
 vi.mock('@/lib/urls', () => ({
-  imageUrl: (id: string, size: string) => `/api/image/tok-${id}?size=${size}`,
+  imageUrl: (ref: string | { id: string; isEdited?: boolean }, size: string) =>
+    typeof ref === 'string'
+      ? `/api/image/tok-${ref}?size=${size}`
+      : `/api/image/tok-${ref.id}?size=${size}${ref.isEdited ? '&e=edit' : ''}`,
   assetPlaceholder: () => null,
 }));
-vi.mock('@/lib/immich', () => ({ immich: {} }));
+const portraitAsset = vi.hoisted(() => ({ value: null as null | Record<string, unknown> }));
+vi.mock('@/lib/immich', () => ({
+  immich: { getAssetInfo: async () => portraitAsset.value },
+}));
 
 const { generateMetadata } = await import('../page');
 
 describe('/about metadata', () => {
   beforeEach(() => {
     aboutMd = '';
+    portraitAsset.value = null;
+  });
+
+  it('shares a portrait edited in Immich under its edited URL (#831)', async () => {
+    aboutMd = '---\nname: Ada\nportrait: portrait-uuid\n---\nHello.';
+    portraitAsset.value = { id: 'portrait-uuid', isEdited: true };
+    const m = await generateMetadata();
+    expect(m.openGraph?.images).toEqual(['/api/image/tok-portrait-uuid?size=preview&e=edit']);
   });
 
   it('uses the portrait as the share image', async () => {

@@ -33,6 +33,9 @@ const STRIP_VERSION = 's1';
  */
 const MAX_STRIP_BYTES = 64 * 1024 * 1024;
 
+/** The shape of lib/urls.ts editMarker(): a base-36 timestamp. */
+const EDIT_MARKER = /^[0-9a-z]{1,16}$/;
+
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // ── Rate limiting ──────────────────────────────────
   const ip = getClientIp(request);
@@ -86,6 +89,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     request.nextUrl.searchParams.get('w'),
   );
 
+  // The edit marker (#831): lib/urls.ts writes `e` for a photo edited in
+  // Immich, and only then is the edit asked for. The URL thereby names the
+  // rendition, which is what makes the `immutable` caching below safe across
+  // an edit. A value outside the marker's shape is ignored, so it cannot carry
+  // anything into the ETag.
+  const editParam = request.nextUrl.searchParams.get('e');
+  const edit = editParam && EDIT_MARKER.test(editParam) ? editParam : null;
+
   // ── Browser Cache Optimization ─────────────────────
   // Use the opaque token to generate a safe ETag without leaking Immich UUIDs.
   // IMAGE_CACHE_VERSION participates so that a bump is not defeated by a client
@@ -93,7 +104,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   // `immutable`, so this only matters after expiry or a cache eviction, but a
   // matching ETag across two different URLs would be wrong either way.
   const cacheVersion = request.nextUrl.searchParams.get('v') ?? '';
-  const etag = `W/"${token}-${size}-${STRIP_VERSION}${cacheVersion ? `-${cacheVersion}` : ''}"`;
+  const etag = `W/"${token}-${size}-${STRIP_VERSION}${edit ? `-e${edit}` : ''}${cacheVersion ? `-${cacheVersion}` : ''}"`;
   if (request.headers.get('if-none-match') === etag) {
     return new NextResponse(null, {
       status: 304,
@@ -107,7 +118,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   let result;
   try {
-    result = await immich.streamAsset(assetId, size);
+    result = await immich.streamAsset(assetId, size, edit !== null);
   } catch (error) {
     // An outage must not look like a deleted photo. These URLs are served with
     // `immutable` on success, and a bare 404 is heuristically cacheable — so
@@ -177,7 +188,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       console.warn(
         `[Image API] Original von ${assetId} (${contentType}) nicht strippbar — liefere Preview.`,
       );
-      const preview = await immich.streamAsset(assetId, 'preview');
+      const preview = await immich.streamAsset(assetId, 'preview', edit !== null);
       if (!preview) {
         return NextResponse.json(
           { error: 'Asset not found' },

@@ -118,7 +118,7 @@ export default async function HomePage() {
       const ph = asset ? assetPlaceholder(asset) : null;
       const exif = asset ? await heroExifLine(asset, config.exif) : undefined;
       return {
-        src: imageUrl(id, 'preview'),
+        src: imageUrl(asset ?? id, 'preview'),
         ...(ph ? { blurDataURL: ph.blurDataURL } : {}),
         ...(exif ? { exif } : {}),
       };

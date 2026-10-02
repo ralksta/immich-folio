@@ -18,6 +18,7 @@ import {
   assetExifSummary,
   assetAspectRatio,
   assetCaption,
+  editMarker,
 } from '@/lib/urls';
 
 describe('imageUrl', () => {
@@ -29,6 +30,43 @@ describe('imageUrl', () => {
   it('uses the specified size parameter', () => {
     expect(imageUrl('id', 'thumbnail')).toBe('/api/image/ENCODED_id?size=thumbnail');
     expect(imageUrl('id', 'original')).toBe('/api/image/ENCODED_id?size=original');
+  });
+});
+
+describe('imageUrl for photos edited in Immich (#831)', () => {
+  const UPDATED = '2026-09-04T19:22:09.220Z';
+
+  it('adds the edit marker only for an edited photo', () => {
+    const marker = Date.parse(UPDATED).toString(36);
+    expect(imageUrl({ id: 'id', isEdited: true, updatedAt: UPDATED })).toBe(
+      `/api/image/ENCODED_id?size=preview&e=${marker}`,
+    );
+    expect(imageUrl({ id: 'id', isEdited: true, updatedAt: UPDATED }, 'thumbnail')).toBe(
+      `/api/image/ENCODED_id?size=thumbnail&e=${marker}`,
+    );
+  });
+
+  it('leaves every other URL exactly as before', () => {
+    expect(imageUrl({ id: 'id', isEdited: false, updatedAt: UPDATED })).toBe(
+      '/api/image/ENCODED_id?size=preview',
+    );
+    expect(imageUrl({ id: 'id', updatedAt: UPDATED })).toBe('/api/image/ENCODED_id?size=preview');
+    expect(imageUrl({ id: 'id' })).toBe(imageUrl('id'));
+  });
+
+  it('changes the marker when the photo is edited again', () => {
+    const first = editMarker({ isEdited: true, updatedAt: UPDATED });
+    const again = editMarker({ isEdited: true, updatedAt: '2026-10-01T08:00:00.000Z' });
+    expect(first).toMatch(/^[0-9a-z]{1,16}$/);
+    expect(again).toMatch(/^[0-9a-z]{1,16}$/);
+    expect(again).not.toBe(first);
+  });
+
+  it('still marks an edited photo whose update time is unknown', () => {
+    expect(editMarker({ isEdited: true })).toBe('1');
+    expect(editMarker({ isEdited: true, updatedAt: 'not a date' })).toBe('1');
+    expect(editMarker({ isEdited: false, updatedAt: UPDATED })).toBeNull();
+    expect(editMarker({})).toBeNull();
   });
 });
 
@@ -142,6 +180,65 @@ describe('assetAspectRatio', () => {
 
   it('returns undefined when dimensions are missing', () => {
     expect(assetAspectRatio({ exifInfo: undefined })).toBeUndefined();
+  });
+
+  /**
+   * #831, measured on Immich 3.2: EXIF keeps describing the stored file after
+   * an edit in Immich, while `width`/`height` follow the edit.
+   */
+  describe('a photo edited in Immich', () => {
+    const exif = (w: number, h: number, orientation: string | null = null) => ({
+      make: null,
+      model: null,
+      lensModel: null,
+      focalLength: null,
+      fNumber: null,
+      exposureTime: null,
+      iso: null,
+      exifImageWidth: w,
+      exifImageHeight: h,
+      orientation,
+      latitude: null,
+      longitude: null,
+      city: null,
+      state: null,
+      country: null,
+      dateTimeOriginal: null,
+      description: null,
+    });
+
+    it('takes a quarter turn from the edited size', () => {
+      // A scan stored 1076×723, rotated 270° in Immich: shown 723×1076.
+      expect(
+        assetAspectRatio({ isEdited: true, width: 723, height: 1076, exifInfo: exif(1076, 723) }),
+      ).toBeCloseTo(723 / 1076);
+    });
+
+    it('takes a crop from the edited size', () => {
+      // Stored 960×1280, cropped to 872×1132.
+      expect(
+        assetAspectRatio({ isEdited: true, width: 872, height: 1132, exifInfo: exif(960, 1280) }),
+      ).toBeCloseTo(872 / 1132);
+      // Stored 8064×6048 with orientation 6 (portrait), cropped to landscape.
+      expect(
+        assetAspectRatio({
+          isEdited: true,
+          width: 6048,
+          height: 4838,
+          exifInfo: exif(8064, 6048, '6'),
+        }),
+      ).toBeCloseTo(6048 / 4838);
+    });
+
+    it('keeps EXIF for a photo that is not edited', () => {
+      expect(
+        assetAspectRatio({ isEdited: false, width: 723, height: 1076, exifInfo: exif(3000, 2000) }),
+      ).toBe(1.5);
+    });
+
+    it('falls back to EXIF when Immich sent no edited size', () => {
+      expect(assetAspectRatio({ isEdited: true, exifInfo: exif(3000, 2000) })).toBe(1.5);
+    });
   });
 
   it('returns undefined when height is 0', () => {

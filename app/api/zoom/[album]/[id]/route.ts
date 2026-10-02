@@ -21,6 +21,9 @@
  *     full-size JPEG rendition, through the same scrubber. When Immich has
  *     none — full-size previews switched off, or the asset not yet processed —
  *     the answer is 404 and the lightbox stays on the preview.
+ *   - For a photo edited in Immich, whatever its format, the edited full-size
+ *     rendition (#831), through the same scrubber, so the zoom shows the crop
+ *     and rotation the preview shows.
  *
  * Whatever the source, only a file the scrubber recognised and cleaned goes
  * out, and only as JPEG or AVIF. A format it passes through untouched (a PNG
@@ -119,10 +122,14 @@ export async function GET(
 
   let result;
   try {
+    // An edited photo (#831) is zoomed into Immich's edited full-size
+    // rendition, never its original, which is the unedited file. Redirects
+    // are not followed here either: should Immich send one, it would be to a
+    // smaller rendition, which must not pass for full resolution.
     result =
       source === 'original'
         ? await immich.streamAsset(assetId, 'original')
-        : await immich.streamFullsize(assetId);
+        : await immich.streamFullsize(assetId, source === 'edited');
   } catch (error) {
     if (error instanceof ImmichUnavailableError) return unavailable();
     throw error;

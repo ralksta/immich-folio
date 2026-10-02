@@ -86,7 +86,7 @@ export function picksFor(session: ProofSession, album: ImmichAlbum | null): Admi
       assetId: asset.id,
       position: index + 1,
       fileName: asset.originalFileName,
-      thumbUrl: imageUrl(asset.id, 'thumbnail'),
+      thumbUrl: imageUrl(asset, 'thumbnail'),
       ...(asset.localDateTime || asset.fileCreatedAt
         ? { takenAt: asset.localDateTime ?? asset.fileCreatedAt }
         : {}),

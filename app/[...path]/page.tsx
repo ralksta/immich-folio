@@ -157,7 +157,7 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
     photoAsset?.exifInfo?.description?.trim() ||
     description ||
     (subtitle ? `${title} — ${subtitle}` : undefined);
-  const ogImage = photoAsset ? imageUrl(photoAsset.id, 'preview') : ogImageUrl(title, subtitle);
+  const ogImage = photoAsset ? imageUrl(photoAsset, 'preview') : ogImageUrl(title, subtitle);
 
   // A hidden subpage is reachable by link only: out of the nav, the home page
   // and the sitemap. Indexing it, or an album below it, would undo that.
@@ -190,13 +190,22 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
  * claim without one (#472).
  */
 function structuredDataFor(
-  album: { albumName: string; description?: string; albumThumbnailAssetId?: string | null },
+  album: {
+    albumName: string;
+    description?: string;
+    albumThumbnailAssetId?: string | null;
+    assets?: ImmichAsset[];
+  },
   path: string,
   photoCount: number,
 ) {
   const config = getConfig();
-  const cover = album.albumThumbnailAssetId
-    ? absoluteUrl(config.siteUrl, imageUrl(album.albumThumbnailAssetId, 'preview'))
+  const coverId = album.albumThumbnailAssetId;
+  // The album's own copy of its cover, when it has one, so an edit made in
+  // Immich reaches the URL (#831).
+  const coverAsset = coverId ? album.assets?.find((a) => a.id === coverId) : undefined;
+  const cover = coverId
+    ? absoluteUrl(config.siteUrl, imageUrl(coverAsset ?? coverId, 'preview'))
     : null;
   return albumStructuredData({
     siteUrl: config.siteUrl,
@@ -244,7 +253,7 @@ async function getAlbumHeroData(
   const asset = await immich.getAssetInfo(heroAssetId);
   const ph = asset ? assetPlaceholder(asset) : null;
   return {
-    heroImageUrl: imageUrl(heroAssetId, 'preview'),
+    heroImageUrl: imageUrl(asset ?? heroAssetId, 'preview'),
     heroBlurDataURL: ph?.blurDataURL,
   };
 }
@@ -655,14 +664,23 @@ async function PathContent({ params, searchParams }: PathPageProps) {
       };
     });
 
-    // Batch-fetch ThumbHash for album cover placeholders
-    const coverPlaceholders = await Promise.all(
-      albumsWithHero.map(async (album) => {
-        if (!album.albumThumbnailAssetId) return null;
-        const asset = await immich.getAssetInfo(album.albumThumbnailAssetId);
-        return asset ? assetPlaceholder(asset) : null;
-      }),
+    // Batch-fetch the cover assets: ThumbHash for the placeholders, and
+    // whether the cover was edited in Immich, which its URL has to say (#831).
+    const coverAssets = await Promise.all(
+      albumsWithHero.map((album) =>
+        album.albumThumbnailAssetId ? immich.getAssetInfo(album.albumThumbnailAssetId) : null,
+      ),
     );
+    const coverPlaceholders = coverAssets.map((asset) => (asset ? assetPlaceholder(asset) : null));
+    const albumsWithCover = albumsWithHero.map((album, i) => {
+      const asset = coverAssets[i];
+      return asset
+        ? {
+            ...album,
+            cover: { id: asset.id, isEdited: asset.isEdited, updatedAt: asset.updatedAt },
+          }
+        : album;
+    });
 
     // 1-based position among the enabled subpages — drives the header kicker.
     const enabledSubpages = config.subpages.filter((sp) => sp.enabled !== false);
@@ -682,7 +700,7 @@ async function PathContent({ params, searchParams }: PathPageProps) {
         slug={slug}
         title={result.subpage.title || result.subpage.name}
         subtitle={result.subpage.subtitle}
-        albums={albumsWithHero}
+        albums={albumsWithCover}
         coverPlaceholders={coverPlaceholders}
         sections={result.subpage.sections}
         gridStyle={buildCoverGridStyle(result.subpage.coverGrid)}

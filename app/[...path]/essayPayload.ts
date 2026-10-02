@@ -178,8 +178,8 @@ export async function buildEssayPayload(
       return {
         id: encodeAssetId(a.id),
         type: isVideo ? 'video' : 'image',
-        thumbUrl: imageUrl(a.id, 'preview'),
-        previewUrl: imageUrl(a.id, 'preview'),
+        thumbUrl: imageUrl(a, 'preview'),
+        previewUrl: imageUrl(a, 'preview'),
         ...(isVideo ? { videoUrl: videoUrl(a.id) } : {}),
         exifUrl: exifUrl(a.id),
         ...(ph ? { blurDataURL: ph.blurDataURL, dominantColor: ph.dominantColor } : {}),

@@ -20,6 +20,8 @@ export interface MapAlbumEntry {
   latSum: number;
   lngSum: number;
   coverAssetId: string;
+  /** Set when the cover was edited in Immich, for its image URL's edit marker (#831). */
+  coverEdit?: { isEdited: true; updatedAt?: string };
 }
 
 interface MapConfig {
@@ -148,6 +150,9 @@ export async function getMapData(): Promise<MapLocation[]> {
               latSum: 0,
               lngSum: 0,
               coverAssetId: asset.id,
+              ...(asset.isEdited === true
+                ? { coverEdit: { isEdited: true as const, updatedAt: asset.updatedAt } }
+                : {}),
             };
             byAlbum.set(album.id, entry);
           }

@@ -60,7 +60,14 @@ export async function generateMetadata(): Promise<Metadata> {
   // A page's openGraph replaces the layout's whole, images included, so
   // leaving them out shared /about with no picture at all. The portrait is the
   // obvious one (it is a published asset); without it, the generated card.
-  const ogImage = meta.portrait ? imageUrl(meta.portrait, 'preview') : ogImageUrl(title);
+  // The portrait's asset for its edit marker (#831), from the cache the page
+  // body reads as well.
+  const portraitAsset = meta.portrait
+    ? await immich.getAssetInfo(meta.portrait).catch(() => null)
+    : null;
+  const ogImage = meta.portrait
+    ? imageUrl(portraitAsset ?? meta.portrait, 'preview')
+    : ogImageUrl(title);
 
   return {
     title,
@@ -96,7 +103,7 @@ export default async function AboutPage() {
       <div className="about__portrait-col">
         {meta.portrait ? (
           <Image
-            src={imageUrl(meta.portrait, 'preview')}
+            src={imageUrl(portraitAsset ?? meta.portrait, 'preview')}
             alt={meta.name || t.about.portraitAlt}
             className="about__portrait"
             fill

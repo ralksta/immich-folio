@@ -62,9 +62,16 @@ export interface ImmichAsset {
   /**
    * Edited in Immich's editor (crop, rotate, …). Immich still answers
    * `/original` and the default thumbnail sizes with the *unedited* file; only
-   * `?edited=true` applies the edit. Optional: older Immich has no editor.
+   * `?edited=true` applies the edit — see streamAsset() and editMarker() in
+   * ./urls (#831). `width`/`height` above are the edited size, EXIF the
+   * stored one. Optional: older Immich has no editor.
    */
   isEdited?: boolean;
+  /**
+   * Last change to the asset in Immich. Read for edited photos only, as the
+   * cache marker of their image URLs (editMarker() in ./urls).
+   */
+  updatedAt?: string;
   /** Only surfaced in the admin pickers. Optional: older Immich responses omit it. */
   isFavorite?: boolean;
 }
@@ -118,6 +125,21 @@ interface CachedAlbumList {
 
 function allowlistKey(config: AppConfig): string {
   return [...config.albums].sort().join(',');
+}
+
+/**
+ * The Immich path for an asset's bytes. `edited=true` is only added when the
+ * edit is wanted, so a photo that is not edited is requested exactly as it
+ * always was (#831).
+ */
+export function assetBinaryPath(
+  assetId: string,
+  size: ImageSize | 'fullsize',
+  edited = false,
+): string {
+  const id = encodeURIComponent(assetId);
+  if (size === 'original') return `/assets/${id}/original${edited ? '?edited=true' : ''}`;
+  return `/assets/${id}/thumbnail?size=${size}${edited ? '&edited=true' : ''}`;
 }
 
 // ── API Client ─────────────────────────────────────────────────
@@ -282,16 +304,21 @@ class ImmichClient {
 
   /**
    * Stream a binary response from Immich (for image proxying).
+   *
+   * `edited` asks for the photo as edited in Immich's editor (#831). Measured
+   * against Immich 3.2: without it, the thumbnail, the preview and the
+   * original are the unedited file. With it, an edited photo's thumbnail and
+   * preview carry the crop or rotation, and its original is Immich's
+   * full-resolution edited rendition — a JPEG without EXIF, not the camera
+   * file. For a photo that is not edited, `edited=true` returns the same
+   * bytes as without it.
    */
   async streamAsset(
     assetId: string,
     size: ImageSize = 'preview',
+    edited = false,
   ): Promise<{ stream: ReadableStream; contentType: string; contentLength: string | null } | null> {
-    const endpoint =
-      size === 'original'
-        ? `/assets/${encodeURIComponent(assetId)}/original`
-        : `/assets/${encodeURIComponent(assetId)}/thumbnail?size=${size}`;
-    return this.streamBinary(assetId, endpoint, 'follow');
+    return this.streamBinary(assetId, assetBinaryPath(assetId, size, edited), 'follow');
   }
 
   /**
@@ -304,15 +331,17 @@ class ImmichClient {
    * were switched on. Following either redirect would pass a preview off as
    * full resolution, or hand out an original the caller did not choose — so
    * redirects are not followed, and any 3xx means "no rendition".
+   *
+   * `edited` asks for the edited rendition of a photo edited in Immich
+   * (#831). Measured against Immich 3.2, an edited photo has one at full
+   * resolution — a JPEG — whether or not full-size previews are switched on,
+   * and it is the same file `original?edited=true` returns.
    */
   async streamFullsize(
     assetId: string,
+    edited = false,
   ): Promise<{ stream: ReadableStream; contentType: string; contentLength: string | null } | null> {
-    return this.streamBinary(
-      assetId,
-      `/assets/${encodeURIComponent(assetId)}/thumbnail?size=fullsize`,
-      'manual',
-    );
+    return this.streamBinary(assetId, assetBinaryPath(assetId, 'fullsize', edited), 'manual');
   }
 
   private async streamBinary(

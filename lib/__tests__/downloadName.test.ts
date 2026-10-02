@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { safeDownloadName, contentDisposition } from '@/lib/downloadName';
+import { safeDownloadName, contentDisposition, editedDownloadName } from '@/lib/downloadName';
 
 const LF = String.fromCharCode(10);
 const CRLF = String.fromCharCode(13, 10);
@@ -83,5 +83,29 @@ describe('contentDisposition', () => {
 
   it('survives a missing name', () => {
     expect(contentDisposition(undefined)).toContain('filename="photo"');
+  });
+});
+
+describe('editedDownloadName (#831)', () => {
+  it('names an edited HEIC after the JPEG Immich renders from it', () => {
+    expect(editedDownloadName('IMG_9262.HEIC', 'image/jpeg')).toBe('IMG_9262.jpg');
+    expect(editedDownloadName('DSC_0001.NEF', 'image/jpeg; charset=binary')).toBe('DSC_0001.jpg');
+  });
+
+  it('keeps a name that already fits', () => {
+    expect(editedDownloadName('scan.jpeg', 'image/jpeg')).toBe('scan.jpeg');
+    expect(editedDownloadName('IMG_0001.JPG', 'image/jpeg')).toBe('IMG_0001.JPG');
+    expect(editedDownloadName('shot.avif', 'image/avif')).toBe('shot.avif');
+  });
+
+  it('adds an extension to a name without one', () => {
+    expect(editedDownloadName('scan', 'image/jpeg')).toBe('scan.jpg');
+    expect(editedDownloadName('.hidden', 'image/jpeg')).toBe('.hidden.jpg');
+  });
+
+  it('leaves the name alone for a type it does not know', () => {
+    expect(editedDownloadName('clip.mov', 'video/quicktime')).toBe('clip.mov');
+    expect(editedDownloadName('IMG_1.HEIC', null)).toBe('IMG_1.HEIC');
+    expect(editedDownloadName(undefined, 'image/jpeg')).toBeUndefined();
   });
 });

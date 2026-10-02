@@ -485,4 +485,30 @@ describe('location metadata', () => {
     expect(zip).toContain('photo-2.jpg');
     expect(zip).toContain('second-original');
   });
+
+  it('puts a photo edited in Immich in as edited, renamed, and without GPS (#831)', async () => {
+    mockGetAlbum.mockResolvedValue({
+      ...ALBUM,
+      assets: [
+        { id: 'asset-1', type: 'IMAGE', originalFileName: 'IMG_9262.HEIC', isEdited: true },
+        { id: 'asset-2', type: 'IMAGE', originalFileName: 'photo-2.jpg' },
+      ],
+    });
+    const jpeg = cameraJpeg(true).file;
+    mockStream.mockImplementation(() =>
+      Promise.resolve({
+        stream: chunked(jpeg, 512),
+        contentType: 'image/jpeg',
+        contentLength: null,
+      }),
+    );
+
+    const zip = new Uint8Array(await (await GET(getReq(), params)).arrayBuffer());
+    expect(mockStream).toHaveBeenCalledWith('asset-1', 'original', true);
+    expect(mockStream).toHaveBeenCalledWith('asset-2', 'original', false);
+    const text = latin1(zip);
+    expect(text).toContain('IMG_9262.jpg');
+    expect(text).not.toContain('IMG_9262.HEIC');
+    expect(contains(zip, LAT.value(true))).toBe(false);
+  });
 });

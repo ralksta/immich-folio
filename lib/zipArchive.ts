@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Readable } from 'node:stream';
 import archiver from 'archiver';
 import { immich, type ImmichAsset } from '@/lib/immich';
-import { contentDisposition, safeDownloadName } from '@/lib/downloadName';
+import { contentDisposition, editedDownloadName, safeDownloadName } from '@/lib/downloadName';
 import { getClientIp } from '@/lib/rate-limit';
 import { getDictionary } from '@/lib/i18n';
 import { getLocale, getServerDictionary } from '@/lib/i18n/server';
@@ -494,7 +494,9 @@ export function streamArchive(
       for (const asset of assets) {
         // The visitor left (or the archive failed): stop pulling originals.
         if (archive.destroyed) break;
-        const result = await immich.streamAsset(asset.id, 'original');
+        // Edited in Immich: the edit, not the unedited camera file (#831).
+        const edited = asset.isEdited === true;
+        const result = await immich.streamAsset(asset.id, 'original', edited);
         if (!result) continue;
         if (archive.destroyed) {
           // Left while the headers were on their way: release the body unread.
@@ -521,7 +523,12 @@ export function streamArchive(
         await appendEntry(
           archive,
           nodeStream,
-          uniqueEntryName(asset.originalFileName, used),
+          uniqueEntryName(
+            edited
+              ? editedDownloadName(asset.originalFileName, result.contentType)
+              : asset.originalFileName,
+            used,
+          ),
           entryDate(asset),
         );
       }

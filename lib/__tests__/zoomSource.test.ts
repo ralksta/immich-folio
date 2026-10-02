@@ -60,11 +60,17 @@ describe('zoomSourceFor', () => {
     expect(zoomSourceFor(image(null, 'no-extension'))).toBeNull();
   });
 
-  it('never zooms a photo edited in Immich (review of #830)', () => {
-    // Immich serves the unedited file as the original: a crop would come undone.
-    expect(zoomSourceFor({ ...image('image/jpeg'), isEdited: true })).toBeNull();
-    expect(zoomSourceFor({ ...image('image/heic'), isEdited: true })).toBeNull();
+  it('zooms a photo edited in Immich into its edited rendition (#831)', () => {
+    // Immich serves the unedited file as the original: a crop would come
+    // undone. The edited full-size rendition matches the edited preview.
+    expect(zoomSourceFor({ ...image('image/jpeg'), isEdited: true })).toBe('edited');
+    expect(zoomSourceFor({ ...image('image/heic'), isEdited: true })).toBe('edited');
     expect(zoomSourceFor({ ...image('image/jpeg'), isEdited: false })).toBe('original');
+    expect(zoomSourceFor({ ...image('image/heic'), isEdited: false })).toBe('fullsize');
+    // Edits never make a video zoomable.
+    expect(
+      zoomSourceFor({ type: 'VIDEO', originalMimeType: 'video/mp4', isEdited: true }),
+    ).toBeNull();
   });
 
   it('refuses a non-image MIME type on an image asset', () => {
@@ -73,6 +79,27 @@ describe('zoomSourceFor', () => {
 });
 
 describe('zoomDimensions', () => {
+  it('gives an edited photo its edited size, which is what its rendition has (#831)', () => {
+    // Measured on Immich 3.2: an iPhone HEIC stored 5712×4284 with
+    // orientation 6, turned back to landscape in Immich's editor. The edited
+    // full-size rendition is 5712×4284; EXIF alone would say 4284×5712.
+    expect(
+      zoomDimensions({
+        width: 5712,
+        height: 4284,
+        exifInfo: { exifImageWidth: 5712, exifImageHeight: 4284, orientation: '6' },
+      }),
+    ).toEqual({ width: 5712, height: 4284 });
+    // A crop: stored 8064×6048 (orientation 6), cropped to 6048×4838.
+    expect(
+      zoomDimensions({
+        width: 6048,
+        height: 4838,
+        exifInfo: { exifImageWidth: 8064, exifImageHeight: 6048, orientation: '6' },
+      }),
+    ).toEqual({ width: 6048, height: 4838 });
+  });
+
   it('prefers Immich’s upright width and height', () => {
     expect(
       zoomDimensions({
