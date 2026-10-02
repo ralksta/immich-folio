@@ -280,6 +280,12 @@ data itself is not touched. Other formats (RAW, DNG, PNG, TIFF, WebP, video) are
 delivered exactly as Immich stores them, including any GPS. The diagnostics page
 warns when a download album contains such files.
 
+A photo edited in Immich's own editor (crop, rotate) is downloaded as edited,
+not as the camera file. Immich renders the edit as a full-resolution JPEG
+without EXIF, so that file has no camera data either, and its name gets a
+`.jpg` extension (`IMG_0001.HEIC` arrives as `IMG_0001.jpg`). It passes the
+same location scrubber.
+
 One visitor (by client IP, see `TRUSTED_PROXY_HOPS`) can have at most two ZIPs
 downloading at once, album and proofing downloads counted together; a third
 gets a "too many requests" page until one finishes. A ZIP whose download stops
@@ -774,7 +780,7 @@ zoom button.
 | JPEG, AVIF                         | The original, with its location removed        |
 | HEIC/HEIF, RAW/DNG, TIFF, JPEG XL… | Immich's full-size rendition, location removed |
 | PNG, WebP, GIF                     | Not zoomable — their metadata is not scrubbed  |
-| Edited in Immich (crop, rotate)    | Not zoomable — Immich's original is unedited   |
+| Edited in Immich (crop, rotate)    | Immich's edited full-size rendition            |
 | Video                              | Not zoomable                                   |
 
 Location is removed the same way as for [originals download](#originals-download):
@@ -795,9 +801,11 @@ exports) can look more saturated at 1:1 than in the preview: Immich's preview
 ignores that tag and comes out desaturated (#827), while the browser shows the
 original as tagged. The original is the accurate one.
 
-A photo edited in Immich's own editor is never zoomed. Immich keeps the edit
-apart from the file: its original is the unedited photo, so whatever a crop
-removed would come back at 1:1.
+A photo edited in Immich's own editor zooms into the edit, never into its
+original: Immich keeps the edit apart from the file, so the original is the
+unedited photo and whatever a crop removed would come back at 1:1. Immich has
+a full-resolution rendition of every edit, whether or not full-size previews
+are switched on, so edited photos do not depend on that setting.
 
 On touch devices, photos above **50 megapixels** get no zoom control. Showing a
 photo at 1:1 means decoding all of it — 200 MB of memory at 50 MP, 240 MB for a

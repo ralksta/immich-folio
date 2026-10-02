@@ -18,6 +18,8 @@ For the quick path — clone, `npm run dev`, open `/install` — see the
 - [Behaviour when Immich is Unreachable](#behaviour-when-immich-is-unreachable)
 - [Reverse Proxy](#reverse-proxy)
 - [CDN Mode](#cdn-mode)
+- [Edits made in Immich](#edits-made-in-immich)
+- [Colour Profiles](#colour-profiles)
 
 ## What the Setup Wizard Writes
 
@@ -230,8 +232,9 @@ Folio URL, then:
 
 - **Cache `/api/image/*` and `/api/video/*`**, and nothing else. Pages are
   rendered per request, and other routes check cookies.
-- **Include the full query string in the cache key.** `size`, `w` and the
-  `IMAGE_CACHE_VERSION` buster `v` all select a different file.
+- **Include the full query string in the cache key.** `size`, `w`, the edit
+  marker `e` and the `IMAGE_CACHE_VERSION` buster `v` all select a different
+  file.
 - **Respect the origin's `Cache-Control`.** Photos come back
   `public, max-age=31536000, immutable`; errors (429, 503, 404) come back
   `no-store` and must not be cached.
@@ -256,10 +259,30 @@ links, not the image URLs themselves.
 
 **Changing a photo.** A CDN keeps immutable responses for as long as a browser
 does. Bump `IMAGE_CACHE_VERSION` after regenerating thumbnails in Immich, which
-changes every URL at once, or purge the CDN.
+changes every URL at once, or purge the CDN. Edits made in Immich's editor need
+neither: see [Edits made in Immich](#edits-made-in-immich).
 
 The Content-Security-Policy allows the CDN's origin for `img-src` and
 `media-src` automatically.
+
+## Edits made in Immich
+
+Photos edited in Immich's own editor (crop, rotate) appear as edited
+everywhere: in the grid, the lightbox, the zoom, share images, the map and
+downloads. Immich keeps an edit apart from the file and applies it only when
+asked to, so Folio asks for the edited rendition of every photo Immich marks as
+edited, and lays the grid out with the edited proportions.
+
+The image URL of an edited photo carries an extra `e` parameter, derived from
+when the photo last changed in Immich. Image responses are cached as
+`immutable` for a year and the asset ID stays the same through an edit, so
+without it browsers and CDNs would keep showing the photo as it was before.
+Only edited photos get a new URL; all other URLs stay as they are. A later
+edit changes the parameter again, once Folio's album cache has picked it up
+(`CACHE_TTL`).
+
+Downloads of an edited photo are Immich's rendition of the edit: a
+full-resolution JPEG without EXIF, named `.jpg`.
 
 ## Colour Profiles
 
