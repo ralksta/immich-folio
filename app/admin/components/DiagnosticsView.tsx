@@ -72,9 +72,9 @@ const DOCS = 'https://github.com/ralksta/immich-folio/blob/main';
 const FIXES: Record<string, { label: string; href: string }> = {
   'auth-secret': {
     label: 'How to set it',
-    href: `${DOCS}/README.md#environment-variables-envlocal`,
+    href: `${DOCS}/docs/deployment.md#environment-variables`,
   },
-  'proxy-hops': { label: 'How to set it', href: `${DOCS}/docs/gallery-config.md#trusted-proxies` },
+  'proxy-hops': { label: 'How to set it', href: `${DOCS}/docs/security.md#trusted-proxies` },
   cdn: { label: 'CDN setup', href: `${DOCS}/docs/deployment.md#cdn-mode` },
   passwords: { label: 'Open settings', href: '/admin/settings/security' },
   'album-ids': { label: 'Open pages', href: '/admin/pages' },
@@ -89,11 +89,11 @@ const FIXES: Record<string, { label: string; href: string }> = {
   'content-writable': { label: 'How to fix', href: `${DOCS}/docs/admin-panel.md#docker-usage` },
   'zoom-renditions': {
     label: 'How to set it up',
-    href: `${DOCS}/docs/gallery-config.md#photo-zoom`,
+    href: `${DOCS}/docs/gallery-features.md#photo-zoom`,
   },
   'immich-api': {
     label: 'API key permissions',
-    href: `${DOCS}/README.md#immich-api-key-permissions`,
+    href: `${DOCS}/docs/immich-setup.md#api-key-permissions`,
   },
 };
 
