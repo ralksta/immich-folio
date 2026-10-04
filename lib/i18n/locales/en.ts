@@ -191,7 +191,7 @@ export const en = {
     shortcutClose: 'Close the viewer',
     /** The zoom button (#467): to 1:1 from fit, and back. */
     zoomIn: 'Zoom to full resolution',
-    zoomInTitle: 'Zoom to full resolution (+ or double-click)',
+    zoomInTitle: 'Zoom to full resolution (+)',
     zoomOut: 'Fit the photo to the screen',
     zoomOutTitle: 'Fit to screen (0 or Esc)',
     zoomLoading: 'Loading full resolution…',

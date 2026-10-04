@@ -190,7 +190,7 @@ export const fr: Dictionary = {
     shortcutList: 'Cette liste',
     shortcutClose: 'Fermer la visionneuse',
     zoomIn: 'Zoomer en pleine résolution',
-    zoomInTitle: 'Zoomer en pleine résolution (+ ou double-clic)',
+    zoomInTitle: 'Zoomer en pleine résolution (+)',
     zoomOut: 'Ajuster la photo à l’écran',
     zoomOutTitle: 'Ajuster à l’écran (0 ou Échap)',
     zoomLoading: 'Chargement de la pleine résolution…',
