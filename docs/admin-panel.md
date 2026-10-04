@@ -2,6 +2,16 @@
 
 Immich Folio includes a built-in visual admin panel at `/admin` that lets you manage your gallery structure, journal entries and site settings without editing YAML files by hand.
 
+<p align="center">
+  <img src="screenshots/admin-login.png" width="49%" alt="Admin panel login screen" />
+  <img src="screenshots/admin-page-builder.png" width="49%" alt="Page builder: the site structure on the left, the selected page with its albums on the right" />
+</p>
+<p align="center">
+  <img src="screenshots/admin-album-picker.png" width="49%" alt="Album picker listing shared Immich albums with photo counts" />
+  <img src="screenshots/admin-settings.png" width="49%" alt="Settings editor: sections on the left, site identity and feature switches grouped by meaning" />
+</p>
+<p align="center"><em>Login · page builder · album picker · settings editor</em></p>
+
 **Contents:**
 
 - [Enabling the Admin Panel](#enabling-the-admin-panel)
@@ -25,7 +35,7 @@ ADMIN_PASSWORD=your-secure-admin-password
 
 Then navigate to `http://your-site/admin`. The panel is completely disabled if no password is set — it won't even render the login page.
 
-The [setup wizard](../README.md#first-run-setup) can set the password instead, storing it as an scrypt hash in `content/install.json`. An `ADMIN_PASSWORD` environment variable takes precedence if both are present.
+The [setup wizard](deployment.md#first-run-setup) can set the password instead, storing it as an scrypt hash in `content/install.json`. An `ADMIN_PASSWORD` environment variable takes precedence if both are present.
 
 > [!IMPORTANT]
 > The admin password is separate from any album or subpage passwords. It controls access to the entire gallery configuration.
