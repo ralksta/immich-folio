@@ -238,7 +238,9 @@ export function InstallWizard({ initialApiUrl, setupToken }: Props) {
                     disabled={testing}
                   />
                   <p className="admin-hint">
-                    Create one in Immich under Admin Settings → API Keys.
+                    Create one in Immich under Account Settings → API Keys. It needs album.read,
+                    asset.read and asset.view, plus asset.download if you want photo zoom or
+                    original downloads.
                   </p>
                 </div>
 

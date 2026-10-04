@@ -237,11 +237,14 @@ PROOFING_WEBHOOK_URL=https://…         # notify on submitted client proofing s
 
 Create a dedicated API key in Immich under **Account Settings → API Keys**. Immich Folio only needs **read access** — it never modifies your library.
 
-| Permission   | Required | Used for                                                             |
-| ------------ | -------- | -------------------------------------------------------------------- |
-| `album.read` | ✅ Yes   | List and fetch album metadata & photo lists                          |
-| `asset.read` | ✅ Yes   | Fetch asset metadata, EXIF data, thumbnails, previews, and originals |
-| `asset.view` | ✅ Yes   | Stream image/video files (thumbnail, preview, video playback)        |
+| Permission       | Required                    | Used for                                                                                                                                           |
+| ---------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `album.read`     | ✅ Yes                      | List and fetch album metadata & photo lists                                                                                                        |
+| `asset.read`     | ✅ Yes                      | Fetch asset metadata, EXIF data and search results                                                                                                 |
+| `asset.view`     | ✅ Yes                      | Stream image/video files (thumbnail, preview, video playback)                                                                                      |
+| `asset.download` | Only for zoom and downloads | Stream originals: [photo zoom](docs/gallery-config.md#photo-zoom) on JPEG/AVIF and [originals download](docs/gallery-config.md#originals-download) |
+
+> **Zoom and downloads need `asset.download`.** Without it Immich answers `403` for the original file, so the zoom button reports that full resolution is unavailable and downloads fail. Leave it off if you use neither feature.
 
 > **No write permissions needed.** `album.create`, `asset.upload`, `asset.delete`, etc. can all be left **off**.
 

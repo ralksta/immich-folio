@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [0.20.1] — 2026-10-04
+
+### Fixed
+
+- **Photo zoom and originals download need the `asset.download` permission**
+  on the Immich API key, which the setup guide never said. Zoom into a JPEG or
+  AVIF, the single download and both ZIPs stream `/assets/:id/original`, and
+  Immich answers `403` to a key that only has `asset.read` and `asset.view`.
+  The README permission table (which also credited `asset.read` with
+  originals), the photo zoom and originals download sections of the gallery
+  guide and the setup wizard hint now name it, and the log says so when a
+  `403` hits an original. Nothing changes for a site that uses neither
+  feature. Reported by a user who had to widen their key after enabling zoom.
+
 ## [0.20.0] — 2026-10-02
 
 ### Security

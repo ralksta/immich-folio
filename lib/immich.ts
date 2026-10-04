@@ -375,7 +375,12 @@ class ImmichClient {
       }
 
       if (!res.ok) {
-        console.error(`[Immich] Failed to stream ${assetId}: ${res.status}`);
+        console.error(
+          `[Immich] Failed to stream ${assetId}: ${res.status}` +
+            (res.status === 403 && endpoint.includes('/original')
+              ? ' (the API key probably lacks the asset.download permission)'
+              : ''),
+        );
         // Neither branch below reads the body — an unconsumed one keeps its
         // socket out of undici's pool until GC finalises it (#635).
         await res.body?.cancel();

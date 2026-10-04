@@ -262,6 +262,9 @@ albums:
       download: true
 ```
 
+The API key needs the `asset.download` permission in Immich, since originals
+are streamed from `/assets/:id/original`.
+
 Once enabled, visitors get a **Download album** link in the album header (every
 original as a ZIP), and — where [client proofing](#client-proofing) is on — a
 **Download selected (.zip)** action in the export dialog that zips just the
@@ -787,6 +790,13 @@ Location is removed the same way as for [originals download](#originals-download
 GPS coordinates and place names below city level are overwritten in place;
 camera data and colour profile stay. A file whose metadata cannot be read is
 refused rather than sent.
+
+Zoom into a JPEG or AVIF streams the original from Immich, so the API key
+needs the `asset.download` permission (_Account Settings › API Keys_). With
+only `asset.read` and `asset.view`, Immich answers `403` and the lightbox says
+full resolution is unavailable; the Folio log shows
+`Failed to stream … 403`. The same permission covers
+[originals download](#originals-download).
 
 Formats a browser cannot display need Immich's **full-size preview**
 (_Administration › Settings › Image Settings › Full-size image_, JPEG format).
