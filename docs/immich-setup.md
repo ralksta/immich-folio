@@ -18,12 +18,12 @@ What Immich Folio needs from your Immich server: a version, an API key with the 
 
 Create a dedicated API key in Immich under **Account Settings → API Keys**. Immich Folio only needs **read access** — it never modifies your library.
 
-| Permission       | Required                    | Used for                                                                                                                                 |
-| ---------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `album.read`     | ✅ Yes                      | List and fetch album metadata & photo lists                                                                                              |
-| `asset.read`     | ✅ Yes                      | Fetch asset metadata, EXIF data and search results                                                                                       |
-| `asset.view`     | ✅ Yes                      | Stream image/video files (thumbnail, preview, video playback)                                                                            |
-| `asset.download` | Only for zoom and downloads | Stream originals: [photo zoom](gallery-config.md#photo-zoom) on JPEG/AVIF and [originals download](gallery-config.md#originals-download) |
+| Permission       | Required                    | Used for                                                                                                                                     |
+| ---------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `album.read`     | ✅ Yes                      | List and fetch album metadata & photo lists                                                                                                  |
+| `asset.read`     | ✅ Yes                      | Fetch asset metadata, EXIF data and search results                                                                                           |
+| `asset.view`     | ✅ Yes                      | Stream image/video files (thumbnail, preview, video playback)                                                                                |
+| `asset.download` | Only for zoom and downloads | Stream originals: [photo zoom](gallery-features.md#photo-zoom) on JPEG/AVIF and [originals download](gallery-features.md#originals-download) |
 
 > **Zoom and downloads need `asset.download`.** Without it Immich answers `403` for the original file, so the zoom button reports that full resolution is unavailable and downloads fail. Leave it off if you use neither feature.
 
@@ -33,7 +33,7 @@ Create a dedicated API key in Immich under **Account Settings → API Keys**. Im
 
 ## Full-size images for HEIC and RAW zoom
 
-[Photo zoom](gallery-config.md#photo-zoom) on formats a browser cannot display (HEIC, RAW and similar) uses Immich's full-size rendition. Turn on _Administration › Settings › Image Settings › Full-size image_ (JPEG format) and run the _Generate Thumbnails_ job for existing photos. JPEG and AVIF photos zoom without this setting.
+[Photo zoom](gallery-features.md#photo-zoom) on formats a browser cannot display (HEIC, RAW and similar) uses Immich's full-size rendition. Turn on _Administration › Settings › Image Settings › Full-size image_ (JPEG format) and run the _Generate Thumbnails_ job for existing photos. JPEG and AVIF photos zoom without this setting.
 
 ## Which albums are published
 

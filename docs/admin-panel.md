@@ -143,7 +143,7 @@ Theme presets, grid layouts, photo frames, hero styles and the Google search sni
 Private client links: pick a client name and any Immich album — published or
 not — and optionally an expiry date and download rights. Each card shows the
 link's state (open, submitted, expired), what the client picked, and the export
-buttons. See [Client Proofing Links](gallery-config.md#client-proofing-links)
+buttons. See [Client Proofing Links](gallery-features.md#client-proofing-links)
 for how the client side works.
 
 ## Analytics

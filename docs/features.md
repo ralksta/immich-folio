@@ -12,7 +12,7 @@ Everything Immich Folio does, grouped by what you are doing. The [README](../REA
 - **Justified rows** _(experimental)_ — every row fills the width at one shared height, aspect ratios intact, nothing cropped
 - **Per-subpage grid overrides** — each subpage can define its own columns, gap, aspect ratio, and layout mode, and individual albums can override that again _(experimental)_
 - **Cover focal points** _(experimental)_ — decide which part of a cover survives the crop
-- **Fullscreen lightbox** — keyboard and swipe navigation, EXIF panel, adjacent image preloading, and opt-in 1:1 zoom to full resolution for checking sharpness ([guide](gallery-config.md#photo-zoom))
+- **Fullscreen lightbox** — keyboard and swipe navigation, EXIF panel, adjacent image preloading, and opt-in 1:1 zoom to full resolution for checking sharpness ([guide](gallery-features.md#photo-zoom))
 - **EXIF metadata on hover** — camera body, lens, focal length, aperture, shutter speed, ISO shown directly on the grid
 - **ThumbHash placeholders** — instant blurred previews while full images load
 
@@ -39,7 +39,7 @@ Everything Immich Folio does, grouped by what you are doing. The [README](../REA
 - **Subpage on/off toggle** — take a page offline without deleting it
 - **External navigation links** _(experimental)_ — point the header at a shop, a blog, or a social profile
 - **Client proofing** — clients favorite photos and export the selection; picks stay in the visitor's browser and the URL, with nothing stored server-side (proofing links, below, do save them)
-- **Client proofing links** — a private link per client and album, picks saved server-side, a submit that locks the selection and pings you via webhook, expiry dates, download limits, and a Lightroom-ready export of the chosen file names ([guide](gallery-config.md#client-proofing-links))
+- **Client proofing links** — a private link per client and album, picks saved server-side, a submit that locks the selection and pings you via webhook, expiry dates, download limits, and a Lightroom-ready export of the chosen file names ([guide](gallery-features.md#client-proofing-links))
 - **Originals delivery** — per-album opt-in lets visitors download a whole album or their proofing selection as a ZIP of the originals, with GPS coordinates removed from JPEG, HEIC and AVIF files
 - **Lightbox watermark** — configurable overlay on fullscreen images
 - **Six interface languages** — English, German, French, Spanish, Italian and Dutch for everything visitors see

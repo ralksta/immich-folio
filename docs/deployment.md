@@ -119,9 +119,9 @@ CONTACT_NOTIFY_URL=https://ntfy.sh/x  # push for new contact form messages, over
 PROOFING_WEBHOOK_URL=https://…         # notify on submitted client proofing selections
 ```
 
-> Login and setup endpoints have their own, much lower limits that `RATE_LIMIT_RPM` does not raise — see [Rate Limiting](gallery-config.md#rate-limiting).
+> Login and setup endpoints have their own, much lower limits that `RATE_LIMIT_RPM` does not raise — see [Rate Limiting](security.md#rate-limiting).
 
-> Behind a reverse proxy, set `TRUSTED_PROXY_HOPS` to the number of proxies in front of the app (nginx/Traefik/Caddy = 1; Cloudflare in front of nginx = 2). Without it the client IP is read from a header the client itself can set, which defeats the brute-force limits on the password endpoints. See [Trusted Proxies](gallery-config.md#trusted-proxies).
+> Behind a reverse proxy, set `TRUSTED_PROXY_HOPS` to the number of proxies in front of the app (nginx/Traefik/Caddy = 1; Cloudflare in front of nginx = 2). Without it the client IP is read from a header the client itself can set, which defeats the brute-force limits on the password endpoints. See [Trusted Proxies](security.md#trusted-proxies).
 
 ## Docker Compose
 
@@ -267,7 +267,7 @@ photos.example.com {
 > make sure they forward `X-Forwarded-For` correctly — otherwise the client IP
 > comes from a header the client itself can set, which defeats the brute-force
 > limits on the password endpoints. See
-> [Trusted Proxies](gallery-config.md#trusted-proxies) for the setting and a
+> [Trusted Proxies](security.md#trusted-proxies) for the setting and a
 > matching nginx config.
 
 Login cookies (admin session and gallery passwords) are marked `Secure` when the

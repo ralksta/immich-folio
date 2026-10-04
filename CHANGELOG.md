@@ -99,7 +99,7 @@ Releases up to and including v0.9.2 are documented in the
   setting of the route, is limited to 20 files a minute per visitor and is
   never cached by a CDN. A new doctor check, `zoom-renditions`, warns when
   Immich has no full-size previews for zoomable photos. See
-  `docs/gallery-config.md#photo-zoom` and the upgrade notes.
+  `docs/gallery-features.md#photo-zoom` and the upgrade notes.
 
 - **Five new theme presets: Kunsthalle, Ma, Cyanotype, Salon and Birch**
   ([#816](https://github.com/ralksta/immich-folio/pull/816),
@@ -445,7 +445,7 @@ Permissions_ in the README.
   `noindex`, send no `Referer` and stay out of the sitemap, and a site
   password still applies. The selection ZIP waits until pending hearts are
   saved, so it never misses the last pick. The anonymous proofing on public
-  albums is unchanged. See `docs/gallery-config.md#client-proofing-links`.
+  albums is unchanged. See `docs/gallery-features.md#client-proofing-links`.
 
 - **Custom content pages**
   ([#738](https://github.com/ralksta/immich-folio/pull/738),
@@ -794,7 +794,7 @@ subpage slugged `proof` is hidden behind it.
 
 **New, optional settings:** `proofing.email` and the `PROOFING_WEBHOOK_URL`
 environment variable. See `content/settings.yaml.example`,
-`.env.local.example` and `docs/gallery-config.md#client-proofing-links`.
+`.env.local.example` and `docs/gallery-features.md#client-proofing-links`.
 
 ## [0.18.1] — 2026-09-27
 
@@ -2047,7 +2047,7 @@ that already left your server cannot be recalled.
   `gap` deliberately does **not** follow the global setting: each theme preset
   picks its cover spacing as part of its look (1px `monograph`, 20px
   `studio-modern`), so only an explicit per-subpage `gap` overrides it. See
-  [docs/gallery-config.md](docs/gallery-config.md#album-covers-on-a-subpage).
+  [docs/gallery-config.md](docs/site-settings.md#album-covers-on-a-subpage).
 
   **A site whose `settings.yaml` sets `grid.columns` to anything other than 2
   will see its subpage cover grids change on upgrade.** That is the point of the

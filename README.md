@@ -19,7 +19,7 @@ A self-hosted portfolio powered by [Immich](https://immich.app). It acts as a **
 
 - **Albums as pages** — group Immich albums into subpages, standalone albums and a hero, all defined in `content/gallery.yaml` or built in the admin panel
 - **Grids and layouts** — masonry, uniform, showcase, filmstrip, editorial flow and justified rows, with six hero layouts and per-page overrides
-- **Fullscreen lightbox** — keyboard and swipe navigation, EXIF panel, and opt-in zoom to full resolution ([guide](docs/gallery-config.md#photo-zoom))
+- **Fullscreen lightbox** — keyboard and swipe navigation, EXIF panel, and opt-in zoom to full resolution ([guide](docs/gallery-features.md#photo-zoom))
 - **Twelve theme presets** — each in dark and light, with fine control over colours, fonts and photo frames ([guide](docs/theming.md))
 - **Journal and photo essays** — long-form stories with drafts, passwords and a map ([guide](docs/journal.md))
 - **Client work** — password-protected pages, proofing with favourites, private proofing links and originals as a ZIP
@@ -76,15 +76,18 @@ The gallery is then at `http://localhost:7211`. The `content/` volume must be re
 
 ## Documentation
 
-| Guide                                           | Covers                                                              |
-| ----------------------------------------------- | ------------------------------------------------------------------- |
-| [Immich setup](docs/immich-setup.md)            | Version, API key permissions, full-size images                      |
-| [Deployment](docs/deployment.md)                | First-run wizard, environment variables, Docker, reverse proxy, CDN |
-| [Gallery configuration](docs/gallery-config.md) | Albums, subpages, passwords, grid, zoom, proofing, SEO, footer      |
-| [Theming](docs/theming.md)                      | Presets, colours, fonts, hero styles                                |
-| [Journal & photo essays](docs/journal.md)       | File format, blocks, drafts, Journal Studio                         |
-| [Admin panel](docs/admin-panel.md)              | Page builder, settings, analytics, backups                          |
-| [Features](docs/features.md)                    | The full feature list with screenshots                              |
+| Guide                                        | Covers                                                                     |
+| -------------------------------------------- | -------------------------------------------------------------------------- |
+| [Immich setup](docs/immich-setup.md)         | Version, API key permissions, full-size images                             |
+| [Deployment](docs/deployment.md)             | First-run wizard, environment variables, Docker, reverse proxy, CDN        |
+| [Gallery structure](docs/gallery-config.md)  | `gallery.yaml`: hero, albums, subpages, per-album options, content pages   |
+| [Site settings](docs/site-settings.md)       | `settings.yaml`: grid, language, navigation, watermark, SEO, footer, about |
+| [Gallery features](docs/gallery-features.md) | Passwords, proofing, photo zoom, original downloads                        |
+| [Security](docs/security.md)                 | Rate limits, trusted proxies, token revocation                             |
+| [Theming](docs/theming.md)                   | Presets, colours, fonts, hero styles                                       |
+| [Journal & photo essays](docs/journal.md)    | File format, blocks, drafts, Journal Studio                                |
+| [Admin panel](docs/admin-panel.md)           | Page builder, settings, analytics, backups                                 |
+| [Features](docs/features.md)                 | The full feature list with screenshots                                     |
 
 Release history is in the [CHANGELOG](CHANGELOG.md) and the [GitHub releases](https://github.com/ralksta/immich-folio/releases). Security fixes ship in normal releases, so running the latest release is the recommended baseline.
 
