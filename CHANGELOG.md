@@ -9,6 +9,18 @@ Releases up to and including v0.9.2 are documented in the
 
 ## [0.20.1] — 2026-10-04
 
+### Changed
+
+- **A single click zooms the lightbox photo in by 1.5×**
+  ([#835](https://github.com/ralksta/immich-folio/pull/835)). The first
+  version of zoom needed a double-click and went straight to 1:1, which was
+  more than visitors wanted when they only wanted a closer look. A click now
+  zooms to 1.5× around the cursor and a second click returns to fit. A press
+  that moves more than 10 px or is held longer than half a second is a pan, so
+  dragging a zoomed photo no longer drops out of the zoom. Ctrl and wheel,
+  pinch, touch double-tap, the magnifier button (still 1:1) and `+`, `-`, `0`
+  and `Esc` work as before.
+
 ### Fixed
 
 - **Photo zoom and originals download need the `asset.download` permission**
