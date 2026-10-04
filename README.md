@@ -13,7 +13,7 @@
 
 A self-hosted portfolio powered by [Immich](https://immich.app). It acts as a **secure reverse proxy** between your visitors and your private Immich instance: your Immich server stays on your local network, completely invisible to the outside world, while your albums are published as a gallery you control.
 
-**Latest: v0.20.0** — 1:1 zoom in the lightbox, five new theme presets, Immich edits shown as edited, and no GPS in downloads. → [What's New](#whats-new)
+**Latest: v0.20.1** — a single click zooms the lightbox in, and the setup guide now names the `asset.download` permission that zoom and downloads need. → [What's New](#whats-new)
 
 ## Contents
 
@@ -348,6 +348,11 @@ own password, separate from any album passwords, and writes straight to
 
 ## What's New
 
+v0.20.1 — zoom by a single click, and the API key permission it needs:
+
+- **Single-click zoom** — a click on the lightbox photo zooms in by 1.5×, a second click goes back; the magnifier button and `+` still go to 1:1 ([guide](docs/gallery-config.md#photo-zoom))
+- **`asset.download` for zoom and downloads** — zoom into JPEG/AVIF photos and original downloads stream the original from Immich, which needs this permission on the API key ([permissions](#immich-api-key-permissions))
+
 v0.20.0 — zoom, five new presets and photos as you edited them:
 
 - **1:1 zoom in the lightbox** — click, pinch, Ctrl + scroll or press `+` to see a photo at full resolution and judge its sharpness; off by default, switched on for the site, a page or a single album ([guide](docs/gallery-config.md#photo-zoom))
@@ -356,7 +361,7 @@ v0.20.0 — zoom, five new presets and photos as you edited them:
 - **No GPS in downloads** — original downloads and ZIPs keep camera data and colour profile but lose the coordinates and sub-city place names ([advisory](https://github.com/ralksta/immich-folio/security/advisories/GHSA-g4xf-4285-4cv4))
 - **Legal pages on a locked site** — with a site password set, the Impressum, the privacy page and the contact form stay reachable, and unknown pages answer a real 404
 
-**Upgrade note:** zoom needs `zoom: true`, and for HEIC/RAW photos Immich's _Full-size image_ setting in JPEG format. If you build the Docker image yourself, keep `content/` mounted as a volume; if you ever pushed a self-built image, see the [changelog](CHANGELOG.md) for what to rotate.
+**Upgrade note:** zoom needs `zoom: true`, the `asset.download` permission on the Immich API key, and for HEIC/RAW photos Immich's _Full-size image_ setting in JPEG format. If you build the Docker image yourself, keep `content/` mounted as a volume; if you ever pushed a self-built image, see the [changelog](CHANGELOG.md) for what to rotate.
 
 Security fixes ship in normal releases, so **running the latest release is the
 recommended baseline**.
