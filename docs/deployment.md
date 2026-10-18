@@ -90,7 +90,8 @@ instance; enter Immich credentials in the first-run setup page, or set
 is optional. If configured, it selects CARTO Voyager and is passed into the
 image build as well as the running container because Next.js embeds
 `NEXT_PUBLIC_*` values in the browser bundle. Changing it requires a rebuild.
-Without it, maps use OpenStreetMap.
+Without it, maps use OpenStreetMap. If both Immich variables are configured,
+the first-run wizard uses them without exposing the API key in the browser.
 
 Build and start the isolated instance from the test checkout:
 
