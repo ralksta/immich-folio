@@ -34,7 +34,6 @@ yarn-error.log*
 # ── Environment ──────────────────────────────────────
 .env*
 !.env.local.example
-!.env.test.example
 
 # ── OS & Editor ──────────────────────────────────────
 .DS_Store

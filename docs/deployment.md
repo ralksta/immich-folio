@@ -74,37 +74,6 @@ docker compose up -d
 
 The gallery will be available at `http://localhost:7211`.
 
-### Isolated test instance
-
-Use the separate Compose file and environment file to run a test instance
-alongside the main deployment without sharing its port or content:
-
-```bash
-cp .env.test.example .env.test
-```
-
-Set a private `AUTH_SECRET` in `.env.test` (for example, generate one with
-`openssl rand -hex 32`). This is the only required setting for a fresh test
-instance; enter Immich credentials in the first-run setup page, or set
-`IMMICH_API_URL` and `IMMICH_API_KEY` in `.env.test`. `NEXT_PUBLIC_CARTO_API_KEY`
-is optional. If configured, it selects CARTO Voyager and is passed into the
-image build as well as the running container because Next.js embeds
-`NEXT_PUBLIC_*` values in the browser bundle. Changing it requires a rebuild.
-Without it, maps use OpenStreetMap. If both Immich variables are configured,
-the first-run wizard uses them without exposing the API key in the browser.
-
-Build and start the isolated instance from the test checkout:
-
-```bash
-docker compose --env-file .env.test -f docker-compose.test.yml up -d --build
-```
-
-It is available only on the local machine at `http://127.0.0.1:7212`. It uses
-the distinct `immich-folio-test` container, a dedicated named content volume,
-and `restart: "no"`; it does not mount or modify the production `content/`.
-`.env.test` is ignored by Git; keep the private values there, not in
-`.env.test.example`.
-
 ## Standalone Docker
 
 ```bash
