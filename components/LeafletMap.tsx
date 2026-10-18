@@ -65,7 +65,7 @@ export function mapTileLayerOptions(cartoApiKey?: string) {
   return {
     url:
       'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' +
-      `?api_key=${encodeURIComponent(cartoApiKey)}`,
+      `?key=${encodeURIComponent(cartoApiKey)}`,
     attribution: `${osmAttribution} &copy; <a href="https://carto.com/attributions">CARTO</a>`,
   };
 }

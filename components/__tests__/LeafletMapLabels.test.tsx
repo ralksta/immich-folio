@@ -61,7 +61,7 @@ describe('mapTileLayerOptions', () => {
   it('uses CARTO Voyager and credits both providers when a key is configured', () => {
     const options = mapTileLayerOptions('test key');
     expect(options.url).toBe(
-      'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?api_key=test%20key',
+      'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=test%20key',
     );
     expect(options.attribution).toContain('OpenStreetMap');
     expect(options.attribution).toContain('CARTO');
