@@ -1,0 +1,20 @@
+name: immich-folio-test
+
+services:
+  lightbox-test:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_CARTO_API_KEY: ${NEXT_PUBLIC_CARTO_API_KEY:-}
+    container_name: immich-folio-test
+    restart: "no"
+    ports:
+      - '127.0.0.1:7212:7211'
+    env_file:
+      - .env.test
+    volumes:
+      - test-content:/app/content
+
+volumes:
+  test-content:
+    name: immich_folio_test_content
