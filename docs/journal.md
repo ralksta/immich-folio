@@ -242,7 +242,9 @@ the gate for a whole album just the same.
 > **Add Block → Photo**, **2-Photo Pair** and **Photo Grid** open the asset
 > picker and fill the UUIDs in for you; **Facts** and **Map** have their own
 > small forms. New entries can also start from a template — Wedding, Hiking,
-> Travel and the others — instead of an empty editor.
+> Travel and the others — instead of an empty editor. The **Albums** tab in the
+> new-entry dialog lets you choose a shared Immich album, then select individual
+> photos to add as photo blocks; it does not add the whole album.
 
 ## Drafts
 

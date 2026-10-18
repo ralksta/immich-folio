@@ -26,6 +26,10 @@ interface Props {
   onClose: () => void;
   currentAssetIds?: string[];
   albumId?: string;
+  /** Restrict selection to the given album, with no library or UUID fallback. */
+  albumOnly?: boolean;
+  /** Preselect assets when reopening a multi-select picker. */
+  initialSelectedAssetIds?: string[];
   title?: string;
 }
 
@@ -40,20 +44,23 @@ export default function AssetPicker({
   onClose,
   currentAssetIds = [],
   albumId,
+  albumOnly = false,
+  initialSelectedAssetIds = [],
   title,
 }: Props) {
   useScrollLock(true);
   const cardRef = useModalDialog(onClose);
   const multi = onSelectMany !== undefined;
-  const [tab, setTab] = useState<Tab>(albumId ? 'album' : 'favorites');
+  const [tab, setTab] = useState<Tab>(albumOnly || albumId ? 'album' : 'favorites');
   const [assets, setAssets] = useState<AssetInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [queryInput, setQueryInput] = useState('');
   const [query, setQuery] = useState('');
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>(initialSelectedAssetIds);
   const [uuidInput, setUuidInput] = useState('');
   const [uuidError, setUuidError] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
@@ -85,6 +92,7 @@ export default function AssetPicker({
         setLoadingMore(true);
       } else {
         setLoading(true);
+        setLoadError(null);
         // A "load more" of the previous list will not clear this itself.
         setLoadingMore(false);
       }
@@ -112,9 +120,14 @@ export default function AssetPicker({
           });
           setHasMore(data.nextPage !== null);
           setPage(pageNum);
+        } else {
+          throw new Error(`Could not load photos (HTTP ${res.status}).`);
         }
       } catch (err) {
-        if (current()) console.error('Failed to load assets:', err);
+        if (current()) {
+          console.error('Failed to load assets:', err);
+          setLoadError(err instanceof Error ? err.message : 'Failed to load photos.');
+        }
       } finally {
         if (current()) {
           setLoading(false);
@@ -213,22 +226,26 @@ export default function AssetPicker({
               This Album
             </button>
           )}
-          <button
-            className={`asset-picker-tab ${tab === 'favorites' ? 'active' : ''}`}
-            aria-pressed={tab === 'favorites'}
-            onClick={() => setTab('favorites')}
-          >
-            <IconStar size={14} />
-            Favorites
-          </button>
-          <button
-            className={`asset-picker-tab ${tab === 'all' ? 'active' : ''}`}
-            aria-pressed={tab === 'all'}
-            onClick={() => setTab('all')}
-          >
-            <IconImage size={14} />
-            All Photos
-          </button>
+          {!albumOnly && (
+            <>
+              <button
+                className={`asset-picker-tab ${tab === 'favorites' ? 'active' : ''}`}
+                aria-pressed={tab === 'favorites'}
+                onClick={() => setTab('favorites')}
+              >
+                <IconStar size={14} />
+                Favorites
+              </button>
+              <button
+                className={`asset-picker-tab ${tab === 'all' ? 'active' : ''}`}
+                aria-pressed={tab === 'all'}
+                onClick={() => setTab('all')}
+              >
+                <IconImage size={14} />
+                All Photos
+              </button>
+            </>
+          )}
         </div>
 
         {/* Search */}
@@ -264,6 +281,11 @@ export default function AssetPicker({
           role="group"
           aria-label="Photos"
         >
+          {loadError && (
+            <p className="empty-hint" role="alert">
+              {loadError}
+            </p>
+          )}
           {loading ? (
             <div className="asset-picker-loading">
               <div className="admin-spinner" />
@@ -358,25 +380,27 @@ export default function AssetPicker({
         )}
 
         {/* UUID Fallback */}
-        <div className="asset-picker-uuid-section">
-          <form onSubmit={handleUuidSubmit} className="asset-picker-uuid-form">
-            <input
-              type="text"
-              value={uuidInput}
-              onChange={(e) => {
-                setUuidInput(e.target.value);
-                setUuidError('');
-              }}
-              placeholder="Or paste asset UUID directly..."
-              aria-label="Asset UUID"
-              className="asset-picker-uuid-input"
-            />
-            <button type="submit" className="admin-btn admin-btn-sm" disabled={!uuidInput.trim()}>
-              Add
-            </button>
-          </form>
-          {uuidError && <span className="asset-picker-uuid-error">{uuidError}</span>}
-        </div>
+        {!albumOnly && (
+          <div className="asset-picker-uuid-section">
+            <form onSubmit={handleUuidSubmit} className="asset-picker-uuid-form">
+              <input
+                type="text"
+                value={uuidInput}
+                onChange={(e) => {
+                  setUuidInput(e.target.value);
+                  setUuidError('');
+                }}
+                placeholder="Or paste asset UUID directly..."
+                aria-label="Asset UUID"
+                className="asset-picker-uuid-input"
+              />
+              <button type="submit" className="admin-btn admin-btn-sm" disabled={!uuidInput.trim()}>
+                Add
+              </button>
+            </form>
+            {uuidError && <span className="asset-picker-uuid-error">{uuidError}</span>}
+          </div>
+        )}
       </div>
     </div>
   );
