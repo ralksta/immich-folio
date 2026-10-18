@@ -76,6 +76,10 @@ describe('proxy', () => {
     const csp = run().headers.get('Content-Security-Policy');
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain("frame-ancestors 'none'");
+    const imageDirectives = csp!.match(/(?:^|;\s*)img-src\b/g);
+    expect(imageDirectives).toHaveLength(1);
+    expect(csp).toContain('https://tile.openstreetmap.org');
+    expect(csp).toContain('https://basemaps.cartocdn.com');
   });
 
   it('issues a per-request nonce and passes it to pages via x-nonce', () => {

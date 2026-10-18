@@ -186,6 +186,15 @@ export function proxy(request: NextRequest) {
   // has no directive of its own otherwise and falls back to default-src.
   const cdn = cdnOrigin();
 
+  const imageSources = [
+    "'self'",
+    'data:',
+    'blob:',
+    'https://tile.openstreetmap.org',
+    'https://basemaps.cartocdn.com',
+    ...(cdn ? [cdn] : []),
+  ].join(' ');
+
   // Define CSP directives
   const cspDirectives = [
     "default-src 'self'",
@@ -198,7 +207,7 @@ export function proxy(request: NextRequest) {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
-    `img-src 'self' data: blob: https://tile.openstreetmap.org${cdn ? ` ${cdn}` : ''}`,
+    `img-src ${imageSources}`,
     ...(cdn ? [`media-src 'self' ${cdn}`] : []),
     "connect-src 'self'",
     "frame-ancestors 'none'",
