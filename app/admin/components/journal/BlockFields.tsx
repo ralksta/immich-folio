@@ -24,6 +24,8 @@ export interface AssetPickTarget {
   onSelectMany?: (assetIds: string[]) => void;
   /** Most assets `onSelectMany` takes. */
   max?: number;
+  /** Offer shared album browsing alongside the library sources. */
+  enableAlbumSelection?: boolean;
 }
 
 interface BlockFieldsProps {

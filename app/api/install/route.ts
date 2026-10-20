@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { completeInstall, isInstalled, normalizeApiBase, validateSetupToken } from '@/lib/install';
+import {
+  completeInstall,
+  isInstalled,
+  normalizeApiBase,
+  resolveInstallConnection,
+  validateSetupToken,
+} from '@/lib/install';
 import { invalidateConfigCache } from '@/lib/config';
 import { DEFAULT_PRESET } from '@/lib/config/theme';
 import { PRESET_IDS } from '@/lib/config/presets';
@@ -40,8 +46,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing request body' }, { status: 400 });
   }
 
-  const apiUrl = typeof body.apiUrl === 'string' ? body.apiUrl.trim() : '';
-  const apiKey = typeof body.apiKey === 'string' ? body.apiKey.trim() : '';
+  const { apiUrl, apiKey } = resolveInstallConnection(
+    typeof body.apiUrl === 'string' ? body.apiUrl : '',
+    typeof body.apiKey === 'string' ? body.apiKey : '',
+  );
   if (!apiUrl || !apiKey) {
     return NextResponse.json({ error: 'Immich URL and API key are required' }, { status: 400 });
   }

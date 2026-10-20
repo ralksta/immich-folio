@@ -551,6 +551,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
                   onClick={() =>
                     setAssetPickerTarget({
                       title: 'Add Photos (one block each)',
+                      enableAlbumSelection: true,
                       onSelectMany: (ids) =>
                         handleBlocksChange([...parsed.blocks, ...createPhotoBlocks(ids)]),
                     })
@@ -712,6 +713,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
         <AssetPicker
           title={assetPickerTarget.title}
           max={assetPickerTarget.max}
+          enableAlbumSelection={assetPickerTarget.enableAlbumSelection}
           onSelect={(id) => {
             assetPickerTarget.onSelect?.(id);
             setAssetPickerTarget(null);

@@ -184,6 +184,25 @@ export function getInstallCredentials(): InstallCredentials {
 }
 
 /**
+ * Use the credentials entered in the wizard, falling back to the values
+ * already configured on the server. API keys stay server-side when supplied
+ * through the environment or install file.
+ */
+export function resolveInstallConnection(
+  apiUrl: string,
+  apiKey: string,
+): {
+  apiUrl: string;
+  apiKey: string;
+} {
+  const configured = getInstallCredentials();
+  return {
+    apiUrl: apiUrl.trim() || configured.apiUrl,
+    apiKey: apiKey.trim() || configured.apiKey,
+  };
+}
+
+/**
  * Whether a first-run install is complete.
  *
  * Mirrors the `needsSetup` definition in getConfig(): a gallery.yaml exists AND

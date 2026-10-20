@@ -51,6 +51,25 @@ export function localizedLeafletPrefix(prefix: string, title: string): string {
   return prefix.replace(/title="[^"]*"/, `title="${escapeHtml(title)}"`);
 }
 
+export function mapTileLayerOptions(cartoApiKey?: string) {
+  const osmAttribution =
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+  if (!cartoApiKey) {
+    return {
+      url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: osmAttribution,
+    };
+  }
+
+  return {
+    url:
+      'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' +
+      `?key=${encodeURIComponent(cartoApiKey)}`,
+    attribution: `${osmAttribution} &copy; <a href="https://carto.com/attributions">CARTO</a>`,
+  };
+}
+
 export function LeafletMap({
   markers,
   line = false,
@@ -96,13 +115,11 @@ export function LeafletMap({
         map.attributionControl.setPrefix(localizedLeafletPrefix(prefix, labels.leafletTitle));
       }
 
-      // OpenStreetMap's own tiles: free to use with attribution and a Referer,
-      // which the Referrer-Policy sends. CARTO's Dark Matter, used before,
-      // started answering every tile with "API KEY REQUIRED". The dark look
-      // comes from a filter in app/leaflet.css, so it follows the colour mode.
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      // CARTO Voyager needs a key; keep OpenStreetMap as the working fallback
+      // for installs that have not configured one.
+      const tileLayerOptions = mapTileLayerOptions(process.env.NEXT_PUBLIC_CARTO_API_KEY);
+      L.tileLayer(tileLayerOptions.url, {
+        attribution: tileLayerOptions.attribution,
         maxZoom: 19,
       }).addTo(map);
 

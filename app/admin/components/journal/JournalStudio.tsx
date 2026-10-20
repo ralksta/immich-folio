@@ -23,6 +23,18 @@ import AdminLoadState from '../AdminLoadState';
 import PageHeader from '../PageHeader';
 import { useConfirm } from '../ConfirmDialog';
 import { useModalDialog } from '@/hooks/useModalDialog';
+import AlbumPicker from '../AlbumPicker';
+import AssetPicker from '../AssetPicker';
+
+interface SharedAlbum {
+  id: string;
+  albumName: string;
+  description: string;
+  thumbnailAssetId: string | null;
+  assetCount: number;
+  isConfigured: boolean;
+  shared?: boolean;
+}
 
 interface JournalStudioProps {
   /** Entry to open, taken from the /admin/journal/[slug] route. */
@@ -51,11 +63,42 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
   const [creating, setCreating] = useState(false);
   /** null = start blank, matching the previous (only) behavior. */
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [createTab, setCreateTab] = useState<'start' | 'albums'>('start');
+  const [albumList, setAlbumList] = useState<SharedAlbum[] | null>(null);
+  const [loadingAlbums, setLoadingAlbums] = useState(false);
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
+  const [selectedAssetIds, setSelectedAssetIds] = useState<string[]>([]);
+  const [showAlbumPicker, setShowAlbumPicker] = useState(false);
+  const [showAssetPicker, setShowAssetPicker] = useState(false);
   const closeCreateModal = () => {
     setShowCreateModal(false);
     setSelectedTemplateId(null);
+    setCreateTab('start');
+    setSelectedAlbumId(null);
+    setSelectedAssetIds([]);
+    setShowAlbumPicker(false);
+    setShowAssetPicker(false);
   };
   const createCardRef = useModalDialog(closeCreateModal, showCreateModal);
+
+  const openAlbumPicker = async () => {
+    if (albumList === null) {
+      setLoadingAlbums(true);
+      try {
+        const res = await fetch('/api/admin/albums');
+        if (!res.ok) throw new Error(`Immich returned ${res.status}`);
+        const data = (await res.json()) as { albums?: SharedAlbum[] };
+        // Immich versions that ignore `?shared=true` can return private albums.
+        setAlbumList((data.albums ?? []).filter((album) => album.shared !== false));
+      } catch {
+        notify('error', 'Could not load shared albums. Check the Immich connection and try again.');
+        return;
+      } finally {
+        setLoadingAlbums(false);
+      }
+    }
+    setShowAlbumPicker(true);
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,17 +110,23 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
       const template = selectedTemplateId
         ? JOURNAL_TEMPLATES.find((t) => t.id === selectedTemplateId)
         : undefined;
-      const content = template
-        ? serializeJournalMarkdown({
-            frontmatter: {
-              title: newTitle.trim(),
-              date: new Date().toISOString().slice(0, 10),
-              draft: true,
-            },
-            blocks: template.blocks,
-            referencedAssetIds: [],
-          })
-        : undefined;
+      const selectedPhotoBlocks = selectedAssetIds.map((assetId) => ({
+        type: 'photo' as const,
+        assetId,
+        layout: 'contained' as const,
+      }));
+      const content =
+        template || selectedPhotoBlocks.length > 0
+          ? serializeJournalMarkdown({
+              frontmatter: {
+                title: newTitle.trim(),
+                date: new Date().toISOString().slice(0, 10),
+                draft: true,
+              },
+              blocks: [...(template?.blocks ?? []), ...selectedPhotoBlocks],
+              referencedAssetIds: [],
+            })
+          : undefined;
 
       const res = await fetch('/api/admin/journal', {
         method: 'POST',
@@ -95,6 +144,9 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
         setNewTitle('');
         setNewSlug('');
         setSelectedTemplateId(null);
+        setCreateTab('start');
+        setSelectedAlbumId(null);
+        setSelectedAssetIds([]);
         fetchEntries();
         if (data.entry?.slug) {
           router.push(`/admin/journal/${data.entry.slug}`);
@@ -340,27 +392,101 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                 >
                   Start from
                 </label>
-                <div className="journal-template-grid">
+                <div
+                  className="journal-create-tabs"
+                  role="group"
+                  aria-label="Journal starting point"
+                >
                   <button
                     type="button"
-                    className={`journal-template-card${selectedTemplateId === null ? ' is-selected' : ''}`}
-                    onClick={() => setSelectedTemplateId(null)}
+                    aria-pressed={createTab === 'start'}
+                    className={`journal-create-tab${createTab === 'start' ? ' is-selected' : ''}`}
+                    onClick={() => setCreateTab('start')}
                   >
-                    <span className="journal-template-card-name">Blank</span>
-                    <span className="journal-template-card-desc">Start with an empty editor.</span>
+                    Templates
                   </button>
-                  {JOURNAL_TEMPLATES.map((template) => (
-                    <button
-                      key={template.id}
-                      type="button"
-                      className={`journal-template-card${selectedTemplateId === template.id ? ' is-selected' : ''}`}
-                      onClick={() => setSelectedTemplateId(template.id)}
-                    >
-                      <span className="journal-template-card-name">{template.name}</span>
-                      <span className="journal-template-card-desc">{template.description}</span>
-                    </button>
-                  ))}
+                  <button
+                    type="button"
+                    aria-pressed={createTab === 'albums'}
+                    className={`journal-create-tab${createTab === 'albums' ? ' is-selected' : ''}`}
+                    onClick={() => setCreateTab('albums')}
+                  >
+                    Albums
+                  </button>
                 </div>
+                {createTab === 'start' ? (
+                  <div className="journal-template-grid">
+                    <button
+                      type="button"
+                      className={`journal-template-card${selectedTemplateId === null ? ' is-selected' : ''}`}
+                      onClick={() => setSelectedTemplateId(null)}
+                    >
+                      <span className="journal-template-card-name">Blank</span>
+                      <span className="journal-template-card-desc">
+                        Start with an empty editor.
+                      </span>
+                    </button>
+                    {JOURNAL_TEMPLATES.map((template) => (
+                      <button
+                        key={template.id}
+                        type="button"
+                        className={`journal-template-card${selectedTemplateId === template.id ? ' is-selected' : ''}`}
+                        onClick={() => setSelectedTemplateId(template.id)}
+                      >
+                        <span className="journal-template-card-name">{template.name}</span>
+                        <span className="journal-template-card-desc">{template.description}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="journal-create-album-source">
+                    <button
+                      type="button"
+                      className="admin-btn admin-btn-secondary"
+                      onClick={openAlbumPicker}
+                      disabled={loadingAlbums}
+                    >
+                      {loadingAlbums
+                        ? 'Loading shared albums...'
+                        : selectedAlbumId
+                          ? (albumList?.find((album) => album.id === selectedAlbumId)?.albumName ??
+                            'Change shared album')
+                          : 'Select shared album'}
+                    </button>
+                    {selectedAlbumId && (
+                      <>
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn-secondary"
+                          onClick={() => setShowAssetPicker(true)}
+                        >
+                          {selectedAssetIds.length
+                            ? `Choose photos (${selectedAssetIds.length} selected)`
+                            : 'Choose photos'}
+                        </button>
+                        {selectedAssetIds.length > 0 && (
+                          <div
+                            className="journal-create-photo-selection"
+                            aria-label="Selected photos"
+                          >
+                            {selectedAssetIds.map((assetId) => (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                key={assetId}
+                                src={`/api/admin/thumbnail/${assetId}`}
+                                alt=""
+                                loading="lazy"
+                              />
+                            ))}
+                          </div>
+                        )}
+                        <p className="journal-template-card-desc">
+                          Only the photos you select from this album will be added to the journal.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
@@ -382,6 +508,33 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
             </form>
           </div>
         </div>
+      )}
+      {showAlbumPicker && albumList && (
+        <AlbumPicker
+          albums={albumList}
+          usedAlbumIds={new Set()}
+          onSelect={(albumId) => {
+            setSelectedAlbumId(albumId);
+            setSelectedAssetIds([]);
+            setShowAlbumPicker(false);
+            setShowAssetPicker(true);
+          }}
+          onClose={() => setShowAlbumPicker(false)}
+        />
+      )}
+      {showAssetPicker && selectedAlbumId && (
+        <AssetPicker
+          key={selectedAlbumId}
+          title="Choose photos from this album"
+          albumId={selectedAlbumId}
+          albumOnly
+          onSelectMany={(assetIds) => {
+            setSelectedAssetIds(assetIds);
+            setShowAssetPicker(false);
+          }}
+          initialSelectedAssetIds={selectedAssetIds}
+          onClose={() => setShowAssetPicker(false)}
+        />
       )}
     </div>
   );

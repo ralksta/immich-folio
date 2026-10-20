@@ -18,6 +18,7 @@ interface Album {
 
 interface Props {
   initialApiUrl: string;
+  hasConfiguredCredentials: boolean;
   setupToken: string;
 }
 
@@ -29,7 +30,7 @@ const THEME_OPTIONS = PRESET_REGISTRY.map((p) => ({
   description: p.tagline,
 }));
 
-export function InstallWizard({ initialApiUrl, setupToken }: Props) {
+export function InstallWizard({ initialApiUrl, hasConfiguredCredentials, setupToken }: Props) {
   const [step, setStep] = useState(0);
 
   // Step 1 — connection
@@ -233,16 +234,35 @@ export function InstallWizard({ initialApiUrl, setupToken }: Props) {
                     type="password"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Your Immich API key"
-                    required
+                    placeholder={
+                      hasConfiguredCredentials
+                        ? 'Optional — using server-configured credentials'
+                        : 'Your Immich API key'
+                    }
+                    required={!hasConfiguredCredentials}
                     disabled={testing}
                   />
                   <p className="admin-hint">
-                    Create one in Immich under Account Settings → API Keys. It needs album.read,
-                    asset.read and asset.view, plus asset.download if you want photo zoom or
-                    original downloads.
+                    {hasConfiguredCredentials ? (
+                      <>
+                        A server-configured Immich API key will be used unless you enter another
+                        one.
+                      </>
+                    ) : (
+                      <>
+                        Create one in Immich under Account Settings → API Keys. It needs album.read,
+                        asset.read and asset.view, plus asset.download if you want photo zoom or
+                        original downloads.
+                      </>
+                    )}
                   </p>
                 </div>
+
+                <p className="admin-hint">
+                  {hasConfiguredCredentials
+                    ? 'Your server-configured Immich credentials will be used to continue.'
+                    : 'Enter both the Immich server URL and API key to enable the continue button.'}
+                </p>
 
                 {testError && <div className="admin-error">{testError}</div>}
 
@@ -250,7 +270,9 @@ export function InstallWizard({ initialApiUrl, setupToken }: Props) {
                   <button
                     type="submit"
                     className="admin-btn admin-btn-primary"
-                    disabled={testing || !apiUrl || !apiKey}
+                    disabled={
+                      testing || !apiUrl.trim() || (!hasConfiguredCredentials && !apiKey.trim())
+                    }
                   >
                     {testing ? 'Testing connection…' : 'Test connection & continue'}
                   </button>
