@@ -10,6 +10,9 @@ export const common = {
   add: 'Add',
   edit: 'Edit',
   confirm: 'Confirm',
+  /** The short label inside a toggle switch; keep it to one short word. */
+  switchOn: 'On',
+  switchOff: 'Off',
   retry: 'Try again',
   loading: 'Loading…',
   none: 'None',

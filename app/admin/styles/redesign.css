@@ -1205,7 +1205,8 @@
 }
 
 .admin-layout .switch-toggle::after {
-  content: 'Off' / '';
+  /* The words come from the admin dictionary, set on .admin-layout (#604). */
+  content: var(--admin-switch-off, 'Off') / '';
 }
 
 .admin-layout .switch-toggle .switch-slider,
@@ -1229,7 +1230,7 @@
 }
 
 .admin-layout .switch-toggle.on::after {
-  content: 'On' / '';
+  content: var(--admin-switch-on, 'On') / '';
 }
 
 .admin-layout .switch-toggle.on .switch-slider {

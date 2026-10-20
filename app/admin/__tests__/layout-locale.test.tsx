@@ -49,6 +49,14 @@ describe('AdminLayout locale', () => {
     expect(renderLayout()).toEqual({ lang: 'en', locale: 'en' });
   });
 
+  it('hands the toggle switches their words in the panel language', () => {
+    config.current = { lang: 'de' };
+    const { container } = render(<AdminLayout>{null}</AdminLayout>);
+    const style = (container.querySelector('.admin-layout') as HTMLElement).style;
+    expect(style.getPropertyValue('--admin-switch-on')).toBe('"An"');
+    expect(style.getPropertyValue('--admin-switch-off')).toBe('"Aus"');
+  });
+
   it('marks an unsupported language as the English it shows', () => {
     config.current = { lang: 'ja' };
     expect(renderLayout()).toEqual({ lang: 'en', locale: 'en' });

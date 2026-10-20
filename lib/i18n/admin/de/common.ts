@@ -12,6 +12,8 @@ export const common: AdminDictionary['common'] = {
   add: 'Hinzufügen',
   edit: 'Bearbeiten',
   confirm: 'Bestätigen',
+  switchOn: 'An',
+  switchOff: 'Aus',
   retry: 'Erneut versuchen',
   loading: 'Wird geladen…',
   none: 'Keine',

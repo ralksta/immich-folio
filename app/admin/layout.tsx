@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import AdminShell from './AdminShell';
 import { AdminI18nProvider } from './components/AdminI18n';
 import { getConfigOrNull } from '@/lib/config';
-import { resolveAdminLocale } from '@/lib/i18n/admin';
+import { getAdminDictionary, resolveAdminLocale } from '@/lib/i18n/admin';
 
 export const metadata: Metadata = {
   title: 'Immich Folio Admin',
@@ -33,8 +33,15 @@ export const dynamic = 'force-dynamic';
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const config = getConfigOrNull();
   const locale = resolveAdminLocale(config?.adminLang, config?.lang);
+  const { common } = getAdminDictionary(locale);
+  // Toggle switches draw their On/Off word in CSS (`::after`), out of reach of
+  // the dictionary hook, so the words arrive as custom properties.
+  const switchWords = {
+    '--admin-switch-on': JSON.stringify(common.switchOn),
+    '--admin-switch-off': JSON.stringify(common.switchOff),
+  } as React.CSSProperties;
   return (
-    <div className="admin-layout" lang={locale}>
+    <div className="admin-layout" lang={locale} style={switchWords}>
       <AdminI18nProvider locale={locale}>
         <AdminShell>{children}</AdminShell>
       </AdminI18nProvider>
