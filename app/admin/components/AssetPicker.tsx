@@ -24,6 +24,8 @@ interface Props {
   onSelectMany?: (assetIds: string[]) => void;
   /** Most assets `onSelectMany` accepts; unlimited when omitted. */
   max?: number;
+  /** Minimum selections required before confirming a multi-select picker. */
+  min?: number;
   onClose: () => void;
   currentAssetIds?: string[];
   albumId?: string;
@@ -44,6 +46,7 @@ export default function AssetPicker({
   onSelect,
   onSelectMany,
   max,
+  min,
   onClose,
   currentAssetIds = [],
   albumId,
@@ -192,7 +195,7 @@ export default function AssetPicker({
   }
 
   function confirm() {
-    if (multi && selected.length > 0) onSelectMany(selected);
+    if (multi && selected.length > 0 && selected.length >= (min ?? 0)) onSelectMany(selected);
   }
 
   function handleUuidSubmit(e: React.FormEvent) {
@@ -225,6 +228,16 @@ export default function AssetPicker({
   }
 
   const full = multi && !canSelectMore(selected, max);
+  const selectionHint =
+    selected.length === 0
+      ? min && min > 1
+        ? `Pick at least ${min} photos`
+        : max && max > 1
+          ? `Pick up to ${max} photos`
+          : 'Pick photos'
+      : `${selected.length}${max && max > 1 ? ` of ${max}` : ''} selected${
+          min && selected.length < min ? ` — select at least ${min}` : ''
+        }`;
 
   return (
     <div className="picker-overlay" onClick={onClose}>
@@ -396,13 +409,7 @@ export default function AssetPicker({
         {/* Selection bar (multi-select) */}
         {multi && (
           <div className="asset-picker-selection">
-            <span aria-live="polite">
-              {selected.length === 0
-                ? max && max > 1
-                  ? `Pick up to ${max} photos`
-                  : 'Pick photos'
-                : `${selected.length}${max && max > 1 ? ` of ${max}` : ''} selected`}
-            </span>
+            <span aria-live="polite">{selectionHint}</span>
             {selected.length > 0 && (
               <button
                 type="button"
@@ -415,7 +422,7 @@ export default function AssetPicker({
             <button
               type="button"
               className="admin-btn admin-btn-sm admin-btn-primary"
-              disabled={selected.length === 0}
+              disabled={selected.length === 0 || selected.length < (min ?? 0)}
               onClick={confirm}
             >
               {selected.length > 1 ? `Add ${selected.length} photos` : 'Add photo'}

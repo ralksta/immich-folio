@@ -38,7 +38,7 @@ import { BlockFields, type AssetPickTarget } from './BlockFields';
 import { StorySettingsModal } from './StorySettingsModal';
 import { PageSettingsPanel } from './PageSettingsPanel';
 import { JournalPreview } from './JournalPreview';
-import { createBlock, createPhotoBlocks, moveBlock } from './blockOps';
+import { createBlock, createPhotoBlocks, fillAssetSlots, moveBlock } from './blockOps';
 import { useSplitPane, SPLIT_MIN, SPLIT_MAX } from './splitPane';
 import { useNotify } from '../Notifications';
 
@@ -541,7 +541,17 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
                 <button
                   type="button"
                   className="admin-btn admin-btn-xs admin-btn-primary"
-                  onClick={() => handleAddBlock('photo')}
+                  onClick={() =>
+                    setAssetPickerTarget({
+                      title: 'Select Photo for Story',
+                      enableAlbumSelection: true,
+                      onSelect: (id) =>
+                        handleBlocksChange([
+                          ...parsed.blocks,
+                          { type: 'photo', assetId: id, caption: '', layout: 'contained' },
+                        ]),
+                    })
+                  }
                 >
                   <IconCamera size={13} /> + Photo
                 </button>
@@ -562,14 +572,45 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
                 <button
                   type="button"
                   className="admin-btn admin-btn-xs admin-btn-primary"
-                  onClick={() => handleAddBlock('photo-pair')}
+                  onClick={() =>
+                    setAssetPickerTarget({
+                      title: 'Select Photos for Pair',
+                      max: 2,
+                      min: 2,
+                      enableAlbumSelection: true,
+                      onSelectMany: (ids) =>
+                        handleBlocksChange([
+                          ...parsed.blocks,
+                          {
+                            type: 'photo-pair',
+                            assetIds: [ids[0] ?? '', ids[1] ?? ''],
+                            caption: '',
+                          },
+                        ]),
+                    })
+                  }
                 >
                   <IconArrowLeftRight size={13} /> + 2-Photo Pair
                 </button>
                 <button
                   type="button"
                   className="admin-btn admin-btn-xs admin-btn-primary"
-                  onClick={() => handleAddBlock('photo-grid')}
+                  onClick={() =>
+                    setAssetPickerTarget({
+                      title: 'Select Photos for Grid',
+                      min: 3,
+                      enableAlbumSelection: true,
+                      onSelectMany: (ids) =>
+                        handleBlocksChange([
+                          ...parsed.blocks,
+                          {
+                            type: 'photo-grid',
+                            assetIds: fillAssetSlots(['', '', ''], ids),
+                            caption: '',
+                          },
+                        ]),
+                    })
+                  }
                 >
                   <IconGrid size={13} /> + Photo Grid
                 </button>
@@ -713,6 +754,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
         <AssetPicker
           title={assetPickerTarget.title}
           max={assetPickerTarget.max}
+          min={assetPickerTarget.min}
           enableAlbumSelection={assetPickerTarget.enableAlbumSelection}
           onSelect={(id) => {
             assetPickerTarget.onSelect?.(id);

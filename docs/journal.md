@@ -239,13 +239,14 @@ the gate for a whole album just the same.
 
 > [!TIP]
 > Writing asset UUIDs by hand is tedious. In the [Journal Studio](#journal-studio),
-> **Add Block → Photo**, **2-Photo Pair** and **Photo Grid** open the asset
-> picker and fill the UUIDs in for you; **Facts** and **Map** have their own
-> small forms. **+ Photos** can browse Favorites, the library, or **Albums**:
-> choose an Immich album, select individual photos, then add them as separate
-> photo blocks. New entries can also start from a template — Wedding, Hiking,
-> Travel and the others — or from the **Albums** tab to select photos before
-> opening the editor. Selecting photos never adds an entire album.
+> **+ Photo**, **+ 2-Photo Pair**, **+ Photo Grid** and **+ Photos** can browse
+> Favorites, the library, or **Albums**. Choose an Immich album, then select
+> the photos for the chosen block: one for a photo, two for a pair, and at
+> least three for a grid. The picker enforces the pair and grid minimums.
+> **+ Photos** adds each selection as its own photo block. Selecting photos
+> never adds an entire album. New entries can also start from a template —
+> Wedding, Hiking, Travel and the others — or from the **Albums** tab to select
+> photos before opening the editor.
 
 ## Drafts
 
