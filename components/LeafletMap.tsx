@@ -96,14 +96,19 @@ export function LeafletMap({
         map.attributionControl.setPrefix(localizedLeafletPrefix(prefix, labels.leafletTitle));
       }
 
-      // OpenStreetMap's own tiles: free to use with attribution and a Referer,
-      // which the Referrer-Policy sends. CARTO's Dark Matter, used before,
-      // started answering every tile with "API KEY REQUIRED". The dark look
-      // comes from a filter in app/leaflet.css, so it follows the colour mode.
+      // OpenStreetMap's own tiles: free to use with attribution and a Referer.
+      // Without one, every tile is an "Access blocked" image. The policy is set
+      // on the tiles themselves because a proxy in front of the site can
+      // replace the page's Referrer-Policy with one that sends nothing
+      // cross-origin (#851).
+      // CARTO's Dark Matter, used before, started answering every tile with
+      // "API KEY REQUIRED". The dark look comes from a filter in
+      // app/leaflet.css, so it follows the colour mode.
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution:
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
+        referrerPolicy: 'strict-origin-when-cross-origin',
       }).addTo(map);
 
       const current = markersRef.current;

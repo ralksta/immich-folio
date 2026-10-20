@@ -76,3 +76,26 @@ describe('LeafletMap marker names', () => {
     expect(icon.getAttribute('role')).toBe('button');
   });
 });
+
+describe('LeafletMap tiles', () => {
+  // OSM serves an "Access blocked" tile to requests without a Referer. A
+  // proxy that rewrites the page's Referrer-Policy must not cost the map its
+  // tiles, so the policy travels on each tile image (#851).
+  it('sets a Referrer-Policy on every tile that still sends the origin', async () => {
+    const { container } = render(
+      <I18nProvider locale="en">
+        <LeafletMap markers={[]} />
+      </I18nProvider>,
+    );
+
+    const tiles = await waitFor(() => {
+      const els = container.querySelectorAll('img.leaflet-tile');
+      if (els.length === 0) throw new Error('no tiles yet');
+      return [...els];
+    });
+    for (const tile of tiles) {
+      expect(tile.getAttribute('src')).toMatch(/^https:\/\/tile\.openstreetmap\.org\//);
+      expect((tile as HTMLImageElement).referrerPolicy).toBe('strict-origin-when-cross-origin');
+    }
+  });
+});
