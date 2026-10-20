@@ -10,6 +10,11 @@ import { describe, it, expect } from 'vitest';
 import { SUPPORTED_LOCALES } from '../i18n';
 import { getAdminDictionary, resolveAdminLocale, type AdminDictionary } from '../i18n/admin';
 import { adminEn } from '../i18n/admin/en';
+import { adminDe } from '../i18n/admin/de';
+import { adminFr } from '../i18n/admin/fr';
+import { adminEs } from '../i18n/admin/es';
+import { adminIt } from '../i18n/admin/it';
+import { adminNl } from '../i18n/admin/nl';
 
 describe('resolveAdminLocale', () => {
   it('uses adminLang when it is set', () => {
@@ -45,10 +50,19 @@ function leaves(obj: object, prefix = ''): [string, unknown][] {
   });
 }
 
-/** Call a dictionary function with plausible arguments for its arity. */
+/**
+ * Call a dictionary function with plausible arguments for its arity. A
+ * function that takes a list (`names: string[]`) throws on a string, so the
+ * call is retried with one-element lists, which interpolate the same way.
+ */
 function invoke(fn: (...args: never[]) => string): string {
+  const call = fn as (...a: unknown[]) => string;
   const args = Array.from({ length: fn.length }, (_, i) => (i === 0 ? 2 : `arg${i}`));
-  return (fn as (...a: unknown[]) => string)(...args);
+  try {
+    return call(...args);
+  } catch {
+    return call(...args.map((arg, i) => (i === 0 ? arg : [arg])));
+  }
 }
 
 /**
@@ -56,9 +70,114 @@ function invoke(fn: (...args: never[]) => string): string {
  * cognates. Anything not listed and still identical to English is an
  * untranslated string.
  */
-const SHARED_EVERYWHERE: string[] = [];
+const SHARED_EVERYWHERE: string[] = [
+  // Immich's own English setting name, quoted as the operator sees it there.
+  'diagnostics.altText.externalDomain',
+  'diagnostics.vitals.immich',
+  'settings.editor.sections.seo',
+  'settings.general.favicon',
+];
 
-const TRANSLATIONS: [string, AdminDictionary, string[]][] = [];
+const TRANSLATIONS: [string, AdminDictionary, string[]][] = [
+  [
+    'de',
+    adminDe,
+    [
+      'shell.nav.groups.system',
+      'shell.nav.journal',
+      'shell.sidebar.landmark',
+      'shell.sidebar.brandSub',
+      'shell.sidebar.backups',
+      'shell.status.backupCount',
+      'shell.status.version',
+      'shell.health.ok',
+      'shell.draft.ok',
+      'shell.overview.journal',
+      'settings.general.details',
+      'settings.theme.photoFrames.passepartout.label',
+      'settings.theme.heroStyles.minimal.label',
+      'settings.grid.layouts.masonry.label',
+      'settings.grid.layouts.showcase.label',
+      'settings.grid.layouts.editorial-flow.label',
+      'settings.footer.linkLabelPlaceholder',
+      'settings.footer.linkUrl',
+      'settings.security.position',
+      'settings.about.name',
+      'diagnostics.levels.ok',
+      'diagnostics.levels.error',
+      'diagnostics.header.kicker',
+      'diagnostics.report.version',
+      'diagnostics.vitals.backups',
+      'diagnostics.vitals.version',
+      'doctor.passwords.labelAlbum',
+    ],
+  ],
+  [
+    'fr',
+    adminFr,
+    [
+      'shell.nav.groups.site',
+      'shell.nav.pages',
+      'shell.nav.journal',
+      'shell.nav.messages',
+      'shell.nav.diagnostics',
+      'shell.sidebar.brandSub',
+      'shell.status.version',
+      'shell.draft.ok',
+      'shell.overview.pages',
+      'shell.overview.journal',
+      'shell.overview.messages',
+      'shell.overview.diagnostics',
+      'settings.editor.kicker',
+      'settings.general.modules',
+      'settings.general.metadataSummary.description',
+      'settings.theme.swatches.violet',
+      'settings.grid.aspectRatios.2/3.label',
+      'settings.footer.linkUrl',
+      'settings.security.position',
+      'diagnostics.levels.ok',
+      'diagnostics.report.version',
+      'diagnostics.vitals.version',
+      'doctor.passwords.labelAlbum',
+    ],
+  ],
+  [
+    'es',
+    adminEs,
+    ['common.errorWith', 'settings.editor.sections.general', 'settings.footer.linkUrl'],
+  ],
+  [
+    'it',
+    adminIt,
+    [
+      'shell.login.password',
+      'shell.sidebar.brandSub',
+      'shell.draft.ok',
+      'settings.theme.preset',
+      'settings.grid.layouts.masonry.label',
+      'settings.grid.aspectRatios.16/9.label',
+      'diagnostics.levels.ok',
+      'doctor.passwords.labelAlbum',
+    ],
+  ],
+  [
+    'nl',
+    adminNl,
+    [
+      'shell.nav.journal',
+      'shell.nav.help',
+      'shell.status.cacheItems',
+      'shell.draft.ok',
+      'shell.overview.journal',
+      'settings.general.modules',
+      'settings.general.details',
+      'settings.grid.layouts.masonry.label',
+      'settings.footer.linkUrl',
+      'diagnostics.levels.ok',
+      'doctor.passwords.labelAlbum',
+    ],
+  ],
+];
 
 describe('admin dictionaries', () => {
   it('have a parity check below for every non-English locale', () => {
@@ -131,5 +250,26 @@ describe.each(TRANSLATIONS)('admin dictionary parity: %s', (_code, dict, sharedK
         : other !== value;
     });
     expect(stale).toEqual([]);
+  });
+});
+
+describe('admin plural forms', () => {
+  const counted = (d: AdminDictionary) => [
+    d.shell.overview.drafts,
+    d.shell.overview.unreadMessages,
+    d.shell.overview.needsLook,
+  ];
+
+  it.each(TRANSLATIONS.map(([code, dict]) => [code, dict] as const))(
+    'vary between 1 and 2 in %s',
+    (_code, dict) => {
+      for (const fn of counted(dict)) expect(fn(1)).not.toBe(fn(2));
+    },
+  );
+
+  it('put 0 in the singular in French, as the visitor dictionary does', () => {
+    for (const fn of counted(adminFr)) {
+      expect(fn(0).replace('0', '1')).toBe(fn(1));
+    }
   });
 });

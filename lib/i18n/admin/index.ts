@@ -18,11 +18,23 @@
 
 import { resolveLocale, DEFAULT_LOCALE, type Locale } from '../index';
 import { adminEn } from './en';
+import { adminDe } from './de';
+import { adminFr } from './fr';
+import { adminEs } from './es';
+import { adminIt } from './it';
+import { adminNl } from './nl';
 
 /** The shape every admin dictionary must implement — English is the reference. */
 export type AdminDictionary = typeof adminEn;
 
-const ADMIN_DICTIONARIES: Partial<Record<Locale, AdminDictionary>> = { en: adminEn };
+const ADMIN_DICTIONARIES: Record<Locale, AdminDictionary> = {
+  en: adminEn,
+  de: adminDe,
+  fr: adminFr,
+  es: adminEs,
+  it: adminIt,
+  nl: adminNl,
+};
 
 /**
  * The admin panel's locale: `adminLang` when it is set, the site's `lang`
