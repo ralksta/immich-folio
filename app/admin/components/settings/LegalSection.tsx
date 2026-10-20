@@ -7,8 +7,10 @@ import EnvLockNote from '../fields/EnvLockNote';
 import { CONTACT_RETENTION_DEFAULT, CONTACT_RETENTION_MAX, isHttpUrl } from '@/lib/config/schema';
 import { FieldError } from './fields';
 import type { SectionProps } from './types';
+import { useAdminDictionary } from '../AdminI18n';
 
 export default function LegalSection({ settings, update, envLocks, fieldErrors }: SectionProps) {
+  const t = useAdminDictionary().settings.legal;
   const notifyLock = envLocks?.['contact.notifyUrl'];
   // The Impressum drops a non-http(s) contact URL with a warning in the server
   // log, where nobody looks; say it here instead.
@@ -21,11 +23,9 @@ export default function LegalSection({ settings, update, envLocks, fieldErrors }
     <div className="settings-panel">
       <div className="settings-section-header">
         <h3>
-          <Icons.IconScale size={18} /> Legal Notice &amp; Impressum
+          <Icons.IconScale size={18} /> {t.title}
         </h3>
-        <p className="settings-section-sub">
-          Configure the legal disclosure page required by the German Digitale-Dienste-Gesetz (DDG).
-        </p>
+        <p className="settings-section-sub">{t.sub}</p>
         {settings.legal?.enabled && (
           <a
             href="/impressum"
@@ -33,7 +33,7 @@ export default function LegalSection({ settings, update, envLocks, fieldErrors }
             rel="noopener noreferrer"
             className="admin-btn admin-btn-sm settings-section-action"
           >
-            View /impressum ↗
+            {t.view}
           </a>
         )}
       </div>
@@ -41,8 +41,8 @@ export default function LegalSection({ settings, update, envLocks, fieldErrors }
       <div className="admin-toggle-cards-grid" style={{ marginBottom: '1.25rem' }}>
         <ToggleCard
           icon={<Icons.IconFileText size={16} />}
-          title="Enable Impressum Page (/impressum)"
-          description="Automatically generates and links /impressum in footer"
+          title={t.enable}
+          description={t.enableDesc}
           checked={settings.legal?.enabled === true}
           onToggle={() => update('legal.enabled', !settings.legal?.enabled)}
         />
@@ -51,21 +51,18 @@ export default function LegalSection({ settings, update, envLocks, fieldErrors }
       {settings.legal?.enabled && (
         <>
           <div className="admin-field">
-            <label htmlFor="legal-heading">Heading</label>
+            <label htmlFor="legal-heading">{t.heading}</label>
             <input
               id="legal-heading"
               value={settings.legal?.heading || ''}
               onChange={(e) => update('legal.heading', e.target.value)}
               placeholder="Angaben gemäß § 5 DDG"
             />
-            <p className="admin-field-hint">
-              Leave empty for the § 5 DDG line in the site language. Set it when a different law
-              applies, e.g. § 5 ECG in Austria.
-            </p>
+            <p className="admin-field-hint">{t.headingHint}</p>
           </div>
           <div className="admin-field-row">
             <div className="admin-field">
-              <label htmlFor="legal-full-name-business-name">Full Name / Business Name</label>
+              <label htmlFor="legal-full-name-business-name">{t.name}</label>
               <input
                 id="legal-full-name-business-name"
                 value={settings.legal?.name || ''}
@@ -74,7 +71,7 @@ export default function LegalSection({ settings, update, envLocks, fieldErrors }
               />
             </div>
             <div className="admin-field">
-              <label htmlFor="legal-street-address">Street Address</label>
+              <label htmlFor="legal-street-address">{t.address}</label>
               <input
                 id="legal-street-address"
                 value={settings.legal?.address || ''}
@@ -85,7 +82,7 @@ export default function LegalSection({ settings, update, envLocks, fieldErrors }
           </div>
           <div className="admin-field-row">
             <div className="admin-field">
-              <label htmlFor="legal-zip-city">ZIP &amp; City</label>
+              <label htmlFor="legal-zip-city">{t.zipCity}</label>
               <input
                 id="legal-zip-city"
                 value={settings.legal?.zipCity || ''}
@@ -94,18 +91,18 @@ export default function LegalSection({ settings, update, envLocks, fieldErrors }
               />
             </div>
             <div className="admin-field">
-              <label htmlFor="legal-country">Country</label>
+              <label htmlFor="legal-country">{t.country}</label>
               <input
                 id="legal-country"
                 value={settings.legal?.country || ''}
                 onChange={(e) => update('legal.country', e.target.value)}
-                placeholder="Germany"
+                placeholder={t.countryPlaceholder}
               />
             </div>
           </div>
           <div className="admin-field-row">
             <div className="admin-field">
-              <label htmlFor="legal-email">Legal Email</label>
+              <label htmlFor="legal-email">{t.email}</label>
               <input
                 id="legal-email"
                 value={settings.legal?.email || ''}
@@ -114,7 +111,7 @@ export default function LegalSection({ settings, update, envLocks, fieldErrors }
               />
             </div>
             <div className="admin-field">
-              <label htmlFor="legal-phone-number">Phone Number</label>
+              <label htmlFor="legal-phone-number">{t.phone}</label>
               <input
                 id="legal-phone-number"
                 value={settings.legal?.phone || ''}
@@ -125,7 +122,7 @@ export default function LegalSection({ settings, update, envLocks, fieldErrors }
           </div>
           <div className="admin-field-row">
             <div className="admin-field">
-              <label htmlFor="legal-contact-url">Contact Form URL</label>
+              <label htmlFor="legal-contact-url">{t.contactUrl}</label>
               <input
                 id="legal-contact-url"
                 type="url"
@@ -140,23 +137,23 @@ export default function LegalSection({ settings, update, envLocks, fieldErrors }
                   id="legal-contact-url-error"
                   className="admin-field-hint admin-field-hint--error"
                 >
-                  Must start with https:// or http://. Any other link is left off the page.
+                  {t.contactUrlInvalid}
                 </p>
               )}
             </div>
             <div className="admin-field">
-              <label htmlFor="legal-contact-link-text">Contact Link Text</label>
+              <label htmlFor="legal-contact-link-text">{t.contactLabel}</label>
               <input
                 id="legal-contact-link-text"
                 value={settings.legal?.contactLabel || ''}
                 onChange={(e) => update('legal.contactLabel', e.target.value)}
-                placeholder="Contact form"
+                placeholder={t.contactLabelPlaceholder}
               />
             </div>
           </div>
           <div className="admin-field-row">
             <div className="admin-field">
-              <label htmlFor="legal-vat-id">VAT ID</label>
+              <label htmlFor="legal-vat-id">{t.vatId}</label>
               <input
                 id="legal-vat-id"
                 value={settings.legal?.vatId || ''}
@@ -165,7 +162,7 @@ export default function LegalSection({ settings, update, envLocks, fieldErrors }
               />
             </div>
             <div className="admin-field">
-              <label htmlFor="legal-tax-number">Tax Number</label>
+              <label htmlFor="legal-tax-number">{t.taxId}</label>
               <input
                 id="legal-tax-number"
                 value={settings.legal?.taxId || ''}
@@ -175,7 +172,7 @@ export default function LegalSection({ settings, update, envLocks, fieldErrors }
             </div>
           </div>
           <div className="admin-field">
-            <label htmlFor="legal-additional-disclosures">Additional Disclosures</label>
+            <label htmlFor="legal-additional-disclosures">{t.extraInfo}</label>
             <textarea
               id="legal-additional-disclosures"
               value={settings.legal?.extraInfo || ''}
@@ -192,8 +189,8 @@ export default function LegalSection({ settings, update, envLocks, fieldErrors }
       <div className="admin-toggle-cards-grid" style={{ marginBottom: '1.25rem' }}>
         <ToggleCard
           icon={<Icons.IconFileText size={16} />}
-          title="Contact Form (/contact)"
-          description="Messages are stored on this server and read under Messages. No mail is sent."
+          title={t.contactForm}
+          description={t.contactFormDesc}
           checked={settings.contact?.enabled === true}
           onToggle={() => update('contact.enabled', !settings.contact?.enabled)}
         />
@@ -202,7 +199,7 @@ export default function LegalSection({ settings, update, envLocks, fieldErrors }
       {settings.contact?.enabled && (
         <div className="admin-field-row">
           <div className="admin-field">
-            <label htmlFor="contact-notify-url">Notification URL (ntfy)</label>
+            <label htmlFor="contact-notify-url">{t.notifyUrl}</label>
             <input
               id="contact-notify-url"
               type="url"
@@ -219,13 +216,13 @@ export default function LegalSection({ settings, update, envLocks, fieldErrors }
               className={`admin-field-hint${notifyUrlInvalid ? ' admin-field-hint--error' : ''}`}
             >
               {notifyUrlInvalid
-                ? 'Must start with https:// or http://.'
-                : 'Gets a fixed "new message" push, with nothing about the sender. Pick a topic name nobody can guess.' +
-                  (notifyLock ? '' : ' CONTACT_NOTIFY_URL overrides this.')}
+                ? t.notifyUrlInvalid
+                : t.notifyUrlHint +
+                  (notifyLock ? '' : ` ${t.notifyUrlEnvOverride('CONTACT_NOTIFY_URL')}`)}
             </p>
           </div>
           <div className="admin-field">
-            <label htmlFor="contact-retention">Delete messages after (days)</label>
+            <label htmlFor="contact-retention">{t.retention}</label>
             <input
               id="contact-retention"
               type="number"
@@ -256,8 +253,8 @@ export default function LegalSection({ settings, update, envLocks, fieldErrors }
       <div className="admin-toggle-cards-grid" style={{ marginBottom: '1.25rem' }}>
         <ToggleCard
           icon={<Icons.IconShieldCheck size={16} />}
-          title="Privacy Policy (/privacy)"
-          description="Shown and linked in the footer once the text below is saved"
+          title={t.privacy}
+          description={t.privacyDesc}
           checked={settings.privacy?.enabled !== false}
           onToggle={() => update('privacy.enabled', settings.privacy?.enabled === false)}
         />

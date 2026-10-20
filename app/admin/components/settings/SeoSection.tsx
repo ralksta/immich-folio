@@ -4,6 +4,7 @@ import * as Icons from '../Icons';
 import ToggleCard from '../fields/ToggleCard';
 import { FieldError } from './fields';
 import type { SectionProps } from './types';
+import { rich, useAdminDictionary } from '../AdminI18n';
 
 export default function SeoSection({
   settings,
@@ -14,22 +15,22 @@ export default function SeoSection({
   /** Resolved site URL and its origin, so the panel can name SITE_URL (#472). */
   siteUrlInfo: { effective: string | null; source: 'env' | 'settings' | 'none' } | null;
 }) {
+  const t = useAdminDictionary().settings.seo;
+  const templateFallback = `%s | ${settings.seo?.title || settings.title || t.titleTemplateFallback}`;
   return (
     <div className="settings-panel">
       <div className="settings-section-header">
         <h3>
-          <Icons.IconSearch size={18} /> Search Engine Optimization (SEO)
+          <Icons.IconSearch size={18} /> {t.title}
         </h3>
-        <p className="settings-section-sub">
-          Customize search engine metadata, OpenGraph tags, and indexing rules.
-        </p>
+        <p className="settings-section-sub">{t.sub}</p>
       </div>
 
       {/* Live Google Search Result Snippet Card */}
       <div className="google-snippet-preview">
         <div className="google-snippet-header">
           <span>
-            <Icons.IconGlobe size={14} /> Google Search Result Preview
+            <Icons.IconGlobe size={14} /> {t.snippetPreview}
           </span>
         </div>
         <div className="google-snippet-card">
@@ -37,18 +38,16 @@ export default function SeoSection({
             https://yourportfolio.com <span className="google-snippet-arrow">▼</span>
           </div>
           <div className="google-snippet-title">
-            {settings.seo?.title || settings.title || 'My Photography Portfolio'}
+            {settings.seo?.title || settings.title || t.snippetTitle}
           </div>
           <div className="google-snippet-desc">
-            {settings.seo?.description ||
-              settings.subtitle ||
-              'A curated selection of photography work.'}
+            {settings.seo?.description || settings.subtitle || t.snippetDesc}
           </div>
         </div>
       </div>
 
       <div className="admin-field">
-        <label htmlFor="seo-site-url">Site URL</label>
+        <label htmlFor="seo-site-url">{t.siteUrl}</label>
         <input
           id="seo-site-url"
           value={settings.url || ''}
@@ -59,56 +58,52 @@ export default function SeoSection({
         />
         <FieldError id="seo-site-url-error" message={fieldErrors?.url} />
         <p style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '4px' }}>
-          Needed for <code>sitemap.xml</code>, the feed and structured data — those are generated
-          without a request, so the address cannot be derived from it. Leave empty and the sitemap
-          stays empty rather than guessing.
+          {rich(t.siteUrlHint, { sitemap: <code>sitemap.xml</code> })}
           {siteUrlInfo?.source === 'env' && (
             <>
               <br />
-              Currently supplied by the <code>SITE_URL</code> environment variable (
-              <code>{siteUrlInfo.effective}</code>). A value entered here takes precedence once
-              saved.
+              {rich(t.siteUrlFromEnv, {
+                variable: <code>SITE_URL</code>,
+                value: <code>{siteUrlInfo.effective}</code>,
+              })}
             </>
           )}
         </p>
       </div>
 
       <div className="admin-field">
-        <label htmlFor="seo-meta-title">SEO Meta Title</label>
+        <label htmlFor="seo-meta-title">{t.metaTitle}</label>
         <input
           id="seo-meta-title"
           value={settings.seo?.title || ''}
           onChange={(e) => update('seo.title', e.target.value)}
-          placeholder="Overrides default site title for Google search results"
+          placeholder={t.metaTitlePlaceholder}
         />
       </div>
 
       <div className="admin-field">
-        <label htmlFor="seo-subpage-title-template">Subpage Title Template</label>
+        <label htmlFor="seo-subpage-title-template">{t.titleTemplate}</label>
         <input
           id="seo-subpage-title-template"
           value={settings.seo?.titleTemplate || ''}
           onChange={(e) => update('seo.titleTemplate', e.target.value)}
-          placeholder={`%s | ${settings.seo?.title || settings.title || 'My Portfolio'}`}
+          placeholder={templateFallback}
         />
         <p style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '4px' }}>
-          Template for subpages &amp; albums. Use <code>%s</code> as placeholder for the page title.
+          {rich(t.titleTemplateHint, { placeholder: <code>%s</code> })}
           <br />
-          <strong>Preview:</strong>{' '}
-          {(
-            settings.seo?.titleTemplate ||
-            `%s | ${settings.seo?.title || settings.title || 'My Portfolio'}`
-          ).replace('%s', 'Landscapes')}
+          <strong>{t.previewLabel}</strong>{' '}
+          {(settings.seo?.titleTemplate || templateFallback).replace('%s', t.previewExample)}
         </p>
       </div>
 
       <div className="admin-field">
-        <label htmlFor="seo-meta-description">SEO Meta Description</label>
+        <label htmlFor="seo-meta-description">{t.metaDescription}</label>
         <textarea
           id="seo-meta-description"
           value={settings.seo?.description || ''}
           onChange={(e) => update('seo.description', e.target.value)}
-          placeholder="A curated selection of photography work..."
+          placeholder={t.metaDescriptionPlaceholder}
           rows={3}
         />
       </div>
@@ -117,26 +112,24 @@ export default function SeoSection({
 
       <div className="settings-section-header">
         <h3>
-          <Icons.IconGlobe size={18} /> Search Crawler Directives
+          <Icons.IconGlobe size={18} /> {t.crawlerTitle}
         </h3>
-        <p className="settings-section-sub">
-          Control how Googlebot and other web crawlers index your site.
-        </p>
+        <p className="settings-section-sub">{t.crawlerSub}</p>
       </div>
 
       <div className="admin-toggle-cards-grid">
         <ToggleCard
           icon={<Icons.IconBan size={16} />}
-          title="noindex (Hide from Google)"
-          description="Instructs search engines NOT to index this site in search results"
+          title={t.noIndex}
+          description={t.noIndexDesc}
           checked={settings.seo?.noIndex === true}
           onToggle={() => update('seo.noIndex', !settings.seo?.noIndex)}
         />
 
         <ToggleCard
           icon={<Icons.IconLink size={16} />}
-          title="nofollow (Block Link Following)"
-          description="Instructs search engine crawlers not to follow outgoing links"
+          title={t.noFollow}
+          description={t.noFollowDesc}
           checked={settings.seo?.noFollow === true}
           onToggle={() => update('seo.noFollow', !settings.seo?.noFollow)}
         />

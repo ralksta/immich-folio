@@ -9,34 +9,10 @@ import {
 } from '@/lib/config/schema';
 import { FieldError } from './fields';
 import type { SectionProps } from './types';
+import { useAdminDictionary } from '../AdminI18n';
 
 const LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow', 'justified'];
 const ASPECT_RATIOS = ['1', '3/2', '2/3', '16/9', 'auto'];
-
-const LAYOUT_INFO: Record<string, { label: string; desc: string }> = {
-  masonry: {
-    label: 'Masonry',
-    desc: 'Dynamic pinterest-style staggered columns',
-  },
-  uniform: { label: 'Uniform Grid', desc: 'Clean equal aspect ratio grid' },
-  showcase: {
-    label: 'Showcase',
-    desc: 'Featured hero photos mixed with smaller tiles',
-  },
-  filmstrip: {
-    label: 'Filmstrip',
-    desc: 'Horizontal scrollable film strip timeline',
-  },
-  'editorial-flow': {
-    label: 'Editorial Flow',
-    desc: 'Magazine story layout with varying photo sizes',
-  },
-  justified: {
-    label: 'Justified (Experimental)',
-    desc: 'Equal-height rows that fill the full width',
-  },
-};
-const LAYOUT_OPTIONS = toOptions(LAYOUTS, LAYOUT_INFO);
 
 function LayoutPreview({ value }: { value: string }) {
   return (
@@ -110,18 +86,6 @@ function LayoutPreview({ value }: { value: string }) {
   );
 }
 
-const ASPECT_RATIO_INFO: Record<string, { label: string; desc: string }> = {
-  '1': { label: 'Square (1:1)', desc: '1:1 ratio square crops' },
-  '3/2': { label: 'Landscape (3:2)', desc: 'Standard 35mm DSLR landscape' },
-  '2/3': { label: 'Portrait (2:3)', desc: 'Vertical portrait orientation' },
-  '16/9': { label: 'Cinema (16:9)', desc: 'Widescreen 16:9 cinematic ratio' },
-  auto: {
-    label: 'Original Auto',
-    desc: 'Uncropped original image proportions',
-  },
-};
-const ASPECT_RATIO_OPTIONS = toOptions(ASPECT_RATIOS, ASPECT_RATIO_INFO);
-
 function AspectRatioPreview({ value }: { value: string }) {
   return (
     <div className="ratio-card-preview">
@@ -133,20 +97,19 @@ function AspectRatioPreview({ value }: { value: string }) {
 }
 
 export default function GridSection({ settings, update, fieldErrors }: SectionProps) {
+  const t = useAdminDictionary().settings.grid;
   return (
     <div className="settings-panel">
       <div className="settings-section-header">
         <h3>
-          <Icons.IconGrid size={18} /> Grid &amp; Layout Engine
+          <Icons.IconGrid size={18} /> {t.title}
         </h3>
-        <p className="settings-section-sub">
-          Configure photography gallery column structures and thumbnail aspect ratios.
-        </p>
+        <p className="settings-section-sub">{t.sub}</p>
       </div>
 
       <OptionGrid
-        label="Layout Algorithm"
-        options={LAYOUT_OPTIONS}
+        label={t.layout}
+        options={toOptions(LAYOUTS, t.layouts)}
         value={settings.grid?.layout || 'masonry'}
         onSelect={(v) => update('grid.layout', v)}
         cardClassName="grid-layout-card"
@@ -154,8 +117,8 @@ export default function GridSection({ settings, update, fieldErrors }: SectionPr
       />
 
       <OptionGrid
-        label="Aspect Ratio"
-        options={ASPECT_RATIO_OPTIONS}
+        label={t.aspectRatio}
+        options={toOptions(ASPECT_RATIOS, t.aspectRatios)}
         value={settings.grid?.aspectRatio || '1'}
         onSelect={(v) => update('grid.aspectRatio', v)}
         cardClassName="ratio-card"
@@ -166,18 +129,15 @@ export default function GridSection({ settings, update, fieldErrors }: SectionPr
 
       <div className="settings-section-header">
         <h3>
-          <Icons.IconColumns size={18} /> Spacing &amp; Columns
+          <Icons.IconColumns size={18} /> {t.spacingTitle}
         </h3>
-        <p className="settings-section-sub">
-          Adjust column counts and grid gap spacing. The column count also tiles the album covers on
-          a subpage; their spacing stays with the theme unless a page overrides it.
-        </p>
+        <p className="settings-section-sub">{t.spacingSub}</p>
       </div>
 
       <div className="admin-field-row">
         <div className="admin-field">
           <label htmlFor="grid-columns">
-            Columns ({PHOTO_GRID_COLUMNS_MIN} - {PHOTO_GRID_COLUMNS_MAX})
+            {t.columns(PHOTO_GRID_COLUMNS_MIN, PHOTO_GRID_COLUMNS_MAX)}
           </label>
           <input
             id="grid-columns"
@@ -192,7 +152,7 @@ export default function GridSection({ settings, update, fieldErrors }: SectionPr
           <FieldError id="grid-columns-error" message={fieldErrors?.['grid.columns']} />
         </div>
         <div className="admin-field">
-          <label htmlFor="grid-gap-spacing">Gap Spacing (px)</label>
+          <label htmlFor="grid-gap-spacing">{t.gap}</label>
           <input
             id="grid-gap-spacing"
             type="number"

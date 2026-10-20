@@ -2,6 +2,7 @@
 
 import { useId, useState } from 'react';
 import { IconEye, IconEyeOff, IconLock } from '../Icons';
+import { useAdminDictionary } from '../AdminI18n';
 
 /**
  * One password input for every place the admin sets one: subpage, album,
@@ -19,7 +20,7 @@ import { IconEye, IconEyeOff, IconLock } from '../Icons';
 export default function PasswordField({
   value,
   onChange,
-  placeholder = 'Leave empty for public access',
+  placeholder,
   disabled,
   label,
   id: idProp,
@@ -27,6 +28,7 @@ export default function PasswordField({
   value: string | undefined;
   /** `undefined` removes the password. */
   onChange: (value: string | undefined) => void;
+  /** Defaults to "Leave empty for public access" in the panel's language. */
   placeholder?: string;
   disabled?: boolean;
   /** Accessible name when there is no visible <label> for the field. */
@@ -36,6 +38,8 @@ export default function PasswordField({
 }) {
   const generatedId = useId();
   const id = idProp ?? generatedId;
+  const dict = useAdminDictionary();
+  const t = dict.settings.fields;
   /** The stored hash while it is being changed, so "Keep" can put it back. */
   const [original, setOriginal] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
@@ -48,7 +52,7 @@ export default function PasswordField({
     return (
       <div className="password-field password-field--set">
         <span className="password-field__status">
-          <IconLock size={12} /> Protected
+          <IconLock size={12} /> {t.passwordProtected}
         </span>
         <button
           type="button"
@@ -58,7 +62,7 @@ export default function PasswordField({
           onClick={() => setOriginal(value)}
           disabled={disabled}
         >
-          Change
+          {t.passwordChange}
         </button>
         <button
           type="button"
@@ -66,7 +70,7 @@ export default function PasswordField({
           onClick={() => onChange(undefined)}
           disabled={disabled}
         >
-          Remove
+          {dict.common.remove}
         </button>
       </div>
     );
@@ -85,7 +89,7 @@ export default function PasswordField({
           // Emptying the field while changing falls back to the stored hash;
           // only Remove takes a password away.
           onChange={(e) => onChange(e.target.value || (changing ? original! : undefined))}
-          placeholder={changing ? 'New password' : placeholder}
+          placeholder={changing ? t.passwordNew : (placeholder ?? t.passwordPlaceholder)}
           aria-label={label}
           autoComplete="new-password"
           disabled={disabled}
@@ -95,7 +99,7 @@ export default function PasswordField({
           type="button"
           className="password-field__reveal"
           onClick={() => setRevealed((r) => !r)}
-          aria-label={revealed ? 'Hide password' : 'Show password'}
+          aria-label={revealed ? t.passwordHide : t.passwordShow}
           aria-pressed={revealed}
           aria-controls={id}
           disabled={disabled}
@@ -112,7 +116,7 @@ export default function PasswordField({
             setOriginal(null);
           }}
         >
-          Keep current password
+          {t.passwordKeep}
         </button>
       )}
     </div>

@@ -6,41 +6,37 @@ import PasswordField from '../fields/PasswordField';
 import EnvLockNote from '../fields/EnvLockNote';
 import { resolveWatermarkOpacity } from '@/lib/config/schema';
 import type { SectionProps } from './types';
+import { rich, useAdminDictionary } from '../AdminI18n';
 
 export default function SecuritySection({ settings, update, envLocks }: SectionProps) {
+  const t = useAdminDictionary().settings.security;
   const passwordLock = envLocks?.sitePassword;
   return (
     <div className="settings-panel">
       <div className="settings-section-header">
         <h3>
-          <Icons.IconLock size={18} /> Site Password
+          <Icons.IconLock size={18} /> {t.title}
         </h3>
-        <p className="settings-section-sub">
-          Puts the whole public site behind one password — useful while a portfolio is still being
-          built, or for a folio only ever shown to clients.
-        </p>
+        <p className="settings-section-sub">{t.sub}</p>
       </div>
 
       <div className="admin-field">
-        <label htmlFor="security-site-password">Site Password</label>
+        <label htmlFor="security-site-password">{t.sitePassword}</label>
         <PasswordField
           id="security-site-password"
           value={settings.sitePassword}
           onChange={(password) => update('sitePassword', password ?? '')}
-          placeholder="Leave empty for a public site"
-          label="Site password"
+          placeholder={t.sitePasswordPlaceholder}
+          label={t.sitePasswordAria}
           disabled={!!passwordLock}
         />
         {passwordLock && <EnvLockNote variable={passwordLock} />}
         <p className="admin-field-hint">
-          Stored as a <code>scrypt:…</code> hash in <code>settings.yaml</code>, never as typed.
+          {rich(t.storedHashed, { hash: <code>scrypt:…</code>, file: <code>settings.yaml</code> })}
           {!passwordLock && (
-            <>
-              {' '}
-              The <code>SITE_PASSWORD</code> environment variable overrides this field.
-            </>
+            <> {rich(t.envOverride, { variable: <code>SITE_PASSWORD</code> })}</>
           )}{' '}
-          The admin panel keeps its own password and is never behind this gate.
+          {t.adminSeparate}
         </p>
       </div>
 
@@ -48,18 +44,16 @@ export default function SecuritySection({ settings, update, envLocks }: SectionP
 
       <div className="settings-section-header">
         <h3>
-          <Icons.IconShieldCheck size={18} /> Asset Protection &amp; Watermark
+          <Icons.IconShieldCheck size={18} /> {t.protectionTitle}
         </h3>
-        <p className="settings-section-sub">
-          Configure image protection rules, right-click prevention, and watermark overlay.
-        </p>
+        <p className="settings-section-sub">{t.protectionSub}</p>
       </div>
 
       <div className="admin-toggle-cards-grid">
         <ToggleCard
           icon={<Icons.IconLock size={16} />}
-          title="Disable Right-Click Menu"
-          description="Prevents context menu on portfolio images to hinder unauthorized downloads"
+          title={t.rightClick}
+          description={t.rightClickDesc}
           checked={settings.protection?.disableRightClick === true}
           onToggle={() =>
             update('protection.disableRightClick', !settings.protection?.disableRightClick)
@@ -68,8 +62,8 @@ export default function SecuritySection({ settings, update, envLocks }: SectionP
 
         <ToggleCard
           icon={<Icons.IconBan size={16} />}
-          title="Disable Image Dragging"
-          description="Prevents visitors from dragging images off the portfolio page"
+          title={t.imageDrag}
+          description={t.imageDragDesc}
           checked={settings.protection?.disableImageDrag === true}
           onToggle={() =>
             update('protection.disableImageDrag', !settings.protection?.disableImageDrag)
@@ -81,16 +75,16 @@ export default function SecuritySection({ settings, update, envLocks }: SectionP
 
       <div className="settings-section-header">
         <h3>
-          <Icons.IconSparkles size={18} /> Dynamic Watermark Overlay
+          <Icons.IconSparkles size={18} /> {t.watermarkTitle}
         </h3>
-        <p className="settings-section-sub">Overlay copyright branding text on Lightbox images.</p>
+        <p className="settings-section-sub">{t.watermarkSub}</p>
       </div>
 
       <div className="admin-toggle-cards-grid" style={{ marginBottom: '1.25rem' }}>
         <ToggleCard
           icon={<Icons.IconFrame size={16} />}
-          title="Enable Watermark"
-          description="Overlay copyright text on portfolio image views"
+          title={t.watermarkEnable}
+          description={t.watermarkEnableDesc}
           checked={settings.watermark?.enabled === true}
           onToggle={() => update('watermark.enabled', !settings.watermark?.enabled)}
         />
@@ -99,7 +93,7 @@ export default function SecuritySection({ settings, update, envLocks }: SectionP
       {settings.watermark?.enabled && (
         <>
           <div className="admin-field">
-            <label htmlFor="security-watermark-text">Watermark Text</label>
+            <label htmlFor="security-watermark-text">{t.watermarkText}</label>
             <input
               id="security-watermark-text"
               value={settings.watermark?.text || ''}
@@ -110,16 +104,16 @@ export default function SecuritySection({ settings, update, envLocks }: SectionP
 
           <div className="admin-field-row">
             <div className="admin-field">
-              <label htmlFor="security-position">Position</label>
+              <label htmlFor="security-position">{t.position}</label>
               <select
                 id="security-position"
-                aria-label="Watermark position"
+                aria-label={t.positionAria}
                 value={settings.watermark?.position || 'bottom-right'}
                 onChange={(e) => update('watermark.position', e.target.value)}
               >
-                <option value="bottom-right">Bottom Right</option>
-                <option value="bottom-left">Bottom Left</option>
-                <option value="center">Center Overlay</option>
+                <option value="bottom-right">{t.positionBottomRight}</option>
+                <option value="bottom-left">{t.positionBottomLeft}</option>
+                <option value="center">{t.positionCenter}</option>
               </select>
             </div>
             <div className="admin-field">
@@ -127,8 +121,7 @@ export default function SecuritySection({ settings, update, envLocks }: SectionP
                           config written as a percentage shows as "90%" here rather
                           than "9000%" — and is written back as a fraction on save. */}
               <label htmlFor="security-opacity-100">
-                Opacity ({Math.round(resolveWatermarkOpacity(settings.watermark?.opacity) * 100)}
-                %)
+                {t.opacity(Math.round(resolveWatermarkOpacity(settings.watermark?.opacity) * 100))}
               </label>
               <input
                 id="security-opacity-100"

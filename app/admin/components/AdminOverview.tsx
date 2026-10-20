@@ -16,6 +16,8 @@ import { adminGet } from './useAdminFetch';
 import type { DoctorFinding, DoctorLevel } from '@/lib/admin/doctor';
 import { DOCTOR_LEVEL_EVENT } from './systemHealth';
 import { parseGalleryYaml } from './page-builder/galleryYaml';
+import { useAdminDictionary } from './AdminI18n';
+import type { AdminDictionary } from '@/lib/i18n/admin';
 
 interface OverviewData {
   /** gallery.yaml as stored; `subpages` may be a list or the older name → albums map. */
@@ -50,15 +52,16 @@ function viewsLastDays(
     .reduce((sum, [, d]) => sum + (d.pageviews || 0), 0);
 }
 
-function greeting(): string {
+function greeting(t: AdminDictionary['shell']['overview']): string {
   const h = new Date().getHours();
-  if (h < 5) return 'Good night';
-  if (h < 12) return 'Good morning';
-  if (h < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (h < 5) return t.goodNight;
+  if (h < 12) return t.goodMorning;
+  if (h < 18) return t.goodAfternoon;
+  return t.goodEvening;
 }
 
 export default function AdminOverview() {
+  const t = useAdminDictionary().shell.overview;
   const [data, setData] = useState<OverviewData | null>(null);
 
   useEffect(() => {
@@ -109,8 +112,8 @@ export default function AdminOverview() {
   if (unread.length) {
     attention.push({
       tone: 'accent',
-      title: `${unread.length} unread message${unread.length === 1 ? '' : 's'}`,
-      detail: `From ${[...new Set(unread.map((m) => m.name))].slice(0, 3).join(', ')}`,
+      title: t.unreadMessages(unread.length),
+      detail: t.from([...new Set(unread.map((m) => m.name))].slice(0, 3).join(', ')),
       href: '/admin/messages',
     });
   }
@@ -127,14 +130,10 @@ export default function AdminOverview() {
     <div className="admin-overview">
       <header className="overview-head">
         <div>
-          <p className="overview-kicker">Overview</p>
-          <h1 className="overview-title">{greeting()}.</h1>
+          <p className="overview-kicker">{t.kicker}</p>
+          <h1 className="overview-title">{greeting(t)}.</h1>
           <p className="overview-sub">
-            {data
-              ? attention.length
-                ? `${attention.length} thing${attention.length === 1 ? '' : 's'} could use a look.`
-                : 'Everything is in order.'
-              : 'Checking the site…'}
+            {data ? (attention.length ? t.needsLook(attention.length) : t.allInOrder) : t.checking}
           </p>
         </div>
         <div className="overview-actions">
@@ -144,17 +143,17 @@ export default function AdminOverview() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Icons.IconLink size={14} /> View site
+            <Icons.IconLink size={14} /> {t.viewSite}
           </a>
           <Link className="admin-btn admin-btn-primary" href="/admin/pages">
-            <Icons.IconPencil size={14} /> Edit pages
+            <Icons.IconPencil size={14} /> {t.editPages}
           </Link>
         </div>
       </header>
 
       <section aria-labelledby="overview-attention">
         <h2 id="overview-attention" className="overview-section-label">
-          Needs attention
+          {t.attention}
         </h2>
         {!data ? (
           <div className="admin-spinner" />
@@ -167,65 +166,63 @@ export default function AdminOverview() {
                   {a.title}
                   {a.detail && <span className="overview-attention-detail">{a.detail}</span>}
                 </span>
-                <span className="overview-attention-go">Open</span>
+                <span className="overview-attention-go">{t.open}</span>
               </Link>
             ))}
           </div>
         ) : (
-          <p className="overview-calm">Nothing waiting. New messages and problems show up here.</p>
+          <p className="overview-calm">{t.calm}</p>
         )}
       </section>
 
       <section aria-labelledby="overview-glance">
         <h2 id="overview-glance" className="overview-section-label">
-          At a glance
+          {t.glance}
         </h2>
         <div className="overview-stats">
           <Link href="/admin/pages" className="overview-stat">
-            <span className="overview-stat-label">Pages</span>
+            <span className="overview-stat-label">{t.pages}</span>
             <span className="overview-stat-value">{data ? published : '–'}</span>
             <span className="overview-stat-note">
               {subpages.length - published > 0
-                ? `${subpages.length - published} switched off`
-                : 'all published'}
+                ? t.switchedOff(subpages.length - published)
+                : t.allPublished}
             </span>
           </Link>
           <Link href="/admin/pages" className="overview-stat">
-            <span className="overview-stat-label">Hero photos</span>
+            <span className="overview-stat-label">{t.heroPhotos}</span>
             <span className="overview-stat-value">{data ? heroCount : '–'}</span>
-            <span className="overview-stat-note">on the home page</span>
+            <span className="overview-stat-note">{t.onHomePage}</span>
           </Link>
           <Link href="/admin/journal" className="overview-stat">
-            <span className="overview-stat-label">Journal</span>
+            <span className="overview-stat-label">{t.journal}</span>
             <span className="overview-stat-value">{data ? entries.length : '–'}</span>
-            <span className="overview-stat-note">
-              {drafts ? `${drafts} draft${drafts === 1 ? '' : 's'}` : 'no drafts'}
-            </span>
+            <span className="overview-stat-note">{drafts ? t.drafts(drafts) : t.noDrafts}</span>
           </Link>
           <Link href="/admin/analytics" className="overview-stat">
-            <span className="overview-stat-label">Views · 7 days</span>
+            <span className="overview-stat-label">{t.views7}</span>
             <span className="overview-stat-value">{data ? views7.toLocaleString() : '–'}</span>
-            <span className="overview-stat-note">cookieless count</span>
+            <span className="overview-stat-note">{t.cookieless}</span>
           </Link>
         </div>
       </section>
 
       <section aria-labelledby="overview-next">
         <h2 id="overview-next" className="overview-section-label">
-          Quick actions
+          {t.quickActions}
         </h2>
         <div className="overview-actions">
           <Link className="admin-btn admin-btn-ghost" href="/admin/journal">
-            <Icons.IconPlus size={14} /> New journal entry
+            <Icons.IconPlus size={14} /> {t.newEntry}
           </Link>
           <Link className="admin-btn admin-btn-ghost" href="/admin/messages">
-            <Icons.IconFileText size={14} /> Messages
+            <Icons.IconFileText size={14} /> {t.messages}
           </Link>
           <Link className="admin-btn admin-btn-ghost" href="/admin/settings/theme">
-            <Icons.IconPalette size={14} /> Theme
+            <Icons.IconPalette size={14} /> {t.theme}
           </Link>
           <Link className="admin-btn admin-btn-ghost" href="/admin/diagnostics">
-            <Icons.IconShieldCheck size={14} /> Diagnostics
+            <Icons.IconShieldCheck size={14} /> {t.diagnostics}
           </Link>
         </div>
       </section>

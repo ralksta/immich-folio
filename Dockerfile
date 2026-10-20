@@ -70,6 +70,7 @@ COPY --chmod=755 docker-entrypoint.sh ./docker-entrypoint.sh
 COPY --from=builder /app/scripts/doctor.mjs ./scripts/doctor.mjs
 COPY --from=builder /app/scripts/doctor.mts ./scripts/doctor.mts
 COPY --from=builder /app/lib/admin/doctor.ts ./lib/admin/doctor.ts
+COPY --from=builder /app/lib/i18n/admin/en/doctor.ts ./lib/i18n/admin/en/doctor.ts
 COPY --from=builder /app/lib/config/settingValues.ts ./lib/config/settingValues.ts
 COPY --from=builder /app/lib/config/schema.ts ./lib/config/schema.ts
 COPY --from=builder /app/lib/config/theme.ts ./lib/config/theme.ts

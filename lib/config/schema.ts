@@ -235,6 +235,11 @@ export interface AppConfig {
   siteTitle: string;
   siteSubtitle: string;
   lang: string;
+  /**
+   * Admin panel language as written in settings.yaml (#604). Absent or empty
+   * means the panel follows `lang`; `resolveAdminLocale()` decides.
+   */
+  adminLang?: string;
   seo: {
     title: string;
     description: string;
@@ -484,6 +489,8 @@ export interface SettingsYaml {
   /** Absolute site URL, e.g. https://folio.example. `SITE_URL` overrides it. */
   url?: string;
   lang?: string;
+  /** Admin panel language; unset follows `lang` (#604). */
+  adminLang?: string;
   seo?: {
     title?: string;
     description?: string;

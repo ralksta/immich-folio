@@ -8,8 +8,11 @@ subtitle: "A visual journal"
 
 # Interface language of the visitor-facing site: "en", "de", "fr", "es", "it" or "nl".
 # Any other value still sets <html lang> and date formatting, but the
-# interface stays English. The admin panel is always English.
+# interface stays English.
 lang: "en"
+
+# Language of the admin panel, same values. Leave it out to follow `lang`.
+# adminLang: "en"
 
 # ── SEO & Metadata ───────────────────────────────────────────────
 # Optional: Overrides global title/subtitle for search engines and social cards

@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { useAdminDictionary } from '../AdminI18n';
 
 /**
  * Lightbox zoom for one page or album (#467): inherit, on, or off.
@@ -24,10 +25,11 @@ export default function ZoomOverrideField({
   inheritLabel: string;
   hint: ReactNode;
 }) {
+  const t = useAdminDictionary().settings.fields;
   const current = value === true ? 'on' : value === false ? 'off' : '';
   return (
     <div className="admin-field">
-      <label htmlFor={id}>Photo zoom</label>
+      <label htmlFor={id}>{t.zoom}</label>
       <select
         id={id}
         value={current}
@@ -37,8 +39,8 @@ export default function ZoomOverrideField({
         }}
       >
         <option value="">{inheritLabel}</option>
-        <option value="on">On — visitors can zoom to full resolution</option>
-        <option value="off">Off</option>
+        <option value="on">{t.zoomOn}</option>
+        <option value="off">{t.zoomOff}</option>
       </select>
       <span className="admin-field-hint">{hint}</span>
     </div>

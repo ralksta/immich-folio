@@ -21,6 +21,7 @@ import { useLatest } from './useLatest';
 import { useDraft } from './useDraft';
 import DraftNotice from './DraftNotice';
 import type { ProcessingFact } from '@/lib/privacy';
+import { rich, useAdminDictionary } from './AdminI18n';
 
 interface PrivacyData {
   body: string;
@@ -33,6 +34,8 @@ interface PrivacyData {
 type Status = { kind: 'success' | 'error'; message: string } | null;
 
 export default function PrivacyEditor() {
+  const dict = useAdminDictionary();
+  const t = dict.settings.privacy;
   const [data, setData] = useState<PrivacyData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [body, setBody] = useState('');
@@ -70,9 +73,9 @@ export default function PrivacyEditor() {
       setBody(restored ?? d.body);
       setDirty(restored !== null);
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'Could not load.');
+      setLoadError(err instanceof Error ? err.message : t.loadFailed);
     }
-  }, [loadDraft]);
+  }, [loadDraft, t]);
 
   useEffect(() => {
     void load();
@@ -101,12 +104,12 @@ export default function PrivacyEditor() {
         return;
       }
       if (result.kind === 'keep') {
-        setStatus({ kind: 'error', message: 'Not saved — the policy changed elsewhere.' });
+        setStatus({ kind: 'error', message: t.conflict });
         return;
       }
       if (result.kind === 'failed') {
         if (!reportIfSessionExpired(result.res)) {
-          setStatus({ kind: 'error', message: `Could not save (HTTP ${result.res.status}).` });
+          setStatus({ kind: 'error', message: t.saveFailed(result.res.status) });
         }
         return;
       }
@@ -115,9 +118,9 @@ export default function PrivacyEditor() {
       setData((d) => (d ? { ...d, body: sent } : d));
       draft.saved(sent, editedMeanwhile);
       if (!editedMeanwhile) setDirty(false);
-      setStatus({ kind: 'success', message: 'Privacy policy saved.' });
+      setStatus({ kind: 'success', message: t.saved });
     } catch {
-      setStatus({ kind: 'error', message: 'Could not reach the server.' });
+      setStatus({ kind: 'error', message: t.unreachable });
     } finally {
       setSaving(false);
     }
@@ -131,11 +134,7 @@ export default function PrivacyEditor() {
 
   if (loadError) {
     // No editor over an unknown file: saving an empty one would erase the policy.
-    return (
-      <p className="admin-field-hint admin-field-hint--error">
-        The privacy policy could not be loaded ({loadError}). Reload the page to try again.
-      </p>
-    );
+    return <p className="admin-field-hint admin-field-hint--error">{t.loadError(loadError)}</p>;
   }
   if (!data) return <div className="admin-spinner" />;
 
@@ -160,16 +159,13 @@ export default function PrivacyEditor() {
       />
 
       <div className="privacy-editor__facts">
-        <h4>What this site processes</h4>
-        <p className="admin-field-hint">
-          Read off your current configuration. A checklist for writing the policy, not text for the
-          page.
-        </p>
+        <h4>{t.factsTitle}</h4>
+        <p className="admin-field-hint">{t.factsHint}</p>
         <ul>
           {data.facts.map((f) => (
             <li key={f.topic}>
               <strong>{f.topic}</strong>
-              {f.thirdParty && <span className="privacy-editor__badge">third party</span>}
+              {f.thirdParty && <span className="privacy-editor__badge">{t.thirdParty}</span>}
               <span>{f.detail}</span>
             </li>
           ))}
@@ -177,7 +173,7 @@ export default function PrivacyEditor() {
       </div>
 
       <div className="admin-field">
-        <label htmlFor="privacy-body">Privacy policy (Markdown)</label>
+        <label htmlFor="privacy-body">{t.body}</label>
         <textarea
           id="privacy-body"
           value={body}
@@ -186,18 +182,21 @@ export default function PrivacyEditor() {
             setDirty(true);
           }}
           rows={18}
-          placeholder="## Controller&#10;&#10;Name, address, email…"
+          placeholder={t.bodyPlaceholder}
         />
         <p className="admin-field-hint">
-          Headings with <code>##</code>, lists with <code>-</code>, <code>**bold**</code> and{' '}
-          <code>[links](https://…)</code>. Shown at /privacy and linked in the footer once there is
-          text. Earlier versions are kept under Backups.
+          {rich(t.syntaxHint, {
+            heading: <code>##</code>,
+            list: <code>-</code>,
+            bold: <code>**bold**</code>,
+            link: <code>[links](https://…)</code>,
+          })}
         </p>
       </div>
 
       <div className="privacy-editor__actions">
         <button type="button" className="admin-btn admin-btn-ghost" onClick={insertHeadings}>
-          <Icons.IconPlus size={14} /> Insert headings
+          <Icons.IconPlus size={14} /> {t.insertHeadings}
         </button>
         {body.trim() && data.enabled && (
           <a
@@ -206,7 +205,7 @@ export default function PrivacyEditor() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            View /privacy ↗
+            {t.view}
           </a>
         )}
         <button
@@ -215,7 +214,7 @@ export default function PrivacyEditor() {
           onClick={save}
           disabled={!dirty || saving}
         >
-          {saving ? 'Saving…' : 'Save privacy policy'}
+          {saving ? dict.common.saving : t.save}
         </button>
         {status && (
           <span className={`save-message ${status.kind}`} role="status">

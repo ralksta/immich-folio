@@ -7,19 +7,21 @@ import { DEFAULT_PRESET } from '@/lib/config/theme';
 import { PRESET_IDS, PRESET_REGISTRY } from '@/lib/config/presets';
 import { effectiveTheme, FeatureRow, FieldError } from './fields';
 import type { SectionProps } from './types';
+import { rich, useAdminDictionary } from '../AdminI18n';
 
 const PHOTO_FRAMES = ['none', 'passepartout', 'shadow'];
 const HERO_STYLES = ['split', 'fullbleed', 'minimal', 'stacked', 'typographic', 'mosaic', 'cover'];
 
-const PHOTO_FRAME_INFO: Record<string, { label: string; desc: string }> = {
-  none: { label: 'None', desc: 'Flush image with crisp edges' },
-  passepartout: {
-    label: 'Passepartout',
-    desc: 'Classic gallery matting border',
-  },
-  shadow: { label: 'Shadow', desc: 'Soft floating drop shadow' },
-};
-const PHOTO_FRAME_OPTIONS = toOptions(PHOTO_FRAMES, PHOTO_FRAME_INFO);
+/** The accent swatches; their names come from `settings.theme.swatches`. */
+const SWATCHES = [
+  { hex: '#e60012', name: 'studioRed' },
+  { hex: '#b89053', name: 'editorialGold' },
+  { hex: '#10b981', name: 'emerald' },
+  { hex: '#3b82f6', name: 'sapphire' },
+  { hex: '#8b5cf6', name: 'violet' },
+  { hex: '#ffffff', name: 'white' },
+  { hex: '#000000', name: 'black' },
+] as const;
 
 function PhotoFramePreview({ value }: { value: string }) {
   return (
@@ -30,20 +32,6 @@ function PhotoFramePreview({ value }: { value: string }) {
     </div>
   );
 }
-
-const HERO_STYLE_INFO: Record<string, { label: string; desc: string }> = {
-  split: { label: 'Split', desc: 'Side-by-side title & photo' },
-  fullbleed: { label: 'Fullbleed', desc: 'Edge-to-edge full width banner' },
-  minimal: { label: 'Minimal', desc: 'Centered title with subtle photo' },
-  stacked: { label: 'Stacked', desc: 'Title stacked directly over photo' },
-  typographic: { label: 'Typographic', desc: 'Oversized text masthead, no photos' },
-  mosaic: { label: 'Mosaic', desc: 'Dynamic photo collage layout' },
-  cover: {
-    label: 'Cover (Experimental)',
-    desc: 'Fullscreen splash with a single Enter link',
-  },
-};
-const HERO_STYLE_OPTIONS = toOptions(HERO_STYLES, HERO_STYLE_INFO);
 
 function HeroStylePreview({ value }: { value: string }) {
   return (
@@ -196,14 +184,12 @@ function PresetPreview({ value }: { value: string }) {
 
 function PresetSpecs({ value }: { value: string }) {
   const i = themeInfo(value);
-  return (
-    <span className="preset-card-specs">
-      {i.font} &middot; radius {i.radius} &middot; {i.frame}
-    </span>
-  );
+  const t = useAdminDictionary().settings.theme;
+  return <span className="preset-card-specs">{t.presetSpecs(i.font, i.radius, i.frame)}</span>;
 }
 
 export default function ThemeSection({ settings, update, fieldErrors }: SectionProps) {
+  const t = useAdminDictionary().settings.theme;
   // Read off the page on mount: the toggle previews light and dark on the
   // admin itself, and the page may already be in either.
   const [currentMode, setCurrentMode] = useState<'dark' | 'light'>(() =>
@@ -229,34 +215,28 @@ export default function ThemeSection({ settings, update, fieldErrors }: SectionP
     <div className="settings-panel theme-settings-panel">
       <div className="settings-section-header">
         <h3>
-          <Icons.IconPalette size={18} /> Theme Presets &amp; Color Mode
+          <Icons.IconPalette size={18} /> {t.title}
         </h3>
-        <p className="settings-section-sub">
-          Choose a typography preset and preview in Light or Dark mode.
-        </p>
+        <p className="settings-section-sub">{t.sub}</p>
       </div>
 
       <div className="admin-field">
-        <label htmlFor="theme-visitor-default-mode">Visitor Default Mode</label>
+        <label htmlFor="theme-visitor-default-mode">{t.visitorMode}</label>
         <select
           id="theme-visitor-default-mode"
-          aria-label="Visitor default mode"
+          aria-label={t.visitorModeAria}
           value={settings.mode || 'dark'}
           onChange={(e) => update('mode', e.target.value)}
         >
-          <option value="dark">Dark</option>
-          <option value="light">Light</option>
-          <option value="auto">Follow the visitor&apos;s system</option>
+          <option value="dark">{t.modeDark}</option>
+          <option value="light">{t.modeLight}</option>
+          <option value="auto">{t.modeAuto}</option>
         </select>
-        <p className="admin-field-hint">
-          What a first-time visitor sees. The light/dark toggle in the site header still lets them
-          choose, and their choice is remembered on their device. The preview below is your own, and
-          does not change this.
-        </p>
+        <p className="admin-field-hint">{t.visitorModeHint}</p>
       </div>
 
       <OptionGrid
-        label="Preset"
+        label={t.preset}
         options={PRESET_OPTIONS}
         value={settings.theme?.preset || DEFAULT_PRESET}
         onSelect={(v) => update('theme.preset', v)}
@@ -276,7 +256,7 @@ export default function ThemeSection({ settings, update, fieldErrors }: SectionP
       />
 
       <div className="admin-field">
-        <span className="admin-field-label">Color Mode</span>
+        <span className="admin-field-label">{t.colorMode}</span>
         <p
           style={{
             fontSize: '0.78rem',
@@ -285,9 +265,11 @@ export default function ThemeSection({ settings, update, fieldErrors }: SectionP
             lineHeight: '1.4',
           }}
         >
-          Presets like <strong>Editorial</strong>, <strong>Minimal</strong> &amp;{' '}
-          <strong>Classic</strong> feature warm light/cream backgrounds in Light Mode and charcoal
-          in Dark Mode.
+          {rich(t.colorModeHint, {
+            editorial: <strong>Editorial</strong>,
+            minimal: <strong>Minimal</strong>,
+            classic: <strong>Classic</strong>,
+          })}
         </p>
         <div className="segmented-control">
           <button
@@ -295,14 +277,14 @@ export default function ThemeSection({ settings, update, fieldErrors }: SectionP
             className={`segment-btn ${currentMode === 'light' ? 'active' : ''}`}
             onClick={() => toggleMode('light')}
           >
-            <Icons.IconSun size={14} /> Light Mode (Cream / Beige)
+            <Icons.IconSun size={14} /> {t.lightMode}
           </button>
           <button
             type="button"
             className={`segment-btn ${currentMode === 'dark' ? 'active' : ''}`}
             onClick={() => toggleMode('dark')}
           >
-            <Icons.IconMoon size={14} /> Dark Mode (Charcoal)
+            <Icons.IconMoon size={14} /> {t.darkMode}
           </button>
         </div>
       </div>
@@ -311,25 +293,15 @@ export default function ThemeSection({ settings, update, fieldErrors }: SectionP
 
       <div className="settings-section-header">
         <h3>
-          <Icons.IconTarget size={18} /> Accent Color
+          <Icons.IconTarget size={18} /> {t.accentTitle}
         </h3>
-        <p className="settings-section-sub">
-          Pick a primary accent color for links, buttons, and highlights.
-        </p>
+        <p className="settings-section-sub">{t.accentSub}</p>
       </div>
 
       <div className="admin-field">
         <div className="accent-picker-wrapper">
           <div className="color-swatches-row">
-            {[
-              { hex: '#e60012', name: 'Studio Red' },
-              { hex: '#b89053', name: 'Editorial Gold' },
-              { hex: '#10b981', name: 'Emerald' },
-              { hex: '#3b82f6', name: 'Sapphire' },
-              { hex: '#8b5cf6', name: 'Violet' },
-              { hex: '#ffffff', name: 'Monochrome White' },
-              { hex: '#000000', name: 'Obsidian Black' },
-            ].map((swatch) => {
+            {SWATCHES.map((swatch) => {
               const isSelected = theme.accent.toLowerCase() === swatch.hex.toLowerCase();
               return (
                 <button
@@ -338,7 +310,7 @@ export default function ThemeSection({ settings, update, fieldErrors }: SectionP
                   className={`color-swatch-btn ${isSelected ? 'active' : ''}`}
                   style={{ backgroundColor: swatch.hex }}
                   onClick={() => update('theme.accent', swatch.hex)}
-                  title={swatch.name}
+                  title={t.swatches[swatch.name]}
                 />
               );
             })}
@@ -346,12 +318,12 @@ export default function ThemeSection({ settings, update, fieldErrors }: SectionP
           <div className="color-field">
             <input
               type="color"
-              aria-label="Accent colour"
+              aria-label={t.accentAria}
               value={theme.accent}
               onChange={(e) => update('theme.accent', e.target.value)}
             />
             <input
-              aria-label="Accent colour (hex)"
+              aria-label={t.accentHexAria}
               type="text"
               value={settings.theme?.accent || ''}
               onChange={(e) => update('theme.accent', e.target.value)}
@@ -368,16 +340,14 @@ export default function ThemeSection({ settings, update, fieldErrors }: SectionP
 
       <div className="settings-section-header">
         <h3>
-          <Icons.IconFrame size={18} /> Photo Frame &amp; Layout
+          <Icons.IconFrame size={18} /> {t.frameTitle}
         </h3>
-        <p className="settings-section-sub">
-          Customize image presentation borders and hero layouts.
-        </p>
+        <p className="settings-section-sub">{t.frameSub}</p>
       </div>
 
       <OptionGrid
-        label="Photo Frame"
-        options={PHOTO_FRAME_OPTIONS}
+        label={t.photoFrame}
+        options={toOptions(PHOTO_FRAMES, t.photoFrames)}
         value={theme.photoFrame}
         onSelect={(v) => update('theme.photoFrame', v)}
         cardClassName="frame-card"
@@ -385,8 +355,8 @@ export default function ThemeSection({ settings, update, fieldErrors }: SectionP
       />
 
       <OptionGrid
-        label="Hero Style"
-        options={HERO_STYLE_OPTIONS}
+        label={t.heroStyle}
+        options={toOptions(HERO_STYLES, t.heroStyles)}
         value={theme.heroStyle}
         onSelect={(v) => update('theme.heroStyle', v)}
         cardClassName="hero-card"
@@ -397,37 +367,37 @@ export default function ThemeSection({ settings, update, fieldErrors }: SectionP
 
       <div className="settings-section-header">
         <h3>
-          <Icons.IconSparkles size={18} /> Look &amp; motion
+          <Icons.IconSparkles size={18} /> {t.lookTitle}
         </h3>
-        <p className="settings-section-sub">Effects and small controls on every page.</p>
+        <p className="settings-section-sub">{t.lookSub}</p>
       </div>
 
       <div className="feature-list">
         <FeatureRow
           icon={<Icons.IconSparkles size={15} />}
-          title="Page transitions"
-          description="A short fade between pages"
+          title={t.transitions}
+          description={t.transitionsDesc}
           checked={settings.transitions !== false}
           onToggle={() => update('transitions', settings.transitions === false)}
         />
         <FeatureRow
           icon={<Icons.IconArrowUp size={15} />}
-          title="Scroll-to-top button"
-          description="A floating arrow on long pages"
+          title={t.scrollToTop}
+          description={t.scrollToTopDesc}
           checked={settings.scrollToTop !== false}
           onToggle={() => update('scrollToTop', settings.scrollToTop === false)}
         />
         <FeatureRow
           icon={<Icons.IconFilm size={15} />}
-          title="Film grain"
-          description="Analog noise over the background"
+          title={t.grain}
+          description={t.grainDesc}
           checked={theme.grain}
           onToggle={() => update('theme.grain', !theme.grain)}
         />
         <FeatureRow
           icon={<Icons.IconTarget size={15} />}
-          title="Header accent dot"
-          description="A dot beside the active section heading"
+          title={t.headerDot}
+          description={t.headerDotDesc}
           checked={theme.headerDot}
           onToggle={() => update('theme.headerDot', !theme.headerDot)}
         />

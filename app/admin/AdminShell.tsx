@@ -7,6 +7,7 @@ import { SESSION_EXPIRED_EVENT } from './components/sessionExpiry';
 import { NotificationProvider } from './components/Notifications';
 import './admin.css';
 import { ConfirmProvider } from './components/ConfirmDialog';
+import { rich, useAdminDictionary } from './components/AdminI18n';
 
 /**
  * Auth gate and panel chrome for every /admin route. Lives in the admin layout
@@ -14,6 +15,7 @@ import { ConfirmProvider } from './components/ConfirmDialog';
  * and the header mounted instead of re-running them per route.
  */
 export default function AdminShell({ children }: { children: ReactNode }) {
+  const t = useAdminDictionary().shell.gate;
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [enabled, setEnabled] = useState(true);
   // Sessions last 24 hours (lib/admin/auth.ts), but nothing re-checked
@@ -51,7 +53,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
     return (
       <div className="admin-loading" role="status">
         <div className="admin-spinner" aria-hidden="true" />
-        <span className="sr-only">Loading admin panel</span>
+        <span className="sr-only">{t.loading}</span>
       </div>
     );
   }
@@ -60,11 +62,8 @@ export default function AdminShell({ children }: { children: ReactNode }) {
     return (
       <div className="admin-disabled">
         <div className="admin-disabled-card">
-          <h1>Admin Panel</h1>
-          <p>
-            The admin panel is not enabled. Set <code>ADMIN_PASSWORD</code> in your environment
-            variables to activate it.
-          </p>
+          <h1>{t.disabledTitle}</h1>
+          <p>{rich(t.disabledBody, { env: <code>ADMIN_PASSWORD</code> })}</p>
         </div>
       </div>
     );
@@ -73,7 +72,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
   if (!authenticated) {
     return (
       <AdminLogin
-        notice={sessionExpired ? 'Your session expired. Sign in again.' : undefined}
+        notice={sessionExpired ? t.sessionExpired : undefined}
         onSuccess={() => {
           setSessionExpired(false);
           setAuthenticated(true);

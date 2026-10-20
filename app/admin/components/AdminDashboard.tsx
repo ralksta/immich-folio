@@ -10,6 +10,10 @@ import { reportIfSessionExpired } from './sessionExpiry';
 import * as Icons from './Icons';
 import { useNotify } from './Notifications';
 import { adminGet } from './useAdminFetch';
+import { rich, useAdminDictionary } from './AdminI18n';
+import type { AdminDictionary } from '@/lib/i18n/admin';
+
+type NavLabels = AdminDictionary['shell']['nav'];
 
 interface Props {
   onLogout: () => void;
@@ -20,11 +24,12 @@ interface Props {
 /**
  * The sidebar, grouped by what the owner is doing (docs/admin-ux-concept.md).
  * `match` decides the active entry; Overview only matches /admin itself.
+ * `group` and `label` are keys into the shell dictionary's `nav`.
  */
 const NAV: {
-  group?: string;
+  group?: keyof NavLabels['groups'];
   items: {
-    label: string;
+    label: Exclude<keyof NavLabels, 'groups' | 'unread'>;
     href: string;
     match: RegExp;
     icon: ReactNode;
@@ -34,7 +39,7 @@ const NAV: {
   {
     items: [
       {
-        label: 'Overview',
+        label: 'overview',
         href: '/admin',
         match: /^\/admin\/?$/,
         icon: <Icons.IconHome size={16} />,
@@ -42,16 +47,16 @@ const NAV: {
     ],
   },
   {
-    group: 'Content',
+    group: 'content',
     items: [
       {
-        label: 'Pages',
+        label: 'pages',
         href: '/admin/pages',
         match: /^\/admin\/pages(\/|$)/,
         icon: <Icons.IconGrid size={16} />,
       },
       {
-        label: 'Journal',
+        label: 'journal',
         href: '/admin/journal',
         match: /^\/admin\/journal/,
         icon: <Icons.IconBook size={16} />,
@@ -59,23 +64,23 @@ const NAV: {
     ],
   },
   {
-    group: 'Visitors',
+    group: 'visitors',
     items: [
       {
-        label: 'Messages',
+        label: 'messages',
         href: '/admin/messages',
         match: /^\/admin\/messages/,
         icon: <Icons.IconFileText size={16} />,
         badge: 'messages',
       },
       {
-        label: 'Proofing',
+        label: 'proofing',
         href: '/admin/proofing',
         match: /^\/admin\/proofing/,
         icon: <Icons.IconHeart size={16} />,
       },
       {
-        label: 'Analytics',
+        label: 'analytics',
         href: '/admin/analytics',
         match: /^\/admin\/analytics/,
         icon: <Icons.IconBarChart size={16} />,
@@ -83,10 +88,10 @@ const NAV: {
     ],
   },
   {
-    group: 'Site',
+    group: 'site',
     items: [
       {
-        label: 'Settings',
+        label: 'settings',
         href: '/admin/settings',
         match: /^\/admin\/settings/,
         icon: <Icons.IconGear size={16} />,
@@ -94,17 +99,17 @@ const NAV: {
     ],
   },
   {
-    group: 'System',
+    group: 'system',
     items: [
       {
-        label: 'Diagnostics',
+        label: 'diagnostics',
         href: '/admin/diagnostics',
         match: /^\/admin\/diagnostics/,
         icon: <Icons.IconShieldCheck size={16} />,
         badge: 'health',
       },
       {
-        label: 'Help',
+        label: 'help',
         href: '/admin/help',
         match: /^\/admin\/help/,
         icon: <Icons.IconQuote size={16} />,
@@ -117,6 +122,8 @@ const SIDEBAR_KEY = 'folio_admin_sidebar';
 
 export default function AdminDashboard({ onLogout, children }: Props) {
   const notify = useNotify();
+  const dict = useAdminDictionary();
+  const t = dict.shell;
   const pathname = usePathname();
   // Phones: the sidebar folds into a header row, and the nav opens from a
   // menu button (#732) — spread out above the content, it took most of an
@@ -174,7 +181,7 @@ export default function AdminDashboard({ onLogout, children }: Props) {
       // result was never checked at all (#596).
       if (!res.ok) {
         if (!reportIfSessionExpired(res)) {
-          notify('error', `Reload failed (HTTP ${res.status}).`);
+          notify('error', t.sidebar.reloadFailed(res.status));
         }
         return;
       }
@@ -211,8 +218,8 @@ export default function AdminDashboard({ onLogout, children }: Props) {
    * the thing being checked is broken.
    */
   const indicator = (healthy: boolean, okLabel: string, badLabel: string) => {
-    if (statusLoading) return { className: 'unknown', label: 'Checking…' };
-    if (statusError || !status) return { className: 'unknown', label: 'Unknown' };
+    if (statusLoading) return { className: 'unknown', label: t.status.checking };
+    if (statusError || !status) return { className: 'unknown', label: dict.common.unknown };
     return healthy ? { className: 'ok', label: okLabel } : { className: 'error', label: badLabel };
   };
 
@@ -254,13 +261,17 @@ export default function AdminDashboard({ onLogout, children }: Props) {
 
   const immichIndicator = indicator(
     status?.immich?.status === 'connected',
-    'Connected',
-    'Disconnected',
+    t.status.connected,
+    t.status.disconnected,
   );
   const configIndicator =
     !statusLoading && !statusError && status?.config?.status === 'setup'
-      ? { className: 'unknown', label: 'Not set up' }
-      : indicator(status?.config?.status === 'valid', 'Valid', 'Degraded');
+      ? { className: 'unknown', label: t.status.configNotSetUp }
+      : indicator(
+          status?.config?.status === 'valid',
+          t.status.configValid,
+          t.status.configDegraded,
+        );
 
   // An installation that was never finished is not a fault. It used to render
   // as "System Degraded" with no further hint, which sent operators looking for
@@ -269,12 +280,10 @@ export default function AdminDashboard({ onLogout, children }: Props) {
 
   // Colour and words decided together — they used to be two separately-ordered
   // nested ternaries over the same inputs, and disagreed in two states (#539).
-  const health = systemHealth({
-    statusLoading,
-    setupIncomplete,
-    immich: immichIndicator.className,
-    doctorLevel,
-  });
+  const health = systemHealth(
+    { statusLoading, setupIncomplete, immich: immichIndicator.className, doctorLevel },
+    t.health,
+  );
   const missingCredentials = status?.setup?.credentials === 'missing';
 
   return (
@@ -284,16 +293,16 @@ export default function AdminDashboard({ onLogout, children }: Props) {
       }`}
     >
       <a href="#admin-main" className="skip-link">
-        Skip to content
+        {t.sidebar.skipToContent}
       </a>
-      <aside className="admin-sidebar" aria-label="Admin">
+      <aside className="admin-sidebar" aria-label={t.sidebar.landmark}>
         <button
           type="button"
           className="admin-sidebar-toggle"
           onClick={toggleCollapsed}
           aria-expanded={!collapsed}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          data-tip={collapsed ? 'Expand' : undefined}
+          aria-label={collapsed ? t.sidebar.expand : t.sidebar.collapse}
+          data-tip={collapsed ? t.sidebar.expandShort : undefined}
         >
           <svg
             width="14"
@@ -313,7 +322,7 @@ export default function AdminDashboard({ onLogout, children }: Props) {
           <span className="admin-brand-mark" aria-hidden="true" />
           <span className="admin-brand-text">
             <span className="admin-brand-name">Immich Folio</span>
-            <span className="admin-brand-sub">Admin</span>
+            <span className="admin-brand-sub">{t.sidebar.brandSub}</span>
           </span>
         </Link>
         <button
@@ -322,7 +331,7 @@ export default function AdminDashboard({ onLogout, children }: Props) {
           onClick={() => setMenuOpen((open) => !open)}
           aria-expanded={menuOpen}
           aria-controls="admin-sidebar-menu"
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-label={menuOpen ? t.sidebar.closeMenu : t.sidebar.openMenu}
         >
           <svg
             width="18"
@@ -342,22 +351,25 @@ export default function AdminDashboard({ onLogout, children }: Props) {
           <nav className="admin-nav">
             {NAV.map((section, i) => (
               <div key={section.group ?? i} className="admin-nav-group">
-                {section.group && <span className="admin-nav-label">{section.group}</span>}
+                {section.group && (
+                  <span className="admin-nav-label">{t.nav.groups[section.group]}</span>
+                )}
                 {section.items.map((item) => {
                   const active = item.match.test(pathname);
+                  const label = t.nav[item.label];
                   const count = item.badge === 'messages' ? unread : 0;
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
                       className={`admin-nav-item ${active ? 'active' : ''}`}
-                      data-tip={item.label}
+                      data-tip={label}
                       aria-current={active ? 'page' : undefined}
                     >
                       <span className="admin-nav-icon">{item.icon}</span>
-                      <span className="admin-nav-text">{item.label}</span>
+                      <span className="admin-nav-text">{label}</span>
                       {count > 0 && (
-                        <span className="admin-nav-count" aria-label={`${count} unread`}>
+                        <span className="admin-nav-count" aria-label={t.nav.unread(count)}>
                           {count}
                         </span>
                       )}
@@ -383,7 +395,7 @@ export default function AdminDashboard({ onLogout, children }: Props) {
                   setShowStatus(!showStatus);
                   if (!showStatus) fetchStatus();
                 }}
-                title="Show system status"
+                title={t.status.showTitle}
                 data-tip={health.label}
               >
                 <span className="status-dot"></span>
@@ -395,12 +407,12 @@ export default function AdminDashboard({ onLogout, children }: Props) {
                   <div className="status-dropdown-backdrop" onClick={() => setShowStatus(false)} />
                   <div className="status-dropdown">
                     <div className="status-dropdown-header">
-                      <h4>System Diagnostics</h4>
+                      <h4>{t.status.heading}</h4>
                       <button
                         className="status-refresh-btn"
                         onClick={fetchStatus}
                         disabled={statusLoading}
-                        title="Refresh diagnostics"
+                        title={t.status.refreshTitle}
                       >
                         {statusLoading ? '...' : '↻'}
                       </button>
@@ -408,44 +420,55 @@ export default function AdminDashboard({ onLogout, children }: Props) {
                     <div className="status-dropdown-body">
                       {setupIncomplete && (
                         <p className="status-setup-note">
-                          {missingCredentials
-                            ? 'No Immich URL or API key configured. Set IMMICH_API_URL and IMMICH_API_KEY, or run the '
-                            : 'No content/gallery.yaml yet — the public site has nothing to show. Add a page below, or run the '}
-                          <a href="/install" target="_blank" rel="noopener noreferrer">
-                            setup wizard
-                          </a>
-                          {missingCredentials
-                            ? '.'
-                            : ' (the one-time token is printed to the server log).'}
+                          {rich(
+                            missingCredentials ? t.status.missingCredentials : t.status.noGallery,
+                            {
+                              apiUrl: 'IMMICH_API_URL',
+                              apiKey: 'IMMICH_API_KEY',
+                              file: 'content/gallery.yaml',
+                              wizard: (
+                                <a href="/install" target="_blank" rel="noopener noreferrer">
+                                  {t.status.setupWizard}
+                                </a>
+                              ),
+                            },
+                          )}
                         </p>
                       )}
                       <div className="status-item">
-                        <span className="status-label">Immich Connection</span>
+                        <span className="status-label">{t.status.immich}</span>
                         <span className={`status-val ${immichIndicator.className}`}>
                           {immichIndicator.label}
                         </span>
                       </div>
                       <div className="status-item">
-                        <span className="status-label">Config Integrity</span>
+                        <span className="status-label">{t.status.config}</span>
                         <span className={`status-val ${configIndicator.className}`}>
                           {configIndicator.label}
                         </span>
                       </div>
                       <div className="status-item">
-                        <span className="status-label">Config Backups</span>
-                        <span className="status-val">{status?.backups?.count ?? 0} Backups</span>
-                      </div>
-                      <div className="status-item">
-                        <span className="status-label">Latest Backup</span>
-                        <span className="status-val" title={status?.backups?.lastBackup || 'None'}>
-                          {status?.backups?.lastBackup
-                            ? new Date(status.backups.lastBackup).toLocaleDateString()
-                            : 'None'}
+                        <span className="status-label">{t.status.backups}</span>
+                        <span className="status-val">
+                          {t.status.backupCount(status?.backups?.count ?? 0)}
                         </span>
                       </div>
                       <div className="status-item">
-                        <span className="status-label">In-Memory Cache</span>
-                        <span className="status-val">{status?.cache?.size ?? 0} items</span>
+                        <span className="status-label">{t.status.latestBackup}</span>
+                        <span
+                          className="status-val"
+                          title={status?.backups?.lastBackup || dict.common.none}
+                        >
+                          {status?.backups?.lastBackup
+                            ? new Date(status.backups.lastBackup).toLocaleDateString()
+                            : dict.common.none}
+                        </span>
+                      </div>
+                      <div className="status-item">
+                        <span className="status-label">{t.status.cache}</span>
+                        <span className="status-val">
+                          {t.status.cacheItems(status?.cache?.size ?? 0)}
+                        </span>
                       </div>
                       {/*
                       Discreet on purpose: a row in the status list, not a
@@ -454,14 +477,14 @@ export default function AdminDashboard({ onLogout, children }: Props) {
                       updates (#496).
                     */}
                       <div className="status-item">
-                        <span className="status-label">Version</span>
+                        <span className="status-label">{t.status.version}</span>
                         {status?.update?.updateAvailable ? (
                           <a
                             className="status-val update"
                             href="https://github.com/ralksta/immich-folio/releases/latest"
                             target="_blank"
                             rel="noopener noreferrer"
-                            title={`Version ${status.update.latest} is available`}
+                            title={t.status.updateAvailable(status.update.latest)}
                           >
                             {status.update.current} → {status.update.latest}
                           </a>
@@ -481,34 +504,38 @@ export default function AdminDashboard({ onLogout, children }: Props) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="admin-side-action"
-                data-tip="View site"
-                title="Open site in new tab (bypassing cache)"
+                data-tip={t.sidebar.viewSite}
+                title={t.sidebar.viewSiteTitle}
               >
                 <Icons.IconLink size={14} />
-                <span className="admin-side-label">View site</span>
+                <span className="admin-side-label">{t.sidebar.viewSite}</span>
               </a>
               <button
                 className="admin-side-action"
-                data-tip="Backups"
+                data-tip={t.sidebar.backups}
                 onClick={() => setShowBackupModal(true)}
-                title="Manage config backups & restore"
+                title={t.sidebar.backupsTitle}
               >
                 <Icons.IconArchive size={14} />
-                <span className="admin-side-label">Backups</span>
+                <span className="admin-side-label">{t.sidebar.backups}</span>
               </button>
               <button
                 className="admin-side-action"
-                data-tip="Reload"
+                data-tip={t.sidebar.reload}
                 onClick={handleReload}
                 disabled={saving}
-                title="Reload config & clear cache"
+                title={t.sidebar.reloadTitle}
               >
                 <Icons.IconRefresh size={14} />
-                <span className="admin-side-label">Reload</span>
+                <span className="admin-side-label">{t.sidebar.reload}</span>
               </button>
-              <button className="admin-side-action" data-tip="Sign out" onClick={handleLogout}>
+              <button
+                className="admin-side-action"
+                data-tip={t.sidebar.signOut}
+                onClick={handleLogout}
+              >
                 <Icons.IconX size={14} />
-                <span className="admin-side-label">Sign out</span>
+                <span className="admin-side-label">{t.sidebar.signOut}</span>
               </button>
             </div>
           </div>

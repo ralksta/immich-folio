@@ -8,6 +8,7 @@ import * as Icons from '../Icons';
 import { resolveTheme } from '@/lib/config/theme';
 import type { SettingsYaml } from '@/lib/config/schema';
 import type { Settings } from './types';
+import { useAdminDictionary } from '../AdminI18n';
 
 /**
  * The message under an input whose value the site would ignore (`fieldErrors`).
@@ -131,6 +132,7 @@ export function FeatureRow({
   /** Where this feature is configured beyond on/off. */
   href?: string;
 }) {
+  const t = useAdminDictionary().settings.fields;
   return (
     <div className="feature-row">
       <button type="button" className="feature-row-main" onClick={onToggle} aria-pressed={checked}>
@@ -146,7 +148,7 @@ export function FeatureRow({
       {/* Reserved even without a link, so every switch lines up in one column. */}
       {href ? (
         <Link href={href} className="feature-row-link">
-          Configure →
+          {t.configure}
         </Link>
       ) : (
         <span className="feature-row-link" aria-hidden="true" />

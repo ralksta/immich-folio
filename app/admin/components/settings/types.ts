@@ -12,6 +12,8 @@ export interface Settings {
   /** Absolute site URL for sitemap, feed and structured data (#472). */
   url?: string;
   lang?: string;
+  /** Admin panel language; unset follows `lang` (#604). */
+  adminLang?: string;
   sitePassword?: string;
   mode?: 'light' | 'dark' | 'auto';
   exifOnHover?: boolean;

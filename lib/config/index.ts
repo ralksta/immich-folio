@@ -835,6 +835,7 @@ function deriveConfig(): AppConfig {
     siteTitle: settings.title ?? defaultTitle,
     siteSubtitle: settings.subtitle ?? env.SITE_SUBTITLE,
     lang: settings.lang ?? 'en',
+    adminLang: settings.adminLang,
     // Env wins, so a deployment can rotate the site password without touching
     // settings.yaml — the same precedence the Immich credentials use.
     sitePassword: env.SITE_PASSWORD ?? settings.sitePassword ?? '',

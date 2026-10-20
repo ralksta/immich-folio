@@ -4,10 +4,21 @@ import { useState } from 'react';
 import * as Icons from '../Icons';
 import type { SaveStatus } from '../SaveBar';
 import { resolveExifDisplay } from '@/lib/config/schema';
-import { SUPPORTED_LOCALES, getDictionary, resolveLocale } from '@/lib/i18n';
+import { SUPPORTED_LOCALES, getDictionary, resolveLocale, type Locale } from '@/lib/i18n';
 import { FeatureGroup, FeatureRow, SettingRow } from './fields';
 import type { SectionProps } from './types';
 import { useConfirm } from '../ConfirmDialog';
+import { rich, useAdminDictionary } from '../AdminI18n';
+
+/** Each language in its own name, so it can be found whatever the panel's language. */
+const LOCALE_NAMES: Record<Locale, string> = {
+  en: 'English (US)',
+  de: 'Deutsch (DE)',
+  fr: 'Français (FR)',
+  es: 'Español (ES)',
+  it: 'Italiano (IT)',
+  nl: 'Nederlands (NL)',
+};
 
 export default function GeneralSection({
   settings,
@@ -16,6 +27,8 @@ export default function GeneralSection({
   siteTitleEnv,
 }: SectionProps & { siteTitleEnv?: string | null }) {
   const confirm = useConfirm();
+  const dict = useAdminDictionary();
+  const t = dict.settings.general;
   // What the site shows while the field is empty, resolved as getConfig does:
   // SITE_TITLE, else the site language's word for a gallery (QA A-15).
   const fallbackTitle = siteTitleEnv || getDictionary(resolveLocale(settings.lang)).common.gallery;
@@ -38,13 +51,13 @@ export default function GeneralSection({
   const anyMetadata = exif.camera || exif.settings || exif.location || exif.caption;
   const metadataSummary =
     [
-      exif.camera && 'Camera & lens',
-      exif.settings && 'Exposure',
-      exif.location && 'Location',
-      exif.caption && 'Description',
+      exif.camera && t.metadataSummary.camera,
+      exif.settings && t.metadataSummary.exposure,
+      exif.location && t.metadataSummary.location,
+      exif.caption && t.metadataSummary.description,
     ]
       .filter(Boolean)
-      .join(' · ') || 'Nothing published — the lightbox hides its info panel';
+      .join(' · ') || t.metadataSummary.none;
 
   /** Turning it back on selects everything; the details below narrow it again. */
   const toggleMetadata = () =>
@@ -59,15 +72,13 @@ export default function GeneralSection({
     <div className="settings-panel">
       <div className="settings-section-header">
         <h3>
-          <Icons.IconGear size={18} /> General Site Settings
+          <Icons.IconGear size={18} /> {t.title}
         </h3>
-        <p className="settings-section-sub">
-          Configure basic site identity, language, and core feature toggles.
-        </p>
+        <p className="settings-section-sub">{t.sub}</p>
       </div>
 
       <div className="admin-field">
-        <label htmlFor="general-site-title">Site Title</label>
+        <label htmlFor="general-site-title">{t.siteTitle}</label>
         <input
           id="general-site-title"
           value={settings.title || ''}
@@ -76,40 +87,59 @@ export default function GeneralSection({
           aria-describedby="general-site-title-hint"
         />
         <p id="general-site-title-hint" className="admin-field-hint">
-          {settings.title
-            ? 'Shown in the header, the browser tab and link previews.'
-            : `Empty, so the site shows “${fallbackTitle}”${siteTitleEnv ? ', from SITE_TITLE' : ''}.`}
+          {settings.title ? t.siteTitleHint : t.siteTitleEmpty(fallbackTitle, !!siteTitleEnv)}
         </p>
       </div>
       <div className="admin-field">
-        <label htmlFor="general-subtitle">Subtitle</label>
+        <label htmlFor="general-subtitle">{t.subtitle}</label>
         <input
           id="general-subtitle"
           value={settings.subtitle || ''}
           onChange={(e) => update('subtitle', e.target.value)}
-          placeholder="A visual journal"
+          placeholder={t.subtitlePlaceholder}
         />
       </div>
       <div className="admin-field">
-        <label htmlFor="general-language">Language</label>
+        <label htmlFor="general-language">{t.language}</label>
         <select
           id="general-language"
-          aria-label="Language"
+          aria-label={t.language}
           value={settings.lang || 'en'}
           onChange={(e) => update('lang', e.target.value)}
         >
-          <option value="en">English (US)</option>
-          <option value="de">Deutsch (DE)</option>
-          <option value="fr">Français (FR)</option>
-          <option value="es">Español (ES)</option>
-          <option value="it">Italiano (IT)</option>
-          <option value="nl">Nederlands (NL)</option>
+          {SUPPORTED_LOCALES.map((locale) => (
+            <option key={locale} value={locale}>
+              {LOCALE_NAMES[locale]}
+            </option>
+          ))}
           <option value="ja">日本語 (JA)</option>
         </select>
         <p className="admin-field-hint">
-          The visitor-facing interface is translated for {SUPPORTED_LOCALES.join(', ')}. Other
-          languages still set <code>&lt;html lang&gt;</code> and date formatting, but show the
-          English interface. The admin panel is always English.
+          {rich(t.languageHint, {
+            locales: SUPPORTED_LOCALES.join(', '),
+            htmlLang: <code>&lt;html lang&gt;</code>,
+          })}
+        </p>
+      </div>
+      {/* The panel's own language (#604). Empty follows the site; only the
+          languages the panel has a dictionary for are offered. */}
+      <div className="admin-field">
+        <label htmlFor="general-admin-language">{t.adminLanguage}</label>
+        <select
+          id="general-admin-language"
+          value={settings.adminLang || ''}
+          onChange={(e) => update('adminLang', e.target.value)}
+          aria-describedby="general-admin-language-hint"
+        >
+          <option value="">{t.adminLanguageSame}</option>
+          {SUPPORTED_LOCALES.map((locale) => (
+            <option key={locale} value={locale}>
+              {LOCALE_NAMES[locale]}
+            </option>
+          ))}
+        </select>
+        <p id="general-admin-language-hint" className="admin-field-hint">
+          {t.adminLanguageHint}
         </p>
       </div>
 
@@ -117,45 +147,43 @@ export default function GeneralSection({
 
       <div className="settings-section-header">
         <h3>
-          <Icons.IconSparkles size={18} /> Portfolio Features &amp; Modules
+          <Icons.IconSparkles size={18} /> {t.featuresTitle}
         </h3>
-        <p className="settings-section-sub">
-          Optional pages, and what the site reveals about your photos and counts about visits.
-        </p>
+        <p className="settings-section-sub">{t.featuresSub}</p>
       </div>
 
       <FeatureGroup
         icon={<Icons.IconFrame size={13} />}
-        title="Modules"
-        description="Each one adds a page or a control visitors can use."
+        title={t.modules}
+        description={t.modulesDesc}
       >
         <div className="feature-list">
           <FeatureRow
             icon={<Icons.IconCamera size={15} />}
-            title="About page"
-            description="Portrait, bio and gear at /about"
+            title={t.aboutPage}
+            description={t.aboutPageDesc}
             checked={settings.about?.enabled !== false}
             onToggle={() => update('about.enabled', settings.about?.enabled === false)}
             href="/admin/settings/about"
           />
           <FeatureRow
             icon={<Icons.IconMap size={15} />}
-            title="Map"
-            description="Photo locations on a world map at /map"
+            title={t.map}
+            description={t.mapDesc}
             checked={settings.map === true}
             onToggle={() => update('map', !settings.map)}
           />
           <FeatureRow
             icon={<Icons.IconHeart size={15} />}
-            title="Client proofing"
-            description="Visitors heart, filter and export a selection of photos"
+            title={t.proofing}
+            description={t.proofingDesc}
             checked={settings.proofing?.enabled !== false}
             onToggle={() => update('proofing.enabled', settings.proofing?.enabled === false)}
           />
           <FeatureRow
             icon={<Icons.IconSearch size={15} />}
-            title="Photo zoom"
-            description="Visitors zoom into a photo to full resolution (1:1) to check sharpness. Pages and albums can override this"
+            title={t.zoom}
+            description={t.zoomDesc}
             checked={settings.zoom === true}
             onToggle={() => update('zoom', !settings.zoom)}
           />
@@ -164,26 +192,23 @@ export default function GeneralSection({
             on for itself (`proofing: true`), so the address still has to be
             settable from here. */}
         <div className="admin-field">
-          <label htmlFor="proofing-email">Proofing email</label>
+          <label htmlFor="proofing-email">{t.proofingEmail}</label>
           <input
             id="proofing-email"
             type="email"
             value={settings.proofing?.email || ''}
             onChange={(e) => update('proofing.email', e.target.value)}
-            placeholder="Defaults to the footer contact email"
+            placeholder={t.proofingEmailPlaceholder}
           />
-          <p className="admin-field-hint">
-            Where &ldquo;Email to photographer&rdquo; sends a selection. Falls back to the footer
-            contact email; when neither is set, the button is hidden.
-          </p>
+          <p className="admin-field-hint">{t.proofingEmailHint}</p>
         </div>
       </FeatureGroup>
 
       <FeatureGroup
         icon={<Icons.IconShieldCheck size={13} />}
-        title="What visitors learn about you"
-        description="What each photo reveals, and what is counted about a visit."
-        chip="visible to visitors"
+        title={t.privacyGroup}
+        description={t.privacyGroupDesc}
+        chip={t.privacyGroupChip}
       >
         <div className={`metadata-card ${anyMetadata ? 'active' : ''}`}>
           <button
@@ -194,7 +219,7 @@ export default function GeneralSection({
           >
             <span className="toggle-card-info">
               <span className="toggle-card-title">
-                <Icons.IconCamera size={16} /> Photo metadata
+                <Icons.IconCamera size={16} /> {t.photoMetadata}
               </span>
               <span className="toggle-card-desc">{metadataSummary}</span>
             </span>
@@ -209,7 +234,7 @@ export default function GeneralSection({
             onClick={() => setMetadataOpen((open) => !open)}
             aria-expanded={metadataOpen}
           >
-            Details
+            {t.details}
             <Icons.IconChevronDown
               size={13}
               className={`metadata-details-chevron${metadataOpen ? ' open' : ''}`}
@@ -219,26 +244,26 @@ export default function GeneralSection({
           {metadataOpen && (
             <div className="metadata-details">
               <SettingRow
-                title="Camera &amp; Lens"
-                description="Body, lens and focal length"
+                title={t.exifCamera}
+                description={t.exifCameraDesc}
                 checked={exif.camera}
                 onToggle={() => update('exif.camera', !exif.camera)}
               />
               <SettingRow
-                title="Exposure Settings"
-                description="Aperture, shutter speed and ISO"
+                title={t.exifSettings}
+                description={t.exifSettingsDesc}
                 checked={exif.settings}
                 onToggle={() => update('exif.settings', !exif.settings)}
               />
               <SettingRow
-                title="Location"
-                description="City and country from the photo's GPS data"
+                title={t.exifLocation}
+                description={t.exifLocationDesc}
                 checked={exif.location}
                 onToggle={() => update('exif.location', !exif.location)}
               />
               <SettingRow
-                title="Photo Description"
-                description="The description written in Immich"
+                title={t.exifCaption}
+                description={t.exifCaptionDesc}
                 checked={exif.caption}
                 onToggle={() => update('exif.caption', !exif.caption)}
               />
@@ -249,11 +274,11 @@ export default function GeneralSection({
                       silently doing nothing (#510). */}
               <SettingRow
                 indented
-                title="Summary on grid hover"
-                description="Camera and lens over the photo, not only in the lightbox"
+                title={t.gridHover}
+                description={t.gridHoverDesc}
                 checked={settings.exifOnHover !== false}
                 disabled={!exif.camera}
-                hint={exif.camera ? undefined : 'Needs Camera & Lens'}
+                hint={exif.camera ? undefined : t.gridHoverNeedsCamera}
                 onToggle={() => update('exifOnHover', settings.exifOnHover === false)}
               />
             </div>
@@ -262,8 +287,8 @@ export default function GeneralSection({
         <div className="feature-list">
           <FeatureRow
             icon={<Icons.IconBarChart size={15} />}
-            title="Analytics"
-            description="Cookieless view counts, stored on your server only"
+            title={t.analytics}
+            description={t.analyticsDesc}
             checked={settings.analytics !== false}
             onToggle={() => update('analytics', settings.analytics === false)}
             href="/admin/analytics"
@@ -273,14 +298,14 @@ export default function GeneralSection({
 
       <div className="admin-field favicon-field">
         <span className="admin-field-label" id="favicon-label">
-          Favicon
+          {t.favicon}
         </span>
         <div className="favicon-row">
           {/* eslint-disable-next-line @next/next/no-img-element -- the site's own icon route, a 32px preview */}
           <img
             className="favicon-preview"
             src={`/api/favicon?v=${faviconVersion}`}
-            alt="Current favicon"
+            alt={t.faviconAlt}
             width={32}
             height={32}
           />
@@ -312,11 +337,14 @@ export default function GeneralSection({
                 setFaviconStatus(
                   res.ok
                     ? { kind: 'success', message: data.message }
-                    : { kind: 'error', message: `Error: ${data.error}` },
+                    : { kind: 'error', message: dict.common.errorWith(data.error) },
                 );
                 if (res.ok) setFaviconVersion((v) => v + 1);
               } catch {
-                setFaviconStatus({ kind: 'error', message: 'Error: Upload failed' });
+                setFaviconStatus({
+                  kind: 'error',
+                  message: dict.common.errorWith(t.faviconUploadFailed),
+                });
               } finally {
                 setFaviconUploading(false);
                 e.target.value = '';
@@ -328,7 +356,7 @@ export default function GeneralSection({
             id="favicon-file-button"
             className="admin-btn admin-btn-sm admin-btn-secondary favicon-upload-btn"
           >
-            <Icons.IconImage size={14} /> Upload icon
+            <Icons.IconImage size={14} /> {t.faviconUpload}
           </label>
           <button
             type="button"
@@ -337,9 +365,9 @@ export default function GeneralSection({
             onClick={async () => {
               // Deletes the uploaded file at once, outside the staged form.
               const ok = await confirm({
-                title: 'Reset the favicon?',
-                message: 'The uploaded icon is deleted and the bundled default is used again.',
-                confirmLabel: 'Reset',
+                title: t.faviconResetTitle,
+                message: t.faviconResetMessage,
+                confirmLabel: dict.common.reset,
                 danger: true,
               });
               if (!ok) return;
@@ -351,17 +379,20 @@ export default function GeneralSection({
                 setFaviconStatus(
                   res.ok
                     ? { kind: 'success', message: data.message }
-                    : { kind: 'error', message: `Error: ${data.error}` },
+                    : { kind: 'error', message: dict.common.errorWith(data.error) },
                 );
                 if (res.ok) setFaviconVersion((v) => v + 1);
               } catch {
-                setFaviconStatus({ kind: 'error', message: 'Error: Reset failed' });
+                setFaviconStatus({
+                  kind: 'error',
+                  message: dict.common.errorWith(t.faviconResetFailed),
+                });
               } finally {
                 setFaviconUploading(false);
               }
             }}
           >
-            Reset
+            {dict.common.reset}
           </button>
           {faviconUploading && <div className="admin-spinner" />}
         </div>
@@ -369,8 +400,7 @@ export default function GeneralSection({
           <p className={`save-message ${faviconStatus.kind}`}>{faviconStatus.message}</p>
         )}
         <span id="favicon-hint" className="admin-field-hint">
-          SVG, PNG, ICO, or JPEG — max 512 kB. Stored in the content volume. Reset restores the
-          bundled default.
+          {t.faviconHint}
         </span>
       </div>
     </div>

@@ -1,4 +1,6 @@
 import type { DoctorLevel } from '@/lib/admin/doctor';
+import type { AdminDictionary } from '@/lib/i18n/admin';
+import { adminEn } from '@/lib/i18n/admin/en';
 
 /**
  * Fired on `window` by the diagnostics page after each run, with the doctor's
@@ -37,21 +39,19 @@ export interface SystemHealthInput {
  * the point: a third condition can no longer be added to one and forgotten in
  * the other.
  */
-export function systemHealth({
-  statusLoading,
-  setupIncomplete,
-  immich,
-  doctorLevel,
-}: SystemHealthInput): { tone: BadgeTone; label: string } {
-  if (statusLoading) return { tone: 'unknown', label: 'Checking...' };
+export function systemHealth(
+  { statusLoading, setupIncomplete, immich, doctorLevel }: SystemHealthInput,
+  t: AdminDictionary['shell']['health'] = adminEn.shell.health,
+): { tone: BadgeTone; label: string } {
+  if (statusLoading) return { tone: 'unknown', label: t.checking };
   // An installation that was never finished is not a fault, so it stays neutral
   // rather than red — the same reasoning that gave it its own label (#507).
-  if (setupIncomplete) return { tone: 'unknown', label: 'Setup Incomplete' };
-  if (immich === 'error') return { tone: 'disconnected', label: 'System Degraded' };
-  if (doctorLevel === 'error') return { tone: 'disconnected', label: 'Needs Attention' };
+  if (setupIncomplete) return { tone: 'unknown', label: t.setupIncomplete };
+  if (immich === 'error') return { tone: 'disconnected', label: t.degraded };
+  if (doctorLevel === 'error') return { tone: 'disconnected', label: t.needsAttention };
   // Amber, like the warnings on the diagnostics page it points to. Grey read
   // as "no answer", which is what `unknown` means.
-  if (doctorLevel === 'warn') return { tone: 'warning', label: 'Check Diagnostics' };
-  if (immich === 'ok') return { tone: 'connected', label: 'System OK' };
-  return { tone: 'unknown', label: 'Status Unknown' };
+  if (doctorLevel === 'warn') return { tone: 'warning', label: t.checkDiagnostics };
+  if (immich === 'ok') return { tone: 'connected', label: t.ok };
+  return { tone: 'unknown', label: t.unknown };
 }

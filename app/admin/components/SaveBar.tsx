@@ -1,5 +1,7 @@
 'use client';
 
+import { useAdminDictionary } from './AdminI18n';
+
 /**
  * The outcome of the last save. Typed rather than read off the wording: the bar
  * used to call a message an error when it started with "Error", so a failure
@@ -33,6 +35,7 @@ export default function SaveBar({
   label,
   showPreview = false,
 }: SaveBarProps) {
+  const t = useAdminDictionary().shell.saveBar;
   if (!dirty && !saving && !status) return null;
 
   return (
@@ -43,7 +46,7 @@ export default function SaveBar({
         ) : (
           <span className="unsaved-badge">
             <span className="badge-pulse-dot" aria-hidden="true" />
-            Unsaved changes
+            {t.unsaved}
           </span>
         )}
       </div>
@@ -54,9 +57,9 @@ export default function SaveBar({
             target="_blank"
             rel="noopener noreferrer"
             className="admin-btn admin-btn-ghost admin-btn-preview"
-            title="Open site in new tab (bypassing cache)"
+            title={t.previewTitle}
           >
-            ↗ Preview Site
+            {t.preview}
           </a>
         )}
         <button
@@ -65,7 +68,7 @@ export default function SaveBar({
           disabled={!dirty || saving}
           title="⌘S / Ctrl+S"
         >
-          {saving ? 'Saving...' : label}
+          {saving ? t.saving : label}
         </button>
       </div>
     </div>

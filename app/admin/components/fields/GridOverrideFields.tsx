@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, type ReactNode } from 'react';
+import { useAdminDictionary } from '../AdminI18n';
 
 type GridOverride = { columns?: number; gap?: number };
 
@@ -51,6 +52,7 @@ export default function GridOverrideFields({
   };
 
   const labelId = useId();
+  const t = useAdminDictionary().settings.fields;
   return (
     <div className="admin-field" style={{ marginTop: '1rem' }}>
       <span className="admin-field-label" id={labelId}>
@@ -62,8 +64,8 @@ export default function GridOverrideFields({
           min={columnsMin}
           max={columnsMax}
           value={value?.columns ?? ''}
-          placeholder="Columns (site default)"
-          aria-label="Columns"
+          placeholder={t.columnsPlaceholder}
+          aria-label={t.columnsAria}
           onChange={(e) => patch('columns', e.target.value, columnsMin, columnsMax)}
           style={NUMBER_INPUT_STYLE}
         />
@@ -72,8 +74,8 @@ export default function GridOverrideFields({
           min={0}
           max={gapMax}
           value={value?.gap ?? ''}
-          placeholder="Gap in px (theme default)"
-          aria-label="Gap in px"
+          placeholder={t.gapPlaceholder}
+          aria-label={t.gapAria}
           onChange={(e) => patch('gap', e.target.value, 0, gapMax)}
           style={NUMBER_INPUT_STYLE}
         />

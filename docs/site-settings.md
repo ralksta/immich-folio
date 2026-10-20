@@ -126,6 +126,7 @@ about:
 | Key             | Default | Notes                                                    |
 | --------------- | ------- | -------------------------------------------------------- |
 | `lang`          | `en`    | Interface language, `<html lang>`, dates                 |
+| `adminLang`     | `lang`  | Admin panel language, see below                          |
 | `mode`          | `dark`  | Visitor's starting colour mode, see below                |
 | `exifOnHover`   | on      | The grid hover overlay only, see below                   |
 | `exif.*`        | on      | Per-group EXIF visibility, see below                     |
@@ -195,9 +196,17 @@ for it yet. That is deliberate — claiming `lang="en"` on a French site would b
 worse for screen readers than an English interface on a page correctly marked
 as Japanese.
 
-Two things stay in one language by design:
+The admin panel has a language of its own, `adminLang`, with the same values.
+Left out, it follows `lang`; set it to run an English panel over a German site
+or the other way round. It is also under **Settings → General → Admin panel
+language**, and takes effect when the settings are saved. The sign-in screen,
+the sidebar, the overview, Settings and Diagnostics are translated so far; the
+page builder, the journal studio and the remaining screens are still English
+and follow in later releases
+([#604](https://github.com/ralksta/immich-folio/issues/604)).
 
-- **The admin panel** is always English, whatever `lang` says.
+One thing stays in one language by design:
+
 - **`/impressum`** keeps its German headings when `lang: de` and the § 5 DDG
   citation in every language, because that is what the statute names
   (`legal.heading` replaces it where another law applies). Under `lang: en`
@@ -212,9 +221,12 @@ falling back silently, and `lib/__tests__/i18n.test.ts` additionally catches
 keys that were copied over but never translated. Words a language genuinely
 shares with English (`ISO`, `Info`, French "photos") go into that locale's
 allowance list in the same test, which in turn fails if an entry stops being
-identical. Add the language to the **Language** select in
-`app/admin/components/SettingsEditor.tsx` so it can be picked from the admin
-panel.
+identical. Add the language to the **Language** and **Admin panel language**
+selects in `app/admin/components/settings/GeneralSection.tsx` so it can be
+picked from the admin panel. The admin panel has dictionaries of its own under
+`lib/i18n/admin/`, one folder per language and one file per area of the panel,
+checked the same way by `lib/__tests__/admin-i18n.test.ts`; a language without
+one shows the English panel.
 
 ### Analytics
 

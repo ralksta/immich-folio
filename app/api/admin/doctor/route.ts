@@ -16,6 +16,7 @@ import { takenPageSlugs } from '@/lib/admin/pageSlugs';
 import { describeCollision, menuPageSlugs, pageSlugCollision } from '@/lib/pages';
 import { immich } from '@/lib/immich';
 import { isLocationScrubbable } from '@/lib/locationScrub';
+import { getAdminDictionary, resolveAdminLocale } from '@/lib/i18n/admin';
 import {
   checkAlbumIds,
   checkAlbumSlugCollisions,
@@ -57,18 +58,22 @@ import {
 export const GET = withAdmin(async (request: NextRequest) => {
   const config = getConfig();
   const findings: DoctorFinding[] = [];
+  // Findings are worded in the panel's language (#604), like the page that
+  // shows them.
+  const t = getAdminDictionary(resolveAdminLocale(config.adminLang, config.lang)).doctor;
 
   // ── Secret and proxy: read off the environment and this very request ──
-  findings.push(checkAuthSecret(env.AUTH_SECRET || config.authSecret));
+  findings.push(checkAuthSecret(env.AUTH_SECRET || config.authSecret, t));
   findings.push(
     checkProxyHops(
       config.trustedProxyHops,
       countForwardedHops(request.headers.get('x-forwarded-for')),
       PROXY_MARKER_HEADERS.some((h) => !!request.headers.get(h)),
+      t,
     ),
   );
 
-  const cdn = checkCdn(env.CDN_URL, !!config.sitePassword, config.trustedProxyHops);
+  const cdn = checkCdn(env.CDN_URL, !!config.sitePassword, config.trustedProxyHops, t);
   if (cdn) findings.push(cdn);
 
   // ── Immich: the three calls Folio actually depends on ────────────────
@@ -79,8 +84,8 @@ export const GET = withAdmin(async (request: NextRequest) => {
     findings.push({
       id: 'immich-api',
       level: 'error',
-      title: 'No Immich URL or API key configured',
-      detail: 'Set IMMICH_API_URL and IMMICH_API_KEY, or run the setup wizard at /install.',
+      title: t.immichApi.notConfiguredTitle,
+      detail: t.immichApi.notConfiguredDetail,
     });
   } else {
     const headers = { 'x-api-key': config.immich.apiKey, Accept: 'application/json' };
@@ -116,7 +121,7 @@ export const GET = withAdmin(async (request: NextRequest) => {
       }
     }
 
-    findings.push(checkImmichCalls(calls));
+    findings.push(checkImmichCalls(calls, t));
 
     // Whenever albums are configured, run the check even if Immich answered
     // with an empty list — an API key regenerated under a different account,
@@ -125,21 +130,23 @@ export const GET = withAdmin(async (request: NextRequest) => {
     // albums at all, while every album page was silently empty (#629).
     // checkAlbumIds treats every configured ID as missing when none resolve.
     if (config.albums.length) {
-      findings.push(checkAlbumIds(config.albums, albums));
-      findings.push(checkAlbumsShared(config.albums, albums));
+      findings.push(checkAlbumIds(config.albums, albums, t));
+      findings.push(checkAlbumsShared(config.albums, albums, t));
 
       // deriveGallery already rejects a slug collision between two albums
       // that both have a title override; this is the other half, using the
       // album's resolved name (override, or otherwise whatever Immich calls
       // it), which is only known once Immich has answered (#632).
       const slugGroups: AlbumSlugGroup[] = [
-        { context: 'gallery.yaml albums', albumIds: config.standaloneAlbums },
+        { context: t.albumSlugs.contextStandalone, albumIds: config.standaloneAlbums },
         ...config.subpages.map((sp) => ({
-          context: `subpage "${sp.name}"`,
+          context: t.albumSlugs.contextSubpage(sp.name),
           albumIds: sp.albumIds,
         })),
       ];
-      findings.push(checkAlbumSlugCollisions(slugGroups, config.albumOverrides, albums, slugify));
+      findings.push(
+        checkAlbumSlugCollisions(slugGroups, config.albumOverrides, albums, slugify, t),
+      );
 
       // Originals whose metadata a download cannot clean. Through the album
       // cache, like the alt-text report; an album that cannot be read is
@@ -162,7 +169,7 @@ export const GET = withAdmin(async (request: NextRequest) => {
           // Immich unreachable: the connection check says so.
         }
       }
-      const downloads = checkDownloadMetadata(downloadAlbums);
+      const downloads = checkDownloadMetadata(downloadAlbums, t);
       if (downloads) findings.push(downloads);
 
       // Lightbox zoom (#467): photos a browser cannot show need Immich's
@@ -213,29 +220,34 @@ export const GET = withAdmin(async (request: NextRequest) => {
       } catch {
         // Best-effort, like every check here: no finding rather than no report.
       }
-      const zoomFinding = checkZoomRenditions(zoomAlbums, renditionSample);
+      const zoomFinding = checkZoomRenditions(zoomAlbums, renditionSample, t);
       if (zoomFinding) findings.push(zoomFinding);
     }
   }
 
   // ── Passwords: every place one can be configured ─────────────────────
   const passwords: PasswordRef[] = [];
-  if (config.sitePassword) passwords.push({ label: 'Site password', value: config.sitePassword });
+  if (config.sitePassword) {
+    passwords.push({ label: t.passwords.labelSite, value: config.sitePassword });
+  }
   for (const sp of config.subpages) {
-    if (sp.password) passwords.push({ label: `Subpage ${sp.slug}`, value: sp.password });
+    if (sp.password)
+      passwords.push({ label: t.passwords.labelSubpage(sp.slug), value: sp.password });
   }
   for (const [slug, value] of Object.entries(config.albumPasswords)) {
-    if (value) passwords.push({ label: `Album ${slug}`, value });
+    if (value) passwords.push({ label: t.passwords.labelAlbum(slug), value });
   }
   try {
     for (const entry of await listJournalEntries()) {
       const password = entry.frontmatter.password;
-      if (password) passwords.push({ label: `Journal ${entry.slug}`, value: password });
+      if (password) {
+        passwords.push({ label: t.passwords.labelJournal(entry.slug), value: password });
+      }
     }
   } catch {
     // Journal entries are optional; a missing directory is not a fault.
   }
-  findings.push(checkPasswords(passwords));
+  findings.push(checkPasswords(passwords, t));
 
   // ── Impressum and contact form: judged on the raw blocks, see checkLegal ──
   let rawLegal: LegalRef = config.legal;
@@ -246,19 +258,22 @@ export const GET = withAdmin(async (request: NextRequest) => {
     rawContact = settings?.contact ?? rawContact;
     // Values the resolvers replaced on the way into `config` — only the raw
     // file still shows them.
-    findings.push(checkSettingValues(validateSettingValues(settings)));
+    findings.push(checkSettingValues(validateSettingValues(settings), t));
   } catch {
     // Fall back to the resolved blocks; only a dropped URL goes unseen.
   }
-  const legal = checkLegal(rawLegal, config.contact.enabled);
+  const legal = checkLegal(rawLegal, config.contact.enabled, t);
   if (legal) findings.push(legal);
-  const contact = checkContact(rawContact, env.CONTACT_NOTIFY_URL);
+  const contact = checkContact(rawContact, env.CONTACT_NOTIFY_URL, t);
   if (contact) findings.push(contact);
-  const privacy = checkPrivacy({
-    legalEnabled: config.legal.enabled,
-    privacyEnabled: config.privacy.enabled,
-    hasText: readPrivacy() !== '',
-  });
+  const privacy = checkPrivacy(
+    {
+      legalEnabled: config.legal.enabled,
+      privacyEnabled: config.privacy.enabled,
+      hasText: readPrivacy() !== '',
+    },
+    t,
+  );
   if (privacy) findings.push(privacy);
 
   // ── Content pages: missing menu targets and slug collisions (#722) ────
@@ -271,11 +286,14 @@ export const GET = withAdmin(async (request: NextRequest) => {
           return collision ? [{ slug, reason: describeCollision(slug, collision) }] : [];
         })
       : [];
-    const pages = checkContentPages({
-      menuRefs: menuPageSlugs(config.nav),
-      pages: pageSlugs,
-      collisions,
-    });
+    const pages = checkContentPages(
+      {
+        menuRefs: menuPageSlugs(config.nav),
+        pages: pageSlugs,
+        collisions,
+      },
+      t,
+    );
     if (pages) findings.push(pages);
   } catch {
     // Pages are optional; a failure to list them is not a finding of its own.
@@ -299,7 +317,7 @@ export const GET = withAdmin(async (request: NextRequest) => {
       }
     }
   }
-  findings.push(checkWritable(unwritable));
+  findings.push(checkWritable(unwritable, t));
 
   return NextResponse.json(
     { level: worstLevel(findings), findings },

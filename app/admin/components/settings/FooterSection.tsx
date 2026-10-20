@@ -3,30 +3,31 @@
 import * as Icons from '../Icons';
 import { FieldError } from './fields';
 import type { SectionProps } from './types';
+import { useAdminDictionary } from '../AdminI18n';
 
 export default function FooterSection({ settings, update, fieldErrors }: SectionProps) {
+  const dict = useAdminDictionary();
+  const t = dict.settings.footer;
   return (
     <div className="settings-panel">
       <div className="settings-section-header">
         <h3>
-          <Icons.IconLink size={18} /> Footer &amp; Social Links
+          <Icons.IconLink size={18} /> {t.title}
         </h3>
-        <p className="settings-section-sub">
-          Display branding, Instagram, email and website links in portfolio footer.
-        </p>
+        <p className="settings-section-sub">{t.sub}</p>
       </div>
 
       <div className="admin-field">
-        <label htmlFor="footer-brand-name">Footer Brand Name</label>
+        <label htmlFor="footer-brand-name">{t.brandName}</label>
         <input
           id="footer-brand-name"
           value={settings.footer?.name || ''}
           onChange={(e) => update('footer.name', e.target.value)}
-          placeholder="My Photography"
+          placeholder={t.brandNamePlaceholder}
         />
       </div>
       <div className="admin-field">
-        <label htmlFor="footer-instagram-url">Instagram URL</label>
+        <label htmlFor="footer-instagram-url">{t.instagram}</label>
         <input
           id="footer-instagram-url"
           value={settings.footer?.instagram || ''}
@@ -36,7 +37,7 @@ export default function FooterSection({ settings, update, fieldErrors }: Section
       </div>
       <div className="admin-field-row">
         <div className="admin-field">
-          <label htmlFor="footer-contact-email">Contact Email</label>
+          <label htmlFor="footer-contact-email">{t.email}</label>
           <input
             id="footer-contact-email"
             value={settings.footer?.email || ''}
@@ -45,7 +46,7 @@ export default function FooterSection({ settings, update, fieldErrors }: Section
           />
         </div>
         <div className="admin-field">
-          <label htmlFor="footer-personal-website">Personal Website</label>
+          <label htmlFor="footer-personal-website">{t.website}</label>
           <input
             id="footer-personal-website"
             value={settings.footer?.website || ''}
@@ -57,18 +58,15 @@ export default function FooterSection({ settings, update, fieldErrors }: Section
 
       <div className="settings-section-header" style={{ marginTop: '2rem' }}>
         <h3>
-          <Icons.IconLink size={18} /> Header Navigation Links (Experimental)
+          <Icons.IconLink size={18} /> {t.navTitle}
         </h3>
-        <p className="settings-section-sub">
-          External links shown after your pages in the header menu. Only http(s) URLs are allowed;
-          they open in a new tab.
-        </p>
+        <p className="settings-section-sub">{t.navSub}</p>
       </div>
 
       {(settings.navLinks || []).map((link, i) => (
         <div className="admin-field-row" key={i}>
           <div className="admin-field">
-            <label htmlFor={`navlink-${i}-label`}>Label</label>
+            <label htmlFor={`navlink-${i}-label`}>{t.linkLabel}</label>
             <input
               id={`navlink-${i}-label`}
               aria-invalid={fieldErrors?.[`navLinks.${i}.label`] ? true : undefined}
@@ -81,7 +79,7 @@ export default function FooterSection({ settings, update, fieldErrors }: Section
                 next[i] = { ...next[i], label: e.target.value };
                 update('navLinks', next);
               }}
-              placeholder="Shop"
+              placeholder={t.linkLabelPlaceholder}
             />
             <FieldError
               id={`navlink-${i}-label-error`}
@@ -89,7 +87,7 @@ export default function FooterSection({ settings, update, fieldErrors }: Section
             />
           </div>
           <div className="admin-field">
-            <label htmlFor={`navlink-${i}-url`}>URL</label>
+            <label htmlFor={`navlink-${i}-url`}>{t.linkUrl}</label>
             <input
               id={`navlink-${i}-url`}
               aria-invalid={fieldErrors?.[`navLinks.${i}.url`] ? true : undefined}
@@ -117,9 +115,9 @@ export default function FooterSection({ settings, update, fieldErrors }: Section
               const next = (settings.navLinks || []).filter((_, j) => j !== i);
               update('navLinks', next.length > 0 ? next : undefined);
             }}
-            title="Remove link"
+            title={t.removeLink}
           >
-            Remove
+            {dict.common.remove}
           </button>
         </div>
       ))}
@@ -128,7 +126,7 @@ export default function FooterSection({ settings, update, fieldErrors }: Section
         className="admin-btn admin-btn-sm"
         onClick={() => update('navLinks', [...(settings.navLinks || []), { label: '', url: '' }])}
       >
-        + Add external link
+        {t.addLink}
       </button>
     </div>
   );

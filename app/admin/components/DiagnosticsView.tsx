@@ -8,6 +8,10 @@ import { DOCTOR_LEVEL_EVENT } from './systemHealth';
 import type { DoctorFinding, DoctorLevel } from '@/lib/admin/doctor';
 import type { AltTextReport } from '@/lib/admin/alt-text';
 import PageHeader from './PageHeader';
+import { rich, useAdminDictionary } from './AdminI18n';
+import type { AdminDictionary } from '@/lib/i18n/admin';
+
+type DiagnosticsText = AdminDictionary['diagnostics'];
 
 /**
  * Diagnostics as a page (/admin/diagnostics).
@@ -39,16 +43,14 @@ type AltTextData = AltTextReport & {
 };
 
 /** Which group a doctor check belongs to. An unknown id lands in Content. */
-const GROUPS: { id: string; title: string; checks: string[] }[] = [
-  { id: 'connection', title: 'Connection', checks: ['immich-api', 'album-ids'] },
+const GROUPS: { id: keyof DiagnosticsText['groups']; checks: string[] }[] = [
+  { id: 'connection', checks: ['immich-api', 'album-ids'] },
   {
     id: 'security',
-    title: 'Security',
     checks: ['auth-secret', 'passwords', 'proxy-hops', 'cdn', 'download-metadata'],
   },
   {
     id: 'content',
-    title: 'Content',
     checks: [
       'albums-shared',
       'content-pages',
@@ -63,36 +65,38 @@ const GROUPS: { id: string; title: string; checks: string[] }[] = [
   },
 ];
 
-const LEVEL_LABEL: Record<DoctorLevel, string> = { ok: 'OK', warn: 'Check', error: 'Problem' };
 const LEVEL_RANK: Record<DoctorLevel, number> = { error: 0, warn: 1, ok: 2 };
 
 const DOCS = 'https://github.com/ralksta/immich-folio/blob/main';
 
-/** Where each doctor finding is fixed. Admin paths are in-app links. */
-const FIXES: Record<string, { label: string; href: string }> = {
+/**
+ * Where each doctor finding is fixed. Admin paths are in-app links; `label`
+ * names the button's text in `diagnostics.fixes`.
+ */
+const FIXES: Record<string, { label: keyof DiagnosticsText['fixes']; href: string }> = {
   'auth-secret': {
-    label: 'How to set it',
+    label: 'howToSetIt',
     href: `${DOCS}/docs/deployment.md#environment-variables`,
   },
-  'proxy-hops': { label: 'How to set it', href: `${DOCS}/docs/security.md#trusted-proxies` },
-  cdn: { label: 'CDN setup', href: `${DOCS}/docs/deployment.md#cdn-mode` },
-  passwords: { label: 'Open settings', href: '/admin/settings/security' },
-  'album-ids': { label: 'Open pages', href: '/admin/pages' },
-  'albums-shared': { label: 'Open pages', href: '/admin/pages' },
-  'content-pages': { label: 'Open pages', href: '/admin/pages' },
-  'download-metadata': { label: 'Open pages', href: '/admin/pages' },
-  legal: { label: 'Open settings', href: '/admin/settings/legal' },
-  contact: { label: 'Open settings', href: '/admin/settings/legal' },
-  privacy: { label: 'Open settings', href: '/admin/settings/legal' },
+  'proxy-hops': { label: 'howToSetIt', href: `${DOCS}/docs/security.md#trusted-proxies` },
+  cdn: { label: 'cdnSetup', href: `${DOCS}/docs/deployment.md#cdn-mode` },
+  passwords: { label: 'openSettings', href: '/admin/settings/security' },
+  'album-ids': { label: 'openPages', href: '/admin/pages' },
+  'albums-shared': { label: 'openPages', href: '/admin/pages' },
+  'content-pages': { label: 'openPages', href: '/admin/pages' },
+  'download-metadata': { label: 'openPages', href: '/admin/pages' },
+  legal: { label: 'openSettings', href: '/admin/settings/legal' },
+  contact: { label: 'openSettings', href: '/admin/settings/legal' },
+  privacy: { label: 'openSettings', href: '/admin/settings/legal' },
   // The href is replaced by the finding's own settingsSection.
-  'settings-values': { label: 'Open settings', href: '/admin/settings/general' },
-  'content-writable': { label: 'How to fix', href: `${DOCS}/docs/admin-panel.md#docker-usage` },
+  'settings-values': { label: 'openSettings', href: '/admin/settings/general' },
+  'content-writable': { label: 'howToFix', href: `${DOCS}/docs/admin-panel.md#docker-usage` },
   'zoom-renditions': {
-    label: 'How to set it up',
+    label: 'howToSetUp',
     href: `${DOCS}/docs/gallery-features.md#photo-zoom`,
   },
   'immich-api': {
-    label: 'API key permissions',
+    label: 'apiKeyPermissions',
     href: `${DOCS}/docs/immich-setup.md#api-key-permissions`,
   },
 };
@@ -100,42 +104,41 @@ const FIXES: Record<string, { label: string; href: string }> = {
 /** Photos shown per album before the "+n more" tile. */
 const PREVIEW_COUNT = 12;
 
-function groupOf(id: string): string {
+function groupOf(id: string): keyof DiagnosticsText['groups'] {
   return GROUPS.find((g) => g.checks.includes(id))?.id ?? 'content';
 }
 
 /** The alt-text report, phrased as one more finding so it sorts with the rest. */
-function altTextFinding(report: AltTextData): DoctorFinding {
+function altTextFinding(report: AltTextData, text: DiagnosticsText): DoctorFinding {
+  const t = text.altText;
   if (!report.captionsEnabled) {
     return {
       id: 'alt-text',
       level: 'warn',
-      title: 'Photo descriptions are not used as alt text',
-      detail:
-        '“Photo Description” is switched off in Settings → General, so every photo on the site has an empty alt text, whatever Immich holds.',
+      title: t.captionsOffTitle,
+      detail: t.captionsOffDetail,
     };
   }
   const missing = report.total - report.described;
-  const unread = report.unreadable
-    ? ` ${report.unreadable} ${report.unreadable === 1 ? 'album' : 'albums'} could not be read and are not counted.`
-    : '';
+  const unread = report.unreadable ? t.unreadable(report.unreadable) : '';
   if (!missing) {
     return {
       id: 'alt-text',
       level: 'ok',
-      title: `All ${report.total} published photos have alt text`,
-      detail: `Every photo carries its Immich description.${unread}`,
+      title: t.allTitle(report.total),
+      detail: t.allDetail(unread),
     };
   }
   return {
     id: 'alt-text',
     level: 'warn',
-    title: `${missing} published ${missing === 1 ? 'photo has' : 'photos have'} no alt text`,
-    detail: `Folio uses the Immich description as alt text. Without one, screen readers announce nothing and search engines index nothing for the photo.${unread}`,
+    title: t.missingTitle(missing),
+    detail: t.missingDetail(unread),
   };
 }
 
 export default function DiagnosticsView() {
+  const t = useAdminDictionary().diagnostics;
   const [status, setStatus] = useState<StatusData | null>(null);
   const [findings, setFindings] = useState<DoctorFinding[] | null>(null);
   const [altText, setAltText] = useState<AltTextData | null>(null);
@@ -178,7 +181,7 @@ export default function DiagnosticsView() {
 
     try {
       const [doctorRes] = await Promise.all([fetch('/api/admin/doctor'), fetchStatus()]);
-      if (!doctorRes.ok) throw new Error(`Diagnostics failed (${doctorRes.status})`);
+      if (!doctorRes.ok) throw new Error(t.errors.failedStatus(doctorRes.status));
       const data = await doctorRes.json();
       setFindings(data.findings || []);
       setRanAt(new Date());
@@ -186,11 +189,11 @@ export default function DiagnosticsView() {
         window.dispatchEvent(new CustomEvent(DOCTOR_LEVEL_EVENT, { detail: data.level }));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Diagnostics failed');
+      setError(err instanceof Error ? err.message : t.errors.failed);
     } finally {
       setLoading(false);
     }
-  }, [fetchStatus]);
+  }, [fetchStatus, t]);
 
   useEffect(() => {
     run();
@@ -206,7 +209,10 @@ export default function DiagnosticsView() {
     }
   }
 
-  const all: DoctorFinding[] = [...(findings ?? []), ...(altText ? [altTextFinding(altText)] : [])];
+  const all: DoctorFinding[] = [
+    ...(findings ?? []),
+    ...(altText ? [altTextFinding(altText, t)] : []),
+  ];
   const attention = all
     .filter((f) => f.level !== 'ok')
     .sort((a, b) => LEVEL_RANK[a.level] - LEVEL_RANK[b.level]);
@@ -214,14 +220,14 @@ export default function DiagnosticsView() {
   /** Markdown, so it can be pasted straight into a GitHub issue. */
   async function copyReport() {
     const body = all
-      .map((f) => `- **${LEVEL_LABEL[f.level]}** — ${f.title}\n  ${f.detail}`)
+      .map((f) => `- **${t.levels[f.level]}** — ${f.title}\n  ${f.detail}`)
       .join('\n');
-    const version = status?.update?.current ? `\nVersion ${status.update.current}\n` : '';
+    const version = status?.update?.current ? `\n${t.report.version(status.update.current)}\n` : '';
     try {
-      await navigator.clipboard.writeText(`### Immich Folio diagnostics\n${version}\n${body}\n`);
+      await navigator.clipboard.writeText(`### ${t.report.heading}\n${version}\n${body}\n`);
       setCopied(true);
     } catch {
-      setError('Could not copy — your browser refused clipboard access.');
+      setError(t.errors.copyFailed);
     }
   }
 
@@ -235,10 +241,10 @@ export default function DiagnosticsView() {
   }
 
   const headline = loading
-    ? 'Checking…'
+    ? t.header.checking
     : attention.length === 0
-      ? 'Nothing needs your attention'
-      : `${attention.length} of ${all.length} checks want a look`;
+      ? t.header.allClear
+      : t.header.attention(attention.length, all.length);
 
   const renderAltTextList = (report: AltTextData) => (
     <div className="diag-alt" id="diag-alt-list">
@@ -247,8 +253,11 @@ export default function DiagnosticsView() {
           <span style={{ width: `${Math.round((report.described / report.total) * 100)}%` }} />
         </div>
         <span>
-          {report.described} of {report.total} described ·{' '}
-          {Math.round((report.described / report.total) * 100)}%
+          {t.altText.coverage(
+            report.described,
+            report.total,
+            Math.round((report.described / report.total) * 100),
+          )}
         </span>
       </div>
 
@@ -264,7 +273,7 @@ export default function DiagnosticsView() {
                 <span className="diag-album-path">{album.path}</span>
               </span>
               <span className="diag-album-count">
-                {album.missing.length} of {album.total} missing
+                {t.altText.albumMissing(album.missing.length, album.total)}
               </span>
             </div>
             <div className="diag-thumbs">
@@ -275,7 +284,7 @@ export default function DiagnosticsView() {
                   href={`${report.immichUrl}/photos/${gap.assetId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  title={`${gap.fileName} — open in Immich`}
+                  title={t.altText.openInImmich(gap.fileName)}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element -- admin thumbnail proxy, not an optimisable image */}
                   <img src={`/api/admin/thumbnail/${gap.assetId}`} alt="" loading="lazy" />
@@ -288,7 +297,7 @@ export default function DiagnosticsView() {
                   className="diag-thumb-more"
                   onClick={() => toggleAlbum(album.albumId)}
                 >
-                  +{hidden} more
+                  {t.altText.more(hidden)}
                 </button>
               )}
             </div>
@@ -297,18 +306,13 @@ export default function DiagnosticsView() {
       })}
 
       <p className="diag-note">
-        Add the description in Immich, then press Reload in the top bar.{' '}
-        {report.immichUrlSource === 'external-domain' ? (
-          <>
-            Photos open at <code>{report.immichUrl}</code>, Immich&rsquo;s external domain.
-          </>
-        ) : (
-          <>
-            Photos open at <code>{report.immichUrl}</code> — the address Folio reaches Immich at,
-            which your browser may not be able to open. Set <strong>External domain</strong> in
-            Immich (Administration → Settings → Server) and the links use that instead.
-          </>
-        )}
+        {t.altText.noteAdd}{' '}
+        {report.immichUrlSource === 'external-domain'
+          ? rich(t.altText.noteExternal, { url: <code>{report.immichUrl}</code> })
+          : rich(t.altText.noteInternal, {
+              url: <code>{report.immichUrl}</code>,
+              setting: <strong>{t.altText.externalDomain}</strong>,
+            })}
       </p>
     </div>
   );
@@ -328,7 +332,7 @@ export default function DiagnosticsView() {
           href={`/admin/pages?album=${encodeURIComponent(f.albumIds[0])}`}
           className="admin-btn admin-btn-sm"
         >
-          Open in Pages
+          {t.fixes.openInPages}
         </Link>
       );
     }
@@ -336,7 +340,7 @@ export default function DiagnosticsView() {
       if (altText && !altText.captionsEnabled) {
         return (
           <Link href="/admin/settings/general" className="admin-btn admin-btn-sm">
-            Open settings
+            {t.fixes.openSettings}
           </Link>
         );
       }
@@ -350,7 +354,7 @@ export default function DiagnosticsView() {
       : known;
     return fix.href.startsWith('/') ? (
       <Link href={fix.href} className="admin-btn admin-btn-sm">
-        {fix.label}
+        {t.fixes[fix.label]}
       </Link>
     ) : (
       <a
@@ -359,7 +363,7 @@ export default function DiagnosticsView() {
         rel="noopener noreferrer"
         className="admin-btn admin-btn-sm"
       >
-        {fix.label} ↗
+        {t.fixes[fix.label]} ↗
       </a>
     );
   };
@@ -373,7 +377,7 @@ export default function DiagnosticsView() {
           <span className="diag-dot" aria-hidden="true" />
           <div className="diag-check-body">
             <span className="diag-check-title">
-              {f.level !== 'ok' && <span className="sr-only">{LEVEL_LABEL[f.level]}: </span>}
+              {f.level !== 'ok' && <span className="sr-only">{t.levels[f.level]}: </span>}
               {f.title}
             </span>
             <span className="diag-check-detail">{f.detail}</span>
@@ -388,7 +392,7 @@ export default function DiagnosticsView() {
                 aria-controls="diag-alt-list"
                 onClick={() => setAltTextOpen(!altTextOpen)}
               >
-                {altTextOpen ? 'Hide photos' : 'Show photos'}
+                {altTextOpen ? t.altText.hidePhotos : t.altText.showPhotos}
               </button>
             )}
           </div>
@@ -407,21 +411,21 @@ export default function DiagnosticsView() {
   return (
     <div className="diag-page">
       <PageHeader
-        kicker="System"
+        kicker={t.header.kicker}
         title={headline}
-        description={ranAt ? `Last run ${ranAt.toLocaleString()}` : 'Running the checks…'}
+        description={ranAt ? t.header.lastRun(ranAt.toLocaleString()) : t.header.running}
         actions={
           <>
             <button className="admin-btn admin-btn-sm" onClick={run} disabled={loading}>
-              <Icons.IconRefresh size={14} /> {loading ? 'Checking…' : 'Run again'}
+              <Icons.IconRefresh size={14} /> {loading ? t.header.checking : t.header.runAgain}
             </button>
             <button
               className="admin-btn admin-btn-sm"
               onClick={copyReport}
               disabled={loading || !all.length}
-              title="Markdown, ready to paste into an issue"
+              title={t.header.copyTitle}
             >
-              <Icons.IconCopy size={14} /> {copied ? 'Copied' : 'Copy report'}
+              <Icons.IconCopy size={14} /> {copied ? t.header.copied : t.header.copy}
             </button>
           </>
         }
@@ -429,18 +433,18 @@ export default function DiagnosticsView() {
 
       {error && <div className="admin-error">{error}</div>}
 
-      <section className="diag-vitals" aria-label="Overview">
+      <section className="diag-vitals" aria-label={t.vitals.aria}>
         <div className="diag-vital">
-          <span className="diag-vital-label">Immich</span>
+          <span className="diag-vital-label">{t.vitals.immich}</span>
           <span className="diag-vital-val">
             <span
               className={`diag-dot diag-dot--${status ? (immichOk ? 'ok' : 'error') : 'unknown'}`}
             />
-            {status ? (immichOk ? 'Connected' : 'Disconnected') : '—'}
+            {status ? (immichOk ? t.vitals.connected : t.vitals.disconnected) : '—'}
           </span>
         </div>
         <div className="diag-vital">
-          <span className="diag-vital-label">Config</span>
+          <span className="diag-vital-label">{t.vitals.config}</span>
           <span className="diag-vital-val">
             <span
               className={`diag-dot diag-dot--${
@@ -448,25 +452,25 @@ export default function DiagnosticsView() {
               }`}
             />
             {configState === 'valid'
-              ? 'Valid'
+              ? t.vitals.valid
               : configState === 'invalid'
-                ? 'Invalid'
+                ? t.vitals.invalid
                 : configState === 'setup'
-                  ? 'Not set up'
+                  ? t.vitals.notSetUp
                   : '—'}
           </span>
         </div>
         <div className="diag-vital">
-          <span className="diag-vital-label">Backups</span>
+          <span className="diag-vital-label">{t.vitals.backups}</span>
           <span className="diag-vital-val">{status?.backups?.count ?? '—'}</span>
           <span className="diag-vital-meta">
             {status?.backups?.lastBackup
-              ? `latest ${new Date(status.backups.lastBackup).toLocaleDateString()}`
-              : 'none yet'}
+              ? t.vitals.latest(new Date(status.backups.lastBackup).toLocaleDateString())
+              : t.vitals.noneYet}
           </span>
         </div>
         <div className="diag-vital">
-          <span className="diag-vital-label">Version</span>
+          <span className="diag-vital-label">{t.vitals.version}</span>
           <span className="diag-vital-val">{status?.update?.current ?? '—'}</span>
           <span className="diag-vital-meta">
             {status?.update?.updateAvailable ? (
@@ -475,10 +479,10 @@ export default function DiagnosticsView() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {status.update.latest} available
+                {t.vitals.available(status.update.latest ?? '')}
               </a>
             ) : status?.update?.current ? (
-              'up to date'
+              t.vitals.upToDate
             ) : (
               ''
             )}
@@ -495,7 +499,7 @@ export default function DiagnosticsView() {
           {attention.length > 0 && (
             <section className="diag-group" aria-labelledby="diag-attention">
               <h3 id="diag-attention" className="diag-group-title">
-                Needs attention
+                {t.needsAttention}
               </h3>
               <ul className="diag-checks">{attention.map(renderFinding)}</ul>
             </section>
@@ -511,7 +515,7 @@ export default function DiagnosticsView() {
             return (
               <section key={group.id} className="diag-group" aria-labelledby={`diag-${group.id}`}>
                 <h3 id={`diag-${group.id}`} className="diag-group-title">
-                  {group.title}
+                  {t.groups[group.id]}
                 </h3>
                 <ul className="diag-checks">
                   {ok.map(renderFinding)}
@@ -520,10 +524,8 @@ export default function DiagnosticsView() {
                       <div className="diag-check-row">
                         <span className="diag-dot" aria-hidden="true" />
                         <div className="diag-check-body">
-                          <span className="diag-check-title">Checking alt text…</span>
-                          <span className="diag-check-detail">
-                            Reading every published album; large libraries take a moment.
-                          </span>
+                          <span className="diag-check-title">{t.altText.pendingTitle}</span>
+                          <span className="diag-check-detail">{t.altText.pendingDetail}</span>
                         </div>
                       </div>
                     </li>
@@ -533,11 +535,8 @@ export default function DiagnosticsView() {
                       <div className="diag-check-row">
                         <span className="diag-dot" aria-hidden="true" />
                         <div className="diag-check-body">
-                          <span className="diag-check-title">Alt text could not be checked</span>
-                          <span className="diag-check-detail">
-                            The albums did not load. If Immich is disconnected, that is the reason —
-                            try again once it is back.
-                          </span>
+                          <span className="diag-check-title">{t.altText.failedTitle}</span>
+                          <span className="diag-check-detail">{t.altText.failedDetail}</span>
                         </div>
                       </div>
                     </li>
@@ -549,7 +548,7 @@ export default function DiagnosticsView() {
 
           <section className="diag-group" aria-labelledby="diag-storage">
             <h3 id="diag-storage" className="diag-group-title">
-              Storage &amp; cache
+              {t.storage.title}
             </h3>
             <ul className="diag-checks">
               <li className="diag-check diag-check--ok">
@@ -557,15 +556,13 @@ export default function DiagnosticsView() {
                   <span className="diag-dot" aria-hidden="true" />
                   <div className="diag-check-body">
                     <span className="diag-check-title">
-                      {status?.backups?.count ?? 0} config backups
+                      {t.storage.backupsTitle(status?.backups?.count ?? 0)}
                     </span>
-                    <span className="diag-check-detail">
-                      Written before every admin save, ten per file.
-                    </span>
+                    <span className="diag-check-detail">{t.storage.backupsDetail}</span>
                   </div>
                   <div className="diag-check-side">
                     <button className="admin-btn admin-btn-sm" onClick={() => setShowBackups(true)}>
-                      <Icons.IconArchive size={14} /> Manage backups
+                      <Icons.IconArchive size={14} /> {t.storage.manageBackups}
                     </button>
                   </div>
                 </div>
@@ -575,12 +572,9 @@ export default function DiagnosticsView() {
                   <span className="diag-dot" aria-hidden="true" />
                   <div className="diag-check-body">
                     <span className="diag-check-title">
-                      In-memory cache holds {status?.cache?.size ?? 0} items
+                      {t.storage.cacheTitle(status?.cache?.size ?? 0)}
                     </span>
-                    <span className="diag-check-detail">
-                      Album lists and photo metadata from Immich. Clearing it makes the next page
-                      views slower, nothing else.
-                    </span>
+                    <span className="diag-check-detail">{t.storage.cacheDetail}</span>
                   </div>
                   <div className="diag-check-side">
                     <button
@@ -588,7 +582,8 @@ export default function DiagnosticsView() {
                       onClick={clearCache}
                       disabled={clearing}
                     >
-                      <Icons.IconRefresh size={14} /> {clearing ? 'Clearing…' : 'Clear cache'}
+                      <Icons.IconRefresh size={14} />{' '}
+                      {clearing ? t.storage.clearing : t.storage.clearCache}
                     </button>
                   </div>
                 </div>

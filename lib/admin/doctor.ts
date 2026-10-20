@@ -10,6 +10,15 @@
  * the API key — only whether something is set, and where to look.
  */
 
+// The finding texts (#604). A relative import with its extension, onto an
+// import-free file, so `npm run doctor` can still load this module with Node's
+// own type stripping (#521). Every check takes the dictionary as its last
+// argument and falls back to English, which is what the CLI and the tests use.
+import { doctor as doctorEn } from '../i18n/admin/en/doctor.ts';
+
+/** The doctor's part of the admin dictionary. */
+export type DoctorText = typeof doctorEn;
+
 export type DoctorLevel = 'ok' | 'warn' | 'error';
 
 export interface DoctorFinding {
@@ -45,36 +54,27 @@ export function worstLevel(findings: DoctorFinding[]): DoctorLevel {
  */
 export const AUTH_SECRET_MIN_LENGTH = 32;
 
-export function checkAuthSecret(secret: string | undefined): DoctorFinding {
+export function checkAuthSecret(
+  secret: string | undefined,
+  text: DoctorText = doctorEn,
+): DoctorFinding {
+  const t = text.authSecret;
   const length = secret?.length ?? 0;
 
   if (!length) {
-    return {
-      id: 'auth-secret',
-      level: 'error',
-      title: 'AUTH_SECRET is not set',
-      detail:
-        'Asset tokens and every auth cookie are signed with a secret regenerated on each ' +
-        'restart, so links and logins break whenever the server restarts. Set AUTH_SECRET to a ' +
-        'long random string.',
-    };
+    return { id: 'auth-secret', level: 'error', title: t.missingTitle, detail: t.missingDetail };
   }
 
   if (length < AUTH_SECRET_MIN_LENGTH) {
     return {
       id: 'auth-secret',
       level: 'warn',
-      title: `AUTH_SECRET is only ${length} characters`,
-      detail: `Use at least ${AUTH_SECRET_MIN_LENGTH} random characters — it is the key behind every asset token and auth cookie.`,
+      title: t.shortTitle(length),
+      detail: t.shortDetail(AUTH_SECRET_MIN_LENGTH),
     };
   }
 
-  return {
-    id: 'auth-secret',
-    level: 'ok',
-    title: 'AUTH_SECRET is set',
-    detail: `${length} characters.`,
-  };
+  return { id: 'auth-secret', level: 'ok', title: t.okTitle, detail: t.okDetail(length) };
 }
 
 /**
@@ -100,7 +100,9 @@ export function checkProxyHops(
   observedHops: number,
   /** A header a real proxy sets and Next never invents. */
   hasProxyMarker = false,
+  text: DoctorText = doctorEn,
 ): DoctorFinding {
+  const t = text.proxyHops;
   // One entry with nothing to corroborate it is what Next writes for a direct
   // request. Not evidence of anything.
   const inconclusive = observedHops === 1 && !hasProxyMarker;
@@ -110,10 +112,8 @@ export function checkProxyHops(
     return {
       id: 'proxy-hops',
       level: 'ok',
-      title: 'No reverse proxy detected',
-      detail: inconclusive
-        ? 'The only X-Forwarded-For entry is the one Next fills in for a direct request, which matches TRUSTED_PROXY_HOPS=0.'
-        : 'This request arrived without X-Forwarded-For, matching TRUSTED_PROXY_HOPS=0.',
+      title: t.noProxyTitle,
+      detail: inconclusive ? t.noProxyInconclusiveDetail : t.noProxyDetail,
     };
   }
 
@@ -121,10 +121,8 @@ export function checkProxyHops(
     return {
       id: 'proxy-hops',
       level: 'warn',
-      title: `TRUSTED_PROXY_HOPS is ${configuredHops}, but this request shows no proxy`,
-      detail:
-        'Either you reached the admin panel directly while public traffic goes through a proxy — ' +
-        'in which case this is fine — or the value is too high and every visitor shares one rate-limit bucket.',
+      title: t.notSeenTitle(configuredHops),
+      detail: t.notSeenDetail,
     };
   }
 
@@ -132,10 +130,8 @@ export function checkProxyHops(
     return {
       id: 'proxy-hops',
       level: 'warn',
-      title: `A proxy chain of ${provenHops} was seen, but TRUSTED_PROXY_HOPS is 0`,
-      detail:
-        'The client IP is read from a header the client can set, so rate limiting can be bypassed ' +
-        `by spoofing it. Set TRUSTED_PROXY_HOPS to ${provenHops} (nginx, Traefik or Caddy alone = 1).`,
+      title: t.unsetTitle(provenHops),
+      detail: t.unsetDetail(provenHops),
     };
   }
 
@@ -143,12 +139,8 @@ export function checkProxyHops(
     return {
       id: 'proxy-hops',
       level: 'warn',
-      title: `TRUSTED_PROXY_HOPS is ${configuredHops}, but only ${provenHops} proxy ${
-        provenHops === 1 ? 'hop was' : 'hops were'
-      } seen`,
-      detail:
-        'The position being read lies before the start of the chain, so the client IP falls back to ' +
-        `something unreliable. ${provenHops} is what this request suggests.`,
+      title: t.tooHighTitle(configuredHops, provenHops),
+      detail: t.tooHighDetail(provenHops),
     };
   }
 
@@ -163,18 +155,16 @@ export function checkProxyHops(
     return {
       id: 'proxy-hops',
       level: 'warn',
-      title: `TRUSTED_PROXY_HOPS is ${configuredHops}, but a chain of ${provenHops} proxy hops was seen`,
-      detail:
-        'The client IP is read from a position still inside the proxy chain, not the real client — ' +
-        `every visitor behind that hop can share one rate-limit bucket. ${provenHops} is what this request suggests.`,
+      title: t.tooLowTitle(configuredHops, provenHops),
+      detail: t.tooLowDetail(provenHops),
     };
   }
 
   return {
     id: 'proxy-hops',
     level: 'ok',
-    title: `TRUSTED_PROXY_HOPS=${configuredHops} matches the observed chain`,
-    detail: `X-Forwarded-For carried ${provenHops} ${provenHops === 1 ? 'entry' : 'entries'} on this request.`,
+    title: t.okTitle(configuredHops),
+    detail: t.okDetail(provenHops),
   };
 }
 
@@ -191,38 +181,20 @@ export function checkCdn(
   cdnUrl: string | undefined,
   sitePasswordSet: boolean,
   trustedProxyHops: number,
+  text: DoctorText = doctorEn,
 ): DoctorFinding | null {
   if (!cdnUrl) return null;
+  const t = text.cdn;
 
   if (sitePasswordSet) {
-    return {
-      id: 'cdn',
-      level: 'warn',
-      title: 'CDN_URL is set, but photos are served from this server',
-      detail:
-        'The site is password-protected, and a CDN would hand cached photos to anyone with a ' +
-        'link, so CDN mode stays off. Remove the site password or unset CDN_URL.',
-    };
+    return { id: 'cdn', level: 'warn', title: t.passwordTitle, detail: t.passwordDetail };
   }
 
   if (trustedProxyHops === 0) {
-    return {
-      id: 'cdn',
-      level: 'warn',
-      title: 'CDN mode is on, but TRUSTED_PROXY_HOPS is 0',
-      detail:
-        `Photos are served through ${cdnUrl}, and without TRUSTED_PROXY_HOPS the rate limiter ` +
-        'counts the CDN edge instead of the visitor. Set it to the number of proxies in front of ' +
-        'the app, the CDN included.',
-    };
+    return { id: 'cdn', level: 'warn', title: t.noHopsTitle, detail: t.noHopsDetail(cdnUrl) };
   }
 
-  return {
-    id: 'cdn',
-    level: 'ok',
-    title: 'CDN mode is on',
-    detail: `Photos and videos are served through ${cdnUrl}.`,
-  };
+  return { id: 'cdn', level: 'ok', title: t.okTitle, detail: t.okDetail(cdnUrl) };
 }
 
 /** Headers a reverse proxy sets and Next never synthesises. */
@@ -250,25 +222,25 @@ export interface AlbumRef {
  * `validateUuid()` deliberately warns rather than throwing, so a typo or a
  * deleted album turns into a page that is silently missing an album.
  */
-export function checkAlbumIds(configured: string[], known: AlbumRef[]): DoctorFinding {
+export function checkAlbumIds(
+  configured: string[],
+  known: AlbumRef[],
+  text: DoctorText = doctorEn,
+): DoctorFinding {
+  const t = text.albumIds;
   const ids = new Set(known.map((a) => a.id));
   const missing = configured.filter((id) => !ids.has(id));
 
   if (!configured.length) {
-    return {
-      id: 'album-ids',
-      level: 'warn',
-      title: 'No albums configured',
-      detail: 'gallery.yaml lists no albums, so the gallery has nothing to show.',
-    };
+    return { id: 'album-ids', level: 'warn', title: t.noneTitle, detail: t.noneDetail };
   }
 
   if (missing.length) {
     return {
       id: 'album-ids',
       level: 'error',
-      title: `${missing.length} of ${configured.length} album IDs do not exist in Immich`,
-      detail: `Those pages are silently empty. Check gallery.yaml for: ${missing.join(', ')}`,
+      title: t.missingTitle(missing.length, configured.length),
+      detail: t.missingDetail(missing.join(', ')),
       albumIds: missing,
     };
   }
@@ -276,8 +248,8 @@ export function checkAlbumIds(configured: string[], known: AlbumRef[]): DoctorFi
   return {
     id: 'album-ids',
     level: 'ok',
-    title: `All ${configured.length} album IDs resolve`,
-    detail: 'Every album in gallery.yaml exists in Immich.',
+    title: t.okTitle(configured.length),
+    detail: t.okDetail,
   };
 }
 
@@ -288,28 +260,26 @@ export function checkAlbumIds(configured: string[], known: AlbumRef[]): DoctorFi
  * current Immich (#515), so publishing an unshared album has always worked.
  * Naming them restores the accident-prevention this was meant to give.
  */
-export function checkAlbumsShared(configured: string[], known: AlbumRef[]): DoctorFinding {
+export function checkAlbumsShared(
+  configured: string[],
+  known: AlbumRef[],
+  text: DoctorText = doctorEn,
+): DoctorFinding {
+  const t = text.albumsShared;
   const byId = new Map(known.map((a) => [a.id, a]));
   const unshared = configured
     .map((id) => byId.get(id))
     .filter((a): a is AlbumRef => !!a && a.shared === false);
 
   if (!unshared.length) {
-    return {
-      id: 'albums-shared',
-      level: 'ok',
-      title: 'Every published album is shared in Immich',
-      detail: 'Nothing is published that Immich still considers private.',
-    };
+    return { id: 'albums-shared', level: 'ok', title: t.okTitle, detail: t.okDetail };
   }
 
   return {
     id: 'albums-shared',
     level: 'warn',
-    title: `${unshared.length} published ${unshared.length === 1 ? 'album is' : 'albums are'} not shared in Immich`,
-    detail:
-      'They are served to visitors regardless — the allowlist in gallery.yaml is what decides. ' +
-      `Worth a look if it was unintentional: ${unshared.map((a) => a.albumName).join(', ')}`,
+    title: t.warnTitle(unshared.length),
+    detail: t.warnDetail(unshared.map((a) => a.albumName).join(', ')),
     albumIds: unshared.map((a) => a.id),
   };
 }
@@ -332,16 +302,20 @@ export interface DownloadAlbumRef {
  * this module stays import-free for `npm run doctor`. Returns null while no
  * album offers downloads.
  */
-export function checkDownloadMetadata(albums: DownloadAlbumRef[]): DoctorFinding | null {
+export function checkDownloadMetadata(
+  albums: DownloadAlbumRef[],
+  text: DoctorText = doctorEn,
+): DoctorFinding | null {
   if (!albums.length) return null;
+  const t = text.downloadMetadata;
   const affected = albums.filter((a) => a.uncleanable > 0);
 
   if (!affected.length) {
     return {
       id: 'download-metadata',
       level: 'ok',
-      title: 'Downloads go out without GPS',
-      detail: `Every original in the ${albums.length === 1 ? 'download album' : `${albums.length} download albums`} is JPEG, HEIC or AVIF, and is served with its location removed.`,
+      title: t.okTitle,
+      detail: t.okDetail(albums.length),
     };
   }
 
@@ -350,12 +324,11 @@ export function checkDownloadMetadata(albums: DownloadAlbumRef[]): DoctorFinding
   return {
     id: 'download-metadata',
     level: 'warn',
-    title: `${files} downloadable ${files === 1 ? 'original keeps' : 'originals keep'} all metadata`,
-    detail:
-      'RAW, DNG, PNG, TIFF, WebP and video files are served exactly as stored, with any GPS ' +
-      `coordinates${located ? ` (Immich has a location for ${located} of them)` : ''}. ` +
-      'Turn off downloads or remove these files if their location should stay private: ' +
+    title: t.warnTitle(files),
+    detail: t.warnDetail(
+      located,
       affected.map((a) => `${a.albumName} (${a.uncleanable})`).join(', '),
+    ),
     albumIds: affected.map((a) => a.id),
   };
 }
@@ -389,45 +362,36 @@ export type ZoomRenditionSample = 'ok' | 'missing' | { contentType: string };
 export function checkZoomRenditions(
   albums: ZoomAlbumRef[],
   sample: ZoomRenditionSample | null,
+  text: DoctorText = doctorEn,
 ): DoctorFinding | null {
   const affected = albums.filter((a) => a.needRendition > 0);
   if (!affected.length || sample === null) return null;
+  const t = text.zoomRenditions;
   const photos = affected.reduce((n, a) => n + a.needRendition, 0);
-  const noun = photos === 1 ? 'photo' : 'photos';
   const albumList = affected.map((a) => `${a.albumName} (${a.needRendition})`).join(', ');
 
   if (sample === 'ok') {
     return {
       id: 'zoom-renditions',
       level: 'ok',
-      title: 'Immich has full-size previews for zoom',
-      detail: `${photos} HEIC, RAW or similar ${noun} in zoom albums are zoomed through Immich's full-size rendition, with the location removed.`,
+      title: t.okTitle,
+      detail: t.okDetail(photos),
     };
   }
   if (sample === 'missing') {
     return {
       id: 'zoom-renditions',
       level: 'warn',
-      title: `${photos} ${noun} cannot be zoomed: Immich has no full-size preview`,
-      detail:
-        'HEIC, RAW and other formats a browser cannot show are zoomed through Immich’s full-size ' +
-        'rendition, and Immich has none (one photo sampled). Visitors see the zoom button and then ' +
-        '"not available". In Immich, turn on Administration › Settings › Image Settings › Full-size ' +
-        'image (JPEG), then run the Generate Thumbnails job for missing assets. Albums: ' +
-        albumList,
+      title: t.missingTitle(photos),
+      detail: t.missingDetail(albumList),
       albumIds: affected.map((a) => a.id),
     };
   }
   return {
     id: 'zoom-renditions',
     level: 'warn',
-    title: `${photos} ${noun} cannot be zoomed: Immich's full-size format is not JPEG`,
-    detail:
-      `Immich renders its full-size previews as ${sample.contentType || 'an unknown type'}, and ` +
-      'zoom only serves JPEG renditions — their location metadata is removed on the way out, which ' +
-      'Folio cannot do for WebP. Set Administration › Settings › Image Settings › Full-size image ' +
-      '› Format to JPEG, then run the Generate Thumbnails job. Albums: ' +
-      albumList,
+    title: t.formatTitle(photos),
+    detail: t.formatDetail(sample.contentType, albumList),
     albumIds: affected.map((a) => a.id),
   };
 }
@@ -455,7 +419,9 @@ export function checkAlbumSlugCollisions(
   overrides: Record<string, string>,
   known: AlbumRef[],
   slugOf: (name: string) => string,
+  text: DoctorText = doctorEn,
 ): DoctorFinding {
+  const t = text.albumSlugs;
   const byId = new Map(known.map((a) => [a.id, a]));
   const collisions: string[] = [];
   const collidingIds: string[] = [];
@@ -477,7 +443,11 @@ export function checkAlbumSlugCollisions(
     for (const [slug, collided] of bySlug) {
       if (collided.length < 2) continue;
       collisions.push(
-        `${group.context}: "${collided.map((a) => a.name).join('" and "')}" all resolve to /${slug}`,
+        t.collision(
+          group.context,
+          collided.map((a) => a.name),
+          slug,
+        ),
       );
       collidingIds.push(...collided.map((a) => a.id));
     }
@@ -487,20 +457,13 @@ export function checkAlbumSlugCollisions(
     return {
       id: 'album-slugs',
       level: 'error',
-      title: `${collisions.length} album slug ${collisions.length === 1 ? 'collision' : 'collisions'} found`,
-      detail:
-        'Every album after the first in a collision is unreachable at its own URL, and its ' +
-        `settings resolve from the one before it. ${collisions.join('; ')}`,
+      title: t.errorTitle(collisions.length),
+      detail: t.errorDetail(collisions.join('; ')),
       albumIds: collidingIds,
     };
   }
 
-  return {
-    id: 'album-slugs',
-    level: 'ok',
-    title: 'No album slug collisions',
-    detail: 'Every album reachable under the same URL prefix has a distinct slug.',
-  };
+  return { id: 'album-slugs', level: 'ok', title: t.okTitle, detail: t.okDetail };
 }
 
 export interface PasswordRef {
@@ -516,7 +479,11 @@ export interface PasswordRef {
  * lib/auth.ts warns about both on every login attempt — to the server log,
  * where nobody looks.
  */
-export function checkPasswords(passwords: PasswordRef[]): DoctorFinding {
+export function checkPasswords(
+  passwords: PasswordRef[],
+  text: DoctorText = doctorEn,
+): DoctorFinding {
+  const t = text.passwords;
   const bcrypt = passwords.filter((p) => /^\$2[aby]\$/.test(p.value));
   const plaintext = passwords.filter(
     (p) => !p.value.startsWith('scrypt:') && !/^\$2[aby]\$/.test(p.value),
@@ -526,10 +493,8 @@ export function checkPasswords(passwords: PasswordRef[]): DoctorFinding {
     return {
       id: 'passwords',
       level: 'error',
-      title: `${bcrypt.length} password${bcrypt.length === 1 ? '' : 's'} still use bcrypt`,
-      detail:
-        'Bcrypt support was removed, so nobody can unlock these at all. Replace with plaintext ' +
-        `once, log in, and paste the scrypt: hash from the log: ${bcrypt.map((p) => p.label).join(', ')}`,
+      title: t.bcryptTitle(bcrypt.length),
+      detail: t.bcryptDetail(bcrypt.map((p) => p.label).join(', ')),
     };
   }
 
@@ -537,28 +502,20 @@ export function checkPasswords(passwords: PasswordRef[]): DoctorFinding {
     return {
       id: 'passwords',
       level: 'warn',
-      title: `${plaintext.length} password${plaintext.length === 1 ? ' is' : 's are'} stored in plaintext`,
-      detail:
-        'Anyone who reads the file reads the password. Saving the page, entry or setting once ' +
-        'in the admin panel stores it hashed; for a hand-edited file, log in once and paste the ' +
-        `scrypt: hash printed to the server log: ${plaintext.map((p) => p.label).join(', ')}`,
+      title: t.plaintextTitle(plaintext.length),
+      detail: t.plaintextDetail(plaintext.map((p) => p.label).join(', ')),
     };
   }
 
   if (!passwords.length) {
-    return {
-      id: 'passwords',
-      level: 'ok',
-      title: 'No passwords configured',
-      detail: 'Nothing on this site is password-protected.',
-    };
+    return { id: 'passwords', level: 'ok', title: t.noneTitle, detail: t.noneDetail };
   }
 
   return {
     id: 'passwords',
     level: 'ok',
-    title: `All ${passwords.length} passwords are hashed`,
-    detail: 'Every configured password uses a scrypt: hash.',
+    title: t.okTitle(passwords.length),
+    detail: t.okDetail,
   };
 }
 
@@ -588,8 +545,10 @@ export function checkLegal(
   legal: LegalRef | null | undefined,
   /** The built-in form (#702) is linked from the Impressum when no contactUrl is set. */
   contactFormEnabled = false,
+  dictionary: DoctorText = doctorEn,
 ): DoctorFinding | null {
   if (!legal || legal.enabled !== true) return null;
+  const t = dictionary.legal;
 
   const text = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
   const email = text(legal.email);
@@ -601,39 +560,28 @@ export function checkLegal(
   const problems: string[] = [];
   const missing = (
     [
-      ['name', legal.name],
-      ['street address', legal.address],
-      ['ZIP and city', legal.zipCity],
+      [t.fieldName, legal.name],
+      [t.fieldAddress, legal.address],
+      [t.fieldZipCity, legal.zipCity],
     ] as const
   )
     .filter(([, value]) => !text(value))
     .map(([label]) => label);
-  if (missing.length) problems.push(`Missing: ${missing.join(', ')}.`);
-  if (!email) problems.push('No email address; § 5 DDG requires one.');
-  if (rawUrl && !contactUrl) {
-    problems.push('The contact form URL is ignored because it does not start with http(s)://.');
-  }
-  if (email && !secondChannel) {
-    problems.push(
-      'Email is the only contact channel. Add a phone number, a contact form URL, or turn on the built-in contact form.',
-    );
-  }
+  if (missing.length) problems.push(t.missing(missing.join(', ')));
+  if (!email) problems.push(t.noEmail);
+  if (rawUrl && !contactUrl) problems.push(t.badContactUrl);
+  if (email && !secondChannel) problems.push(t.emailOnly);
 
   if (problems.length) {
     return {
       id: 'legal',
       level: 'warn',
-      title: `The Impressum has ${problems.length} gap${problems.length === 1 ? '' : 's'}`,
+      title: t.gapsTitle(problems.length),
       detail: problems.join(' '),
     };
   }
 
-  return {
-    id: 'legal',
-    level: 'ok',
-    title: 'The Impressum is complete',
-    detail: 'Name, address, email and a second contact channel are set.',
-  };
+  return { id: 'legal', level: 'ok', title: t.okTitle, detail: t.okDetail };
 }
 
 /** The `contact:` block as settings.yaml holds it. */
@@ -651,34 +599,20 @@ export interface ContactRef {
 export function checkContact(
   contact: ContactRef | null | undefined,
   envNotifyUrl?: string,
+  text: DoctorText = doctorEn,
 ): DoctorFinding | null {
   if (!contact || contact.enabled !== true) return null;
+  const t = text.contact;
   const url =
     envNotifyUrl?.trim() || (typeof contact.notifyUrl === 'string' ? contact.notifyUrl.trim() : '');
 
   if (!url) {
-    return {
-      id: 'contact',
-      level: 'warn',
-      title: 'Contact form messages notify nobody',
-      detail:
-        'New messages only show up under Messages in the admin panel. Set an ntfy URL so you hear about them.',
-    };
+    return { id: 'contact', level: 'warn', title: t.noNotifyTitle, detail: t.noNotifyDetail };
   }
   if (!/^https?:\/\//i.test(url)) {
-    return {
-      id: 'contact',
-      level: 'warn',
-      title: 'The contact notification URL is ignored',
-      detail: 'It does not start with http(s)://, so no notification is sent.',
-    };
+    return { id: 'contact', level: 'warn', title: t.badUrlTitle, detail: t.badUrlDetail };
   }
-  return {
-    id: 'contact',
-    level: 'ok',
-    title: 'Contact form notifies you',
-    detail: 'Each new message triggers a notification.',
-  };
+  return { id: 'contact', level: 'ok', title: t.okTitle, detail: t.okDetail };
 }
 
 /** Where each value checked by `validateSettingValues` is edited. */
@@ -692,15 +626,15 @@ const SETTING_SECTIONS: Record<string, string> = {
   navLinks: 'footer',
 };
 
-/** Human names for the same fields, for the finding's text. */
-const SETTING_LABELS: Record<string, string> = {
-  url: 'Site URL',
-  'theme.accent': 'accent colour',
-  'theme.radius': 'corner radius',
-  'grid.columns': 'grid columns',
-  'grid.gap': 'grid gap',
-  'contact.retentionDays': 'message retention',
-  navLinks: 'header links',
+/** The dictionary label that names each of the same fields in the finding's text. */
+const SETTING_LABELS: Record<string, keyof DoctorText['settingValues']['labels']> = {
+  url: 'url',
+  'theme.accent': 'themeAccent',
+  'theme.radius': 'themeRadius',
+  'grid.columns': 'gridColumns',
+  'grid.gap': 'gridGap',
+  'contact.retentionDays': 'retentionDays',
+  navLinks: 'navLinks',
 };
 
 /** `navLinks.2.url` → `navLinks`: every header-link error is one setting. */
@@ -715,28 +649,24 @@ function settingKey(field: string): string {
  * panel now refuses to save them, but a hand-edited file or one saved before
  * that still holds them. Takes `validateSettingValues(settings.yaml)`.
  */
-export function checkSettingValues(errors: Array<{ field: string }>): DoctorFinding {
+export function checkSettingValues(
+  errors: Array<{ field: string }>,
+  text: DoctorText = doctorEn,
+): DoctorFinding {
+  const t = text.settingValues;
   if (errors.length === 0) {
-    return {
-      id: 'settings-values',
-      level: 'ok',
-      title: 'Settings are used as written',
-      detail:
-        'Site URL, theme, grid, message retention and header links in settings.yaml are all valid.',
-    };
+    return { id: 'settings-values', level: 'ok', title: t.okTitle, detail: t.okDetail };
   }
   const keys = [...new Set(errors.map((e) => settingKey(e.field)))];
-  const names = keys.map((key) => SETTING_LABELS[key] ?? key);
+  const names = keys.map((key) => {
+    const label = SETTING_LABELS[key];
+    return label ? t.labels[label] : key;
+  });
   return {
     id: 'settings-values',
     level: 'warn',
-    title:
-      names.length === 1
-        ? `The ${names[0]} setting is ignored`
-        : `${names.length} settings are ignored`,
-    detail:
-      `settings.yaml holds a value the site cannot use for: ${names.join(', ')}. ` +
-      'The site uses a default or the nearest allowed value instead. Open the setting to see what it expects.',
+    title: names.length === 1 ? t.oneIgnoredTitle(names[0]) : t.manyIgnoredTitle(names.length),
+    detail: t.ignoredDetail(names.join(', ')),
     settingsSection: SETTING_SECTIONS[keys[0]],
   };
 }
@@ -746,27 +676,24 @@ export function checkSettingValues(errors: Array<{ field: string }>): DoctorFind
  * (Art. 13 GDPR). Returns null while there is neither an Impressum nor a
  * policy, so a site that has chosen to have no legal pages is not nagged.
  */
-export function checkPrivacy(p: {
-  legalEnabled: boolean;
-  privacyEnabled: boolean;
-  hasText: boolean;
-}): DoctorFinding | null {
+export function checkPrivacy(
+  p: {
+    legalEnabled: boolean;
+    privacyEnabled: boolean;
+    hasText: boolean;
+  },
+  text: DoctorText = doctorEn,
+): DoctorFinding | null {
+  const t = text.privacy;
   if (p.privacyEnabled && p.hasText) {
-    return {
-      id: 'privacy',
-      level: 'ok',
-      title: 'The privacy policy is published',
-      detail: 'Shown at /privacy and linked in the footer.',
-    };
+    return { id: 'privacy', level: 'ok', title: t.okTitle, detail: t.okDetail };
   }
   if (!p.legalEnabled) return null;
   return {
     id: 'privacy',
     level: 'warn',
-    title: 'There is no privacy policy',
-    detail: p.hasText
-      ? 'The text exists but the privacy page is switched off, so /privacy answers 404.'
-      : 'The Impressum is on but /privacy has no text. Settings → Legal lists what this site processes, as a starting point.',
+    title: t.missingTitle,
+    detail: p.hasText ? t.switchedOffDetail : t.noTextDetail,
   };
 }
 
@@ -774,24 +701,18 @@ export function checkPrivacy(p: {
  * The whole content directory must be writable: the wizard, the admin panel,
  * the journal, favicon upload, analytics and backup rotation all write there.
  */
-export function checkWritable(unwritable: string[]): DoctorFinding {
+export function checkWritable(unwritable: string[], text: DoctorText = doctorEn): DoctorFinding {
+  const t = text.writable;
   if (unwritable.length) {
     return {
       id: 'content-writable',
       level: 'error',
-      title: `${unwritable.length} content ${unwritable.length === 1 ? 'path is' : 'paths are'} not writable`,
-      detail:
-        'Saving from the admin panel will fail, and so will backups. Check the ownership of the ' +
-        `mounted volume: ${unwritable.join(', ')}`,
+      title: t.errorTitle(unwritable.length),
+      detail: t.errorDetail(unwritable.join(', ')),
     };
   }
 
-  return {
-    id: 'content-writable',
-    level: 'ok',
-    title: 'content/ is writable',
-    detail: 'Config, journal and backups can be saved.',
-  };
+  return { id: 'content-writable', level: 'ok', title: t.okTitle, detail: t.okDetail };
 }
 
 /**
@@ -801,22 +722,26 @@ export function checkWritable(unwritable: string[]): DoctorFinding {
  * does not report what a key may do, so the only honest answer is whether the
  * three requests this app depends on came back.
  */
-export function checkImmichCalls(results: Array<{ endpoint: string; ok: boolean }>): DoctorFinding {
+export function checkImmichCalls(
+  results: Array<{ endpoint: string; ok: boolean }>,
+  text: DoctorText = doctorEn,
+): DoctorFinding {
+  const t = text.immichApi;
   const failed = results.filter((r) => !r.ok);
 
   if (failed.length) {
     return {
       id: 'immich-api',
       level: 'error',
-      title: `${failed.length} of ${results.length} Immich calls failed`,
-      detail: `Check IMMICH_API_URL and the API key. Failing: ${failed.map((f) => f.endpoint).join(', ')}`,
+      title: t.failedTitle(failed.length, results.length),
+      detail: t.failedDetail(failed.map((f) => f.endpoint).join(', ')),
     };
   }
 
   return {
     id: 'immich-api',
     level: 'ok',
-    title: 'Immich answers every call Folio makes',
+    title: t.okTitle,
     detail: results.map((r) => r.endpoint).join(', '),
   };
 }
@@ -833,14 +758,18 @@ export interface PageSlugProblem {
  * is shadowed by the subpage or album — or, for a built-in route, never
  * reached at all. Returns null while there are no pages and no references.
  */
-export function checkContentPages(p: {
-  /** Slugs referenced from gallery.yaml. */
-  menuRefs: string[];
-  /** Slugs of the files in content/pages/. */
-  pages: string[];
-  collisions: PageSlugProblem[];
-}): DoctorFinding | null {
+export function checkContentPages(
+  p: {
+    /** Slugs referenced from gallery.yaml. */
+    menuRefs: string[];
+    /** Slugs of the files in content/pages/. */
+    pages: string[];
+    collisions: PageSlugProblem[];
+  },
+  text: DoctorText = doctorEn,
+): DoctorFinding | null {
   if (!p.menuRefs.length && !p.pages.length) return null;
+  const t = text.contentPages;
   const existing = new Set(p.pages);
   const missing = p.menuRefs.filter((slug) => !existing.has(slug));
   const missingList = missing.map((s) => `"${s}"`).join(', ');
@@ -850,11 +779,8 @@ export function checkContentPages(p: {
     return {
       id: 'content-pages',
       level: 'error',
-      title: `${n} content ${n === 1 ? 'page has' : 'pages have'} a slug that is already taken`,
-      detail:
-        p.collisions.map((c) => c.reason).join(' ') +
-        ' Rename the page in Pages so visitors can reach it.' +
-        (missing.length ? ` The menu also lists missing pages: ${missingList}.` : ''),
+      title: t.takenTitle(n),
+      detail: t.takenDetail(p.collisions.map((c) => c.reason).join(' '), missingList),
     };
   }
 
@@ -862,10 +788,8 @@ export function checkContentPages(p: {
     return {
       id: 'content-pages',
       level: 'warn',
-      title: `The menu lists ${missing.length} missing ${missing.length === 1 ? 'page' : 'pages'}`,
-      detail:
-        `gallery.yaml references ${missingList}, but content/pages/ has no such file. ` +
-        'The menu skips the entry; remove the reference or create the page.',
+      title: t.missingTitle(missing.length),
+      detail: t.missingDetail(missingList),
     };
   }
 
@@ -873,7 +797,7 @@ export function checkContentPages(p: {
   return {
     id: 'content-pages',
     level: 'ok',
-    title: `${n} content ${n === 1 ? 'page' : 'pages'}, every slug free`,
-    detail: `${p.menuRefs.length} of them in the menu.`,
+    title: t.okTitle(n),
+    detail: t.okDetail(p.menuRefs.length),
   };
 }

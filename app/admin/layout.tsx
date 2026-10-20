@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import AdminShell from './AdminShell';
+import { AdminI18nProvider } from './components/AdminI18n';
+import { getConfigOrNull } from '@/lib/config';
+import { resolveAdminLocale } from '@/lib/i18n/admin';
 
 export const metadata: Metadata = {
   title: 'Immich Folio Admin',
@@ -17,15 +20,24 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 /**
- * `lang="en"`: `<html lang>` follows the site language (settings.yaml `lang`),
- * but the admin is deliberately untranslated. Without this a screen reader
- * read the English interface with a German voice on a `lang: de` site.
- * The Listbox popup is portalled to <body> and still inherits the root value.
+ * The panel has a language of its own (#604): `settings.yaml: adminLang`, else
+ * the site's `lang`. `lang` on the wrapper follows it, so a screen reader reads
+ * an English panel over a German site with an English voice and the other way
+ * round. The Listbox popup is portalled to <body> and still inherits the root
+ * value.
+ *
+ * Read per request (the layout is force-dynamic), so a save in Settings that
+ * changes the language takes effect on the `router.refresh()` that follows it.
+ * Without a usable config the panel is English.
  */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const config = getConfigOrNull();
+  const locale = resolveAdminLocale(config?.adminLang, config?.lang);
   return (
-    <div className="admin-layout" lang="en">
-      <AdminShell>{children}</AdminShell>
+    <div className="admin-layout" lang={locale}>
+      <AdminI18nProvider locale={locale}>
+        <AdminShell>{children}</AdminShell>
+      </AdminI18nProvider>
     </div>
   );
 }

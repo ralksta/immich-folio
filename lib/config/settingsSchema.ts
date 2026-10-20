@@ -59,6 +59,7 @@ export const settingsSchema = z.looseObject({
   subtitle: str,
   url: str,
   lang: str,
+  adminLang: str,
 
   seo: z
     .looseObject({
