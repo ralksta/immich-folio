@@ -322,7 +322,7 @@ export default function PageBuilder() {
         '/api/admin/gallery',
         { gallery: yamlData },
         versionRef,
-        'The page structure (gallery.yaml)',
+        'pageStructure',
       );
 
       if (result.kind === 'reload') {
@@ -816,7 +816,7 @@ export default function PageBuilder() {
 
       <DraftNotice
         status={draft.status}
-        subject="page structure"
+        subject="pageStructure"
         onDiscard={discardDraft}
         onRestore={restoreConflictingDraft}
         onDismiss={draft.dismiss}

@@ -258,7 +258,7 @@ export default function SettingsEditor() {
         '/api/admin/settings',
         { settings: cleaned },
         versionRef,
-        'The settings file',
+        'settings',
       );
 
       if (result.kind === 'reload') {
@@ -390,7 +390,7 @@ export default function SettingsEditor() {
       />
       <DraftNotice
         status={about.draftStatus}
-        subject="About page"
+        subject="about"
         onDiscard={about.discardDraft}
         onRestore={about.restoreDraft}
         onDismiss={about.dismissDraft}

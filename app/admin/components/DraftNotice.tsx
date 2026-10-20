@@ -1,11 +1,16 @@
 'use client';
 
 import type { DraftStatus } from './useDraft';
+import { useAdminDictionary } from './AdminI18n';
+import type { AdminDictionary } from '@/lib/i18n/admin';
+
+/** What a draft can belong to; the words come from the shell dictionary. */
+export type DraftSubject = keyof AdminDictionary['shell']['draft']['subjects'];
 
 interface DraftNoticeProps {
   status: DraftStatus;
-  /** What the draft belongs to, e.g. "page structure" or "entry". */
-  subject: string;
+  /** What the draft belongs to, e.g. the page structure or an entry. */
+  subject: DraftSubject;
   onDiscard: () => void;
   onRestore: () => void;
   onDismiss: () => void;
@@ -24,34 +29,33 @@ export default function DraftNotice({
   onRestore,
   onDismiss,
 }: DraftNoticeProps) {
+  const t = useAdminDictionary().shell.draft;
   if (status === 'none') return null;
+  const what = t.subjects[subject];
 
   return (
     <div className="admin-notice draft-notice" role="status">
       {status === 'restored' ? (
         <>
-          <span>Your unsaved changes to the {subject} were restored. They are not saved yet.</span>
+          <span>{t.restored(what)}</span>
           <span className="draft-notice-actions">
             <button type="button" className="admin-btn admin-btn-xs" onClick={onDiscard}>
-              Discard changes
+              {t.discardChanges}
             </button>
             <button type="button" className="admin-btn admin-btn-xs" onClick={onDismiss}>
-              OK
+              {t.ok}
             </button>
           </span>
         </>
       ) : (
         <>
-          <span>
-            You have unsaved changes to the {subject} from earlier, but it was saved elsewhere
-            since. Restoring them replaces that version when you save.
-          </span>
+          <span>{t.stale(what)}</span>
           <span className="draft-notice-actions">
             <button type="button" className="admin-btn admin-btn-xs" onClick={onRestore}>
-              Restore my changes
+              {t.restore}
             </button>
             <button type="button" className="admin-btn admin-btn-xs" onClick={onDiscard}>
-              Discard them
+              {t.discardThem}
             </button>
           </span>
         </>

@@ -105,6 +105,58 @@ export const shell = {
     unknown: 'Status Unknown',
   },
 
+  /** The spinner and the error-with-retry every admin screen shares. */
+  loadState: {
+    retry: 'Retry',
+    loading: 'Loading',
+  },
+
+  /**
+   * Unsaved edits that came back from the browser's draft store. `restored`
+   * and `stale` insert one of `subjects`, so phrase the subjects to fit those
+   * sentences in your language (article, case, preposition).
+   */
+  draft: {
+    subjects: {
+      settings: 'settings',
+      about: 'About page',
+      privacy: 'privacy policy',
+      pageStructure: 'page structure',
+      page: 'page',
+      entry: 'entry',
+    },
+    restored: (subject: string) =>
+      `Your unsaved changes to the ${subject} were restored. They are not saved yet.`,
+    stale: (subject: string) =>
+      `You have unsaved changes to the ${subject} from earlier, but it was saved elsewhere since. Restoring them replaces that version when you save.`,
+    discardChanges: 'Discard changes',
+    ok: 'OK',
+    restore: 'Restore my changes',
+    discardThem: 'Discard them',
+  },
+
+  /**
+   * The dialog when a file was saved elsewhere since it was opened. `message`
+   * starts with one of `subjects`, so phrase them as the subject of that
+   * sentence.
+   */
+  conflict: {
+    subjects: {
+      settings: 'The settings file',
+      about: 'The About page',
+      privacy: 'The privacy policy',
+      pageStructure: 'The page structure (gallery.yaml)',
+      page: 'This page',
+      entry: 'This entry',
+    },
+    title: 'Changed elsewhere',
+    message: (subject: string) =>
+      `${subject} was changed since you opened it — in another tab, on another device, by hand or by a backup restore. Saving now would replace that change.`,
+    overwrite: 'Overwrite anyway',
+    reload: 'Reload (discard mine)',
+    keepEditing: 'Keep editing',
+  },
+
   saveBar: {
     unsaved: 'Unsaved changes',
     preview: '↗ Preview Site',

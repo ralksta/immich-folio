@@ -142,7 +142,7 @@ export function useAboutEditor(active: boolean) {
         '/api/admin/about',
         { meta: cleanedMeta, body: aboutBody },
         versionRef,
-        'The About page',
+        'about',
       );
       if (result.kind === 'reload') {
         draft.discard();

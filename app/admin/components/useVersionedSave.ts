@@ -18,6 +18,11 @@
 
 import { useCallback, type MutableRefObject } from 'react';
 import { useChoice } from './ConfirmDialog';
+import { useAdminDictionary } from './AdminI18n';
+import type { AdminDictionary } from '@/lib/i18n/admin';
+
+/** What a versioned save writes; named in the conflict dialog. */
+export type SaveSubject = keyof AdminDictionary['shell']['conflict']['subjects'];
 
 /** The If-Match header for a version, or none before the first load. */
 export function ifMatch(version: string | null): Record<string, string> {
@@ -46,18 +51,19 @@ export function isEditConflict(res: Response, data: unknown): data is { version:
 type ConflictChoice = 'overwrite' | 'reload';
 
 /**
- * `what` names the file in the dialog ("The settings", "This entry").
+ * `what` names the file in the dialog ("The settings file", "This entry").
  * A network failure throws, as a plain fetch would.
  */
 export function useVersionedSave() {
   const choose = useChoice();
+  const t = useAdminDictionary().shell.conflict;
 
   return useCallback(
     async (
       url: string,
       body: unknown,
       versionRef: MutableRefObject<string | null>,
-      what: string,
+      what: SaveSubject,
     ): Promise<VersionedSaveResult> => {
       let version = versionRef.current;
       for (;;) {
@@ -70,13 +76,13 @@ export function useVersionedSave() {
 
         if (isEditConflict(res, data)) {
           const choice = await choose<ConflictChoice>({
-            title: 'Changed elsewhere',
-            message: `${what} was changed since you opened it — in another tab, on another device, by hand or by a backup restore. Saving now would replace that change.`,
+            title: t.title,
+            message: t.message(t.subjects[what]),
             actions: [
-              { id: 'overwrite', label: 'Overwrite anyway' },
-              { id: 'reload', label: 'Reload (discard mine)' },
+              { id: 'overwrite', label: t.overwrite },
+              { id: 'reload', label: t.reload },
             ],
-            cancelLabel: 'Keep editing',
+            cancelLabel: t.keepEditing,
           });
           if (choice === 'overwrite') {
             version = data.version;
@@ -92,6 +98,6 @@ export function useVersionedSave() {
         return { kind: 'failed', res, data };
       }
     },
-    [choose],
+    [choose, t],
   );
 }

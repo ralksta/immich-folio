@@ -9,6 +9,7 @@ export const common = {
   delete: 'Delete',
   add: 'Add',
   edit: 'Edit',
+  confirm: 'Confirm',
   retry: 'Try again',
   loading: 'Loading…',
   none: 'None',

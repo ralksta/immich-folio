@@ -193,7 +193,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
         apiUrl,
         { rawMarkdown: toSave },
         versionRef,
-        isPage ? 'This page' : 'This entry',
+        isPage ? 'page' : 'entry',
       );
 
       if (result.kind === 'reload') {

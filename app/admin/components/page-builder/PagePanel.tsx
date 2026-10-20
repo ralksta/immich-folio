@@ -165,7 +165,7 @@ export default function PagePanel({
         `/api/admin/pages/${encodeURIComponent(slug)}`,
         { rawMarkdown: markdown, ...(renaming ? { newSlug: targetSlug } : {}) },
         versionRef,
-        'This page',
+        'page',
       );
       if (result.kind === 'reload') {
         setReloadKey((k) => k + 1);

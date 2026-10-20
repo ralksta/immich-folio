@@ -96,7 +96,7 @@ export default function PrivacyEditor() {
         '/api/admin/privacy',
         { body: sent },
         versionRef,
-        'The privacy policy',
+        'privacy',
       );
       if (result.kind === 'reload') {
         draft.discard();
@@ -142,7 +142,7 @@ export default function PrivacyEditor() {
     <div className="privacy-editor">
       <DraftNotice
         status={draft.status}
-        subject="privacy policy"
+        subject="privacy"
         onDiscard={() => {
           draft.discard();
           setBody(data.body);

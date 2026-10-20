@@ -28,9 +28,7 @@ describe('rich', () => {
 describe('AdminI18nProvider', () => {
   function Probe() {
     const t = useAdminDictionary();
-    return (
-      <span data-locale={useAdminLocale()}>{t === adminEn ? 'english' : 'translated'}</span>
-    );
+    return <span data-locale={useAdminLocale()}>{t === adminEn ? 'english' : 'translated'}</span>;
   }
 
   it('is English outside a provider', () => {

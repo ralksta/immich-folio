@@ -15,6 +15,7 @@
 
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
 import { useModalDialog } from '@/hooks/useModalDialog';
+import { useAdminDictionary } from './AdminI18n';
 
 export interface ConfirmOptions {
   title: string;
@@ -74,6 +75,7 @@ export function useChoice(): Choose {
 const CONFIRM_ID = 'confirm';
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const common = useAdminDictionary().common;
   const [pending, setPending] = useState<ChoiceOptions<string> | null>(null);
   const resolver = useRef<((id: string | null) => void) | null>(null);
 
@@ -96,12 +98,12 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         actions: [
           {
             id: CONFIRM_ID,
-            label: options.confirmLabel ?? 'Confirm',
+            label: options.confirmLabel ?? common.confirm,
             danger: options.danger,
           },
         ],
       })) === CONFIRM_ID,
-    [choose],
+    [choose, common],
   );
 
   const settle = useCallback((id: string | null) => {
@@ -126,6 +128,7 @@ function Dialog({
   onSettle: (id: string | null) => void;
 }) {
   // Esc cancels, focus is trapped and returned (the same hook the modals use).
+  const common = useAdminDictionary().common;
   const cardRef = useModalDialog(() => onSettle(null));
   const last = options.actions.length - 1;
   return (
@@ -153,7 +156,7 @@ function Dialog({
             className="admin-btn admin-btn-ghost"
             onClick={() => onSettle(null)}
           >
-            {options.cancelLabel ?? 'Cancel'}
+            {options.cancelLabel ?? common.cancel}
           </button>
           {options.actions.map((action, i) => (
             <button

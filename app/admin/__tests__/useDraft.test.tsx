@@ -167,7 +167,7 @@ describe('DraftNotice', () => {
 
   it('asks before restoring over a newer save', () => {
     const h = handlers();
-    render(<DraftNotice status="conflict" subject="page structure" {...h} />);
+    render(<DraftNotice status="conflict" subject="pageStructure" {...h} />);
     fireEvent.click(screen.getByText('Restore my changes'));
     expect(h.onRestore).toHaveBeenCalled();
     fireEvent.click(screen.getByText('Discard them'));
