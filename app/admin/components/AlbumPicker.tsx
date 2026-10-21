@@ -69,9 +69,7 @@ export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }:
 
         <div className="picker-list">
           {filtered.length === 0 && (
-            <p className="empty-hint">
-              No albums found. Make sure you have shared albums in Immich.
-            </p>
+            <p className="empty-hint">No albums found. Check your Immich connection and access.</p>
           )}
           {filtered.map((album) => {
             const isUsed = usedAlbumIds.has(album.id);

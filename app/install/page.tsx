@@ -66,11 +66,5 @@ export default async function InstallPage({
 
   const creds = getInstallCredentials();
 
-  return (
-    <InstallWizard
-      initialApiUrl={creds.apiUrl}
-      hasConfiguredCredentials={Boolean(creds.apiUrl && creds.apiKey)}
-      setupToken={token!}
-    />
-  );
+  return <InstallWizard initialApiUrl={creds.apiUrl} setupToken={token!} />;
 }

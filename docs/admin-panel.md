@@ -168,7 +168,7 @@ Spam protection works without a captcha: a hidden field only bots fill in, a min
 
 ## Album & Asset Pickers
 
-**Album Picker** — a modal listing **all shared albums** from your Immich instance, not just the configured ones:
+**Album Picker** — a modal listing **all albums** from your Immich instance, not just the configured ones:
 
 - **Search** by album name or UUID
 - **Photo count** per album

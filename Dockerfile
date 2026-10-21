@@ -15,9 +15,6 @@ RUN npm config set fetch-retry-maxtimeout 120000 && npm config set fetch-retry-m
 RUN npm ci --verbose
 COPY . .
 
-# Next.js inlines NEXT_PUBLIC_* variables into browser bundles at build time.
-ARG NEXT_PUBLIC_CARTO_API_KEY
-
 # Dummy env vars for build — pages are force-dynamic so these are
 # never used at runtime, but Next.js page-data collection imports
 # env.ts which runs Zod validation on import.

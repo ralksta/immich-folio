@@ -116,6 +116,7 @@ function renderJournalEditor() {
 
 async function selectSharedAlbum() {
   fireEvent.click(await screen.findByRole('button', { name: 'Albums' }));
+  expect(await screen.findByRole('button', { name: /^Private trip/ })).toBeTruthy();
   fireEvent.click(await screen.findByRole('button', { name: /^Shared trip/ }));
 }
 
@@ -152,6 +153,22 @@ describe('JournalEditor shared album photo selection', () => {
     expect(photoBlock.querySelector('img')?.getAttribute('src')).toBe(
       '/api/admin/thumbnail/selected-photo',
     );
+  });
+
+  it('Escape closes only the album picker when it is stacked over the asset picker', async () => {
+    renderJournalEditor();
+
+    fireEvent.click(await screen.findByRole('button', { name: /^\+ Photo$/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Albums' }));
+    expect(await screen.findByRole('dialog', { name: 'Select Album' })).toBeTruthy();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog', { name: 'Select Album' })).toBeNull();
+    expect(screen.getByRole('dialog', { name: 'Select Photo for Story' })).toBeTruthy();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog', { name: 'Select Photo for Story' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Pick a photo' })).toBeNull();
   });
 
   it('requires exactly two selected shared-album photos for + 2-Photo Pair', async () => {

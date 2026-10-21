@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  isInstalled,
-  normalizeApiBase,
-  resolveInstallConnection,
-  validateSetupToken,
-} from '@/lib/install';
+import { isInstalled, normalizeApiBase, validateSetupToken } from '@/lib/install';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 
 /** Album discovery attempts per minute per IP — only live before install. */
@@ -18,9 +13,9 @@ interface AlbumSummary {
 }
 
 /**
- * POST: list shared Immich albums for the wizard's picker. The configured
- * Immich client cannot be used here — it reads getConfig(), which is still in
- * setup mode.
+ * POST: list shared Immich albums for the wizard's picker, using the
+ * credentials the user just typed. The configured Immich client cannot be used
+ * here — it reads getConfig(), which is still in setup mode.
  */
 export async function POST(request: NextRequest) {
   if (isInstalled()) {
@@ -45,10 +40,8 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
-  const { apiUrl, apiKey } = resolveInstallConnection(
-    typeof body?.apiUrl === 'string' ? body.apiUrl : '',
-    typeof body?.apiKey === 'string' ? body.apiKey : '',
-  );
+  const apiUrl = typeof body?.apiUrl === 'string' ? body.apiUrl.trim() : '';
+  const apiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';
 
   if (!apiUrl || !apiKey) {
     return NextResponse.json({ error: 'Immich URL and API key are required' }, { status: 400 });

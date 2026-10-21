@@ -99,9 +99,9 @@ describe('JournalStudio shared album creation', () => {
     fireEvent.click(await screen.findByRole('button', { name: /New Journal Entry/ }));
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Shared trip' } });
     fireEvent.click(screen.getByRole('button', { name: 'Albums' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Select shared album' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Select album' }));
+    expect(await screen.findByRole('button', { name: /Private trip/ })).toBeTruthy();
     fireEvent.click(await screen.findByRole('button', { name: /Shared trip/ }));
-    expect(screen.queryByRole('button', { name: /Private trip/ })).toBeNull();
 
     fireEvent.click(await screen.findByRole('button', { name: /^selected\.jpg/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Add photo' }));

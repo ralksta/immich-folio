@@ -88,10 +88,9 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
         const res = await fetch('/api/admin/albums');
         if (!res.ok) throw new Error(`Immich returned ${res.status}`);
         const data = (await res.json()) as { albums?: SharedAlbum[] };
-        // Immich versions that ignore `?shared=true` can return private albums.
-        setAlbumList((data.albums ?? []).filter((album) => album.shared !== false));
+        setAlbumList(data.albums ?? []);
       } catch {
-        notify('error', 'Could not load shared albums. Check the Immich connection and try again.');
+        notify('error', 'Could not load albums. Check the Immich connection and try again.');
         return;
       } finally {
         setLoadingAlbums(false);
@@ -447,11 +446,11 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                       disabled={loadingAlbums}
                     >
                       {loadingAlbums
-                        ? 'Loading shared albums...'
+                        ? 'Loading albums...'
                         : selectedAlbumId
                           ? (albumList?.find((album) => album.id === selectedAlbumId)?.albumName ??
-                            'Change shared album')
-                          : 'Select shared album'}
+                            'Change album')
+                          : 'Select album'}
                     </button>
                     {selectedAlbumId && (
                       <>

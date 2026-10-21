@@ -73,9 +73,9 @@ export function AdminDiagnosticBanner({
           }}
         >
           <li>
-            <strong>Album Shared Status in Immich:</strong> Ensure the album in Immich is marked as{' '}
-            <strong>Shared (Geteilt)</strong>. Unshared albums are excluded by Immich Folio for
-            security.
+            <strong>Album visibility in Immich:</strong> Sharing controls whether other Immich users
+            can see an album. Folio can list and publish any album from this account, so check the
+            gallery configuration before exposing one.
           </li>
           <li>
             <strong>Cache Lag:</strong> If you just added the album or changed permissions, click{' '}

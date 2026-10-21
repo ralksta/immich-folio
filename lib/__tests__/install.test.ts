@@ -153,30 +153,6 @@ describe('getInstallCredentials', () => {
   });
 });
 
-describe('resolveInstallConnection', () => {
-  it('uses server-configured credentials when wizard fields are left blank', async () => {
-    const { resolveInstallConnection } = await loadInstall();
-    process.env.__T_INSTALL_URL = 'https://env-immich:2283/';
-    process.env.__T_INSTALL_KEY = 'env-key';
-
-    expect(resolveInstallConnection('', '')).toEqual({
-      apiUrl: 'https://env-immich:2283',
-      apiKey: 'env-key',
-    });
-  });
-
-  it('prefers credentials explicitly entered in the wizard', async () => {
-    const { resolveInstallConnection } = await loadInstall();
-    process.env.__T_INSTALL_URL = 'https://env-immich:2283';
-    process.env.__T_INSTALL_KEY = 'env-key';
-
-    expect(resolveInstallConnection('https://typed-immich:2283', 'typed-key')).toEqual({
-      apiUrl: 'https://typed-immich:2283',
-      apiKey: 'typed-key',
-    });
-  });
-});
-
 describe('isInstalled', () => {
   it('is false while gallery.yaml is missing', async () => {
     const { isInstalled } = await loadInstall();

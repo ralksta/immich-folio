@@ -94,11 +94,11 @@ export default function AssetPicker({
         const data = (await res.json()) as {
           albums?: Parameters<typeof AlbumPicker>[0]['albums'];
         };
-        setAlbumList((data.albums ?? []).filter((album) => album.shared !== false));
+        setAlbumList(data.albums ?? []);
         setAlbumLoadError(null);
       } catch (err) {
-        console.error('Failed to load shared albums:', err);
-        setAlbumLoadError(err instanceof Error ? err.message : 'Failed to load shared albums.');
+        console.error('Failed to load albums:', err);
+        setAlbumLoadError(err instanceof Error ? err.message : 'Failed to load albums.');
         return;
       }
     }

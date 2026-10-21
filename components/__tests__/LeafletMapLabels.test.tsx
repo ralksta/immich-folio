@@ -2,7 +2,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, cleanup, waitFor } from '@testing-library/react';
 import { I18nProvider } from '@/components/I18nProvider';
-import { LeafletMap, localizedLeafletPrefix, mapTileLayerOptions } from '@/components/LeafletMap';
+import { LeafletMap, localizedLeafletPrefix } from '@/components/LeafletMap';
 import { de } from '@/lib/i18n/locales/de';
 
 /**
@@ -46,25 +46,6 @@ describe('localizedLeafletPrefix', () => {
     expect(localizedLeafletPrefix(prefix, 'Karten "&" mehr')).toBe(
       '<a href="https://leafletjs.com" title="Karten &quot;&amp;&quot; mehr">Leaflet</a>',
     );
-  });
-});
-
-describe('mapTileLayerOptions', () => {
-  it('uses OpenStreetMap when no CARTO key is configured', () => {
-    expect(mapTileLayerOptions()).toEqual({
-      url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    });
-  });
-
-  it('uses CARTO Voyager and credits both providers when a key is configured', () => {
-    const options = mapTileLayerOptions('test key');
-    expect(options.url).toBe(
-      'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=test%20key',
-    );
-    expect(options.attribution).toContain('OpenStreetMap');
-    expect(options.attribution).toContain('CARTO');
   });
 });
 
