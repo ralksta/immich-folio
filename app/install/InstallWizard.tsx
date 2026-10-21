@@ -18,6 +18,7 @@ interface Album {
 
 interface Props {
   initialApiUrl: string;
+  hasConfiguredCredentials: boolean;
   setupToken: string;
 }
 
@@ -29,7 +30,17 @@ const THEME_OPTIONS = PRESET_REGISTRY.map((p) => ({
   description: p.tagline,
 }));
 
-export function InstallWizard({ initialApiUrl, setupToken }: Props) {
+function normalizedServerUrl(value: string): string {
+  try {
+    const url = new URL(value.trim());
+    const normalized = url.toString().replace(/\/+$/, '');
+    return normalized.endsWith('/api') ? normalized.slice(0, -4) : normalized;
+  } catch {
+    return value.trim().replace(/\/+$/, '');
+  }
+}
+
+export function InstallWizard({ initialApiUrl, hasConfiguredCredentials, setupToken }: Props) {
   const [step, setStep] = useState(0);
 
   // Step 1 — connection
@@ -59,6 +70,9 @@ export function InstallWizard({ initialApiUrl, setupToken }: Props) {
   const [galleryKept, setGalleryKept] = useState(false);
 
   const selectedCount = Object.values(selected).filter(Boolean).length;
+  const canReuseConfiguredCredentials =
+    hasConfiguredCredentials &&
+    (!apiUrl.trim() || normalizedServerUrl(apiUrl) === normalizedServerUrl(initialApiUrl));
 
   const filteredAlbums = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -233,16 +247,35 @@ export function InstallWizard({ initialApiUrl, setupToken }: Props) {
                     type="password"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Your Immich API key"
-                    required
+                    placeholder={
+                      canReuseConfiguredCredentials
+                        ? 'Optional — using server-configured credentials'
+                        : 'Your Immich API key'
+                    }
+                    required={!canReuseConfiguredCredentials}
                     disabled={testing}
                   />
                   <p className="admin-hint">
-                    Create one in Immich under Account Settings → API Keys. It needs album.read,
-                    asset.read and asset.view, plus asset.download if you want photo zoom or
-                    original downloads.
+                    {canReuseConfiguredCredentials ? (
+                      <>
+                        The configured API key is reused only for the configured Immich server.
+                        Enter a key if you use another URL.
+                      </>
+                    ) : (
+                      <>
+                        Create one in Immich under Account Settings → API Keys. It needs album.read,
+                        asset.read and asset.view, plus asset.download if you want photo zoom or
+                        original downloads.
+                      </>
+                    )}
                   </p>
                 </div>
+
+                <p className="admin-hint">
+                  {canReuseConfiguredCredentials
+                    ? 'Your server-configured Immich credentials will be used to continue.'
+                    : 'Enter both the Immich server URL and API key to enable the continue button.'}
+                </p>
 
                 {testError && <div className="admin-error">{testError}</div>}
 
@@ -250,7 +283,11 @@ export function InstallWizard({ initialApiUrl, setupToken }: Props) {
                   <button
                     type="submit"
                     className="admin-btn admin-btn-primary"
-                    disabled={testing || !apiUrl || !apiKey}
+                    disabled={
+                      testing ||
+                      !apiUrl.trim() ||
+                      (!canReuseConfiguredCredentials && !apiKey.trim())
+                    }
                   >
                     {testing ? 'Testing connection…' : 'Test connection & continue'}
                   </button>

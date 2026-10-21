@@ -184,6 +184,33 @@ export function getInstallCredentials(): InstallCredentials {
 }
 
 /**
+ * Use the credentials entered in the wizard, falling back to the values
+ * already configured on the server. API keys stay server-side when supplied
+ * through the environment or install file.
+ */
+export function resolveInstallConnection(
+  apiUrl: string,
+  apiKey: string,
+): {
+  apiUrl: string;
+  apiKey: string;
+} {
+  const configured = getInstallCredentials();
+  const requestedUrl = apiUrl.trim();
+  const configuredUrl = configured.apiUrl;
+  const canReuseConfiguredKey =
+    !!configured.apiKey &&
+    !!configuredUrl &&
+    (!requestedUrl ||
+      (normalizeApiBase(requestedUrl) !== null &&
+        normalizeApiBase(requestedUrl) === normalizeApiBase(configuredUrl)));
+  return {
+    apiUrl: requestedUrl || configuredUrl,
+    apiKey: apiKey.trim() || (canReuseConfiguredKey ? configured.apiKey : ''),
+  };
+}
+
+/**
  * Whether a first-run install is complete.
  *
  * Mirrors the `needsSetup` definition in getConfig(): a gallery.yaml exists AND
@@ -224,7 +251,8 @@ export function normalizeApiBase(raw: string): string | null {
 /** What the wizard collects on its final step. */
 export interface InstallInput {
   apiUrl: string;
-  apiKey: string;
+  /** Only the key explicitly submitted by the user; env-only keys stay out of install.json. */
+  apiKey?: string;
   siteTitle?: string;
   siteSubtitle?: string;
   theme?: string;
@@ -272,10 +300,12 @@ export async function completeInstall(input: InstallInput): Promise<CompleteInst
   // the ping and then every request after install went to
   // ".../api//api/albums" and 404ed (#634).
   const normalizedApiUrl = normalizeApiUrl(input.apiUrl.trim()) || input.apiUrl.trim();
+  const existingApiKey = readInstallFile().apiKey;
+  const persistedApiKey = input.apiKey?.trim() || existingApiKey;
 
   const data: InstallFileData = {
     apiUrl: normalizedApiUrl,
-    apiKey: input.apiKey.trim(),
+    ...(persistedApiKey ? { apiKey: persistedApiKey } : {}),
     authSecret: crypto.randomBytes(32).toString('hex'),
     // Hashed, not stored as typed: the API key and the site secret have to be
     // recoverable to be useful, but an admin password does not — and it is the

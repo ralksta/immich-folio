@@ -153,6 +153,52 @@ describe('getInstallCredentials', () => {
   });
 });
 
+describe('resolveInstallConnection', () => {
+  it('uses server-configured credentials when wizard fields are left blank', async () => {
+    const { resolveInstallConnection } = await loadInstall();
+    process.env.__T_INSTALL_URL = 'https://env-immich:2283/';
+    process.env.__T_INSTALL_KEY = 'env-key';
+
+    expect(resolveInstallConnection('', '')).toEqual({
+      apiUrl: 'https://env-immich:2283',
+      apiKey: 'env-key',
+    });
+  });
+
+  it('prefers credentials explicitly entered in the wizard', async () => {
+    const { resolveInstallConnection } = await loadInstall();
+    process.env.__T_INSTALL_URL = 'https://env-immich:2283';
+    process.env.__T_INSTALL_KEY = 'env-key';
+
+    expect(resolveInstallConnection('https://typed-immich:2283', 'typed-key')).toEqual({
+      apiUrl: 'https://typed-immich:2283',
+      apiKey: 'typed-key',
+    });
+  });
+
+  it('does not reuse the configured key when a different server URL is entered', async () => {
+    const { resolveInstallConnection } = await loadInstall();
+    process.env.__T_INSTALL_URL = 'https://env-immich:2283';
+    process.env.__T_INSTALL_KEY = 'env-key';
+
+    expect(resolveInstallConnection('https://other-immich:2283', '')).toEqual({
+      apiUrl: 'https://other-immich:2283',
+      apiKey: '',
+    });
+  });
+
+  it('reuses the configured key when the entered URL identifies the same server', async () => {
+    const { resolveInstallConnection } = await loadInstall();
+    process.env.__T_INSTALL_URL = 'https://env-immich:2283';
+    process.env.__T_INSTALL_KEY = 'env-key';
+
+    expect(resolveInstallConnection('https://env-immich:2283/api/', '')).toEqual({
+      apiUrl: 'https://env-immich:2283/api/',
+      apiKey: 'env-key',
+    });
+  });
+});
+
 describe('isInstalled', () => {
   it('is false while gallery.yaml is missing', async () => {
     const { isInstalled } = await loadInstall();
@@ -243,6 +289,18 @@ describe('completeInstall', () => {
 
     const gallery = fs.readFileSync(path.join(dir, 'gallery.yaml'), 'utf8');
     expect(gallery).toContain('albums: []');
+  });
+
+  it('does not persist an API key supplied only by the environment', async () => {
+    const { completeInstall, getInstallCredentials } = await loadInstall();
+    process.env.__T_INSTALL_URL = 'https://env-immich:2283';
+    process.env.__T_INSTALL_KEY = 'environment-only-key';
+
+    await completeInstall({ apiUrl: 'https://env-immich:2283' });
+
+    const creds = JSON.parse(fs.readFileSync(path.join(dir, 'install.json'), 'utf8'));
+    expect(creds.apiKey).toBeUndefined();
+    expect(getInstallCredentials().apiKey).toBe('environment-only-key');
   });
 
   it('does not set an admin password when none is given', async () => {
