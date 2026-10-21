@@ -77,6 +77,11 @@ const SHARED_EVERYWHERE: string[] = [
   'diagnostics.vitals.immich',
   'settings.editor.sections.seo',
   'settings.general.favicon',
+  'system.backups.files.gallery',
+  'system.backups.files.settings',
+  'system.backups.files.about',
+  'system.backups.files.privacy',
+  'system.backups.tabLabel',
 ];
 
 const TRANSLATIONS: [string, AdminDictionary, string[]][] = [
@@ -111,6 +116,11 @@ const TRANSLATIONS: [string, AdminDictionary, string[]][] = [
       'diagnostics.vitals.backups',
       'diagnostics.vitals.version',
       'doctor.passwords.labelAlbum',
+      'visitors.proofing.create.clientPlaceholder',
+      'visitors.proofing.create.album',
+      'visitors.proofing.create.downloads',
+      'system.help.kicker',
+      'system.backups.tabs.journal',
     ],
   ],
   [
@@ -140,6 +150,12 @@ const TRANSLATIONS: [string, AdminDictionary, string[]][] = [
       'diagnostics.report.version',
       'diagnostics.vitals.version',
       'doctor.passwords.labelAlbum',
+      'visitors.messages.title',
+      'visitors.proofing.create.client',
+      'visitors.proofing.create.album',
+      'system.help.diagnostics',
+      'system.help.diagnosticsTab',
+      'system.backups.tabs.journal',
     ],
   ],
   [
@@ -159,6 +175,8 @@ const TRANSLATIONS: [string, AdminDictionary, string[]][] = [
       'settings.grid.aspectRatios.16/9.label',
       'diagnostics.levels.ok',
       'doctor.passwords.labelAlbum',
+      'visitors.proofing.create.album',
+      'system.backups.tabs.privacy',
     ],
   ],
   [
@@ -176,6 +194,12 @@ const TRANSLATIONS: [string, AdminDictionary, string[]][] = [
       'settings.footer.linkUrl',
       'diagnostics.levels.ok',
       'doctor.passwords.labelAlbum',
+      'visitors.proofing.states.open',
+      'visitors.proofing.create.album',
+      'visitors.proofing.create.downloads',
+      'system.help.title',
+      'system.backups.tabs.privacy',
+      'system.backups.tabs.journal',
     ],
   ],
 ];

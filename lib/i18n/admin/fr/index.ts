@@ -10,5 +10,15 @@ import { shell } from './shell';
 import { settings } from './settings';
 import { diagnostics } from './diagnostics';
 import { doctor } from './doctor';
+import { visitors } from './visitors';
+import { system } from './system';
 
-export const adminFr: AdminDictionary = { common, shell, settings, diagnostics, doctor };
+export const adminFr: AdminDictionary = {
+  common,
+  shell,
+  settings,
+  diagnostics,
+  doctor,
+  visitors,
+  system,
+};
