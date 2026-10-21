@@ -22,6 +22,7 @@ export interface Settings {
     caption?: boolean;
   };
   map?: boolean;
+  mapTiles?: { provider?: string; apiKey?: string };
   transitions?: boolean;
   scrollToTop?: boolean;
   analytics?: boolean;

@@ -201,6 +201,7 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
         title={frontmatter.title}
         subtitle={frontmatter.subtitle}
         watermark={config.watermark}
+        mapTiles={config.mapTiles}
       />
       <JournalNav {...nav} />
     </div>

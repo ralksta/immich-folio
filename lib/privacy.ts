@@ -12,6 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { AppConfig } from './config/schema';
+import { getMapTileLayerOptions } from './mapTiles';
 
 export const PRIVACY_FILENAME = 'privacy.md';
 
@@ -92,10 +93,10 @@ export function processingFacts(
   ];
 
   if (config.map) {
+    const mapProvider = getMapTileLayerOptions(config.mapTiles);
     facts.push({
       topic: 'Map',
-      detail:
-        'The map on /map and in journal entries loads its tiles from tile.openstreetmap.org (OpenStreetMap Foundation, UK). The visitor’s browser requests them, so their IP address reaches OSM.',
+      detail: `The map on /map and in journal entries loads its tiles from ${new URL(mapProvider.cspOrigin).host} (${mapProvider.privacyName}). The visitor’s browser requests them, so their IP address reaches ${mapProvider.privacyName}.`,
       thirdParty: true,
     });
   }

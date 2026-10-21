@@ -160,6 +160,39 @@ export default function GeneralSection({
             onToggle={() => update('zoom', !settings.zoom)}
           />
         </div>
+        <div className="admin-field">
+          <label htmlFor="general-map-provider">Map tile provider</label>
+          <select
+            id="general-map-provider"
+            value={settings.mapTiles?.provider || 'osm'}
+            onChange={(e) => update('mapTiles.provider', e.target.value)}
+          >
+            <option value="osm">OpenStreetMap</option>
+            <option value="carto-voyager">CARTO Voyager</option>
+            <option value="carto-dark-matter">CARTO Dark Matter</option>
+          </select>
+          <p className="admin-field-hint">
+            Used by the public map and journal map blocks. CARTO providers require an API key;
+            configure it here or with <code>CARTO_API_KEY</code>.
+          </p>
+        </div>
+        {settings.mapTiles?.provider?.startsWith('carto-') && (
+          <div className="admin-field">
+            <label htmlFor="general-map-api-key">CARTO API key</label>
+            <input
+              id="general-map-api-key"
+              type="password"
+              autoComplete="new-password"
+              value={settings.mapTiles.apiKey || ''}
+              onChange={(e) => update('mapTiles.apiKey', e.target.value)}
+              placeholder="Optional when CARTO_API_KEY is set"
+            />
+            <p className="admin-field-hint">
+              The key is sent to visitors’ browsers in tile requests. Restrict it to your site in
+              your CARTO account. The environment variable takes precedence over this value.
+            </p>
+          </div>
+        )}
         {/* Shown even while proofing is off globally: a subpage can switch it
             on for itself (`proofing: true`), so the address still has to be
             settable from here. */}

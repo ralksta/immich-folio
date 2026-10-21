@@ -36,6 +36,7 @@ import {
 import { isValidSlug } from '../journal';
 import { getDictionary, resolveLocale } from '../i18n';
 import type { NavEntry } from '../pages';
+import { resolveMapTiles } from '../mapTiles';
 
 export * from './schema';
 export * from './theme';
@@ -771,6 +772,7 @@ function deriveConfig(): AppConfig {
       contact: { enabled: false, retentionDays: CONTACT_RETENTION_DEFAULT },
       privacy: { enabled: false },
       map: false,
+      mapTiles: resolveMapTiles(undefined, env.CARTO_API_KEY),
       transitions: false,
       scrollToTop: false,
       analytics: true,
@@ -887,6 +889,7 @@ function deriveConfig(): AppConfig {
     contact: resolveContact(settings.contact, env.CONTACT_NOTIFY_URL),
     privacy: { enabled: settings.privacy?.enabled !== false },
     map: settings.map === true,
+    mapTiles: resolveMapTiles(settings.mapTiles, env.CARTO_API_KEY),
     transitions: settings.transitions !== false,
     scrollToTop: settings.scrollToTop !== false,
     analytics: settings.analytics !== false,

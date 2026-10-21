@@ -15,6 +15,7 @@ import { useEffect, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { useDictionary } from './I18nProvider';
 import { escapeHtml } from '@/lib/escapeHtml';
+import { getMapTileLayerOptions, type MapTilesConfig } from '@/lib/mapTiles';
 
 export interface LeafletMarker {
   lat: number;
@@ -37,6 +38,7 @@ interface LeafletMapProps {
   className?: string;
   /** Cap the zoom fitBounds may pick — a single pin otherwise zooms to the rooftop. */
   fitMaxZoom?: number;
+  tileConfig?: MapTilesConfig;
   onReady?: () => void;
   onError?: (err: unknown) => void;
 }
@@ -56,6 +58,7 @@ export function LeafletMap({
   line = false,
   className = 'map-container',
   fitMaxZoom,
+  tileConfig,
   onReady,
   onError,
 }: LeafletMapProps) {
@@ -66,6 +69,8 @@ export function LeafletMap({
   const t = useDictionary();
   const labelsRef = useRef(t.map);
   labelsRef.current = t.map;
+  const tileProvider = tileConfig?.provider ?? 'osm';
+  const tileOptions = getMapTileLayerOptions(tileConfig);
 
   // Callers rebuild the markers array on every render; the map is only
   // rebuilt when its content changes.
@@ -96,14 +101,10 @@ export function LeafletMap({
         map.attributionControl.setPrefix(localizedLeafletPrefix(prefix, labels.leafletTitle));
       }
 
-      // OpenStreetMap's own tiles: free to use with attribution and a Referer,
-      // which the Referrer-Policy sends. CARTO's Dark Matter, used before,
-      // started answering every tile with "API KEY REQUIRED". The dark look
-      // comes from a filter in app/leaflet.css, so it follows the colour mode.
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19,
+      L.tileLayer(tileOptions.url, {
+        attribution: tileOptions.attribution,
+        maxZoom: tileOptions.maxZoom,
+        detectRetina: tileOptions.detectRetina,
       }).addTo(map);
 
       const current = markersRef.current;
@@ -164,7 +165,24 @@ export function LeafletMap({
         mapRef.current = null;
       }
     };
-  }, [markersKey, line, fitMaxZoom]);
+  }, [
+    markersKey,
+    line,
+    fitMaxZoom,
+    tileProvider,
+    tileOptions.url,
+    tileOptions.attribution,
+    tileOptions.maxZoom,
+    tileOptions.detectRetina,
+    tileOptions.filterTiles,
+  ]);
 
-  return <div ref={containerRef} className={className} />;
+  return (
+    <div
+      ref={containerRef}
+      className={className}
+      data-map-tile-provider={tileProvider}
+      data-map-filter-tiles={tileOptions.filterTiles ? 'true' : 'false'}
+    />
+  );
 }

@@ -7,11 +7,13 @@ import { expandAlbumBlocks, type AlbumAssetRef } from '@/lib/journalAlbum';
 import { EssayView } from '@/app/[...path]/EssayView';
 import type { PhotoItem } from '@/app/[...path]/PhotoGrid';
 import { IconEye } from '../Icons';
+import type { MapTilesConfig } from '@/lib/mapTiles';
 
 interface JournalPreviewProps {
   parsed: ParsedJournal;
   /** Assets of the albums referenced by album blocks, as loaded so far. */
   albumAssets: Record<string, AlbumAssetRef[]>;
+  mapTiles?: MapTilesConfig;
 }
 
 /**
@@ -20,7 +22,7 @@ interface JournalPreviewProps {
  * the way the page expands them, and photo proportions are measured from the
  * admin thumbnails.
  */
-export function JournalPreview({ parsed, albumAssets }: JournalPreviewProps) {
+export function JournalPreview({ parsed, albumAssets, mapTiles }: JournalPreviewProps) {
   const [viewport, setViewport] = useState<'desktop' | 'mobile'>('desktop');
 
   /** Real width/height ratios of the referenced photos, measured from thumbnails. */
@@ -123,6 +125,7 @@ export function JournalPreview({ parsed, albumAssets }: JournalPreviewProps) {
           assets={previewAssets}
           title={parsed.frontmatter.title}
           subtitle={parsed.frontmatter.subtitle}
+          mapTiles={mapTiles}
         />
       </div>
     </div>

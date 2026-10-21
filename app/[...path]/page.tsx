@@ -593,6 +593,7 @@ async function PathContent({ params, searchParams }: PathPageProps) {
           proofing={essayProofing}
           allowMailto={config.proofing.allowMailto}
           encodedMailto={encodedMailto}
+          mapTiles={config.mapTiles}
         />
       );
     }

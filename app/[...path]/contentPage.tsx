@@ -91,6 +91,7 @@ export async function renderContentPage(
   const access = await accessFor(page);
   if (access === 'draft') return 'not-found';
   const { frontmatter, blocks } = page.parsed;
+  const config = getConfig();
   if (access === 'locked') {
     return <PasswordGate slug={slug} title={frontmatter.title || slug} type="page" />;
   }
@@ -111,7 +112,8 @@ export async function renderContentPage(
         essay={{ ...essay, frontmatter: { title: frontmatter.title } }}
         assets={images}
         title={frontmatter.title}
-        watermark={getConfig().watermark}
+        watermark={config.watermark}
+        mapTiles={config.mapTiles}
       />
     </div>
   );

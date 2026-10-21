@@ -5,14 +5,13 @@
 
 /* ── Tiles ─────────────────────────────────────────────────── */
 
-/* OpenStreetMap's tiles are bright and colourful. Photographs should carry
-   the colour, so the map is muted in both modes, and inverted into a dark
-   map in dark mode (the default; light mode sets data-theme='light'). */
-.leaflet-tile-pane {
+/* Only providers marked for filtering in lib/mapTiles.ts use this muted
+   treatment. CARTO's dark tiles already have their own dark palette. */
+[data-map-filter-tiles='true'] .leaflet-tile-pane {
   filter: invert(1) hue-rotate(180deg) grayscale(0.85) brightness(0.9) contrast(0.9);
 }
 
-[data-theme='light'] .leaflet-tile-pane {
+[data-theme='light'] [data-map-filter-tiles='true'] .leaflet-tile-pane {
   filter: grayscale(0.85) contrast(0.95);
 }
 

@@ -32,6 +32,7 @@ describe('parseMarkdownBlocks', () => {
 const config = (over: Partial<AppConfig> = {}) =>
   ({
     map: false,
+    mapTiles: { provider: 'osm' },
     analytics: false,
     contact: { enabled: false, retentionDays: 90 },
     proofing: { enabled: false },
@@ -66,6 +67,17 @@ describe('processingFacts', () => {
     expect(contact.detail).toContain('ntfy.sh');
     expect(contact.detail).not.toContain('secret');
     expect(facts.some((f) => f.topic === 'Cookies')).toBe(true);
+  });
+
+  it('names the configured map tile provider in the privacy facts', () => {
+    const map = processingFacts(
+      config({ map: true, mapTiles: { provider: 'carto-dark-matter' } }),
+      { hasPasswords: false, hasProofingLinks: false },
+    ).find((fact) => fact.topic === 'Map')!;
+
+    expect(map.detail).toContain('basemaps.cartocdn.com');
+    expect(map.detail).toContain('CARTO');
+    expect(map.detail).not.toContain('OpenStreetMap Foundation');
   });
 
   it('keeps anonymous favourites in the browser, also when only a subpage turns them on', () => {

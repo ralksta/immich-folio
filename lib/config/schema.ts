@@ -1,6 +1,7 @@
 import type { AlbumSortMode } from '../albumSort';
 import type { LocationPrecision } from '../mapPrecision';
 import type { NavEntry } from '../pages';
+import type { MapTilesConfig, MapTilesSettings } from '../mapTiles';
 
 export interface SubpageSectionConfig {
   title: string;
@@ -272,6 +273,7 @@ export interface AppConfig {
   /** /privacy, shown while this is on and content/privacy.md has text (#699). */
   privacy: { enabled: boolean };
   map: boolean;
+  mapTiles: MapTilesConfig;
   transitions: boolean;
   /** Floating back-to-top arrow in the frontend. */
   scrollToTop: boolean;
@@ -498,6 +500,7 @@ export interface SettingsYaml {
   exifOnHover?: boolean;
   exif?: ExifDisplayYaml;
   map?: boolean;
+  mapTiles?: MapTilesSettings;
   transitions?: boolean;
   scrollToTop?: boolean;
   analytics?: boolean;
