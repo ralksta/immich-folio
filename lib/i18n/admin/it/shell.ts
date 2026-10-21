@@ -150,6 +150,18 @@ export const shell: AdminDictionary['shell'] = {
     keepEditing: 'Continua a modificare',
   },
 
+  fetch: {
+    loadFailed: (status: number, detail: string) =>
+      detail
+        ? `Impossibile caricare (HTTP ${status}): ${detail}.`
+        : `Impossibile caricare (HTTP ${status}).`,
+    unreachable: 'Impossibile raggiungere il server.',
+  },
+
+  notifications: {
+    dismiss: 'Chiudi',
+  },
+
   saveBar: {
     unsaved: 'Modifiche non salvate',
     preview: '↗ Anteprima del sito',

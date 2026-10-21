@@ -141,6 +141,16 @@ export const shell: AdminDictionary['shell'] = {
     keepEditing: 'Verder bewerken',
   },
 
+  fetch: {
+    loadFailed: (status: number, detail: string) =>
+      detail ? `Laden mislukt (HTTP ${status}): ${detail}.` : `Laden mislukt (HTTP ${status}).`,
+    unreachable: 'De server is niet bereikbaar.',
+  },
+
+  notifications: {
+    dismiss: 'Sluiten',
+  },
+
   saveBar: {
     unsaved: 'Niet-opgeslagen wijzigingen',
     preview: '↗ Site bekijken',

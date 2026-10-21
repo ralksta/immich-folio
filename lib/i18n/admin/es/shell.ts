@@ -158,6 +158,18 @@ export const shell: AdminDictionary['shell'] = {
     keepEditing: 'Seguir editando',
   },
 
+  fetch: {
+    loadFailed: (status: number, detail: string) =>
+      detail
+        ? `No se pudo cargar (HTTP ${status}): ${detail}.`
+        : `No se pudo cargar (HTTP ${status}).`,
+    unreachable: 'No se pudo conectar con el servidor.',
+  },
+
+  notifications: {
+    dismiss: 'Descartar',
+  },
+
   saveBar: {
     unsaved: 'Cambios sin guardar',
     preview: '↗ Previsualizar el sitio',

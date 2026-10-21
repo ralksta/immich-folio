@@ -158,6 +158,18 @@ export const shell: AdminDictionary['shell'] = {
     keepEditing: 'Weiter bearbeiten',
   },
 
+  fetch: {
+    loadFailed: (status: number, detail: string) =>
+      detail
+        ? `Laden fehlgeschlagen (HTTP ${status}): ${detail}.`
+        : `Laden fehlgeschlagen (HTTP ${status}).`,
+    unreachable: 'Der Server ist nicht erreichbar.',
+  },
+
+  notifications: {
+    dismiss: 'Schließen',
+  },
+
   saveBar: {
     unsaved: 'Ungespeicherte Änderungen',
     preview: '↗ Vorschau',

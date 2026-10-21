@@ -157,6 +157,18 @@ export const shell = {
     keepEditing: 'Keep editing',
   },
 
+  /** Errors of an admin screen's load; `detail` is the server's own message, or empty. */
+  fetch: {
+    loadFailed: (status: number, detail: string) =>
+      detail ? `Could not load (HTTP ${status}): ${detail}.` : `Could not load (HTTP ${status}).`,
+    unreachable: 'Could not reach the server.',
+  },
+
+  /** The close button on a notification toast. */
+  notifications: {
+    dismiss: 'Dismiss',
+  },
+
   saveBar: {
     unsaved: 'Unsaved changes',
     preview: '↗ Preview Site',

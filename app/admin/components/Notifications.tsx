@@ -13,6 +13,7 @@
 
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
 import { IconX } from './Icons';
+import { useAdminDictionary } from './AdminI18n';
 
 export type NotificationKind = 'success' | 'error';
 
@@ -45,6 +46,7 @@ const SUCCESS_MS = 4000;
 const ACTION_MS = 8000;
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
+  const t = useAdminDictionary().shell.notifications;
   const [items, setItems] = useState<Notification[]>([]);
   const nextId = useRef(1);
 
@@ -84,7 +86,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             type="button"
             className="admin-notification__close"
             onClick={() => dismiss(n.id)}
-            aria-label="Dismiss"
+            aria-label={t.dismiss}
           >
             <IconX size={14} />
           </button>

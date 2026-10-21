@@ -14,24 +14,33 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { reportIfSessionExpired } from './sessionExpiry';
+import { useAdminDictionary } from './AdminI18n';
+import type { AdminDictionary } from '@/lib/i18n/admin';
+import { adminEn } from '@/lib/i18n/admin/en';
 
 export type AdminResult<T> = { data: T; error: null } | { data: null; error: string };
 
-/** One GET, with the admin's error conventions. Usable outside the hook too. */
-export async function adminGet<T>(url: string): Promise<AdminResult<T>> {
+/**
+ * One GET, with the admin's error conventions. Usable outside the hook too;
+ * `t` words the errors, English unless a caller passes the panel's.
+ */
+export async function adminGet<T>(
+  url: string,
+  t: AdminDictionary['shell'] = adminEn.shell,
+): Promise<AdminResult<T>> {
   try {
     const res = await fetch(url);
     if (!res.ok) {
       if (reportIfSessionExpired(res)) {
-        return { data: null, error: 'Your session expired. Sign in again.' };
+        return { data: null, error: t.gate.sessionExpired };
       }
       const body = (await res.json().catch(() => null)) as { error?: unknown } | null;
-      const detail = typeof body?.error === 'string' ? `: ${body.error}` : '';
-      return { data: null, error: `Could not load (HTTP ${res.status})${detail}.` };
+      const detail = typeof body?.error === 'string' ? body.error : '';
+      return { data: null, error: t.fetch.loadFailed(res.status, detail) };
     }
     return { data: (await res.json()) as T, error: null };
   } catch {
-    return { data: null, error: 'Could not reach the server.' };
+    return { data: null, error: t.fetch.unreachable };
   }
 }
 
@@ -51,6 +60,7 @@ export interface AdminFetch<T> {
  * answer stays visible while a reload runs.
  */
 export function useAdminFetch<T>(url: string | null): AdminFetch<T> {
+  const t = useAdminDictionary().shell;
   const [attempt, setAttempt] = useState(0);
   const key = url === null ? null : `${attempt}:${url}`;
   const [result, setResult] = useState<(AdminResult<T> & { key: string }) | null>(null);
@@ -59,13 +69,13 @@ export function useAdminFetch<T>(url: string | null): AdminFetch<T> {
     if (key === null || url === null) return;
     let live = true;
     // State is set in the callback, never synchronously in the effect.
-    adminGet<T>(url).then((r) => {
+    adminGet<T>(url, t).then((r) => {
       if (live) setResult({ ...r, key });
     });
     return () => {
       live = false;
     };
-  }, [key, url]);
+  }, [key, url, t]);
 
   const loading = key !== null && result?.key !== key;
   const reload = useCallback(() => setAttempt((n) => n + 1), []);
