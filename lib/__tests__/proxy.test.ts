@@ -78,6 +78,18 @@ describe('proxy', () => {
     expect(csp).toContain("frame-ancestors 'none'");
   });
 
+  it('allows only the configured map tile origin in img-src', () => {
+    mockConfig.mockReturnValue({ mapTiles: { provider: 'carto-voyager' } });
+    const imgSrc = run('/story')
+      .headers.get('Content-Security-Policy')!
+      .split(';')
+      .map((directive) => directive.trim())
+      .find((directive) => directive.startsWith('img-src '))!;
+
+    expect(imgSrc).toContain('https://basemaps.cartocdn.com');
+    expect(imgSrc).not.toContain('tile.openstreetmap.org');
+  });
+
   it('issues a per-request nonce and passes it to pages via x-nonce', () => {
     const response = run();
     const nonce = response.headers.get('x-middleware-request-x-nonce');

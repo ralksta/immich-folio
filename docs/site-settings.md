@@ -114,6 +114,8 @@ exif: # which groups may be shown at all
   location: true # city and country
   caption: true # the description written in Immich
 map: true # the interactive world map at /map
+mapTiles: # optional runtime tile provider; defaults to OpenStreetMap
+  provider: osm # osm | carto-voyager | carto-dark-matter
 transitions: true # smooth page transitions between routes
 scrollToTop: true # floating back-to-top arrow on long pages
 analytics: true # cookieless view counts, see below
@@ -135,6 +137,12 @@ about:
 | `analytics`     | on      |                                                          |
 | `zoom`          | **off** | Opt-in, see [Photo Zoom](gallery-features.md#photo-zoom) |
 | `about.enabled` | on      | Needs a `content/about.md` to show anything              |
+
+When using a CARTO provider, set its API key under `mapTiles.apiKey` or with the
+runtime environment variable `CARTO_API_KEY` (which takes precedence). The
+browser sends the key with tile requests, so restrict it to your site's domain
+in your CARTO account. The provider setting applies to `/map` and journal map
+blocks; OpenStreetMap remains the default and needs no key.
 
 ### Colour mode
 

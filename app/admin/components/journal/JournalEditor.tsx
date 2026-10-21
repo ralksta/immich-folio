@@ -41,10 +41,12 @@ import { JournalPreview } from './JournalPreview';
 import { createBlock, createPhotoBlocks, moveBlock } from './blockOps';
 import { useSplitPane, SPLIT_MIN, SPLIT_MAX } from './splitPane';
 import { useNotify } from '../Notifications';
+import type { MapTilesConfig } from '@/lib/mapTiles';
 
 interface JournalEditorProps {
   slug: string;
   mapEnabled?: boolean;
+  mapTiles?: MapTilesConfig;
   onBack: () => void;
   /**
    * `page` edits a content page (#722) instead of a journal entry: its own
@@ -54,7 +56,13 @@ interface JournalEditorProps {
   kind?: 'journal' | 'page';
 }
 
-export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: JournalEditorProps) {
+export function JournalEditor({
+  slug,
+  mapEnabled,
+  mapTiles,
+  onBack,
+  kind = 'journal',
+}: JournalEditorProps) {
   const isPage = kind === 'page';
   const apiUrl = isPage ? `/api/admin/pages/${slug}` : `/api/admin/journal/${slug}`;
   const liveUrl = isPage ? `/${slug}` : `/journal/${slug}`;
@@ -672,7 +680,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
         </div>
 
         {/* Right: Live Preview Pane */}
-        <JournalPreview parsed={parsed} albumAssets={albumAssets} />
+        <JournalPreview parsed={parsed} albumAssets={albumAssets} mapTiles={mapTiles} />
       </div>
 
       {/* Page settings: a side panel, so editing never means going back (#722). */}

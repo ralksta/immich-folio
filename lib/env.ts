@@ -29,6 +29,8 @@ export interface Env {
    * rewritten onto it; see lib/cdn.ts.
    */
   CDN_URL?: string;
+  /** Optional CARTO tile key. Runtime-only; it is not exposed as NEXT_PUBLIC. */
+  CARTO_API_KEY?: string;
 }
 
 /**
@@ -175,6 +177,7 @@ function parseEnv(): Env {
     UPDATE_CHECK: process.env.UPDATE_CHECK !== 'false',
     SITE_URL: process.env.SITE_URL || undefined,
     CDN_URL: cdnUrl || undefined,
+    CARTO_API_KEY: process.env.CARTO_API_KEY?.trim() || undefined,
   };
 }
 

@@ -38,6 +38,11 @@ describe('validateSettings — accepts what works today', () => {
     expect(ok({ theme: { preset: 'minimal', accent: '#c0ffee', radius: 4 } })).toBe(true);
   });
 
+  it('accepts supported runtime map tile providers and their optional key', () => {
+    expect(ok({ mapTiles: { provider: 'carto-voyager', apiKey: 'key-from-account' } })).toBe(true);
+    expect(ok({ mapTiles: { provider: 'unknown-provider' } })).toBe(false);
+  });
+
   it('accepts a watermark opacity written as a percentage', () => {
     // The #508 workaround: values above 1 are read as percentages. A validator
     // that insisted on 0–1 would reject configurations that render correctly.

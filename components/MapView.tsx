@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDictionary } from './I18nProvider';
 import { LeafletMap, escapeHtml, type LeafletMarker } from './LeafletMap';
+import type { MapTilesConfig } from '@/lib/mapTiles';
 
 interface MapLocationPublic {
   city: string;
@@ -19,7 +20,7 @@ interface MapLocationPublic {
   albums: { name: string; url: string }[];
 }
 
-export function MapView() {
+export function MapView({ tileConfig }: { tileConfig?: MapTilesConfig }) {
   const t = useDictionary();
   const [locations, setLocations] = useState<MapLocationPublic[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -159,6 +160,7 @@ export function MapView() {
       {locations ? (
         <LeafletMap
           markers={markers}
+          tileConfig={tileConfig}
           onReady={() => setLoading(false)}
           onError={() => {
             setError(t.map.initFailed);

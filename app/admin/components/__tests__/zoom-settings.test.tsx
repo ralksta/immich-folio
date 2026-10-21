@@ -34,6 +34,32 @@ describe('Settings › General › Photo zoom', () => {
   });
 });
 
+describe('Settings › General › Map tile provider', () => {
+  it('selects a runtime provider and shows its optional key field', () => {
+    const update = vi.fn();
+    render(<GeneralSection settings={{}} update={update} updateMany={vi.fn()} />);
+
+    const provider = screen.getByLabelText('Map tile provider') as HTMLSelectElement;
+    expect(provider.value).toBe('osm');
+    fireEvent.change(provider, { target: { value: 'carto-dark-matter' } });
+    expect(update).toHaveBeenCalledWith('mapTiles.provider', 'carto-dark-matter');
+
+    cleanup();
+    render(
+      <GeneralSection
+        settings={{ mapTiles: { provider: 'carto-voyager' } }}
+        update={update}
+        updateMany={vi.fn()}
+      />,
+    );
+    expect(screen.getByLabelText('CARTO API key').getAttribute('type')).toBe('password');
+    fireEvent.change(screen.getByLabelText('CARTO API key'), {
+      target: { value: 'test-key' },
+    });
+    expect(update).toHaveBeenLastCalledWith('mapTiles.apiKey', 'test-key');
+  });
+});
+
 describe('ZoomOverrideField', () => {
   const renderField = (value: boolean | undefined) => {
     const onChange = vi.fn();

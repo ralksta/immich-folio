@@ -42,6 +42,7 @@
  */
 
 import { z } from 'zod';
+import { MAP_TILE_PROVIDER_IDS } from '../mapTiles';
 
 const str = z.string().optional();
 const bool = z.boolean().optional();
@@ -85,6 +86,12 @@ export const settingsSchema = z.looseObject({
     .optional(),
 
   map: bool,
+  mapTiles: z
+    .looseObject({
+      provider: z.enum(MAP_TILE_PROVIDER_IDS),
+      apiKey: str,
+    })
+    .optional(),
   transitions: bool,
   scrollToTop: bool,
   analytics: bool,

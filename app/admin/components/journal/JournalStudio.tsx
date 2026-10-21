@@ -23,15 +23,17 @@ import AdminLoadState from '../AdminLoadState';
 import PageHeader from '../PageHeader';
 import { useConfirm } from '../ConfirmDialog';
 import { useModalDialog } from '@/hooks/useModalDialog';
+import type { MapTilesConfig } from '@/lib/mapTiles';
 
 interface JournalStudioProps {
   /** Entry to open, taken from the /admin/journal/[slug] route. */
   slug?: string;
   /** `config.map`, passed by the server route: a map block renders only when the site has a map. */
   mapEnabled?: boolean;
+  mapTiles?: MapTilesConfig;
 }
 
-export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioProps) {
+export function JournalStudio({ slug: activeSlug, mapEnabled, mapTiles }: JournalStudioProps) {
   const confirm = useConfirm();
   const notify = useNotify();
   const router = useRouter();
@@ -140,6 +142,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
       <JournalEditor
         slug={activeSlug}
         mapEnabled={mapEnabled}
+        mapTiles={mapTiles}
         onBack={() => router.push('/admin/journal')}
       />
     );
