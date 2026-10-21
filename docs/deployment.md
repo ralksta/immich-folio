@@ -55,10 +55,12 @@ The token is stored in `content/.setup-token` (mode `0600`) so it survives a
 restart, and is deleted once setup completes. From then on `/install` redirects
 to the gallery and its API routes refuse to run again.
 
-The wizard writes `gallery.yaml`, `settings.yaml` and `content/install.json` —
-the last of which **holds your Immich API key**. Environment variables override
-everything in it, so credentials can be rotated without touching the file, and
-setting them all up front means the wizard never appears at all.
+The wizard writes `gallery.yaml`, `settings.yaml` and `content/install.json`.
+When you enter an API key in the wizard, it is stored in `install.json`;
+environment-only keys are not copied there. If the server already has Immich
+credentials configured, the wizard can reuse them for that same server without
+showing the key in the browser. Changing the server URL requires entering a key
+for that server.
 
 The next section lists what the wizard writes, and environment variables take precedence over it.
 
@@ -66,18 +68,18 @@ The next section lists what the wizard writes, and environment variables take pr
 
 The wizard at `/install` writes three files into `content/`:
 
-| File                    | Contents                                                             |
-| ----------------------- | -------------------------------------------------------------------- |
-| `content/gallery.yaml`  | The albums you picked                                                |
-| `content/settings.yaml` | Site title, subtitle, theme — only if it does not exist yet          |
-| `content/install.json`  | Immich URL and API key, a generated site secret, admin password hash |
+| File                    | Contents                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------ |
+| `content/gallery.yaml`  | The albums you picked                                                                            |
+| `content/settings.yaml` | Site title, subtitle, theme — only if it does not exist yet                                      |
+| `content/install.json`  | Immich URL, a wizard-entered API key when supplied, a generated site secret, admin password hash |
 
 > [!IMPORTANT]
-> **`content/install.json` holds credentials.** It is written with mode `0600`,
-> and it is the reason a backup of your `content/` directory is also a backup of
-> your Immich API key — treat it accordingly. The admin password is stored as an
-> scrypt hash, not as you typed it; the API key and site secret have to stay
-> readable to be usable.
+> **`content/install.json` may hold credentials.** It is written with mode
+> `0600`; if you entered an API key in the wizard, a backup of `content/` also
+> contains that key. An API key supplied only through the environment remains
+> in the environment and is not copied into the file. The admin password is
+> stored as an scrypt hash, not as you typed it.
 
 Nothing is written until your credentials have been verified against your Immich
 server, so a typo cannot leave you with an "installed" site that loads no photos.
