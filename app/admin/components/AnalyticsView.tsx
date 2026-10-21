@@ -5,6 +5,7 @@ import { useAdminFetch } from './useAdminFetch';
 import AdminLoadState from './AdminLoadState';
 import PageHeader from './PageHeader';
 import { lastDays } from './analyticsDays';
+import { rich, useAdminDictionary } from './AdminI18n';
 
 interface AnalyticsData {
   trackingEnabled?: boolean;
@@ -25,6 +26,8 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsView() {
+  const v = useAdminDictionary().visitors;
+  const t = v.analytics;
   const analytics = useAdminFetch<AnalyticsData>('/api/admin/analytics');
   const data = analytics.data;
 
@@ -53,12 +56,12 @@ export default function AnalyticsView() {
   return (
     <div className="analytics-view">
       <PageHeader
-        kicker="Visitors"
-        title="Analytics"
-        description="Cookieless page counts, kept on this server. No personal data is collected."
+        kicker={v.kicker}
+        title={t.title}
+        description={t.description}
         actions={
           <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={analytics.reload}>
-            <Icons.IconRefresh size={14} /> Refresh
+            <Icons.IconRefresh size={14} /> {v.refresh}
           </button>
         }
       />
@@ -70,9 +73,10 @@ export default function AnalyticsView() {
         >
           <Icons.IconLock size={16} />
           <span>
-            <strong>Analytics Tracking is Currently Disabled.</strong> No new visitor views are
-            being recorded. You can re-enable tracking anytime under{' '}
-            <em>Settings &rarr; General</em>.
+            {rich(t.disabled, {
+              title: <strong>{t.disabledTitle}</strong>,
+              where: <em>{t.disabledWhere}</em>,
+            })}
           </span>
         </div>
       )}
@@ -80,21 +84,21 @@ export default function AnalyticsView() {
       {/* Top Metric Cards */}
       <div className="analytics-metrics-grid">
         <div className="metric-card">
-          <span className="metric-label">Total Page Views</span>
+          <span className="metric-label">{t.totalViews}</span>
           <span className="metric-value">{totalViews.toLocaleString()}</span>
-          <span className="metric-sub">Lifetime aggregate</span>
+          <span className="metric-sub">{t.lifetime}</span>
         </div>
         <div className="metric-card">
-          <span className="metric-label">Active Days Tracked</span>
+          <span className="metric-label">{t.activeDays}</span>
           <span className="metric-value">{Object.keys(data.days || {}).length}</span>
-          <span className="metric-sub">Days recorded</span>
+          <span className="metric-sub">{t.daysRecorded}</span>
         </div>
         <div className="metric-card">
-          <span className="metric-label">Desktop vs Mobile</span>
+          <span className="metric-label">{t.devices}</span>
           <span className="metric-value">
             {desktopRatio}% / {100 - desktopRatio}%
           </span>
-          <span className="metric-sub">Device distribution</span>
+          <span className="metric-sub">{t.deviceSplit}</span>
         </div>
       </div>
 
@@ -102,13 +106,11 @@ export default function AnalyticsView() {
       <div className="analytics-panel">
         <div className="analytics-section-title">
           <h3>
-            <Icons.IconGrid size={16} /> Daily Traffic Trend (Last 14 Days)
+            <Icons.IconGrid size={16} /> {t.dailyTrend}
           </h3>
         </div>
         {!hasDays ? (
-          <p className="analytics-empty">
-            No pageviews recorded yet. Visit portfolio pages to start tracking!
-          </p>
+          <p className="analytics-empty">{t.noViews}</p>
         ) : (
           <div className="analytics-bar-chart">
             {daysList.map(({ date, pageviews }) => {
@@ -116,7 +118,7 @@ export default function AnalyticsView() {
               const month = date.slice(5, 8); // "MM-"
               const day = date.slice(8); // "DD"
               return (
-                <div key={date} className="bar-col" title={`${date}: ${pageviews} views`}>
+                <div key={date} className="bar-col" title={t.dayViews(date, pageviews)}>
                   <div className="bar-wrapper">
                     {/* A day with views keeps a sliver of bar; an empty one has none. */}
                     <div
@@ -142,11 +144,11 @@ export default function AnalyticsView() {
       <div className="analytics-panel">
         <div className="analytics-section-title">
           <h3>
-            <Icons.IconTarget size={16} /> Top Visited Pages &amp; Subpages
+            <Icons.IconTarget size={16} /> {t.topPages}
           </h3>
         </div>
         {data.topPages.length === 0 ? (
-          <p className="analytics-empty">No pages recorded yet.</p>
+          <p className="analytics-empty">{t.noPages}</p>
         ) : (
           <div className="analytics-top-pages">
             {data.topPages.map((p, idx) => {
@@ -157,7 +159,7 @@ export default function AnalyticsView() {
                   <div className="page-info">
                     <div className="page-path-line">
                       <span className="page-path">{p.path}</span>
-                      <span className="page-count">{p.count} views</span>
+                      <span className="page-count">{t.pageViews(p.count)}</span>
                     </div>
                     <div className="page-progress-bg">
                       <div className="page-progress-fill" style={{ width: `${widthPct}%` }} />

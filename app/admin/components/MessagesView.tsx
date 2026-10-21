@@ -16,6 +16,8 @@ import type { ContactMessage } from '@/lib/contact';
 import { useNotify } from './Notifications';
 import PageHeader from './PageHeader';
 import { useConfirm } from './ConfirmDialog';
+import { rich, useAdminDictionary } from './AdminI18n';
+import type { AdminDictionary } from '@/lib/i18n/admin';
 
 interface InboxData {
   enabled: boolean;
@@ -24,13 +26,13 @@ interface InboxData {
   messages: ContactMessage[];
 }
 
-function replyHref(m: ContactMessage): string {
-  const subject = encodeURIComponent('Re: your message');
+function replyHref(m: ContactMessage, t: AdminDictionary['visitors']['messages']): string {
+  const subject = encodeURIComponent(t.replySubject);
   const quoted = m.message
     .split('\n')
     .map((line) => `> ${line}`)
     .join('\n');
-  const body = encodeURIComponent(`\n\n${m.name} wrote:\n${quoted}`);
+  const body = encodeURIComponent(`\n\n${t.replyQuote(m.name)}\n${quoted}`);
   // Encoded so a ? or & in the address cannot start the query, with the @
   // put back: not every mail client decodes %40 in the address part.
   const to = encodeURIComponent(m.email).replace(/%40/g, '@');
@@ -38,6 +40,8 @@ function replyHref(m: ContactMessage): string {
 }
 
 export default function MessagesView() {
+  const v = useAdminDictionary().visitors;
+  const t = v.messages;
   const confirm = useConfirm();
   const notify = useNotify();
   const inbox = useAdminFetch<InboxData>('/api/admin/messages');
@@ -68,9 +72,9 @@ export default function MessagesView() {
 
   async function remove(m: ContactMessage) {
     const ok = await confirm({
-      title: `Delete the message from ${m.name}?`,
-      message: 'It is removed from this server and cannot be restored.',
-      confirmLabel: 'Delete',
+      title: t.deleteTitle(m.name),
+      message: t.deleteMessage,
+      confirmLabel: t.delete,
       danger: true,
     });
     if (!ok) return;
@@ -78,7 +82,7 @@ export default function MessagesView() {
       method: 'DELETE',
     });
     if (!res.ok) {
-      if (!reportIfSessionExpired(res)) notify('error', `Delete failed (HTTP ${res.status}).`);
+      if (!reportIfSessionExpired(res)) notify('error', t.deleteFailed(res.status));
       return;
     }
     inbox.mutate((d) => ({ ...d, messages: d.messages.filter((x) => x.id !== m.id) }));
@@ -100,36 +104,38 @@ export default function MessagesView() {
   return (
     <div className="messages-view">
       <PageHeader
-        kicker="Visitors"
+        kicker={v.kicker}
         title={
           <>
-            Messages
-            {unread > 0 && <span className="messages-count">{unread} unread</span>}
+            {t.title}
+            {unread > 0 && <span className="messages-count">{t.unread(unread)}</span>}
           </>
         }
-        description={`Sent through the contact form at /contact. Stored on this server and deleted after ${data.retentionDays} days.`}
+        description={t.description(data.retentionDays)}
         actions={
           <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={inbox.reload}>
-            <Icons.IconRefresh size={14} /> Refresh
+            <Icons.IconRefresh size={14} /> {v.refresh}
           </button>
         }
       />
 
       {!data.enabled && (
         <div className="messages-notice">
-          The contact form is switched off, so no new messages arrive.{' '}
-          <Link href="/admin/settings/legal">Turn it on in Settings → Legal</Link>.
+          {rich(t.formOff, {
+            link: <Link href="/admin/settings/legal">{t.formOffLink}</Link>,
+          })}
         </div>
       )}
       {data.enabled && !data.notifyConfigured && (
         <div className="messages-notice">
-          No notification is set up, so new messages only show up here.{' '}
-          <Link href="/admin/settings/legal">Add an ntfy URL in Settings → Legal</Link>.
+          {rich(t.noNotify, {
+            link: <Link href="/admin/settings/legal">{t.noNotifyLink}</Link>,
+          })}
         </div>
       )}
 
       {data.messages.length === 0 ? (
-        <div className="analytics-panel messages-empty">No messages.</div>
+        <div className="analytics-panel messages-empty">{t.empty}</div>
       ) : (
         <ul className="messages-list">
           {data.messages.map((m) => {
@@ -148,7 +154,7 @@ export default function MessagesView() {
                   <span className="messages-dot" aria-hidden="true" />
                   <span className="messages-from">
                     {m.name}
-                    {!m.read && <span className="sr-only"> (unread)</span>}
+                    {!m.read && <span className="sr-only">{t.unreadMarker}</span>}
                   </span>
                   <span className="messages-preview">{m.message.slice(0, 120)}</span>
                   <time className="messages-date" dateTime={m.receivedAt}>
@@ -162,22 +168,25 @@ export default function MessagesView() {
                     </p>
                     <p className="messages-text">{m.message}</p>
                     <div className="messages-actions">
-                      <a className="admin-btn admin-btn-primary admin-btn-sm" href={replyHref(m)}>
-                        Reply by email
+                      <a
+                        className="admin-btn admin-btn-primary admin-btn-sm"
+                        href={replyHref(m, t)}
+                      >
+                        {t.reply}
                       </a>
                       <button
                         type="button"
                         className="admin-btn admin-btn-ghost admin-btn-sm"
                         onClick={() => markRead(m, false)}
                       >
-                        Mark unread
+                        {t.markUnread}
                       </button>
                       <button
                         type="button"
                         className="admin-btn admin-btn-ghost admin-btn-sm"
                         onClick={() => remove(m)}
                       >
-                        <Icons.IconTrash size={14} /> Delete
+                        <Icons.IconTrash size={14} /> {t.delete}
                       </button>
                     </div>
                   </div>

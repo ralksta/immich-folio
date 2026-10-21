@@ -15,6 +15,7 @@ import { adminFr } from '../i18n/admin/fr';
 import { adminEs } from '../i18n/admin/es';
 import { adminIt } from '../i18n/admin/it';
 import { adminNl } from '../i18n/admin/nl';
+import { LIGHTBOX_SHORTCUTS } from '../lightboxShortcuts';
 
 describe('resolveAdminLocale', () => {
   it('uses adminLang when it is set', () => {
@@ -271,5 +272,17 @@ describe('admin plural forms', () => {
     for (const fn of counted(adminFr)) {
       expect(fn(0).replace('0', '1')).toBe(fn(1));
     }
+  });
+});
+
+describe('help page shortcut notes', () => {
+  // The catalogue in lib/lightboxShortcuts.ts documents when a key is absent;
+  // the help page shows that note in the panel's language. The English copy
+  // must not drift from the catalogue, and no conditional key may lose its note.
+  it('cover every shortcut that has a note, in the catalogue’s English', () => {
+    const notes = adminEn.system.help.notes as Record<string, string>;
+    const withNote = LIGHTBOX_SHORTCUTS.filter((s) => s.note);
+    expect(Object.keys(notes).sort()).toEqual(withNote.map((s) => s.labelKey).sort());
+    for (const shortcut of withNote) expect(notes[shortcut.labelKey]).toBe(shortcut.note);
   });
 });

@@ -7,6 +7,7 @@ import { useScrollLock } from './useScrollLock';
 import { useModalDialog } from '@/hooks/useModalDialog';
 import { reportContentRestored } from './contentRestored';
 import { useAdminFetch } from './useAdminFetch';
+import { rich, useAdminDictionary } from './AdminI18n';
 
 interface Props {
   isOpen: boolean;
@@ -14,14 +15,8 @@ interface Props {
   onRestoreSuccess: () => void;
 }
 
-const TABS: { target: BackupTarget; label: string; file: string }[] = [
-  { target: 'gallery', label: 'Gallery', file: 'gallery.yaml' },
-  { target: 'settings', label: 'Settings', file: 'settings.yaml' },
-  { target: 'about', label: 'About', file: 'about.md' },
-  { target: 'privacy', label: 'Privacy', file: 'privacy.md' },
-  { target: 'journal', label: 'Journal', file: 'journal entries' },
-  { target: 'pages', label: 'Content pages', file: 'content pages' },
-];
+/** In tab order; the labels come from the system dictionary. */
+const TABS: BackupTarget[] = ['gallery', 'settings', 'about', 'privacy', 'journal', 'pages'];
 
 type BackupLists = Record<BackupTarget, BackupItem[]>;
 
@@ -35,6 +30,8 @@ const EMPTY_LISTS: BackupLists = {
 };
 
 export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }: Props) {
+  const dict = useAdminDictionary();
+  const t = dict.system.backups;
   const [activeTab, setActiveTab] = useState<BackupTarget>('gallery');
   const [showAllBackups, setShowAllBackups] = useState(false);
   const list = useAdminFetch<{ backups: Partial<BackupLists> }>(
@@ -84,13 +81,15 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to restore backup');
+        throw new Error(data.error || t.restoreFailed);
       }
 
       setSuccessMsg(
         item.slug
-          ? `${item.target === 'pages' ? 'Page' : 'Journal entry'} "${item.slug}" restored.`
-          : `Backup restored successfully! (${filename})`,
+          ? item.target === 'pages'
+            ? t.restoredPage(item.slug)
+            : t.restoredEntry(item.slug)
+          : t.restored(filename),
       );
       setConfirmItem(null);
       // Open editors still hold the pre-restore state; they reload on this.
@@ -98,7 +97,7 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
       reloadList();
       onRestoreSuccess();
     } catch (err) {
-      setRestoreError(err instanceof Error ? err.message : 'Error restoring backup');
+      setRestoreError(err instanceof Error ? err.message : t.restoreError);
     } finally {
       setRestoringFilename(null);
     }
@@ -121,13 +120,14 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
       >
         <div className="backup-modal-header">
           <div>
-            <h2 id="backup-modal-title">Backup History &amp; Restoration</h2>
-            <p className="backup-modal-subtitle">
-              Restore an earlier version of your pages, settings, about page, journal or content
-              pages — including deleted journal entries and pages.
-            </p>
+            <h2 id="backup-modal-title">{t.title}</h2>
+            <p className="backup-modal-subtitle">{t.subtitle}</p>
           </div>
-          <button className="backup-modal-close-btn" onClick={onClose} aria-label="Close">
+          <button
+            className="backup-modal-close-btn"
+            onClick={onClose}
+            aria-label={dict.common.close}
+          >
             <Icons.IconX size={16} />
           </button>
         </div>
@@ -136,15 +136,15 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
         <div className="backup-modal-tabs">
           {TABS.map((tab) => (
             <button
-              key={tab.target}
-              className={`backup-modal-tab ${activeTab === tab.target ? 'active' : ''}`}
+              key={tab}
+              className={`backup-modal-tab ${activeTab === tab ? 'active' : ''}`}
               onClick={() => {
-                setActiveTab(tab.target);
+                setActiveTab(tab);
                 setConfirmItem(null);
                 setShowAllBackups(false);
               }}
             >
-              {tab.label} ({backups[tab.target].length})
+              {t.tabLabel(t.tabs[tab], backups[tab].length)}
             </button>
           ))}
         </div>
@@ -157,25 +157,22 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
         {confirmItem && (
           <div className="backup-confirm-box">
             <div className="backup-confirm-content">
-              <strong>Confirm Restoration</strong>
-              <p>
-                Are you sure you want to restore <code>{confirmItem.filename}</code>? A safety
-                snapshot of your current state will be created automatically before reverting.
-              </p>
+              <strong>{t.confirmTitle}</strong>
+              <p>{rich(t.confirmBody, { file: <code>{confirmItem.filename}</code> })}</p>
               <div className="backup-confirm-actions">
                 <button
                   className="btn btn-secondary"
                   onClick={() => setConfirmItem(null)}
                   disabled={!!restoringFilename}
                 >
-                  Cancel
+                  {dict.common.cancel}
                 </button>
                 <button
                   className="btn btn-danger"
                   onClick={() => handleRestore(confirmItem)}
                   disabled={!!restoringFilename}
                 >
-                  {restoringFilename ? 'Restoring...' : 'Yes, Restore Now'}
+                  {restoringFilename ? t.restoring : t.restoreNow}
                 </button>
               </div>
             </div>
@@ -185,11 +182,9 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
         {/* Backup List Content */}
         <div className="backup-modal-body">
           {loading ? (
-            <div className="backup-loading">Loading backups...</div>
+            <div className="backup-loading">{t.loading}</div>
           ) : currentList.length === 0 ? (
-            <div className="backup-empty">
-              No backups available yet for {TABS.find((t) => t.target === activeTab)?.file}
-            </div>
+            <div className="backup-empty">{t.empty(t.files[activeTab])}</div>
           ) : (
             <div className="backup-list">
               {visibleList.map((item) => {
@@ -209,19 +204,13 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
                         {item.slug && <strong className="backup-slug">{item.slug}</strong>}
                         <span className="backup-filename">{formattedDate}</span>
                         {item.isDeleted && (
-                          <span
-                            className="backup-badge deleted"
-                            title="Snapshot taken when the entry was deleted"
-                          >
-                            Deleted entry
+                          <span className="backup-badge deleted" title={t.deletedTitle}>
+                            {t.deleted}
                           </span>
                         )}
                         {item.isPreRestore && (
-                          <span
-                            className="backup-badge pre-restore"
-                            title="Safety snapshot taken before a restore"
-                          >
-                            Pre-Restore Snapshot
+                          <span className="backup-badge pre-restore" title={t.preRestoreTitle}>
+                            {t.preRestore}
                           </span>
                         )}
                       </div>
@@ -234,7 +223,7 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
                       onClick={() => setConfirmItem(item)}
                       disabled={!!restoringFilename || confirmItem?.filename === item.filename}
                     >
-                      Restore
+                      {t.restore}
                     </button>
                   </div>
                 );
@@ -252,9 +241,7 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
                       transition: 'transform 0.2s ease',
                     }}
                   />
-                  {showAllBackups
-                    ? 'Hide older backups'
-                    : `Show ${hiddenCount} older ${hiddenCount === 1 ? 'backup' : 'backups'}`}
+                  {showAllBackups ? t.hideOlder : t.showOlder(hiddenCount)}
                 </button>
               )}
             </div>
@@ -263,7 +250,7 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
 
         <div className="backup-modal-footer">
           <button className="btn btn-secondary" onClick={onClose}>
-            Close
+            {dict.common.close}
           </button>
         </div>
       </div>

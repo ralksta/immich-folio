@@ -1,9 +1,10 @@
 'use client';
 
 import * as Icons from './Icons';
-import { en } from '@/lib/i18n/locales/en';
+import { getDictionary } from '@/lib/i18n';
 import { LIGHTBOX_SHORTCUTS, shortcutDisplayKeys } from '@/lib/lightboxShortcuts';
 import PageHeader from './PageHeader';
+import { rich, useAdminDictionary, useAdminLocale } from './AdminI18n';
 
 /**
  * The admin help section.
@@ -13,30 +14,28 @@ import PageHeader from './PageHeader';
  * visitors, which also left the site owner with no way to learn they exist
  * (#473). This is where the owner finds out what their portfolio can do.
  *
- * Labels come from the English dictionary rather than being retyped, so what
- * this page promises is what a visitor is actually shown. The admin panel is
- * English-only, hence `en` directly.
+ * Labels come from the visitor dictionary rather than being retyped, so what
+ * this page promises is what a visitor is actually shown — in the panel's
+ * language, which is usually the site's too (#604).
  */
 export default function HelpView() {
+  const t = useAdminDictionary().system.help;
+  const visitor = getDictionary(useAdminLocale());
   return (
     <div className="settings-panel">
-      <PageHeader
-        kicker="System"
-        title="Help"
-        description="What your portfolio can do that has no button of its own."
-      />
+      <PageHeader kicker={t.kicker} title={t.title} description={t.description} />
 
       <div className="settings-group">
         <div className="settings-group-head">
           <span className="settings-group-title">
             <Icons.IconFilm size={13} />
-            Image viewer
+            {t.viewer}
           </span>
           <span className="settings-group-desc">
-            Keys a visitor can press in the lightbox. There is deliberately no toolbar for these — a
-            permanent control over a photograph costs every visitor something — but visitors can
-            call up the same list with <kbd className="help-kbd">?</kbd> or{' '}
-            <kbd className="help-kbd">H</kbd>.
+            {rich(t.viewerIntro, {
+              question: <kbd className="help-kbd">?</kbd>,
+              h: <kbd className="help-kbd">H</kbd>,
+            })}
           </span>
         </div>
 
@@ -51,8 +50,12 @@ export default function HelpView() {
                 ))}
               </dt>
               <dd className="help-shortcuts-label">
-                {en.lightbox[shortcut.labelKey]}
-                {shortcut.note && <span className="help-shortcuts-note">{shortcut.note}</span>}
+                {visitor.lightbox[shortcut.labelKey]}
+                {shortcut.note && (
+                  <span className="help-shortcuts-note">
+                    {t.notes[shortcut.labelKey as keyof typeof t.notes] ?? shortcut.note}
+                  </span>
+                )}
               </dd>
             </div>
           ))}
@@ -63,13 +66,10 @@ export default function HelpView() {
         <div className="settings-group-head">
           <span className="settings-group-title">
             <Icons.IconShieldCheck size={13} />
-            Diagnostics
+            {t.diagnostics}
           </span>
           <span className="settings-group-desc">
-            Checks the things that fail silently — a wrong proxy hop count, a deleted album ID, a
-            plaintext password, an album Immich does not consider shared. Open it from the{' '}
-            <strong>Diagnostics</strong> tab in the top bar; the status badge next to it still gives
-            a quick read on whether anything needs attention right now.
+            {rich(t.diagnosticsIntro, { tab: <strong>{t.diagnosticsTab}</strong> })}
           </span>
         </div>
       </div>
