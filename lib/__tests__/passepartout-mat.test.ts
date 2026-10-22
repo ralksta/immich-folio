@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import { THEME_PRESETS, contrastRatio } from '../config/theme';
+import { readGlobalsCss } from './fixtures/globalsCss';
 
 /**
  * The passepartout frame prints the EXIF line on the mat, in --mat-text on
@@ -57,7 +58,7 @@ describe('passepartout mat tokens', () => {
 
   it('are no longer hard-coded in the theme files', () => {
     const themes = path.join(process.cwd(), 'app', 'themes');
-    const globals = fs.readFileSync(path.join(process.cwd(), 'app', 'globals.css'), 'utf8');
+    const globals = readGlobalsCss();
     const sources = [
       globals,
       ...fs.readdirSync(themes).map((f) => fs.readFileSync(path.join(themes, f), 'utf8')),

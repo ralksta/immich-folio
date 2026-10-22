@@ -99,6 +99,7 @@ describe('accentText', () => {
 describe('public styles use the text token for accent-coloured text', () => {
   const files = [
     'app/globals.css',
+    ...fs.readdirSync(path.join(root, 'app', 'styles')).map((f) => `app/styles/${f}`),
     'app/leaflet.css',
     'app/journal/journal.css',
     'app/contact/contact.css',

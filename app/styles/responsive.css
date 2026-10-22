@@ -1,0 +1,179 @@
+/* ── Tablet (iPad, kleine Laptops) ─────────────────── */
+/* Direkt column-count setzen → kein Konflikt mit Inline-Style der Custom Property */
+@media (max-width: 1024px) and (min-width: 641px) {
+  .photo-grid {
+    column-count: 2;
+  }
+
+  .photo-grid--uniform,
+  .photo-grid--showcase {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Album covers follow the photo grids here: two-up on tablet widths, so a
+     configured 4 or 6 columns does not squeeze them below ~300px. The count is
+     computed server-side because repeat() does not reliably take a min(). */
+  .subpage-grid {
+    grid-template-columns: repeat(var(--subpage-columns-tablet, 2), 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .hero__right {
+    order: -1;
+    height: 50vh;
+    height: 50svh;
+    min-height: 200px;
+  }
+
+  .hero__left {
+    padding: 40px 24px;
+  }
+
+  .hero__title {
+    font-size: 2rem;
+  }
+
+  /* Portrait: 2 Spalten — direkt gesetzt, kein !important nötig */
+  .photo-grid {
+    column-count: 2;
+  }
+
+  .photo-grid--uniform,
+  .photo-grid--showcase {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Landscape-Handy → 3 Spalten */
+  @media (orientation: landscape) {
+    .photo-grid {
+      column-count: 3;
+    }
+
+    .photo-grid--uniform,
+    .photo-grid--showcase {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .album-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .subpage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* The header is about 37px tall here (the 44px menu button with its
+     negative margins); 32px left the album back link partly under it. */
+  .main {
+    padding: 56px 20px 80px;
+  }
+
+  .header__nav-link {
+    padding: 14px 10px;
+    font-size: 0.6rem;
+  }
+
+  .album-header__title {
+    font-size: 1.8rem;
+  }
+
+  .album-card__overlay {
+    opacity: 1;
+  }
+
+  .subpage-grid__item-overlay {
+    opacity: 1;
+  }
+
+  [data-photo-frame='passepartout'] .photo-grid {
+    --photo-mat: 6px;
+    --photo-mat-caption: 26px;
+  }
+
+  [data-photo-frame='passepartout'] .photo-grid .photo-grid__item-exif {
+    font-size: 0.6875rem;
+  }
+
+  /* Minimal: adjust fullbleed hero for mobile */
+  [data-preset='minimal'] .hero__left {
+    padding: 20px 24px;
+  }
+
+  [data-preset='minimal'] .hero__right {
+    height: 70vh;
+    height: 70svh;
+  }
+
+  /* Editorial: scale down oversized title */
+  [data-preset='editorial'] .hero__title {
+    font-size: 2.5rem;
+  }
+
+  [data-preset='editorial'] .album-header__title {
+    font-size: 2rem;
+  }
+
+  /* Classic: scale title */
+  [data-preset='classic'] .hero__title {
+    font-size: 2rem;
+  }
+
+  /* Stacked: compact overlay */
+  .hero__stacked-overlay {
+    padding: 24px 20px;
+  }
+
+  .hero--stacked .hero__title {
+    font-size: 2rem;
+  }
+
+  .hero__thumbnail-item {
+    padding: 12px 20px;
+  }
+
+  /* Typographic: scale down massive title */
+  .hero--typographic {
+    padding: 40px 24px;
+  }
+
+  .hero--typographic .hero__title {
+    font-size: 3.5rem;
+  }
+
+  /* Mosaic: simplify to 2-column */
+  .hero__mosaic-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+  }
+
+  .hero__mosaic-cell--1 {
+    grid-row: auto;
+  }
+
+  .hero__mosaic-cell--2 {
+    grid-column: auto;
+  }
+
+  .hero__mosaic-cell:nth-child(n + 5) {
+    display: none;
+  }
+
+  .hero__mosaic-overlay {
+    padding: 24px 28px;
+  }
+
+  .hero--mosaic .hero__title {
+    font-size: 2rem;
+  }
+
+  /* Monograph: scale album header */
+  [data-preset='monograph'] .album-header__title {
+    font-size: 2rem;
+  }
+}

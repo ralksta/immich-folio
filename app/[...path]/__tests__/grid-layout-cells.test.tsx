@@ -1,9 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
-import fs from 'fs';
-import path from 'path';
 import { PhotoGrid, type PhotoItem } from '../PhotoGrid';
+import { readGlobalsCss } from '@/lib/__tests__/fixtures/globalsCss';
 
 /**
  * The photo grid's children are the FadeIn wrappers, with the tile inside
@@ -79,7 +78,7 @@ describe('showcase lead photo', () => {
 });
 
 describe('grid layout rules in globals.css', () => {
-  const css = fs.readFileSync(path.join(process.cwd(), 'app', 'globals.css'), 'utf8');
+  const css = readGlobalsCss();
   // Comments mention the old selectors to explain the fix.
   const rules = css.replace(/\/\*[\s\S]*?\*\//g, '');
 

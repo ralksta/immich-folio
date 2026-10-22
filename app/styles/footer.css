@@ -1,0 +1,68 @@
+/* ── Footer ──────────────────────────────────────── */
+.footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 32px 24px;
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+.footer__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.footer__left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  /* Without wrapping, the name and three legal links in uppercase tracking
+     ran to about 440px on a phone and widened the page itself: the layout
+     viewport grew with it, and the fixed lightbox and menu panel grew along,
+     cutting off the close button and the next arrow. */
+  min-width: 0;
+}
+
+.footer__name {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.footer__legal-link {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  /* --text-muted is already the quietest colour that clears 4.5:1; an extra
+     opacity on top halved that to about 2:1 in every light preset. */
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+}
+
+.footer__legal-link:hover {
+  color: var(--text-primary);
+}
+
+.footer__links {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.footer__link {
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+  display: flex;
+  align-items: center;
+}
+
+.footer__link:hover {
+  color: var(--text-primary);
+}
+

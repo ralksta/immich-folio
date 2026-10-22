@@ -1,0 +1,596 @@
+/* ── Hero Split Layout (Homepage) ────────────────── */
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: calc(100vh - 56px);
+}
+
+.hero__left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 48px;
+  background: var(--bg-primary);
+}
+
+.hero__content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.hero__title {
+  font-family: var(--font-serif);
+  font-size: 3rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.hero__subtitle {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  text-transform: lowercase;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 40px;
+}
+
+.hero__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.hero__nav-link {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(255, 255, 255, 0.2);
+  transition:
+    color var(--transition-fast),
+    text-decoration-color var(--transition-fast);
+  padding: 4px 0;
+}
+
+.hero__nav-link:hover {
+  color: var(--text-primary);
+  text-decoration-color: var(--text-primary);
+}
+
+.hero__right {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero__image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-secondary);
+}
+
+/* ── Hero Carousel Crossfade ────────────────────── */
+.hero__carousel-image {
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+}
+
+.hero__carousel-image--active {
+  opacity: 1;
+}
+
+/* Pause/play for the crossfade (WCAG 2.2.2). Sits over the photo, so it
+   takes the theme's background at partial opacity rather than a fixed
+   black; the 44px box is the touch target. */
+.hero__carousel-toggle {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bg-primary) 70%, transparent);
+  color: var(--text-primary);
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity var(--transition-fast);
+}
+
+.hero__carousel-toggle:hover,
+.hero__carousel-toggle:focus-visible {
+  opacity: 1;
+}
+
+.hero__carousel-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Camera chip over the hero image — opt-in per preset. */
+.hero__exif-chip {
+  display: none;
+}
+
+/* The aperture sign inside EXIF lines (components/ExifText.tsx). Presets that
+   set EXIF in capitals would otherwise print "Ƒ/4". */
+.exif-fsign {
+  text-transform: none;
+}
+
+/* ── Hero: Fullbleed Layout ─────────────────────── */
+.hero--fullbleed {
+  position: relative;
+  min-height: calc(100vh - 56px);
+  overflow: hidden;
+}
+
+/* ── Cover / Splash hero (EXPERIMENTAL) ───────────── */
+/* Fullscreen welcome page: one image, the title, a single Enter link. */
+.hero--cover {
+  position: relative;
+  min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
+  overflow: hidden;
+}
+
+.hero--cover > span,
+.hero--cover > img {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+.hero__cover-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 64px 40px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.1) 75%);
+  color: #fff;
+}
+
+.hero--cover .hero__title,
+.hero--cover .hero__subtitle {
+  color: #fff;
+}
+
+.hero__cover-enter {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 36px;
+  padding: 12px 32px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: var(--radius-lg, 4px);
+  color: #fff;
+  font-family: var(--font-caption);
+  font-size: 0.85rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition:
+    background var(--transition-normal),
+    color var(--transition-normal);
+}
+
+.hero__cover-enter:hover,
+.hero__cover-enter:focus-visible {
+  background: #fff;
+  color: #000;
+}
+
+.hero__cover-enter-arrow {
+  transition: transform var(--transition-normal);
+}
+
+.hero__cover-enter:hover .hero__cover-enter-arrow {
+  transform: translateX(4px);
+}
+
+/* HeroCarousel images fill the entire container */
+.hero--fullbleed > span,
+.hero--fullbleed > img {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+.hero__fullbleed-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 64px 40px;
+  /* Multi-stop for contrast on any image brightness */
+  background:
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 70%),
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.4) 0%,
+      rgba(0, 0, 0, 0.15) 40%,
+      rgba(0, 0, 0, 0.45) 100%
+    );
+}
+
+.hero--fullbleed .hero__title {
+  color: #fff;
+  /* Scales down on a phone instead of running off the edge; 4rem was cut off
+     at 390px in minimal and noir, whose single long words cannot wrap. */
+  font-size: clamp(2.25rem, 9vw, 4rem);
+  overflow-wrap: break-word;
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.7),
+    0 8px 48px rgba(0, 0, 0, 0.6);
+}
+
+.hero--fullbleed .hero__subtitle {
+  color: rgba(255, 255, 255, 0.92);
+  margin-bottom: 32px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+}
+
+.hero--fullbleed .hero__nav {
+  background: rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 14px 28px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hero--fullbleed .hero__nav-link {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration-color: rgba(255, 255, 255, 0.25);
+}
+
+.hero--fullbleed .hero__nav-link:hover {
+  color: #fff;
+  text-decoration-color: #fff;
+}
+
+/* ── Hero: Minimal Layout ───────────────────────── */
+.hero--minimal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 56px);
+  padding: 64px 40px;
+}
+
+.hero--minimal .hero__content {
+  text-align: center;
+  max-width: 500px;
+}
+
+.hero--minimal .hero__title {
+  font-size: 4.5rem;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+
+.hero--minimal .hero__subtitle {
+  margin-bottom: 48px;
+}
+
+/* ── Hero: Stacked Layout ───────────────────────── */
+.hero--stacked {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 56px);
+}
+
+.hero__stacked-image {
+  position: relative;
+  flex: 1;
+  min-height: 70vh;
+  min-height: 70svh;
+}
+
+.hero__stacked-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  padding: 48px 40px;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.8) 0%,
+    rgba(0, 0, 0, 0.3) 50%,
+    transparent 100%
+  );
+}
+
+.hero--stacked .hero__title {
+  font-family: var(--font-serif);
+  font-size: 3.5rem;
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.hero--stacked .hero__subtitle {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.hero__thumbnail-strip {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  background: var(--bg-secondary);
+  padding: 0;
+}
+
+.hero__thumbnail-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.hero__thumbnail-item {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 28px;
+  background: var(--bg-card);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.hero__thumbnail-item:hover {
+  background: var(--bg-card-hover);
+}
+
+.hero__thumbnail-label {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  transition: color var(--transition-fast);
+}
+
+.hero__thumbnail-item:hover .hero__thumbnail-label {
+  color: var(--text-primary);
+}
+
+/* ── Hero: Typographic Layout ───────────────────── */
+.hero--typographic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 56px);
+  padding: 64px 40px;
+}
+
+.hero--typographic .hero__content {
+  text-align: center;
+  max-width: 700px;
+}
+
+.hero--typographic .hero__title {
+  font-family: var(--font-serif);
+  font-size: 8rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  margin-bottom: 16px;
+}
+
+.hero--typographic .hero__subtitle {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 32px;
+}
+
+.hero__divider {
+  width: 60px;
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 0 auto 32px;
+}
+
+.hero__nav--indexed {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.hero__nav--indexed .hero__nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  padding: 6px 0;
+  text-decoration: none;
+  text-transform: none;
+  border-bottom: none;
+  transition: color var(--transition-fast);
+}
+
+.hero__nav--indexed .hero__nav-link:hover {
+  color: var(--text-primary);
+}
+
+/* Index + album count ship with every hero nav link; presets opt in to
+   showing them. Only the indexed nav shows the index by default. */
+.hero__nav-index {
+  display: none;
+  font-family: var(--font-caption, monospace);
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  min-width: 20px;
+}
+
+.hero__nav--indexed .hero__nav-index {
+  display: inline-block;
+}
+
+.hero__nav-count,
+.hero__thumbnail-index {
+  display: none;
+}
+
+/* ── Hero: Mosaic Layout ────────────────────────── */
+.hero--mosaic {
+  position: relative;
+  display: block; /* override inherited 1fr 1fr split grid from .hero */
+  min-height: calc(100vh - 56px);
+}
+
+.hero__mosaic-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  min-height: calc(100vh - 56px);
+}
+
+.hero__mosaic-cell {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero__mosaic-cell img {
+  object-fit: cover;
+}
+
+/* Cell 1: spans 2 rows on the left */
+.hero__mosaic-cell--1 {
+  grid-column: 1;
+  grid-row: 1 / 3;
+}
+
+/* Cell 2: wide, top right — spans 2 columns */
+.hero__mosaic-cell--2 {
+  grid-column: 2 / 4;
+  grid-row: 1;
+}
+
+/* Cell 3: bottom middle */
+.hero__mosaic-cell--3 {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+/* Cell 4: bottom right */
+.hero__mosaic-cell--4 {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.hero__mosaic-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  text-align: center;
+  padding: 40px 48px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hero--mosaic .hero__title {
+  font-family: var(--font-serif);
+  font-size: 3rem;
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.hero--mosaic .hero__subtitle {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 24px;
+}
+
+.hero--mosaic .hero__nav {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.hero--mosaic .hero__nav-link {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 4px 0;
+  border-bottom: 1px solid transparent;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.hero--mosaic .hero__nav-link:hover {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
