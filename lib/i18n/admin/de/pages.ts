@@ -234,6 +234,8 @@ export const pages: AdminDictionary['pages'] = {
   /** The subpage drawer's Live Preview tab. */
   preview: {
     note: 'Dargestellt mit der gespeicherten Design-Vorlage der Website in Desktop-Breite. Ungespeicherte Änderungen in diesem Bereich erscheinen hier; Designänderungen erst, wenn sie in den Einstellungen gespeichert sind.',
+    settingsFailed: (error: string) =>
+      `Die Vorschau nutzt das Standardraster und Englisch, bis die Website-Einstellungen geladen sind. ${error}`,
   },
 
   /** Rows and tiles of the structure list. */

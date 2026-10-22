@@ -111,6 +111,7 @@ export const journal = {
     openingPage: 'Opening page editor...',
     loadFailedEntry: 'This entry could not be loaded.',
     loadFailedPage: 'This page could not be loaded.',
+    albumListFailed: (error: string) => `Album list: ${error}`,
     loadFailedNote:
       'Nothing has been changed. Saving stays disabled until it loads, so an empty editor cannot overwrite it.',
     backToEntries: 'Back to entries',

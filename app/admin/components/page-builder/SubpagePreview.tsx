@@ -5,6 +5,8 @@ import { buildCoverGridVars } from '@/lib/config/schema';
 import { dictionaryFor } from '@/lib/i18n';
 import type { AlbumEntry, ImmichAlbumInfo, Subpage } from './types';
 import { useAdminDictionary } from '../AdminI18n';
+import { useAdminFetch } from '../useAdminFetch';
+import AdminLoadState from '../AdminLoadState';
 
 interface SubpagePreviewProps {
   sp: Subpage;
@@ -50,9 +52,6 @@ export default function SubpagePreview({ sp, immichAlbums, index }: SubpagePrevi
   const adminT = useAdminDictionary().pages.preview;
   const frameRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(0.4);
-  const [site, setSite] = useState<{ columns: number; lang?: string }>({
-    columns: DEFAULT_GRID_COLUMNS,
-  });
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -66,28 +65,18 @@ export default function SubpagePreview({ sp, immichAlbums, index }: SubpagePrevi
 
   // Fetched on every open rather than cached: the global column count and the
   // language may have been changed in Settings since the page builder loaded.
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/admin/settings')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (cancelled || !data?.settings) return;
-        setSite({
-          columns: data.settings.grid?.columns ?? DEFAULT_GRID_COLUMNS,
-          lang: data.settings.lang,
-        });
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Until they arrive, or when they fail, the preview uses the defaults and
+  // says so.
+  const settings = useAdminFetch<{ settings?: { grid?: { columns?: number }; lang?: string } }>(
+    '/api/admin/settings',
+  );
+  const siteColumns = settings.data?.settings?.grid?.columns ?? DEFAULT_GRID_COLUMNS;
 
-  const t = dictionaryFor(site.lang);
+  const t = dictionaryFor(settings.data?.settings?.lang);
   // Only the two keys the cover grid reads; see buildCoverGridVars().
   const gridStyle = buildCoverGridVars(
     { columns: sp.coverGrid?.columns, gap: sp.coverGrid?.gap },
-    site.columns,
+    siteColumns,
   ) as React.CSSProperties;
 
   const toPreviewAlbum = (alb: AlbumEntry, i: number): PreviewAlbum => {
@@ -154,6 +143,11 @@ export default function SubpagePreview({ sp, immichAlbums, index }: SubpagePrevi
   return (
     <div className="subpage-preview">
       <p className="subpage-preview__note">{adminT.note}</p>
+      <AdminLoadState
+        loading={false}
+        error={settings.error && adminT.settingsFailed(settings.error)}
+        onRetry={settings.reload}
+      />
       <div className="subpage-preview__frame" ref={frameRef}>
         {/* inert: a picture of the page, not a second copy of its links. */}
         <div

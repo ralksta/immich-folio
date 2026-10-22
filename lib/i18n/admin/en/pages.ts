@@ -224,6 +224,8 @@ export const pages = {
   /** The subpage drawer's Live Preview tab. */
   preview: {
     note: 'Rendered with the site’s saved theme preset at desktop width. Unsaved edits in this drawer show up here; theme changes show up once saved in Settings.',
+    settingsFailed: (error: string) =>
+      `The preview uses the default grid and English until the site settings load. ${error}`,
   },
 
   /** Rows and tiles of the structure list. */

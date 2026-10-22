@@ -124,6 +124,7 @@ export const journal: AdminDictionary['journal'] = {
     openingPage: 'Ouverture de l’éditeur de page…',
     loadFailedEntry: 'Cet article n’a pas pu être chargé.',
     loadFailedPage: 'Cette page n’a pas pu être chargée.',
+    albumListFailed: (error: string) => `Liste des albums : ${error}`,
     loadFailedNote:
       'Rien n’a été modifié. L’enregistrement reste désactivé tant que le contenu n’est pas chargé, pour qu’un éditeur vide ne puisse pas l’écraser.',
     backToEntries: 'Retour aux articles',

@@ -41,6 +41,7 @@ import { JournalPreview } from './JournalPreview';
 import { createBlock, createPhotoBlocks, fillAssetSlots, moveBlock } from './blockOps';
 import { useSplitPane, SPLIT_MIN, SPLIT_MAX } from './splitPane';
 import { useNotify } from '../Notifications';
+import { adminGet } from '../useAdminFetch';
 import { useAdminDictionary } from '../AdminI18n';
 
 interface JournalEditorProps {
@@ -300,14 +301,23 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
     };
   }, [parsed.blocks]);
 
+  // A failed load opens no picker: an empty list would read as "no albums in
+  // Immich". The next click tries again.
   const openAlbumPicker = (onSelect: (albumId: string) => void) => {
-    setAlbumPickerTarget(() => onSelect);
-    if (albumList === null) {
-      fetch('/api/admin/albums')
-        .then((res) => res.json())
-        .then((data) => setAlbumList(data.albums ?? []))
-        .catch(() => setAlbumList([]));
+    if (albumList !== null) {
+      setAlbumPickerTarget(() => onSelect);
+      return;
     }
+    adminGet<{ albums?: NonNullable<typeof albumList> }>('/api/admin/albums', dict.shell).then(
+      (r) => {
+        if (r.error !== null) {
+          notify('error', t.albumListFailed(r.error));
+          return;
+        }
+        setAlbumList(r.data.albums ?? []);
+        setAlbumPickerTarget(() => onSelect);
+      },
+    );
   };
 
   // Block manipulation

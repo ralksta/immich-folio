@@ -120,6 +120,7 @@ export const journal: AdminDictionary['journal'] = {
     openingPage: 'Apertura dell’editor della pagina...',
     loadFailedEntry: 'Non è stato possibile caricare questo articolo.',
     loadFailedPage: 'Non è stato possibile caricare questa pagina.',
+    albumListFailed: (error: string) => `Elenco degli album: ${error}`,
     loadFailedNote:
       'Non è stato modificato nulla. Il salvataggio resta disattivato finché non viene caricato, così un editor vuoto non può sovrascriverlo.',
     backToEntries: 'Torna agli articoli',

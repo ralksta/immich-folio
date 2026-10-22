@@ -233,6 +233,8 @@ export const pages: AdminDictionary['pages'] = {
   /** The subpage drawer's Live Preview tab. */
   preview: {
     note: 'Se muestra con el preajuste de tema guardado del sitio, a ancho de escritorio. Los cambios sin guardar de este panel aparecen aquí; los cambios de tema, una vez guardados en Ajustes.',
+    settingsFailed: (error: string) =>
+      `La vista previa usa la cuadrícula predeterminada y el inglés hasta que se carguen los ajustes del sitio. ${error}`,
   },
 
   /** Rows and tiles of the structure list. */

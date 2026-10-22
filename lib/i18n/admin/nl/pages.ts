@@ -234,6 +234,8 @@ export const pages: AdminDictionary['pages'] = {
   /** The subpage drawer's Live Preview tab. */
   preview: {
     note: 'Weergegeven met de opgeslagen themavoorinstelling van de site, op desktopbreedte. Niet-opgeslagen wijzigingen in dit paneel zie je hier; themawijzigingen pas zodra ze in Instellingen zijn opgeslagen.',
+    settingsFailed: (error: string) =>
+      `De voorvertoning gebruikt het standaardraster en Engels tot de site-instellingen geladen zijn. ${error}`,
   },
 
   /** Rows and tiles of the structure list. */

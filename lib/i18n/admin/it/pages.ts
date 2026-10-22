@@ -237,6 +237,8 @@ export const pages: AdminDictionary['pages'] = {
   /** The subpage drawer's Live Preview tab. */
   preview: {
     note: 'Mostrata con il preset del tema salvato per il sito, a larghezza desktop. Le modifiche non salvate in questo pannello compaiono qui; quelle al tema compaiono dopo averle salvate in Impostazioni.',
+    settingsFailed: (error: string) =>
+      `L’anteprima usa la griglia predefinita e l’inglese finché le impostazioni del sito non sono caricate. ${error}`,
   },
 
   /** Rows and tiles of the structure list. */

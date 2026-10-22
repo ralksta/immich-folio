@@ -121,6 +121,7 @@ export const journal: AdminDictionary['journal'] = {
     openingPage: 'Seiteneditor wird geöffnet...',
     loadFailedEntry: 'Dieser Eintrag konnte nicht geladen werden.',
     loadFailedPage: 'Diese Seite konnte nicht geladen werden.',
+    albumListFailed: (error: string) => `Albumliste: ${error}`,
     loadFailedNote:
       'Es wurde nichts geändert. Speichern bleibt gesperrt, bis geladen ist, damit ein leerer Editor nichts überschreibt.',
     backToEntries: 'Zurück zu den Einträgen',

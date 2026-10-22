@@ -121,6 +121,7 @@ export const journal: AdminDictionary['journal'] = {
     openingPage: 'Pagina-editor openen…',
     loadFailedEntry: 'Dit verhaal kon niet worden geladen.',
     loadFailedPage: 'Deze pagina kon niet worden geladen.',
+    albumListFailed: (error: string) => `Albumlijst: ${error}`,
     loadFailedNote:
       'Er is niets gewijzigd. Opslaan blijft uitgeschakeld tot het geladen is, zodat een lege editor het niet kan overschrijven.',
     backToEntries: 'Terug naar de verhalen',
