@@ -39,10 +39,11 @@
  * If parsing EXIF or XMP runs into anything unexpected, that whole segment or
  * item is zeroed: losing the camera data is better than keeping the location.
  *
- * Only JPEG and the HEIF family (HEIC, HEIF, AVIF) are handled, detected from
- * the bytes rather than a content type. Anything else passes through
- * unchanged; the doctor (`checkDownloadMetadata`) names albums that offer such
- * files for download.
+ * JPEG and the HEIF family (HEIC, HEIF, AVIF) are handled here, MP4 and
+ * QuickTime videos and the clip appended to a motion photo by
+ * lib/mp4Location.ts (#829), all detected from the bytes rather than a
+ * content type. Anything else passes through unchanged; the doctor
+ * (`checkDownloadMetadata`) names albums that offer such files for download.
  *
  * Memory: nothing is held longer than needed. A JPEG is held up to its first
  * SOS, a HEIF up to the end of its `meta` box, then the file streams on and
@@ -50,6 +51,8 @@
  * at HEAD_CAP; a file whose metadata cannot be found within it is refused, not
  * passed through.
  */
+
+import { Mp4LocationScrubber, findMp4Start, isVideoBrand } from './mp4Location';
 
 /** Same ceiling as the image route's MAX_STRIP_BYTES. */
 export const HEAD_CAP = 64 * 1024 * 1024;
@@ -929,18 +932,22 @@ function scrubbedStream(
  *
  * After EOI, the trailer is searched for further JPEGs (MPF secondary images
  * and the like), whose heads are held until complete, scrubbed, and followed
- * to their own EOI in turn.
+ * to their own EOI in turn — and for the MP4 clip a motion photo appends
+ * (#829). From that clip on, the rest of the file is MP4 data and goes to the
+ * MP4 scrubber: bytes in a video can look like an SOI, and are not one.
  */
 class JpegScrubber implements Scrubber {
   /** Absolute offset of the next byte to examine. */
   private pos: number;
   private inScan = true;
+  private mp4: Mp4LocationScrubber | null = null;
 
   constructor(sos: number) {
     this.pos = sos;
   }
 
   advance(buf: Uint8Array, base: number, eof: boolean): number {
+    if (this.mp4) return this.mp4.advance(buf, base, eof);
     const end = base + buf.length;
     for (;;) {
       const i = this.pos - base;
@@ -988,15 +995,26 @@ class JpegScrubber implements Scrubber {
       }
 
       const hit = findSoi(buf, i);
+      const clip = findMp4Start(buf, i);
+      if (clip >= 0 && (hit < 0 || clip < hit)) {
+        this.mp4 = new Mp4LocationScrubber(base + clip);
+        return this.mp4.advance(buf, base, eof);
+      }
       if (hit < 0) {
-        // Hold back a trailing FF or FF D8 that may start a pattern.
+        // Hold back what may be the start of a pattern: a trailing FF or
+        // FF D8, or up to the eleven bytes before an `ftyp` brand is complete.
         const n = buf.length;
-        const keep =
-          n >= 2 && buf[n - 2] === 0xff && buf[n - 1] === 0xd8
-            ? 2
-            : n >= 1 && buf[n - 1] === 0xff
-              ? 1
-              : 0;
+        const keep = Math.min(
+          n - Math.min(n, i),
+          Math.max(
+            n >= 2 && buf[n - 2] === 0xff && buf[n - 1] === 0xd8
+              ? 2
+              : n >= 1 && buf[n - 1] === 0xff
+                ? 1
+                : 0,
+            11,
+          ),
+        );
         this.pos = base + Math.max(i, n - keep);
         return eof ? end : base + n - keep;
       }
@@ -1119,7 +1137,7 @@ export type LocationScrubResult =
       ok: true;
       stream: ReadableStream<Uint8Array>;
       /** 'passthrough' for formats this module does not edit. */
-      format: 'jpeg' | 'heif' | 'passthrough';
+      format: 'jpeg' | 'heif' | 'video' | 'passthrough';
     }
   | { ok: false; reason: string };
 
@@ -1148,6 +1166,11 @@ export async function scrubLocationStream(
     await reader.cancel().catch(() => {});
     return { ok: false, reason };
   };
+  const videoResult = (): LocationScrubResult => ({
+    ok: true,
+    format: 'video',
+    stream: scrubbedStream(reader, pending, new Mp4LocationScrubber(0), eof),
+  });
 
   // Eight bytes tell JPEG (FF D8 FF) from ISOBMFF (`ftyp` at 4). Asking for
   // more would stall a short first chunk of a passthrough file.
@@ -1200,6 +1223,12 @@ export async function scrubLocationStream(
         await fill(pending.length + 1);
       }
     }
+    if (brands.some(isVideoBrand)) return videoResult();
+  }
+
+  // QuickTime files from before `ftyp` existed start with one of these.
+  if (b.length >= 8 && ['moov', 'mdat', 'wide', 'free', 'skip'].includes(fourcc(b, 4))) {
+    return videoResult();
   }
 
   // Not a format we edit: send it as it is.
@@ -1233,6 +1262,14 @@ const SCRUBBABLE_MIME = new Set([
   'image/avif',
 ]);
 const SCRUBBABLE_EXT = /\.(jpe?g|jpe|jfif|heic|heif|hif|avif)$/i;
+/** MP4 and QuickTime, which lib/mp4Location.ts cleans (#829). */
+const SCRUBBABLE_VIDEO_MIME = new Set([
+  'video/mp4',
+  'video/quicktime',
+  'video/3gpp',
+  'video/x-m4v',
+]);
+const SCRUBBABLE_VIDEO_EXT = /\.(mp4|m4v|mov|qt|3gp|3g2)$/i;
 
 /**
  * Whether an Immich asset's original is a format this module cleans, judged
@@ -1243,8 +1280,9 @@ export function isLocationScrubbable(asset: {
   originalMimeType?: string | null;
   originalFileName?: string | null;
 }): boolean {
-  if (asset.type && asset.type !== 'IMAGE') return false;
+  const video = asset.type === 'VIDEO';
+  if (asset.type && asset.type !== 'IMAGE' && !video) return false;
   const mime = asset.originalMimeType?.toLowerCase().split(';')[0].trim();
-  if (mime) return SCRUBBABLE_MIME.has(mime);
-  return SCRUBBABLE_EXT.test(asset.originalFileName ?? '');
+  if (mime) return (video ? SCRUBBABLE_VIDEO_MIME : SCRUBBABLE_MIME).has(mime);
+  return (video ? SCRUBBABLE_VIDEO_EXT : SCRUBBABLE_EXT).test(asset.originalFileName ?? '');
 }

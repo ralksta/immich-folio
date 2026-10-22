@@ -98,12 +98,12 @@ export const doctor: AdminDictionary['doctor'] = {
   downloadMetadata: {
     okTitle: 'Downloads gaan zonder gps de deur uit',
     okDetail: (albums: number) =>
-      `Elk origineel in ${albums === 1 ? 'het downloadalbum' : `de ${albums} downloadalbums`} is JPEG, HEIC of AVIF en wordt zonder locatie geleverd.`,
+      `Elk origineel in ${albums === 1 ? 'het downloadalbum' : `de ${albums} downloadalbums`} is JPEG, HEIC, AVIF, MP4 of MOV en wordt zonder locatie geleverd.`,
     warnTitle: (files: number) =>
       `${files} ${files === 1 ? 'downloadbaar origineel behoudt' : 'downloadbare originelen behouden'} alle metadata`,
     /** `located`: how many of the files Immich has GPS for (0 = say nothing). `albums`: "Name (3), …". */
     warnDetail: (located: number, albums: string) =>
-      'RAW-, DNG-, PNG-, TIFF-, WebP- en videobestanden worden precies zo geleverd als ze zijn ' +
+      'RAW-, DNG-, PNG-, TIFF- en WebP-bestanden en video’s anders dan MP4 en MOV worden precies zo geleverd als ze zijn ' +
       `opgeslagen, met eventuele gps-coördinaten${located ? ` (Immich heeft voor ${located} ervan een locatie)` : ''}. ` +
       'Zet downloads uit of verwijder deze bestanden als hun locatie privé moet blijven: ' +
       albums,

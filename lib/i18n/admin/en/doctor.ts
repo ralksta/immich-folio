@@ -93,12 +93,12 @@ export const doctor = {
   downloadMetadata: {
     okTitle: 'Downloads go out without GPS',
     okDetail: (albums: number) =>
-      `Every original in the ${albums === 1 ? 'download album' : `${albums} download albums`} is JPEG, HEIC or AVIF, and is served with its location removed.`,
+      `Every original in the ${albums === 1 ? 'download album' : `${albums} download albums`} is JPEG, HEIC, AVIF, MP4 or MOV, and is served with its location removed.`,
     warnTitle: (files: number) =>
       `${files} downloadable ${files === 1 ? 'original keeps' : 'originals keep'} all metadata`,
     /** `located`: how many of the files Immich has GPS for (0 = say nothing). `albums`: "Name (3), …". */
     warnDetail: (located: number, albums: string) =>
-      'RAW, DNG, PNG, TIFF, WebP and video files are served exactly as stored, with any GPS ' +
+      'RAW, DNG, PNG, TIFF and WebP files, and videos other than MP4 and MOV, are served exactly as stored, with any GPS ' +
       `coordinates${located ? ` (Immich has a location for ${located} of them)` : ''}. ` +
       'Turn off downloads or remove these files if their location should stay private: ' +
       albums,

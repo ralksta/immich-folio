@@ -106,14 +106,14 @@ export const doctor: AdminDictionary['doctor'] = {
   downloadMetadata: {
     okTitle: 'Les téléchargements partent sans GPS',
     okDetail: (albums: number) =>
-      `Chaque original ${isOne(albums) ? 'de l’album de téléchargement' : `des ${albums} albums de téléchargement`} est en JPEG, HEIC ou AVIF, et il est servi sans sa localisation.`,
+      `Chaque original ${isOne(albums) ? 'de l’album de téléchargement' : `des ${albums} albums de téléchargement`} est en JPEG, HEIC, AVIF, MP4 ou MOV, et il est servi sans sa localisation.`,
     warnTitle: (files: number) =>
       isOne(files)
         ? `${files} original téléchargeable conserve toutes ses métadonnées`
         : `${files} originaux téléchargeables conservent toutes leurs métadonnées`,
     /** `located`: how many of the files Immich has GPS for (0 = say nothing). `albums`: "Name (3), …". */
     warnDetail: (located: number, albums: string) =>
-      'Les fichiers RAW, DNG, PNG, TIFF, WebP et vidéo sont servis tels qu’ils sont stockés, avec leurs éventuelles ' +
+      'Les fichiers RAW, DNG, PNG, TIFF et WebP, ainsi que les vidéos autres que MP4 et MOV, sont servis tels qu’ils sont stockés, avec leurs éventuelles ' +
       `coordonnées GPS${located ? ` (Immich connaît la position de ${located} d’entre eux)` : ''}. ` +
       'Désactivez les téléchargements ou retirez ces fichiers si leur localisation doit rester privée : ' +
       albums,

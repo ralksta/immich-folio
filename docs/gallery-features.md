@@ -313,9 +313,17 @@ drive memory use.
 Originals keep their metadata except their location. JPEG, HEIC/HEIF and AVIF
 files are delivered with camera, lens, exposure, copyright/IPTC and colour
 profile intact, but with GPS coordinates removed from EXIF and XMP; the image
-data itself is not touched. Other formats (RAW, DNG, PNG, TIFF, WebP, video) are
-delivered exactly as Immich stores them, including any GPS. The diagnostics page
-warns when a download album contains such files.
+data itself is not touched. MP4 and MOV videos lose their recorded location
+too (QuickTime `©xyz`, 3GPP `loci`, Apple's location keys and XMP), and so does
+the clip a Samsung or Pixel motion photo appends to its JPEG. Other formats
+(RAW, DNG, PNG, TIFF, WebP, other video containers) are delivered exactly as
+Immich stores them, including any GPS. The diagnostics page warns when a
+download album contains such files.
+
+What a video still carries is a GPS **track**: action cameras and some
+dashcams (GoPro, DJI, Insta360) record coordinates as a timed metadata stream
+next to the picture, which the scrubber does not reach. Leave downloads off
+for albums with such footage if the route should stay private.
 
 A photo edited in Immich's own editor (crop, rotate) is downloaded as edited,
 not as the camera file. Immich renders the edit as a full-resolution JPEG

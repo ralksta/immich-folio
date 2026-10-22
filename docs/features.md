@@ -40,7 +40,7 @@ Everything Immich Folio does, grouped by what you are doing. The [README](../REA
 - **External navigation links** _(experimental)_ — point the header at a shop, a blog, or a social profile
 - **Client proofing** — clients favorite photos and export the selection; picks stay in the visitor's browser and the URL, with nothing stored server-side (proofing links, below, do save them)
 - **Client proofing links** — a private link per client and album, picks saved server-side, a submit that locks the selection and pings you via webhook, expiry dates, download limits, and a Lightroom-ready export of the chosen file names ([guide](gallery-features.md#client-proofing-links))
-- **Originals delivery** — per-album opt-in lets visitors download a whole album or their proofing selection as a ZIP of the originals, with GPS coordinates removed from JPEG, HEIC and AVIF files
+- **Originals delivery** — per-album opt-in lets visitors download a whole album or their proofing selection as a ZIP of the originals, with GPS coordinates removed from JPEG, HEIC, AVIF, MP4 and MOV files
 - **Lightbox watermark** — configurable overlay on fullscreen images
 - **Six interface languages** — English, German, French, Spanish, Italian and Dutch for everything visitors see
 - **Privacy-friendly analytics** — cookieless view counts, no third parties, can be switched off

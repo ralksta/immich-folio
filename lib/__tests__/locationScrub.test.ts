@@ -364,11 +364,12 @@ describe('HEIF / AVIF', () => {
 });
 
 describe('other formats', () => {
-  it('passes PNG, TIFF/DNG, video and unknown bytes through unchanged', async () => {
+  it('passes PNG, TIFF/DNG and unknown bytes through unchanged', async () => {
     const samples = [
       cat(bytes(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a), ascii('IHDR...GPS')),
       cameraTiff(true),
-      cat(be32(20), ascii('ftypqt  '), be32(0), ascii('qt  '), ascii('moov....')),
+      // ISOBMFF that is neither HEIF nor video, e.g. JPEG XL.
+      cat(be32(20), ascii('ftypjxl '), be32(0), ascii('jxl '), ascii('jxlc....')),
       ascii('image-bytes'),
       bytes(),
     ];
@@ -386,6 +387,11 @@ describe('other formats', () => {
     expect(jpeg.ok && jpeg.format).toBe('jpeg');
     const heic = await scrubLocationStream(chunked(cameraHeic().file, 4));
     expect(heic.ok && heic.format).toBe('heif');
+    // Videos go to lib/mp4Location.ts (#829); one without metadata is unchanged.
+    const mov = cat(be32(20), ascii('ftypqt  '), be32(0), ascii('qt  '), ascii('moov....'));
+    const video = await scrubLocationStream(chunked(mov, 3));
+    expect(video.ok && video.format).toBe('video');
+    expect(await viaStream(mov, 3)).toEqual(mov);
   });
 });
 
@@ -398,7 +404,17 @@ describe('isLocationScrubbable', () => {
       false,
     );
     expect(isLocationScrubbable({ type: 'IMAGE', originalMimeType: 'image/png' })).toBe(false);
-    expect(isLocationScrubbable({ type: 'VIDEO', originalMimeType: 'video/mp4' })).toBe(false);
+    // MP4 and QuickTime are cleaned since #829; other containers are not.
+    expect(isLocationScrubbable({ type: 'VIDEO', originalMimeType: 'video/mp4' })).toBe(true);
+    expect(isLocationScrubbable({ type: 'VIDEO', originalMimeType: 'video/quicktime' })).toBe(true);
+    expect(isLocationScrubbable({ type: 'VIDEO', originalMimeType: 'video/webm' })).toBe(false);
+    expect(isLocationScrubbable({ type: 'VIDEO', originalMimeType: 'video/x-msvideo' })).toBe(
+      false,
+    );
+    expect(isLocationScrubbable({ type: 'VIDEO', originalFileName: 'IMG_0001.MOV' })).toBe(true);
+    // A video's name does not make a photo cleanable, nor the other way round.
+    expect(isLocationScrubbable({ type: 'IMAGE', originalFileName: 'clip.mp4' })).toBe(false);
+    expect(isLocationScrubbable({ type: 'VIDEO', originalFileName: 'IMG_0001.JPG' })).toBe(false);
     expect(isLocationScrubbable({ type: 'IMAGE', originalFileName: 'IMG_0001.HEIC' })).toBe(true);
     expect(isLocationScrubbable({ type: 'IMAGE', originalFileName: 'DSC_0001.NEF' })).toBe(false);
   });

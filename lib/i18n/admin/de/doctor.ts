@@ -96,14 +96,14 @@ export const doctor: AdminDictionary['doctor'] = {
   downloadMetadata: {
     okTitle: 'Downloads gehen ohne GPS-Daten hinaus',
     okDetail: (albums: number) =>
-      `Jedes Original ${albums === 1 ? 'im Download-Album' : `in den ${albums} Download-Alben`} ist JPEG, HEIC oder AVIF und wird ohne Standort ausgeliefert.`,
+      `Jedes Original ${albums === 1 ? 'im Download-Album' : `in den ${albums} Download-Alben`} ist JPEG, HEIC, AVIF, MP4 oder MOV und wird ohne Standort ausgeliefert.`,
     warnTitle: (files: number) =>
       files === 1
         ? `${files} herunterladbares Original behält alle Metadaten`
         : `${files} herunterladbare Originale behalten alle Metadaten`,
     /** `located`: how many of the files Immich has GPS for (0 = say nothing). `albums`: "Name (3), …". */
     warnDetail: (located: number, albums: string) =>
-      'RAW-, DNG-, PNG-, TIFF-, WebP- und Videodateien werden genau so ausgeliefert, wie sie gespeichert sind, ' +
+      'RAW-, DNG-, PNG-, TIFF- und WebP-Dateien sowie Videos außer MP4 und MOV werden genau so ausgeliefert, wie sie gespeichert sind, ' +
       `mit allen GPS-Koordinaten${located ? ` (Immich kennt für ${located} davon einen Standort)` : ''}. ` +
       'Schalte Downloads aus oder entferne diese Dateien, wenn ihr Standort privat bleiben soll: ' +
       albums,
