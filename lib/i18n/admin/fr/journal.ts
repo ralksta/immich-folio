@@ -112,8 +112,6 @@ export const journal: AdminDictionary['journal'] = {
 
   /** The editor of one entry, also used for content pages. */
   editor: {
-    sessionExpired: 'Votre session a expiré. Reconnectez-vous pour continuer.',
-    serverAnswered: (status: number) => `Le serveur a répondu ${status}.`,
     loadFailedFallback: 'L’article n’a pas pu être chargé.',
     conflictKept:
       'Non enregistré — le contenu a été modifié ailleurs. Vos modifications sont toujours là.',

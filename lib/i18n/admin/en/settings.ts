@@ -25,9 +25,6 @@ export const settings = {
     description: 'Saved changes apply to the site at once, no restart needed.',
     /** Label of the save button in the floating save bar. */
     saveChanges: 'Save Changes',
-    sessionExpired: 'Your session has expired. Sign in again to continue.',
-    serverAnswered: (status: number) => `The server answered ${status}.`,
-    loadFailed: 'The settings could not be loaded.',
     loadErrorTitle: 'Settings could not be loaded.',
     loadErrorBody:
       'Nothing has been changed. Saving stays disabled until they load, so an empty form cannot overwrite your configuration.',
@@ -344,12 +341,10 @@ export const settings = {
     gear: 'Gear (one per line)',
     biography: 'Biography (Markdown)',
     biographyPlaceholder: 'Photographer based in...',
-    loadFailed: 'The About page could not be loaded.',
     conflict: 'Not saved — the About page changed elsewhere.',
   },
 
   privacy: {
-    loadFailed: 'Could not load.',
     /** `error` is a short technical reason, e.g. "HTTP 500". */
     loadError: (error: string) =>
       `The privacy policy could not be loaded (${error}). Reload the page to try again.`,

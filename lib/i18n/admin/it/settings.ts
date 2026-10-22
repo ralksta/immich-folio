@@ -25,9 +25,6 @@ export const settings: AdminDictionary['settings'] = {
     title: 'Impostazioni',
     description: 'Le modifiche salvate valgono subito per il sito, senza riavvio.',
     saveChanges: 'Salva le modifiche',
-    sessionExpired: 'La tua sessione è scaduta. Accedi di nuovo per continuare.',
-    serverAnswered: (status: number) => `Il server ha risposto ${status}.`,
-    loadFailed: 'Non è stato possibile caricare le impostazioni.',
     loadErrorTitle: 'Impossibile caricare le impostazioni.',
     loadErrorBody:
       'Non è stato modificato nulla. Il salvataggio resta disattivato finché non vengono caricate, così un modulo vuoto non può sovrascrivere la tua configurazione.',
@@ -354,12 +351,10 @@ export const settings: AdminDictionary['settings'] = {
     gear: 'Attrezzatura (una per riga)',
     biography: 'Biografia (Markdown)',
     biographyPlaceholder: 'Fotografo con base a...',
-    loadFailed: 'Non è stato possibile caricare la pagina «Chi sono».',
     conflict: 'Non salvato: la pagina «Chi sono» è stata modificata altrove.',
   },
 
   privacy: {
-    loadFailed: 'Impossibile caricare.',
     /** `error` is a short technical reason, e.g. "HTTP 500". */
     loadError: (error: string) =>
       `Non è stato possibile caricare l’informativa sulla privacy (${error}). Ricarica la pagina per riprovare.`,

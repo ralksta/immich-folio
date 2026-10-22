@@ -109,8 +109,6 @@ export const journal: AdminDictionary['journal'] = {
 
   /** The editor of one entry, also used for content pages. */
   editor: {
-    sessionExpired: 'La tua sessione è scaduta. Accedi di nuovo per continuare.',
-    serverAnswered: (status: number) => `Il server ha risposto ${status}.`,
     loadFailedFallback: 'Non è stato possibile caricare l’articolo.',
     conflictKept: 'Non salvato: è stato modificato altrove. Le tue modifiche sono ancora qui.',
     saveFailed: 'Salvataggio non riuscito',

@@ -108,8 +108,6 @@ export const journal: AdminDictionary['journal'] = {
 
   /** The editor of one entry, also used for content pages. */
   editor: {
-    sessionExpired: 'Je sessie is verlopen. Meld je opnieuw aan om verder te gaan.',
-    serverAnswered: (status: number) => `De server antwoordde met ${status}.`,
     loadFailedFallback: 'Het verhaal kon niet worden geladen.',
     conflictKept: 'Niet opgeslagen — het is elders gewijzigd. Je wijzigingen staan er nog.',
     saveFailed: 'Opslaan mislukt',

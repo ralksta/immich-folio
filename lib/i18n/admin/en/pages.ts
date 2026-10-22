@@ -19,8 +19,6 @@ export const pages = {
       `Immich albums did not load, so the album picker is empty. ${error}`,
     pageListFailed: (error: string) =>
       `The content pages did not load; their menu entries stay as they are. ${error}`,
-    sessionExpired: 'Your session has expired. Sign in again to continue.',
-    serverAnswered: (status: number) => `The server answered ${status}.`,
     loadFailed: 'The page structure could not be loaded.',
     loadFailedNote:
       'Nothing has been changed. Saving stays disabled until it loads, so an empty builder cannot overwrite your gallery.',
@@ -274,8 +272,6 @@ export const pages = {
 
   pagePanel: {
     noFile: 'There is no file for this page in content/pages/.',
-    serverAnswered: (status: number) => `The server answered ${status}.`,
-    couldNotLoad: 'Could not load.',
     exists: (slug: string) => `A page "${slug}" already exists.`,
     moveTitle: (slug: string) => `Move this page to /${slug}?`,
     linksBreak: (slug: string) =>

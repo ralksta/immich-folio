@@ -21,8 +21,6 @@ export const pages: AdminDictionary['pages'] = {
       `Gli album di Immich non sono stati caricati, quindi il selettore degli album è vuoto. ${error}`,
     pageListFailed: (error: string) =>
       `Le pagine di contenuto non sono state caricate; le loro voci di menu restano come sono. ${error}`,
-    sessionExpired: 'La tua sessione è scaduta. Accedi di nuovo per continuare.',
-    serverAnswered: (status: number) => `Il server ha risposto ${status}.`,
     loadFailed: 'Non è stato possibile caricare la struttura delle pagine.',
     loadFailedNote:
       'Non è stato modificato nulla. Il salvataggio resta disattivato finché non viene caricata, così un editor vuoto non può sovrascrivere la tua galleria.',
@@ -287,8 +285,6 @@ export const pages: AdminDictionary['pages'] = {
 
   pagePanel: {
     noFile: 'In content/pages/ non c’è un file per questa pagina.',
-    serverAnswered: (status: number) => `Il server ha risposto ${status}.`,
-    couldNotLoad: 'Impossibile caricare.',
     exists: (slug: string) => `Esiste già una pagina «${slug}».`,
     moveTitle: (slug: string) => `Spostare questa pagina su /${slug}?`,
     linksBreak: (slug: string) =>

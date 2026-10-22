@@ -27,9 +27,6 @@ export const settings: AdminDictionary['settings'] = {
     description: 'Gespeicherte Änderungen gelten sofort, ohne Neustart.',
     /** Label of the save button in the floating save bar. */
     saveChanges: 'Änderungen speichern',
-    sessionExpired: 'Deine Sitzung ist abgelaufen. Melde dich erneut an, um fortzufahren.',
-    serverAnswered: (status: number) => `Der Server antwortete mit ${status}.`,
-    loadFailed: 'Die Einstellungen konnten nicht geladen werden.',
     loadErrorTitle: 'Einstellungen konnten nicht geladen werden.',
     loadErrorBody:
       'Es wurde nichts geändert. Speichern bleibt gesperrt, bis sie geladen sind, damit ein leeres Formular deine Konfiguration nicht überschreibt.',
@@ -359,12 +356,10 @@ export const settings: AdminDictionary['settings'] = {
     gear: 'Ausrüstung (eine pro Zeile)',
     biography: 'Biografie (Markdown)',
     biographyPlaceholder: 'Fotograf aus...',
-    loadFailed: 'Die „Über mich“-Seite konnte nicht geladen werden.',
     conflict: 'Nicht gespeichert — die „Über mich“-Seite wurde anderswo geändert.',
   },
 
   privacy: {
-    loadFailed: 'Konnte nicht geladen werden.',
     /** `error` is a short technical reason, e.g. "HTTP 500". */
     loadError: (error: string) =>
       `Die Datenschutzerklärung konnte nicht geladen werden (${error}). Lade die Seite neu, um es erneut zu versuchen.`,

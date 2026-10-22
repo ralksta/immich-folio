@@ -100,8 +100,6 @@ export const journal = {
 
   /** The editor of one entry, also used for content pages. */
   editor: {
-    sessionExpired: 'Your session has expired. Sign in again to continue.',
-    serverAnswered: (status: number) => `The server answered ${status}.`,
     loadFailedFallback: 'The entry could not be loaded.',
     conflictKept: 'Not saved — it changed elsewhere. Your edits are still here.',
     saveFailed: 'Failed to save',
