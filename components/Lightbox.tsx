@@ -68,6 +68,34 @@ function subscribeCoarsePointer(onChange: () => void): () => void {
   return () => query?.removeEventListener?.('change', onChange);
 }
 
+const subscribeNothing = () => () => {};
+
+/**
+ * True once rendering on the client, false on the server and while hydrating —
+ * without the extra render an effect that sets state would cost.
+ */
+function useIsClient(): boolean {
+  return useSyncExternalStore(
+    subscribeNothing,
+    () => true,
+    () => false,
+  );
+}
+
+/**
+ * Whether this browser can put an element in fullscreen. `fullscreenEnabled`
+ * is the honest gate: iPhone Safari implements the API on `<video>` only, so
+ * the key and its shortcut row are simply absent there rather than failing
+ * silently.
+ */
+function useCanFullscreen(): boolean {
+  return useSyncExternalStore(
+    subscribeNothing,
+    () => !!document.fullscreenEnabled,
+    () => false,
+  );
+}
+
 /** A touch device, where very large images are not offered for zoom. */
 function useCoarsePointer(): boolean {
   return useSyncExternalStore(
@@ -90,7 +118,7 @@ export function Lightbox({
   const [showExif, setShowExif] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [canFullscreen, setCanFullscreen] = useState(false);
+  const canFullscreen = useCanFullscreen();
   const { exifData, exifLoading, fetchExif, clearExif } = useExif();
   const [imageLoaded, setImageLoaded] = useState(false);
   /**
@@ -131,12 +159,21 @@ export function Lightbox({
   const canZoom = zoomable && zoom.enabled;
   const proofing = useProofing();
   const isFav = proofing && current ? proofing.isFavorite(current.id) : false;
-  const [mounted, setMounted] = useState(false);
-
   // Mount guard — createPortal needs document.body (client-only)
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsClient();
+
+  /*
+   * What belongs to the photo on screen starts over when another one is
+   * shown: its load state, and a "Copied" that was about the previous photo.
+   * Reset while rendering rather than in an effect, so the new photo is never
+   * drawn for a frame with the old one's state.
+   */
+  const [shownIndex, setShownIndex] = useState(currentIndex);
+  if (shownIndex !== currentIndex) {
+    setShownIndex(currentIndex);
+    setImageLoaded(false);
+    setCopyState('idle');
+  }
 
   // Auto-focus the close button when the modal mounts
   useEffect(() => {
@@ -176,7 +213,6 @@ export function Lightbox({
   // Reset EXIF data when switching images; refetch if panel is open
   useEffect(() => {
     clearExif();
-    setImageLoaded(false);
     if (showExif && current) {
       fetchExif(current.exifUrl);
     }
@@ -263,11 +299,6 @@ export function Lightbox({
     onPrev();
   }, [onPrev]);
 
-  // A confirmation must not outlive the photo it was about.
-  useEffect(() => {
-    setCopyState('idle');
-  }, [currentIndex]);
-
   useEffect(() => {
     if (copyState !== 'copied') return;
     const timer = setTimeout(() => setCopyState('idle'), 2000);
@@ -277,15 +308,9 @@ export function Lightbox({
   /*
    * Real fullscreen. The overlay already covers the viewport, but the browser's
    * own chrome sits above it — tab strip, URL bar, bookmarks — which is exactly
-   * the frame a photograph should not be shown in.
-   *
-   * `fullscreenEnabled` is the honest gate: iPhone Safari implements the API on
-   * `<video>` only, so the key and its shortcut row are simply absent there
-   * rather than failing silently.
+   * the frame a photograph should not be shown in. Whether it is offered at
+   * all is useCanFullscreen().
    */
-  useEffect(() => {
-    setCanFullscreen(typeof document !== 'undefined' && !!document.fullscreenEnabled);
-  }, []);
 
   const toggleFullscreen = useCallback(() => {
     const overlay = overlayRef.current;

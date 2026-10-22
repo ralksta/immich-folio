@@ -181,12 +181,14 @@ export function useAboutEditor(active: boolean) {
   // stays mounted across sections, so reloading on every visit would overwrite
   // unsaved About edits with the file on disk.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a load started on mount; moves to useAdminFetch in #821
     if (active && !aboutLoaded) loadAboutContent();
   }, [active, aboutLoaded, loadAboutContent]);
 
   // A kept About draft loads the file at once, from any section, so the save
   // bar owns up to those edits before the About section is ever opened.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a load started on mount; moves to useAdminFetch in #821
     if (!active && readDraft('about')) loadAboutContent();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

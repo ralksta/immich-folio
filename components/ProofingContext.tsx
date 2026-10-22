@@ -156,6 +156,9 @@ export function ProofingProvider({
 
       // Mount-time hydration from an external store, not a render cascade:
       // the state lands in the same commit and never re-triggers this effect.
+      // localStorage and the URL only exist on the client, so this cannot be
+      // read during render without a hydration mismatch.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
       setFavorites(initialSet);
     } catch (e) {
       console.error('Failed to load favorites', e);

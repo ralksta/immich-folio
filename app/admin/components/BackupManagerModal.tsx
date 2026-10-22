@@ -47,16 +47,24 @@ export default function BackupManagerModal({ isOpen, onClose, onRestoreSuccess }
   const [confirmItem, setConfirmItem] = useState<BackupItem | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  useEffect(() => {
+  // Each opening starts clean: no message, confirmation or expanded list left
+  // over from the last time. Reset while rendering, so the reopened modal is
+  // never drawn with the old state for a frame.
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
     if (isOpen) {
-      // Each opening shows the backups as they are now, not as they were
-      // the last time the modal was open.
-      reloadList();
       setRestoreError(null);
       setConfirmItem(null);
       setSuccessMsg(null);
       setShowAllBackups(false);
     }
+  }
+
+  // ...and shows the backups as they are now, not as they were the last time
+  // the modal was open.
+  useEffect(() => {
+    if (isOpen) reloadList();
   }, [isOpen, reloadList]);
 
   useScrollLock(isOpen);

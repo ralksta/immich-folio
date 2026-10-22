@@ -83,6 +83,7 @@ export default function PagePanel({
 
   useEffect(() => {
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a load started on mount; moves to useAdminFetch in #821
     setParsed(null);
     setLoadError(null);
     fetch(`/api/admin/pages/${encodeURIComponent(slug)}`)

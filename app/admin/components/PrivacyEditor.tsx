@@ -78,6 +78,7 @@ export default function PrivacyEditor() {
   }, [loadDraft, t]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a load started on mount; moves to useAdminFetch in #821
     void load();
   }, [load]);
 
