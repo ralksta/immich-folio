@@ -8,10 +8,12 @@
  * A card expands into the selected photos and the export buttons.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PageHeader from './PageHeader';
 import * as Icons from './Icons';
 import { reportIfSessionExpired } from './sessionExpiry';
+import { useAdminFetch } from './useAdminFetch';
+import AdminLoadState from './AdminLoadState';
 import type { AdminProofPick, AdminProofSession } from '@/lib/admin/proofing-view';
 import { rich, useAdminDictionary } from './AdminI18n';
 
@@ -32,6 +34,7 @@ function formatDate(iso: string | null): string {
   return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+/** Changes; the loads go through useAdminFetch. */
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
   if (reportIfSessionExpired(res)) throw new Error('Session expired');
@@ -43,7 +46,13 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 function CreateForm({ onCreated }: { onCreated: () => void }) {
   const p = useAdminDictionary().visitors.proofing;
   const t = p.create;
-  const [albums, setAlbums] = useState<AlbumOption[] | null>(null);
+  const albumsLoad = useAdminFetch<{ albums: AlbumOption[] }>('/api/admin/albums');
+  const albums = useMemo(
+    () =>
+      albumsLoad.data &&
+      [...albumsLoad.data.albums].sort((a, b) => a.albumName.localeCompare(b.albumName)),
+    [albumsLoad.data],
+  );
   const [clientName, setClientName] = useState('');
   const [albumId, setAlbumId] = useState('');
   const [expiresOn, setExpiresOn] = useState('');
@@ -51,14 +60,6 @@ function CreateForm({ onCreated }: { onCreated: () => void }) {
   const [limit, setLimit] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api<{ albums: AlbumOption[] }>('/api/admin/albums')
-      .then((data) =>
-        setAlbums([...data.albums].sort((a, b) => a.albumName.localeCompare(b.albumName))),
-      )
-      .catch((err: Error) => setError(err.message));
-  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,6 +164,7 @@ function CreateForm({ onCreated }: { onCreated: () => void }) {
           </div>
         )}
       </div>
+      <AdminLoadState loading={false} error={albumsLoad.error} onRetry={albumsLoad.reload} />
       {error && <p className="admin-error">{error}</p>}
       <div>
         <button
@@ -190,17 +192,15 @@ function SessionCard({
 }) {
   const p = useAdminDictionary().visitors.proofing;
   const t = p.card;
-  const [picks, setPicks] = useState<AdminProofPick[] | null>(null);
+  // Fetched again when the client changes the selection or submits it.
+  const picksLoad = useAdminFetch<{ picks: AdminProofPick[] }>(
+    expanded ? `/api/admin/proofing/${session.id}` : null,
+    `${session.selected}:${session.submittedAt}`,
+  );
+  const picks = picksLoad.data?.picks ?? null;
   const [copied, setCopied] = useState<'link' | 'lightroom' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const linkUrl = typeof window !== 'undefined' ? `${window.location.origin}${session.link}` : '';
-
-  useEffect(() => {
-    if (!expanded) return;
-    api<{ picks: AdminProofPick[] }>(`/api/admin/proofing/${session.id}`)
-      .then((data) => setPicks(data.picks))
-      .catch((err: Error) => setError(err.message));
-  }, [expanded, session.id, session.selected, session.submittedAt]);
 
   const copy = (kind: 'link' | 'lightroom', text: string) => {
     if (!navigator.clipboard) {
@@ -367,7 +367,9 @@ function SessionCard({
             </button>
           </div>
 
-          {picks === null ? (
+          {picksLoad.error ? (
+            <AdminLoadState loading={false} error={picksLoad.error} onRetry={picksLoad.reload} />
+          ) : picks === null ? (
             <div className="admin-spinner" />
           ) : picks.length === 0 ? (
             <p className="analytics-empty">{t.noPicks}</p>
@@ -393,31 +395,20 @@ function SessionCard({
 export default function ProofingView() {
   const v = useAdminDictionary().visitors;
   const t = v.proofing;
-  const [sessions, setSessions] = useState<AdminProofSession[] | null>(null);
-  const [webhookConfigured, setWebhookConfigured] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const list = useAdminFetch<{ sessions: AdminProofSession[]; webhookConfigured: boolean }>(
+    '/api/admin/proofing',
+  );
+  const sessions = list.data?.sessions ?? null;
+  const webhookConfigured = list.data?.webhookConfigured ?? true;
+  const load = list.reload;
   const [expanded, setExpanded] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    try {
-      const data = await api<{ sessions: AdminProofSession[]; webhookConfigured: boolean }>(
-        '/api/admin/proofing',
-      );
-      setSessions(data.sessions);
-      setWebhookConfigured(data.webhookConfigured);
-      setError(null);
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  }, []);
 
   useEffect(() => {
     // The webhook's admin link lands here with ?session=<id>: open that card.
     const wanted = new URLSearchParams(window.location.search).get('session');
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time read of the URL on mount
     if (wanted) setExpanded(wanted);
-    void load();
-  }, [load]);
+  }, []);
 
   return (
     <div className="analytics-view proofing-view">
@@ -426,7 +417,7 @@ export default function ProofingView() {
         title={t.title}
         description={t.description}
         actions={
-          <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => void load()}>
+          <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={load}>
             <Icons.IconRefresh size={14} /> {v.refresh}
           </button>
         }
@@ -438,24 +429,25 @@ export default function ProofingView() {
         </p>
       )}
 
-      <CreateForm onCreated={() => void load()} />
+      <CreateForm onCreated={load} />
 
-      {error && <p className="admin-error">{error}</p>}
+      <AdminLoadState
+        loading={list.loading}
+        error={list.error}
+        onRetry={load}
+        hasData={sessions !== null}
+      />
 
-      {sessions === null && !error ? (
-        <div className="admin-loading-container">
-          <div className="admin-spinner" />
-        </div>
-      ) : sessions && sessions.length === 0 ? (
+      {sessions === null ? null : sessions.length === 0 ? (
         <p className="analytics-empty">{t.empty}</p>
       ) : (
-        sessions?.map((session) => (
+        sessions.map((session) => (
           <SessionCard
             key={session.id}
             session={session}
             expanded={expanded === session.id}
             onToggle={() => setExpanded((cur) => (cur === session.id ? null : session.id))}
-            onChanged={() => void load()}
+            onChanged={load}
           />
         ))
       )}

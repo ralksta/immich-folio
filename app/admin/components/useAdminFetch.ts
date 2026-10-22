@@ -57,12 +57,13 @@ export interface AdminFetch<T> {
 
 /**
  * `url === null` fetches nothing (a closed modal, say). Data from the previous
- * answer stays visible while a reload runs.
+ * answer stays visible while a reload runs. A change of `revision` fetches
+ * again, for data that follows something the URL does not name.
  */
-export function useAdminFetch<T>(url: string | null): AdminFetch<T> {
+export function useAdminFetch<T>(url: string | null, revision = ''): AdminFetch<T> {
   const t = useAdminDictionary().shell;
   const [attempt, setAttempt] = useState(0);
-  const key = url === null ? null : `${attempt}:${url}`;
+  const key = url === null ? null : `${attempt}:${revision}:${url}`;
   const [result, setResult] = useState<(AdminResult<T> & { key: string }) | null>(null);
 
   useEffect(() => {
