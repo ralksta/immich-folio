@@ -86,10 +86,15 @@ export function exifUrl(assetId: string): string {
  * Generate a public video proxy URL for an asset — on the CDN in CDN mode,
  * like imageUrl().
  */
+/**
+ * Revision of what `/api/video` serves. Video responses are `immutable` for a
+ * year, so a change to the bytes needs a new URL to reach browsers and CDNs
+ * that cached the old ones. 2: location metadata removed from playback.
+ */
+const VIDEO_REVISION = '2';
+
 export function videoUrl(assetId: string): string {
-  // No `size` here, so the buster is the only query parameter.
-  const v = cacheBuster ? `?${cacheBuster.slice(1)}` : '';
-  return `${cdnBase()}/api/video/${encodeAssetId(assetId)}${v}`;
+  return `${cdnBase()}/api/video/${encodeAssetId(assetId)}?r=${VIDEO_REVISION}${cacheBuster}`;
 }
 
 /**

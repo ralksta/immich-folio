@@ -29,7 +29,8 @@ describe('IMAGE_CACHE_VERSION', () => {
 
     expect(imageUrl(ASSET)).toMatch(/^\/api\/image\/[^?]+\?size=preview$/);
     expect(imageUrl(ASSET, 'thumbnail')).toMatch(/^\/api\/image\/[^?]+\?size=thumbnail$/);
-    expect(videoUrl(ASSET)).toMatch(/^\/api\/video\/[^?]+$/);
+    // Video URLs carry their revision (lib/urls.ts VIDEO_REVISION), nothing else.
+    expect(videoUrl(ASSET)).toMatch(/^\/api\/video\/[^?]+\?r=2$/);
   });
 
   it('treats an empty or whitespace-only value as unset', async () => {
@@ -44,12 +45,12 @@ describe('IMAGE_CACHE_VERSION', () => {
     expect(imageUrl(ASSET)).toMatch(/\?size=preview&v=2$/);
   });
 
-  it('uses a leading ? on video URLs, which carry no other parameter', async () => {
+  it('appends the version after the video revision', async () => {
     vi.stubEnv('IMAGE_CACHE_VERSION', '2');
     const { videoUrl } = await urls();
 
     const url = videoUrl(ASSET);
-    expect(url).toMatch(/\?v=2$/);
+    expect(url).toMatch(/\?r=2&v=2$/);
     expect(url).not.toContain('?&');
   });
 

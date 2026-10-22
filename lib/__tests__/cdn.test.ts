@@ -57,7 +57,7 @@ describe('CDN mode', () => {
   it('keeps URLs relative without CDN_URL', async () => {
     const { imageUrl, videoUrl, cdnOrigin } = await load();
     expect(imageUrl(ASSET)).toMatch(/^\/api\/image\/[^?]+\?size=preview$/);
-    expect(videoUrl(ASSET)).toMatch(/^\/api\/video\/[^?]+$/);
+    expect(videoUrl(ASSET)).toMatch(/^\/api\/video\/[^?]+\?r=2$/);
     expect(cdnOrigin()).toBeNull();
   });
 

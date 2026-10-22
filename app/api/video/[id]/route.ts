@@ -17,6 +17,56 @@ import { decodeAssetId } from '@/lib/tokens';
 import { getConfig } from '@/lib/config';
 import { checkRateLimit, getClientIp, retryAfterSeconds } from '@/lib/rate-limit';
 import { siteLockResponse } from '@/lib/auth';
+import {
+  parseContentRange,
+  patchStream,
+  playbackPlan,
+  type RangeFetcher,
+} from '@/lib/videoPlayback';
+
+/** The first `n` bytes of a stream; the rest is cancelled. */
+async function readUpTo(stream: ReadableStream<Uint8Array>, n: number): Promise<Uint8Array> {
+  const reader = stream.getReader();
+  const parts: Uint8Array[] = [];
+  let length = 0;
+  try {
+    while (length < n) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      parts.push(value);
+      length += value.length;
+    }
+  } finally {
+    await reader.cancel().catch(() => {});
+  }
+  const out = new Uint8Array(Math.min(length, n));
+  let at = 0;
+  for (const part of parts) {
+    if (at >= out.length) break;
+    out.set(part.subarray(0, out.length - at), at);
+    at += part.length;
+  }
+  return out;
+}
+
+/** Ranged reads of one video's playback file, for lib/videoPlayback.ts. */
+function rangeFetcher(assetId: string): RangeFetcher {
+  return async (start, end) => {
+    const res = await immich.streamVideo(assetId, `bytes=${start}-${end}`);
+    if (!res) return null;
+    const range = parseContentRange(res.contentRange);
+    if (res.status === 206 && range?.start === start) {
+      return { bytes: await readUpTo(res.stream, end - start + 1), total: range.total };
+    }
+    // A 200 is the whole file. That only works for a read from the start.
+    const total = Number(res.contentLength);
+    if (res.status === 200 && start === 0 && Number.isFinite(total)) {
+      return { bytes: await readUpTo(res.stream, end + 1), total };
+    }
+    await res.stream.cancel().catch(() => {});
+    throw new Error(`Immich did not answer the range ${start}-${end} for video ${assetId}`);
+  };
+}
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // ── Rate limiting ──────────────────────────────────
@@ -86,6 +136,44 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     );
   }
 
+  // Location out of what is played (lib/videoPlayback.ts): Immich's playback
+  // file is the original whenever it did not transcode, and an original
+  // keeps where it was recorded. The edits are planned once per video and
+  // applied to whichever range this response carries.
+  const served =
+    result.status === 206
+      ? parseContentRange(result.contentRange)
+      : { start: 0, total: Number(result.contentLength) };
+  let planned;
+  try {
+    if (!served || !Number.isFinite(served.total)) throw new Error('unknown video length');
+    planned = await playbackPlan(assetId, served.total, rangeFetcher(assetId));
+  } catch (error) {
+    await result.stream.cancel().catch(() => {});
+    if (error instanceof ImmichUnavailableError) {
+      console.error(`[Video API] Immich unavailable for ${assetId}:`, error.message);
+      return NextResponse.json(
+        { error: 'Immich is currently unavailable' },
+        { status: 503, headers: { 'Retry-After': '30', 'Cache-Control': 'no-store' } },
+      );
+    }
+    planned = {
+      ok: false as const,
+      reason: error instanceof Error ? error.message : String(error),
+    };
+  }
+  if (!planned.ok) {
+    await result.stream.cancel().catch(() => {});
+    console.warn(
+      `[Video API] Refused video ${assetId}: its location metadata could not be located (${planned.reason}).`,
+    );
+    return NextResponse.json(
+      { error: 'Not found' },
+      { status: 404, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+  const body = patchStream(result.stream, served!.start, planned.plan.patches);
+
   let contentType = result.contentType.toLowerCase();
   if (!contentType.startsWith('video/') && !contentType.startsWith('audio/')) {
     contentType = 'application/octet-stream';
@@ -106,7 +194,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     headers['Content-Range'] = result.contentRange;
   }
 
-  return new NextResponse(result.stream, {
+  return new NextResponse(body, {
     status: result.status,
     headers,
   });

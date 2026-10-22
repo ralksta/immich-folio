@@ -320,6 +320,11 @@ the clip a Samsung or Pixel motion photo appends to its JPEG. Other formats
 Immich stores them, including any GPS. The diagnostics page warns when a
 download album contains such files.
 
+Video playback gets the same treatment. When Immich has not transcoded a
+video, the file the player streams is the original, so `/api/video` removes
+the same metadata from every range it serves. A video Folio cannot read far
+enough to find its metadata is not played.
+
 What a video still carries is a GPS **track**: action cameras and some
 dashcams (GoPro, DJI, Insta360) record coordinates as a timed metadata stream
 next to the picture, which the scrubber does not reach. Leave downloads off

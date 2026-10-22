@@ -339,6 +339,25 @@ export function isVideoBrand(brand: string): boolean {
   );
 }
 
+/** Top-level boxes QuickTime files started with before `ftyp` existed. */
+export const LEGACY_QUICKTIME_BOXES = ['moov', 'mdat', 'wide', 'free', 'skip'];
+
+/**
+ * Whether the first bytes of a file are an MP4/QuickTime video: an `ftyp`
+ * with a video brand among those present, or a legacy QuickTime top box.
+ */
+export function isMp4Head(b: Uint8Array): boolean {
+  if (b.length < 8) return false;
+  const type = fourcc(b, 4);
+  if (LEGACY_QUICKTIME_BOXES.includes(type)) return true;
+  if (type !== 'ftyp' || b.length < 12) return false;
+  const end = Math.min(b.length, u32be(b, 0));
+  for (let p = 8; p + 4 <= end; p += p === 8 ? 8 : 4) {
+    if (isVideoBrand(fourcc(b, p))) return true;
+  }
+  return false;
+}
+
 /**
  * Where an appended MP4 begins in a motion photo's trailer: the offset of an
  * `ftyp` box with a video brand at or after `from` in `b`, or -1.

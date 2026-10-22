@@ -52,7 +52,12 @@
  * passed through.
  */
 
-import { Mp4LocationScrubber, findMp4Start, isVideoBrand } from './mp4Location';
+import {
+  LEGACY_QUICKTIME_BOXES,
+  Mp4LocationScrubber,
+  findMp4Start,
+  isVideoBrand,
+} from './mp4Location';
 
 /** Same ceiling as the image route's MAX_STRIP_BYTES. */
 export const HEAD_CAP = 64 * 1024 * 1024;
@@ -1227,7 +1232,7 @@ export async function scrubLocationStream(
   }
 
   // QuickTime files from before `ftyp` existed start with one of these.
-  if (b.length >= 8 && ['moov', 'mdat', 'wide', 'free', 'skip'].includes(fourcc(b, 4))) {
+  if (b.length >= 8 && LEGACY_QUICKTIME_BOXES.includes(fourcc(b, 4))) {
     return videoResult();
   }
 
