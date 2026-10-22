@@ -65,7 +65,6 @@ export const pickers: AdminDictionary['pickers'] = {
   /** The editor for `sort: manual`: pinned photos first, the rest in Immich order. */
   orderEditor: {
     title: (albumName: string) => `Fotovolgorde — ${albumName}`,
-    loadFailed: 'De foto’s van het album konden niet uit Immich worden geladen.',
     /** Pinned photos that were removed from the album in Immich. */
     dropped: (count: number) =>
       `${count} ${count === 1 ? 'vastgezette foto staat' : 'vastgezette foto’s staan'} niet meer in dit album. ${

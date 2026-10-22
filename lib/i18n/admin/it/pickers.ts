@@ -65,7 +65,6 @@ export const pickers: AdminDictionary['pickers'] = {
   /** The editor for `sort: manual`: pinned photos first, the rest in Immich order. */
   orderEditor: {
     title: (albumName: string) => `Ordine delle foto — ${albumName}`,
-    loadFailed: 'Impossibile caricare da Immich le foto dell’album.',
     /** Pinned photos that were removed from the album in Immich. */
     dropped: (count: number) =>
       `${count} ${count === 1 ? 'foto fissata non è' : 'foto fissate non sono'} più in questo album. ${
