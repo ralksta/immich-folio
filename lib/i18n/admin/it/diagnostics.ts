@@ -82,8 +82,7 @@ export const diagnostics: AdminDictionary['diagnostics'] = {
   },
 
   errors: {
-    failed: 'Diagnostica non riuscita',
-    failedStatus: (status: number) => `Diagnostica non riuscita (${status})`,
+    failed: (reason: string) => `Diagnostica non riuscita. ${reason}`,
     copyFailed: 'Impossibile copiare: il browser ha negato l’accesso agli appunti.',
   },
 

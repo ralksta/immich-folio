@@ -89,8 +89,7 @@ export const diagnostics: AdminDictionary['diagnostics'] = {
   },
 
   errors: {
-    failed: 'Échec du diagnostic',
-    failedStatus: (status: number) => `Échec du diagnostic (${status})`,
+    failed: (reason: string) => `Échec du diagnostic. ${reason}`,
     copyFailed: 'Copie impossible — votre navigateur a refusé l’accès au presse-papiers.',
   },
 
