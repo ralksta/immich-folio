@@ -1401,7 +1401,9 @@ body:has(> #main-content) > .footer {
 }
 
 /* ── Showcase Layout ────────────────────────────── */
-/* First item gets full width; rest in standard grid */
+/* First item gets full width; rest in standard grid. The grid's children are
+   the FadeIn wrappers, not the tiles, so the span goes on the wrapper and the
+   shape on the tile inside it (#825). */
 .photo-grid--showcase {
   display: grid;
   grid-template-columns: repeat(var(--grid-columns, 3), 1fr);
@@ -1409,8 +1411,11 @@ body:has(> #main-content) > .footer {
   column-count: unset;
 }
 
-.photo-grid--showcase .photo-grid__featured {
+.photo-grid--showcase > .photo-grid__cell--featured {
   grid-column: 1 / -1;
+}
+
+.photo-grid--showcase .photo-grid__featured {
   aspect-ratio: 16 / 9;
   margin-bottom: 0;
 }
@@ -1465,9 +1470,14 @@ body:has(> #main-content) > .footer {
   aspect-ratio: 4 / 3;
 }
 
-/* Every 3rd item (1st, 4th, 7th, …) spans full width */
-.photo-grid--editorial-flow .photo-grid__item:nth-child(3n + 1) {
+/* Every 3rd item (1st, 4th, 7th, …) spans full width. Counted on the grid's
+   own children: every tile is the only child of its FadeIn wrapper, so
+   `.photo-grid__item:nth-child(3n + 1)` matched all of them (#825). */
+.photo-grid--editorial-flow > :nth-child(3n + 1) {
   grid-column: 1 / -1;
+}
+
+.photo-grid--editorial-flow > :nth-child(3n + 1) .photo-grid__item {
   aspect-ratio: 21 / 9;
 }
 
@@ -1476,11 +1486,8 @@ body:has(> #main-content) > .footer {
     grid-template-columns: 1fr;
   }
 
-  .photo-grid--editorial-flow .photo-grid__item:nth-child(3n + 1) {
-    aspect-ratio: 16 / 9;
-  }
-
-  .photo-grid--editorial-flow .photo-grid__item {
+  .photo-grid--editorial-flow .photo-grid__item,
+  .photo-grid--editorial-flow > :nth-child(3n + 1) .photo-grid__item {
     aspect-ratio: 16 / 9;
   }
 }

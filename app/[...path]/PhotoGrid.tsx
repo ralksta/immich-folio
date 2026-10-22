@@ -253,18 +253,21 @@ function PhotoGridInner({
       // which is the FadeIn wrapper — not the .photo-grid__item inside it.
       const justifiedStyle: React.CSSProperties | undefined =
         layout === 'justified' ? justifiedTileStyle(asset.aspectRatio) : undefined;
+      // The same goes for spanning grid columns: the showcase's lead photo has
+      // to widen the wrapper, which is the grid cell (#825). Its 16:9 comes
+      // from the stylesheet, so it takes no aspect ratio of its own here.
+      const featured = layout === 'showcase' && index === 0;
 
       return (
         <FadeIn
           key={asset.id}
           as="figure"
+          className={featured ? 'photo-grid__cell--featured' : undefined}
           delay={index < 12 ? index * 50 : 0}
           style={justifiedStyle}
         >
           <div
-            className={`photo-grid__item${
-              layout === 'showcase' && index === 0 ? ' photo-grid__featured' : ''
-            }`}
+            className={`photo-grid__item${featured ? ' photo-grid__featured' : ''}`}
             onClick={() => openLightbox(index)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -278,7 +281,7 @@ function PhotoGridInner({
             aria-label={t.lightbox.openPhoto(index + 1)}
             aria-haspopup="dialog"
             style={{
-              ...((layout === 'masonry' || layout === 'showcase') && asset.aspectRatio
+              ...((layout === 'masonry' || layout === 'showcase') && !featured && asset.aspectRatio
                 ? { aspectRatio: `${asset.aspectRatio}` }
                 : {}),
               position: 'relative',
