@@ -75,20 +75,29 @@ export function pageSlugCollision(slug: string, taken: SlugTakenBy): SlugCollisi
   return null;
 }
 
+/** The words of describeCollision(), one function per kind of collision. */
+export type CollisionText = Record<SlugCollision['kind'], (slug: string) => string>;
+
+/**
+ * English, for the API's error messages. The admin UI and the doctor pass the
+ * panel's language (`pages.collision` in lib/i18n/admin), which must say the
+ * same; lib/__tests__/admin-i18n.test.ts compares the two.
+ */
+export const COLLISION_TEXT_EN: CollisionText = {
+  invalid: (slug) => `"${slug}" is not a valid slug: use letters, digits, "-" and "_" only.`,
+  reserved: (slug) => `/${slug} is a built-in route of the site.`,
+  subpage: (slug) => `/${slug} is already a subpage.`,
+  album: (slug) => `/${slug} is already a standalone album.`,
+  journal: (slug) => `A journal entry already uses the slug "${slug}".`,
+};
+
 /** A sentence for the admin UI and the doctor. */
-export function describeCollision(slug: string, collision: SlugCollision): string {
-  switch (collision.kind) {
-    case 'invalid':
-      return `"${slug}" is not a valid slug: use letters, digits, "-" and "_" only.`;
-    case 'reserved':
-      return `/${slug} is a built-in route of the site.`;
-    case 'subpage':
-      return `/${slug} is already a subpage.`;
-    case 'album':
-      return `/${slug} is already a standalone album.`;
-    case 'journal':
-      return `A journal entry already uses the slug "${slug}".`;
-  }
+export function describeCollision(
+  slug: string,
+  collision: SlugCollision,
+  t: CollisionText = COLLISION_TEXT_EN,
+): string {
+  return t[collision.kind](slug);
 }
 
 /** One entry of the header menu, in gallery.yaml order. */

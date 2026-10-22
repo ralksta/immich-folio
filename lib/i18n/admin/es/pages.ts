@@ -413,4 +413,12 @@ export const pages: AdminDictionary['pages'] = {
     mapHint:
       'Los puntos introducidos se publican tal cual. Los marcadores de foto se colocan en la página publicada según el GPS de la foto, con la precisión de ubicación del álbum. Solo se muestra mientras el mapa esté activado en Ajustes.',
   },
+  collision: {
+    invalid: (slug: string) =>
+      `«${slug}» no es una ruta válida: usa solo letras, números, «-» y «_».`,
+    reserved: (slug: string) => `/${slug} es una ruta propia del sitio.`,
+    subpage: (slug: string) => `/${slug} ya es una subpágina.`,
+    album: (slug: string) => `/${slug} ya es un álbum independiente.`,
+    journal: (slug: string) => `Una entrada del diario ya usa la ruta «${slug}».`,
+  },
 };

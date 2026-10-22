@@ -43,7 +43,7 @@ export default function NewPageDialog({
       ? t.exists(effectiveSlug)
       : (() => {
           const c = pageSlugCollision(effectiveSlug, taken);
-          return c ? describeCollision(effectiveSlug, c) : null;
+          return c ? describeCollision(effectiveSlug, c, dict.pages.collision) : null;
         })();
 
   const submit = (e: React.FormEvent) => {

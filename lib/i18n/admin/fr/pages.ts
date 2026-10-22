@@ -422,4 +422,12 @@ export const pages: AdminDictionary['pages'] = {
     mapHint:
       'Les points saisis sont publiés tels quels. Les marqueurs photo sont placés sur la page en ligne d’après le GPS de la photo, selon la précision de localisation de l’album. Rendu uniquement si la carte est activée dans Paramètres.',
   },
+  collision: {
+    invalid: (slug: string) =>
+      `« ${slug} » n’est pas un slug valide : utilisez uniquement des lettres, des chiffres, « - » et « _ ».`,
+    reserved: (slug: string) => `/${slug} est une route intégrée du site.`,
+    subpage: (slug: string) => `/${slug} est déjà une sous-page.`,
+    album: (slug: string) => `/${slug} est déjà un album indépendant.`,
+    journal: (slug: string) => `Un article du journal utilise déjà le slug « ${slug} ».`,
+  },
 };

@@ -430,13 +430,22 @@
 
 .subpage-albums-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 0.4rem 0.75rem;
   margin-bottom: 0.5rem;
   font-size: 0.75rem;
   color: var(--admin-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* The drawer's album column is narrow: when the heading and the button do not
+   fit side by side, the button moves under the heading rather than squeezing
+   it into a word per line. */
+.subpage-albums-header > button {
+  white-space: nowrap;
 }
 
 .subpage-sections {

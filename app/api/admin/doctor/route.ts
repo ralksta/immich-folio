@@ -60,7 +60,8 @@ export const GET = withAdmin(async (request: NextRequest) => {
   const findings: DoctorFinding[] = [];
   // Findings are worded in the panel's language (#604), like the page that
   // shows them.
-  const t = getAdminDictionary(resolveAdminLocale(config.adminLang, config.lang)).doctor;
+  const adminDict = getAdminDictionary(resolveAdminLocale(config.adminLang, config.lang));
+  const t = adminDict.doctor;
 
   // ── Secret and proxy: read off the environment and this very request ──
   findings.push(checkAuthSecret(env.AUTH_SECRET || config.authSecret, t));
@@ -283,7 +284,9 @@ export const GET = withAdmin(async (request: NextRequest) => {
     const collisions = taken
       ? pageSlugs.flatMap((slug) => {
           const collision = pageSlugCollision(slug, taken);
-          return collision ? [{ slug, reason: describeCollision(slug, collision) }] : [];
+          return collision
+            ? [{ slug, reason: describeCollision(slug, collision, adminDict.pages.collision) }]
+            : [];
         })
       : [];
     const pages = checkContentPages(

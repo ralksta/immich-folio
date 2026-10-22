@@ -136,7 +136,7 @@ export default function PagePanel({
       ? t.exists(targetSlug)
       : (() => {
           const c = pageSlugCollision(targetSlug, taken);
-          return c ? describeCollision(targetSlug, c) : null;
+          return c ? describeCollision(targetSlug, c, dict.pages.collision) : null;
         })()
     : null;
 

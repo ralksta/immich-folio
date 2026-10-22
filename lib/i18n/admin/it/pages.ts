@@ -414,4 +414,12 @@ export const pages: AdminDictionary['pages'] = {
     mapHint:
       'I punti inseriti a mano vengono pubblicati così come sono. I segnaposto delle foto vengono posizionati sulla pagina online in base al GPS della foto, rispettando la precisione della posizione dell’album. Compare solo se la mappa è attiva nelle Impostazioni.',
   },
+  collision: {
+    invalid: (slug: string) =>
+      `«${slug}» non è uno slug valido: usa solo lettere, cifre, «-» e «_».`,
+    reserved: (slug: string) => `/${slug} è un percorso predefinito del sito.`,
+    subpage: (slug: string) => `/${slug} è già una sottopagina.`,
+    album: (slug: string) => `/${slug} è già un album indipendente.`,
+    journal: (slug: string) => `Un articolo del diario usa già lo slug «${slug}».`,
+  },
 };

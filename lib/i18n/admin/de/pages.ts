@@ -412,4 +412,12 @@ export const pages: AdminDictionary['pages'] = {
     mapHint:
       'Eingegebene Punkte erscheinen so, wie du sie eingibst. Foto-Pins werden auf der Live-Seite anhand der GPS-Daten des Fotos gesetzt, mit der Ortsgenauigkeit des Albums. Wird nur angezeigt, solange die Karte in den Einstellungen eingeschaltet ist.',
   },
+  collision: {
+    invalid: (slug: string) =>
+      `„${slug}“ ist kein gültiger Slug: nur Buchstaben, Ziffern, „-“ und „_“.`,
+    reserved: (slug: string) => `/${slug} ist eine eingebaute Route der Website.`,
+    subpage: (slug: string) => `/${slug} ist schon eine Unterseite.`,
+    album: (slug: string) => `/${slug} ist schon ein eigenständiges Album.`,
+    journal: (slug: string) => `Ein Journal-Eintrag nutzt den Slug „${slug}“ bereits.`,
+  },
 };

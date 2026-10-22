@@ -397,4 +397,13 @@ export const pages = {
     mapHint:
       "Typed points are published as typed. Photo pins are placed from the photo's GPS on the live page, under the album's location precision. Renders only while the map is enabled in Settings.",
   },
+  /** Why a page slug is taken (lib/pages.ts describeCollision); also shown in Diagnostics. */
+  collision: {
+    invalid: (slug: string) =>
+      `"${slug}" is not a valid slug: use letters, digits, "-" and "_" only.`,
+    reserved: (slug: string) => `/${slug} is a built-in route of the site.`,
+    subpage: (slug: string) => `/${slug} is already a subpage.`,
+    album: (slug: string) => `/${slug} is already a standalone album.`,
+    journal: (slug: string) => `A journal entry already uses the slug "${slug}".`,
+  },
 };

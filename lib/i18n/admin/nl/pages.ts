@@ -412,4 +412,12 @@ export const pages: AdminDictionary['pages'] = {
     mapHint:
       'Getypte punten worden gepubliceerd zoals getypt. Fotospelden worden op de live pagina geplaatst op basis van de gps-gegevens van de foto, binnen de locatieprecisie van het album. Alleen getoond zolang de kaart in Instellingen is ingeschakeld.',
   },
+  collision: {
+    invalid: (slug: string) =>
+      `“${slug}” is geen geldige slug: gebruik alleen letters, cijfers, “-” en “_”.`,
+    reserved: (slug: string) => `/${slug} is een ingebouwde route van de site.`,
+    subpage: (slug: string) => `/${slug} is al een subpagina.`,
+    album: (slug: string) => `/${slug} is al een los album.`,
+    journal: (slug: string) => `Een journalverhaal gebruikt de slug “${slug}” al.`,
+  },
 };

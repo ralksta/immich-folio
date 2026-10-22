@@ -16,6 +16,7 @@ import { adminEs } from '../i18n/admin/es';
 import { adminIt } from '../i18n/admin/it';
 import { adminNl } from '../i18n/admin/nl';
 import { LIGHTBOX_SHORTCUTS } from '../lightboxShortcuts';
+import { COLLISION_TEXT_EN, describeCollision, type SlugCollision } from '../pages';
 
 describe('resolveAdminLocale', () => {
   it('uses adminLang when it is set', () => {
@@ -412,5 +413,29 @@ describe('help page shortcut notes', () => {
     const withNote = LIGHTBOX_SHORTCUTS.filter((s) => s.note);
     expect(Object.keys(notes).sort()).toEqual(withNote.map((s) => s.labelKey).sort());
     for (const shortcut of withNote) expect(notes[shortcut.labelKey]).toBe(shortcut.note);
+  });
+});
+
+describe('slug collision reasons', () => {
+  // The API answers in English from lib/pages.ts; the page builder and the
+  // doctor read the panel's dictionary. The two English copies must agree.
+  const kinds: SlugCollision['kind'][] = ['invalid', 'reserved', 'subpage', 'album', 'journal'];
+
+  it('say the same in the English dictionary as in the API default', () => {
+    expect(Object.keys(adminEn.pages.collision).sort()).toEqual(
+      Object.keys(COLLISION_TEXT_EN).sort(),
+    );
+    for (const kind of kinds) {
+      expect(adminEn.pages.collision[kind]('trips')).toBe(COLLISION_TEXT_EN[kind]('trips'));
+    }
+  });
+
+  it('name the slug in every language', () => {
+    for (const locale of SUPPORTED_LOCALES) {
+      const t = getAdminDictionary(locale).pages.collision;
+      for (const kind of kinds) {
+        expect(describeCollision('trips', { kind } as SlugCollision, t)).toContain('trips');
+      }
+    }
   });
 });
