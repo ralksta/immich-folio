@@ -16,6 +16,7 @@ import { adminEs } from '../i18n/admin/es';
 import { adminIt } from '../i18n/admin/it';
 import { adminNl } from '../i18n/admin/nl';
 import { LIGHTBOX_SHORTCUTS } from '../lightboxShortcuts';
+import { COLLISION_TEXT_EN, describeCollision, type SlugCollision } from '../pages';
 
 describe('resolveAdminLocale', () => {
   it('uses adminLang when it is set', () => {
@@ -52,18 +53,29 @@ function leaves(obj: object, prefix = ''): [string, unknown][] {
 }
 
 /**
- * Call a dictionary function with plausible arguments for its arity. A
- * function that takes a list (`names: string[]`) throws on a string, so the
- * call is retried with one-element lists, which interpolate the same way.
+ * Call a dictionary function with plausible arguments for its arity: a count
+ * first, then strings. A function that takes a list (`names: string[]`) or a
+ * string first (`label: string`) throws on that, so the call is retried with
+ * one-element lists, then with strings throughout; they interpolate alike.
  */
 function invoke(fn: (...args: never[]) => string): string {
   const call = fn as (...a: unknown[]) => string;
-  const args = Array.from({ length: fn.length }, (_, i) => (i === 0 ? 2 : `arg${i}`));
-  try {
-    return call(...args);
-  } catch {
-    return call(...args.map((arg, i) => (i === 0 ? arg : [arg])));
+  const n = fn.length;
+  const attempts: unknown[][] = [
+    Array.from({ length: n }, (_, i) => (i === 0 ? 2 : `arg${i}`)),
+    Array.from({ length: n }, (_, i) => (i === 0 ? 2 : [`arg${i}`])),
+    Array.from({ length: n }, (_, i) => [`arg${i}`]),
+    Array.from({ length: n }, (_, i) => `arg${i}`),
+  ];
+  let error: unknown;
+  for (const args of attempts) {
+    try {
+      return call(...args);
+    } catch (err) {
+      error = err;
+    }
   }
+  throw error;
 }
 
 /**
@@ -121,6 +133,29 @@ const TRANSLATIONS: [string, AdminDictionary, string[]][] = [
       'visitors.proofing.create.downloads',
       'system.help.kicker',
       'system.backups.tabs.journal',
+      'pages.albumDrawer.original',
+      'pages.albumDrawer.downloads',
+      'pages.albumDrawer.layouts.masonry',
+      'pages.albumDrawer.layouts.showcase',
+      'pages.albumDrawer.layouts.editorialFlow',
+      'pages.albumDrawer.heroAlt',
+      'pages.subpageDrawer.layouts.editorialFlow',
+      'pages.newPage.url',
+      'pages.newPage.slugFallback',
+      'pages.pagePanel.url',
+      'pages.essay.add.album',
+      'pages.essay.uuidN',
+      'pages.essay.layout',
+      'journal.studio.title',
+      'journal.studio.create.slugFallback',
+      'journal.editor.live',
+      'journal.editor.addText',
+      'journal.editor.addAlbum',
+      'journal.blocks.text',
+      'journal.blocks.layout',
+      'journal.preview.desktop',
+      'pickers.badges.paragraph',
+      'pickers.badges.album',
     ],
   ],
   [
@@ -156,12 +191,53 @@ const TRANSLATIONS: [string, AdminDictionary, string[]][] = [
       'system.help.diagnostics',
       'system.help.diagnosticsTab',
       'system.backups.tabs.journal',
+      'pages.header.title',
+      'pages.builder.menu',
+      'pages.albumCard.photos',
+      'pages.albumDrawer.photos',
+      'pages.albumDrawer.description',
+      'pages.tiles.page',
+      'pages.tiles.albums',
+      'pages.newPage.url',
+      'pages.newPage.slugFallback',
+      'pages.pagePanel.url',
+      'pages.essay.add.photo',
+      'pages.essay.add.album',
+      'pages.essay.photoN',
+      'pages.essay.latitude',
+      'pages.essay.longitude',
+      'pages.essay.addPoint',
+      'journal.studio.title',
+      'journal.studio.readingTime',
+      'journal.studio.create.slugFallback',
+      'journal.studio.create.tabAlbums',
+      'journal.editor.pages',
+      'journal.editor.addPhoto',
+      'journal.editor.addPhotos',
+      'journal.editor.addAlbum',
+      'journal.blocks.latitude',
+      'journal.blocks.longitude',
+      'journal.blocks.addPoint',
+      'journal.preview.mobile',
+      'pickers.albumPicker.photoCount',
+      'pickers.assetPicker.tabs.albums',
+      'pickers.assetPicker.gridLabel',
+      'pickers.badges.photo',
+      'pickers.badges.album',
     ],
   ],
   [
     'es',
     adminEs,
-    ['common.errorWith', 'settings.editor.sections.general', 'settings.footer.linkUrl'],
+    [
+      'common.errorWith',
+      'settings.editor.sections.general',
+      'settings.footer.linkUrl',
+      'pages.sort.manual',
+      'pages.newPage.url',
+      'pages.pagePanel.url',
+      'journal.studio.readingTime',
+    ],
   ],
   [
     'it',
@@ -177,6 +253,19 @@ const TRANSLATIONS: [string, AdminDictionary, string[]][] = [
       'doctor.passwords.labelAlbum',
       'visitors.proofing.create.album',
       'system.backups.tabs.privacy',
+      'pages.builder.homePage',
+      'pages.builder.menu',
+      'pages.albumDrawer.layouts.masonry',
+      'pages.tiles.password',
+      'pages.essay.add.album',
+      'pages.essay.uuidN',
+      'pages.essay.lat',
+      'journal.studio.readingTime',
+      'journal.studio.password',
+      'journal.editor.addAlbum',
+      'journal.blocks.lat',
+      'journal.preview.desktop',
+      'pickers.badges.album',
     ],
   ],
   [
@@ -200,6 +289,22 @@ const TRANSLATIONS: [string, AdminDictionary, string[]][] = [
       'system.help.title',
       'system.backups.tabs.privacy',
       'system.backups.tabs.journal',
+      'pages.builder.menu',
+      'pages.albumDrawer.downloads',
+      'pages.albumDrawer.layouts.masonry',
+      'pages.tiles.albums',
+      'pages.newPage.url',
+      'pages.newPage.slugFallback',
+      'pages.pagePanel.url',
+      'pages.essay.add.album',
+      'journal.studio.title',
+      'journal.studio.create.slugFallback',
+      'journal.studio.create.tabAlbums',
+      'journal.editor.live',
+      'journal.editor.addAlbum',
+      'journal.preview.desktop',
+      'pickers.assetPicker.tabs.albums',
+      'pickers.badges.album',
     ],
   ],
 ];
@@ -308,5 +413,29 @@ describe('help page shortcut notes', () => {
     const withNote = LIGHTBOX_SHORTCUTS.filter((s) => s.note);
     expect(Object.keys(notes).sort()).toEqual(withNote.map((s) => s.labelKey).sort());
     for (const shortcut of withNote) expect(notes[shortcut.labelKey]).toBe(shortcut.note);
+  });
+});
+
+describe('slug collision reasons', () => {
+  // The API answers in English from lib/pages.ts; the page builder and the
+  // doctor read the panel's dictionary. The two English copies must agree.
+  const kinds: SlugCollision['kind'][] = ['invalid', 'reserved', 'subpage', 'album', 'journal'];
+
+  it('say the same in the English dictionary as in the API default', () => {
+    expect(Object.keys(adminEn.pages.collision).sort()).toEqual(
+      Object.keys(COLLISION_TEXT_EN).sort(),
+    );
+    for (const kind of kinds) {
+      expect(adminEn.pages.collision[kind]('trips')).toBe(COLLISION_TEXT_EN[kind]('trips'));
+    }
+  });
+
+  it('name the slug in every language', () => {
+    for (const locale of SUPPORTED_LOCALES) {
+      const t = getAdminDictionary(locale).pages.collision;
+      for (const kind of kinds) {
+        expect(describeCollision('trips', { kind } as SlugCollision, t)).toContain('trips');
+      }
+    }
   });
 });

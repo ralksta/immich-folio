@@ -26,9 +26,6 @@ export const settings: AdminDictionary['settings'] = {
     description:
       'Les modifications enregistrées s’appliquent immédiatement au site, sans redémarrage.',
     saveChanges: 'Enregistrer les modifications',
-    sessionExpired: 'Votre session a expiré. Reconnectez-vous pour continuer.',
-    serverAnswered: (status: number) => `Le serveur a répondu ${status}.`,
-    loadFailed: 'Les paramètres n’ont pas pu être chargés.',
     loadErrorTitle: 'Les paramètres n’ont pas pu être chargés.',
     loadErrorBody:
       'Rien n’a été modifié. L’enregistrement reste désactivé tant qu’ils ne sont pas chargés, pour qu’un formulaire vide ne puisse pas écraser votre configuration.',
@@ -339,12 +336,10 @@ export const settings: AdminDictionary['settings'] = {
     gear: 'Matériel (un par ligne)',
     biography: 'Biographie (Markdown)',
     biographyPlaceholder: 'Photographe basé à…',
-    loadFailed: 'La page À propos n’a pas pu être chargée.',
     conflict: 'Non enregistré — la page À propos a été modifiée ailleurs.',
   },
 
   privacy: {
-    loadFailed: 'Chargement impossible.',
     loadError: (error: string) =>
       `La politique de confidentialité n’a pas pu être chargée (${error}). Rechargez la page pour réessayer.`,
     conflict: 'Non enregistré — la politique a été modifiée ailleurs.',

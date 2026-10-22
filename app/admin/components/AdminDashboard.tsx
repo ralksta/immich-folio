@@ -198,25 +198,15 @@ export default function AdminDashboard({ onLogout, children }: Props) {
     }
   }
 
-  const fetchStatus = async () => {
+  // A failure only makes the indicators "unknown" (below); through adminGet a
+  // 401 still signs the panel out.
+  const fetchStatus = useCallback(async () => {
     setStatusLoading(true);
-    try {
-      const res = await fetch('/api/admin/status');
-      if (res.ok) {
-        const data = await res.json();
-        setStatus(data);
-        setStatusError(false);
-      } else {
-        setStatus(null);
-        setStatusError(true);
-      }
-    } catch {
-      setStatus(null);
-      setStatusError(true);
-    } finally {
-      setStatusLoading(false);
-    }
-  };
+    const r = await adminGet<NonNullable<typeof status>>('/api/admin/status', dict.shell);
+    setStatus(r.data);
+    setStatusError(r.error !== null);
+    setStatusLoading(false);
+  }, [dict.shell]);
 
   /**
    * Render one diagnostic as ok / bad / unknown. "Unknown" covers both the
@@ -230,34 +220,29 @@ export default function AdminDashboard({ onLogout, children }: Props) {
   };
 
   const fetchDoctor = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/doctor');
-      if (!res.ok) return;
-      const data = await res.json();
-      setDoctorLevel(data.level ?? null);
-    } catch {
-      // A failed check must not colour the badge — "unknown" is not "broken".
-    }
-  }, []);
+    const r = await adminGet<{ level?: DoctorLevel }>('/api/admin/doctor', dict.shell);
+    // A failed check must not colour the badge — "unknown" is not "broken".
+    if (r.data) setDoctorLevel(r.data.level ?? null);
+  }, [dict.shell]);
 
   useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect -- loads started on mount; move to useAdminFetch in #821 */
+    /* eslint-disable react-hooks/set-state-in-effect -- loads started on mount; a reload and the status badge call them again, so they stay functions (#821) */
     fetchStatus();
     fetchDoctor();
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [fetchDoctor]);
+  }, [fetchStatus, fetchDoctor]);
 
   // Re-counted on every navigation: reading a message in the inbox and moving
   // on should clear the count without a reload.
   useEffect(() => {
     let live = true;
-    adminGet<{ messages: { read: boolean }[] }>('/api/admin/messages').then((r) => {
+    adminGet<{ messages: { read: boolean }[] }>('/api/admin/messages', dict.shell).then((r) => {
       if (live && r.data) setUnread(r.data.messages.filter((m) => !m.read).length);
     });
     return () => {
       live = false;
     };
-  }, [pathname]);
+  }, [pathname, dict.shell]);
 
   // The diagnostics page runs the doctor itself; take its answer rather than
   // asking Immich the same three questions again.

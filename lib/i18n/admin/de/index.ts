@@ -11,6 +11,9 @@ import { diagnostics } from './diagnostics';
 import { doctor } from './doctor';
 import { visitors } from './visitors';
 import { system } from './system';
+import { pages } from './pages';
+import { journal } from './journal';
+import { pickers } from './pickers';
 
 export const adminDe: AdminDictionary = {
   common,
@@ -20,4 +23,7 @@ export const adminDe: AdminDictionary = {
   doctor,
   visitors,
   system,
+  pages,
+  journal,
+  pickers,
 };

@@ -1,4 +1,6 @@
 import type { JournalBlock } from '@/lib/journal';
+import type { AdminDictionary } from '@/lib/i18n/admin';
+import { adminEn } from '@/lib/i18n/admin/en';
 
 /**
  * Block-list operations of the journal editor, as plain functions so they can
@@ -38,14 +40,17 @@ export function createPhotoBlocks(assetIds: string[]): JournalBlock[] {
 }
 
 /** The block the "Add Block" toolbar inserts for each type. */
-export function createBlock(type: JournalBlock['type']): JournalBlock {
+export function createBlock(
+  type: JournalBlock['type'],
+  t: AdminDictionary['journal']['blockDefaults'] = adminEn.journal.blockDefaults,
+): JournalBlock {
   switch (type) {
     case 'heading':
-      return { type: 'heading', level: 2, text: 'New Heading' };
+      return { type: 'heading', level: 2, text: t.heading };
     case 'paragraph':
-      return { type: 'paragraph', html: 'Enter paragraph text here...' };
+      return { type: 'paragraph', html: t.paragraph };
     case 'quote':
-      return { type: 'quote', text: 'Enter quote text...', author: '' };
+      return { type: 'quote', text: t.quote, author: '' };
     case 'photo':
       return { type: 'photo', assetId: '', caption: '', layout: 'contained' };
     case 'photo-pair':

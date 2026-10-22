@@ -23,9 +23,6 @@ export const settings: AdminDictionary['settings'] = {
     title: 'Instellingen',
     description: 'Opgeslagen wijzigingen gelden meteen voor de site, zonder herstart.',
     saveChanges: 'Wijzigingen opslaan',
-    sessionExpired: 'Je sessie is verlopen. Meld je opnieuw aan om verder te gaan.',
-    serverAnswered: (status: number) => `De server antwoordde met ${status}.`,
-    loadFailed: 'De instellingen konden niet worden geladen.',
     loadErrorTitle: 'Instellingen konden niet worden geladen.',
     loadErrorBody:
       'Er is niets gewijzigd. Opslaan blijft uitgeschakeld tot ze geladen zijn, zodat een leeg formulier je configuratie niet kan overschrijven.',
@@ -342,12 +339,10 @@ export const settings: AdminDictionary['settings'] = {
     gear: 'Uitrusting (één per regel)',
     biography: 'Biografie (Markdown)',
     biographyPlaceholder: 'Fotograaf uit…',
-    loadFailed: 'De Over-mij-pagina kon niet worden geladen.',
     conflict: 'Niet opgeslagen — de Over-mij-pagina is elders gewijzigd.',
   },
 
   privacy: {
-    loadFailed: 'Kon niet worden geladen.',
     /** `error` is a short technical reason, e.g. "HTTP 500". */
     loadError: (error: string) =>
       `De privacyverklaring kon niet worden geladen (${error}). Laad de pagina opnieuw om het nog eens te proberen.`,

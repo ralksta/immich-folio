@@ -22,6 +22,8 @@ import { useDraft } from './useDraft';
 import DraftNotice from './DraftNotice';
 import type { ProcessingFact } from '@/lib/privacy';
 import { rich, useAdminDictionary } from './AdminI18n';
+import { adminGet } from './useAdminFetch';
+import AdminLoadState from './AdminLoadState';
 
 interface PrivacyData {
   body: string;
@@ -60,25 +62,19 @@ export default function PrivacyEditor() {
   });
 
   const load = useCallback(async (): Promise<void> => {
-    try {
-      const res = await fetch('/api/admin/privacy');
-      if (!res.ok) {
-        reportIfSessionExpired(res);
-        throw new Error(`HTTP ${res.status}`);
-      }
-      const d = (await res.json()) as PrivacyData;
-      versionRef.current = d.version ?? null;
-      setData(d);
-      const restored = loadDraft(d.body);
-      setBody(restored ?? d.body);
-      setDirty(restored !== null);
-    } catch (err) {
-      setLoadError(err instanceof Error ? err.message : t.loadFailed);
-    }
-  }, [loadDraft, t]);
+    const r = await adminGet<PrivacyData>('/api/admin/privacy', dict.shell);
+    setLoadError(r.error);
+    if (r.error !== null) return;
+    const d = r.data;
+    versionRef.current = d.version ?? null;
+    setData(d);
+    const restored = loadDraft(d.body);
+    setBody(restored ?? d.body);
+    setDirty(restored !== null);
+  }, [loadDraft, dict.shell]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- a load started on mount; moves to useAdminFetch in #821
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a load started on mount; a restored backup calls it again, so it stays a function (#821)
     void load();
   }, [load]);
 
@@ -135,7 +131,9 @@ export default function PrivacyEditor() {
 
   if (loadError) {
     // No editor over an unknown file: saving an empty one would erase the policy.
-    return <p className="admin-field-hint admin-field-hint--error">{t.loadError(loadError)}</p>;
+    return (
+      <AdminLoadState loading={false} error={t.loadError(loadError)} onRetry={() => void load()} />
+    );
   }
   if (!data) return <div className="admin-spinner" />;
 

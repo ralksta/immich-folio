@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import type { ParsedJournal } from '@/lib/journal';
 import PasswordField from '../fields/PasswordField';
 import { IconX } from '../Icons';
+import { useAdminDictionary } from '../AdminI18n';
 
 type Frontmatter = ParsedJournal['frontmatter'];
 
@@ -19,6 +20,8 @@ interface PageSettingsPanelProps {
  * place are edited in Pages, where the collision check and the menu live.
  */
 export function PageSettingsPanel({ frontmatter, onChange, onClose }: PageSettingsPanelProps) {
+  const dict = useAdminDictionary();
+  const t = dict.journal.pageSettings;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -28,21 +31,26 @@ export function PageSettingsPanel({ frontmatter, onChange, onClose }: PageSettin
   }, [onClose]);
 
   return (
-    <aside className="page-settings-panel" aria-label="Page settings">
+    <aside className="page-settings-panel" aria-label={t.title}>
       <div className="page-settings-panel-head">
-        <h3>Page settings</h3>
-        <button type="button" className="admin-btn-icon" onClick={onClose} title="Close">
+        <h3>{t.title}</h3>
+        <button
+          type="button"
+          className="admin-btn-icon"
+          onClick={onClose}
+          title={dict.common.close}
+        >
           <IconX size={14} />
         </button>
       </div>
 
       <div className="admin-field">
-        <label htmlFor="page-settings-description">SEO description</label>
+        <label htmlFor="page-settings-description">{t.description}</label>
         <textarea
           id="page-settings-description"
           rows={3}
           value={frontmatter.description || ''}
-          placeholder="One or two sentences for search engines and link previews"
+          placeholder={t.descriptionPlaceholder}
           // One line in the frontmatter: a line break would end the value.
           onChange={(e) => onChange({ description: e.target.value.replace(/\s*\n\s*/g, ' ') })}
         />
@@ -55,10 +63,8 @@ export function PageSettingsPanel({ frontmatter, onChange, onClose }: PageSettin
         aria-pressed={!!frontmatter.draft}
       >
         <span className="setting-row-info">
-          <span className="setting-row-title">Draft</span>
-          <span className="setting-row-desc">
-            Only you can see a draft, and it stays out of the menu and the sitemap.
-          </span>
+          <span className="setting-row-title">{t.draft}</span>
+          <span className="setting-row-desc">{t.draftDescription}</span>
         </span>
         <span className={`switch-toggle switch-toggle--sm ${frontmatter.draft ? 'on' : ''}`}>
           <span className="switch-slider" />
@@ -66,17 +72,15 @@ export function PageSettingsPanel({ frontmatter, onChange, onClose }: PageSettin
       </button>
 
       <div className="admin-field">
-        <span className="admin-field-label">Password (optional)</span>
+        <span className="admin-field-label">{t.password}</span>
         <PasswordField
           value={frontmatter.password || undefined}
           onChange={(password) => onChange({ password: password ?? '' })}
-          label="Page password"
+          label={t.passwordLabel}
         />
       </div>
 
-      <p className="page-settings-panel-note">
-        Settings are saved with the page. The URL and the menu place are set in Pages.
-      </p>
+      <p className="page-settings-panel-note">{t.note}</p>
     </aside>
   );
 }

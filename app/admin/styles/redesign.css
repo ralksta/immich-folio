@@ -931,11 +931,16 @@
 
 .pb-add-row {
   display: flex;
-  gap: 0.35rem;
+  flex-wrap: wrap;
+  column-gap: 0.35rem;
 }
 
+/* Side by side while both labels fit on one line; a longer label ("Nouvelle
+   sous-page", "Nuova sottopagina") puts each button on a row of its own
+   instead of breaking inside it. */
 .pb-add-row .pb-add {
-  flex: 1;
+  flex: 1 1 auto;
+  white-space: nowrap;
 }
 
 .pb-add {

@@ -77,4 +77,18 @@ describe('useAdminFetch', () => {
     act(() => result.current.mutate((d) => ({ items: d.items.filter((i) => i !== 1) })));
     expect(result.current.data).toEqual({ items: [2] });
   });
+
+  it('fetches again when the revision changes, and not otherwise', async () => {
+    const fetchMock = respond(200, { n: 1 });
+    vi.stubGlobal('fetch', fetchMock);
+    const { result, rerender } = renderHook(({ rev }) => useAdminFetch('/api/admin/x', rev), {
+      initialProps: { rev: 'a' },
+    });
+    await waitFor(() => expect(result.current.data).toEqual({ n: 1 }));
+    rerender({ rev: 'a' });
+    rerender({ rev: 'b' });
+    expect(result.current.data).toEqual({ n: 1 }); // the old answer stays while it reloads
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });

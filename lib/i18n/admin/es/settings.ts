@@ -27,9 +27,6 @@ export const settings: AdminDictionary['settings'] = {
     description: 'Los cambios guardados se aplican al sitio al instante, sin reiniciar.',
     /** Label of the save button in the floating save bar. */
     saveChanges: 'Guardar cambios',
-    sessionExpired: 'Tu sesión ha caducado. Vuelve a iniciar sesión para continuar.',
-    serverAnswered: (status: number) => `El servidor ha respondido ${status}.`,
-    loadFailed: 'No se han podido cargar los ajustes.',
     loadErrorTitle: 'No se han podido cargar los ajustes.',
     loadErrorBody:
       'No se ha cambiado nada. Guardar seguirá desactivado hasta que se carguen, para que un formulario vacío no pueda sobrescribir tu configuración.',
@@ -366,12 +363,10 @@ export const settings: AdminDictionary['settings'] = {
     gear: 'Equipo (uno por línea)',
     biography: 'Biografía (Markdown)',
     biographyPlaceholder: 'Fotógrafo afincado en…',
-    loadFailed: 'No se ha podido cargar la página «Sobre mí».',
     conflict: 'No se ha guardado: la página «Sobre mí» se ha cambiado en otro lugar.',
   },
 
   privacy: {
-    loadFailed: 'No se ha podido cargar.',
     /** `error` is a short technical reason, e.g. "HTTP 500". */
     loadError: (error: string) =>
       `No se ha podido cargar la política de privacidad (${error}). Recarga la página para intentarlo de nuevo.`,

@@ -199,10 +199,11 @@ as Japanese.
 The admin panel has a language of its own, `adminLang`, with the same values.
 Left out, it follows `lang`; set it to run an English panel over a German site
 or the other way round. It is also under **Settings → General → Admin panel
-language**, and takes effect when the settings are saved. Everything except
-the page builder and the journal studio is translated so far; those two are
-still English and follow in a later release
-([#604](https://github.com/ralksta/immich-folio/issues/604)).
+language**, and takes effect when the settings are saved. The whole panel is
+translated ([#604](https://github.com/ralksta/immich-folio/issues/604)). What
+stays English are error messages the server sends back, the text a journal
+template inserts into a new entry (that is content, yours to edit), and the
+theme preset names and taglines, which the install wizard shares.
 
 One thing stays in one language by design:
 

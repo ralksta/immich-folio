@@ -6,6 +6,8 @@ import { canSelectMore, matchesQuery, toggleSelection } from '@/lib/admin/assetS
 import { IconCheck, IconFolder, IconImage, IconSearch, IconStar } from './Icons';
 import { useScrollLock } from './useScrollLock';
 import AlbumPicker from './AlbumPicker';
+import { useAdminDictionary } from './AdminI18n';
+import { adminGet } from './useAdminFetch';
 
 interface AssetInfo {
   id: string;
@@ -57,6 +59,8 @@ export default function AssetPicker({
 }: Props) {
   useScrollLock(true);
   const cardRef = useModalDialog(onClose);
+  const dict = useAdminDictionary();
+  const t = dict.pickers.assetPicker;
   const multi = onSelectMany !== undefined;
   const [tab, setTab] = useState<Tab>(albumOnly || albumId ? 'album' : 'favorites');
   const [activeAlbumId, setActiveAlbumId] = useState(albumId);
@@ -88,19 +92,13 @@ export default function AssetPicker({
 
   async function openAlbumPicker() {
     if (albumList === null) {
-      try {
-        const res = await fetch('/api/admin/albums');
-        if (!res.ok) throw new Error(`Could not load albums (HTTP ${res.status}).`);
-        const data = (await res.json()) as {
-          albums?: Parameters<typeof AlbumPicker>[0]['albums'];
-        };
-        setAlbumList(data.albums ?? []);
-        setAlbumLoadError(null);
-      } catch (err) {
-        console.error('Failed to load albums:', err);
-        setAlbumLoadError(err instanceof Error ? err.message : 'Failed to load albums.');
-        return;
-      }
+      const r = await adminGet<{ albums?: NonNullable<typeof albumList> }>(
+        '/api/admin/albums',
+        dict.shell,
+      );
+      setAlbumLoadError(r.error);
+      if (r.error !== null) return;
+      setAlbumList(r.data.albums ?? []);
     }
     setShowAlbumPicker(true);
   }
@@ -129,49 +127,40 @@ export default function AssetPicker({
         setLoadingMore(false);
       }
 
-      try {
-        let res: Response;
-        if (tab === 'album' && activeAlbumId) {
-          res = await fetch(`/api/admin/albums/${activeAlbumId}/assets`);
-        } else {
-          const params = new URLSearchParams({
-            page: pageNum.toString(),
-            favorites: tab === 'favorites' ? 'true' : 'false',
-          });
-          if (serverQuery) params.set('q', serverQuery);
-          res = await fetch(`/api/admin/assets?${params}`);
-        }
-        if (res.ok) {
-          const data = await res.json();
-          if (!current()) return;
-          setAssets((prev) => {
-            if (!append) return data.assets;
-            // Merged filename + description pages can overlap across pages.
-            const seen = new Set(prev.map((a) => a.id));
-            return [...prev, ...data.assets.filter((a: AssetInfo) => !seen.has(a.id))];
-          });
-          setHasMore(data.nextPage !== null);
-          setPage(pageNum);
-        } else {
-          throw new Error(`Could not load photos (HTTP ${res.status}).`);
-        }
-      } catch (err) {
-        if (current()) {
-          console.error('Failed to load assets:', err);
-          setLoadError(err instanceof Error ? err.message : 'Failed to load photos.');
-        }
-      } finally {
-        if (current()) {
-          setLoading(false);
-          setLoadingMore(false);
-        }
+      let url: string;
+      if (tab === 'album' && activeAlbumId) {
+        url = `/api/admin/albums/${activeAlbumId}/assets`;
+      } else {
+        const params = new URLSearchParams({
+          page: pageNum.toString(),
+          favorites: tab === 'favorites' ? 'true' : 'false',
+        });
+        if (serverQuery) params.set('q', serverQuery);
+        url = `/api/admin/assets?${params}`;
       }
+      const r = await adminGet<{ assets: AssetInfo[]; nextPage: unknown }>(url, dict.shell);
+      if (!current()) return;
+      if (r.error !== null) {
+        setLoadError(r.error);
+      } else {
+        const data = r.data;
+        setAssets((prev) => {
+          if (!append) return data.assets;
+          // Merged filename + description pages can overlap across pages.
+          const seen = new Set(prev.map((a) => a.id));
+          return [...prev, ...data.assets.filter((a) => !seen.has(a.id))];
+        });
+        setHasMore(data.nextPage !== null);
+        setPage(pageNum);
+      }
+      setLoading(false);
+      setLoadingMore(false);
     },
-    [tab, activeAlbumId, serverQuery],
+    [tab, activeAlbumId, serverQuery, dict.shell],
   );
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- a new source starts an empty list and loads it; moves to useAdminFetch in #821
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a new source starts an empty list and loads it; paging appends to it, so it stays a function (#821)
     setAssets([]);
     setPage(1);
     setHasMore(false);
@@ -204,7 +193,7 @@ export default function AssetPicker({
     const uuid = uuidInput.trim();
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(uuid)) {
-      setUuidError('Invalid UUID format');
+      setUuidError(t.invalidUuid);
       return;
     }
     setUuidError('');
@@ -232,13 +221,15 @@ export default function AssetPicker({
   const selectionHint =
     selected.length === 0
       ? min && min > 1
-        ? `Pick at least ${min} photos`
+        ? t.pickAtLeast(min)
         : max && max > 1
-          ? `Pick up to ${max} photos`
-          : 'Pick photos'
-      : `${selected.length}${max && max > 1 ? ` of ${max}` : ''} selected${
-          min && selected.length < min ? ` — select at least ${min}` : ''
-        }`;
+          ? t.pickUpTo(max)
+          : t.pickPhotos
+      : t.selectedCount(
+          selected.length,
+          max && max > 1 ? max : null,
+          min && selected.length < min ? min : null,
+        );
 
   return (
     <div className="picker-overlay" onClick={onClose}>
@@ -251,8 +242,8 @@ export default function AssetPicker({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="picker-header">
-          <h3 id="asset-picker-title">{title || 'Select Hero Image'}</h3>
-          <button className="admin-btn-icon" onClick={onClose} aria-label="Close">
+          <h3 id="asset-picker-title">{title || t.defaultTitle}</h3>
+          <button className="admin-btn-icon" onClick={onClose} aria-label={dict.common.close}>
             ×
           </button>
         </div>
@@ -266,7 +257,7 @@ export default function AssetPicker({
               onClick={() => void openAlbumPicker()}
             >
               <IconFolder size={14} />
-              Albums
+              {t.tabs.albums}
             </button>
           )}
           {activeAlbumId && !enableAlbumSelection && (
@@ -276,7 +267,7 @@ export default function AssetPicker({
               onClick={() => setTab('album')}
             >
               <IconFolder size={14} />
-              This Album
+              {t.tabs.thisAlbum}
             </button>
           )}
           {!albumOnly && (
@@ -287,7 +278,7 @@ export default function AssetPicker({
                 onClick={() => setTab('favorites')}
               >
                 <IconStar size={14} />
-                Favorites
+                {t.tabs.favorites}
               </button>
               <button
                 className={`asset-picker-tab ${tab === 'all' ? 'active' : ''}`}
@@ -295,7 +286,7 @@ export default function AssetPicker({
                 onClick={() => setTab('all')}
               >
                 <IconImage size={14} />
-                All Photos
+                {t.tabs.allPhotos}
               </button>
             </>
           )}
@@ -321,12 +312,8 @@ export default function AssetPicker({
               }
             }}
             maxLength={100}
-            placeholder={
-              tab === 'album'
-                ? 'Filter this album by filename…'
-                : 'Search filename, description, or a date (2024-05)…'
-            }
-            aria-label="Search photos"
+            placeholder={tab === 'album' ? t.filterAlbumPlaceholder : t.searchPlaceholder}
+            aria-label={t.searchLabel}
             className="asset-picker-search-input"
           />
         </div>
@@ -337,7 +324,7 @@ export default function AssetPicker({
           ref={listRef}
           onScroll={handleScroll}
           role="group"
-          aria-label="Photos"
+          aria-label={t.gridLabel}
         >
           {loadError && (
             <p className="empty-hint" role="alert">
@@ -350,11 +337,7 @@ export default function AssetPicker({
             </div>
           ) : visible.length === 0 ? (
             <p className="empty-hint">
-              {query
-                ? `No photos match “${query}”.`
-                : tab === 'favorites'
-                  ? 'No favorite photos found. Star photos in Immich first, or switch to "All Photos".'
-                  : 'No photos found.'}
+              {query ? t.noMatch(query) : tab === 'favorites' ? t.noFavorites : t.noPhotos}
             </p>
           ) : (
             <>
@@ -363,9 +346,11 @@ export default function AssetPicker({
                 const order = selected.indexOf(asset.id);
                 const isSelected = order !== -1;
                 const blocked = isUsed || (full && !isSelected);
-                const label = `${asset.originalFileName}, ${formatDate(asset.fileCreatedAt)}${
-                  isUsed ? ' (already used)' : ''
-                }`;
+                const label = t.tileLabel(
+                  asset.originalFileName,
+                  formatDate(asset.fileCreatedAt),
+                  isUsed,
+                );
                 return (
                   <button
                     type="button"
@@ -417,7 +402,7 @@ export default function AssetPicker({
                 className="admin-btn admin-btn-sm"
                 onClick={() => setSelected([])}
               >
-                Clear
+                {t.clear}
               </button>
             )}
             <button
@@ -426,7 +411,7 @@ export default function AssetPicker({
               disabled={selected.length === 0 || selected.length < (min ?? 0)}
               onClick={confirm}
             >
-              {selected.length > 1 ? `Add ${selected.length} photos` : 'Add photo'}
+              {t.addPhotos(selected.length)}
             </button>
           </div>
         )}
@@ -442,12 +427,12 @@ export default function AssetPicker({
                   setUuidInput(e.target.value);
                   setUuidError('');
                 }}
-                placeholder="Or paste asset UUID directly..."
-                aria-label="Asset UUID"
+                placeholder={t.uuidPlaceholder}
+                aria-label={t.uuidLabel}
                 className="asset-picker-uuid-input"
               />
               <button type="submit" className="admin-btn admin-btn-sm" disabled={!uuidInput.trim()}>
-                Add
+                {dict.common.add}
               </button>
             </form>
             {uuidError && <span className="asset-picker-uuid-error">{uuidError}</span>}

@@ -88,8 +88,7 @@ export const diagnostics: AdminDictionary['diagnostics'] = {
   },
 
   errors: {
-    failed: 'Diagnose fehlgeschlagen',
-    failedStatus: (status: number) => `Diagnose fehlgeschlagen (${status})`,
+    failed: (reason: string) => `Diagnose fehlgeschlagen. ${reason}`,
     copyFailed:
       'Kopieren nicht möglich — dein Browser verweigert den Zugriff auf die Zwischenablage.',
   },

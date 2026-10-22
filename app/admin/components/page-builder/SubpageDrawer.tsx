@@ -42,6 +42,7 @@ import {
   PHOTO_GRID_GAP_MAX,
   slugify,
 } from '@/lib/config/schema';
+import { useAdminDictionary } from '../AdminI18n';
 
 interface SubpageDrawerProps {
   sp: Subpage;
@@ -110,6 +111,8 @@ export default function SubpageDrawer({
   highlightedAlbumId,
   inline = false,
 }: SubpageDrawerProps) {
+  const dict = useAdminDictionary();
+  const t = dict.pages.subpageDrawer;
   const sheet = (
     <div
       className={`subpage-drawer-container${inline ? ' subpage-drawer-container--inline' : ''}`}
@@ -117,18 +120,18 @@ export default function SubpageDrawer({
     >
       <div className="subpage-drawer-header">
         <div className="subpage-drawer-title-group">
-          <span className="subpage-drawer-breadcrumb">Pages / Subpages</span>
-          <h3 className="subpage-drawer-title">{sp.title || sp.name || 'Untitled Page'}</h3>
+          <span className="subpage-drawer-breadcrumb">{t.breadcrumb}</span>
+          <h3 className="subpage-drawer-title">{sp.title || sp.name || t.untitled}</h3>
         </div>
         <div className="subpage-drawer-header-actions">
-          <div className="segmented-control segmented-control--sm" role="group" aria-label="View">
+          <div className="segmented-control segmented-control--sm" role="group" aria-label={t.view}>
             <button
               type="button"
               className={`segment-btn ${drawerMode === 'edit' ? 'active' : ''}`}
               aria-pressed={drawerMode === 'edit'}
               onClick={() => onDrawerModeChange('edit')}
             >
-              <IconPencil size={14} /> Edit
+              <IconPencil size={14} /> {dict.common.edit}
             </button>
             <button
               type="button"
@@ -136,7 +139,7 @@ export default function SubpageDrawer({
               aria-pressed={drawerMode === 'preview'}
               onClick={() => onDrawerModeChange('preview')}
             >
-              <IconSearch size={14} /> Live Preview
+              <IconSearch size={14} /> {t.livePreview}
             </button>
           </div>
 
@@ -145,12 +148,12 @@ export default function SubpageDrawer({
             target="_blank"
             rel="noopener noreferrer"
             className="admin-btn admin-btn-xs admin-btn-ghost"
-            title="Open live page in new tab (bypassing cache)"
+            title={t.openLive}
           >
             /{slugify(sp.name)} ↗
           </a>
           {!inline && (
-            <button className="admin-btn-icon" onClick={() => onClose()} title="Close drawer">
+            <button className="admin-btn-icon" onClick={() => onClose()} title={t.close}>
               <IconX size={14} />
             </button>
           )}
@@ -165,14 +168,14 @@ export default function SubpageDrawer({
             <div className="admin-sheet-col">
               <div className="subpage-drawer-section">
                 <div className="admin-field">
-                  <label htmlFor="subpage-name">Page Name (URL Identifier)</label>
+                  <label htmlFor="subpage-name">{t.pageName}</label>
                   <div className="input-slug-wrapper">
                     <input
                       id="subpage-name"
                       className="subpage-name-input"
                       value={sp.name}
                       onChange={(e) => updateSubpage(spIndex, { name: e.target.value })}
-                      placeholder="e.g. dubai, travel, weddings"
+                      placeholder={t.pageNamePlaceholder}
                     />
                     <span className="input-slug-preview">/{slugify(sp.name)}</span>
                   </div>
@@ -183,7 +186,7 @@ export default function SubpageDrawer({
               <div className="subpage-drawer-section">
                 <div className="admin-field-row">
                   <div className="admin-field">
-                    <label htmlFor="subpage-display-title">Display Title (optional)</label>
+                    <label htmlFor="subpage-display-title">{t.displayTitle}</label>
                     <input
                       id="subpage-display-title"
                       value={sp.title || ''}
@@ -192,11 +195,11 @@ export default function SubpageDrawer({
                       }
                       // Short enough for the half-width column at any size; the
                       // old "Display title (defaults to name)" was cut off (A-18).
-                      placeholder="Same as page name"
+                      placeholder={t.displayTitlePlaceholder}
                     />
                   </div>
                   <div className="admin-field">
-                    <label htmlFor="subpage-subtitle">Subtitle</label>
+                    <label htmlFor="subpage-subtitle">{t.subtitle}</label>
                     <input
                       id="subpage-subtitle"
                       value={sp.subtitle || ''}
@@ -205,12 +208,12 @@ export default function SubpageDrawer({
                           subtitle: e.target.value || undefined,
                         })
                       }
-                      placeholder="Subtitle text"
+                      placeholder={t.subtitlePlaceholder}
                     />
                   </div>
                 </div>
                 <div className="admin-field" style={{ marginTop: '1rem' }}>
-                  <span className="admin-field-label">Visibility &amp; Access</span>
+                  <span className="admin-field-label">{t.visibility}</span>
                   {/*
                             One field, three states — enabled/hidden are two YAML flags,
                             but for the owner it is a single question: how visible is
@@ -224,8 +227,8 @@ export default function SubpageDrawer({
                         active: sp.enabled !== false && sp.hidden !== true,
                         icon: <IconGlobe size={15} />,
                         iconColor: '#4ade80',
-                        title: 'Published',
-                        desc: 'Shown in the header menu and homepage lists, reachable via URL',
+                        title: t.visibilityOptions.published.title,
+                        desc: t.visibilityOptions.published.desc,
                         patch: { enabled: true, hidden: false },
                       },
                       {
@@ -233,8 +236,8 @@ export default function SubpageDrawer({
                         active: sp.enabled !== false && sp.hidden === true,
                         icon: <IconEyeOff size={15} />,
                         iconColor: '#fbbf24',
-                        title: 'Unlisted (Experimental)',
-                        desc: 'Not shown in menus or on the homepage, but reachable via direct link',
+                        title: t.visibilityOptions.unlisted.title,
+                        desc: t.visibilityOptions.unlisted.desc,
                         patch: { enabled: true, hidden: true },
                       },
                       {
@@ -242,8 +245,8 @@ export default function SubpageDrawer({
                         active: sp.enabled === false,
                         icon: <IconBan size={15} />,
                         iconColor: '#f87171',
-                        title: 'Disabled',
-                        desc: 'Completely offline — returns 404 even when accessed directly',
+                        title: t.visibilityOptions.disabled.title,
+                        desc: t.visibilityOptions.disabled.desc,
                         patch: { enabled: false, hidden: false },
                       },
                     ] as const
@@ -307,17 +310,17 @@ export default function SubpageDrawer({
                     <PasswordField
                       value={sp.password}
                       onChange={(password) => updateSubpage(spIndex, { password })}
-                      placeholder="Password protection (optional) — leave empty for public access"
-                      label="Page password"
+                      placeholder={t.passwordPlaceholder}
+                      label={t.pagePassword}
                       disabled={sp.enabled === false}
                     />
                   </div>
                 </div>
                 <div className="admin-field" style={{ marginTop: '1rem' }}>
-                  <label htmlFor="subpage-page-layout-style">Page Layout Style</label>
+                  <label htmlFor="subpage-page-layout-style">{t.layoutStyle}</label>
                   <select
                     id="subpage-page-layout-style"
-                    aria-label="Page layout style"
+                    aria-label={t.layoutStyleAria}
                     value={sp.grid?.layout || 'masonry'}
                     onChange={(e) => {
                       const newLayout = e.target.value;
@@ -337,12 +340,12 @@ export default function SubpageDrawer({
                               SVG icon set is not available here — and a decorative emoji is
                               not a substitute for it.
                             */}
-                    <option value="masonry">Masonry Grid (Dynamic Height)</option>
-                    <option value="uniform">Uniform Grid (Square Tiles)</option>
-                    <option value="showcase">Showcase (Featured First Asset)</option>
-                    <option value="filmstrip">Filmstrip (Horizontal Scroll)</option>
-                    <option value="editorial-flow">Editorial Flow</option>
-                    <option value="essay">Photo Essay Mode (Storytelling Editor)</option>
+                    <option value="masonry">{t.layouts.masonry}</option>
+                    <option value="uniform">{t.layouts.uniform}</option>
+                    <option value="showcase">{t.layouts.showcase}</option>
+                    <option value="filmstrip">{t.layouts.filmstrip}</option>
+                    <option value="editorial-flow">{t.layouts.editorialFlow}</option>
+                    <option value="essay">{t.layouts.essay}</option>
                   </select>
                 </div>
 
@@ -353,8 +356,8 @@ export default function SubpageDrawer({
                       id="subpage-zoom"
                       value={sp.zoom}
                       onChange={(zoom) => updateSubpage(spIndex, { zoom })}
-                      inheritLabel="Inherit from site settings"
-                      hint="Applies to every album on this page that does not set its own. Settings › General has the site-wide switch."
+                      inheritLabel={t.zoomInherit}
+                      hint={t.zoomHint}
                     />
                   </div>
                 )}
@@ -367,15 +370,8 @@ export default function SubpageDrawer({
                                   has no effect yet. */}
                 {sp.grid?.layout !== 'essay' && sp.essayText == null && (
                   <GridOverrideFields
-                    label="Album Cover Grid"
-                    hint={
-                      <>
-                        Overrides how the album covers are tiled on this page — the photos inside
-                        the albums are not affected. Leave the column count empty to follow the
-                        site-wide grid setting, and the gap empty to keep the theme&apos;s own
-                        spacing. Tablet widths show at most two covers per row.
-                      </>
-                    }
+                    label={t.coverGrid}
+                    hint={t.coverGridHint}
                     columnsMin={COVER_GRID_COLUMNS_MIN}
                     columnsMax={COVER_GRID_COLUMNS_MAX}
                     gapMax={COVER_GRID_GAP_MAX}
@@ -394,14 +390,8 @@ export default function SubpageDrawer({
                                   every photo grid on the page (#523). */}
                 {sp.essayText == null && (
                   <GridOverrideFields
-                    label="Photo Grid (Albums On This Page)"
-                    hint={
-                      <>
-                        How the photos inside every album on this page are laid out. Leave both
-                        empty to follow Settings &rsaquo; Grid; a single album can still override
-                        this in gallery.yaml.
-                      </>
-                    }
+                    label={t.photoGrid}
+                    hint={t.photoGridHint}
                     columnsMin={PHOTO_GRID_COLUMNS_MIN}
                     columnsMax={PHOTO_GRID_COLUMNS_MAX}
                     gapMax={PHOTO_GRID_GAP_MAX}
@@ -418,9 +408,9 @@ export default function SubpageDrawer({
                 <div className="subpage-drawer-section">
                   <div className="drawer-section-heading">
                     <h4>
-                      <IconBook size={16} /> Storytelling &amp; Photo Essay Builder
+                      <IconBook size={16} /> {t.essayHeading}
                     </h4>
-                    <p>Compose text, quotes, and fullbleed/wide photos visually.</p>
+                    <p>{t.essayIntro}</p>
                   </div>
 
                   <EssayBlockEditor
@@ -429,7 +419,7 @@ export default function SubpageDrawer({
                     onSelectPhoto={(callback) => {
                       onPickHero({
                         albumId: undefined,
-                        title: 'Select Photo for Photo Essay',
+                        title: t.essayPickerTitle,
                         onSelect: (assetId) => {
                           callback(assetId);
                           onPickHero(null);
@@ -446,12 +436,12 @@ export default function SubpageDrawer({
               {(!sp.sections || sp.sections.length === 0) && (
                 <div className="subpage-albums">
                   <div className="subpage-albums-header">
-                    <span>Albums in this Page</span>
+                    <span>{t.albums}</span>
                     <button
                       className="admin-btn admin-btn-xs admin-btn-primary"
                       onClick={() => onPickAlbum({ type: 'subpage', subpageIndex: spIndex })}
                     >
-                      + Add Album
+                      {t.addAlbum}
                     </button>
                   </div>
                   <DndContext
@@ -464,11 +454,7 @@ export default function SubpageDrawer({
                       strategy={verticalListSortingStrategy}
                     >
                       <div className="album-list">
-                        {sp.albums.length === 0 && (
-                          <p className="empty-hint">
-                            No albums added yet. Click + Add Album to pick from Immich.
-                          </p>
-                        )}
+                        {sp.albums.length === 0 && <p className="empty-hint">{t.noAlbums}</p>}
                         {sp.albums.map((album, aIndex) => (
                           <SortableAlbumCard
                             key={`${album.id}-${aIndex}`}
@@ -508,13 +494,13 @@ export default function SubpageDrawer({
                               title: e.target.value,
                             })
                           }
-                          placeholder="Section title"
-                          aria-label="Section title"
+                          placeholder={t.sectionTitle}
+                          aria-label={t.sectionTitle}
                         />
                         <button
                           className="admin-btn-icon"
                           onClick={() => removeSection(spIndex, secIndex)}
-                          title="Remove section"
+                          title={t.removeSection}
                         >
                           <IconX size={14} />
                         </button>
@@ -527,8 +513,8 @@ export default function SubpageDrawer({
                               description: e.target.value || undefined,
                             })
                           }
-                          placeholder="Section description (optional)"
-                          aria-label="Section description"
+                          placeholder={t.sectionDescPlaceholder}
+                          aria-label={t.sectionDesc}
                           className="section-desc-input"
                         />
                       </div>
@@ -563,7 +549,7 @@ export default function SubpageDrawer({
                           })
                         }
                       >
-                        + Add Album
+                        {t.addAlbum}
                       </button>
                     </div>
                   ))}
@@ -575,14 +561,14 @@ export default function SubpageDrawer({
                   className="admin-btn admin-btn-xs admin-btn-secondary"
                   onClick={() => addSection(spIndex)}
                 >
-                  + Add Section
+                  {t.addSection}
                 </button>
                 {sp.sections && sp.sections.length > 0 && (
                   <button
                     className="admin-btn admin-btn-xs admin-btn-secondary"
                     onClick={() => onPickAlbum({ type: 'subpage', subpageIndex: spIndex })}
                   >
-                    + Add Loose Album
+                    {t.addLooseAlbum}
                   </button>
                 )}
               </div>
@@ -599,11 +585,11 @@ export default function SubpageDrawer({
             onClose();
           }}
         >
-          <IconTrash size={14} /> Delete Subpage
+          <IconTrash size={14} /> {t.deleteSubpage}
         </button>
         {!inline && (
           <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={() => onClose()}>
-            Done
+            {t.done}
           </button>
         )}
       </div>

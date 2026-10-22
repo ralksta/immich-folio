@@ -7,6 +7,7 @@ import { expandAlbumBlocks, type AlbumAssetRef } from '@/lib/journalAlbum';
 import { EssayView } from '@/app/[...path]/EssayView';
 import type { PhotoItem } from '@/app/[...path]/PhotoGrid';
 import { IconEye } from '../Icons';
+import { useAdminDictionary } from '../AdminI18n';
 
 interface JournalPreviewProps {
   parsed: ParsedJournal;
@@ -21,6 +22,7 @@ interface JournalPreviewProps {
  * admin thumbnails.
  */
 export function JournalPreview({ parsed, albumAssets }: JournalPreviewProps) {
+  const t = useAdminDictionary().journal.preview;
   const [viewport, setViewport] = useState<'desktop' | 'mobile'>('desktop');
 
   /** Real width/height ratios of the referenced photos, measured from thumbnails. */
@@ -90,13 +92,13 @@ export function JournalPreview({ parsed, albumAssets }: JournalPreviewProps) {
     <div className="journal-editor-pane-right">
       <div className="journal-preview-bar">
         <span className="journal-preview-bar-label">
-          <IconEye size={13} /> Realtime Theme Preview
+          <IconEye size={13} /> {t.label}
         </span>
         {/* Same control and same fix as the editor's mode toggle. */}
         <div
           className="segmented-control segmented-control--sm"
           role="group"
-          aria-label="Preview width"
+          aria-label={t.widthLabel}
         >
           <button
             type="button"
@@ -104,7 +106,7 @@ export function JournalPreview({ parsed, albumAssets }: JournalPreviewProps) {
             aria-pressed={viewport === 'desktop'}
             onClick={() => setViewport('desktop')}
           >
-            Desktop
+            {t.desktop}
           </button>
           <button
             type="button"
@@ -112,7 +114,7 @@ export function JournalPreview({ parsed, albumAssets }: JournalPreviewProps) {
             aria-pressed={viewport === 'mobile'}
             onClick={() => setViewport('mobile')}
           >
-            Mobile
+            {t.mobile}
           </button>
         </div>
       </div>

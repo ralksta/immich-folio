@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useScrollLock } from './useScrollLock';
 import { useModalDialog } from '@/hooks/useModalDialog';
 import { IconFolder } from './Icons';
+import { useAdminDictionary } from './AdminI18n';
 
 interface ImmichAlbumInfo {
   id: string;
@@ -25,6 +26,8 @@ interface Props {
 
 export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }: Props) {
   useScrollLock(true);
+  const dict = useAdminDictionary();
+  const t = dict.pickers.albumPicker;
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -51,8 +54,13 @@ export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }:
         onClick={(e) => e.stopPropagation()}
       >
         <div className="picker-header">
-          <h3 id="album-picker-title">Select Album</h3>
-          <button type="button" className="admin-btn-icon" onClick={onClose} aria-label="Close">
+          <h3 id="album-picker-title">{t.title}</h3>
+          <button
+            type="button"
+            className="admin-btn-icon"
+            onClick={onClose}
+            aria-label={dict.common.close}
+          >
             ×
           </button>
         </div>
@@ -60,7 +68,7 @@ export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }:
         <div className="picker-search">
           <input
             type="text"
-            placeholder="Search albums by name or UUID..."
+            placeholder={t.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             autoFocus
@@ -68,9 +76,7 @@ export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }:
         </div>
 
         <div className="picker-list">
-          {filtered.length === 0 && (
-            <p className="empty-hint">No albums found. Check your Immich connection and access.</p>
-          )}
+          {filtered.length === 0 && <p className="empty-hint">{t.empty}</p>}
           {filtered.map((album) => {
             const isUsed = usedAlbumIds.has(album.id);
             return (
@@ -100,7 +106,7 @@ export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }:
                 <span className="picker-item-info">
                   <span className="picker-item-name">{album.albumName}</span>
                   <span className="picker-item-meta">
-                    {album.assetCount} photos
+                    {t.photoCount(album.assetCount)}
                     {album.description && ` · ${album.description.slice(0, 40)}`}
                   </span>
                   {/* Not a warning and not a barrier: publishing an unshared
@@ -108,14 +114,14 @@ export default function AlbumPicker({ albums, onSelect, onClose, usedAlbumIds }:
                       ?shared=true filter this list is fetched with (#515). It
                       is here so nobody publishes a private album unaware. */}
                   {album.shared === false && (
-                    <span className="picker-item-note">Not shared in Immich</span>
+                    <span className="picker-item-note">{t.notShared}</span>
                   )}
                 </span>
                 <span className="picker-item-action">
                   {isUsed ? (
-                    <span className="picker-used-badge">In use</span>
+                    <span className="picker-used-badge">{t.inUse}</span>
                   ) : (
-                    <span className="picker-select-badge">Select</span>
+                    <span className="picker-select-badge">{t.select}</span>
                   )}
                 </span>
               </button>

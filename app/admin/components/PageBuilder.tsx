@@ -59,6 +59,9 @@ import { reportIfSessionExpired } from './sessionExpiry';
 import { IconCamera, IconHome, IconPlus, IconSearch } from './Icons';
 import { useNotify } from './Notifications';
 import { dndAnnouncements } from './dndAnnouncements';
+import PageHeader from './PageHeader';
+import { useAdminDictionary } from './AdminI18n';
+import { adminGet } from './useAdminFetch';
 
 /** Drop target id of the "Not in menu" group. */
 const OFF_MENU_ID = 'offmenu-zone';
@@ -68,7 +71,15 @@ function menuRowId(item: ops.MenuItem): string {
   return item.kind === 'subpage' ? `subpage-${item.index}` : `page-${item.slug}`;
 }
 
+/** The Pages screen's header, in the panel's language (the route is a server component). */
+export function PageBuilderHeader() {
+  const t = useAdminDictionary().pages.header;
+  return <PageHeader kicker={t.kicker} title={t.title} description={t.description} />;
+}
+
 export default function PageBuilder() {
+  const dict = useAdminDictionary();
+  const t = dict.pages.builder;
   const [gallery, setGallery] = useState<GalleryState>({ hero: [], albums: [], subpages: [] });
   const notify = useNotify();
   /** The state as last rendered, for Undo to check nothing changed since. */
@@ -193,22 +204,21 @@ export default function PageBuilder() {
   async function loadData() {
     setLoading(true);
     setLoadError(null);
+    const [galleryRes, albumsRes, pagesRes] = await Promise.all([
+      adminGet<{ gallery: Record<string, unknown>; version?: unknown }>(
+        '/api/admin/gallery',
+        dict.shell,
+      ),
+      adminGet<{ albums: ImmichAlbumInfo[] }>('/api/admin/albums', dict.shell),
+      adminGet<{ pages: PageSummary[]; taken: SlugTakenBy }>('/api/admin/pages', dict.shell),
+    ]);
+    if (galleryRes.error !== null) {
+      setLoadError(galleryRes.error);
+      setLoading(false);
+      return;
+    }
     try {
-      const [galleryRes, albumsRes, pagesRes] = await Promise.all([
-        fetch('/api/admin/gallery'),
-        fetch('/api/admin/albums'),
-        fetch('/api/admin/pages'),
-      ]);
-
-      if (!galleryRes.ok) {
-        throw new Error(
-          galleryRes.status === 401
-            ? 'Your session has expired. Sign in again to continue.'
-            : `The server answered ${galleryRes.status}.`,
-        );
-      }
-
-      const { gallery: raw, version } = await galleryRes.json();
+      const { gallery: raw, version } = galleryRes.data;
       versionRef.current = typeof version === 'string' ? version : null;
       const parsed = parseGalleryYaml(raw);
       serverState.current = parsed;
@@ -221,23 +231,23 @@ export default function PageBuilder() {
       openAlbumFromLink(restored ?? parsed);
 
       // A failed album list is survivable — it only empties the picker, and
-      // saving with it empty changes nothing in gallery.yaml.
-      if (albumsRes.ok) {
-        const { albums } = await albumsRes.json();
-        setImmichAlbums(albums);
-      }
+      // saving with it empty changes nothing in gallery.yaml. It is said,
+      // though: an empty picker otherwise reads as "no albums in Immich".
+      if (albumsRes.error === null) setImmichAlbums(albumsRes.data.albums);
+      else notify('error', t.albumListFailed(albumsRes.error));
 
       // Pages are survivable the same way: without the list the menu still
       // shows their references, and saving keeps them.
-      if (pagesRes.ok) {
-        const data = (await pagesRes.json()) as { pages: PageSummary[]; taken: SlugTakenBy };
-        setPages(data.pages);
-        setTakenSlugs(data.taken);
+      if (pagesRes.error === null) {
+        setPages(pagesRes.data.pages);
+        setTakenSlugs(pagesRes.data.taken);
+      } else {
+        notify('error', t.pageListFailed(pagesRes.error));
       }
       openPageFromLink();
     } catch (err) {
       console.error('Failed to load admin data:', err);
-      setLoadError(err instanceof Error ? err.message : 'The page structure could not be loaded.');
+      setLoadError(err instanceof Error ? err.message : t.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -329,7 +339,7 @@ export default function PageBuilder() {
         draft.discard();
         await loadData();
       } else if (result.kind === 'keep') {
-        setSaveStatus({ kind: 'error', message: 'Not saved — gallery.yaml changed elsewhere.' });
+        setSaveStatus({ kind: 'error', message: t.notSavedConflict });
       } else if (result.kind === 'saved') {
         const data = result.data as { gallery?: unknown; message?: string };
         // Fingerprint what the next load will see, the way it will see it: the
@@ -353,16 +363,16 @@ export default function PageBuilder() {
           if (JSON.stringify(written) !== JSON.stringify(yamlData)) setGallery(asLoaded);
           setDirty(false);
         }
-        setSaveStatus({ kind: 'success', message: data.message || 'Saved successfully!' });
+        setSaveStatus({ kind: 'success', message: data.message || t.saved });
         setTimeout(() => setSaveStatus(null), 5000);
       } else if (!reportIfSessionExpired(result.res)) {
         setSaveStatus({
           kind: 'error',
-          message: `Error: ${result.data?.error ?? `HTTP ${result.res.status}`}`,
+          message: dict.common.errorWith(result.data?.error ?? `HTTP ${result.res.status}`),
         });
       }
     } catch {
-      setSaveStatus({ kind: 'error', message: 'Error: Failed to save' });
+      setSaveStatus({ kind: 'error', message: dict.common.errorWith(t.saveFailed) });
     } finally {
       setSaving(false);
     }
@@ -514,8 +524,7 @@ export default function PageBuilder() {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        if (!reportIfSessionExpired(res))
-          notify('error', data?.error || 'Failed to create the page');
+        if (!reportIfSessionExpired(res)) notify('error', data?.error || t.createFailed);
         return;
       }
       const slug: string = data.page.slug;
@@ -526,14 +535,9 @@ export default function PageBuilder() {
       if (input.showInMenu) edit((g) => ops.setPageInMenu(g, slug, true));
       setShowNewPage(false);
       selectPage(slug);
-      notify(
-        'success',
-        input.showInMenu
-          ? 'Page created as a draft. Save Changes to put it in the menu.'
-          : 'Page created as a draft.',
-      );
+      notify('success', input.showInMenu ? t.createdInMenu : t.created);
     } catch {
-      notify('error', 'Could not create the page. Check the connection and try again.');
+      notify('error', t.createOffline);
     } finally {
       setCreatingPage(false);
     }
@@ -584,15 +588,16 @@ export default function PageBuilder() {
   }
 
   // ── Subpages and sections ────────────────────────────────────
-  const addSubpage = () => edit(ops.addSubpage);
+  const addSubpage = () => edit((g) => ops.addSubpage(g, dict.pages.defaults));
 
   const removeSubpage = (index: number) =>
-    removeWithUndo('Page removed.', (g) => ops.removeSubpage(g, index));
+    removeWithUndo(t.pageRemoved, (g) => ops.removeSubpage(g, index));
 
   const updateSubpage = (index: number, updates: Partial<Subpage>) =>
     edit((g) => ops.updateSubpage(g, index, updates));
 
-  const addSection = (subpageIndex: number) => edit((g) => ops.addSection(g, subpageIndex));
+  const addSection = (subpageIndex: number) =>
+    edit((g) => ops.addSection(g, subpageIndex, dict.pages.defaults));
 
   const removeSection = (subpageIndex: number, sectionIndex: number) =>
     edit((g) => ops.removeSection(g, subpageIndex, sectionIndex));
@@ -611,15 +616,12 @@ export default function PageBuilder() {
     if (after === before) return;
     edit(() => after);
     notify('success', message, {
-      label: 'Undo',
+      label: t.undo,
       run: () => {
         // Only while nothing else changed since: restoring `before` on top of
         // later edits would silently throw those away.
         if (galleryRef.current !== after) {
-          notify(
-            'error',
-            'Could not undo: the page structure changed since. Nothing is saved yet.',
-          );
+          notify('error', t.undoFailed);
           return;
         }
         edit(() => before);
@@ -628,20 +630,20 @@ export default function PageBuilder() {
   }
 
   const removeStandaloneAlbum = (index: number) =>
-    removeWithUndo('Album removed.', (g) => ops.removeAlbum(g, { type: 'standalone' }, index));
+    removeWithUndo(t.albumRemoved, (g) => ops.removeAlbum(g, { type: 'standalone' }, index));
 
   const removeSubpageAlbum = (subpageIndex: number, albumIndex: number) =>
-    removeWithUndo('Album removed from the page.', (g) =>
+    removeWithUndo(t.albumRemovedFromPage, (g) =>
       ops.removeAlbum(g, { type: 'subpage', subpageIndex }, albumIndex),
     );
 
   const removeSectionAlbum = (subpageIndex: number, sectionIndex: number, albumIndex: number) =>
-    removeWithUndo('Album removed from the section.', (g) =>
+    removeWithUndo(t.albumRemovedFromSection, (g) =>
       ops.removeAlbum(g, { type: 'section', subpageIndex, sectionIndex }, albumIndex),
     );
 
   const removeHero = (index: number) =>
-    removeWithUndo('Hero photo removed.', (g) => ops.removeHero(g, index));
+    removeWithUndo(t.heroRemoved, (g) => ops.removeHero(g, index));
 
   // ── Helpers ──────────────────────────────────────────────────
   function getAlbumName(id: string): string {
@@ -653,19 +655,19 @@ export default function PageBuilder() {
   function dragLabel(id: string | number): string {
     const key = String(id);
     const subpage = /^subpage-(\d+)$/.exec(key);
-    if (subpage) return `page "${gallery.subpages[Number(subpage[1])]?.name || 'Untitled'}"`;
+    if (subpage) return t.drag.page(gallery.subpages[Number(subpage[1])]?.name || t.drag.untitled);
     const page = /^page-(.+)$/.exec(key);
     if (page) {
       const found = pages.find((p) => p.slug === page[1]);
-      return `page "${found?.frontmatter.title || page[1]}"`;
+      return t.drag.page(found?.frontmatter.title || page[1]);
     }
     const hero = /^hero-(\d+)$/.exec(key);
-    if (hero) return `homepage hero photo ${Number(hero[1]) + 1}`;
+    if (hero) return t.drag.hero(Number(hero[1]) + 1);
     const album = /^album-(.+)-\d+$/.exec(key);
-    if (album) return `album "${getAlbumName(album[1])}"`;
-    return 'item';
+    if (album) return t.drag.album(getAlbumName(album[1]));
+    return t.drag.item;
   }
-  const announcements = dndAnnouncements(dragLabel);
+  const announcements = dndAnnouncements(dragLabel, dict.pickers.dnd);
 
   function getAlbumCount(id: string): number {
     const found = immichAlbums.find((a) => a.id === id);
@@ -732,13 +734,10 @@ export default function PageBuilder() {
   if (loadError) {
     return (
       <div className="admin-error" role="alert">
-        <strong>The page structure could not be loaded.</strong> {loadError}
-        <p>
-          Nothing has been changed. Saving stays disabled until it loads, so an empty builder cannot
-          overwrite your gallery.
-        </p>
+        <strong>{t.loadFailed}</strong> {loadError}
+        <p>{t.loadFailedNote}</p>
         <button className="admin-btn admin-btn-secondary" onClick={loadData}>
-          Try again
+          {dict.common.retry}
         </button>
       </div>
     );
@@ -810,7 +809,7 @@ export default function PageBuilder() {
         saving={saving}
         status={saveStatus}
         onSave={handleSave}
-        label="Save Changes"
+        label={t.saveChanges}
         showPreview
       />
 
@@ -824,7 +823,7 @@ export default function PageBuilder() {
 
       <div className="pb-split">
         {/* Structure: everything on the site, always visible (UX stage 4). */}
-        <aside className="pb-tree" aria-label="Page structure">
+        <aside className="pb-tree" aria-label={t.tree}>
           {/* Search Bar */}
           <div className="builder-search-container">
             <div className="builder-search-wrapper">
@@ -833,9 +832,9 @@ export default function PageBuilder() {
               </span>
               <input
                 type="search"
-                aria-label="Search albums or subpages"
+                aria-label={t.searchLabel}
                 className="builder-search-input"
-                placeholder="Search albums or subpages..."
+                placeholder={t.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -843,7 +842,7 @@ export default function PageBuilder() {
                 <button
                   className="builder-search-clear"
                   onClick={() => setSearchQuery('')}
-                  title="Clear search"
+                  title={t.clearSearch}
                 >
                   ×
                 </button>
@@ -853,7 +852,7 @@ export default function PageBuilder() {
 
           <div className="pb-group">
             <div className="pb-group-head">
-              <span>Home page</span>
+              <span>{t.homePage}</span>
             </div>
             <button
               type="button"
@@ -867,7 +866,7 @@ export default function PageBuilder() {
                   <IconHome size={14} />
                 )}
               </span>
-              <span className="pb-row-name">Hero photos</span>
+              <span className="pb-row-name">{t.heroPhotos}</span>
               <span className="pb-row-count">{gallery.hero.length}</span>
             </button>
           </div>
@@ -880,14 +879,16 @@ export default function PageBuilder() {
           >
             <div className="pb-group">
               <div className="pb-group-head">
-                <span>Menu</span>
+                <span>{t.menu}</span>
                 <span>
-                  {gallery.subpages.filter((sp) => sp.enabled !== false).length} of{' '}
-                  {gallery.subpages.length} subpages live
+                  {t.subpagesLive(
+                    gallery.subpages.filter((sp) => sp.enabled !== false).length,
+                    gallery.subpages.length,
+                  )}
                 </span>
               </div>
               {(gallery.subpages.length > 0 || (gallery.pageRefs ?? []).length > 0) &&
-                menuRows.length === 0 && <p className="empty-hint">No matching entries.</p>}
+                menuRows.length === 0 && <p className="empty-hint">{t.noMatches}</p>}
               <SortableContext
                 items={menuRows.map(menuRowId)}
                 strategy={verticalListSortingStrategy}
@@ -931,17 +932,17 @@ export default function PageBuilder() {
                     selectSubpage(gallery.subpages.length);
                   }}
                 >
-                  <IconPlus size={13} /> New subpage
+                  <IconPlus size={13} /> {t.newSubpage}
                 </button>
                 <button type="button" className="pb-add" onClick={() => setShowNewPage(true)}>
-                  <IconPlus size={13} /> New page
+                  <IconPlus size={13} /> {t.newPage}
                 </button>
               </div>
             </div>
 
             <div className="pb-group">
               <div className="pb-group-head">
-                <span>Not in menu</span>
+                <span>{t.notInMenu}</span>
                 <span>{offMenuPages.length}</span>
               </div>
               <OffMenuDropZone id={OFF_MENU_ID}>
@@ -961,18 +962,14 @@ export default function PageBuilder() {
                     />
                   ))}
                 </SortableContext>
-                {offMenuPages.length === 0 && (
-                  <p className="empty-hint">
-                    Pages reachable only by their link. Drag a page here to take it out of the menu.
-                  </p>
-                )}
+                {offMenuPages.length === 0 && <p className="empty-hint">{t.offMenuEmpty}</p>}
               </OffMenuDropZone>
             </div>
           </DndContext>
 
           <div className="pb-group">
             <div className="pb-group-head">
-              <span>Standalone albums</span>
+              <span>{t.standaloneGroup}</span>
             </div>
             <button
               type="button"
@@ -982,7 +979,7 @@ export default function PageBuilder() {
               <span className="pb-row-thumb">
                 <IconCamera size={14} />
               </span>
-              <span className="pb-row-name">On the home page</span>
+              <span className="pb-row-name">{t.onHomePage}</span>
               <span className="pb-row-count">{gallery.albums.length}</span>
             </button>
           </div>
@@ -1040,13 +1037,13 @@ export default function PageBuilder() {
                 <div className="builder-section-header">
                   <h2>
                     <IconCamera />
-                    Standalone Albums
+                    {t.standaloneHeading}
                   </h2>
                   <button
                     className="admin-btn admin-btn-sm"
                     onClick={() => setPickerTarget({ type: 'standalone' })}
                   >
-                    + Add Album
+                    {t.addAlbum}
                   </button>
                 </div>
                 <DndContext
@@ -1065,9 +1062,7 @@ export default function PageBuilder() {
                     <div className="album-list">
                       {filteredAlbums.length === 0 && (
                         <p className="empty-hint">
-                          {searchQuery
-                            ? 'No matching standalone albums found.'
-                            : 'No standalone albums. These show directly on the homepage.'}
+                          {searchQuery ? t.noMatchingStandalone : t.noStandalone}
                         </p>
                       )}
                       {filteredAlbums.map((album) => {
@@ -1101,7 +1096,7 @@ export default function PageBuilder() {
               <section className="builder-section">
                 <div className="builder-section-header">
                   <h2>
-                    <IconHome /> Hero photos
+                    <IconHome /> {t.heroPhotos}
                   </h2>
                   <button
                     className="admin-btn admin-btn-sm"
@@ -1109,11 +1104,11 @@ export default function PageBuilder() {
                       setHeroPickerTarget({
                         onSelectMany: handleHeroSelectMany,
                         currentAssetIds: gallery.hero,
-                        title: 'Pick Hero Images for Homepage',
+                        title: t.heroPickerTitle,
                       })
                     }
                   >
-                    <IconPlus size={14} /> Add Hero
+                    <IconPlus size={14} /> {t.addHero}
                   </button>
                 </div>
                 <DndContext
@@ -1127,12 +1122,7 @@ export default function PageBuilder() {
                     strategy={horizontalListSortingStrategy}
                   >
                     <div className="hero-grid">
-                      {gallery.hero.length === 0 && (
-                        <p className="empty-hint">
-                          No hero images configured. Add photos to show a hero carousel on the
-                          homepage.
-                        </p>
-                      )}
+                      {gallery.hero.length === 0 && <p className="empty-hint">{t.noHero}</p>}
                       {gallery.hero.map((id, i) => (
                         <SortableHeroTile
                           key={`hero-${i}`}

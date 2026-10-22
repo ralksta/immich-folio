@@ -9,6 +9,7 @@ import type { DoctorFinding, DoctorLevel } from '@/lib/admin/doctor';
 import type { AltTextReport } from '@/lib/admin/alt-text';
 import PageHeader from './PageHeader';
 import { rich, useAdminDictionary } from './AdminI18n';
+import { adminGet } from './useAdminFetch';
 import type { AdminDictionary } from '@/lib/i18n/admin';
 
 type DiagnosticsText = AdminDictionary['diagnostics'];
@@ -138,7 +139,8 @@ function altTextFinding(report: AltTextData, text: DiagnosticsText): DoctorFindi
 }
 
 export default function DiagnosticsView() {
-  const t = useAdminDictionary().diagnostics;
+  const dict = useAdminDictionary();
+  const t = dict.diagnostics;
   const [status, setStatus] = useState<StatusData | null>(null);
   const [findings, setFindings] = useState<DoctorFinding[] | null>(null);
   const [altText, setAltText] = useState<AltTextData | null>(null);
@@ -153,13 +155,8 @@ export default function DiagnosticsView() {
   const [expandedAlbums, setExpandedAlbums] = useState<Set<string>>(new Set());
 
   const fetchStatus = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/status');
-      setStatus(res.ok ? await res.json() : null);
-    } catch {
-      setStatus(null);
-    }
-  }, []);
+    setStatus((await adminGet<StatusData>('/api/admin/status', dict.shell)).data);
+  }, [dict.shell]);
 
   const run = useCallback(async () => {
     setLoading(true);
@@ -169,34 +166,32 @@ export default function DiagnosticsView() {
     // The alt-text report reads every published album and is the slow one, so
     // it arrives on its own and does not hold up the rest of the page.
     setAltTextFailed(false);
-    fetch('/api/admin/alt-text')
-      .then(async (res) => {
-        if (!res.ok) throw new Error();
-        setAltText(await res.json());
-      })
-      .catch(() => {
-        setAltText(null);
-        setAltTextFailed(true);
-      });
+    adminGet<AltTextData>('/api/admin/alt-text', dict.shell).then((r) => {
+      setAltText(r.data);
+      setAltTextFailed(r.error !== null);
+    });
 
-    try {
-      const [doctorRes] = await Promise.all([fetch('/api/admin/doctor'), fetchStatus()]);
-      if (!doctorRes.ok) throw new Error(t.errors.failedStatus(doctorRes.status));
-      const data = await doctorRes.json();
-      setFindings(data.findings || []);
+    const [doctor] = await Promise.all([
+      adminGet<{ findings?: DoctorFinding[]; level?: DoctorLevel }>(
+        '/api/admin/doctor',
+        dict.shell,
+      ),
+      fetchStatus(),
+    ]);
+    if (doctor.error !== null) {
+      setError(t.errors.failed(doctor.error));
+    } else {
+      setFindings(doctor.data.findings || []);
       setRanAt(new Date());
-      if (data.level) {
-        window.dispatchEvent(new CustomEvent(DOCTOR_LEVEL_EVENT, { detail: data.level }));
+      if (doctor.data.level) {
+        window.dispatchEvent(new CustomEvent(DOCTOR_LEVEL_EVENT, { detail: doctor.data.level }));
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t.errors.failed);
-    } finally {
-      setLoading(false);
     }
-  }, [fetchStatus, t]);
+    setLoading(false);
+  }, [fetchStatus, dict.shell, t]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- a load started on mount; moves to useAdminFetch in #821
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a load started on mount; Run again calls it too, so it stays a function (#821)
     run();
   }, [run]);
 

@@ -88,8 +88,7 @@ export const diagnostics: AdminDictionary['diagnostics'] = {
   },
 
   errors: {
-    failed: 'El diagnóstico ha fallado',
-    failedStatus: (status: number) => `El diagnóstico ha fallado (${status})`,
+    failed: (reason: string) => `El diagnóstico ha fallado. ${reason}`,
     copyFailed: 'No se ha podido copiar: tu navegador ha denegado el acceso al portapapeles.',
   },
 

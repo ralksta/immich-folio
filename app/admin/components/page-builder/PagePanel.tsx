@@ -22,6 +22,8 @@ import { useNotify } from '../Notifications';
 import { reportIfSessionExpired } from '../sessionExpiry';
 import { useVersionedSave } from '../useVersionedSave';
 import type { GalleryVersionChange } from '@/lib/admin/pageRefs';
+import { useAdminDictionary } from '../AdminI18n';
+import { adminGet } from '../useAdminFetch';
 
 interface PagePanelProps {
   slug: string;
@@ -65,10 +67,12 @@ export default function PagePanel({
   onSaved,
   onDeleted,
 }: PagePanelProps) {
+  const dict = useAdminDictionary();
+  const t = dict.pages.pagePanel;
   const confirm = useConfirm();
   const notify = useNotify();
-  const [parsed, setParsed] = useState<ParsedJournal | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [parsedState, setParsed] = useState<ParsedJournal | null>(null);
+  const [loadErrorState, setLoadError] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [slugInput, setSlugInput] = useState(slug);
   const [draft, setDraft] = useState(false);
@@ -81,41 +85,44 @@ export default function PagePanel({
   /** Bumped to load the file again — "Reload" in the conflict prompt. */
   const [reloadKey, setReloadKey] = useState(0);
 
+  // What was loaded belongs to one slug and reload: until that one answers,
+  // the panel shows neither the previous page nor its error.
+  const loadKey = `${reloadKey}:${slug}`;
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const current = loadedKey === loadKey;
+  const parsed = current ? parsedState : null;
+  const loadError = current ? loadErrorState : null;
+
   useEffect(() => {
     let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- a load started on mount; moves to useAdminFetch in #821
-    setParsed(null);
-    setLoadError(null);
-    fetch(`/api/admin/pages/${encodeURIComponent(slug)}`)
-      .then(async (res) => {
-        if (!res.ok) {
-          reportIfSessionExpired(res);
-          throw new Error(
-            res.status === 404
-              ? 'There is no file for this page in content/pages/.'
-              : `The server answered ${res.status}.`,
-          );
-        }
-        return res.json();
-      })
-      .then((data: { page: { rawMarkdown: string }; version?: string }) => {
-        if (cancelled) return;
-        versionRef.current = data.version ?? null;
-        const p = parseJournalMarkdown(data.page.rawMarkdown);
-        setParsed(p);
-        setTitle(p.frontmatter.title || '');
-        setSlugInput(slug);
-        setDraft(!!p.frontmatter.draft);
-        setPassword(p.frontmatter.password || undefined);
-        setDescription(p.frontmatter.description || '');
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) setLoadError(err instanceof Error ? err.message : 'Could not load.');
-      });
+    adminGet<{ page: { rawMarkdown: string }; version?: string }>(
+      `/api/admin/pages/${encodeURIComponent(slug)}`,
+      dict.shell,
+    ).then((r) => {
+      if (cancelled) return;
+      setLoadedKey(loadKey);
+      if (r.error !== null) {
+        setParsed(null);
+        setLoadError(r.status === 404 ? t.noFile : r.error);
+        return;
+      }
+      setLoadError(null);
+      const data = r.data;
+      versionRef.current = data.version ?? null;
+      const p = parseJournalMarkdown(data.page.rawMarkdown);
+      setParsed(p);
+      setTitle(p.frontmatter.title || '');
+      setSlugInput(slug);
+      setDraft(!!p.frontmatter.draft);
+      setPassword(p.frontmatter.password || undefined);
+      setDescription(p.frontmatter.description || '');
+    });
     return () => {
       cancelled = true;
     };
-  }, [slug, reloadKey]);
+    // `t` only words the error; a language switch need not reload the page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadKey]);
 
   // The field keeps what is typed, a trailing "-" included; the page moves to
   // the finished slug.
@@ -133,10 +140,10 @@ export default function PagePanel({
   const renaming = targetSlug !== slug;
   const collision = renaming
     ? otherPageSlugs.includes(targetSlug)
-      ? `A page "${targetSlug}" already exists.`
+      ? t.exists(targetSlug)
       : (() => {
           const c = pageSlugCollision(targetSlug, taken);
-          return c ? describeCollision(targetSlug, c) : null;
+          return c ? describeCollision(targetSlug, c, dict.pages.collision) : null;
         })()
     : null;
 
@@ -144,9 +151,9 @@ export default function PagePanel({
     if (!parsed || !dirty || collision || !title.trim()) return;
     if (renaming) {
       const ok = await confirm({
-        title: `Move this page to /${targetSlug}?`,
-        message: `Links to /${slug} will stop working. There is no automatic redirect.`,
-        confirmLabel: 'Move page',
+        title: t.moveTitle(targetSlug),
+        message: t.linksBreak(slug),
+        confirmLabel: t.movePage,
       });
       if (!ok) return;
     }
@@ -173,12 +180,12 @@ export default function PagePanel({
         return;
       }
       if (result.kind === 'keep') {
-        notify('error', 'Not saved — the page changed elsewhere. Your edits are still here.');
+        notify('error', t.notSavedConflict);
         return;
       }
       if (result.kind === 'failed') {
         if (!reportIfSessionExpired(result.res)) {
-          notify('error', result.data?.error || 'Failed to save the page');
+          notify('error', result.data?.error || t.saveFailed);
         }
         return;
       }
@@ -192,20 +199,20 @@ export default function PagePanel({
       const written = parseJournalMarkdown(data.page.rawMarkdown);
       setParsed(written);
       setPassword(written.frontmatter.password || undefined);
-      const { title: t, description: d, password: pw, draft: dr } = written.frontmatter;
+      const { title: ti, description: d, password: pw, draft: dr } = written.frontmatter;
       onSaved(
         slug,
         {
           slug: data.page.slug,
-          frontmatter: { title: t, description: d, password: pw, draft: dr },
+          frontmatter: { title: ti, description: d, password: pw, draft: dr },
         },
         data.menuRenamed === true,
         data.galleryVersion,
       );
       if (data.warning) notify('error', data.warning);
-      else notify('success', 'Page saved.');
+      else notify('success', t.saved);
     } catch {
-      notify('error', 'Could not save the page. Check the connection and try again.');
+      notify('error', t.saveOffline);
     } finally {
       setSaving(false);
     }
@@ -213,11 +220,9 @@ export default function PagePanel({
 
   async function remove() {
     const ok = await confirm({
-      title: `Delete “${title || slug}”?`,
-      message: inMenu
-        ? 'The page is also removed from the menu in gallery.yaml. Both files are backed up first and can be restored under Backups.'
-        : 'A copy is kept and can be restored under Backups.',
-      confirmLabel: 'Delete page',
+      title: t.deleteTitle(title || slug),
+      message: inMenu ? t.deleteMessageInMenu : t.deleteMessage,
+      confirmLabel: t.deletePage,
       danger: true,
     });
     if (!ok) return;
@@ -227,15 +232,14 @@ export default function PagePanel({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        if (!reportIfSessionExpired(res))
-          notify('error', data?.error || 'Failed to delete the page');
+        if (!reportIfSessionExpired(res)) notify('error', data?.error || t.deleteFailed);
         return;
       }
       onDeleted(slug, data?.removedFromMenu === true, data?.galleryVersion);
       if (typeof data?.warning === 'string') notify('error', data.warning);
-      else notify('success', 'Page deleted.');
+      else notify('success', t.deleted);
     } catch {
-      notify('error', 'Could not delete the page. Check the connection and try again.');
+      notify('error', t.deleteOffline);
     }
   }
 
@@ -248,17 +252,12 @@ export default function PagePanel({
           </h2>
         </div>
         <div className="admin-error" role="alert">
-          <strong>This page could not be loaded.</strong> {loadError}
-          {inMenu && (
-            <p>
-              The menu still lists it. Switch off “Show in menu” and save the structure to remove
-              the entry.
-            </p>
-          )}
+          <strong>{t.loadFailed}</strong> {loadError}
+          {inMenu && <p>{t.menuStillLists}</p>}
         </div>
         {inMenu && (
           <button type="button" className="admin-btn admin-btn-secondary" onClick={onToggleMenu}>
-            Remove from menu
+            {t.removeFromMenu}
           </button>
         )}
       </section>
@@ -284,19 +283,19 @@ export default function PagePanel({
           target="_blank"
           rel="noopener noreferrer"
           className="admin-btn admin-btn-xs admin-btn-ghost"
-          title="Open the live page in a new tab"
+          title={t.openLive}
         >
           /{slug} ↗
         </a>
       </div>
 
       <div className="admin-field">
-        <label htmlFor="page-title">Title</label>
+        <label htmlFor="page-title">{t.title}</label>
         <input id="page-title" value={title} onChange={(e) => setTitle(e.target.value)} />
       </div>
 
       <div className="admin-field">
-        <label htmlFor="page-slug">URL</label>
+        <label htmlFor="page-slug">{t.url}</label>
         <div className="input-slug-wrapper">
           <input
             id="page-slug"
@@ -311,23 +310,16 @@ export default function PagePanel({
           id="page-slug-hint"
           className={`admin-field-hint${collision ? ' admin-field-hint--error' : renaming ? ' admin-field-hint--warn' : ''}`}
         >
-          {collision
-            ? collision
-            : renaming
-              ? `Links to /${slug} will stop working. There is no automatic redirect.`
-              : 'Checked against subpages, albums, journal entries and built-in routes.'}
+          {collision ? collision : renaming ? t.linksBreak(slug) : t.slugHint}
         </span>
       </div>
 
       <div className="page-panel-switches">
         <button type="button" className="setting-row" onClick={onToggleMenu} aria-pressed={inMenu}>
           <span className="setting-row-info">
-            <span className="setting-row-title">Show in menu</span>
+            <span className="setting-row-title">{t.showInMenu}</span>
             <span className="setting-row-desc">
-              {inMenu
-                ? 'Listed in the header menu. Drag it in the structure list to move it.'
-                : 'Not in the menu, but reachable at its URL — for pages shared by link.'}{' '}
-              Saved with “Save Changes”.
+              {inMenu ? t.inMenuDesc : t.offMenuDesc} {t.savedWithStructure}
             </span>
           </span>
           <span className={`switch-toggle switch-toggle--sm ${inMenu ? 'on' : ''}`}>
@@ -342,10 +334,8 @@ export default function PagePanel({
           aria-pressed={draft}
         >
           <span className="setting-row-info">
-            <span className="setting-row-title">Draft</span>
-            <span className="setting-row-desc">
-              Only you can see a draft. It stays out of the menu and the sitemap.
-            </span>
+            <span className="setting-row-title">{t.draft}</span>
+            <span className="setting-row-desc">{t.draftDesc}</span>
           </span>
           <span className={`switch-toggle switch-toggle--sm ${draft ? 'on' : ''}`}>
             <span className="switch-slider" />
@@ -354,24 +344,24 @@ export default function PagePanel({
       </div>
 
       <div className="admin-field">
-        <span className="admin-field-label">Password (optional)</span>
-        <PasswordField value={password} onChange={setPassword} label="Page password" />
+        <span className="admin-field-label">{t.password}</span>
+        <PasswordField value={password} onChange={setPassword} label={t.pagePassword} />
       </div>
 
       <div className="admin-field">
-        <label htmlFor="page-description">SEO description</label>
+        <label htmlFor="page-description">{t.seoDescription}</label>
         <textarea
           id="page-description"
           rows={2}
           value={description}
-          placeholder="One or two sentences for search engines and link previews"
+          placeholder={t.seoPlaceholder}
           onChange={(e) => setDescription(e.target.value.replace(/\s*\n\s*/g, ' '))}
         />
       </div>
 
       <div className="page-panel-actions">
         <Link href={`/admin/pages/edit/${slug}`} className="admin-btn admin-btn-secondary">
-          Edit content →
+          {t.editContent}
         </Link>
         <button
           type="button"
@@ -379,7 +369,7 @@ export default function PagePanel({
           onClick={save}
           disabled={!dirty || saving || !!collision || !title.trim()}
         >
-          {saving ? 'Saving…' : 'Save page'}
+          {saving ? dict.common.saving : t.savePage}
         </button>
         <button
           type="button"
@@ -387,7 +377,7 @@ export default function PagePanel({
           onClick={remove}
           style={{ marginLeft: 'auto' }}
         >
-          <IconTrash size={14} /> Delete
+          <IconTrash size={14} /> {dict.common.delete}
         </button>
       </div>
     </section>

@@ -81,8 +81,7 @@ export const diagnostics = {
   },
 
   errors: {
-    failed: 'Diagnostics failed',
-    failedStatus: (status: number) => `Diagnostics failed (${status})`,
+    failed: (reason: string) => `Diagnostics failed. ${reason}`,
     copyFailed: 'Could not copy — your browser refused clipboard access.',
   },
 

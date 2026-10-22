@@ -79,8 +79,7 @@ export const diagnostics: AdminDictionary['diagnostics'] = {
   },
 
   errors: {
-    failed: 'Diagnose mislukt',
-    failedStatus: (status: number) => `Diagnose mislukt (${status})`,
+    failed: (reason: string) => `Diagnose mislukt. ${reason}`,
     copyFailed: 'Kopiëren mislukt — je browser weigerde toegang tot het klembord.',
   },
 
