@@ -1,0 +1,462 @@
+/* ── Photo Grid (Album Detail) ────────────────────── */
+/* ── Album Hero Image ────────────────────────────────────────── */
+.album-hero {
+  position: relative;
+  width: 100%;
+  height: clamp(240px, 40vw, 520px);
+  overflow: hidden;
+  margin-bottom: 0;
+}
+
+.album-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, var(--bg-primary, #fff) 100%);
+  pointer-events: none;
+}
+
+.album-header {
+  margin-bottom: 40px;
+}
+
+.album-header--has-hero {
+  margin-top: -60px;
+  position: relative;
+  z-index: 1;
+}
+
+.album-header__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  transition: color var(--transition-fast);
+}
+
+.album-header__back:hover {
+  color: var(--text-primary);
+}
+
+.album-header__back svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Album navigation (previous / next) ── */
+
+.album-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 16px;
+  max-width: var(--max-width);
+  margin: 64px auto 96px;
+  padding: 24px 24px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.album-nav__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 45%;
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.album-nav__link:hover {
+  color: var(--text-primary);
+}
+
+.album-nav__link--next {
+  margin-left: auto;
+  text-align: right;
+}
+
+.album-nav__link svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.album-nav__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.album-nav__kicker {
+  font-family: var(--font-caption);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.album-nav__name {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: inherit;
+  /* Long album names must not push the pair apart. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .album-nav {
+    margin: 48px auto 64px;
+    padding: 20px 16px 0;
+  }
+
+  .album-nav__name {
+    font-size: 0.95rem;
+  }
+}
+
+.album-header__main {
+  /* A flex child defaults to min-width: auto, so one long word in the title
+     would widen the header past the viewport on phones. */
+  min-width: 0;
+}
+
+.album-header__title {
+  font-family: var(--font-serif);
+  font-size: 2.5rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  hyphens: auto;
+  overflow-wrap: anywhere;
+}
+
+.album-header__description {
+  margin-top: 12px;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+  line-height: 1.6;
+  max-width: 640px;
+}
+
+/* Client proofing link (/proof/<token>): greeting and notes under the title. */
+.proof-session-intro {
+  margin-top: 16px;
+  max-width: 640px;
+}
+
+.proof-session-intro__greeting {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.proof-session-intro__text {
+  margin-top: 6px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.proof-session-intro__meta {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.album-header__meta {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 300;
+}
+
+/* Date + gear ship with every album header but stay hidden unless a preset
+   opts in, so the meta line reads "86 photos" as it always has. */
+.album-header__meta-date,
+.album-header__meta-gear {
+  display: none;
+}
+
+.album-header__download {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.album-header__download:hover {
+  color: var(--text-primary);
+}
+
+.album-header__download svg {
+  width: 15px;
+  height: 15px;
+}
+
+.photo-grid {
+  /* The gap the grid uses when settings.yaml does not set one. Declared rather
+     than left to each layout's own `var(--grid-gap, N)` fallback, because those
+     fallbacks disagree (6px filmstrip, 16px editorial-flow) and were dead code
+     while the variable was emitted unconditionally — 12px is what every layout
+     has actually rendered. A preset overrides it, an explicit setting beats
+     both by landing inline on this element (#513). */
+  --grid-gap: 12px;
+  column-count: var(--grid-columns, 3);
+  column-gap: var(--grid-gap, 12px);
+}
+
+/* Uniform layout: CSS Grid with fixed aspect ratio */
+.photo-grid--uniform {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns, 3), 1fr);
+  gap: var(--grid-gap, 12px);
+  column-count: unset;
+}
+
+.photo-grid__item {
+  break-inside: avoid;
+  margin-bottom: var(--grid-gap, 12px);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  aspect-ratio: var(--grid-aspect-ratio, 1);
+}
+
+.photo-grid--uniform .photo-grid__item {
+  margin-bottom: 0;
+}
+
+/* ── Showcase Layout ────────────────────────────── */
+/* First item gets full width; rest in standard grid. The grid's children are
+   the FadeIn wrappers, not the tiles, so the span goes on the wrapper and the
+   shape on the tile inside it (#825). */
+.photo-grid--showcase {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns, 3), 1fr);
+  gap: var(--grid-gap, 12px);
+  column-count: unset;
+}
+
+.photo-grid--showcase > .photo-grid__cell--featured {
+  grid-column: 1 / -1;
+}
+
+.photo-grid--showcase .photo-grid__featured {
+  aspect-ratio: 16 / 9;
+  margin-bottom: 0;
+}
+
+.photo-grid--showcase .photo-grid__item {
+  margin-bottom: 0;
+}
+
+/* ── Filmstrip Layout ───────────────────────────── */
+/* Horizontal scroll of tall vertical strips */
+.photo-grid--filmstrip {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: var(--grid-gap, 6px);
+  column-count: unset;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--text-muted) transparent;
+  padding-bottom: 8px;
+}
+
+.photo-grid--filmstrip .photo-grid__item {
+  flex: 0 0 auto;
+  width: 280px;
+  height: 440px;
+  margin-bottom: 0;
+  scroll-snap-align: start;
+  aspect-ratio: unset;
+}
+
+@media (max-width: 640px) {
+  .photo-grid--filmstrip .photo-grid__item {
+    width: 220px;
+    height: 340px;
+  }
+}
+
+/* ── Editorial Flow Layout ──────────────────────── */
+/* Alternating full-width singles and 2-column pairs */
+.photo-grid--editorial-flow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--grid-gap, 16px);
+  column-count: unset;
+}
+
+.photo-grid--editorial-flow .photo-grid__item {
+  margin-bottom: 0;
+  aspect-ratio: 4 / 3;
+}
+
+/* Every 3rd item (1st, 4th, 7th, …) spans full width. Counted on the grid's
+   own children: every tile is the only child of its FadeIn wrapper, so
+   `.photo-grid__item:nth-child(3n + 1)` matched all of them (#825). */
+.photo-grid--editorial-flow > :nth-child(3n + 1) {
+  grid-column: 1 / -1;
+}
+
+.photo-grid--editorial-flow > :nth-child(3n + 1) .photo-grid__item {
+  aspect-ratio: 21 / 9;
+}
+
+@media (max-width: 640px) {
+  .photo-grid--editorial-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .photo-grid--editorial-flow .photo-grid__item,
+  .photo-grid--editorial-flow > :nth-child(3n + 1) .photo-grid__item {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* ── Justified Rows Layout (EXPERIMENTAL) ───────── */
+/* Row-based justified layout: every row fills the container width, all
+   images in a row share the same height, aspect ratios stay intact.
+   Flex sizing (grow = aspect ratio) lives inline on the .fade-in wrapper. */
+.photo-grid--justified {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--grid-gap, 12px);
+  column-count: unset;
+  /* More columns → shorter rows, mirroring the density of the other layouts */
+  --grid-row-height: calc(900px / var(--grid-columns, 3));
+}
+
+/* Filler that soaks up leftover space so the last row keeps natural sizes
+   instead of stretching a lone image to full width */
+.photo-grid--justified::after {
+  content: '';
+  flex-grow: 999999;
+  min-width: 0;
+}
+
+.photo-grid--justified > .fade-in {
+  height: var(--grid-row-height);
+  min-width: 0;
+}
+
+.photo-grid--justified .photo-grid__item {
+  height: 100%;
+  width: 100%;
+  margin-bottom: 0;
+  /* The base .photo-grid__item rule forces aspect-ratio from the grid
+     setting. Combined with height: 100% that pins the item width to
+     height × ratio, so it never fills the flex-grown wrapper and rows end
+     ragged. The wrapper's flex sizing is the only geometry source here. */
+  aspect-ratio: unset;
+}
+
+@media (max-width: 1024px) {
+  .photo-grid--justified {
+    --grid-row-height: 240px;
+  }
+}
+
+@media (max-width: 640px) {
+  .photo-grid--justified {
+    --grid-row-height: 160px;
+  }
+}
+
+.photo-grid__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition:
+    filter var(--transition-normal),
+    transform var(--transition-slow);
+}
+
+.photo-grid__item:hover img {
+  filter: brightness(0.85);
+  transform: scale(1.02);
+}
+
+/* EXIF hover overlay */
+.photo-grid__item-exif {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px 10px 8px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+  z-index: 2;
+}
+
+.photo-grid__item:hover .photo-grid__item-exif {
+  opacity: 1;
+}
+
+/* The wall label (PhotoGrid's figcaption): number, caption, EXIF under the
+   photo. Hidden unless a preset hangs its photos with one (kunsthalle), so
+   every other preset lays out as if it were not there. */
+.photo-grid__label {
+  display: none;
+}
+
+/* Hover-only overlays leave keyboard and touch visitors out (#696). A tile
+   with keyboard focus shows its overlay like a hovered one, and on devices
+   without hover — phones, and tablets wider than the 640px mobile rules — the
+   overlays are simply always shown. */
+.photo-grid__item:is(:focus-visible, :has(:focus-visible)) .photo-grid__item-exif,
+.subpage-grid__item:is(:focus-visible, :has(:focus-visible)) .subpage-grid__item-overlay,
+.album-card:is(:focus-visible, :has(:focus-visible)) .album-card__overlay {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .photo-grid__item .photo-grid__item-exif,
+  .subpage-grid__item .subpage-grid__item-overlay,
+  .album-card .album-card__overlay {
+    opacity: 1;
+  }
+}
+
+.photo-grid__item-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.photo-grid__item-play svg {
+  width: 48px;
+  height: 48px;
+  color: white;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+  transition: transform var(--transition-fast);
+}
+
+.photo-grid__item:hover .photo-grid__item-play svg {
+  transform: scale(1.1);
+}
+

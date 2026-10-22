@@ -1,0 +1,204 @@
+/* ── Section Labels ──────────────────────────────── */
+.section-label {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  margin-top: 48px;
+  margin-bottom: 20px;
+}
+
+.section-label:first-child {
+  margin-top: 0;
+}
+
+/* ── Subpage Header ──────────────────────────────── */
+.subpage-header {
+  margin-bottom: 40px;
+}
+
+/* Kicker + meta block are rendered for every preset but stay hidden
+   unless a preset opts in (studio-modern uses both). */
+.subpage-header__kicker,
+.subpage-header__meta {
+  display: none;
+}
+
+.subpage-title {
+  font-family: var(--font-serif);
+  font-size: 2.5rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  margin-bottom: 8px;
+}
+
+.subpage-subtitle {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+
+/* ── Subpage TOC (Typographic Navigation) ────────── */
+.subpage-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-bottom: 56px;
+  margin-top: 8px;
+}
+
+.subpage-toc__entry {
+  display: flex;
+  align-items: center;
+}
+
+.subpage-toc__entry + .subpage-toc__entry::before {
+  content: '·';
+  padding: 0 12px;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.subpage-toc__link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  text-decoration: none;
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.subpage-toc__link:hover {
+  color: var(--text-primary);
+}
+
+.subpage-toc__num {
+  font-family: var(--font-caption, monospace);
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.subpage-toc__label {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+}
+
+/* ── Subpage Section ─────────────────────────────── */
+.subpage-section {
+  scroll-margin-top: 80px;
+  margin-bottom: 72px;
+}
+
+.subpage-section__header {
+  margin-bottom: 28px;
+}
+
+.subpage-section__title {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  margin-bottom: 6px;
+}
+
+.subpage-section__desc {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  margin-bottom: 16px;
+}
+
+.subpage-section__rule {
+  height: 1px;
+  background: var(--border-subtle);
+  width: 100%;
+}
+
+/* The album-cover grid. `--subpage-columns` comes from the resolved grid
+   config (global settings.yaml < per-subpage override); the fallback keeps the
+   historical two-up layout for anything rendering this grid without the vars.
+   `--subpage-gap` is a *preset* decision — the theme files below set it, and
+   only an explicit per-subpage `gap:` overrides it (inline vars win). */
+.subpage-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--subpage-columns, 2), 1fr);
+  gap: var(--subpage-gap, 4px);
+}
+
+.subpage-grid__item {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 3 / 2;
+  cursor: pointer;
+  display: block;
+}
+
+/* Media wrapper keeps the cover square-on while presets that want a
+   caption bar below the image can grow the card. */
+.subpage-grid__item-media {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.subpage-grid__item-caption {
+  display: none;
+}
+
+.subpage-grid__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition:
+    transform var(--transition-slow),
+    filter var(--transition-slow);
+}
+
+.subpage-grid__item:hover img {
+  transform: scale(1.03);
+  filter: brightness(0.75);
+}
+
+.subpage-grid__item-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 20px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.subpage-grid__item:hover .subpage-grid__item-overlay {
+  opacity: 1;
+}
+
+.subpage-grid__item-title {
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+
+.subpage-grid__item-count {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+  margin-top: 2px;
+}
+

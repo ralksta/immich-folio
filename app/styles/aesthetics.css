@@ -1,0 +1,107 @@
+/* ── Gallery Aesthetics (all themes) ─────────────── */
+
+/* Generous spacing — gallery exhibition feel */
+.main {
+  padding: 64px 40px 120px;
+}
+
+.album-header {
+  margin-bottom: 56px;
+}
+
+.album-header__title {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 300;
+  font-size: 2rem;
+}
+
+.section-label {
+  font-weight: 400;
+  letter-spacing: 0.2em;
+}
+
+/* Photo grid gap */
+.photo-grid {
+  column-gap: var(--grid-gap, 24px);
+}
+
+/* Shutter-click feedback */
+.photo-grid__item:active img {
+  filter: brightness(0.6);
+  transform: scale(0.98);
+  transition: all 80ms ease;
+}
+
+/* Hero — wider, cleaner */
+.hero__title {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 300;
+}
+
+.hero__subtitle {
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-style: normal;
+  font-weight: 300;
+}
+
+.hero__nav-link {
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 0.75rem;
+  font-weight: 400;
+  padding: 6px 0;
+  border-bottom: 1px solid transparent;
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.hero__nav-link:hover {
+  border-bottom-color: var(--accent);
+  color: var(--accent-text);
+}
+
+/* Album cards */
+.album-card {
+  border-radius: var(--radius-md);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme='light'] .album-card {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.album-card:hover {
+  border-color: var(--accent);
+  transform: none;
+}
+
+/* Subpage grid */
+.subpage-grid__item {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme='light'] .subpage-grid__item {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Accent hover effects (works with any accent color) */
+.header__nav-link:hover,
+.header__nav-link.active {
+  color: var(--accent-text);
+  border-bottom-color: var(--accent);
+}
+
+.footer__link:hover {
+  color: var(--accent-text);
+}
+
+.scroll-to-top:hover {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+

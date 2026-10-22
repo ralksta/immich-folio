@@ -1,0 +1,74 @@
+/* ── Album Grid (Homepage) ────────────────────────── */
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 20px;
+}
+
+.album-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  aspect-ratio: 3 / 2;
+  cursor: pointer;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  transition:
+    border-color var(--transition-normal),
+    transform var(--transition-normal);
+}
+
+.album-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+
+.album-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition:
+    transform var(--transition-slow),
+    filter var(--transition-slow);
+}
+
+.album-card:hover .album-card__image {
+  transform: scale(1.03);
+  filter: brightness(0.7);
+}
+
+.album-card__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 24px;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.8) 0%,
+    rgba(0, 0, 0, 0.3) 40%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.album-card:hover .album-card__overlay {
+  opacity: 1;
+}
+
+.album-card__title {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  margin-bottom: 4px;
+}
+
+.album-card__count {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+
