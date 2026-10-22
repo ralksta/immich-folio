@@ -20,6 +20,10 @@ export const pages: AdminDictionary['pages'] = {
   },
 
   builder: {
+    albumListFailed: (error: string) =>
+      `Les albums Immich n’ont pas été chargés : le sélecteur d’albums est vide. ${error}`,
+    pageListFailed: (error: string) =>
+      `Les pages de contenu n’ont pas été chargées ; leurs entrées de menu restent telles quelles. ${error}`,
     sessionExpired: 'Votre session a expiré. Reconnectez-vous pour continuer.',
     serverAnswered: (status: number) => `Le serveur a répondu ${status}.`,
     loadFailed: 'La structure des pages n’a pas pu être chargée.',

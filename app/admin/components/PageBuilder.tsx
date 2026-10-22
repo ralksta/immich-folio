@@ -61,6 +61,7 @@ import { useNotify } from './Notifications';
 import { dndAnnouncements } from './dndAnnouncements';
 import PageHeader from './PageHeader';
 import { useAdminDictionary } from './AdminI18n';
+import { adminGet } from './useAdminFetch';
 
 /** Drop target id of the "Not in menu" group. */
 const OFF_MENU_ID = 'offmenu-zone';
@@ -203,20 +204,21 @@ export default function PageBuilder() {
   async function loadData() {
     setLoading(true);
     setLoadError(null);
+    const [galleryRes, albumsRes, pagesRes] = await Promise.all([
+      adminGet<{ gallery: Record<string, unknown>; version?: unknown }>(
+        '/api/admin/gallery',
+        dict.shell,
+      ),
+      adminGet<{ albums: ImmichAlbumInfo[] }>('/api/admin/albums', dict.shell),
+      adminGet<{ pages: PageSummary[]; taken: SlugTakenBy }>('/api/admin/pages', dict.shell),
+    ]);
+    if (galleryRes.error !== null) {
+      setLoadError(galleryRes.error);
+      setLoading(false);
+      return;
+    }
     try {
-      const [galleryRes, albumsRes, pagesRes] = await Promise.all([
-        fetch('/api/admin/gallery'),
-        fetch('/api/admin/albums'),
-        fetch('/api/admin/pages'),
-      ]);
-
-      if (!galleryRes.ok) {
-        throw new Error(
-          galleryRes.status === 401 ? t.sessionExpired : t.serverAnswered(galleryRes.status),
-        );
-      }
-
-      const { gallery: raw, version } = await galleryRes.json();
+      const { gallery: raw, version } = galleryRes.data;
       versionRef.current = typeof version === 'string' ? version : null;
       const parsed = parseGalleryYaml(raw);
       serverState.current = parsed;
@@ -229,18 +231,18 @@ export default function PageBuilder() {
       openAlbumFromLink(restored ?? parsed);
 
       // A failed album list is survivable — it only empties the picker, and
-      // saving with it empty changes nothing in gallery.yaml.
-      if (albumsRes.ok) {
-        const { albums } = await albumsRes.json();
-        setImmichAlbums(albums);
-      }
+      // saving with it empty changes nothing in gallery.yaml. It is said,
+      // though: an empty picker otherwise reads as "no albums in Immich".
+      if (albumsRes.error === null) setImmichAlbums(albumsRes.data.albums);
+      else notify('error', t.albumListFailed(albumsRes.error));
 
       // Pages are survivable the same way: without the list the menu still
       // shows their references, and saving keeps them.
-      if (pagesRes.ok) {
-        const data = (await pagesRes.json()) as { pages: PageSummary[]; taken: SlugTakenBy };
-        setPages(data.pages);
-        setTakenSlugs(data.taken);
+      if (pagesRes.error === null) {
+        setPages(pagesRes.data.pages);
+        setTakenSlugs(pagesRes.data.taken);
+      } else {
+        notify('error', t.pageListFailed(pagesRes.error));
       }
       openPageFromLink();
     } catch (err) {

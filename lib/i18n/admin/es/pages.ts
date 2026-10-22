@@ -17,6 +17,10 @@ export const pages: AdminDictionary['pages'] = {
   },
 
   builder: {
+    albumListFailed: (error: string) =>
+      `Los álbumes de Immich no se cargaron, por eso el selector de álbumes está vacío. ${error}`,
+    pageListFailed: (error: string) =>
+      `Las páginas de contenido no se cargaron; sus entradas del menú se quedan como están. ${error}`,
     sessionExpired: 'Tu sesión ha caducado. Vuelve a iniciar sesión para continuar.',
     serverAnswered: (status: number) => `El servidor ha respondido ${status}.`,
     loadFailed: 'No se ha podido cargar la estructura de páginas.',

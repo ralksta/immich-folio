@@ -17,6 +17,10 @@ export const pages: AdminDictionary['pages'] = {
   },
 
   builder: {
+    albumListFailed: (error: string) =>
+      `De Immich-albums zijn niet geladen, daarom is de albumkiezer leeg. ${error}`,
+    pageListFailed: (error: string) =>
+      `De inhoudspagina’s zijn niet geladen; hun menu-items blijven zoals ze zijn. ${error}`,
     sessionExpired: 'Je sessie is verlopen. Meld je opnieuw aan om verder te gaan.',
     serverAnswered: (status: number) => `De server antwoordde met ${status}.`,
     loadFailed: 'De paginastructuur kon niet worden geladen.',

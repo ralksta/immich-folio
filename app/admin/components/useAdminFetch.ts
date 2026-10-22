@@ -18,7 +18,9 @@ import { useAdminDictionary } from './AdminI18n';
 import type { AdminDictionary } from '@/lib/i18n/admin';
 import { adminEn } from '@/lib/i18n/admin/en';
 
-export type AdminResult<T> = { data: T; error: null } | { data: null; error: string };
+/** `status` is the HTTP status of a failed answer, null when none arrived. */
+export type AdminResult<T> =
+  { data: T; error: null } | { data: null; error: string; status: number | null };
 
 /**
  * One GET, with the admin's error conventions. Usable outside the hook too;
@@ -32,15 +34,15 @@ export async function adminGet<T>(
     const res = await fetch(url);
     if (!res.ok) {
       if (reportIfSessionExpired(res)) {
-        return { data: null, error: t.gate.sessionExpired };
+        return { data: null, error: t.gate.sessionExpired, status: res.status };
       }
       const body = (await res.json().catch(() => null)) as { error?: unknown } | null;
       const detail = typeof body?.error === 'string' ? body.error : '';
-      return { data: null, error: t.fetch.loadFailed(res.status, detail) };
+      return { data: null, error: t.fetch.loadFailed(res.status, detail), status: res.status };
     }
     return { data: (await res.json()) as T, error: null };
   } catch {
-    return { data: null, error: t.fetch.unreachable };
+    return { data: null, error: t.fetch.unreachable, status: null };
   }
 }
 

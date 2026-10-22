@@ -15,6 +15,10 @@ export const pages = {
   },
 
   builder: {
+    albumListFailed: (error: string) =>
+      `Immich albums did not load, so the album picker is empty. ${error}`,
+    pageListFailed: (error: string) =>
+      `The content pages did not load; their menu entries stay as they are. ${error}`,
     sessionExpired: 'Your session has expired. Sign in again to continue.',
     serverAnswered: (status: number) => `The server answered ${status}.`,
     loadFailed: 'The page structure could not be loaded.',

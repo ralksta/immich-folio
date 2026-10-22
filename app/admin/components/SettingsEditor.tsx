@@ -32,6 +32,7 @@ import AboutSection, { useAboutEditor } from './settings/AboutSection';
 import PageHeader from './PageHeader';
 import { sameDraft } from './sameDraft';
 import { useAdminDictionary } from './AdminI18n';
+import { adminGet } from './useAdminFetch';
 
 /** Nav order; the labels come from the dictionary (`settings.editor.sections`). */
 const SETTINGS_SECTIONS = [
@@ -155,40 +156,32 @@ export default function SettingsEditor() {
   async function loadSettings() {
     setLoading(true);
     setLoadError(null);
-    try {
-      const res = await fetch('/api/admin/settings');
-      if (!res.ok) {
-        // 401 is the common one: the session lasts 24h and nothing re-checks
-        // it, so a tab left open overnight lands here. reportIfSessionExpired
-        // also drops the whole panel back to the login screen (#596); the
-        // thrown message below still covers the brief moment before that
-        // re-render happens, and any other non-ok status.
-        reportIfSessionExpired(res);
-        throw new Error(res.status === 401 ? t.sessionExpired : t.serverAnswered(res.status));
-      }
-      const {
-        settings: data,
-        siteUrl,
-        envLocks: locks,
-        version,
-        siteTitleEnv: titleEnv,
-      } = await res.json();
-      const loaded: Settings = data || {};
-      versionRef.current = typeof version === 'string' ? version : null;
-      setServerSettings(loaded);
-      const restoredDraft = settingsDraft.load(JSON.stringify(withoutSitePassword(loaded)));
-      const restored = restoredDraft && withSitePasswordOf(restoredDraft, loaded);
-      setSettings(restored ?? loaded);
-      setDirty(restored !== null);
-      setSiteUrlInfo(siteUrl ?? null);
-      setEnvLocks(locks ?? {});
-      setSiteTitleEnv(typeof titleEnv === 'string' ? titleEnv : null);
-    } catch (err) {
-      console.error('Failed to load settings:', err);
-      setLoadError(err instanceof Error ? err.message : t.loadFailed);
-    } finally {
+    // A 401 also drops the whole panel back to the login screen (#596);
+    // adminGet raises that and words the error for the moment before.
+    const r = await adminGet<{
+      settings?: Settings;
+      siteUrl?: NonNullable<typeof siteUrlInfo>;
+      envLocks?: EnvLocks;
+      version?: unknown;
+      siteTitleEnv?: unknown;
+    }>('/api/admin/settings', dict.shell);
+    if (r.error !== null) {
+      setLoadError(r.error);
       setLoading(false);
+      return;
     }
+    const { settings: data, siteUrl, envLocks: locks, version, siteTitleEnv: titleEnv } = r.data;
+    const loaded: Settings = data || {};
+    versionRef.current = typeof version === 'string' ? version : null;
+    setServerSettings(loaded);
+    const restoredDraft = settingsDraft.load(JSON.stringify(withoutSitePassword(loaded)));
+    const restored = restoredDraft && withSitePasswordOf(restoredDraft, loaded);
+    setSettings(restored ?? loaded);
+    setDirty(restored !== null);
+    setSiteUrlInfo(siteUrl ?? null);
+    setEnvLocks(locks ?? {});
+    setSiteTitleEnv(typeof titleEnv === 'string' ? titleEnv : null);
+    setLoading(false);
   }
 
   /** Write several paths in one state update — used by the metadata master switch. */

@@ -23,6 +23,7 @@ import { reportIfSessionExpired } from '../sessionExpiry';
 import { useVersionedSave } from '../useVersionedSave';
 import type { GalleryVersionChange } from '@/lib/admin/pageRefs';
 import { useAdminDictionary } from '../AdminI18n';
+import { adminGet } from '../useAdminFetch';
 
 interface PagePanelProps {
   slug: string;
@@ -70,8 +71,8 @@ export default function PagePanel({
   const t = dict.pages.pagePanel;
   const confirm = useConfirm();
   const notify = useNotify();
-  const [parsed, setParsed] = useState<ParsedJournal | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [parsedState, setParsed] = useState<ParsedJournal | null>(null);
+  const [loadErrorState, setLoadError] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [slugInput, setSlugInput] = useState(slug);
   const [draft, setDraft] = useState(false);
@@ -84,38 +85,44 @@ export default function PagePanel({
   /** Bumped to load the file again — "Reload" in the conflict prompt. */
   const [reloadKey, setReloadKey] = useState(0);
 
+  // What was loaded belongs to one slug and reload: until that one answers,
+  // the panel shows neither the previous page nor its error.
+  const loadKey = `${reloadKey}:${slug}`;
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const current = loadedKey === loadKey;
+  const parsed = current ? parsedState : null;
+  const loadError = current ? loadErrorState : null;
+
   useEffect(() => {
     let cancelled = false;
-    setParsed(null);
-    setLoadError(null);
-    fetch(`/api/admin/pages/${encodeURIComponent(slug)}`)
-      .then(async (res) => {
-        if (!res.ok) {
-          reportIfSessionExpired(res);
-          throw new Error(res.status === 404 ? t.noFile : t.serverAnswered(res.status));
-        }
-        return res.json();
-      })
-      .then((data: { page: { rawMarkdown: string }; version?: string }) => {
-        if (cancelled) return;
-        versionRef.current = data.version ?? null;
-        const p = parseJournalMarkdown(data.page.rawMarkdown);
-        setParsed(p);
-        setTitle(p.frontmatter.title || '');
-        setSlugInput(slug);
-        setDraft(!!p.frontmatter.draft);
-        setPassword(p.frontmatter.password || undefined);
-        setDescription(p.frontmatter.description || '');
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) setLoadError(err instanceof Error ? err.message : t.couldNotLoad);
-      });
+    adminGet<{ page: { rawMarkdown: string }; version?: string }>(
+      `/api/admin/pages/${encodeURIComponent(slug)}`,
+      dict.shell,
+    ).then((r) => {
+      if (cancelled) return;
+      setLoadedKey(loadKey);
+      if (r.error !== null) {
+        setParsed(null);
+        setLoadError(r.status === 404 ? t.noFile : r.error);
+        return;
+      }
+      setLoadError(null);
+      const data = r.data;
+      versionRef.current = data.version ?? null;
+      const p = parseJournalMarkdown(data.page.rawMarkdown);
+      setParsed(p);
+      setTitle(p.frontmatter.title || '');
+      setSlugInput(slug);
+      setDraft(!!p.frontmatter.draft);
+      setPassword(p.frontmatter.password || undefined);
+      setDescription(p.frontmatter.description || '');
+    });
     return () => {
       cancelled = true;
     };
     // `t` only words the error; a language switch need not reload the page.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, reloadKey]);
+  }, [loadKey]);
 
   // The field keeps what is typed, a trailing "-" included; the page moves to
   // the finished slug.

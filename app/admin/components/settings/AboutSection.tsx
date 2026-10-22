@@ -8,6 +8,7 @@ import { useContentRestored } from '../contentRestored';
 import { useVersionedSave } from '../useVersionedSave';
 import { useLatest } from '../useLatest';
 import { useAdminDictionary } from '../AdminI18n';
+import { adminGet } from '../useAdminFetch';
 
 interface AboutMeta {
   portrait?: string;
@@ -83,40 +84,34 @@ export function useAboutEditor(active: boolean) {
   const loadAboutContent = useCallback(async () => {
     setAboutLoading(true);
     setAboutStatus(null);
-    try {
-      const res = await fetch('/api/admin/about');
-      if (!res.ok) {
-        throw new Error(
-          res.status === 401 ? editor.sessionExpired : editor.serverAnswered(res.status),
-        );
-      }
-      const data = await res.json();
-      versionRef.current = typeof data.version === 'string' ? data.version : null;
-      const loaded: AboutDraft = {
-        meta: data.meta || {},
-        body: data.body || '',
-        gearText: data.meta?.gear?.join('\n') || '',
-      };
-      setServerAbout(loaded);
-      const restored = loadDraft(aboutFingerprint(loaded));
-      const value = restored ?? loaded;
-      setAboutMeta(value.meta);
-      setAboutBody(value.body);
-      setAboutGearText(value.gearText);
-      setAboutDirty(restored !== null);
-      setAboutLoaded(true);
-    } catch (err) {
-      console.error('Failed to load about content:', err);
+    const r = await adminGet<{ version?: unknown; meta?: AboutDraft['meta']; body?: string }>(
+      '/api/admin/about',
+      dict.shell,
+    );
+    if (r.error !== null) {
       // aboutLoaded stays false, which is what blocks the save below: an empty
       // editor written to about.md would replace the page with nothing.
-      setAboutStatus({
-        kind: 'error',
-        message: dict.common.errorWith(err instanceof Error ? err.message : t.loadFailed),
-      });
-    } finally {
+      setAboutStatus({ kind: 'error', message: dict.common.errorWith(r.error) });
       setAboutLoading(false);
+      return;
     }
-  }, [loadDraft, dict, t, editor]);
+    const data = r.data;
+    versionRef.current = typeof data.version === 'string' ? data.version : null;
+    const loaded: AboutDraft = {
+      meta: data.meta || {},
+      body: data.body || '',
+      gearText: data.meta?.gear?.join('\n') || '',
+    };
+    setServerAbout(loaded);
+    const restored = loadDraft(aboutFingerprint(loaded));
+    const value = restored ?? loaded;
+    setAboutMeta(value.meta);
+    setAboutBody(value.body);
+    setAboutGearText(value.gearText);
+    setAboutDirty(restored !== null);
+    setAboutLoaded(true);
+    setAboutLoading(false);
+  }, [loadDraft, dict]);
 
   async function saveAboutContent() {
     if (!aboutLoaded) return;
