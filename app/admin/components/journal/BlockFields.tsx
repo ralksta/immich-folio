@@ -38,6 +38,8 @@ interface BlockFieldsProps {
   onPickAlbum: (onSelect: (albumId: string) => void) => void;
   /** Assets of the albums referenced by album blocks, as loaded so far. */
   albumAssets: Record<string, AlbumAssetRef[]>;
+  /** Why an album's photos did not load, by album ID. */
+  albumErrors?: Record<string, string>;
   /** The picker's album list, once fetched — used for the album's name. */
   albumList: Parameters<typeof AlbumPicker>[0]['albums'] | null;
   mapEnabled?: boolean;
@@ -54,6 +56,7 @@ export function BlockFields({
   onPickAsset,
   onPickAlbum,
   albumAssets,
+  albumErrors,
   albumList,
   mapEnabled,
 }: BlockFieldsProps) {
@@ -464,7 +467,7 @@ export function BlockFields({
               <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
                 {albumAssets[block.albumId]
                   ? t.albumPhotoCount(albumAssets[block.albumId].length)
-                  : t.albumLoading}
+                  : (albumErrors?.[block.albumId] ?? t.albumLoading)}
               </span>
             )}
           </div>

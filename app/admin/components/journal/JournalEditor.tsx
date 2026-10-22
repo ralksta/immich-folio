@@ -65,7 +65,6 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
   const pickerTitles = dict.journal.pickerTitles;
   const blockDefaults = dict.journal.blockDefaults;
   const notify = useNotify();
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [editorMode, setEditorMode] = useState<'blocks' | 'markdown'>('blocks');
@@ -95,9 +94,6 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
   // Asset Picker State
   const [assetPickerTarget, setAssetPickerTarget] = useState<AssetPickTarget | null>(null);
 
-  /** Set when the entry could not be fetched; blocks saving over it. */
-  const [loadError, setLoadError] = useState<string | null>(null);
-
   // Unsaved edits survive leaving the editor — the entry list, a tab link,
   // back, Reload (#592). The markdown is the whole entry; blocks and
   // frontmatter are parsed from it. `serverMarkdown` is what a discard restores.
@@ -114,35 +110,39 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
     if (target === (isPage ? 'pages' : 'journal') && restored === slug) setReloadKey((k) => k + 1);
   });
 
-  // Load entry
+  // Load entry. Loading lasts until this URL and reload count have answered;
+  // a stale answer (another entry, an earlier reload) is dropped.
+  const loadKey = `${reloadKey}:${apiUrl}`;
+  const [loaded, setLoaded] = useState<{ key: string; error: string | null } | null>(null);
+  const loading = loaded?.key !== loadKey;
+  /** Set when the entry could not be fetched; blocks saving over it. */
+  const loadError = loading ? null : loaded.error;
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setLoadError(null);
-      try {
-        const res = await fetch(apiUrl);
-        if (!res.ok) {
-          throw new Error(res.status === 401 ? t.sessionExpired : t.serverAnswered(res.status));
-        }
-        const data = await res.json();
-        versionRef.current = typeof data.version === 'string' ? data.version : null;
-        const md: string = (isPage ? data.page : data.entry).rawMarkdown;
-        serverMarkdown.current = md;
-        const restored = loadDraft(md);
-        setRawMarkdown(restored ?? md);
-        setParsed(parseJournalMarkdown(restored ?? md));
-        setDirty(restored !== null);
-      } catch (err) {
-        console.error('Failed to load journal entry:', err);
+    let live = true;
+    type Loaded = { version?: unknown } & Partial<
+      Record<'entry' | 'page', { rawMarkdown?: unknown }>
+    >;
+    adminGet<Loaded>(apiUrl, dict.shell).then((r) => {
+      if (!live) return;
+      const md = r.data?.[isPage ? 'page' : 'entry']?.rawMarkdown;
+      if (r.error !== null || typeof md !== 'string') {
         // An empty editor saved over the entry replaces it with nothing, so
         // this blocks the save rather than only reporting it.
-        setLoadError(err instanceof Error ? err.message : t.loadFailedFallback);
-      } finally {
-        setLoading(false);
+        setLoaded({ key: loadKey, error: r.error ?? t.loadFailedFallback });
+        return;
       }
-    }
-    load();
-  }, [slug, apiUrl, isPage, loadDraft, reloadKey, t]);
+      versionRef.current = typeof r.data.version === 'string' ? r.data.version : null;
+      serverMarkdown.current = md;
+      const restored = loadDraft(md);
+      setRawMarkdown(restored ?? md);
+      setParsed(parseJournalMarkdown(restored ?? md));
+      setDirty(restored !== null);
+      setLoaded({ key: loadKey, error: null });
+    });
+    return () => {
+      live = false;
+    };
+  }, [loadKey, apiUrl, isPage, loadDraft, dict.shell, t]);
 
   // Update markdown and sync blocks
   const handleMarkdownChange = (newMd: string) => {
@@ -271,6 +271,8 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
    * does not render. The picker's album list is fetched on first use.
    */
   const [albumAssets, setAlbumAssets] = useState<Record<string, AlbumAssetRef[]>>({});
+  /** Why an album's photos did not load, shown on its block until they do. */
+  const [albumErrors, setAlbumErrors] = useState<Record<string, string>>({});
   const albumRequested = useRef(new Set<string>());
   const [albumList, setAlbumList] = useState<Parameters<typeof AlbumPicker>[0]['albums'] | null>(
     null,
@@ -279,27 +281,30 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
     null,
   );
 
+  // No cancel on cleanup: this runs again on every edit, and an answer dropped
+  // because the author kept typing would never be asked for again, leaving the
+  // block "loading" for good. The answer is keyed by album, so it is never stale.
   useEffect(() => {
-    let cancelled = false;
     for (const block of parsed.blocks) {
       if (block.type !== 'album' || !block.albumId || albumRequested.current.has(block.albumId))
         continue;
       const albumId = block.albumId;
       albumRequested.current.add(albumId);
-      fetch(`/api/admin/albums/${albumId}/assets?types=all`)
-        .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
-        .then((data: { assets: AlbumAssetRef[] }) => {
-          if (!cancelled) setAlbumAssets((prev) => ({ ...prev, [albumId]: data.assets }));
-        })
-        .catch(() => {
-          // Let a retry happen after a save or a re-pick.
+      adminGet<{ assets: AlbumAssetRef[] }>(
+        `/api/admin/albums/${albumId}/assets?types=all`,
+        dict.shell,
+      ).then((r) => {
+        if (r.error !== null) {
+          // Asked for again on the next edit, a save or a re-pick.
           albumRequested.current.delete(albumId);
-        });
+          setAlbumErrors((prev) => ({ ...prev, [albumId]: r.error }));
+          return;
+        }
+        setAlbumAssets((prev) => ({ ...prev, [albumId]: r.data.assets }));
+        setAlbumErrors(({ [albumId]: _, ...rest }) => rest);
+      });
     }
-    return () => {
-      cancelled = true;
-    };
-  }, [parsed.blocks]);
+  }, [parsed.blocks, dict.shell]);
 
   // A failed load opens no picker: an empty list would read as "no albums in
   // Immich". The next click tries again.
@@ -377,6 +382,13 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
       <div className="admin-error" role="alert">
         <strong>{isPage ? t.loadFailedPage : t.loadFailedEntry}</strong> {loadError}
         <p>{t.loadFailedNote}</p>
+        <button
+          type="button"
+          className="admin-btn admin-btn-primary"
+          onClick={() => setReloadKey((k) => k + 1)}
+        >
+          {dict.shell.loadState.retry}
+        </button>{' '}
         <button className="admin-btn admin-btn-secondary" onClick={onBack}>
           {isPage ? t.backToPages : t.backToEntries}
         </button>
@@ -686,6 +698,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
                         onPickAsset={setAssetPickerTarget}
                         onPickAlbum={openAlbumPicker}
                         albumAssets={albumAssets}
+                        albumErrors={albumErrors}
                         albumList={albumList}
                         mapEnabled={mapEnabled}
                       />

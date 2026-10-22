@@ -136,4 +136,84 @@ describe('the journal editor’s album picker', () => {
     expect(await screen.findByRole('dialog', { name: 'Select Album' })).toBeTruthy();
     expect(screen.getByRole('button', { name: /^Summer trip/ })).toBeTruthy();
   });
+
+  it('reports a failed entry, offers no editor to save over it, and loads on retry', async () => {
+    let answer = json({ error: 'disk full' }, 500);
+    route = (url) => (url === '/api/admin/journal/story' ? answer : undefined);
+    renderEditor();
+
+    const alert = (await screen.findByText('This entry could not be loaded.')).closest(
+      '[role="alert"]',
+    )!;
+    expect(alert.textContent).toContain('HTTP 500');
+    expect(alert.textContent).toContain('disk full');
+    expect(screen.queryByRole('button', { name: /Save/ })).toBeNull();
+
+    answer = entry.clone();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByRole('button', { name: /Pick album/ })).toBeTruthy();
+  });
+});
+
+describe('an album block’s photos', () => {
+  const assetsUrl = '/api/admin/albums/trip/assets?types=all';
+  const entry = () =>
+    json({
+      entry: { slug: 'story', rawMarkdown: '---\ntitle: "Story"\n---\n\n::album trip\n' },
+      version: 'v1',
+    });
+  const assets = () => json({ assets: [{ id: 'p1' }, { id: 'p2' }] });
+
+  function renderEditor() {
+    const storage = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => void storage.set(key, String(value)),
+      removeItem: (key: string) => void storage.delete(key),
+      clear: () => storage.clear(),
+    });
+    render(
+      <NotificationProvider>
+        <ConfirmProvider>
+          <JournalEditor slug="story" onBack={() => {}} />
+        </ConfirmProvider>
+      </NotificationProvider>,
+    );
+  }
+
+  it('show why they did not load, and load on the next edit', async () => {
+    let answer = json({ error: 'Immich is unreachable' }, 502);
+    route = (url) =>
+      url === '/api/admin/journal/story' ? entry() : url === assetsUrl ? answer : undefined;
+    renderEditor();
+
+    expect(await screen.findByText(/HTTP 502.*Immich is unreachable/)).toBeTruthy();
+
+    answer = assets();
+    fireEvent.click(screen.getByRole('button', { name: '+ Text' }));
+    expect(await screen.findByText('2 photos in album')).toBeTruthy();
+    expect(screen.queryByText(/HTTP 502/)).toBeNull();
+  });
+
+  it('still arrive when the author edits while they load', async () => {
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    route = (url) => (url === '/api/admin/journal/story' ? entry() : undefined);
+    fetchMock.mockImplementation(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url === assetsUrl) {
+        await held;
+        return assets();
+      }
+      const res = route(url);
+      if (!res) throw new Error(`Unexpected fetch: ${url}`);
+      return res;
+    });
+    renderEditor();
+
+    fireEvent.click(await screen.findByRole('button', { name: '+ Text' }));
+    release();
+    expect(await screen.findByText('2 photos in album')).toBeTruthy();
+    expect(fetchMock.mock.calls.filter(([u]) => String(u) === assetsUrl)).toHaveLength(1);
+  });
 });
