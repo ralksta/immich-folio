@@ -31,12 +31,6 @@ export const pickers: AdminDictionary['pickers'] = {
       favorites: 'Favoriten',
       allPhotos: 'Alle Fotos',
     },
-    albumsLoadFailed: (status: number) =>
-      `Die Alben konnten nicht geladen werden (HTTP ${status}).`,
-    albumsUnreachable: 'Laden der Alben fehlgeschlagen.',
-    photosLoadFailed: (status: number) =>
-      `Die Fotos konnten nicht geladen werden (HTTP ${status}).`,
-    photosUnreachable: 'Laden der Fotos fehlgeschlagen.',
     filterAlbumPlaceholder: 'Dieses Album nach Dateiname filtern…',
     searchPlaceholder: 'Nach Dateiname, Beschreibung oder Datum (2024-05) suchen…',
     searchLabel: 'Fotos suchen',

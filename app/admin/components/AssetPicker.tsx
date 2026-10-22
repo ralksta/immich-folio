@@ -7,6 +7,7 @@ import { IconCheck, IconFolder, IconImage, IconSearch, IconStar } from './Icons'
 import { useScrollLock } from './useScrollLock';
 import AlbumPicker from './AlbumPicker';
 import { useAdminDictionary } from './AdminI18n';
+import { adminGet } from './useAdminFetch';
 
 interface AssetInfo {
   id: string;
@@ -91,19 +92,13 @@ export default function AssetPicker({
 
   async function openAlbumPicker() {
     if (albumList === null) {
-      try {
-        const res = await fetch('/api/admin/albums');
-        if (!res.ok) throw new Error(t.albumsLoadFailed(res.status));
-        const data = (await res.json()) as {
-          albums?: Parameters<typeof AlbumPicker>[0]['albums'];
-        };
-        setAlbumList(data.albums ?? []);
-        setAlbumLoadError(null);
-      } catch (err) {
-        console.error('Failed to load albums:', err);
-        setAlbumLoadError(err instanceof Error ? err.message : t.albumsUnreachable);
-        return;
-      }
+      const r = await adminGet<{ albums?: NonNullable<typeof albumList> }>(
+        '/api/admin/albums',
+        dict.shell,
+      );
+      setAlbumLoadError(r.error);
+      if (r.error !== null) return;
+      setAlbumList(r.data.albums ?? []);
     }
     setShowAlbumPicker(true);
   }
@@ -132,45 +127,36 @@ export default function AssetPicker({
         setLoadingMore(false);
       }
 
-      try {
-        let res: Response;
-        if (tab === 'album' && activeAlbumId) {
-          res = await fetch(`/api/admin/albums/${activeAlbumId}/assets`);
-        } else {
-          const params = new URLSearchParams({
-            page: pageNum.toString(),
-            favorites: tab === 'favorites' ? 'true' : 'false',
-          });
-          if (serverQuery) params.set('q', serverQuery);
-          res = await fetch(`/api/admin/assets?${params}`);
-        }
-        if (res.ok) {
-          const data = await res.json();
-          if (!current()) return;
-          setAssets((prev) => {
-            if (!append) return data.assets;
-            // Merged filename + description pages can overlap across pages.
-            const seen = new Set(prev.map((a) => a.id));
-            return [...prev, ...data.assets.filter((a: AssetInfo) => !seen.has(a.id))];
-          });
-          setHasMore(data.nextPage !== null);
-          setPage(pageNum);
-        } else {
-          throw new Error(t.photosLoadFailed(res.status));
-        }
-      } catch (err) {
-        if (current()) {
-          console.error('Failed to load assets:', err);
-          setLoadError(err instanceof Error ? err.message : t.photosUnreachable);
-        }
-      } finally {
-        if (current()) {
-          setLoading(false);
-          setLoadingMore(false);
-        }
+      let url: string;
+      if (tab === 'album' && activeAlbumId) {
+        url = `/api/admin/albums/${activeAlbumId}/assets`;
+      } else {
+        const params = new URLSearchParams({
+          page: pageNum.toString(),
+          favorites: tab === 'favorites' ? 'true' : 'false',
+        });
+        if (serverQuery) params.set('q', serverQuery);
+        url = `/api/admin/assets?${params}`;
       }
+      const r = await adminGet<{ assets: AssetInfo[]; nextPage: unknown }>(url, dict.shell);
+      if (!current()) return;
+      if (r.error !== null) {
+        setLoadError(r.error);
+      } else {
+        const data = r.data;
+        setAssets((prev) => {
+          if (!append) return data.assets;
+          // Merged filename + description pages can overlap across pages.
+          const seen = new Set(prev.map((a) => a.id));
+          return [...prev, ...data.assets.filter((a) => !seen.has(a.id))];
+        });
+        setHasMore(data.nextPage !== null);
+        setPage(pageNum);
+      }
+      setLoading(false);
+      setLoadingMore(false);
     },
-    [tab, activeAlbumId, serverQuery, t],
+    [tab, activeAlbumId, serverQuery, dict.shell],
   );
 
   useEffect(() => {
