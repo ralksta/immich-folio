@@ -23,6 +23,10 @@ const eslintConfig = defineConfig([
         },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
+      // eslint-config-next 16.4 made these React Compiler rules errors; they
+      // warned before. Kept at warn until the findings are fixed (#864).
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/refs': 'warn',
     },
   },
   prettier,
@@ -33,6 +37,8 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
+    // Claude Code worktrees: each is a full checkout, linted on its own.
+    '.claude/**',
   ]),
 ]);
 

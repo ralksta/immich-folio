@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getImgProps } from 'next/dist/shared/lib/get-img-props';
-import { imageConfigDefault } from 'next/dist/shared/lib/image-config';
+import { imageConfigDefault, prepareImageConfig } from 'next/dist/shared/lib/image-config';
 import immichLoader from '../immichLoader';
 import { canonicalImageUrl, resolveImageSize } from '../imageSize';
 
@@ -22,7 +22,13 @@ function srcSetUrls(src: string, sizes: string): string[] {
     { src, alt: '', fill: true, sizes },
     {
       defaultLoader: immichLoader,
-      imgConf: { ...imageConfigDefault, loader: 'custom', loaderFile: './lib/immichLoader.ts' },
+      // Prepared the way next/image prepares it (sorted sizes, allSizes), as
+      // getImgProps expects since Next 16.4.
+      imgConf: prepareImageConfig(undefined, {
+        ...imageConfigDefault,
+        loader: 'custom',
+        loaderFile: './lib/immichLoader.ts',
+      }),
       showAltText: false,
       blurComplete: false,
     },
