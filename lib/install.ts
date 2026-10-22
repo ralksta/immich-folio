@@ -300,8 +300,14 @@ export async function completeInstall(input: InstallInput): Promise<CompleteInst
   // the ping and then every request after install went to
   // ".../api//api/albums" and 404ed (#634).
   const normalizedApiUrl = normalizeApiUrl(input.apiUrl.trim()) || input.apiUrl.trim();
-  const existingApiKey = readInstallFile().apiKey;
-  const persistedApiKey = input.apiKey?.trim() || existingApiKey;
+  // A key already in install.json belongs to the server stored next to it.
+  // Keep it only while the wizard still points at that server: paired with
+  // another URL it would be sent to a different host as soon as environment
+  // credentials stop overriding the file.
+  const existing = readInstallFile();
+  const existingBase = existing.apiUrl ? normalizeApiBase(existing.apiUrl) : null;
+  const sameServer = existingBase !== null && existingBase === normalizeApiBase(normalizedApiUrl);
+  const persistedApiKey = input.apiKey?.trim() || (sameServer ? existing.apiKey : undefined);
 
   const data: InstallFileData = {
     apiUrl: normalizedApiUrl,

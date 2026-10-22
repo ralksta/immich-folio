@@ -303,7 +303,24 @@ describe('completeInstall', () => {
     expect(getInstallCredentials().apiKey).toBe('environment-only-key');
   });
 
-  it('preserves an existing install-file key when environment credentials override it', async () => {
+  it('keeps an existing install-file key for the same server', async () => {
+    fs.writeFileSync(
+      path.join(dir, 'install.json'),
+      JSON.stringify({ apiUrl: 'https://env-immich:2283', apiKey: 'file-key' }),
+    );
+    process.env.__T_INSTALL_URL = 'https://env-immich:2283';
+    process.env.__T_INSTALL_KEY = 'environment-key';
+    const { completeInstall } = await loadInstall();
+
+    await completeInstall({ apiUrl: 'https://env-immich:2283/api/' });
+
+    const creds = JSON.parse(fs.readFileSync(path.join(dir, 'install.json'), 'utf8'));
+    expect(creds.apiKey).toBe('file-key');
+  });
+
+  it('drops an install-file key that belongs to another server', async () => {
+    // Kept, it would sit next to the new URL and be sent to that host once
+    // the environment credentials are removed.
     fs.writeFileSync(
       path.join(dir, 'install.json'),
       JSON.stringify({ apiUrl: 'https://file-immich:2283', apiKey: 'file-key' }),
@@ -315,7 +332,8 @@ describe('completeInstall', () => {
     await completeInstall({ apiUrl: 'https://env-immich:2283' });
 
     const creds = JSON.parse(fs.readFileSync(path.join(dir, 'install.json'), 'utf8'));
-    expect(creds.apiKey).toBe('file-key');
+    expect(creds.apiUrl).toBe('https://env-immich:2283');
+    expect(creds.apiKey).toBeUndefined();
   });
 
   it('does not set an admin password when none is given', async () => {
