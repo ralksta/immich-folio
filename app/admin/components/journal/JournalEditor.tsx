@@ -41,6 +41,7 @@ import { JournalPreview } from './JournalPreview';
 import { createBlock, createPhotoBlocks, fillAssetSlots, moveBlock } from './blockOps';
 import { useSplitPane, SPLIT_MIN, SPLIT_MAX } from './splitPane';
 import { useNotify } from '../Notifications';
+import { useAdminDictionary } from '../AdminI18n';
 
 interface JournalEditorProps {
   slug: string;
@@ -58,6 +59,10 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
   const isPage = kind === 'page';
   const apiUrl = isPage ? `/api/admin/pages/${slug}` : `/api/admin/journal/${slug}`;
   const liveUrl = isPage ? `/${slug}` : `/journal/${slug}`;
+  const dict = useAdminDictionary();
+  const t = dict.journal.editor;
+  const pickerTitles = dict.journal.pickerTitles;
+  const blockDefaults = dict.journal.blockDefaults;
   const notify = useNotify();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -116,11 +121,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
       try {
         const res = await fetch(apiUrl);
         if (!res.ok) {
-          throw new Error(
-            res.status === 401
-              ? 'Your session has expired. Sign in again to continue.'
-              : `The server answered ${res.status}.`,
-          );
+          throw new Error(res.status === 401 ? t.sessionExpired : t.serverAnswered(res.status));
         }
         const data = await res.json();
         versionRef.current = typeof data.version === 'string' ? data.version : null;
@@ -134,13 +135,13 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
         console.error('Failed to load journal entry:', err);
         // An empty editor saved over the entry replaces it with nothing, so
         // this blocks the save rather than only reporting it.
-        setLoadError(err instanceof Error ? err.message : 'The entry could not be loaded.');
+        setLoadError(err instanceof Error ? err.message : t.loadFailedFallback);
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, [slug, apiUrl, isPage, loadDraft, reloadKey]);
+  }, [slug, apiUrl, isPage, loadDraft, reloadKey, t]);
 
   // Update markdown and sync blocks
   const handleMarkdownChange = (newMd: string) => {
@@ -200,7 +201,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
         draft.discard();
         setReloadKey((k) => k + 1);
       } else if (result.kind === 'keep') {
-        notify('error', 'Not saved — it changed elsewhere. Your edits are still here.');
+        notify('error', t.conflictKept);
       } else if (result.kind === 'saved') {
         // The file as written, not as sent: a password line is hashed on the
         // way to disk (#690). Taking the sent text as the base would make the
@@ -225,13 +226,10 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
           setDirty(false);
         }
       } else if (!reportIfSessionExpired(result.res)) {
-        notify('error', result.data?.error || 'Failed to save');
+        notify('error', result.data?.error || t.saveFailed);
       }
     } catch {
-      notify(
-        'error',
-        `Could not save the ${isPage ? 'page' : 'entry'}. Check the connection and try again.`,
-      );
+      notify('error', isPage ? t.saveErrorPage : t.saveErrorEntry);
     } finally {
       setSaving(false);
     }
@@ -330,7 +328,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
   };
 
   const handleAddBlock = (type: JournalBlock['type']) => {
-    handleBlocksChange([...parsed.blocks, createBlock(type)]);
+    handleBlocksChange([...parsed.blocks, createBlock(type, blockDefaults)]);
   };
 
   const handleMoveBlock = (index: number, direction: 'up' | 'down') => {
@@ -355,7 +353,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
   if (loading) {
     return (
       <div style={{ padding: '4rem', textAlign: 'center', opacity: 0.6 }}>
-        {isPage ? 'Opening page editor...' : 'Opening Journal Studio...'}
+        {isPage ? t.openingPage : t.openingEntry}
       </div>
     );
   }
@@ -367,13 +365,10 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
   if (loadError) {
     return (
       <div className="admin-error" role="alert">
-        <strong>This {isPage ? 'page' : 'entry'} could not be loaded.</strong> {loadError}
-        <p>
-          Nothing has been changed. Saving stays disabled until it loads, so an empty editor cannot
-          overwrite it.
-        </p>
+        <strong>{isPage ? t.loadFailedPage : t.loadFailedEntry}</strong> {loadError}
+        <p>{t.loadFailedNote}</p>
         <button className="admin-btn admin-btn-secondary" onClick={onBack}>
-          {isPage ? 'Back to pages' : 'Back to entries'}
+          {isPage ? t.backToPages : t.backToEntries}
         </button>
       </div>
     );
@@ -389,15 +384,15 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
             className="admin-btn admin-btn-sm admin-btn-secondary"
             onClick={onBack}
           >
-            {isPage ? '← Pages' : '← All Entries'}
+            {isPage ? t.pages : t.allEntries}
           </button>
 
           <input
             type="text"
             className="journal-editor-title-input"
             value={parsed.frontmatter.title || ''}
-            placeholder={isPage ? 'Page title...' : 'Story Title...'}
-            aria-label={isPage ? 'Page title' : 'Story title'}
+            placeholder={isPage ? t.pageTitlePlaceholder : t.storyTitlePlaceholder}
+            aria-label={isPage ? t.pageTitleLabel : t.storyTitleLabel}
             onChange={(e) => handleFrontmatterChange({ title: e.target.value })}
           />
 
@@ -407,7 +402,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
           <div
             className="segmented-control segmented-control--sm"
             role="group"
-            aria-label="Editor mode"
+            aria-label={t.modeLabel}
           >
             <button
               type="button"
@@ -415,7 +410,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
               aria-pressed={editorMode === 'blocks'}
               onClick={() => setEditorMode('blocks')}
             >
-              Visual Blocks
+              {t.modeBlocks}
             </button>
             <button
               type="button"
@@ -423,7 +418,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
               aria-pressed={editorMode === 'markdown'}
               onClick={() => setEditorMode('markdown')}
             >
-              Raw Markdown
+              {t.modeMarkdown}
             </button>
           </div>
         </div>
@@ -434,7 +429,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
             className="admin-btn admin-btn-sm admin-btn-secondary"
             onClick={() => setShowMetaModal(true)}
           >
-            <IconGear size={14} /> {isPage ? 'Page Settings' : 'Story Settings'}
+            <IconGear size={14} /> {isPage ? t.pageSettings : t.storySettings}
           </button>
 
           {isPage && (
@@ -443,13 +438,9 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
               className="admin-btn admin-btn-sm admin-btn-secondary"
               onClick={handleTogglePublish}
               disabled={saving}
-              title={
-                parsed.frontmatter.draft
-                  ? 'Publish the page and save it now'
-                  : 'Turn the page back into a draft and save it now'
-              }
+              title={parsed.frontmatter.draft ? t.publishTitle : t.unpublishTitle}
             >
-              {parsed.frontmatter.draft ? 'Publish' : 'Unpublish'}
+              {parsed.frontmatter.draft ? t.publish : t.unpublish}
             </button>
           )}
 
@@ -459,7 +450,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
             rel="noopener noreferrer"
             className="admin-btn admin-btn-sm admin-btn-secondary"
           >
-            <IconLink size={14} /> Live
+            <IconLink size={14} /> {t.live}
           </a>
 
           <button
@@ -469,12 +460,12 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
             disabled={saving || !dirty}
           >
             {saving ? (
-              'Saving...'
+              t.saving
             ) : dirty ? (
-              'Save Changes'
+              t.saveChanges
             ) : (
               <>
-                <IconCheck size={14} /> Saved
+                <IconCheck size={14} /> {t.saved}
               </>
             )}
           </button>
@@ -502,40 +493,40 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
               className="journal-raw-markdown-editor"
               value={rawMarkdown}
               onChange={(e) => handleMarkdownChange(e.target.value)}
-              placeholder="Write Markdown here..."
+              placeholder={t.markdownPlaceholder}
             />
           ) : (
             <div>
               {/* Add Block Toolbar */}
               <div className="essay-toolbar-sticky">
-                <span className="essay-toolbar-label">Add Block:</span>
+                <span className="essay-toolbar-label">{t.addBlock}</span>
                 <button
                   type="button"
                   className="admin-btn admin-btn-xs"
                   onClick={() => handleAddBlock('paragraph')}
                 >
-                  <IconFileText size={13} /> + Text
+                  <IconFileText size={13} /> {t.addText}
                 </button>
                 <button
                   type="button"
                   className="admin-btn admin-btn-xs"
                   onClick={() => handleAddBlock('heading')}
                 >
-                  <IconSparkles size={13} /> + Heading
+                  <IconSparkles size={13} /> {t.addHeading}
                 </button>
                 <button
                   type="button"
                   className="admin-btn admin-btn-xs"
                   onClick={() => handleAddBlock('quote')}
                 >
-                  <IconQuote size={13} /> + Quote
+                  <IconQuote size={13} /> {t.addQuote}
                 </button>
                 <button
                   type="button"
                   className="admin-btn admin-btn-xs"
                   onClick={() => handleAddBlock('facts')}
                 >
-                  <IconColumns size={13} /> + Facts
+                  <IconColumns size={13} /> {t.addFacts}
                 </button>
                 <div className="essay-toolbar-divider" />
                 <button
@@ -543,7 +534,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
                   className="admin-btn admin-btn-xs admin-btn-primary"
                   onClick={() =>
                     setAssetPickerTarget({
-                      title: 'Select Photo for Story',
+                      title: pickerTitles.storyPhoto,
                       enableAlbumSelection: true,
                       onSelect: (id) =>
                         handleBlocksChange([
@@ -553,28 +544,28 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
                     })
                   }
                 >
-                  <IconCamera size={13} /> + Photo
+                  <IconCamera size={13} /> {t.addPhoto}
                 </button>
                 <button
                   type="button"
                   className="admin-btn admin-btn-xs admin-btn-primary"
                   onClick={() =>
                     setAssetPickerTarget({
-                      title: 'Add Photos (one block each)',
+                      title: pickerTitles.photos,
                       enableAlbumSelection: true,
                       onSelectMany: (ids) =>
                         handleBlocksChange([...parsed.blocks, ...createPhotoBlocks(ids)]),
                     })
                   }
                 >
-                  <IconCamera size={13} /> + Photos
+                  <IconCamera size={13} /> {t.addPhotos}
                 </button>
                 <button
                   type="button"
                   className="admin-btn admin-btn-xs admin-btn-primary"
                   onClick={() =>
                     setAssetPickerTarget({
-                      title: 'Select Photos for Pair',
+                      title: pickerTitles.pair,
                       max: 2,
                       min: 2,
                       enableAlbumSelection: true,
@@ -590,14 +581,14 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
                     })
                   }
                 >
-                  <IconArrowLeftRight size={13} /> + 2-Photo Pair
+                  <IconArrowLeftRight size={13} /> {t.addPair}
                 </button>
                 <button
                   type="button"
                   className="admin-btn admin-btn-xs admin-btn-primary"
                   onClick={() =>
                     setAssetPickerTarget({
-                      title: 'Select Photos for Grid',
+                      title: pickerTitles.grid,
                       min: 3,
                       enableAlbumSelection: true,
                       onSelectMany: (ids) =>
@@ -612,14 +603,14 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
                     })
                   }
                 >
-                  <IconGrid size={13} /> + Photo Grid
+                  <IconGrid size={13} /> {t.addGrid}
                 </button>
                 <button
                   type="button"
                   className="admin-btn admin-btn-xs admin-btn-primary"
                   onClick={() => handleAddBlock('album')}
                 >
-                  <IconFolder size={13} /> + Album
+                  <IconFolder size={13} /> {t.addAlbum}
                 </button>
                 {/* No map block on content pages in v1 (#722). */}
                 {!isPage && (
@@ -628,7 +619,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
                     className="admin-btn admin-btn-xs"
                     onClick={() => handleAddBlock('map')}
                   >
-                    <IconMap size={13} /> + Map
+                    <IconMap size={13} /> {t.addMap}
                   </button>
                 )}
               </div>
@@ -654,7 +645,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
                             type="button"
                             className="admin-btn admin-btn-xs"
                             disabled={idx === 0}
-                            aria-label="Move block up"
+                            aria-label={t.moveUp}
                             onClick={() => handleMoveBlock(idx, 'up')}
                           >
                             <IconChevronUp size={12} />
@@ -663,7 +654,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
                             type="button"
                             className="admin-btn admin-btn-xs"
                             disabled={idx === parsed.blocks.length - 1}
-                            aria-label="Move block down"
+                            aria-label={t.moveDown}
                             onClick={() => handleMoveBlock(idx, 'down')}
                           >
                             <IconChevronDown size={12} />
@@ -671,7 +662,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
                           <button
                             type="button"
                             className="admin-btn admin-btn-xs admin-btn-danger"
-                            aria-label="Delete block"
+                            aria-label={t.deleteBlock}
                             onClick={() => handleDeleteBlock(idx)}
                           >
                             <IconTrash size={12} />
@@ -701,7 +692,7 @@ export function JournalEditor({ slug, mapEnabled, onBack, kind = 'journal' }: Jo
           className="journal-editor-resizer"
           role="separator"
           aria-orientation="vertical"
-          aria-label="Resize editor and preview"
+          aria-label={t.resize}
           aria-valuenow={Math.round(splitPct)}
           aria-valuemin={SPLIT_MIN}
           aria-valuemax={SPLIT_MAX}

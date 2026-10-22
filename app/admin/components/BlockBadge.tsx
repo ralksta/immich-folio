@@ -12,6 +12,8 @@ import {
   IconMap,
   IconFolder,
 } from './Icons';
+import { useAdminDictionary } from './AdminI18n';
+import type { AdminDictionary } from '@/lib/i18n/admin';
 
 type BlockType = JournalBlock['type'];
 
@@ -23,16 +25,19 @@ type BlockType = JournalBlock['type'];
  * so they carry no colour of their own. The block type is told apart by its
  * icon — the same icon the "Add Block" toolbar uses for it.
  */
-const BLOCK_META: Record<BlockType, { label: string; Icon: typeof IconFileText }> = {
-  paragraph: { label: 'Text', Icon: IconFileText },
-  heading: { label: 'Heading', Icon: IconSparkles },
-  quote: { label: 'Quote', Icon: IconQuote },
-  photo: { label: 'Photo', Icon: IconCamera },
-  'photo-pair': { label: 'Photo Pair', Icon: IconArrowLeftRight },
-  'photo-grid': { label: 'Photo Grid', Icon: IconGrid },
-  facts: { label: 'Facts', Icon: IconColumns },
-  map: { label: 'Map', Icon: IconMap },
-  album: { label: 'Album', Icon: IconFolder },
+const BLOCK_META: Record<
+  BlockType,
+  { label: keyof AdminDictionary['pickers']['badges']; Icon: typeof IconFileText }
+> = {
+  paragraph: { label: 'paragraph', Icon: IconFileText },
+  heading: { label: 'heading', Icon: IconSparkles },
+  quote: { label: 'quote', Icon: IconQuote },
+  photo: { label: 'photo', Icon: IconCamera },
+  'photo-pair': { label: 'photoPair', Icon: IconArrowLeftRight },
+  'photo-grid': { label: 'photoGrid', Icon: IconGrid },
+  facts: { label: 'facts', Icon: IconColumns },
+  map: { label: 'map', Icon: IconMap },
+  album: { label: 'album', Icon: IconFolder },
 };
 
 interface BlockBadgeProps {
@@ -42,6 +47,7 @@ interface BlockBadgeProps {
 }
 
 export function BlockBadge({ type, index }: BlockBadgeProps) {
+  const t = useAdminDictionary().pickers.badges;
   const meta = BLOCK_META[type];
   if (!meta) return <span className="essay-block-badge">{type}</span>;
 
@@ -50,7 +56,7 @@ export function BlockBadge({ type, index }: BlockBadgeProps) {
     <span className="essay-block-badge">
       <Icon size={11} />
       {index != null && <span className="essay-block-badge-index">{index}</span>}
-      {label}
+      {t[label]}
     </span>
   );
 }

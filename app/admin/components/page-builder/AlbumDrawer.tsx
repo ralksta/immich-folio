@@ -1,13 +1,15 @@
 'use client';
 
+import { useMemo } from 'react';
 import { DEFAULT_ALBUM_SORT } from '@/lib/albumSort';
 import { IconCamera, IconCopy, IconGripVertical, IconImage, IconTrash, IconX } from '../Icons';
 import { Listbox } from '../Listbox';
-import { SORT_OPTIONS } from './sortOptions';
+import { sortOptions } from './sortOptions';
 import type { AlbumEntry, HeroPickerTarget, OrderEditorTarget } from './types';
 import PasswordField from '../fields/PasswordField';
 import ZoomOverrideField from '../fields/ZoomOverrideField';
 import { useModalDialog } from '@/hooks/useModalDialog';
+import { useAdminDictionary } from '../AdminI18n';
 
 interface AlbumDrawerProps {
   album: AlbumEntry;
@@ -37,6 +39,9 @@ export default function AlbumDrawer({
   onPickHero,
   onEditOrder,
 }: AlbumDrawerProps) {
+  const dict = useAdminDictionary();
+  const t = dict.pages.albumDrawer;
+  const options = useMemo(() => sortOptions(dict.pages.sort), [dict]);
   const heroThumb = album.heroImage || thumbnailId;
   const cardRef = useModalDialog(onClose);
 
@@ -52,14 +57,14 @@ export default function AlbumDrawer({
       >
         <div className="album-drawer-header">
           <h3 id="album-drawer-title">
-            <IconCamera /> Edit Album Details
+            <IconCamera /> {t.heading}
           </h3>
           <button
             type="button"
             className="admin-btn-icon"
             onClick={() => onClose()}
-            title="Close details"
-            aria-label="Close details"
+            title={t.close}
+            aria-label={t.close}
           >
             <IconX size={14} />
           </button>
@@ -82,13 +87,13 @@ export default function AlbumDrawer({
               <div className="modal-meta-box">
                 <span className="modal-album-title">{album.title || name}</span>
                 <span className="modal-album-subtitle">
-                  {count} {count === 1 ? 'photo' : 'photos'}
-                  {album.title ? ` · Original: ${name}` : ''}
+                  {t.photos(count)}
+                  {album.title ? ` · ${t.original(name)}` : ''}
                 </span>
               </div>
 
               <div className="admin-field">
-                <label htmlFor="album-title-override">Title override</label>
+                <label htmlFor="album-title-override">{t.titleOverride}</label>
                 <input
                   id="album-title-override"
                   value={album.title || ''}
@@ -98,28 +103,28 @@ export default function AlbumDrawer({
               </div>
 
               <div className="admin-field">
-                <label htmlFor="album-description">Description</label>
+                <label htmlFor="album-description">{t.description}</label>
                 <textarea
                   id="album-description"
                   value={album.description || ''}
                   onChange={(e) => onUpdate({ description: e.target.value || undefined })}
-                  placeholder="Optional description for visitors"
+                  placeholder={t.descriptionPlaceholder}
                   rows={4}
                 />
               </div>
 
               <div className="admin-field">
-                <label htmlFor="album-password">Password protection</label>
+                <label htmlFor="album-password">{t.passwordProtection}</label>
                 <PasswordField
                   id="album-password"
                   value={album.password}
                   onChange={(password) => onUpdate({ password })}
-                  label="Album password"
+                  label={t.albumPassword}
                 />
               </div>
 
               <div className="admin-field">
-                <span className="admin-field-label">Downloads</span>
+                <span className="admin-field-label">{t.downloads}</span>
                 <button
                   type="button"
                   className={`admin-toggle-card ${album.download ? 'active' : ''}`}
@@ -140,13 +145,13 @@ export default function AlbumDrawer({
                       className="toggle-card-title"
                       style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center' }}
                     >
-                      Allow original downloads
+                      {t.allowDownloads}
                     </span>
                     <span
                       className="toggle-card-desc"
                       style={{ fontSize: '0.8rem', display: 'block', opacity: 0.75 }}
                     >
-                      Visitors can download the whole album or their selected photos as a ZIP
+                      {t.allowDownloadsDesc}
                     </span>
                   </div>
                   <div className={`switch-toggle ${album.download ? 'on' : ''}`}>
@@ -159,17 +164,17 @@ export default function AlbumDrawer({
                 id="album-zoom"
                 value={album.zoom}
                 onChange={(zoom) => onUpdate({ zoom })}
-                inheritLabel="Inherit from page / site settings"
-                hint="Lets visitors zoom into a photo in the viewer to check sharpness. JPEG and AVIF originals are shown without their GPS data; HEIC and RAW need Immich's full-size previews. PNG, WebP, GIF and photos edited in Immich are never zoomed. Applies where the album is listed here."
+                inheritLabel={t.zoomInherit}
+                hint={t.zoomHint}
               />
             </div>
 
             <div className="admin-sheet-col admin-sheet-col--divided">
               <div className="admin-field">
-                <label htmlFor="album-layout-override">Layout override (Experimental)</label>
+                <label htmlFor="album-layout-override">{t.layoutOverride}</label>
                 <select
                   id="album-layout-override"
-                  aria-label="Layout override"
+                  aria-label={t.layoutOverrideAria}
                   value={album.grid?.layout || ''}
                   onChange={(e) => {
                     const layout = e.target.value || undefined;
@@ -181,43 +186,43 @@ export default function AlbumDrawer({
                     });
                   }}
                 >
-                  <option value="">Inherit from page / global settings</option>
-                  <option value="masonry">Masonry</option>
-                  <option value="uniform">Uniform Grid</option>
-                  <option value="showcase">Showcase</option>
-                  <option value="filmstrip">Filmstrip</option>
-                  <option value="editorial-flow">Editorial Flow</option>
-                  <option value="justified">Justified (Experimental)</option>
+                  <option value="">{t.layoutInherit}</option>
+                  <option value="masonry">{t.layouts.masonry}</option>
+                  <option value="uniform">{t.layouts.uniform}</option>
+                  <option value="showcase">{t.layouts.showcase}</option>
+                  <option value="filmstrip">{t.layouts.filmstrip}</option>
+                  <option value="editorial-flow">{t.layouts.editorialFlow}</option>
+                  <option value="justified">{t.layouts.justified}</option>
                 </select>
               </div>
 
               <div className="admin-field">
-                <label htmlFor="album-cover-focal-point">Cover focal point (Experimental)</label>
+                <label htmlFor="album-cover-focal-point">{t.coverFocalPoint}</label>
                 <input
                   id="album-cover-focal-point"
                   value={album.coverPosition || ''}
                   onChange={(e) => onUpdate({ coverPosition: e.target.value || undefined })}
-                  placeholder={'e.g. "50% 25%" or "top" — where the cover crop should anchor'}
+                  placeholder={t.coverFocalPointPlaceholder}
                 />
               </div>
 
               {/* Hero Image Selection */}
               <div className="admin-field">
-                <span className="admin-field-label">Custom Hero Image</span>
+                <span className="admin-field-label">{t.customHero}</span>
                 <div className="album-hero-field">
                   {album.heroImage ? (
                     <div className="album-hero-preview">
-                      <img src={`/api/admin/thumbnail/${album.heroImage}`} alt="Hero" />
+                      <img src={`/api/admin/thumbnail/${album.heroImage}`} alt={t.heroAlt} />
                       <button
                         className="album-hero-remove"
                         onClick={() => onUpdate({ heroImage: undefined })}
-                        title="Remove custom hero image"
+                        title={t.removeHero}
                       >
                         <IconX size={14} />
                       </button>
                     </div>
                   ) : (
-                    <span className="album-hero-empty">Using default album cover</span>
+                    <span className="album-hero-empty">{t.defaultCover}</span>
                   )}
                   <button
                     className="admin-btn admin-btn-sm"
@@ -229,11 +234,11 @@ export default function AlbumDrawer({
                           onPickHero(null);
                         },
                         currentAssetIds: album.heroImage ? [album.heroImage] : [],
-                        title: `Pick Hero Image for ${name}`,
+                        title: t.pickHeroTitle(name),
                       })
                     }
                   >
-                    <IconImage size={12} /> {album.heroImage ? 'Change Image' : 'Pick Hero Image'}
+                    <IconImage size={12} /> {album.heroImage ? t.changeImage : t.pickHero}
                   </button>
                 </div>
               </div>
@@ -241,18 +246,16 @@ export default function AlbumDrawer({
               {/* Photo order */}
               <div className="admin-field">
                 <span className="admin-field-label" id="album-sort-label">
-                  Photo order
+                  {t.photoOrder}
                 </span>
                 <Listbox
                   labelledBy="album-sort-label"
                   value={album.sort || DEFAULT_ALBUM_SORT}
-                  options={SORT_OPTIONS}
+                  options={options}
                   onChange={(mode) => onUpdate({ sort: mode })}
                 />
                 <span className="admin-field-hint">
-                  {album.sort === 'manual'
-                    ? 'Pinned photos come first, in the order you set. Everything else follows in the album’s Immich order.'
-                    : 'Immich order follows the album’s own sort setting in Immich.'}
+                  {album.sort === 'manual' ? t.manualHint : t.immichHint}
                 </span>
 
                 {album.sort === 'manual' && (
@@ -273,8 +276,8 @@ export default function AlbumDrawer({
                     >
                       <IconGripVertical size={18} className="svg-icon svg-drag" />{' '}
                       {album.assetOrder?.length
-                        ? `Reorder photos (${album.assetOrder.length} pinned)`
-                        : 'Reorder photos'}
+                        ? t.reorderPhotosPinned(album.assetOrder.length)
+                        : t.reorderPhotos}
                     </button>
                   </div>
                 )}
@@ -288,17 +291,17 @@ export default function AlbumDrawer({
             onClick={onRemove}
             style={{ maxWidth: '160px' }}
           >
-            <IconTrash size={14} /> Remove Album
+            <IconTrash size={14} /> {t.removeAlbum}
           </button>
-          <div className="uuid-copy-box" title="Immich album UUID">
+          <div className="uuid-copy-box" title={t.uuidTitle}>
             <code>{album.id}</code>
             <button
               className="uuid-copy-btn"
               onClick={() => {
                 navigator.clipboard.writeText(album.id);
               }}
-              title="Copy UUID"
-              aria-label="Copy Immich album UUID"
+              title={t.copyUuid}
+              aria-label={t.copyUuidAria}
             >
               <IconCopy size={12} />
             </button>
@@ -308,7 +311,7 @@ export default function AlbumDrawer({
             onClick={() => onClose()}
             style={{ maxWidth: '140px' }}
           >
-            Done
+            {t.done}
           </button>
         </div>
       </div>

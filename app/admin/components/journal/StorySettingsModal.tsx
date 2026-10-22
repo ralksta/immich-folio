@@ -4,6 +4,7 @@ import type { ParsedJournal } from '@/lib/journal';
 import type { AssetPickTarget } from './BlockFields';
 import PasswordField from '../fields/PasswordField';
 import { useModalDialog } from '@/hooks/useModalDialog';
+import { useAdminDictionary } from '../AdminI18n';
 
 type Frontmatter = ParsedJournal['frontmatter'];
 
@@ -22,6 +23,8 @@ export function StorySettingsModal({
   onClose,
 }: StorySettingsModalProps) {
   const cardRef = useModalDialog(onClose);
+  const dict = useAdminDictionary();
+  const t = dict.journal.storySettings;
 
   return (
     <div className="journal-modal-overlay">
@@ -33,7 +36,7 @@ export function StorySettingsModal({
         aria-labelledby="story-settings-title"
       >
         <h3 id="story-settings-title" style={{ margin: '0 0 1.25rem' }}>
-          Story Settings &amp; Metadata
+          {t.title}
         </h3>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -47,14 +50,14 @@ export function StorySettingsModal({
                 marginBottom: '4px',
               }}
             >
-              Subtitle
+              {t.subtitle}
             </label>
             <input
               id="story-subtitle"
               type="text"
               className="admin-input"
               value={frontmatter.subtitle || ''}
-              placeholder="e.g. Field notes from our winter journey"
+              placeholder={t.subtitlePlaceholder}
               onChange={(e) => onChange({ subtitle: e.target.value })}
             />
           </div>
@@ -70,14 +73,14 @@ export function StorySettingsModal({
                   marginBottom: '4px',
                 }}
               >
-                Author
+                {t.author}
               </label>
               <input
                 id="story-author"
                 type="text"
                 className="admin-input"
                 value={frontmatter.author || ''}
-                placeholder="e.g. Ralf"
+                placeholder={t.authorPlaceholder}
                 onChange={(e) => onChange({ author: e.target.value })}
               />
             </div>
@@ -91,7 +94,7 @@ export function StorySettingsModal({
                   marginBottom: '4px',
                 }}
               >
-                Publish Date
+                {t.date}
               </label>
               <input
                 id="story-publish-date"
@@ -112,7 +115,7 @@ export function StorySettingsModal({
                 marginBottom: '4px',
               }}
             >
-              Cover Photo
+              {t.cover}
             </label>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <div
@@ -131,11 +134,11 @@ export function StorySettingsModal({
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={`/api/admin/thumbnail/${frontmatter.coverAssetId}`}
-                    alt="Cover"
+                    alt={t.coverAlt}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
-                  <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>None</span>
+                  <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>{dict.common.none}</span>
                 )}
               </div>
               <button
@@ -143,12 +146,12 @@ export function StorySettingsModal({
                 className="admin-btn admin-btn-xs"
                 onClick={() =>
                   onPickAsset({
-                    title: 'Select Cover Photo',
+                    title: dict.journal.pickerTitles.cover,
                     onSelect: (id) => onChange({ coverAssetId: id }),
                   })
                 }
               >
-                Choose Cover
+                {t.chooseCover}
               </button>
               {frontmatter.coverAssetId && (
                 <button
@@ -156,7 +159,7 @@ export function StorySettingsModal({
                   className="admin-btn admin-btn-xs admin-btn-danger"
                   onClick={() => onChange({ coverAssetId: undefined })}
                 >
-                  Remove
+                  {dict.common.remove}
                 </button>
               )}
             </div>
@@ -172,7 +175,7 @@ export function StorySettingsModal({
                 marginBottom: '4px',
               }}
             >
-              Password Protection (Optional)
+              {t.password}
             </label>
             {/* The input takes its styles from .admin-field, as everywhere else
                 PasswordField is used; without it the lock icon sat on the text. */}
@@ -193,14 +196,14 @@ export function StorySettingsModal({
               onChange={(e) => onChange({ draft: e.target.checked })}
             />
             <label htmlFor="draft-checkbox" style={{ fontSize: '0.9rem', cursor: 'pointer' }}>
-              Keep as Draft (Hidden from public /journal list)
+              {t.draft}
             </label>
           </div>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
           <button type="button" className="admin-btn admin-btn-primary" onClick={() => onClose()}>
-            Done
+            {t.done}
           </button>
         </div>
       </div>

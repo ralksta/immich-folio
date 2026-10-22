@@ -12,6 +12,11 @@
 import { arrayMove } from '@dnd-kit/sortable';
 import type { GalleryState } from './galleryYaml';
 import type { AlbumEntry, PickerTarget, Section, Subpage } from './types';
+import { adminEn } from '@/lib/i18n/admin/en';
+import type { AdminDictionary } from '@/lib/i18n/admin';
+
+/** The seed names of a new subpage or section, in the panel's language. */
+type Defaults = AdminDictionary['pages']['defaults'];
 
 /**
  * Where a list of albums lives: the standalone list, a subpage's own list, or
@@ -111,11 +116,14 @@ export const moveHero = (g: GalleryState, from: number, to: number): GalleryStat
 
 // ── Subpages and sections ───────────────────────────────────────
 
-export const addSubpage = (g: GalleryState): GalleryState => ({
+export const addSubpage = (
+  g: GalleryState,
+  t: Defaults = adminEn.pages.defaults,
+): GalleryState => ({
   ...g,
   subpages: [
     ...g.subpages,
-    { name: `New subpage ${g.subpages.length + 1}`, albums: [], sections: undefined },
+    { name: t.subpageName(g.subpages.length + 1), albums: [], sections: undefined },
   ],
 });
 
@@ -140,10 +148,14 @@ export const moveSubpage = (g: GalleryState, from: number, to: number): GalleryS
   subpages: arrayMove(g.subpages, from, to),
 });
 
-export const addSection = (g: GalleryState, subpageIndex: number) =>
+export const addSection = (
+  g: GalleryState,
+  subpageIndex: number,
+  t: Defaults = adminEn.pages.defaults,
+) =>
   mapSubpage(g, subpageIndex, (sp) => ({
     ...sp,
-    sections: [...(sp.sections || []), { title: 'New Section', albums: [] }],
+    sections: [...(sp.sections || []), { title: t.sectionTitle, albums: [] }],
   }));
 
 export const removeSection = (g: GalleryState, subpageIndex: number, sectionIndex: number) =>

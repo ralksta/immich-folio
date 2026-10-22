@@ -25,6 +25,7 @@ import { useConfirm } from '../ConfirmDialog';
 import { useModalDialog } from '@/hooks/useModalDialog';
 import AlbumPicker from '../AlbumPicker';
 import AssetPicker from '../AssetPicker';
+import { useAdminDictionary } from '../AdminI18n';
 
 interface SharedAlbum {
   id: string;
@@ -44,6 +45,10 @@ interface JournalStudioProps {
 }
 
 export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioProps) {
+  const dict = useAdminDictionary();
+  const t = dict.journal.studio;
+  const tc = t.create;
+  const templateText = dict.journal.templates;
   const confirm = useConfirm();
   const notify = useNotify();
   const router = useRouter();
@@ -90,7 +95,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
         const data = (await res.json()) as { albums?: SharedAlbum[] };
         setAlbumList(data.albums ?? []);
       } catch {
-        notify('error', 'Could not load albums. Check the Immich connection and try again.');
+        notify('error', t.albumsError);
         return;
       } finally {
         setLoadingAlbums(false);
@@ -107,7 +112,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
     try {
       const slug = sanitizeSlug(newSlug || newTitle);
       const template = selectedTemplateId
-        ? JOURNAL_TEMPLATES.find((t) => t.id === selectedTemplateId)
+        ? JOURNAL_TEMPLATES.find((tpl) => tpl.id === selectedTemplateId)
         : undefined;
       const selectedPhotoBlocks = selectedAssetIds.map((assetId) => ({
         type: 'photo' as const,
@@ -152,10 +157,10 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
         }
       } else {
         const data = await res.json();
-        notify('error', data.error || 'Failed to create journal entry');
+        notify('error', data.error || t.createFailed);
       }
     } catch {
-      notify('error', 'Could not create the journal entry. Check the connection and try again.');
+      notify('error', t.createError);
     } finally {
       setCreating(false);
     }
@@ -164,9 +169,9 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
   const handleDelete = async (slug: string, title?: string) => {
     // Named by title, as the page delete is; the slug only when there is none.
     const ok = await confirm({
-      title: `Delete “${title || slug}”?`,
-      message: 'A copy is kept and can be restored under Backups.',
-      confirmLabel: 'Delete entry',
+      title: t.deleteTitle(title || slug),
+      message: t.deleteMessage,
+      confirmLabel: t.deleteEntry,
       danger: true,
     });
     if (!ok) return;
@@ -179,10 +184,10 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
         fetchEntries();
         if (activeSlug === slug) router.push('/admin/journal');
       } else {
-        notify('error', 'Failed to delete journal entry');
+        notify('error', t.deleteFailed);
       }
     } catch {
-      notify('error', 'Could not delete the journal entry. Check the connection and try again.');
+      notify('error', t.deleteError);
     }
   };
 
@@ -199,16 +204,16 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
   return (
     <div className="journal-studio">
       <PageHeader
-        kicker="Content"
-        title="Journal"
-        description="Stories, field notes and longform photo essays, written with a live preview."
+        kicker={t.kicker}
+        title={t.title}
+        description={t.description}
         actions={
           <button
             type="button"
             className="admin-btn admin-btn-primary"
             onClick={() => setShowCreateModal(true)}
           >
-            <IconPlus size={16} /> New Journal Entry
+            <IconPlus size={16} /> {t.newEntry}
           </button>
         }
       />
@@ -222,16 +227,14 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
         />
       ) : entries.length === 0 ? (
         <div style={{ padding: '5rem 2rem', textAlign: 'center', opacity: 0.6 }}>
-          <h3>No journal entries yet</h3>
-          <p style={{ margin: '8px 0 1.5rem', fontSize: '0.9rem' }}>
-            Create your first story to share travel journals or wedding reportages.
-          </p>
+          <h3>{t.emptyTitle}</h3>
+          <p style={{ margin: '8px 0 1.5rem', fontSize: '0.9rem' }}>{t.emptyText}</p>
           <button
             type="button"
             className="admin-btn admin-btn-primary"
             onClick={() => setShowCreateModal(true)}
           >
-            <IconPlus size={16} /> Create First Entry
+            <IconPlus size={16} /> {t.createFirst}
           </button>
         </div>
       ) : (
@@ -262,16 +265,16 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                     </span>
                   )}
                   <span>
-                    <IconClock size={12} /> {entry.readingTimeMinutes} min
+                    <IconClock size={12} /> {t.readingTime(entry.readingTimeMinutes)}
                   </span>
                   {entry.frontmatter.draft ? (
-                    <span className="journal-status-pill is-draft">Draft</span>
+                    <span className="journal-status-pill is-draft">{t.draft}</span>
                   ) : (
-                    <span className="journal-status-pill is-published">Published</span>
+                    <span className="journal-status-pill is-published">{t.published}</span>
                   )}
                   {entry.frontmatter.password && (
                     <span>
-                      <IconLock size={12} /> Password
+                      <IconLock size={12} /> {t.password}
                     </span>
                   )}
                 </div>
@@ -282,14 +285,14 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                     className="admin-btn admin-btn-sm admin-btn-primary"
                     onClick={() => router.push(`/admin/journal/${entry.slug}`)}
                   >
-                    Edit in Studio
+                    {t.editInStudio}
                   </button>
                   <a
                     href={`/journal/${entry.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="admin-btn admin-btn-sm admin-btn-secondary"
-                    title="View live page"
+                    title={t.viewLive}
                   >
                     <IconLink size={14} />
                   </a>
@@ -297,7 +300,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                     type="button"
                     className="admin-btn admin-btn-sm admin-btn-danger"
                     onClick={() => handleDelete(entry.slug, entry.frontmatter.title)}
-                    title="Delete entry"
+                    title={t.deleteEntry}
                     style={{ marginLeft: 'auto' }}
                   >
                     <IconTrash size={14} />
@@ -320,7 +323,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
             aria-labelledby="journal-new-dialog-title"
           >
             <h3 id="journal-new-dialog-title" style={{ margin: '0 0 1rem' }}>
-              Create New Journal Entry
+              {tc.title}
             </h3>
             <form onSubmit={handleCreate}>
               <div style={{ marginBottom: '1rem' }}>
@@ -333,13 +336,13 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                     opacity: 0.8,
                   }}
                 >
-                  Title
+                  {tc.titleLabel}
                 </label>
                 <input
                   id="journal-new-title"
                   type="text"
                   className="admin-input"
-                  placeholder="e.g. Expedition Nordkap"
+                  placeholder={tc.titlePlaceholder}
                   value={newTitle}
                   onChange={(e) => {
                     setNewTitle(e.target.value);
@@ -362,13 +365,13 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                     opacity: 0.8,
                   }}
                 >
-                  URL Slug
+                  {tc.slugLabel}
                 </label>
                 <input
                   id="journal-new-url-slug"
                   type="text"
                   className="admin-input"
-                  placeholder="e.g. expedition-nordkap"
+                  placeholder={tc.slugPlaceholder}
                   value={newSlug}
                   onChange={(e) => setNewSlug(slugFieldValue(e.target.value))}
                   required
@@ -376,7 +379,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                 <span
                   style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '2px', display: 'block' }}
                 >
-                  Will be accessible at /journal/{newSlug ? sanitizeSlug(newSlug) : 'slug'}
+                  {tc.slugHint(newSlug ? sanitizeSlug(newSlug) : tc.slugFallback)}
                 </span>
               </div>
 
@@ -389,20 +392,16 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                     opacity: 0.8,
                   }}
                 >
-                  Start from
+                  {tc.startFrom}
                 </label>
-                <div
-                  className="journal-create-tabs"
-                  role="group"
-                  aria-label="Journal starting point"
-                >
+                <div className="journal-create-tabs" role="group" aria-label={tc.startFromLabel}>
                   <button
                     type="button"
                     aria-pressed={createTab === 'start'}
                     className={`journal-create-tab${createTab === 'start' ? ' is-selected' : ''}`}
                     onClick={() => setCreateTab('start')}
                   >
-                    Templates
+                    {tc.tabTemplates}
                   </button>
                   <button
                     type="button"
@@ -410,7 +409,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                     className={`journal-create-tab${createTab === 'albums' ? ' is-selected' : ''}`}
                     onClick={() => setCreateTab('albums')}
                   >
-                    Albums
+                    {tc.tabAlbums}
                   </button>
                 </div>
                 {createTab === 'start' ? (
@@ -420,10 +419,8 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                       className={`journal-template-card${selectedTemplateId === null ? ' is-selected' : ''}`}
                       onClick={() => setSelectedTemplateId(null)}
                     >
-                      <span className="journal-template-card-name">Blank</span>
-                      <span className="journal-template-card-desc">
-                        Start with an empty editor.
-                      </span>
+                      <span className="journal-template-card-name">{tc.blank}</span>
+                      <span className="journal-template-card-desc">{tc.blankDescription}</span>
                     </button>
                     {JOURNAL_TEMPLATES.map((template) => (
                       <button
@@ -432,8 +429,14 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                         className={`journal-template-card${selectedTemplateId === template.id ? ' is-selected' : ''}`}
                         onClick={() => setSelectedTemplateId(template.id)}
                       >
-                        <span className="journal-template-card-name">{template.name}</span>
-                        <span className="journal-template-card-desc">{template.description}</span>
+                        <span className="journal-template-card-name">
+                          {templateText[template.id as keyof typeof templateText]?.name ??
+                            template.name}
+                        </span>
+                        <span className="journal-template-card-desc">
+                          {templateText[template.id as keyof typeof templateText]?.description ??
+                            template.description}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -446,11 +449,11 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                       disabled={loadingAlbums}
                     >
                       {loadingAlbums
-                        ? 'Loading albums...'
+                        ? tc.loadingAlbums
                         : selectedAlbumId
                           ? (albumList?.find((album) => album.id === selectedAlbumId)?.albumName ??
-                            'Change album')
-                          : 'Select album'}
+                            tc.changeAlbum)
+                          : tc.selectAlbum}
                     </button>
                     {selectedAlbumId && (
                       <>
@@ -460,13 +463,13 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                           onClick={() => setShowAssetPicker(true)}
                         >
                           {selectedAssetIds.length
-                            ? `Choose photos (${selectedAssetIds.length} selected)`
-                            : 'Choose photos'}
+                            ? tc.choosePhotosSelected(selectedAssetIds.length)
+                            : tc.choosePhotos}
                         </button>
                         {selectedAssetIds.length > 0 && (
                           <div
                             className="journal-create-photo-selection"
-                            aria-label="Selected photos"
+                            aria-label={tc.selectedPhotos}
                           >
                             {selectedAssetIds.map((assetId) => (
                               // eslint-disable-next-line @next/next/no-img-element
@@ -479,9 +482,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                             ))}
                           </div>
                         )}
-                        <p className="journal-template-card-desc">
-                          Only the photos you select from this album will be added to the journal.
-                        </p>
+                        <p className="journal-template-card-desc">{tc.albumNote}</p>
                       </>
                     )}
                   </div>
@@ -494,14 +495,14 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                   className="admin-btn admin-btn-secondary"
                   onClick={closeCreateModal}
                 >
-                  Cancel
+                  {dict.common.cancel}
                 </button>
                 <button
                   type="submit"
                   className="admin-btn admin-btn-primary"
                   disabled={creating || !newTitle.trim()}
                 >
-                  {creating ? 'Creating...' : 'Create & Open Studio'}
+                  {creating ? tc.creating : tc.submit}
                 </button>
               </div>
             </form>
@@ -524,7 +525,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
       {showAssetPicker && selectedAlbumId && (
         <AssetPicker
           key={selectedAlbumId}
-          title="Choose photos from this album"
+          title={tc.pickerTitle}
           albumId={selectedAlbumId}
           albumOnly
           onSelectMany={(assetIds) => {

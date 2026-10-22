@@ -20,6 +20,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useScrollLock } from './useScrollLock';
 import { useModalDialog } from '@/hooks/useModalDialog';
+import { useAdminDictionary } from './AdminI18n';
 
 interface AssetInfo {
   id: string;
@@ -49,6 +50,7 @@ function SortableAssetTile({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: asset.id,
   });
+  const t = useAdminDictionary().pickers.orderEditor;
 
   return (
     <div
@@ -68,8 +70,8 @@ function SortableAssetTile({
       <button
         type="button"
         className="order-tile-action"
-        title="Unpin — let this photo follow automatically"
-        aria-label={`Unpin ${asset.originalFileName}`}
+        title={t.unpinTitle}
+        aria-label={t.unpin(asset.originalFileName)}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
@@ -98,6 +100,8 @@ export default function AssetOrderEditor({
 }: Props) {
   useScrollLock(true);
   const cardRef = useModalDialog(onClose);
+  const dict = useAdminDictionary();
+  const t = dict.pickers.orderEditor;
   const [assets, setAssets] = useState<AssetInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -128,7 +132,7 @@ export default function AssetOrderEditor({
       } catch (err) {
         if (cancelled) return;
         console.error('Failed to load album assets:', err);
-        setError('Could not load the album’s photos from Immich.');
+        setError(t.loadFailed);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -136,7 +140,7 @@ export default function AssetOrderEditor({
     return () => {
       cancelled = true;
     };
-  }, [albumId, assetOrder]);
+  }, [albumId, assetOrder, t]);
 
   const byId = useMemo(() => new Map(assets.map((a) => [a.id, a])), [assets]);
   const pinned = useMemo(
@@ -177,8 +181,13 @@ export default function AssetOrderEditor({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="picker-header">
-          <h3 id="order-editor-title">Photo order — {albumName}</h3>
-          <button type="button" className="admin-btn-icon" onClick={onClose} aria-label="Close">
+          <h3 id="order-editor-title">{t.title(albumName)}</h3>
+          <button
+            type="button"
+            className="admin-btn-icon"
+            onClick={onClose}
+            aria-label={dict.common.close}
+          >
             ×
           </button>
         </div>
@@ -191,27 +200,19 @@ export default function AssetOrderEditor({
           <p className="empty-hint">{error}</p>
         ) : (
           <div className="order-editor-body">
-            {dropped > 0 && (
-              <p className="order-editor-notice">
-                {dropped} pinned {dropped === 1 ? 'photo is' : 'photos are'} no longer in this
-                album. {dropped === 1 ? 'It' : 'They'} will be removed from the order when you save.
-              </p>
-            )}
+            {dropped > 0 && <p className="order-editor-notice">{t.dropped(dropped)}</p>}
 
             <div className="order-editor-section">
               <div className="order-editor-section-head">
-                <h4>Pinned ({pinned.length})</h4>
+                <h4>{t.pinned(pinned.length)}</h4>
                 {pinned.length > 0 && (
                   <button className="admin-btn admin-btn-sm" onClick={() => setPinnedIds([])}>
-                    Unpin all
+                    {t.unpinAll}
                   </button>
                 )}
               </div>
               {pinned.length === 0 ? (
-                <p className="empty-hint">
-                  Nothing pinned yet — the album shows in Immich order. Pin the photos that should
-                  open the album.
-                </p>
+                <p className="empty-hint">{t.nothingPinned}</p>
               ) : (
                 <DndContext
                   sensors={sensors}
@@ -236,19 +237,17 @@ export default function AssetOrderEditor({
 
             <div className="order-editor-section">
               <div className="order-editor-section-head">
-                <h4>Follows automatically ({unpinned.length})</h4>
+                <h4>{t.following(unpinned.length)}</h4>
                 {unpinned.length > 0 && (
                   <button
                     className="admin-btn admin-btn-sm"
                     onClick={() => setPinnedIds([...pinnedIds, ...unpinned.map((a) => a.id)])}
                   >
-                    Pin all
+                    {t.pinAll}
                   </button>
                 )}
               </div>
-              <p className="empty-hint">
-                These follow the pinned photos in the album’s Immich order. Click one to pin it.
-              </p>
+              <p className="empty-hint">{t.followingHint}</p>
               <div className="order-editor-grid">
                 {unpinned.map((asset) => (
                   <button
@@ -256,7 +255,7 @@ export default function AssetOrderEditor({
                     key={asset.id}
                     className="order-tile order-tile-unpinned"
                     title={asset.originalFileName}
-                    aria-label={`Pin ${asset.originalFileName}`}
+                    aria-label={t.pin(asset.originalFileName)}
                     onClick={() => setPinnedIds([...pinnedIds, asset.id])}
                   >
                     <img src={`/api/admin/thumbnail/${asset.id}`} alt="" loading="lazy" />
@@ -272,7 +271,7 @@ export default function AssetOrderEditor({
 
         <div className="order-editor-footer">
           <button className="admin-btn admin-btn-ghost" onClick={onClose}>
-            Cancel
+            {dict.common.cancel}
           </button>
           <button
             className="admin-btn admin-btn-primary"
@@ -281,7 +280,7 @@ export default function AssetOrderEditor({
             disabled={loading || !!error}
             onClick={() => onSave(pinnedIds)}
           >
-            Apply order
+            {t.apply}
           </button>
         </div>
       </div>

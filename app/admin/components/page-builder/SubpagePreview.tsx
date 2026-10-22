@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { buildCoverGridVars } from '@/lib/config/schema';
 import { dictionaryFor } from '@/lib/i18n';
 import type { AlbumEntry, ImmichAlbumInfo, Subpage } from './types';
+import { useAdminDictionary } from '../AdminI18n';
 
 interface SubpagePreviewProps {
   sp: Subpage;
@@ -45,6 +46,8 @@ interface PreviewAlbum {
  * squeezed into the drawer, so a three-column grid still looks like one.
  */
 export default function SubpagePreview({ sp, immichAlbums, index }: SubpagePreviewProps) {
+  /** The admin's own words; `t` below is the site's, for the page itself. */
+  const adminT = useAdminDictionary().pages.preview;
   const frameRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(0.4);
   const [site, setSite] = useState<{ columns: number; lang?: string }>({
@@ -150,10 +153,7 @@ export default function SubpagePreview({ sp, immichAlbums, index }: SubpagePrevi
 
   return (
     <div className="subpage-preview">
-      <p className="subpage-preview__note">
-        Rendered with the site&rsquo;s saved theme preset at desktop width. Unsaved edits in this
-        drawer show up here; theme changes show up once saved in Settings.
-      </p>
+      <p className="subpage-preview__note">{adminT.note}</p>
       <div className="subpage-preview__frame" ref={frameRef}>
         {/* inert: a picture of the page, not a second copy of its links. */}
         <div

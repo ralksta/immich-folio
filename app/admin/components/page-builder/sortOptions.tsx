@@ -10,20 +10,8 @@ import {
   IconSortAlpha,
 } from '../Icons';
 import type { ListboxOption } from '../Listbox';
-
-/**
- * Labels for the per-album sort control.
- *
- * Kept as plain text on their own because they also feed the `title` attribute
- * on the album card's sort badge, where markup is not an option.
- */
-export const SORT_LABELS: Record<AlbumSortMode, string> = {
-  immich: 'Immich order (default)',
-  newest: 'Newest first',
-  oldest: 'Oldest first',
-  filename: 'Filename',
-  manual: 'Manual',
-};
+import { adminEn } from '@/lib/i18n/admin/en';
+import type { AdminDictionary } from '@/lib/i18n/admin';
 
 /** Manual reuses the drag glyph so the control matches the card's badge. */
 export const SORT_ICONS: Record<AlbumSortMode, ReactNode> = {
@@ -34,10 +22,17 @@ export const SORT_ICONS: Record<AlbumSortMode, ReactNode> = {
   manual: <IconGripVertical />,
 };
 
-export const SORT_OPTIONS: readonly ListboxOption<AlbumSortMode>[] = ALBUM_SORT_MODES.map(
-  (mode) => ({
+/**
+ * Options of the per-album sort control. The labels are plain text on their
+ * own because they also feed the `title` attribute on the album card's sort
+ * badge, where markup is not an option.
+ */
+export function sortOptions(
+  t: AdminDictionary['pages']['sort'] = adminEn.pages.sort,
+): ListboxOption<AlbumSortMode>[] {
+  return ALBUM_SORT_MODES.map((mode) => ({
     value: mode,
-    label: SORT_LABELS[mode],
+    label: t[mode],
     icon: SORT_ICONS[mode],
-  }),
-);
+  }));
+}

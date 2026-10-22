@@ -31,6 +31,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { IconGripVertical } from './Icons';
+import { useAdminDictionary } from './AdminI18n';
 
 const idAt = (index: number) => `block-${index}`;
 
@@ -81,6 +82,7 @@ export function SortableBlockCard({ index, badge, actions, children }: SortableB
     transition,
     isDragging,
   } = useSortable({ id: idAt(index) });
+  const t = useAdminDictionary().pickers.sortable;
 
   return (
     <div
@@ -99,8 +101,8 @@ export function SortableBlockCard({ index, badge, actions, children }: SortableB
             type="button"
             ref={setActivatorNodeRef}
             className="essay-block-grip"
-            aria-label="Drag to reorder"
-            title="Drag to reorder"
+            aria-label={t.dragToReorder}
+            title={t.dragToReorder}
             {...attributes}
             {...listeners}
           >

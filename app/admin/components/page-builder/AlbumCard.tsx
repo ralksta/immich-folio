@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { DEFAULT_ALBUM_SORT } from '@/lib/albumSort';
 import { IconCamera, IconGripVertical, IconImage, IconLock, IconPencil, IconTrash } from '../Icons';
-import { SORT_LABELS } from './sortOptions';
+import { useAdminDictionary } from '../AdminI18n';
 import type { AlbumEntry } from './types';
 
 export function SortableAlbumCard({
@@ -75,6 +75,8 @@ export default function AlbumCard({
   dragListeners,
   highlighted,
 }: AlbumCardProps) {
+  const dict = useAdminDictionary();
+  const t = dict.pages.albumCard;
   const heroThumb = album.heroImage || thumbnailId;
   const hasPassword = !!album.password;
   const hasTitleOverride = !!album.title;
@@ -89,8 +91,8 @@ export default function AlbumCard({
           <div
             className="album-tile-drag"
             {...dragListeners}
-            aria-label={`Reorder ${name}`}
-            title="Drag to reorder"
+            aria-label={t.reorder(name)}
+            title={t.dragToReorder}
           >
             <IconGripVertical size={18} className="svg-icon svg-drag" />
           </div>
@@ -103,13 +105,13 @@ export default function AlbumCard({
           </div>
         )}
         <div className="album-tile-overlay">
-          <button className="album-tile-btn" onClick={onEdit} title="Edit details">
+          <button className="album-tile-btn" onClick={onEdit} title={t.editDetails}>
             <IconPencil size={14} />
           </button>
           <button
             className="album-tile-btn album-tile-btn-danger"
             onClick={onRemove}
-            title="Remove album"
+            title={t.removeAlbum}
           >
             <IconTrash size={14} />
           </button>
@@ -125,17 +127,17 @@ export default function AlbumCard({
           </span>
           <div className="album-tile-badges">
             {hasPassword && (
-              <span className="badge badge-password" title="Password protected">
+              <span className="badge badge-password" title={t.passwordProtected}>
                 <IconLock size={12} />
               </span>
             )}
             {album.heroImage && (
-              <span className="badge badge-hero" title="Custom Hero Image set">
+              <span className="badge badge-hero" title={t.customHero}>
                 <IconImage size={12} />
               </span>
             )}
             {album.sort && album.sort !== DEFAULT_ALBUM_SORT && (
-              <span className="badge badge-sort" title={`Photo order: ${SORT_LABELS[album.sort]}`}>
+              <span className="badge badge-sort" title={t.photoOrder(dict.pages.sort[album.sort])}>
                 {album.sort === 'manual' ? (
                   <IconGripVertical size={18} className="svg-icon svg-drag" />
                 ) : (
@@ -145,7 +147,7 @@ export default function AlbumCard({
             )}
           </div>
         </div>
-        <span className="album-tile-count">{count} photos</span>
+        <span className="album-tile-count">{t.photos(count)}</span>
       </div>
     </div>
   );

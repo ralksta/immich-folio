@@ -15,6 +15,7 @@ import {
 } from '../Icons';
 import { InlineMarkdownField } from '../InlineMarkdownField';
 import { fillAssetSlots, isLegacyAssetRef } from './blockOps';
+import { useAdminDictionary } from '../AdminI18n';
 
 /** What the asset picker is opened for: its title, and where the pick goes. */
 export interface AssetPickTarget {
@@ -56,12 +57,15 @@ export function BlockFields({
   albumList,
   mapEnabled,
 }: BlockFieldsProps) {
+  const dict = useAdminDictionary();
+  const t = dict.journal.blocks;
+  const pickerTitles = dict.journal.pickerTitles;
   return (
     <div style={{ marginTop: '0.75rem' }}>
       {block.type === 'heading' && (
         <div className="journal-heading-row">
           <select
-            aria-label="Heading level"
+            aria-label={t.headingLevel}
             className="admin-input journal-level-select"
             value={block.level}
             onChange={(e) => onChange({ ...block, level: Number(e.target.value) })}
@@ -82,10 +86,10 @@ export function BlockFields({
       {block.type === 'paragraph' && (
         <InlineMarkdownField
           multiline
-          aria-label="Text"
+          aria-label={t.text}
           className="admin-input"
           rows={3}
-          placeholder="Text (**bold**, *italic*, [link](https://…))"
+          placeholder={t.textPlaceholder}
           html={block.html}
           onChange={(html) => onChange({ ...block, html })}
         />
@@ -98,24 +102,21 @@ export function BlockFields({
             className="admin-input"
             rows={2}
             html={block.text}
-            placeholder="Quote text..."
+            placeholder={t.quotePlaceholder}
             onChange={(text) => onChange({ ...block, text })}
           />
           <input
             type="text"
             className="admin-input"
             value={block.author || ''}
-            placeholder="Author attribution (optional)"
+            placeholder={t.authorPlaceholder}
             onChange={(e) => onChange({ ...block, author: e.target.value })}
           />
         </div>
       )}
 
       {block.type === 'photo' && isLegacyAssetRef(block.assetId) && (
-        <p className="journal-block-warning">
-          Reference &quot;{block.assetId}&quot; is a legacy album position, not a photo. It will not
-          appear on the published page — pick a photo below.
-        </p>
+        <p className="journal-block-warning">{t.legacyRef(block.assetId)}</p>
       )}
 
       {block.type === 'photo' && (
@@ -123,7 +124,7 @@ export function BlockFields({
           {/* A button, not a clickable div, so the keyboard reaches it. */}
           <button
             type="button"
-            aria-label={block.assetId ? 'Change photo' : 'Pick a photo'}
+            aria-label={block.assetId ? t.changePhoto : t.pickPhoto}
             style={{
               width: '140px',
               height: '96px',
@@ -142,7 +143,7 @@ export function BlockFields({
             }}
             onClick={() =>
               onPickAsset({
-                title: 'Select Photo for Story',
+                title: pickerTitles.storyPhoto,
                 onSelect: (id) => onChange({ ...block, assetId: id }),
               })
             }
@@ -155,7 +156,7 @@ export function BlockFields({
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
             ) : (
-              <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>+ Pick</span>
+              <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>{t.pick}</span>
             )}
           </button>
 
@@ -169,7 +170,7 @@ export function BlockFields({
           >
             <div className="journal-photo-layout-row">
               <select
-                aria-label="Photo layout"
+                aria-label={t.photoLayout}
                 className="admin-input"
                 value={block.layout}
                 onChange={(e) =>
@@ -179,26 +180,26 @@ export function BlockFields({
                   })
                 }
               >
-                <option value="contained">Contained (Column Width)</option>
-                <option value="wide">Wide (Expanded Width)</option>
-                <option value="fullbleed">Fullbleed (Edge to Edge)</option>
+                <option value="contained">{t.layoutContained}</option>
+                <option value="wide">{t.layoutWide}</option>
+                <option value="fullbleed">{t.layoutFullbleed}</option>
               </select>
               <button
                 type="button"
                 className="admin-btn admin-btn-xs"
                 onClick={() =>
                   onPickAsset({
-                    title: 'Select Photo for Story',
+                    title: pickerTitles.storyPhoto,
                     onSelect: (id) => onChange({ ...block, assetId: id }),
                   })
                 }
               >
-                Change Photo
+                {t.changePhotoButton}
               </button>
             </div>
             <InlineMarkdownField
               className="admin-input"
-              placeholder="Caption (optional)"
+              placeholder={t.captionPlaceholder}
               html={block.caption}
               onChange={(caption) => onChange({ ...block, caption })}
             />
@@ -208,9 +209,7 @@ export function BlockFields({
 
       {block.type === 'photo-pair' && block.assetIds.some(isLegacyAssetRef) && (
         <p className="journal-block-warning">
-          References &quot;{block.assetIds.filter(isLegacyAssetRef).join('", "')}
-          &quot; are legacy album positions, not photos. They will not appear on the published page
-          — pick photos below.
+          {t.legacyRefs(block.assetIds.filter(isLegacyAssetRef))}
         </p>
       )}
 
@@ -227,7 +226,9 @@ export function BlockFields({
               <button
                 type="button"
                 key={pIdx}
-                aria-label={`${block.assetIds[pIdx] ? 'Change' : 'Pick'} photo ${pIdx + 1} of the pair`}
+                aria-label={
+                  block.assetIds[pIdx] ? t.changePairPhoto(pIdx + 1) : t.pickPairPhoto(pIdx + 1)
+                }
                 style={{
                   height: '90px',
                   width: '100%',
@@ -245,7 +246,7 @@ export function BlockFields({
                 }}
                 onClick={() =>
                   onPickAsset({
-                    title: `Select Photo #${pIdx + 1} for Pair`,
+                    title: pickerTitles.pairPhoto(pIdx + 1),
                     onSelect: (id) => {
                       const newIds = [...block.assetIds] as [string, string];
                       newIds[pIdx] = id;
@@ -262,7 +263,9 @@ export function BlockFields({
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
-                  <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>+ Pick Photo #{pIdx + 1}</span>
+                  <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>
+                    {t.pickPairSlot(pIdx + 1)}
+                  </span>
                 )}
               </button>
             ))}
@@ -273,7 +276,7 @@ export function BlockFields({
               className="admin-btn admin-btn-xs"
               onClick={() =>
                 onPickAsset({
-                  title: 'Select Photos for Pair',
+                  title: pickerTitles.pair,
                   max: 2,
                   onSelectMany: (ids) => {
                     // Two picks replace the pair; a single pick fills a gap.
@@ -284,12 +287,12 @@ export function BlockFields({
                 })
               }
             >
-              <IconCamera size={12} /> Pick both photos
+              <IconCamera size={12} /> {t.pickBoth}
             </button>
           </div>
           <InlineMarkdownField
             className="admin-input"
-            placeholder="Shared caption for pair (optional)"
+            placeholder={t.pairCaptionPlaceholder}
             html={block.caption}
             onChange={(caption) => onChange({ ...block, caption })}
           />
@@ -298,9 +301,7 @@ export function BlockFields({
 
       {block.type === 'photo-grid' && block.assetIds.some(isLegacyAssetRef) && (
         <p className="journal-block-warning">
-          References &quot;{block.assetIds.filter(isLegacyAssetRef).join('", "')}
-          &quot; are legacy album positions, not photos. They will not appear on the published page
-          — pick photos below.
+          {t.legacyRefs(block.assetIds.filter(isLegacyAssetRef))}
         </p>
       )}
 
@@ -313,7 +314,7 @@ export function BlockFields({
                   className="journal-grid-tile-pick"
                   onClick={() =>
                     onPickAsset({
-                      title: `Select Photo #${pIdx + 1} for Grid`,
+                      title: pickerTitles.gridPhoto(pIdx + 1),
                       onSelect: (id) => {
                         const newIds = [...block.assetIds];
                         newIds[pIdx] = id;
@@ -324,16 +325,16 @@ export function BlockFields({
                 >
                   {assetId ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={`/api/admin/thumbnail/${assetId}`} alt="Thumb" />
+                    <img src={`/api/admin/thumbnail/${assetId}`} alt={t.thumb} />
                   ) : (
-                    <span>+ Pick #{pIdx + 1}</span>
+                    <span>{t.pickGridSlot(pIdx + 1)}</span>
                   )}
                 </div>
                 {block.assetIds.length > 3 && (
                   <button
                     type="button"
                     className="admin-btn admin-btn-xs journal-grid-tile-remove"
-                    aria-label={`Remove photo #${pIdx + 1}`}
+                    aria-label={t.removePhoto(pIdx + 1)}
                     onClick={() =>
                       onChange({
                         ...block,
@@ -358,28 +359,26 @@ export function BlockFields({
                 })
               }
             >
-              <IconPlus size={12} /> Add photo
+              <IconPlus size={12} /> {t.addPhoto}
             </button>
             <button
               type="button"
               className="admin-btn admin-btn-xs"
               onClick={() =>
                 onPickAsset({
-                  title: 'Select Photos for Grid',
+                  title: pickerTitles.grid,
                   onSelectMany: (ids) =>
                     onChange({ ...block, assetIds: fillAssetSlots(block.assetIds, ids) }),
                 })
               }
             >
-              <IconCamera size={12} /> Pick several
+              <IconCamera size={12} /> {t.pickSeveral}
             </button>
-            <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
-              Three or more photos, laid out in rows of three.
-            </span>
+            <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>{t.gridHint}</span>
           </div>
           <InlineMarkdownField
             className="admin-input"
-            placeholder="Shared caption for grid (optional)"
+            placeholder={t.gridCaptionPlaceholder}
             html={block.caption}
             onChange={(caption) => onChange({ ...block, caption })}
           />
@@ -393,7 +392,7 @@ export function BlockFields({
               <input
                 type="text"
                 className="admin-input"
-                placeholder="Label, e.g. Distance"
+                placeholder={t.factLabelPlaceholder}
                 value={item.label}
                 onChange={(e) =>
                   onChange({
@@ -406,7 +405,7 @@ export function BlockFields({
               />
               <InlineMarkdownField
                 className="admin-input"
-                placeholder="Value, e.g. 21 km"
+                placeholder={t.factValuePlaceholder}
                 html={item.value}
                 onChange={(value) =>
                   onChange({
@@ -418,7 +417,7 @@ export function BlockFields({
               <button
                 type="button"
                 className="admin-btn admin-btn-xs"
-                aria-label={`Remove fact #${fIdx + 1}`}
+                aria-label={t.removeFact(fIdx + 1)}
                 disabled={block.items.length <= 1}
                 onClick={() =>
                   onChange({
@@ -442,7 +441,7 @@ export function BlockFields({
                 })
               }
             >
-              <IconPlus size={12} /> Add fact
+              <IconPlus size={12} /> {t.addFact}
             </button>
           </div>
         </div>
@@ -458,25 +457,25 @@ export function BlockFields({
             >
               <IconFolder size={12} />{' '}
               {block.albumId
-                ? (albumList?.find((a) => a.id === block.albumId)?.albumName ?? 'Change album')
-                : 'Pick album'}
+                ? (albumList?.find((a) => a.id === block.albumId)?.albumName ?? t.changeAlbum)
+                : t.pickAlbum}
             </button>
             {block.albumId && (
               <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
                 {albumAssets[block.albumId]
-                  ? `${albumAssets[block.albumId].length} photos in album`
-                  : 'loading…'}
+                  ? t.albumPhotoCount(albumAssets[block.albumId].length)
+                  : t.albumLoading}
               </span>
             )}
           </div>
           <div className="journal-album-row">
             <label className="journal-album-field">
-              Count
+              {t.count}
               <input
                 type="number"
                 min={1}
                 className="admin-input"
-                placeholder="all"
+                placeholder={t.countAll}
                 value={block.count ?? ''}
                 onChange={(e) =>
                   onChange({
@@ -487,7 +486,7 @@ export function BlockFields({
               />
             </label>
             <label className="journal-album-field">
-              Skip
+              {t.skip}
               <input
                 type="number"
                 min={0}
@@ -503,7 +502,7 @@ export function BlockFields({
               />
             </label>
             <label className="journal-album-field">
-              Layout
+              {t.layout}
               <select
                 className="admin-input"
                 value={block.layout}
@@ -514,36 +513,28 @@ export function BlockFields({
                   })
                 }
               >
-                <option value="grid">Grid (rows of three)</option>
-                <option value="pairs">Pairs (rows of two)</option>
-                <option value="wide">Wide (one per row)</option>
+                <option value="grid">{t.albumLayoutGrid}</option>
+                <option value="pairs">{t.albumLayoutPairs}</option>
+                <option value="wide">{t.albumLayoutWide}</option>
               </select>
             </label>
           </div>
           <InlineMarkdownField
             className="admin-input"
-            placeholder="Caption for the set (optional)"
+            placeholder={t.albumCaptionPlaceholder}
             html={block.caption}
             onChange={(caption) => onChange({ ...block, caption: caption || undefined })}
           />
-          <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
-            Photos follow the album&apos;s order (a manual order in the gallery comes first). Count
-            and skip pick a slice; leave count empty for all.
-          </span>
+          <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>{t.albumHint}</span>
         </div>
       )}
 
       {block.type === 'map' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {mapEnabled === false && (
-            <p className="journal-block-warning">
-              The map is switched off in Settings → General. This block will not render until it is
-              enabled.
-            </p>
-          )}
+          {mapEnabled === false && <p className="journal-block-warning">{t.mapOff}</p>}
           <InlineMarkdownField
             className="admin-input"
-            placeholder="Caption, e.g. Busan → Seoul (optional)"
+            placeholder={t.mapCaptionPlaceholder}
             html={block.caption}
             onChange={(caption) => onChange({ ...block, caption })}
           />
@@ -569,7 +560,7 @@ export function BlockFields({
                     <input
                       type="text"
                       className="admin-input"
-                      placeholder="Label (optional)"
+                      placeholder={t.pointLabelPlaceholder}
                       value={item.label ?? ''}
                       onChange={(e) => setItem({ ...item, label: e.target.value || undefined })}
                     />
@@ -577,8 +568,8 @@ export function BlockFields({
                       type="number"
                       step="any"
                       className="admin-input journal-map-coord"
-                      placeholder="Lat"
-                      aria-label="Latitude"
+                      placeholder={t.lat}
+                      aria-label={t.latitude}
                       value={Number.isFinite(item.lat) ? item.lat : ''}
                       onChange={(e) => setItem({ ...item, lat: parseFloat(e.target.value) })}
                     />
@@ -586,8 +577,8 @@ export function BlockFields({
                       type="number"
                       step="any"
                       className="admin-input journal-map-coord"
-                      placeholder="Lng"
-                      aria-label="Longitude"
+                      placeholder={t.lng}
+                      aria-label={t.longitude}
                       value={Number.isFinite(item.lng) ? item.lng : ''}
                       onChange={(e) => setItem({ ...item, lng: parseFloat(e.target.value) })}
                     />
@@ -598,30 +589,28 @@ export function BlockFields({
                     className="journal-map-photo"
                     onClick={() =>
                       onPickAsset({
-                        title: 'Select a photo to place on the map',
+                        title: pickerTitles.mapPhoto,
                         onSelect: (id) => setItem({ kind: 'photo', assetId: id }),
                       })
                     }
                   >
                     {item.assetId ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={`/api/admin/thumbnail/${item.assetId}`} alt="Thumb" />
+                      <img src={`/api/admin/thumbnail/${item.assetId}`} alt={t.thumb} />
                     ) : (
-                      <span>+ Pick photo</span>
+                      <span>{t.pickPhotoTile}</span>
                     )}
                   </div>
                 )}
                 {item.kind === 'all-photos' && (
-                  <span className="journal-map-all">
-                    All geotagged photos of this entry, in order
-                  </span>
+                  <span className="journal-map-all">{t.allPhotosItem}</span>
                 )}
                 <div className="essay-block-actions">
                   <button
                     type="button"
                     className="admin-btn admin-btn-xs"
                     disabled={mIdx === 0}
-                    aria-label="Move pin up"
+                    aria-label={t.movePinUp}
                     onClick={() => move(-1)}
                   >
                     <IconChevronUp size={12} />
@@ -630,7 +619,7 @@ export function BlockFields({
                     type="button"
                     className="admin-btn admin-btn-xs"
                     disabled={mIdx === block.items.length - 1}
-                    aria-label="Move pin down"
+                    aria-label={t.movePinDown}
                     onClick={() => move(1)}
                   >
                     <IconChevronDown size={12} />
@@ -638,7 +627,7 @@ export function BlockFields({
                   <button
                     type="button"
                     className="admin-btn admin-btn-xs admin-btn-danger"
-                    aria-label="Remove pin"
+                    aria-label={t.removePin}
                     onClick={() =>
                       onChange({
                         ...block,
@@ -654,10 +643,7 @@ export function BlockFields({
           })}
 
           {block.items.some((it) => it.kind === 'point' && !isValidCoordinate(it.lat, it.lng)) && (
-            <p className="journal-block-warning">
-              A point needs a latitude within ±90 and a longitude within ±180. Points without valid
-              coordinates are not saved.
-            </p>
+            <p className="journal-block-warning">{t.invalidCoordinates}</p>
           )}
 
           <div
@@ -678,14 +664,14 @@ export function BlockFields({
                 })
               }
             >
-              <IconPlus size={12} /> Point
+              <IconPlus size={12} /> {t.addPoint}
             </button>
             <button
               type="button"
               className="admin-btn admin-btn-xs"
               onClick={() =>
                 onPickAsset({
-                  title: 'Select a photo to place on the map',
+                  title: pickerTitles.mapPhoto,
                   onSelect: (id) =>
                     onChange({
                       ...block,
@@ -694,7 +680,7 @@ export function BlockFields({
                 })
               }
             >
-              <IconCamera size={12} /> Photo pin
+              <IconCamera size={12} /> {t.addPhotoPin}
             </button>
             <button
               type="button"
@@ -707,7 +693,7 @@ export function BlockFields({
                 })
               }
             >
-              <IconMap size={12} /> All geotagged photos
+              <IconMap size={12} /> {t.addAllPhotos}
             </button>
             <label className="journal-map-line-toggle">
               <input
@@ -715,14 +701,11 @@ export function BlockFields({
                 checked={block.line}
                 onChange={(e) => onChange({ ...block, line: e.target.checked })}
               />
-              Connect pins with a line
+              {t.connectLine}
             </label>
           </div>
 
-          <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
-            Typed points show in the preview right away. Photo pins are placed on the live page from
-            the photo&apos;s GPS, under the album&apos;s location precision.
-          </span>
+          <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>{t.mapHint}</span>
         </div>
       )}
     </div>

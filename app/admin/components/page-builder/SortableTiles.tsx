@@ -11,6 +11,7 @@ import { CSS } from '@dnd-kit/utilities';
 import type { ReactNode } from 'react';
 import { IconFileText, IconFolder, IconGripVertical, IconLock, IconPencil, IconX } from '../Icons';
 import type { Subpage } from './types';
+import { useAdminDictionary } from '../AdminI18n';
 
 // ── Sortable Hero Tile ─────────────────────────────────────────
 
@@ -26,6 +27,8 @@ export function SortableHeroTile({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: `hero-${index}`,
   });
+  const dict = useAdminDictionary();
+  const t = dict.pages.tiles;
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -43,13 +46,13 @@ export function SortableHeroTile({
         className="hero-tile-drag"
         {...attributes}
         {...listeners}
-        aria-label={`Reorder hero photo ${index + 1}`}
-        title="Drag to reorder"
+        aria-label={t.reorderHero(index + 1)}
+        title={t.dragToReorder}
       >
         <IconGripVertical size={18} className="svg-icon svg-drag" />
       </div>
       <img src={`/api/admin/thumbnail/${id}`} alt="" loading="lazy" />
-      <button className="hero-tile-remove" onClick={onRemove} title="Remove">
+      <button className="hero-tile-remove" onClick={onRemove} title={dict.common.remove}>
         <IconX size={14} />
       </button>
       <span className="hero-tile-index">{index + 1}</span>
@@ -75,6 +78,7 @@ export function SortableSubpageTile({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: `subpage-${spIndex}`,
   });
+  const t = useAdminDictionary().pages.tiles;
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -102,8 +106,8 @@ export function SortableSubpageTile({
         className="subpage-tile-drag"
         {...attributes}
         {...listeners}
-        aria-label={`Reorder ${sp.name || 'page'}`}
-        title="Drag to reorder"
+        aria-label={t.reorder(sp.name || t.pageFallback)}
+        title={t.dragToReorder}
       >
         <IconGripVertical size={18} className="svg-icon svg-drag" />
       </div>
@@ -112,24 +116,21 @@ export function SortableSubpageTile({
         <span
           className="subpage-badge-protected"
           style={{ background: '#e60012', color: '#fff' }}
-          title="Page is disabled"
+          title={t.disabledTitle}
         >
-          Disabled
+          {t.disabled}
         </span>
       )}
 
       {sp.hidden === true && sp.enabled !== false && (
-        <span
-          className="subpage-badge-protected"
-          title="Hidden from navigation, reachable by direct link"
-        >
-          Unlisted
+        <span className="subpage-badge-protected" title={t.unlistedTitle}>
+          {t.unlisted}
         </span>
       )}
 
       {sp.password && (
-        <span className="subpage-badge-protected" title="Password protected">
-          <IconLock size={12} /> Password
+        <span className="subpage-badge-protected" title={t.passwordProtected}>
+          <IconLock size={12} /> {t.password}
         </span>
       )}
 
@@ -143,7 +144,7 @@ export function SortableSubpageTile({
         )}
         <div className="subpage-hover-overlay">
           <span className="hover-action-btn">
-            <IconPencil size={14} /> Edit Page
+            <IconPencil size={14} /> {t.editPage}
           </span>
         </div>
       </div>
@@ -153,7 +154,7 @@ export function SortableSubpageTile({
           <span className="subpage-tile-slug">/{slug}</span>
         </div>
         <span className="subpage-tile-meta">
-          <IconFolder /> {totalAlbums} album{totalAlbums !== 1 ? 's' : ''}
+          <IconFolder /> {t.albums(totalAlbums)}
         </span>
       </div>
     </div>
@@ -185,6 +186,7 @@ export function SortableSubpageRow({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: `subpage-${spIndex}`,
   });
+  const t = useAdminDictionary().pages.tiles;
   const totalAlbums =
     sp.albums.length + (sp.sections?.reduce((sum, sec) => sum + sec.albums.length, 0) || 0);
   const thumb = getFirstThumb(sp);
@@ -204,8 +206,8 @@ export function SortableSubpageRow({
         className="pb-row-grip"
         {...attributes}
         {...listeners}
-        aria-label={`Reorder ${sp.name || 'page'}`}
-        title="Drag to reorder"
+        aria-label={t.reorder(sp.name || t.pageFallback)}
+        title={t.dragToReorder}
       >
         <IconGripVertical size={14} />
       </span>
@@ -222,9 +224,9 @@ export function SortableSubpageRow({
           {sp.password && <IconLock size={11} />}
         </span>
         {sp.enabled === false ? (
-          <span className="pb-row-state">Off</span>
+          <span className="pb-row-state">{t.off}</span>
         ) : sp.hidden ? (
-          <span className="pb-row-state">Unlisted</span>
+          <span className="pb-row-state">{t.unlisted}</span>
         ) : (
           <span className="pb-row-count">{totalAlbums}</span>
         )}
@@ -261,6 +263,7 @@ export function SortablePageRow({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
   });
+  const t = useAdminDictionary().pages.tiles;
   return (
     <div
       ref={setNodeRef}
@@ -276,8 +279,8 @@ export function SortablePageRow({
         className="pb-row-grip"
         {...attributes}
         {...listeners}
-        aria-label={`Reorder ${title}`}
-        title="Drag to reorder"
+        aria-label={t.reorder(title)}
+        title={t.dragToReorder}
       >
         <IconGripVertical size={14} />
       </span>
@@ -290,11 +293,11 @@ export function SortablePageRow({
           {hasPassword && <IconLock size={11} />}
         </span>
         {missing ? (
-          <span className="pb-row-state">Missing</span>
+          <span className="pb-row-state">{t.missing}</span>
         ) : draft ? (
-          <span className="pb-row-state">Draft</span>
+          <span className="pb-row-state">{t.draft}</span>
         ) : (
-          <span className="pb-row-tag">Page</span>
+          <span className="pb-row-tag">{t.page}</span>
         )}
       </button>
     </div>

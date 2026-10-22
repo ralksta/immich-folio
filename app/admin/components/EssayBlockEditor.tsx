@@ -30,6 +30,7 @@ import {
 } from './Icons';
 import { BlockBadge } from './BlockBadge';
 import { InlineMarkdownField } from './InlineMarkdownField';
+import { useAdminDictionary } from './AdminI18n';
 
 interface EssayBlockEditorProps {
   markdown: string;
@@ -38,8 +39,9 @@ interface EssayBlockEditorProps {
 }
 
 export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlockEditorProps) {
+  const t = useAdminDictionary().pages.essay;
   const [essay, setEssay] = useState<ParsedEssay>(() =>
-    parseEssayMarkdown(markdown || '# Title\n\nWrite your story here...'),
+    parseEssayMarkdown(markdown || `# ${t.starterTitle}\n\n${t.starterBody}`),
   );
 
   // Sync internal state when the prop changes from outside (e.g. initial load).
@@ -98,13 +100,13 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
 
     switch (type) {
       case 'heading':
-        newBlock = { type: 'heading', level: 2, text: 'New Section Heading' };
+        newBlock = { type: 'heading', level: 2, text: t.newHeading };
         break;
       case 'paragraph':
-        newBlock = { type: 'paragraph', html: 'Enter text paragraph here...' };
+        newBlock = { type: 'paragraph', html: t.newParagraph };
         break;
       case 'quote':
-        newBlock = { type: 'quote', text: 'Enter quote text here...', author: '' };
+        newBlock = { type: 'quote', text: t.newQuote, author: '' };
         break;
       case 'photo':
         newBlock = {
@@ -148,34 +150,34 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
     <div className="essay-block-editor">
       {/* Sticky Dark Glass Toolbar */}
       <div className="essay-toolbar-sticky">
-        <span className="essay-toolbar-label">Add Story Block:</span>
+        <span className="essay-toolbar-label">{t.toolbar}</span>
         <button
           type="button"
           className="admin-btn admin-btn-xs"
           onClick={() => handleAddBlock('paragraph')}
         >
-          <IconFileText size={13} /> + Paragraph
+          <IconFileText size={13} /> {t.add.paragraph}
         </button>
         <button
           type="button"
           className="admin-btn admin-btn-xs"
           onClick={() => handleAddBlock('heading')}
         >
-          <IconSparkles size={13} /> + Heading
+          <IconSparkles size={13} /> {t.add.heading}
         </button>
         <button
           type="button"
           className="admin-btn admin-btn-xs"
           onClick={() => handleAddBlock('quote')}
         >
-          <IconQuote size={13} /> + Pullquote
+          <IconQuote size={13} /> {t.add.quote}
         </button>
         <button
           type="button"
           className="admin-btn admin-btn-xs"
           onClick={() => handleAddBlock('facts')}
         >
-          <IconColumns size={13} /> + Facts
+          <IconColumns size={13} /> {t.add.facts}
         </button>
         <div className="essay-toolbar-divider" />
         <button
@@ -183,41 +185,41 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
           className="admin-btn admin-btn-xs admin-btn-primary"
           onClick={() => handleAddBlock('photo')}
         >
-          <IconCamera size={13} /> + Photo
+          <IconCamera size={13} /> {t.add.photo}
         </button>
         <button
           type="button"
           className="admin-btn admin-btn-xs admin-btn-primary"
           onClick={() => handleAddBlock('photo-pair')}
         >
-          <IconCamera size={13} /> + 2-Photo Pair
+          <IconCamera size={13} /> {t.add.photoPair}
         </button>
         <button
           type="button"
           className="admin-btn admin-btn-xs admin-btn-primary"
           onClick={() => handleAddBlock('photo-grid')}
         >
-          <IconGrid size={13} /> + Photo Grid
+          <IconGrid size={13} /> {t.add.photoGrid}
         </button>
         <button
           type="button"
           className="admin-btn admin-btn-xs admin-btn-primary"
           onClick={() => handleAddBlock('album')}
         >
-          <IconFolder size={13} /> + Album
+          <IconFolder size={13} /> {t.add.album}
         </button>
         <button
           type="button"
           className="admin-btn admin-btn-xs"
           onClick={() => handleAddBlock('map')}
         >
-          <IconMap size={13} /> + Map
+          <IconMap size={13} /> {t.add.map}
         </button>
       </div>
 
       {essay.blocks.length === 0 && (
         <p className="empty-hint" style={{ textAlign: 'center', padding: '2rem' }}>
-          No story blocks yet. Use the buttons above to build your photo essay!
+          {t.empty}
         </p>
       )}
 
@@ -235,7 +237,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   className="admin-btn-icon"
                   onClick={() => handleMoveBlock(idx, 'up')}
                   disabled={idx === 0}
-                  title="Move Up"
+                  title={t.moveUp}
                 >
                   <IconChevronUp size={15} />
                 </button>
@@ -244,7 +246,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   className="admin-btn-icon"
                   onClick={() => handleMoveBlock(idx, 'down')}
                   disabled={idx === essay.blocks.length - 1}
-                  title="Move Down"
+                  title={t.moveDown}
                 >
                   <IconChevronDown size={15} />
                 </button>
@@ -252,7 +254,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   type="button"
                   className="admin-btn-icon"
                   onClick={() => handleDeleteBlock(idx)}
-                  title="Delete Block"
+                  title={t.deleteBlock}
                   style={{ color: 'var(--admin-error)' }}
                 >
                   <IconTrash size={15} />
@@ -266,7 +268,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
             {block.type === 'heading' && (
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <select
-                  aria-label="Heading level"
+                  aria-label={t.headingLevel}
                   value={block.level}
                   onChange={(e) =>
                     handleUpdateBlock(idx, { ...block, level: Number(e.target.value) })
@@ -281,7 +283,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   type="text"
                   value={block.text}
                   onChange={(e) => handleUpdateBlock(idx, { ...block, text: e.target.value })}
-                  placeholder="Section heading..."
+                  placeholder={t.headingPlaceholder}
                   style={{
                     flex: 1,
                     fontWeight: block.level === 1 ? 700 : block.level === 2 ? 600 : 500,
@@ -303,7 +305,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                 rows={3}
                 html={block.html}
                 onChange={(html) => handleUpdateBlock(idx, { ...block, html })}
-                placeholder="Write text paragraph... (**bold**, *italic* markdown supported)"
+                placeholder={t.paragraphPlaceholder}
               />
             )}
 
@@ -323,7 +325,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   rows={2}
                   html={block.text}
                   onChange={(text) => handleUpdateBlock(idx, { ...block, text })}
-                  placeholder="Quote text..."
+                  placeholder={t.quotePlaceholder}
                   style={{ fontStyle: 'italic', fontFamily: 'serif', fontSize: '1rem' }}
                 />
                 <input
@@ -332,7 +334,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   onChange={(e) =>
                     handleUpdateBlock(idx, { ...block, author: e.target.value || undefined })
                   }
-                  placeholder="— Author / Attribution (optional)"
+                  placeholder={t.authorPlaceholder}
                 />
               </div>
             )}
@@ -353,7 +355,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   ) : (
                     <div className="essay-photo-empty">
                       <IconCamera size={20} />
-                      <span>No Photo</span>
+                      <span>{t.noPhoto}</span>
                     </div>
                   )}
 
@@ -370,7 +372,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                           }
                         >
                           <IconCamera size={14} />
-                          {block.assetId ? 'Change Photo' : 'Select Photo'}
+                          {block.assetId ? t.changePhoto : t.selectPhoto}
                         </button>
                       )}
 
@@ -380,21 +382,21 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                           className={`essay-pill-btn ${block.layout === 'contained' ? 'active' : ''}`}
                           onClick={() => handleUpdateBlock(idx, { ...block, layout: 'contained' })}
                         >
-                          Contained (68ch)
+                          {t.contained}
                         </button>
                         <button
                           type="button"
                           className={`essay-pill-btn ${block.layout === 'wide' ? 'active' : ''}`}
                           onClick={() => handleUpdateBlock(idx, { ...block, layout: 'wide' })}
                         >
-                          Wide (1100px)
+                          {t.wide}
                         </button>
                         <button
                           type="button"
                           className={`essay-pill-btn ${block.layout === 'fullbleed' ? 'active' : ''}`}
                           onClick={() => handleUpdateBlock(idx, { ...block, layout: 'fullbleed' })}
                         >
-                          Fullbleed (100vw)
+                          {t.fullbleed}
                         </button>
                       </div>
                     </div>
@@ -405,7 +407,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                       onChange={(e) =>
                         handleUpdateBlock(idx, { ...block, assetId: e.target.value })
                       }
-                      placeholder="Immich Asset UUID..."
+                      placeholder={t.assetUuidPlaceholder}
                       style={{ fontSize: '0.75rem', color: 'var(--admin-text-secondary)' }}
                     />
                   </div>
@@ -416,7 +418,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   onChange={(caption) =>
                     handleUpdateBlock(idx, { ...block, caption: caption || undefined })
                   }
-                  placeholder="Photo caption (optional)"
+                  placeholder={t.photoCaption}
                 />
               </div>
             )}
@@ -434,7 +436,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                         color: 'var(--admin-text-secondary)',
                       }}
                     >
-                      Photo 1
+                      {t.photoN(1)}
                     </span>
                     <div className="essay-photo-preview-container">
                       {block.assetIds[0] ? (
@@ -468,7 +470,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                               )
                             }
                           >
-                            <IconCamera size={12} /> Select Photo 1
+                            <IconCamera size={12} /> {t.selectPhotoN(1)}
                           </button>
                         )}
                         <input
@@ -480,7 +482,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                               assetIds: [e.target.value, block.assetIds[1]],
                             })
                           }
-                          placeholder="UUID 1..."
+                          placeholder={t.uuidN(1)}
                           style={{ fontSize: '0.75rem' }}
                         />
                       </div>
@@ -503,12 +505,12 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                           color: 'var(--admin-text-secondary)',
                         }}
                       >
-                        Photo 2
+                        {t.photoN(2)}
                       </span>
                       <button
                         type="button"
                         className="admin-btn-icon"
-                        title="Swap Photo 1 & Photo 2"
+                        title={t.swapPhotos}
                         onClick={() =>
                           handleUpdateBlock(idx, {
                             ...block,
@@ -552,7 +554,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                               )
                             }
                           >
-                            <IconCamera size={12} /> Select Photo 2
+                            <IconCamera size={12} /> {t.selectPhotoN(2)}
                           </button>
                         )}
                         <input
@@ -564,7 +566,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                               assetIds: [block.assetIds[0], e.target.value],
                             })
                           }
-                          placeholder="UUID 2..."
+                          placeholder={t.uuidN(2)}
                           style={{ fontSize: '0.75rem' }}
                         />
                       </div>
@@ -577,7 +579,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   onChange={(caption) =>
                     handleUpdateBlock(idx, { ...block, caption: caption || undefined })
                   }
-                  placeholder="Side-by-side caption (optional)"
+                  placeholder={t.pairCaption}
                 />
               </div>
             )}
@@ -611,13 +613,13 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                             color: 'var(--admin-text-secondary)',
                           }}
                         >
-                          Photo {pIdx + 1}
+                          {t.photoN(pIdx + 1)}
                         </span>
                         {block.assetIds.length > 3 && (
                           <button
                             type="button"
                             className="admin-btn-icon"
-                            title="Remove photo"
+                            title={t.removePhoto}
                             onClick={() =>
                               handleUpdateBlock(idx, {
                                 ...block,
@@ -660,7 +662,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                                 })
                               }
                             >
-                              <IconCamera size={12} /> Select
+                              <IconCamera size={12} /> {t.select}
                             </button>
                           )}
                           <input
@@ -671,7 +673,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                               ids[pIdx] = e.target.value;
                               handleUpdateBlock(idx, { ...block, assetIds: ids });
                             }}
-                            placeholder={`UUID ${pIdx + 1}...`}
+                            placeholder={t.uuidN(pIdx + 1)}
                             style={{ fontSize: '0.75rem' }}
                           />
                         </div>
@@ -688,7 +690,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                     handleUpdateBlock(idx, { ...block, assetIds: [...block.assetIds, ''] })
                   }
                 >
-                  <IconPlus size={12} /> Add photo
+                  <IconPlus size={12} /> {t.addPhoto}
                 </button>
 
                 <InlineMarkdownField
@@ -696,7 +698,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   onChange={(caption) =>
                     handleUpdateBlock(idx, { ...block, caption: caption || undefined })
                   }
-                  placeholder="Grid caption (optional)"
+                  placeholder={t.gridCaption}
                 />
               </div>
             )}
@@ -716,7 +718,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                     <input
                       type="text"
                       value={item.label}
-                      placeholder="Label, e.g. Distance"
+                      placeholder={t.factLabel}
                       onChange={(e) =>
                         handleUpdateBlock(idx, {
                           ...block,
@@ -728,7 +730,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                     />
                     <InlineMarkdownField
                       html={item.value}
-                      placeholder="Value, e.g. 21 km"
+                      placeholder={t.factValue}
                       onChange={(value) =>
                         handleUpdateBlock(idx, {
                           ...block,
@@ -739,7 +741,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                     <button
                       type="button"
                       className="admin-btn-icon"
-                      title="Remove fact"
+                      title={t.removeFact}
                       disabled={block.items.length <= 1}
                       onClick={() =>
                         handleUpdateBlock(idx, {
@@ -763,7 +765,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                     })
                   }
                 >
-                  <IconPlus size={12} /> Add fact
+                  <IconPlus size={12} /> {t.addFact}
                 </button>
               </div>
             )}
@@ -773,7 +775,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                 <input
                   type="text"
                   value={block.albumId}
-                  placeholder="Immich album UUID (the album picker in Pages shows ids)"
+                  placeholder={t.albumUuidPlaceholder}
                   style={{ fontSize: '0.75rem' }}
                   onChange={(e) => handleUpdateBlock(idx, { ...block, albumId: e.target.value })}
                 />
@@ -781,8 +783,8 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   <input
                     type="number"
                     min={1}
-                    placeholder="Count (all)"
-                    aria-label="Count"
+                    placeholder={t.countPlaceholder}
+                    aria-label={t.count}
                     style={{ flex: '1 1 100px' }}
                     value={block.count ?? ''}
                     onChange={(e) =>
@@ -795,8 +797,8 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   <input
                     type="number"
                     min={0}
-                    placeholder="Skip (0)"
-                    aria-label="Skip"
+                    placeholder={t.skipPlaceholder}
+                    aria-label={t.skip}
                     style={{ flex: '1 1 100px' }}
                     value={block.skip ?? ''}
                     onChange={(e) =>
@@ -807,7 +809,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                     }
                   />
                   <select
-                    aria-label="Layout"
+                    aria-label={t.layout}
                     style={{ flex: '1 1 140px' }}
                     value={block.layout}
                     onChange={(e) =>
@@ -817,9 +819,9 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                       })
                     }
                   >
-                    <option value="grid">Grid (rows of three)</option>
-                    <option value="pairs">Pairs (rows of two)</option>
-                    <option value="wide">Wide (one per row)</option>
+                    <option value="grid">{t.albumLayouts.grid}</option>
+                    <option value="pairs">{t.albumLayouts.pairs}</option>
+                    <option value="wide">{t.albumLayouts.wide}</option>
                   </select>
                 </div>
                 <InlineMarkdownField
@@ -827,11 +829,10 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   onChange={(caption) =>
                     handleUpdateBlock(idx, { ...block, caption: caption || undefined })
                   }
-                  placeholder="Caption for the set (optional)"
+                  placeholder={t.albumCaption}
                 />
                 <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-secondary)' }}>
-                  Expanded into photo blocks when the page renders — the album&apos;s order, a
-                  manual gallery order first. Leave count empty for the whole album.
+                  {t.albumHint}
                 </span>
               </div>
             )}
@@ -844,7 +845,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   onChange={(caption) =>
                     handleUpdateBlock(idx, { ...block, caption: caption || undefined })
                   }
-                  placeholder="Caption, e.g. Busan → Seoul (optional)"
+                  placeholder={t.mapCaption}
                 />
 
                 {block.items.map((item, mIdx) => {
@@ -871,7 +872,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                           <input
                             type="text"
                             value={item.label ?? ''}
-                            placeholder="Label (optional)"
+                            placeholder={t.pointLabel}
                             style={{ flex: '1 1 140px' }}
                             onChange={(e) =>
                               setItem({ ...item, label: e.target.value || undefined })
@@ -880,8 +881,8 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                           <input
                             type="number"
                             step="any"
-                            aria-label="Latitude"
-                            placeholder="Lat"
+                            aria-label={t.latitude}
+                            placeholder={t.lat}
                             style={{ flex: '0 1 110px' }}
                             value={Number.isFinite(item.lat) ? item.lat : ''}
                             onChange={(e) => setItem({ ...item, lat: parseFloat(e.target.value) })}
@@ -889,8 +890,8 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                           <input
                             type="number"
                             step="any"
-                            aria-label="Longitude"
-                            placeholder="Lng"
+                            aria-label={t.longitude}
+                            placeholder={t.lng}
                             style={{ flex: '0 1 110px' }}
                             value={Number.isFinite(item.lng) ? item.lng : ''}
                             onChange={(e) => setItem({ ...item, lng: parseFloat(e.target.value) })}
@@ -909,27 +910,25 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                                 )
                               }
                             >
-                              <IconCamera size={12} /> {item.assetId ? 'Change' : 'Select'}
+                              <IconCamera size={12} /> {item.assetId ? t.change : t.select}
                             </button>
                           )}
                           <input
                             type="text"
                             value={item.assetId}
-                            placeholder="Photo UUID..."
+                            placeholder={t.photoUuidPlaceholder}
                             style={{ flex: '1 1 200px', fontSize: '0.75rem' }}
                             onChange={(e) => setItem({ kind: 'photo', assetId: e.target.value })}
                           />
                         </>
                       )}
                       {item.kind === 'all-photos' && (
-                        <span style={{ flex: 1, fontSize: '0.8rem' }}>
-                          All geotagged photos of this page&apos;s albums, in order
-                        </span>
+                        <span style={{ flex: 1, fontSize: '0.8rem' }}>{t.allPhotosItem}</span>
                       )}
                       <button
                         type="button"
                         className="admin-btn-icon"
-                        title="Remove pin"
+                        title={t.removePin}
                         onClick={() =>
                           handleUpdateBlock(idx, {
                             ...block,
@@ -947,8 +946,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                   (it) => it.kind === 'point' && !isValidCoordinate(it.lat, it.lng),
                 ) && (
                   <p className="empty-hint" style={{ color: 'var(--admin-warning)' }}>
-                    A point needs a latitude within ±90 and a longitude within ±180; points without
-                    valid coordinates are not saved.
+                    {t.invalidPoint}
                   </p>
                 )}
 
@@ -968,7 +966,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                       })
                     }
                   >
-                    <IconPlus size={12} /> Point
+                    <IconPlus size={12} /> {t.addPoint}
                   </button>
                   <button
                     type="button"
@@ -980,7 +978,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                       })
                     }
                   >
-                    <IconCamera size={12} /> Photo pin
+                    <IconCamera size={12} /> {t.addPhotoPin}
                   </button>
                   <button
                     type="button"
@@ -993,7 +991,7 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                       })
                     }
                   >
-                    <IconMap size={12} /> All geotagged photos
+                    <IconMap size={12} /> {t.addAllPhotos}
                   </button>
                   <label
                     style={{
@@ -1009,14 +1007,12 @@ export function EssayBlockEditor({ markdown, onChange, onSelectPhoto }: EssayBlo
                       checked={block.line}
                       onChange={(e) => handleUpdateBlock(idx, { ...block, line: e.target.checked })}
                     />
-                    Connect pins with a line
+                    {t.connectLine}
                   </label>
                 </div>
 
                 <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-secondary)' }}>
-                  Typed points are published as typed. Photo pins are placed from the photo&apos;s
-                  GPS on the live page, under the album&apos;s location precision. Renders only
-                  while the map is enabled in Settings.
+                  {t.mapHint}
                 </span>
               </div>
             )}

@@ -65,7 +65,7 @@ describe('createBlock', () => {
 });
 
 describe('moveBlock', () => {
-  const blocks = (['paragraph', 'heading', 'quote'] as const).map(createBlock);
+  const blocks = (['paragraph', 'heading', 'quote'] as const).map((type) => createBlock(type));
 
   it('moves a block up and down', () => {
     expect(moveBlock(blocks, 1, 'up')?.map((b) => b.type)).toEqual([
