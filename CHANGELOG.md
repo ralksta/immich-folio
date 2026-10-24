@@ -7,6 +7,98 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [0.21.0] — 2026-10-24
+
+### Security
+
+- **Video playback no longer carries the recording location**
+  ([#863](https://github.com/ralksta/immich-folio/pull/863),
+  [GHSA-96g4-q7m2-3242](https://github.com/ralksta/immich-folio/security/advisories/GHSA-96g4-q7m2-3242),
+  low). When Immich does not transcode a video, `/api/video` passed the
+  original file through, including its QuickTime `©xyz`, 3GPP `loci`, Apple
+  `com.apple.quicktime.location.*` or XMP GPS data, whether or not the album
+  allows downloads. Playback now overwrites those bytes in every range it
+  serves. The patch plan is worked out once per video from ranged reads of the
+  top-level boxes and cached; nothing changes length, so `Content-Length` and
+  `Content-Range` stay as Immich sent them. An MP4 whose metadata cannot be
+  located is not played (`404`), and Video URLs carry `?r=2` so browsers and
+  CDNs drop the copies they kept. Files that are not MP4/QuickTime pass
+  through as before.
+
+- **Downloads remove the location from MP4/MOV videos and motion-photo
+  clips** ([#860](https://github.com/ralksta/immich-folio/pull/860), follow-up
+  to GHSA-g4xf-4285-4cv4). The single download and both ZIPs cleaned JPEG and
+  HEIF/AVIF only. The same box walker now zeroes location atoms, Apple
+  location keys, XMP and C2PA in videos and in the clip that Samsung and Pixel
+  motion photos append to their JPEG, as the file streams and without moving a
+  byte. GPS tracks recorded as timed metadata (GoPro, Google CAMM, some
+  dashcams) are not covered; the `download-metadata` doctor check and the docs
+  say so.
+
+- **The setup wizard no longer sends the configured API key to another host**
+  ([#857](https://github.com/ralksta/immich-folio/pull/857)). Submitting a
+  different Immich URL with an empty key reused the server's configured key
+  for that URL. The key is now reused only when the URL is omitted or resolves
+  to the configured server, and a key that exists only in the environment is
+  no longer copied into `content/install.json`. Contributed by
+  [@sgsmcfe](https://github.com/sgsmcfe).
+
+### Added
+
+- **The whole admin panel is translated** ([#855](https://github.com/ralksta/immich-folio/pull/855),
+  [#856](https://github.com/ralksta/immich-folio/pull/856),
+  [#867](https://github.com/ralksta/immich-folio/pull/867), closes
+  [#604](https://github.com/ralksta/immich-folio/issues/604)). German, French,
+  Spanish, Italian and Dutch join English, about 560 keys for the page builder,
+  journal studio and pickers alone. The language is `adminLang` in
+  `settings.yaml` (Settings → General → Admin panel language) and falls back to
+  `lang`, so an English panel can run over a German site and the other way
+  round. The dictionaries live apart from the visitor ones, so visitors never
+  download them. Messages the API routes return are still English.
+
+- **Journals can take photos from an album**
+  ([#852](https://github.com/ralksta/immich-folio/pull/852)). The picker lists
+  every Immich album, and **+ Photo**, **+ 2-Photo Pair** and **+ Photo Grid**
+  open it first and create a block only once photos are chosen (exactly two
+  for a pair, at least three for a grid). Contributed by
+  [@sgsmcfe](https://github.com/sgsmcfe).
+
+### Changed
+
+- **Lightbox controls stay readable on bright photos**
+  ([#842](https://github.com/ralksta/immich-folio/issues/842)). Suggested by
+  [@ImScheinox](https://github.com/ImScheinox).
+
+- **Next.js 16.4.2, React 19.3.1** and current dev tooling
+  ([#865](https://github.com/ralksta/immich-folio/pull/865)).
+
+- **The README is 97 lines and the guides are split by topic**
+  ([#841](https://github.com/ralksta/immich-folio/pull/841)). Features, Immich
+  setup, deployment, site settings, gallery features and security each have a
+  page under `docs/`; headings keep their names so old anchors still work.
+
+### Fixed
+
+- **`editorial-flow` and `showcase` grids show their layouts**
+  ([#859](https://github.com/ralksta/immich-folio/pull/859)). The rules
+  targeted the tile instead of the grid cell, so every `editorial-flow` photo
+  spanned the full width and the `showcase` lead photo stayed one column wide.
+
+- **OpenStreetMap tiles load behind a proxy that rewrites the
+  `Referrer-Policy`** ([#854](https://github.com/ralksta/immich-folio/pull/854),
+  closes [#851](https://github.com/ralksta/immich-folio/issues/851)). The
+  policy is now set on each tile image, so OSM no longer answers with its
+  "Access blocked" tile.
+
+### Internal
+
+- All admin loads use `useAdminFetch`
+  ([#869](https://github.com/ralksta/immich-folio/pull/869)), `globals.css` is
+  split along its section banners
+  ([#868](https://github.com/ralksta/immich-folio/pull/868)), and the React
+  Compiler lint findings are resolved with the rules enforced again
+  ([#866](https://github.com/ralksta/immich-folio/pull/866)).
+
 ## [0.20.1] — 2026-10-04
 
 ### Changed
