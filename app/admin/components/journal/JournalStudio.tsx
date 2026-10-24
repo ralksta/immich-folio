@@ -475,7 +475,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 key={assetId}
-                                src={`/api/admin/thumbnail/${assetId}`}
+                                src={`/api/admin/thumbnail/${encodeURIComponent(assetId)}`}
                                 alt=""
                                 loading="lazy"
                               />
