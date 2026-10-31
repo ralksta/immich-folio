@@ -224,7 +224,7 @@ The admin panel works seamlessly with Docker deployments since the `content/` di
 ```yaml
 services:
   lightbox:
-    image: immich-folio
+    image: ghcr.io/ralksta/immich-folio:latest
     environment:
       - ADMIN_PASSWORD=your-secure-password
     volumes:

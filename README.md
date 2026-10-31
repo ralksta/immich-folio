@@ -68,11 +68,21 @@ Something not coming up? `npm run doctor` checks the configuration from the term
 
 ### Docker
 
-```bash
-docker compose up -d
+No checkout needed: every release is published as `ghcr.io/ralksta/immich-folio` (amd64 and arm64). Put this in an empty folder as `docker-compose.yml`:
+
+```yaml
+services:
+  lightbox:
+    image: ghcr.io/ralksta/immich-folio:latest
+    container_name: immich-folio
+    restart: unless-stopped
+    ports:
+      - '7211:7211'
+    volumes:
+      - ./content:/app/content
 ```
 
-The gallery is then at `http://localhost:7211`. The `content/` volume must be read-write. See [Deployment](docs/deployment.md) for the Compose file, health check, reverse proxy and CDN mode.
+Run `docker compose up -d`, then open `http://localhost:7211/install`; the setup token is in `docker compose logs lightbox`. The `content/` volume must be read-write. See [Deployment](docs/deployment.md#docker-compose) for image tags, updating, building from source, the health check, reverse proxy and CDN mode.
 
 ## Documentation
 
