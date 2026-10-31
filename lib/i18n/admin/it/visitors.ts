@@ -118,7 +118,7 @@ export const visitors: AdminDictionary['visitors'] = {
       `${date}: ${n} ${n === 1 ? 'visualizzazione' : 'visualizzazioni'}`,
     noViews:
       'Ancora nessuna visualizzazione registrata. Visita le pagine del portfolio per avviare il conteggio.',
-    topPages: 'Pagine e sottopagine più visitate',
+    topPages: 'Pagine più visitate',
     noPages: 'Ancora nessuna pagina registrata.',
     pageViews: (n: number) => `${n} ${n === 1 ? 'visualizzazione' : 'visualizzazioni'}`,
   },

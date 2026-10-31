@@ -11,6 +11,7 @@ import PasswordField from '../fields/PasswordField';
 import ZoomOverrideField from '../fields/ZoomOverrideField';
 import { useModalDialog } from '@/hooks/useModalDialog';
 import { useAdminDictionary } from '../AdminI18n';
+import { PHOTO_LAYOUTS } from '@/lib/admin/layouts';
 
 interface AlbumDrawerProps {
   album: AlbumEntry;
@@ -300,12 +301,11 @@ export default function AlbumDrawer({
                   }}
                 >
                   <option value="">{t.layoutInherit}</option>
-                  <option value="masonry">{t.layouts.masonry}</option>
-                  <option value="uniform">{t.layouts.uniform}</option>
-                  <option value="showcase">{t.layouts.showcase}</option>
-                  <option value="filmstrip">{t.layouts.filmstrip}</option>
-                  <option value="editorial-flow">{t.layouts.editorialFlow}</option>
-                  <option value="justified">{t.layouts.justified}</option>
+                  {PHOTO_LAYOUTS.map((id) => (
+                    <option key={id} value={id}>
+                      {dict.common.layouts[id].label}
+                    </option>
+                  ))}
                 </select>
               </div>
 

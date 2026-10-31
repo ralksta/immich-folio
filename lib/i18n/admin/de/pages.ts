@@ -2,7 +2,7 @@ import type { AdminDictionary } from '../index';
 
 /**
  * Admin → Seiten: the page builder (home page hero, standalone albums,
- * subpages, content pages), its drawers and the photo-essay block editor.
+ * pages, content pages), its drawers and the story block editor.
  *
  * File names (gallery.yaml, content/pages/), CSS values and units in the
  * strings below are literal — keep them as written.
@@ -13,7 +13,7 @@ export const pages: AdminDictionary['pages'] = {
     kicker: 'Inhalt',
     title: 'Seiten',
     description:
-      'Hero der Startseite, eigenständige Alben, Unterseiten und Inhaltsseiten. Zum Umsortieren ziehen; Änderungen gehen beim Speichern live.',
+      'Hero der Startseite, eigenständige Alben, Seiten und Inhaltsseiten. Zum Umsortieren ziehen; Änderungen gehen beim Speichern live.',
   },
 
   builder: {
@@ -59,16 +59,16 @@ export const pages: AdminDictionary['pages'] = {
     },
     /** The structure list on the left. */
     tree: 'Seitenstruktur',
-    searchLabel: 'Alben oder Unterseiten suchen',
-    searchPlaceholder: 'Alben oder Unterseiten suchen...',
+    searchLabel: 'Alben oder Seiten suchen',
+    searchPlaceholder: 'Alben oder Seiten suchen...',
     clearSearch: 'Suche leeren',
     homePage: 'Startseite',
     heroPhotos: 'Hero-Fotos',
     menu: 'Menü',
-    subpagesLive: (live: number, total: number) => `${live} von ${total} Unterseiten live`,
+    subpagesLive: (live: number, total: number) => `${live} von ${total} Seiten live`,
     noMatches: 'Keine passenden Einträge.',
-    newSubpage: 'Neue Unterseite',
-    newPage: 'Neue Seite',
+    newSubpage: 'Neue Seite',
+    newPage: 'Neue Inhaltsseite',
     notInMenu: 'Nicht im Menü',
     offMenuEmpty:
       'Seiten, die nur über ihren Link erreichbar sind. Zieh eine Seite hierher, um sie aus dem Menü zu nehmen.',
@@ -86,9 +86,9 @@ export const pages: AdminDictionary['pages'] = {
       'Keine Hero-Bilder eingerichtet. Füge Fotos hinzu, um auf der Startseite ein Hero-Karussell zu zeigen.',
   },
 
-  /** Seed values for a new subpage or section, written into gallery.yaml. */
+  /** Seed values for a new page or section, written into gallery.yaml. */
   defaults: {
-    subpageName: (n: number) => `Neue Unterseite ${n}`,
+    subpageName: (n: number) => `Neue Seite ${n}`,
     sectionTitle: 'Neuer Abschnitt',
   },
 
@@ -108,7 +108,7 @@ export const pages: AdminDictionary['pages'] = {
     editDetails: 'Details bearbeiten',
     removeAlbum: 'Album entfernen',
     passwordProtected: 'Passwortgeschützt',
-    customHero: 'Eigenes Hero-Bild gesetzt',
+    customHero: 'Eigenes Coverfoto gesetzt',
     /** `label` is one of the `sort` labels. */
     photoOrder: (label: string) => `Fotoreihenfolge: ${label}`,
     photos: (n: number) => `${n} ${n === 1 ? 'Foto' : 'Fotos'}`,
@@ -124,7 +124,7 @@ export const pages: AdminDictionary['pages'] = {
     visibility: 'Sichtbarkeit',
     unlisted: 'Nicht gelistet',
     unlistedDesc:
-      'Nur über einen direkten Link erreichbar – nicht in Menü, Startseite, Sitemap oder Karte. Die URL ist erratbar; ergänze ein Passwort für alles Private.',
+      'Nur über einen direkten Link erreichbar – nicht in Menü, Startseite, Sitemap oder Karte. Eine URL aus dem Titel ist erratbar, ein zufälliger Link kaum; ergänze ein Passwort für alles Private.',
     listedDesc:
       'Wird wie jedes andere eigenständige Album in Menü, Startseite und Sitemap gezeigt.',
     heading: 'Albumdetails bearbeiten',
@@ -147,25 +147,17 @@ export const pages: AdminDictionary['pages'] = {
     layoutOverride: 'Abweichendes Layout (experimentell)',
     layoutOverrideAria: 'Abweichendes Layout',
     layoutInherit: 'Von Seite / globalen Einstellungen übernehmen',
-    layouts: {
-      masonry: 'Masonry',
-      uniform: 'Gleichmäßiges Raster',
-      showcase: 'Showcase',
-      filmstrip: 'Filmstreifen',
-      editorialFlow: 'Editorial Flow',
-      justified: 'Blocksatz (experimentell)',
-    },
     coverFocalPoint: 'Fokuspunkt des Covers (experimentell)',
     /** "50% 25%" and "top" are CSS values; keep them as written. */
     coverFocalPointPlaceholder:
       'z. B. "50% 25%" oder "top" — woran sich der Zuschnitt des Covers ausrichtet',
-    customHero: 'Eigenes Hero-Bild',
-    heroAlt: 'Hero',
-    removeHero: 'Eigenes Hero-Bild entfernen',
+    customHero: 'Eigenes Coverfoto',
+    heroAlt: 'Cover',
+    removeHero: 'Eigenes Coverfoto entfernen',
     defaultCover: 'Standard-Albumcover wird verwendet',
-    pickHeroTitle: (name: string) => `Hero-Bild für ${name} wählen`,
-    changeImage: 'Bild ändern',
-    pickHero: 'Hero-Bild wählen',
+    pickHeroTitle: (name: string) => `Coverfoto für ${name} wählen`,
+    changeImage: 'Foto ändern',
+    pickHero: 'Coverfoto wählen',
     photoOrder: 'Fotoreihenfolge',
     manualHint:
       'Angeheftete Fotos kommen zuerst, in der von dir festgelegten Reihenfolge. Alle anderen folgen in der Immich-Reihenfolge des Albums.',
@@ -180,7 +172,7 @@ export const pages: AdminDictionary['pages'] = {
   },
 
   subpageDrawer: {
-    breadcrumb: 'Seiten / Unterseiten',
+    breadcrumb: 'Seiten',
     untitled: 'Seite ohne Titel',
     /** Accessible name of the Edit / Live Preview switch. */
     view: 'Ansicht',
@@ -213,15 +205,6 @@ export const pages: AdminDictionary['pages'] = {
     pagePassword: 'Seitenpasswort',
     layoutStyle: 'Layout der Seite',
     layoutStyleAria: 'Layout der Seite',
-    /** Options of a <select>: plain text only. */
-    layouts: {
-      masonry: 'Masonry-Raster (dynamische Höhe)',
-      uniform: 'Gleichmäßiges Raster (quadratische Kacheln)',
-      showcase: 'Showcase (erstes Foto hervorgehoben)',
-      filmstrip: 'Filmstreifen (horizontal scrollen)',
-      editorialFlow: 'Editorial Flow',
-      essay: 'Fotoessay-Modus (Storytelling-Editor)',
-    },
     zoomInherit: 'Von den Website-Einstellungen übernehmen',
     zoomHint:
       'Gilt für jedes Album dieser Seite, das nichts Eigenes festlegt. Den Schalter für die ganze Website findest du unter Einstellungen › Allgemein.',
@@ -231,9 +214,9 @@ export const pages: AdminDictionary['pages'] = {
     photoGrid: 'Fotoraster (Alben dieser Seite)',
     photoGridHint:
       'Wie die Fotos in jedem Album dieser Seite angeordnet werden. Lass beide Felder leer, um Einstellungen › Raster zu folgen; ein einzelnes Album kann das in gallery.yaml weiterhin überschreiben.',
-    essayHeading: 'Storytelling & Fotoessay-Editor',
+    essayHeading: 'Story-Editor',
     essayIntro: 'Text, Zitate und randlose oder breite Fotos visuell zusammenstellen.',
-    essayPickerTitle: 'Foto für den Fotoessay wählen',
+    essayPickerTitle: 'Foto für die Story wählen',
     albums: 'Alben auf dieser Seite',
     addAlbum: '+ Album hinzufügen',
     noAlbums:
@@ -245,11 +228,11 @@ export const pages: AdminDictionary['pages'] = {
     sectionDesc: 'Beschreibung des Abschnitts',
     addSection: '+ Abschnitt hinzufügen',
     addLooseAlbum: '+ Album ohne Abschnitt hinzufügen',
-    deleteSubpage: 'Unterseite löschen',
+    deleteSubpage: 'Seite löschen',
     done: 'Fertig',
   },
 
-  /** The subpage drawer's Live Preview tab. */
+  /** The page drawer's Live Preview tab. */
   preview: {
     note: 'Dargestellt mit der gespeicherten Design-Vorlage der Website in Desktop-Breite. Ungespeicherte Änderungen in diesem Bereich erscheinen hier; Designänderungen erst, wenn sie in den Einstellungen gespeichert sind.',
     settingsFailed: (error: string) =>
@@ -260,7 +243,7 @@ export const pages: AdminDictionary['pages'] = {
   tiles: {
     reorderHero: (n: number) => `Hero-Foto ${n} verschieben`,
     reorder: (name: string) => `${name} verschieben`,
-    /** Stands in for a subpage without a name in `reorder`. */
+    /** Stands in for a page without a name in `reorder`. */
     pageFallback: 'Seite',
     dragToReorder: 'Zum Umsortieren ziehen',
     disabledTitle: 'Seite ist deaktiviert',
@@ -271,8 +254,8 @@ export const pages: AdminDictionary['pages'] = {
     off: 'Aus',
     missing: 'Fehlt',
     draft: 'Entwurf',
-    /** Tag marking a content page, as opposed to a subpage; one short word. */
-    page: 'Seite',
+    /** Tag marking a content page, as opposed to a page that groups albums. */
+    page: 'Inhalt',
     passwordProtected: 'Passwortgeschützt',
     password: 'Passwort',
     editPage: 'Seite bearbeiten',
@@ -280,7 +263,7 @@ export const pages: AdminDictionary['pages'] = {
   },
 
   newPage: {
-    title: 'Neue Seite',
+    title: 'Neue Inhaltsseite',
     titleLabel: 'Titel',
     titlePlaceholder: 'z. B. Preise',
     url: 'URL',
@@ -288,7 +271,7 @@ export const pages: AdminDictionary['pages'] = {
     slugPlaceholder: 'preise',
     /** Shown as "/slug" while no slug is typed; same rules as above. */
     slugFallback: 'slug',
-    exists: (slug: string) => `Eine Seite „${slug}“ gibt es bereits.`,
+    exists: (slug: string) => `Eine Inhaltsseite „${slug}“ gibt es bereits.`,
     hint: 'Beginnt leer und als Entwurf. Die URL kannst du später ändern.',
     showInMenu: 'Im Menü zeigen',
     showInMenuDesc: 'Hängt sie ans Ende des Menüs; gespeichert mit „Änderungen speichern“.',
@@ -325,7 +308,7 @@ export const pages: AdminDictionary['pages'] = {
     openLive: 'Live-Seite in neuem Tab öffnen',
     title: 'Titel',
     url: 'URL',
-    slugHint: 'Wird mit Unterseiten, Alben, Journal-Einträgen und festen Routen abgeglichen.',
+    slugHint: 'Wird mit Seiten, Alben, Journal-Einträgen und festen Routen abgeglichen.',
     showInMenu: 'Im Menü zeigen',
     inMenuDesc:
       'Steht im Header-Menü. Zum Verschieben in der Strukturliste an die gewünschte Stelle ziehen.',
@@ -343,7 +326,7 @@ export const pages: AdminDictionary['pages'] = {
     savePage: 'Seite speichern',
   },
 
-  /** The photo-essay block editor in a subpage set to "Fotoessay-Modus". */
+  /** The story block editor in a page set to "Story Layout". */
   essay: {
     /** The starting story of an empty essay: a "# heading" and a paragraph. */
     starterTitle: 'Titel',
@@ -364,7 +347,7 @@ export const pages: AdminDictionary['pages'] = {
       album: '+ Album',
       map: '+ Karte',
     },
-    empty: 'Noch keine Blöcke. Bau deinen Fotoessay mit den Buttons oben auf!',
+    empty: 'Noch keine Blöcke. Bau deine Story mit den Buttons oben auf!',
     moveUp: 'Nach oben',
     moveDown: 'Nach unten',
     deleteBlock: 'Block löschen',
@@ -434,7 +417,7 @@ export const pages: AdminDictionary['pages'] = {
     invalid: (slug: string) =>
       `„${slug}“ ist kein gültiger Slug: nur Buchstaben, Ziffern, „-“ und „_“.`,
     reserved: (slug: string) => `/${slug} ist eine eingebaute Route der Website.`,
-    subpage: (slug: string) => `/${slug} ist schon eine Unterseite.`,
+    subpage: (slug: string) => `/${slug} ist schon eine Seite.`,
     album: (slug: string) => `/${slug} ist schon ein eigenständiges Album.`,
     journal: (slug: string) => `Ein Journal-Eintrag nutzt den Slug „${slug}“ bereits.`,
   },

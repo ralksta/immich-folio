@@ -121,7 +121,7 @@ export const visitors: AdminDictionary['visitors'] = {
     dayViews: (date: string, n: number) => `${date}: ${n} ${n === 1 ? 'visita' : 'visitas'}`,
     noViews:
       'Todavía no se ha registrado ninguna visita. ¡Visita las páginas del portfolio para empezar el recuento!',
-    topPages: 'Páginas y subpáginas más visitadas',
+    topPages: 'Páginas más visitadas',
     noPages: 'Todavía no se ha registrado ninguna página.',
     pageViews: (n: number) => `${n} ${n === 1 ? 'visita' : 'visitas'}`,
   },

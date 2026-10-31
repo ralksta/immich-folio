@@ -176,20 +176,6 @@ export const settings: AdminDictionary['settings'] = {
     title: 'Raster & opmaak',
     sub: 'Stel de kolomindeling van de galerij en de beeldverhouding van miniaturen in.',
     layout: 'Opmaakalgoritme',
-    layouts: {
-      masonry: { label: 'Masonry', desc: 'Dynamische, verspringende kolommen in Pinterest-stijl' },
-      uniform: { label: 'Gelijkmatig raster', desc: 'Strak raster met gelijke beeldverhouding' },
-      showcase: { label: 'Etalage', desc: 'Uitgelichte foto’s gemengd met kleinere tegels' },
-      filmstrip: { label: 'Filmstrook', desc: 'Horizontaal scrollbare filmstrook als tijdlijn' },
-      'editorial-flow': {
-        label: 'Redactionele stroom',
-        desc: 'Verhaalopmaak als in een tijdschrift, met wisselende fotoformaten',
-      },
-      justified: {
-        label: 'Uitgevuld (experimenteel)',
-        desc: 'Rijen van gelijke hoogte over de volle breedte',
-      },
-    },
     aspectRatio: 'Beeldverhouding',
     aspectRatios: {
       '1': { label: 'Vierkant (1:1)', desc: 'Vierkant bijgesneden, 1:1' },
@@ -200,7 +186,7 @@ export const settings: AdminDictionary['settings'] = {
     },
     spacingTitle: 'Tussenruimte & kolommen',
     spacingSub:
-      'Pas het aantal kolommen en de tussenruimte van het raster aan. Het aantal kolommen bepaalt ook de indeling van de albumomslagen op een subpagina; hun tussenruimte volgt het thema, tenzij een pagina die overschrijft.',
+      'Pas het aantal kolommen en de tussenruimte van het raster aan. Het aantal kolommen bepaalt ook de indeling van de albumomslagen op een pagina; hun tussenruimte volgt het thema, tenzij een pagina die overschrijft.',
     columns: (min: number, max: number) => `Kolommen (${min} - ${max})`,
     gap: 'Tussenruimte (px)',
   },
@@ -277,11 +263,11 @@ export const settings: AdminDictionary['settings'] = {
       'Nu ingesteld via de omgevingsvariabele {variable} ({value}). Een waarde die je hier invult, gaat voor zodra die is opgeslagen.',
     metaTitle: 'SEO-metatitel',
     metaTitlePlaceholder: 'Vervangt de standaard sitetitel in Google-zoekresultaten',
-    titleTemplate: 'Titelsjabloon voor subpagina’s',
+    titleTemplate: 'Titelsjabloon voor pagina’s',
     titleTemplateFallback: 'Mijn portfolio',
     /** {placeholder}: the literal `%s`. */
     titleTemplateHint:
-      'Sjabloon voor subpagina’s & albums. Gebruik {placeholder} als plaatshouder voor de paginatitel.',
+      'Sjabloon voor pagina’s & albums. Gebruik {placeholder} als plaatshouder voor de paginatitel.',
     previewLabel: 'Voorbeeld:',
     previewExample: 'Landschappen',
     metaDescription: 'SEO-metabeschrijving',

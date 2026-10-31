@@ -1,17 +1,17 @@
-# Journal & Photo Essays
+# Journal entries & the story layout
 
 Immich Folio has two ways to publish long-form, text-and-image storytelling. They
 share one Markdown format and one renderer, and differ only in where the result
 appears:
 
-| Feature         | Lives in               | URL               | Use for                                                          |
-| --------------- | ---------------------- | ----------------- | ---------------------------------------------------------------- |
-| **Journal**     | `content/journal/*.md` | `/journal/<slug>` | A running series of stories, listed on a `/journal` index page   |
-| **Photo Essay** | `content/essays/*.md`  | the subpage's URL | Turning one subpage of your gallery into a single narrative page |
+| Feature          | Lives in               | URL               | Use for                                                        |
+| ---------------- | ---------------------- | ----------------- | -------------------------------------------------------------- |
+| **Journal**      | `content/journal/*.md` | `/journal/<slug>` | A running series of stories, listed on a `/journal` index page |
+| **Story layout** | `content/essays/*.md`  | the page's URL    | Turning one page of your gallery into a single narrative page  |
 
-If you are unsure: use the **Journal**. A photo essay is the older mechanism and
-is tied to a subpage; the journal is a standalone section with its own index,
-cover images, reading times, and drafts.
+If you are unsure: use the **Journal**. The story layout is the older mechanism
+and is tied to a page (a `subpage` in `gallery.yaml`); the journal is a
+standalone section with its own index, cover images, reading times, and drafts.
 
 **Contents:**
 
@@ -21,7 +21,7 @@ cover images, reading times, and drafts.
 - [Drafts](#drafts)
 - [Password-protected Entries](#password-protected-entries)
 - [Journal Studio](#journal-studio)
-- [Photo Essays on a Subpage](#photo-essays-on-a-subpage)
+- [The Story Layout on a Page](#the-story-layout-on-a-page)
 
 ## Journal Entries
 
@@ -305,16 +305,17 @@ the studio parses the same files.
 > photo references. The studio marks those blocks instead of silently
 > misrendering them, so they can be repointed at an asset UUID.
 
-## Photo Essays on a Subpage
+## The Story Layout on a Page
 
-A subpage can render a Markdown essay instead of an album grid. Point it at a
+A page (a `subpage` in `gallery.yaml`) can render a Markdown story instead of
+an album grid. Point it at a
 file, inline the text, or let it build itself from the albums:
 
 ```yaml
 subpages:
   - name: Highlands
     title: 'Icelandic Highlands'
-    subtitle: 'A Photo Essay'
+    subtitle: 'A Story'
     essayFile: 'sample-story' # content/journal/sample-story.md
     albums:
       - 'album-uuid-iceland-1'
@@ -336,7 +337,7 @@ Any one of the three switches the page into essay mode; setting `essayFile` or
 
 The Markdown format is identical to a journal entry, including the photo block
 syntax. The admin panel has a visual block editor for `essayText` under the
-subpage's settings.
+page's settings.
 
 The album list is used either way: it supplies the photos the lightbox pages
 through. And with `grid.layout: essay` but no Markdown at all, the essay is

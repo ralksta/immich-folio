@@ -127,8 +127,8 @@ export const diagnostics: AdminDictionary['diagnostics'] = {
     cacheTitle: (n: number) =>
       `Der Arbeitsspeicher-Cache enthält ${n} ${n === 1 ? 'Eintrag' : 'Einträge'}`,
     cacheDetail:
-      'Albumlisten und Foto-Metadaten aus Immich. Leeren macht die nächsten Seitenaufrufe langsamer, sonst nichts.',
-    clearing: 'Wird geleert…',
-    clearCache: 'Cache leeren',
+      'Albumlisten und Foto-Metadaten aus Immich. Neu laden leert den Cache und liest die Konfiguration neu ein; die nächsten Seitenaufrufe werden langsamer, sonst nichts.',
+    clearing: 'Wird neu geladen…',
+    clearCache: 'Neu laden',
   },
 };

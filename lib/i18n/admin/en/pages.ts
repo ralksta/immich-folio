@@ -1,6 +1,6 @@
 /**
  * Admin → Pages: the page builder (home page hero, standalone albums,
- * subpages, content pages), its drawers and the photo-essay block editor.
+ * pages, content pages), its drawers and the story block editor.
  *
  * File names (gallery.yaml, content/pages/), CSS values and units in the
  * strings below are literal — keep them as written.
@@ -11,7 +11,7 @@ export const pages = {
     kicker: 'Content',
     title: 'Pages',
     description:
-      'The home page hero, standalone albums, subpages and content pages. Drag to reorder; changes go live when saved.',
+      'The home page hero, standalone albums, pages and content pages. Drag to reorder; changes go live when saved.',
   },
 
   builder: {
@@ -52,16 +52,16 @@ export const pages = {
     },
     /** The structure list on the left. */
     tree: 'Page structure',
-    searchLabel: 'Search albums or subpages',
-    searchPlaceholder: 'Search albums or subpages...',
+    searchLabel: 'Search albums or pages',
+    searchPlaceholder: 'Search albums or pages...',
     clearSearch: 'Clear search',
     homePage: 'Home page',
     heroPhotos: 'Hero photos',
     menu: 'Menu',
-    subpagesLive: (live: number, total: number) => `${live} of ${total} subpages live`,
+    subpagesLive: (live: number, total: number) => `${live} of ${total} pages live`,
     noMatches: 'No matching entries.',
-    newSubpage: 'New subpage',
-    newPage: 'New page',
+    newSubpage: 'New Page',
+    newPage: 'New Content Page',
     notInMenu: 'Not in menu',
     offMenuEmpty:
       'Pages reachable only by their link. Drag a page here to take it out of the menu.',
@@ -78,9 +78,9 @@ export const pages = {
     noHero: 'No hero images configured. Add photos to show a hero carousel on the homepage.',
   },
 
-  /** Seed values for a new subpage or section, written into gallery.yaml. */
+  /** Seed values for a new page or section, written into gallery.yaml. */
   defaults: {
-    subpageName: (n: number) => `New subpage ${n}`,
+    subpageName: (n: number) => `New page ${n}`,
     sectionTitle: 'New Section',
   },
 
@@ -99,7 +99,7 @@ export const pages = {
     editDetails: 'Edit details',
     removeAlbum: 'Remove album',
     passwordProtected: 'Password protected',
-    customHero: 'Custom Hero Image set',
+    customHero: 'Custom cover photo set',
     unlisted: 'Unlisted standalone album',
     /** `label` is one of the `sort` labels. */
     photoOrder: (label: string) => `Photo order: ${label}`,
@@ -129,7 +129,7 @@ export const pages = {
     visibility: 'Visibility',
     unlisted: 'Unlisted',
     unlistedDesc:
-      'Reachable only by direct link — not in the menu, homepage, sitemap or map. The URL is guessable; add a password for anything private.',
+      'Reachable only by direct link — not in the menu, homepage, sitemap or map. A title-based URL can be guessed, a random link hardly; add a password for anything private.',
     listedDesc: 'Shown in the menu, homepage and sitemap, like every other standalone album.',
     zoomInherit: 'Inherit from page / site settings',
     zoomHint:
@@ -137,24 +137,16 @@ export const pages = {
     layoutOverride: 'Layout override (Experimental)',
     layoutOverrideAria: 'Layout override',
     layoutInherit: 'Inherit from page / global settings',
-    layouts: {
-      masonry: 'Masonry',
-      uniform: 'Uniform Grid',
-      showcase: 'Showcase',
-      filmstrip: 'Filmstrip',
-      editorialFlow: 'Editorial Flow',
-      justified: 'Justified (Experimental)',
-    },
     coverFocalPoint: 'Cover focal point (Experimental)',
     /** "50% 25%" and "top" are CSS values; keep them as written. */
     coverFocalPointPlaceholder: 'e.g. "50% 25%" or "top" — where the cover crop should anchor',
-    customHero: 'Custom Hero Image',
-    heroAlt: 'Hero',
-    removeHero: 'Remove custom hero image',
+    customHero: 'Cover Photo',
+    heroAlt: 'Cover',
+    removeHero: 'Remove custom cover photo',
     defaultCover: 'Using default album cover',
-    pickHeroTitle: (name: string) => `Pick Hero Image for ${name}`,
-    changeImage: 'Change Image',
-    pickHero: 'Pick Hero Image',
+    pickHeroTitle: (name: string) => `Pick Cover Photo for ${name}`,
+    changeImage: 'Change Photo',
+    pickHero: 'Pick Cover Photo',
     photoOrder: 'Photo order',
     manualHint:
       'Pinned photos come first, in the order you set. Everything else follows in the album’s Immich order.',
@@ -169,7 +161,7 @@ export const pages = {
   },
 
   subpageDrawer: {
-    breadcrumb: 'Pages / Subpages',
+    breadcrumb: 'Pages',
     untitled: 'Untitled Page',
     /** Accessible name of the Edit / Live Preview switch. */
     view: 'View',
@@ -202,15 +194,6 @@ export const pages = {
     pagePassword: 'Page password',
     layoutStyle: 'Page Layout Style',
     layoutStyleAria: 'Page layout style',
-    /** Options of a <select>: plain text only. */
-    layouts: {
-      masonry: 'Masonry Grid (Dynamic Height)',
-      uniform: 'Uniform Grid (Square Tiles)',
-      showcase: 'Showcase (Featured First Asset)',
-      filmstrip: 'Filmstrip (Horizontal Scroll)',
-      editorialFlow: 'Editorial Flow',
-      essay: 'Photo Essay Mode (Storytelling Editor)',
-    },
     zoomInherit: 'Inherit from site settings',
     zoomHint:
       'Applies to every album on this page that does not set its own. Settings › General has the site-wide switch.',
@@ -220,9 +203,9 @@ export const pages = {
     photoGrid: 'Photo Grid (Albums On This Page)',
     photoGridHint:
       'How the photos inside every album on this page are laid out. Leave both empty to follow Settings › Grid; a single album can still override this in gallery.yaml.',
-    essayHeading: 'Storytelling & Photo Essay Builder',
+    essayHeading: 'Story Builder',
     essayIntro: 'Compose text, quotes, and fullbleed/wide photos visually.',
-    essayPickerTitle: 'Select Photo for Photo Essay',
+    essayPickerTitle: 'Select Photo for the Story',
     albums: 'Albums in this Page',
     addAlbum: '+ Add Album',
     noAlbums: 'No albums added yet. Click + Add Album to pick from Immich.',
@@ -233,11 +216,11 @@ export const pages = {
     sectionDesc: 'Section description',
     addSection: '+ Add Section',
     addLooseAlbum: '+ Add Loose Album',
-    deleteSubpage: 'Delete Subpage',
+    deleteSubpage: 'Delete Page',
     done: 'Done',
   },
 
-  /** The subpage drawer's Live Preview tab. */
+  /** The page drawer's Live Preview tab. */
   preview: {
     note: 'Rendered with the site’s saved theme preset at desktop width. Unsaved edits in this drawer show up here; theme changes show up once saved in Settings.',
     settingsFailed: (error: string) =>
@@ -248,7 +231,7 @@ export const pages = {
   tiles: {
     reorderHero: (n: number) => `Reorder hero photo ${n}`,
     reorder: (name: string) => `Reorder ${name}`,
-    /** Stands in for a subpage without a name in `reorder`. */
+    /** Stands in for a page without a name in `reorder`. */
     pageFallback: 'page',
     dragToReorder: 'Drag to reorder',
     disabledTitle: 'Page is disabled',
@@ -259,8 +242,11 @@ export const pages = {
     off: 'Off',
     missing: 'Missing',
     draft: 'Draft',
-    /** Tag marking a content page, as opposed to a subpage; one short word. */
-    page: 'Page',
+    /**
+     * Tag marking a content page, as opposed to a page that groups albums;
+     * one short word.
+     */
+    page: 'Content',
     passwordProtected: 'Password protected',
     password: 'Password',
     editPage: 'Edit Page',
@@ -268,7 +254,7 @@ export const pages = {
   },
 
   newPage: {
-    title: 'New page',
+    title: 'New Content Page',
     titleLabel: 'Title',
     titlePlaceholder: 'e.g. Pricing',
     url: 'URL',
@@ -276,7 +262,7 @@ export const pages = {
     slugPlaceholder: 'pricing',
     /** Shown as "/slug" while no slug is typed; same rules as above. */
     slugFallback: 'slug',
-    exists: (slug: string) => `A page "${slug}" already exists.`,
+    exists: (slug: string) => `A content page "${slug}" already exists.`,
     hint: 'Starts blank and as a draft. You can change the URL later.',
     showInMenu: 'Show in menu',
     showInMenuDesc: 'Adds it to the end of the menu; saved with “Save Changes”.',
@@ -310,7 +296,7 @@ export const pages = {
     openLive: 'Open the live page in a new tab',
     title: 'Title',
     url: 'URL',
-    slugHint: 'Checked against subpages, albums, journal entries and built-in routes.',
+    slugHint: 'Checked against pages, albums, journal entries and built-in routes.',
     showInMenu: 'Show in menu',
     inMenuDesc: 'Listed in the header menu. Drag it in the structure list to move it.',
     offMenuDesc: 'Not in the menu, but reachable at its URL — for pages shared by link.',
@@ -326,7 +312,7 @@ export const pages = {
     savePage: 'Save page',
   },
 
-  /** The photo-essay block editor in a subpage set to "Photo Essay Mode". */
+  /** The story block editor in a page set to "Story Layout". */
   essay: {
     /** The starting story of an empty essay: a "# heading" and a paragraph. */
     starterTitle: 'Title',
@@ -347,7 +333,7 @@ export const pages = {
       album: '+ Album',
       map: '+ Map',
     },
-    empty: 'No story blocks yet. Use the buttons above to build your photo essay!',
+    empty: 'No story blocks yet. Use the buttons above to build your story!',
     moveUp: 'Move Up',
     moveDown: 'Move Down',
     deleteBlock: 'Delete Block',
@@ -418,7 +404,7 @@ export const pages = {
     invalid: (slug: string) =>
       `"${slug}" is not a valid slug: use letters, digits, "-" and "_" only.`,
     reserved: (slug: string) => `/${slug} is a built-in route of the site.`,
-    subpage: (slug: string) => `/${slug} is already a subpage.`,
+    subpage: (slug: string) => `/${slug} is already a page.`,
     album: (slug: string) => `/${slug} is already a standalone album.`,
     journal: (slug: string) => `A journal entry already uses the slug "${slug}".`,
   },

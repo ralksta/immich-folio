@@ -186,26 +186,6 @@ export const settings: AdminDictionary['settings'] = {
     title: 'Cuadrícula y motor de diseño',
     sub: 'Configura la estructura de columnas de la galería y la proporción de las miniaturas.',
     layout: 'Algoritmo de diseño',
-    layouts: {
-      masonry: { label: 'Cascada', desc: 'Columnas escalonadas dinámicas, al estilo Pinterest' },
-      uniform: { label: 'Cuadrícula uniforme', desc: 'Cuadrícula limpia con la misma proporción' },
-      showcase: {
-        label: 'Escaparate',
-        desc: 'Fotos destacadas combinadas con miniaturas más pequeñas',
-      },
-      filmstrip: {
-        label: 'Tira de película',
-        desc: 'Tira horizontal desplazable, como una línea temporal',
-      },
-      'editorial-flow': {
-        label: 'Flujo editorial',
-        desc: 'Diseño de reportaje de revista con fotos de distintos tamaños',
-      },
-      justified: {
-        label: 'Justificado (experimental)',
-        desc: 'Filas de igual altura que ocupan todo el ancho',
-      },
-    },
     aspectRatio: 'Proporción',
     /** Keyed by the ratio value written to settings.yaml. */
     aspectRatios: {
@@ -220,7 +200,7 @@ export const settings: AdminDictionary['settings'] = {
     },
     spacingTitle: 'Espaciado y columnas',
     spacingSub:
-      'Ajusta el número de columnas y el espacio entre elementos de la cuadrícula. El número de columnas también distribuye las portadas de los álbumes en una subpágina; su espaciado lo sigue decidiendo el tema, salvo que una página lo cambie.',
+      'Ajusta el número de columnas y el espacio entre elementos de la cuadrícula. El número de columnas también distribuye las portadas de los álbumes en una página; su espaciado lo sigue decidiendo el tema, salvo que una página lo cambie.',
     columns: (min: number, max: number) => `Columnas (${min} - ${max})`,
     gap: 'Espaciado (px)',
   },
@@ -299,12 +279,12 @@ export const settings: AdminDictionary['settings'] = {
     metaTitle: 'Metatítulo SEO',
     metaTitlePlaceholder:
       'Sustituye el título predeterminado del sitio en los resultados de Google',
-    titleTemplate: 'Plantilla de título de subpágina',
+    titleTemplate: 'Plantilla de título de página',
     /** Site name used in the template example while no title is set. */
     titleTemplateFallback: 'Mi portfolio',
     /** {placeholder}: the literal `%s`. */
     titleTemplateHint:
-      'Plantilla para subpáginas y álbumes. Usa {placeholder} en lugar del título de la página.',
+      'Plantilla para páginas y álbumes. Usa {placeholder} en lugar del título de la página.',
     previewLabel: 'Vista previa:',
     /** Example page title put into the template preview. */
     previewExample: 'Paisajes',

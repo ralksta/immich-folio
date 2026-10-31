@@ -246,11 +246,11 @@ const PLURAL_TABLE: [string, Dictionary, Record<CountedKey, [string, string, str
       photos: ['0 photos', '1 photo', '2 photos'],
       albums: ['0 albums', '1 album', '2 albums'],
       collections: ['0 collections', '1 collection', '2 collections'],
-      selected: ['❤️ 0 Selected', '❤️ 1 Selected', '❤️ 2 Selected'],
+      selected: ['0 selected', '1 selected', '2 selected'],
       mailSubject: [
-        'Photo Selection (0 items)',
-        'Photo Selection (1 item)',
-        'Photo Selection (2 items)',
+        'Photo selection (0 items)',
+        'Photo selection (1 item)',
+        'Photo selection (2 items)',
       ],
       downloadsLeft: ['0 downloads left', '1 download left', '2 downloads left'],
     },
@@ -262,7 +262,7 @@ const PLURAL_TABLE: [string, Dictionary, Record<CountedKey, [string, string, str
       photos: ['0 Fotos', '1 Foto', '2 Fotos'],
       albums: ['0 Alben', '1 Album', '2 Alben'],
       collections: ['0 Sammlungen', '1 Sammlung', '2 Sammlungen'],
-      selected: ['❤️ 0 ausgewählt', '❤️ 1 ausgewählt', '❤️ 2 ausgewählt'],
+      selected: ['0 ausgewählt', '1 ausgewählt', '2 ausgewählt'],
       mailSubject: ['Fotoauswahl (0 Fotos)', 'Fotoauswahl (1 Foto)', 'Fotoauswahl (2 Fotos)'],
       downloadsLeft: ['Noch 0 Downloads', 'Noch 1 Download', 'Noch 2 Downloads'],
     },
@@ -274,7 +274,7 @@ const PLURAL_TABLE: [string, Dictionary, Record<CountedKey, [string, string, str
       photos: ['0 photo', '1 photo', '2 photos'],
       albums: ['0 album', '1 album', '2 albums'],
       collections: ['0 collection', '1 collection', '2 collections'],
-      selected: ['❤️ 0 sélectionnée', '❤️ 1 sélectionnée', '❤️ 2 sélectionnées'],
+      selected: ['0 sélectionnée', '1 sélectionnée', '2 sélectionnées'],
       mailSubject: [
         'Sélection de photos (0)',
         'Sélection de photos (1)',
@@ -294,7 +294,7 @@ const PLURAL_TABLE: [string, Dictionary, Record<CountedKey, [string, string, str
       photos: ['0 fotos', '1 foto', '2 fotos'],
       albums: ['0 álbumes', '1 álbum', '2 álbumes'],
       collections: ['0 colecciones', '1 colección', '2 colecciones'],
-      selected: ['❤️ 0 seleccionadas', '❤️ 1 seleccionada', '❤️ 2 seleccionadas'],
+      selected: ['0 seleccionadas', '1 seleccionada', '2 seleccionadas'],
       mailSubject: ['Selección de fotos (0)', 'Selección de fotos (1)', 'Selección de fotos (2)'],
       downloadsLeft: ['0 descargas restantes', '1 descarga restante', '2 descargas restantes'],
     },
@@ -306,7 +306,7 @@ const PLURAL_TABLE: [string, Dictionary, Record<CountedKey, [string, string, str
       photos: ['0 foto', '1 foto', '2 foto'],
       albums: ['0 album', '1 album', '2 album'],
       collections: ['0 collezioni', '1 collezione', '2 collezioni'],
-      selected: ['❤️ 0 selezionate', '❤️ 1 selezionata', '❤️ 2 selezionate'],
+      selected: ['0 selezionate', '1 selezionata', '2 selezionate'],
       mailSubject: ['Selezione di foto (0)', 'Selezione di foto (1)', 'Selezione di foto (2)'],
       downloadsLeft: ['0 download rimasti', '1 download rimasto', '2 download rimasti'],
     },
@@ -318,7 +318,7 @@ const PLURAL_TABLE: [string, Dictionary, Record<CountedKey, [string, string, str
       photos: ['0 foto’s', '1 foto', '2 foto’s'],
       albums: ['0 albums', '1 album', '2 albums'],
       collections: ['0 collecties', '1 collectie', '2 collecties'],
-      selected: ['❤️ 0 geselecteerd', '❤️ 1 geselecteerd', '❤️ 2 geselecteerd'],
+      selected: ['0 geselecteerd', '1 geselecteerd', '2 geselecteerd'],
       mailSubject: ['Fotoselectie (0)', 'Fotoselectie (1)', 'Fotoselectie (2)'],
       downloadsLeft: ['Nog 0 downloads', 'Nog 1 download', 'Nog 2 downloads'],
     },
@@ -346,6 +346,63 @@ describe('plural forms at 0, 1 and 2', () => {
   ] as const)('contact retention days in %s', (_code, dict, endings) => {
     const got = [0, 1, 2].map((n) => dict.contact.privacy(n));
     got.forEach((text, i) => expect(text.endsWith(` ${endings[i]}`), text).toBe(true));
+  });
+});
+
+/**
+ * English copy style (#691).
+ *
+ * The reference dictionary sets the tone every other locale follows, and it had
+ * drifted: "Not found" beside "Not Found", "Back to Gallery" beside "Back to
+ * the gallery", and emoji and arrows baked into the strings. Decoration
+ * belongs to the markup — an `<IconHeart>` next to the text, an arrow in a
+ * span — so a translation is free to place it where its grammar needs it, and
+ * a screen reader does not read "red heart".
+ */
+describe('English copy style', () => {
+  /** Words that are genuinely capitalised mid-sentence. */
+  const PROPER_NOUNS = new Set(['JavaScript', 'Esc', 'WebP', 'Immich']);
+
+  /** Arrows, emoji and pictographs, including the emoji variation selector. */
+  const DECORATION = /[←-⇿⌀-⏿■-➿⬀-⯿️\u{1F000}-\u{1FAFF}]/u;
+
+  const strings = leaves(en).flatMap(([path, value]) =>
+    typeof value === 'string'
+      ? [[path, value] as const]
+      : typeof value === 'function'
+        ? [[path, invoke(value as never)] as const]
+        : [],
+  );
+
+  it('leaves emoji and arrows to the markup', () => {
+    const decorated = strings.filter(([, text]) => DECORATION.test(text)).map(([path]) => path);
+    expect(decorated).toEqual([]);
+  });
+
+  it('uses sentence case, not Title Case', () => {
+    /** Words capitalised mid-sentence, ignoring sentence starts and labels. */
+    const titleCaseWords = (text: string): string[] => {
+      const offenders: string[] = [];
+      // A new sentence, a label before a colon, an em dash and a new line all
+      // start a fresh segment: "03 — Collection" and "From: Name" are fine.
+      for (const segment of text.split(/(?<=[.!?…:—])\s+|\n+/)) {
+        const words = segment.split(/\s+/).filter(Boolean);
+        for (const word of words.slice(1)) {
+          const core = word.replace(/^[«„“"'(\[]+/, '').replace(/[.,;:!?)»”"'\]]+$/, '');
+          if (!core || core === 'I' || PROPER_NOUNS.has(core)) continue;
+          // A leading capital followed by a lowercase letter; all-caps
+          // acronyms (ISO, EXIF, DDG) are their own convention.
+          if (/^[A-ZÄÖÜ][a-zäöüß]/.test(core)) offenders.push(core);
+        }
+      }
+      return offenders;
+    };
+
+    const offenders = strings
+      .map(([path, text]) => [path, titleCaseWords(text)] as const)
+      .filter(([, words]) => words.length > 0)
+      .map(([path, words]) => `${path}: ${words.join(', ')}`);
+    expect(offenders).toEqual([]);
   });
 });
 

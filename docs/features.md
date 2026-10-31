@@ -7,10 +7,10 @@ Everything Immich Folio does, grouped by what you are doing. The [README](../REA
 - **Configurable hero layouts** — split, fullbleed, minimal, stacked (image + thumbnail strip), typographic (text-only), or mosaic (multi-image grid)
 - **Hero image carousel** — single image or crossfade carousel of multiple Immich assets
 - **Masonry photo grid** — responsive layout with natural aspect ratios and configurable columns, gap, and aspect ratio
-- **Uniform grid mode** — switch to a fixed-aspect uniform grid per-subpage or globally
+- **Uniform grid mode** — switch to a fixed-aspect uniform grid per page or globally
 - **Showcase / filmstrip / editorial-flow layouts** — featured hero + grid, horizontal scroll strips, or alternating full-width and paired images
 - **Justified rows** _(experimental)_ — every row fills the width at one shared height, aspect ratios intact, nothing cropped
-- **Per-subpage grid overrides** — each subpage can define its own columns, gap, aspect ratio, and layout mode, and individual albums can override that again _(experimental)_
+- **Per-page grid overrides** — each page can define its own columns, gap, aspect ratio, and layout mode, and individual albums can override that again _(experimental)_
 - **Cover focal points** _(experimental)_ — decide which part of a cover survives the crop
 - **Fullscreen lightbox** — keyboard and swipe navigation, EXIF panel, adjacent image preloading, and opt-in 1:1 zoom to full resolution for checking sharpness ([guide](gallery-features.md#photo-zoom))
 - **EXIF metadata on hover** — camera body, lens, focal length, aperture, shutter speed, ISO shown directly on the grid
@@ -29,14 +29,14 @@ Everything Immich Folio does, grouped by what you are doing. The [README](../REA
 
 ## Content & Organization
 
-- **Subpage grouping** — organize albums into named collections (e.g. `/japan/tokyo-2023`)
+- **Page grouping** — organize albums into named pages (a `subpage` in `gallery.yaml`, e.g. `/japan/tokyo-2023`)
 - **Auto-generated slugs** — URL slugs derived from album names automatically
 - **YAML gallery config** — all gallery structure defined in a single `content/gallery.yaml` file
 - **Markdown about page** — `content/about.md` with frontmatter for portrait, name, location, and gear list, editable from the admin panel
 - **Journal** — photo essays and travel stories at `/journal`, with drafts, per-entry passwords, cover images and reading times; new entries can start from a template (wedding, hiking, travel, …)
 - **Photo Essay mode** — long-form storytelling pages alternating text with fullbleed, paired and grid image layouts, facts lists, a slice of an album, and a map with the pins you choose — typed places, or photos placed by their GPS
-- **Unlisted galleries** _(experimental)_ — a subpage or standalone album reachable by its own direct link, absent from the navigation, homepage, sitemap and map; choose or randomly generate the album's slug, and add a password to make the link private
-- **Subpage on/off toggle** — take a page offline without deleting it
+- **Unlisted pages and albums** _(experimental)_ — a page or standalone album reachable by its own direct link, absent from the navigation, homepage, sitemap and map; choose or randomly generate the album's slug, and add a password to make the link private
+- **Page on/off toggle** — take a page offline without deleting it
 - **External navigation links** _(experimental)_ — point the header at a shop, a blog, or a social profile
 - **Client proofing** — clients favorite photos and export the selection; picks stay in the visitor's browser and the URL, with nothing stored server-side (proofing links, below, do save them)
 - **Client proofing links** — a private link per client and album, picks saved server-side, a submit that locks the selection and pings you via webhook, expiry dates, download limits, and a Lightroom-ready export of the chosen file names ([guide](gallery-features.md#client-proofing-links))
@@ -47,9 +47,9 @@ Everything Immich Folio does, grouped by what you are doing. The [README](../REA
 - **Dynamic OG images** — auto-generated social preview images per album
 
 <p align="center">
-  <img src="screenshots/page-collection.png" width="98%" alt="Collection overview grouping several albums under one subpage" />
+  <img src="screenshots/page-collection.png" width="98%" alt="A page grouping several albums" />
 </p>
-<p align="center"><em>A subpage grouping several albums into one collection.</em></p>
+<p align="center"><em>A page grouping several albums into one collection.</em></p>
 
 <p align="center">
   <img src="screenshots/page-about.png" width="49%" alt="About page rendered from content/about.md" />
@@ -59,7 +59,7 @@ Everything Immich Folio does, grouped by what you are doing. The [README](../REA
 
 ## Admin Panel
 
-- **Visual page builder** — drag & drop interface to manage hero images, standalone albums, subpages, and sections
+- **Visual page builder** — drag & drop interface to manage hero images, standalone albums, pages, and sections
 - **Album picker** — browse all shared Immich albums with search, see photo counts, and add them with one click
 - **Settings editor** — configure theme, grid layout, footer, legal/impressum, SEO, image protection and the about page from a visual UI
 - **Visual previews everywhere** — grid layout, theme, photo frame, hero style and the Google search snippet are picked from preview cards instead of text fields
@@ -84,7 +84,7 @@ Everything Immich Folio does, grouped by what you are doing. The [README](../REA
 | **API key**                | Stored only in `.env.local`, never in client code                                    |
 | **Asset IDs**              | Immich UUIDs encrypted (AES-256) into opaque tokens                                  |
 | **Album scope**            | Only albums in `gallery.yaml` are accessible                                         |
-| **Password protection**    | Per-subpage password support                                                         |
+| **Password protection**    | Per-page password support                                                            |
 | **Rate limiting**          | Per-IP sliding-window rate limiter (configurable RPM)                                |
 | **Vulnerability scanning** | Docker image scanned with Trivy on every release, results in the GitHub Security tab |
 

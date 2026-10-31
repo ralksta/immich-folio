@@ -117,8 +117,8 @@ export const diagnostics = {
     manageBackups: 'Manage backups',
     cacheTitle: (n: number) => `In-memory cache holds ${n} items`,
     cacheDetail:
-      'Album lists and photo metadata from Immich. Clearing it makes the next page views slower, nothing else.',
-    clearing: 'Clearing…',
-    clearCache: 'Clear cache',
+      'Album lists and photo metadata from Immich. Reloading clears it and re-reads the config; the next page views are slower, nothing else.',
+    clearing: 'Reloading…',
+    clearCache: 'Reload',
   },
 };

@@ -5,7 +5,7 @@ const isOne = (n: number) => n <= 1;
 
 /**
  * Admin → Pages: the page builder (home page hero, standalone albums,
- * subpages, content pages), its drawers and the photo-essay block editor.
+ * pages, content pages), its drawers and the story block editor.
  *
  * File names (gallery.yaml, content/pages/), CSS values and units in the
  * strings below are literal — keep them as written.
@@ -16,7 +16,7 @@ export const pages: AdminDictionary['pages'] = {
     kicker: 'Contenu',
     title: 'Pages',
     description:
-      'Les photos d’accueil, les albums indépendants, les sous-pages et les pages de contenu. Faites glisser pour réorganiser ; les modifications sont en ligne dès l’enregistrement.',
+      'Les photos d’accueil, les albums indépendants, les pages et les pages de contenu. Faites glisser pour réorganiser ; les modifications sont en ligne dès l’enregistrement.',
   },
 
   builder: {
@@ -62,17 +62,17 @@ export const pages: AdminDictionary['pages'] = {
     },
     /** The structure list on the left. */
     tree: 'Structure des pages',
-    searchLabel: 'Rechercher des albums ou des sous-pages',
-    searchPlaceholder: 'Rechercher des albums ou des sous-pages…',
+    searchLabel: 'Rechercher des albums ou des pages',
+    searchPlaceholder: 'Rechercher des albums ou des pages…',
     clearSearch: 'Effacer la recherche',
     homePage: 'Page d’accueil',
     heroPhotos: 'Photos d’accueil',
     menu: 'Menu',
     subpagesLive: (live: number, total: number) =>
-      `${live} sur ${total} ${isOne(total) ? 'sous-page en ligne' : 'sous-pages en ligne'}`,
+      `${live} sur ${total} ${isOne(total) ? 'page en ligne' : 'pages en ligne'}`,
     noMatches: 'Aucune entrée correspondante.',
-    newSubpage: 'Nouvelle sous-page',
-    newPage: 'Nouvelle page',
+    newSubpage: 'Nouvelle page',
+    newPage: 'Nouvelle page de contenu',
     notInMenu: 'Hors du menu',
     offMenuEmpty:
       'Pages accessibles uniquement par leur lien. Faites glisser une page ici pour la retirer du menu.',
@@ -91,9 +91,9 @@ export const pages: AdminDictionary['pages'] = {
       'Aucune photo d’accueil configurée. Ajoutez des photos pour afficher un carrousel sur la page d’accueil.',
   },
 
-  /** Seed values for a new subpage or section, written into gallery.yaml. */
+  /** Seed values for a new page or section, written into gallery.yaml. */
   defaults: {
-    subpageName: (n: number) => `Nouvelle sous-page ${n}`,
+    subpageName: (n: number) => `Nouvelle page ${n}`,
     sectionTitle: 'Nouvelle section',
   },
 
@@ -113,7 +113,7 @@ export const pages: AdminDictionary['pages'] = {
     editDetails: 'Modifier les détails',
     removeAlbum: 'Retirer l’album',
     passwordProtected: 'Protégé par mot de passe',
-    customHero: 'Image d’en-tête personnalisée définie',
+    customHero: 'Photo de couverture personnalisée définie',
     /** `label` is one of the `sort` labels. */
     photoOrder: (label: string) => `Ordre des photos : ${label}`,
     /** English always says "photos"; French uses the singular for 0 and 1. */
@@ -130,7 +130,7 @@ export const pages: AdminDictionary['pages'] = {
     visibility: 'Visibilité',
     unlisted: 'Non répertorié',
     unlistedDesc:
-      'Accessible uniquement par lien direct — absent du menu, de la page d’accueil, du sitemap et de la carte. L’URL est devinable ; ajoutez un mot de passe pour tout contenu privé.',
+      'Accessible uniquement par lien direct — absent du menu, de la page d’accueil, du sitemap et de la carte. Une URL tirée du titre se devine, un lien aléatoire difficilement ; ajoutez un mot de passe pour tout contenu privé.',
     listedDesc:
       'Affiché dans le menu, la page d’accueil et le sitemap, comme tout autre album autonome.',
     heading: 'Modifier les détails de l’album',
@@ -153,25 +153,17 @@ export const pages: AdminDictionary['pages'] = {
     layoutOverride: 'Mise en page de remplacement (expérimental)',
     layoutOverrideAria: 'Mise en page de remplacement',
     layoutInherit: 'Hériter des paramètres de la page / globaux',
-    layouts: {
-      masonry: 'Maçonnerie',
-      uniform: 'Grille uniforme',
-      showcase: 'Vitrine',
-      filmstrip: 'Pellicule',
-      editorialFlow: 'Flux éditorial',
-      justified: 'Justifiée (expérimental)',
-    },
     coverFocalPoint: 'Point focal de la couverture (expérimental)',
     /** "50% 25%" and "top" are CSS values; keep them as written. */
     coverFocalPointPlaceholder:
       'par ex. « 50% 25% » ou « top » — le point d’ancrage du recadrage de la couverture',
-    customHero: 'Image d’en-tête personnalisée',
-    heroAlt: 'Image d’en-tête',
-    removeHero: 'Retirer l’image d’en-tête personnalisée',
+    customHero: 'Photo de couverture personnalisée',
+    heroAlt: 'Couverture',
+    removeHero: 'Retirer la photo de couverture personnalisée',
     defaultCover: 'Couverture de l’album par défaut',
-    pickHeroTitle: (name: string) => `Choisir l’image d’en-tête de ${name}`,
-    changeImage: 'Changer l’image',
-    pickHero: 'Choisir une image d’en-tête',
+    pickHeroTitle: (name: string) => `Choisir la photo de couverture de ${name}`,
+    changeImage: 'Changer la photo',
+    pickHero: 'Choisir une photo de couverture',
     photoOrder: 'Ordre des photos',
     manualHint:
       'Les photos épinglées passent en premier, dans l’ordre choisi. Les autres suivent dans l’ordre de l’album dans Immich.',
@@ -187,7 +179,7 @@ export const pages: AdminDictionary['pages'] = {
   },
 
   subpageDrawer: {
-    breadcrumb: 'Pages / Sous-pages',
+    breadcrumb: 'Pages',
     untitled: 'Page sans titre',
     /** Accessible name of the Edit / Live Preview switch. */
     view: 'Affichage',
@@ -221,15 +213,6 @@ export const pages: AdminDictionary['pages'] = {
     pagePassword: 'Mot de passe de la page',
     layoutStyle: 'Style de mise en page',
     layoutStyleAria: 'Style de mise en page',
-    /** Options of a <select>: plain text only. */
-    layouts: {
-      masonry: 'Maçonnerie (hauteur variable)',
-      uniform: 'Grille uniforme (vignettes carrées)',
-      showcase: 'Vitrine (premier média mis en avant)',
-      filmstrip: 'Pellicule (défilement horizontal)',
-      editorialFlow: 'Flux éditorial',
-      essay: 'Essai photo (éditeur narratif)',
-    },
     zoomInherit: 'Hériter des paramètres du site',
     zoomHint:
       'S’applique à chaque album de cette page qui ne définit pas le sien. Le réglage pour tout le site se trouve dans Paramètres › Général.',
@@ -239,10 +222,10 @@ export const pages: AdminDictionary['pages'] = {
     photoGrid: 'Grille des photos (albums de cette page)',
     photoGridHint:
       'La disposition des photos à l’intérieur de chaque album de cette page. Laissez les deux champs vides pour suivre Paramètres › Grille ; un album peut toujours la remplacer dans gallery.yaml.',
-    essayHeading: 'Éditeur narratif & essai photo',
+    essayHeading: 'Éditeur de récit',
     essayIntro:
       'Composez visuellement du texte, des citations et des photos larges ou pleine largeur.',
-    essayPickerTitle: 'Choisir une photo pour l’essai photo',
+    essayPickerTitle: 'Choisir une photo pour le récit',
     albums: 'Albums de cette page',
     addAlbum: '+ Ajouter un album',
     noAlbums:
@@ -254,11 +237,11 @@ export const pages: AdminDictionary['pages'] = {
     sectionDesc: 'Description de la section',
     addSection: '+ Ajouter une section',
     addLooseAlbum: '+ Ajouter un album hors section',
-    deleteSubpage: 'Supprimer la sous-page',
+    deleteSubpage: 'Supprimer la page',
     done: 'Terminé',
   },
 
-  /** The subpage drawer's Live Preview tab. */
+  /** The page drawer's Live Preview tab. */
   preview: {
     note: 'Rendu avec le préréglage de thème enregistré du site, en largeur ordinateur. Les modifications non enregistrées de ce panneau apparaissent ici ; celles du thème, une fois enregistrées dans Paramètres.',
     settingsFailed: (error: string) =>
@@ -269,7 +252,7 @@ export const pages: AdminDictionary['pages'] = {
   tiles: {
     reorderHero: (n: number) => `Réorganiser la photo d’accueil ${n}`,
     reorder: (name: string) => `Réorganiser ${name}`,
-    /** Stands in for a subpage without a name in `reorder`. */
+    /** Stands in for a page without a name in `reorder`. */
     pageFallback: 'la page',
     dragToReorder: 'Faire glisser pour réorganiser',
     disabledTitle: 'La page est désactivée',
@@ -280,8 +263,8 @@ export const pages: AdminDictionary['pages'] = {
     off: 'Désactivée',
     missing: 'Manquante',
     draft: 'Brouillon',
-    /** Tag marking a content page, as opposed to a subpage; one short word. */
-    page: 'Page',
+    /** Tag marking a content page, as opposed to a page that groups albums. */
+    page: 'Contenu',
     passwordProtected: 'Protégée par mot de passe',
     password: 'Mot de passe',
     editPage: 'Modifier la page',
@@ -289,7 +272,7 @@ export const pages: AdminDictionary['pages'] = {
   },
 
   newPage: {
-    title: 'Nouvelle page',
+    title: 'Nouvelle page de contenu',
     titleLabel: 'Titre',
     titlePlaceholder: 'par ex. Tarifs',
     url: 'URL',
@@ -297,7 +280,7 @@ export const pages: AdminDictionary['pages'] = {
     slugPlaceholder: 'tarifs',
     /** Shown as "/slug" while no slug is typed; same rules as above. */
     slugFallback: 'slug',
-    exists: (slug: string) => `Une page « ${slug} » existe déjà.`,
+    exists: (slug: string) => `Une page de contenu « ${slug} » existe déjà.`,
     hint: 'Commence vide et en brouillon. Vous pourrez changer l’URL plus tard.',
     showInMenu: 'Afficher dans le menu',
     showInMenuDesc:
@@ -334,7 +317,7 @@ export const pages: AdminDictionary['pages'] = {
     title: 'Titre',
     url: 'URL',
     slugHint:
-      'Vérifiée par rapport aux sous-pages, aux albums, aux articles du journal et aux routes intégrées.',
+      'Vérifiée par rapport aux pages, aux albums, aux articles du journal et aux routes intégrées.',
     showInMenu: 'Afficher dans le menu',
     inMenuDesc:
       'Figure dans le menu de l’en-tête. Faites-la glisser dans la structure pour la déplacer.',
@@ -352,7 +335,7 @@ export const pages: AdminDictionary['pages'] = {
     savePage: 'Enregistrer la page',
   },
 
-  /** The photo-essay block editor in a subpage set to "Essai photo". */
+  /** The story block editor in a page set to "Story Layout". */
   essay: {
     /** The starting story of an empty essay: a "# heading" and a paragraph. */
     starterTitle: 'Titre',
@@ -374,7 +357,7 @@ export const pages: AdminDictionary['pages'] = {
       map: '+ Carte',
     },
     empty:
-      'Aucun bloc pour le moment. Utilisez les boutons ci-dessus pour construire votre essai photo !',
+      'Aucun bloc pour le moment. Utilisez les boutons ci-dessus pour construire votre récit !',
     moveUp: 'Monter',
     moveDown: 'Descendre',
     deleteBlock: 'Supprimer le bloc',
@@ -444,7 +427,7 @@ export const pages: AdminDictionary['pages'] = {
     invalid: (slug: string) =>
       `« ${slug} » n’est pas un slug valide : utilisez uniquement des lettres, des chiffres, « - » et « _ ».`,
     reserved: (slug: string) => `/${slug} est une route intégrée du site.`,
-    subpage: (slug: string) => `/${slug} est déjà une sous-page.`,
+    subpage: (slug: string) => `/${slug} est déjà une page.`,
     album: (slug: string) => `/${slug} est déjà un album indépendant.`,
     journal: (slug: string) => `Un article du journal utilise déjà le slug « ${slug} ».`,
   },

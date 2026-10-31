@@ -260,11 +260,11 @@ describe('PageBuilder: edits made while a save is in flight', () => {
         </ConfirmProvider>
       </NotificationProvider>,
     );
-    fireEvent.click(await screen.findByRole('button', { name: 'New subpage' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'New Page' }));
     // A page without an album is refused by the builder before the request;
     // give this one an album so the save this test is about can happen.
     const newRow = [...container.querySelectorAll<HTMLElement>('.pb-row-main')].find((el) =>
-      el.textContent?.includes('New subpage'),
+      el.textContent?.includes('New page'),
     );
     fireEvent.click(newRow as HTMLElement);
     fireEvent.click(await screen.findByRole('button', { name: /Add Album/i }));
@@ -272,7 +272,7 @@ describe('PageBuilder: edits made while a save is in flight', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
     await waitFor(() => expect(releasePut).not.toBeNull());
 
-    fireEvent.click(screen.getByRole('button', { name: 'New subpage' }));
+    fireEvent.click(screen.getByRole('button', { name: 'New Page' }));
     await act(async () => releasePut!());
 
     await screen.findByText('Saved successfully!');

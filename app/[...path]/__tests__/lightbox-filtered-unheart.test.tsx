@@ -51,7 +51,7 @@ afterEach(() => {
 
 async function openFilteredLightboxOn(n: number) {
   render(<PhotoGrid assets={ASSETS} proofing albumName="Wedding" />);
-  fireEvent.click(await screen.findByText(/❤️ \d Selected/));
+  fireEvent.click(await screen.findByText(/\d+ selected/));
   fireEvent.click(screen.getByLabelText(`View photo ${n}`));
   return screen.getByRole('dialog');
 }

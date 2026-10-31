@@ -86,7 +86,7 @@ export type CollisionText = Record<SlugCollision['kind'], (slug: string) => stri
 export const COLLISION_TEXT_EN: CollisionText = {
   invalid: (slug) => `"${slug}" is not a valid slug: use letters, digits, "-" and "_" only.`,
   reserved: (slug) => `/${slug} is a built-in route of the site.`,
-  subpage: (slug) => `/${slug} is already a subpage.`,
+  subpage: (slug) => `/${slug} is already a page.`,
   album: (slug) => `/${slug} is already a standalone album.`,
   journal: (slug) => `A journal entry already uses the slug "${slug}".`,
 };

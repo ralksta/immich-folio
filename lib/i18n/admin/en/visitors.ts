@@ -110,7 +110,7 @@ export const visitors = {
     /** Tooltip on one bar of the chart. */
     dayViews: (date: string, n: number) => `${date}: ${n} views`,
     noViews: 'No pageviews recorded yet. Visit portfolio pages to start tracking!',
-    topPages: 'Top Visited Pages & Subpages',
+    topPages: 'Top Visited Pages',
     noPages: 'No pages recorded yet.',
     pageViews: (n: number) => `${n} views`,
   },

@@ -178,20 +178,6 @@ export const settings = {
     title: 'Grid & Layout Engine',
     sub: 'Configure photography gallery column structures and thumbnail aspect ratios.',
     layout: 'Layout Algorithm',
-    layouts: {
-      masonry: { label: 'Masonry', desc: 'Dynamic pinterest-style staggered columns' },
-      uniform: { label: 'Uniform Grid', desc: 'Clean equal aspect ratio grid' },
-      showcase: { label: 'Showcase', desc: 'Featured hero photos mixed with smaller tiles' },
-      filmstrip: { label: 'Filmstrip', desc: 'Horizontal scrollable film strip timeline' },
-      'editorial-flow': {
-        label: 'Editorial Flow',
-        desc: 'Magazine story layout with varying photo sizes',
-      },
-      justified: {
-        label: 'Justified (Experimental)',
-        desc: 'Equal-height rows that fill the full width',
-      },
-    },
     aspectRatio: 'Aspect Ratio',
     /** Keyed by the ratio value written to settings.yaml. */
     aspectRatios: {
@@ -203,7 +189,7 @@ export const settings = {
     },
     spacingTitle: 'Spacing & Columns',
     spacingSub:
-      'Adjust column counts and grid gap spacing. The column count also tiles the album covers on a subpage; their spacing stays with the theme unless a page overrides it.',
+      'Adjust column counts and grid gap spacing. The column count also tiles the album covers on a page; their spacing stays with the theme unless a page overrides it.',
     columns: (min: number, max: number) => `Columns (${min} - ${max})`,
     gap: 'Gap Spacing (px)',
   },
@@ -279,12 +265,12 @@ export const settings = {
       'Currently supplied by the {variable} environment variable ({value}). A value entered here takes precedence once saved.',
     metaTitle: 'SEO Meta Title',
     metaTitlePlaceholder: 'Overrides default site title for Google search results',
-    titleTemplate: 'Subpage Title Template',
+    titleTemplate: 'Page Title Template',
     /** Site name used in the template example while no title is set. */
     titleTemplateFallback: 'My Portfolio',
     /** {placeholder}: the literal `%s`. */
     titleTemplateHint:
-      'Template for subpages & albums. Use {placeholder} as placeholder for the page title.',
+      'Template for pages & albums. Use {placeholder} as placeholder for the page title.',
     previewLabel: 'Preview:',
     /** Example page title put into the template preview. */
     previewExample: 'Landscapes',

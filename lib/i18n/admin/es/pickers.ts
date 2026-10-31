@@ -24,7 +24,7 @@ export const pickers: AdminDictionary['pickers'] = {
 
   assetPicker: {
     /** Heading when the caller names no purpose of its own. */
-    defaultTitle: 'Seleccionar imagen de portada',
+    defaultTitle: 'Seleccionar foto',
     tabs: {
       albums: 'Álbumes',
       thisAlbum: 'Este álbum',

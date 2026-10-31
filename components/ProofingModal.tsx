@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useProofing } from './ProofingContext';
-import { IconCheck, IconCopy, IconLink } from './Icons';
+import { IconCheck, IconCopy, IconHeart, IconLink, IconMail } from './Icons';
 import { useDictionary } from './I18nProvider';
 import { useModalDialog } from '@/hooks/useModalDialog';
 import { decodeEmail } from '@/lib/emailObfuscation';
@@ -153,6 +153,12 @@ export function ProofingModal() {
           }}
         >
           <h3 id="proofing-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
+            <IconHeart
+              size={16}
+              fill="currentColor"
+              aria-hidden="true"
+              style={{ verticalAlign: '-2px', marginRight: '0.35em' }}
+            />
             {t.proofing.modalTitle(selectedCount)}
           </h3>
           <button
@@ -332,6 +338,7 @@ export function ProofingModal() {
                 cursor: 'pointer',
               }}
             >
+              <IconMail size={16} aria-hidden="true" />
               {t.proofing.sendEmail}
             </button>
           )}

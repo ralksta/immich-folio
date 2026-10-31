@@ -53,7 +53,7 @@ describe('favourites filter with nothing left', () => {
     store.set('folio_fav_wedding', JSON.stringify(['a2']));
     render(<PhotoGrid assets={ASSETS} proofing albumName="Wedding" />);
 
-    fireEvent.click(await screen.findByText('❤️ 1 Selected'));
+    fireEvent.click(await screen.findByText('1 selected'));
     expect(screen.getAllByLabelText(/^View photo/)).toHaveLength(1);
 
     fireEvent.click(screen.getByLabelText('Remove favorite'));
@@ -62,7 +62,7 @@ describe('favourites filter with nothing left', () => {
     expect(within(empty).getByText('No photos selected.')).toBeTruthy();
     expect(screen.queryAllByLabelText(/^View photo/)).toHaveLength(0);
 
-    fireEvent.click(within(empty).getByRole('button', { name: 'Show All' }));
+    fireEvent.click(within(empty).getByRole('button', { name: 'Show all' }));
     expect(screen.getAllByLabelText(/^View photo/)).toHaveLength(3);
     expect(screen.queryByText('No photos selected.')).toBeNull();
   });
@@ -70,7 +70,7 @@ describe('favourites filter with nothing left', () => {
   it('shows no empty state while the filter still has photos', async () => {
     store.set('folio_fav_wedding', JSON.stringify(['a1', 'a2']));
     render(<PhotoGrid assets={ASSETS} proofing albumName="Wedding" />);
-    fireEvent.click(await screen.findByText('❤️ 2 Selected'));
+    fireEvent.click(await screen.findByText('2 selected'));
     expect(screen.getAllByLabelText(/^View photo/)).toHaveLength(2);
     expect(screen.queryByText('No photos selected.')).toBeNull();
   });

@@ -2,7 +2,7 @@ import type { AdminDictionary } from '../index';
 
 /**
  * Admin → Pages: the page builder (home page hero, standalone albums,
- * subpages, content pages), its drawers and the photo-essay block editor.
+ * pages, content pages), its drawers and the story block editor.
  *
  * File names (gallery.yaml, content/pages/), CSS values and units in the
  * strings below are literal — keep them as written.
@@ -13,7 +13,7 @@ export const pages: AdminDictionary['pages'] = {
     kicker: 'Inhoud',
     title: 'Pagina’s',
     description:
-      'De hero van de startpagina, losse albums, subpagina’s en inhoudspagina’s. Sleep om te herschikken; wijzigingen staan online zodra ze zijn opgeslagen.',
+      'De hero van de startpagina, losse albums, pagina’s en inhoudspagina’s. Sleep om te herschikken; wijzigingen staan online zodra ze zijn opgeslagen.',
   },
 
   builder: {
@@ -57,17 +57,17 @@ export const pages: AdminDictionary['pages'] = {
     },
     /** The structure list on the left. */
     tree: 'Paginastructuur',
-    searchLabel: 'Albums of subpagina’s zoeken',
-    searchPlaceholder: 'Albums of subpagina’s zoeken…',
+    searchLabel: 'Albums of pagina’s zoeken',
+    searchPlaceholder: 'Albums of pagina’s zoeken…',
     clearSearch: 'Zoekopdracht wissen',
     homePage: 'Startpagina',
     heroPhotos: 'Hero-foto’s',
     menu: 'Menu',
     subpagesLive: (live: number, total: number) =>
-      `${live} van ${total} ${total === 1 ? 'subpagina' : 'subpagina’s'} online`,
+      `${live} van ${total} ${total === 1 ? 'pagina' : 'pagina’s'} online`,
     noMatches: 'Geen overeenkomende items.',
-    newSubpage: 'Nieuwe subpagina',
-    newPage: 'Nieuwe pagina',
+    newSubpage: 'Nieuwe pagina',
+    newPage: 'Nieuwe inhoudspagina',
     notInMenu: 'Niet in het menu',
     offMenuEmpty:
       'Pagina’s die alleen via hun link bereikbaar zijn. Sleep een pagina hierheen om die uit het menu te halen.',
@@ -85,9 +85,9 @@ export const pages: AdminDictionary['pages'] = {
       'Geen hero-foto’s ingesteld. Voeg foto’s toe om een hero-carrousel op de startpagina te tonen.',
   },
 
-  /** Seed values for a new subpage or section, written into gallery.yaml. */
+  /** Seed values for a new page or section, written into gallery.yaml. */
   defaults: {
-    subpageName: (n: number) => `Nieuwe subpagina ${n}`,
+    subpageName: (n: number) => `Nieuwe pagina ${n}`,
     sectionTitle: 'Nieuwe sectie',
   },
 
@@ -107,7 +107,7 @@ export const pages: AdminDictionary['pages'] = {
     editDetails: 'Details bewerken',
     removeAlbum: 'Album verwijderen',
     passwordProtected: 'Met wachtwoord beveiligd',
-    customHero: 'Eigen hero-foto ingesteld',
+    customHero: 'Eigen omslagfoto ingesteld',
     /** `label` is one of the `sort` labels. */
     photoOrder: (label: string) => `Fotovolgorde: ${label}`,
     /** English deliberately says "photos" for every count here. */
@@ -124,7 +124,7 @@ export const pages: AdminDictionary['pages'] = {
     visibility: 'Zichtbaarheid',
     unlisted: 'Niet vermeld',
     unlistedDesc:
-      'Alleen bereikbaar via een directe link — niet in het menu, op de homepage, in de sitemap of op de kaart. De URL is raadbaar; voeg een wachtwoord toe voor alles wat privé moet blijven.',
+      'Alleen bereikbaar via een directe link — niet in het menu, op de homepage, in de sitemap of op de kaart. Een URL op basis van de titel is te raden, een willekeurige link nauwelijks; voeg een wachtwoord toe voor alles wat privé moet blijven.',
     listedDesc:
       'Wordt net als elk ander los album getoond in het menu, op de homepage en in de sitemap.',
     heading: 'Albumdetails bewerken',
@@ -147,25 +147,17 @@ export const pages: AdminDictionary['pages'] = {
     layoutOverride: 'Afwijkende opmaak (experimenteel)',
     layoutOverrideAria: 'Afwijkende opmaak',
     layoutInherit: 'Overnemen van pagina- / algemene instellingen',
-    layouts: {
-      masonry: 'Masonry',
-      uniform: 'Gelijkmatig raster',
-      showcase: 'Etalage',
-      filmstrip: 'Filmstrook',
-      editorialFlow: 'Redactionele stroom',
-      justified: 'Uitgevuld (experimenteel)',
-    },
     coverFocalPoint: 'Brandpunt van de omslag (experimenteel)',
     /** "50% 25%" and "top" are CSS values; keep them as written. */
     coverFocalPointPlaceholder:
       'bijv. “50% 25%” of “top” — waar de uitsnede van de omslag aan vastzit',
-    customHero: 'Eigen hero-foto',
-    heroAlt: 'Hero-foto',
-    removeHero: 'Eigen hero-foto verwijderen',
+    customHero: 'Eigen omslagfoto',
+    heroAlt: 'Omslag',
+    removeHero: 'Eigen omslagfoto verwijderen',
     defaultCover: 'Standaard albumomslag in gebruik',
-    pickHeroTitle: (name: string) => `Hero-foto kiezen voor ${name}`,
+    pickHeroTitle: (name: string) => `Omslagfoto kiezen voor ${name}`,
     changeImage: 'Foto wijzigen',
-    pickHero: 'Hero-foto kiezen',
+    pickHero: 'Omslagfoto kiezen',
     photoOrder: 'Fotovolgorde',
     manualHint:
       'Vastgezette foto’s komen eerst, in de volgorde die jij instelt. De rest volgt in de Immich-volgorde van het album.',
@@ -180,7 +172,7 @@ export const pages: AdminDictionary['pages'] = {
   },
 
   subpageDrawer: {
-    breadcrumb: 'Pagina’s / Subpagina’s',
+    breadcrumb: 'Pagina’s',
     untitled: 'Naamloze pagina',
     /** Accessible name of the Edit / Live Preview switch. */
     view: 'Weergave',
@@ -213,15 +205,6 @@ export const pages: AdminDictionary['pages'] = {
     pagePassword: 'Paginawachtwoord',
     layoutStyle: 'Opmaakstijl van de pagina',
     layoutStyleAria: 'Opmaakstijl van de pagina',
-    /** Options of a <select>: plain text only. */
-    layouts: {
-      masonry: 'Masonry-raster (dynamische hoogte)',
-      uniform: 'Gelijkmatig raster (vierkante tegels)',
-      showcase: 'Etalage (eerste foto uitgelicht)',
-      filmstrip: 'Filmstrook (horizontaal scrollen)',
-      editorialFlow: 'Redactionele stroom',
-      essay: 'Fotoessaymodus (verhaaleditor)',
-    },
     zoomInherit: 'Overnemen van de site-instellingen',
     zoomHint:
       'Geldt voor elk album op deze pagina dat geen eigen instelling heeft. De schakelaar voor de hele site staat onder Instellingen › Algemeen.',
@@ -231,9 +214,9 @@ export const pages: AdminDictionary['pages'] = {
     photoGrid: 'Fotoraster (albums op deze pagina)',
     photoGridHint:
       'Hoe de foto’s in elk album op deze pagina worden ingedeeld. Laat beide leeg om Instellingen › Raster te volgen; een afzonderlijk album kan dit in gallery.yaml nog steeds overschrijven.',
-    essayHeading: 'Verhaal- & fotoessaybouwer',
+    essayHeading: 'Verhaalbouwer',
     essayIntro: 'Stel tekst, citaten en paginabrede of brede foto’s visueel samen.',
-    essayPickerTitle: 'Foto voor het fotoessay kiezen',
+    essayPickerTitle: 'Foto voor het verhaal kiezen',
     albums: 'Albums op deze pagina',
     addAlbum: '+ Album toevoegen',
     noAlbums:
@@ -245,11 +228,11 @@ export const pages: AdminDictionary['pages'] = {
     sectionDesc: 'Beschrijving van de sectie',
     addSection: '+ Sectie toevoegen',
     addLooseAlbum: '+ Los album toevoegen',
-    deleteSubpage: 'Subpagina verwijderen',
+    deleteSubpage: 'Pagina verwijderen',
     done: 'Klaar',
   },
 
-  /** The subpage drawer's Live Preview tab. */
+  /** The page drawer's Live Preview tab. */
   preview: {
     note: 'Weergegeven met de opgeslagen themavoorinstelling van de site, op desktopbreedte. Niet-opgeslagen wijzigingen in dit paneel zie je hier; themawijzigingen pas zodra ze in Instellingen zijn opgeslagen.',
     settingsFailed: (error: string) =>
@@ -260,7 +243,7 @@ export const pages: AdminDictionary['pages'] = {
   tiles: {
     reorderHero: (n: number) => `Hero-foto ${n} herschikken`,
     reorder: (name: string) => `${name} herschikken`,
-    /** Stands in for a subpage without a name in `reorder`. */
+    /** Stands in for a page without a name in `reorder`. */
     pageFallback: 'pagina',
     dragToReorder: 'Sleep om te herschikken',
     disabledTitle: 'Pagina is uitgeschakeld',
@@ -271,8 +254,8 @@ export const pages: AdminDictionary['pages'] = {
     off: 'Uit',
     missing: 'Ontbreekt',
     draft: 'Concept',
-    /** Tag marking a content page, as opposed to a subpage; one short word. */
-    page: 'Pagina',
+    /** Tag marking a content page, as opposed to a page that groups albums. */
+    page: 'Inhoud',
     passwordProtected: 'Met wachtwoord beveiligd',
     password: 'Wachtwoord',
     editPage: 'Pagina bewerken',
@@ -280,7 +263,7 @@ export const pages: AdminDictionary['pages'] = {
   },
 
   newPage: {
-    title: 'Nieuwe pagina',
+    title: 'Nieuwe inhoudspagina',
     titleLabel: 'Titel',
     titlePlaceholder: 'bijv. Tarieven',
     url: 'URL',
@@ -288,7 +271,7 @@ export const pages: AdminDictionary['pages'] = {
     slugPlaceholder: 'tarieven',
     /** Shown as "/slug" while no slug is typed; same rules as above. */
     slugFallback: 'slug',
-    exists: (slug: string) => `Er bestaat al een pagina “${slug}”.`,
+    exists: (slug: string) => `Er bestaat al een inhoudspagina “${slug}”.`,
     hint: 'Begint leeg en als concept. Je kunt de URL later wijzigen.',
     showInMenu: 'In het menu tonen',
     showInMenuDesc: 'Zet de pagina achteraan in het menu; opgeslagen met “Wijzigingen opslaan”.',
@@ -325,7 +308,7 @@ export const pages: AdminDictionary['pages'] = {
     openLive: 'De live pagina in een nieuw tabblad openen',
     title: 'Titel',
     url: 'URL',
-    slugHint: 'Gecontroleerd tegen subpagina’s, albums, journalverhalen en ingebouwde routes.',
+    slugHint: 'Gecontroleerd tegen pagina’s, albums, journalverhalen en ingebouwde routes.',
     showInMenu: 'In het menu tonen',
     inMenuDesc:
       'Staat in het menu in de kop. Sleep de pagina in de structuurlijst om die te verplaatsen.',
@@ -343,7 +326,7 @@ export const pages: AdminDictionary['pages'] = {
     savePage: 'Pagina opslaan',
   },
 
-  /** The photo-essay block editor in a subpage set to "Photo Essay Mode". */
+  /** The story block editor in a page set to "Story Layout". */
   essay: {
     /** The starting story of an empty essay: a "# heading" and a paragraph. */
     starterTitle: 'Titel',
@@ -364,7 +347,7 @@ export const pages: AdminDictionary['pages'] = {
       album: '+ Album',
       map: '+ Kaart',
     },
-    empty: 'Nog geen verhaalblokken. Bouw je fotoessay met de knoppen hierboven!',
+    empty: 'Nog geen verhaalblokken. Bouw je verhaal met de knoppen hierboven!',
     moveUp: 'Omhoog',
     moveDown: 'Omlaag',
     deleteBlock: 'Blok verwijderen',
@@ -434,7 +417,7 @@ export const pages: AdminDictionary['pages'] = {
     invalid: (slug: string) =>
       `“${slug}” is geen geldige slug: gebruik alleen letters, cijfers, “-” en “_”.`,
     reserved: (slug: string) => `/${slug} is een ingebouwde route van de site.`,
-    subpage: (slug: string) => `/${slug} is al een subpagina.`,
+    subpage: (slug: string) => `/${slug} is al een pagina.`,
     album: (slug: string) => `/${slug} is al een los album.`,
     journal: (slug: string) => `Een journalverhaal gebruikt de slug “${slug}” al.`,
   },

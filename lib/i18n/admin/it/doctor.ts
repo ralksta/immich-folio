@@ -133,8 +133,8 @@ export const doctor: AdminDictionary['doctor'] = {
   albumSlugs: {
     /** Where a set of albums shares one URL prefix — the top level of the site… */
     contextStandalone: 'album di gallery.yaml',
-    /** …or a subpage. */
-    contextSubpage: (name: string) => `sottopagina «${name}»`,
+    /** …or a page. */
+    contextSubpage: (name: string) => `pagina «${name}»`,
     collision: (context: string, names: string[], slug: string) =>
       `${context}: «${names.join('» e «')}» puntano tutti a /${slug}`,
     errorTitle: (n: number) =>
@@ -150,7 +150,7 @@ export const doctor: AdminDictionary['doctor'] = {
   passwords: {
     /** Where a password lives, listed in the findings below. */
     labelSite: 'Password del sito',
-    labelSubpage: (slug: string) => `Sottopagina ${slug}`,
+    labelSubpage: (slug: string) => `Pagina ${slug}`,
     labelAlbum: (slug: string) => `Album ${slug}`,
     labelJournal: (slug: string) => `Diario ${slug}`,
     bcryptTitle: (n: number) => `${n} password ${n === 1 ? 'usa' : 'usano'} ancora bcrypt`,

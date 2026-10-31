@@ -16,6 +16,7 @@ Immich Folio includes a built-in visual admin panel at `/admin` that lets you ma
 
 - [Enabling the Admin Panel](#enabling-the-admin-panel)
 - [Layout](#layout)
+- [Vocabulary](#vocabulary)
 - [Pages](#pages)
 - [Journal](#journal)
 - [Settings](#settings)
@@ -38,7 +39,7 @@ Then navigate to `http://your-site/admin`. The panel is completely disabled if n
 The [setup wizard](deployment.md#first-run-setup) can set the password instead, storing it as an scrypt hash in `content/install.json`. An `ADMIN_PASSWORD` environment variable takes precedence if both are present.
 
 > [!IMPORTANT]
-> The admin password is separate from any album or subpage passwords. It controls access to the entire gallery configuration.
+> The admin password is separate from any album or page passwords. It controls access to the entire gallery configuration.
 
 ## Layout
 
@@ -60,9 +61,26 @@ Unsaved changes raise a save bar pinned to the bottom of the viewport, so the Sa
 
 `/admin` opens on the overview: what needs attention (unread messages, doctor warnings and errors, each linking to where it is fixed), the site at a glance (published pages, hero photos, journal entries and drafts, views in the last seven days) and a few quick actions. Navigation sits in a sidebar grouped into Content, Visitors, Site and System; View site, Backups, Reload and Sign out are at its foot. See [the UX concept](admin-ux-concept.md) for where this is going.
 
+## Vocabulary
+
+One concept, one word. The panel, this documentation and the live site use these names; the YAML keys are unchanged, so every existing `gallery.yaml` keeps working.
+
+| Concept                       | Name in the panel | YAML key               |
+| ----------------------------- | ----------------- | ---------------------- |
+| A named group of albums       | **Page**          | `subpages`             |
+| One Immich album              | **Album**         | `albums`               |
+| A heading inside a page       | **Section**       | `sections`             |
+| A dated post under `/journal` | **Journal entry** | `content/journal/*.md` |
+| A page rendered as a story    | **Story layout**  | `grid.layout: essay`   |
+| An album's thumbnail          | **Cover photo**   | `heroImage`            |
+| Homepage hero images          | **Hero**          | `hero`                 |
+| Proofing picks                | **Selection**     | `proofing`             |
+
+The visitor-facing pages call a page a _collection_ in the header kicker and the map's meta line — that is site copy, not a second concept.
+
 ## Pages
 
-The page builder has two columns: on the left the whole structure (home page hero, every subpage with its cover, state and album count, standalone albums), always visible and drag-sortable; on the right the selected entry, edited in place. A subpage's panel switches between **Edit** and **Live preview** in its header.
+The page builder has two columns: on the left the whole structure (home page hero, every page with its cover, state and album count, standalone albums), always visible and drag-sortable; on the right the selected entry, edited in place. A page's panel switches between **Edit** and **Live preview** in its header.
 A visual tree of your gallery structure. Each item opens a slide-over drawer with its settings.
 
 ### Hero Images
@@ -85,29 +103,29 @@ Each album supports:
 - **Grid override** _(experimental)_ — a different grid layout for this album alone (the panel exposes the layout; columns, gap and aspect ratio can be set in `gallery.yaml`)
 - **Cover focal point** _(experimental)_ — which part of the cover survives the crop
 
-### Subpages
+### Pages
 
-Group albums under custom URL paths (e.g. `/japan`, `/wedding-smith`).
+Group albums under custom URL paths (e.g. `/japan`, `/wedding-smith`). These are `subpages` in `gallery.yaml`; the panel calls them pages so one word names one concept.
 
 - **Name** — navigation label; the URL slug is derived from it
 - **Title / Subtitle** — page heading and subline
-- **Password** — protect the whole subpage
-- **Page Layout Style** — the layout the photos on this page are shown in (masonry, uniform, showcase, …), or essay mode
-- **Album Cover Grid** — how the album covers are tiled: columns (empty = the site-wide grid setting) and gap in px (empty = the theme's own cover spacing). Hidden in essay mode
+- **Password** — protect the whole page
+- **Page Layout Style** — the layout the photos on this page are shown in (masonry, uniform, showcase, …), or the **story layout**
+- **Album Cover Grid** — how the album covers are tiled: columns (empty = the site-wide grid setting) and gap in px (empty = the theme's own cover spacing). Hidden in the story layout
 - **Photo Grid (Albums On This Page)** — columns and gap for the photos inside those albums; empty follows _Settings › Grid_. Separate from the cover grid: one field used to size both until [#523](https://github.com/ralksta/immich-folio/issues/523)
 - **Enabled** — take the page offline without deleting it
 - **Unlisted** _(experimental)_ — reachable by direct link, absent from the navigation, homepage, sitemap and map
-- **Essay** — turn the page into a photo essay, with a block editor for the text
+- **Story layout** — turn the page into a scrolling story, with a block editor for the text
 
 A live preview shows the page as visitors will see it.
 
 ### Sections
 
-Within a subpage, albums can be grouped into named sections, which renders a table of contents with anchor links.
+Within a page, albums can be grouped into named sections, which renders a table of contents with anchor links.
 
 ### Reordering
 
-Subpages, albums and sections are reordered in place; the order in the panel is the order on the site.
+Pages, albums and sections are reordered in place; the order in the panel is the order on the site.
 
 ## Journal
 
@@ -130,7 +148,7 @@ Eight sections, each at its own URL (`/admin/settings/theme`, …):
 | **Grid**                  | Layout algorithm, columns, gap, aspect ratio                                                                                        |
 | **Footer**                | Name, Instagram, email, website, and the header navigation links                                                                    |
 | **Legal**                 | Impressum toggle and all legal fields, the contact form and its notification, the privacy policy                                    |
-| **SEO**                   | Meta title, subpage title template, description, noindex, nofollow                                                                  |
+| **SEO**                   | Meta title, page title template, description, noindex, nofollow                                                                     |
 | **Security & Protection** | Right-click and image-drag deterrents, lightbox watermark (text, position, opacity)                                                 |
 | **About**                 | Portrait asset, name, location, gear list, and the biography — written to `content/about.md`                                        |
 
@@ -250,7 +268,7 @@ This is useful after making external changes to config files or when Immich data
 
 The status badge in the header opens a short summary: whether Immich answers, whether `gallery.yaml` and `settings.yaml` parse, the number of cached entries, and the backup count with the timestamp of the most recent one. `settings.yaml` is optional, so its absence is not a fault — only a file that exists and cannot be parsed counts as invalid. A check that could not run (an expired session, for example) is reported as such rather than as an outage.
 
-The **Diagnostics** tab in the top bar leads to the full page at `/admin/diagnostics`. Anything that wants a look is listed first; the checks that passed follow, grouped into connection, security and content. Each finding that wants a look links to where it is fixed — a finding about one album opens the subpage it is published on (or, for a standalone album, the album itself). The page also manages backups and clears the cache, and **Copy report** puts the findings on the clipboard as Markdown, ready for a GitHub issue.
+The **Diagnostics** tab in the top bar leads to the full page at `/admin/diagnostics`. Anything that wants a look is listed first; the checks that passed follow, grouped into connection, security and content. Each finding that wants a look links to where it is fixed — a finding about one album opens the page it is published on (or, for a standalone album, the album itself). The page also manages backups and clears the cache, and **Copy report** puts the findings on the clipboard as Markdown, ready for a GitHub issue.
 
 It also reports **alt text**. Folio has no alt-text field of its own: the Immich description of a photo becomes its alt text, as long as **Photo Description** is switched on under Settings → General. The page counts the published photos that have no description and lists them by album, each linking to the photo in Immich. Add the description there and press **Reload**. The links use Immich's own **External domain** (Administration → Settings → Server in Immich) when it is set. Otherwise they fall back to the address Folio reaches Immich at, which is often an internal Docker name your browser cannot open. Missing alt text does not colour the status badge — most libraries have some, and a badge that is never green stops being read.
 

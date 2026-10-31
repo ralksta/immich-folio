@@ -135,7 +135,7 @@ export const doctor: AdminDictionary['doctor'] = {
 
   albumSlugs: {
     contextStandalone: 'albums in gallery.yaml',
-    contextSubpage: (name: string) => `subpagina “${name}”`,
+    contextSubpage: (name: string) => `pagina “${name}”`,
     collision: (context: string, names: string[], slug: string) =>
       `${context}: “${names.join('” en “')}” verwijzen allemaal naar /${slug}`,
     errorTitle: (n: number) =>
@@ -150,7 +150,7 @@ export const doctor: AdminDictionary['doctor'] = {
 
   passwords: {
     labelSite: 'Sitewachtwoord',
-    labelSubpage: (slug: string) => `Subpagina ${slug}`,
+    labelSubpage: (slug: string) => `Pagina ${slug}`,
     labelAlbum: (slug: string) => `Album ${slug}`,
     labelJournal: (slug: string) => `Journalverhaal ${slug}`,
     bcryptTitle: (n: number) =>

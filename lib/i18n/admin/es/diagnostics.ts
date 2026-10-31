@@ -126,8 +126,8 @@ export const diagnostics: AdminDictionary['diagnostics'] = {
     cacheTitle: (n: number) =>
       `La caché en memoria contiene ${n} ${n === 1 ? 'elemento' : 'elementos'}`,
     cacheDetail:
-      'Listas de álbumes y metadatos de fotos de Immich. Vaciarla solo hace que las siguientes visitas a las páginas sean más lentas.',
-    clearing: 'Vaciando…',
-    clearCache: 'Vaciar caché',
+      'Listas de álbumes y metadatos de fotos de Immich. Recargar vacía la caché y vuelve a leer la configuración; las siguientes visitas serán más lentas, nada más.',
+    clearing: 'Recargando…',
+    clearCache: 'Recargar',
   },
 };

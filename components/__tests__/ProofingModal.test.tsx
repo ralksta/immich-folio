@@ -54,21 +54,21 @@ describe('ProofingModal copy buttons', () => {
   it('shows the link to copy by hand when there is no clipboard (plain http)', () => {
     setClipboard(undefined);
     render(<ProofingModal />);
-    fireEvent.click(screen.getByText('Copy Shareable Link'));
+    fireEvent.click(screen.getByText('Copy shareable link'));
     expect((screen.getByLabelText('Copy this link') as HTMLTextAreaElement).value).toBe(URL_);
   });
 
   it('shows the list to copy by hand when there is no clipboard', () => {
     setClipboard(undefined);
     render(<ProofingModal />);
-    fireEvent.click(screen.getByText('Copy Text List (#1, #2...)'));
+    fireEvent.click(screen.getByText('Copy text list (#1, #2...)'));
     expect((screen.getByLabelText('Copy this list') as HTMLTextAreaElement).value).toBe(LIST);
   });
 
   it('falls back as well when the browser refuses the write', async () => {
     setClipboard({ writeText: vi.fn(() => Promise.reject(new Error('NotAllowedError'))) });
     render(<ProofingModal />);
-    fireEvent.click(screen.getByText('Copy Shareable Link'));
+    fireEvent.click(screen.getByText('Copy shareable link'));
     await waitFor(() => expect(screen.getByLabelText('Copy this link')).toBeTruthy());
   });
 
@@ -76,8 +76,8 @@ describe('ProofingModal copy buttons', () => {
     const writeText = vi.fn(() => Promise.resolve());
     setClipboard({ writeText });
     render(<ProofingModal />);
-    fireEvent.click(screen.getByText('Copy Shareable Link'));
-    await waitFor(() => expect(screen.getByText('Link Copied!')).toBeTruthy());
+    fireEvent.click(screen.getByText('Copy shareable link'));
+    await waitFor(() => expect(screen.getByText('Link copied!')).toBeTruthy());
     expect(writeText).toHaveBeenCalledWith(URL_);
     expect(screen.queryByLabelText('Copy this link')).toBeNull();
   });
@@ -87,13 +87,13 @@ describe('ProofingModal email to photographer (#736)', () => {
   it('hides the email action when no recipient is configured', () => {
     setContext({ allowMailto: true, encodedMailto: undefined });
     render(<ProofingModal />);
-    expect(screen.queryByText(/Send Email/)).toBeNull();
+    expect(screen.queryByText(/Send email/)).toBeNull();
   });
 
   it('hides the email action when the site turned it off', () => {
     setContext({ allowMailto: false, encodedMailto: encodeEmail(RECIPIENT) });
     render(<ProofingModal />);
-    expect(screen.queryByText(/Send Email/)).toBeNull();
+    expect(screen.queryByText(/Send email/)).toBeNull();
   });
 
   it('addresses the compose to the configured recipient', () => {
@@ -101,7 +101,7 @@ describe('ProofingModal email to photographer (#736)', () => {
     const location = { href: '' };
     vi.stubGlobal('location', location);
     render(<ProofingModal />);
-    fireEvent.click(screen.getByText(/Send Email/));
+    fireEvent.click(screen.getByText(/Send email/));
     expect(location.href.startsWith(`mailto:${RECIPIENT}?subject=`)).toBe(true);
   });
 
@@ -110,7 +110,7 @@ describe('ProofingModal email to photographer (#736)', () => {
     const location = { href: '' };
     vi.stubGlobal('location', location);
     render(<ProofingModal />);
-    fireEvent.click(screen.getByText(/Send Email/));
+    fireEvent.click(screen.getByText(/Send email/));
     // The `?` and `=` are escaped, so the draft gains no bcc field.
     expect(location.href.startsWith('mailto:a@b.c%3Fbcc%3Devil@x.y?subject=')).toBe(true);
   });

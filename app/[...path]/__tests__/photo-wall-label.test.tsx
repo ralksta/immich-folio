@@ -117,7 +117,7 @@ describe('photo wall label', () => {
   it('keeps a photo’s album number when the favourites filter hides the others', async () => {
     store.set('folio_fav_kloster', JSON.stringify(['a3']));
     const { container } = render(<PhotoGrid assets={ASSETS} proofing albumName="Kloster" />);
-    fireEvent.click(await screen.findByText('❤️ 1 Selected'));
+    fireEvent.click(await screen.findByText('1 selected'));
     const numbers = labels(container).map(
       (l) => l.querySelector('.photo-grid__label-no')?.textContent,
     );

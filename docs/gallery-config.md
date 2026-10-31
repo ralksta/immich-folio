@@ -23,6 +23,9 @@ cp content/settings.yaml.example content/settings.yaml
 
 `content/gallery.yaml` holds the **structure** of the site: hero assets, albums, subpages and sections, per-album settings and content pages.
 
+> [!NOTE]
+> The admin panel calls a `subpages` entry a **page**, and an album's `heroImage` its **cover photo**. The YAML keys keep their old names, so existing files need no change. See [Vocabulary](admin-panel.md#vocabulary).
+
 **Contents:**
 
 - [Hero Images](#hero-images)
@@ -118,7 +121,7 @@ subpages:
 subpages:
   - name: Client Preview
     hidden: true # unlisted: not in the nav, still reachable at /client-preview
-    proofing: true # visitors can mark favourites and export the selection
+    proofing: true # visitors can mark favorites and export the selection
     password: 'clientpass123'
     albums:
       - 55555555-5555-5555-5555-555555555555

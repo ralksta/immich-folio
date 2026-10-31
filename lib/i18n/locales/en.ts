@@ -27,8 +27,8 @@ export const en = {
 
   common: {
     backTo: (label: string) => `Back to ${label}`,
-    backToGallery: 'Back to Gallery',
-    backToJournal: 'Back to Journal',
+    backToGallery: 'Back to gallery',
+    backToJournal: 'Back to journal',
     /** Footer contact links, read out by screen readers. */
     email: 'Email',
     website: 'Website',
@@ -74,7 +74,7 @@ export const en = {
     notAvailable: 'This download is not available.',
     rateLimited: 'Too many download requests. Please wait a moment and try again.',
     immichUnavailable: 'The photo library is unavailable right now. Please try again shortly.',
-    back: 'Back to the gallery',
+    back: 'Back to gallery',
     limitReached: 'The download limit for this link has been reached.',
   },
 
@@ -133,15 +133,15 @@ export const en = {
 
   journal: {
     title: 'Journal',
-    kicker: 'Stories & Essays',
-    subtitle: 'Photo essays, visual stories, and field notes.',
+    kicker: 'Stories & notes',
+    subtitle: 'Visual stories and field notes.',
     entryDescription: 'Journal entry',
     empty: 'No journal entries published yet.',
-    readStory: 'Read Story →',
+    readStory: 'Read story',
     minRead: (n: number) => `${n} min read`,
     draft: 'Draft',
     by: (author: string) => `by ${author}`,
-    notFound: 'Not Found',
+    notFound: 'Not found',
   },
 
   lightbox: {
@@ -152,17 +152,17 @@ export const en = {
     close: 'Close',
     closeTitle: 'Close (Esc)',
     previous: 'Previous photo',
-    previousTitle: 'Previous photo (Left arrow)',
+    previousTitle: 'Previous photo (left arrow)',
     next: 'Next photo',
-    nextTitle: 'Next photo (Right arrow)',
+    nextTitle: 'Next photo (right arrow)',
     toggleInfo: 'Toggle photo info',
     toggleInfoTitle: 'Toggle photo info (i)',
-    hideInfo: 'Hide Info',
+    hideInfo: 'Hide info',
     info: 'Info',
     loading: 'Loading...',
     camera: 'Camera',
     lens: 'Lens',
-    focalLength: 'Focal Length',
+    focalLength: 'Focal length',
     aperture: 'Aperture',
     shutter: 'Shutter',
     iso: 'ISO',
@@ -208,32 +208,32 @@ export const en = {
     removeFromFavorites: 'Remove from favorites',
     saved: 'Saved',
     favorite: 'Favorite',
-    showAll: 'Show All',
+    showAll: 'Show all',
     /** Shown in place of the grid when the filter is on and nothing is selected. */
     filterEmpty: 'No photos selected.',
-    selected: (n: number) => `❤️ ${n} Selected`,
-    shareExport: 'Share & Export',
-    modalTitle: (n: number) => `❤️ Selection (${n})`,
+    selected: (n: number) => `${n} selected`,
+    shareExport: 'Share & export',
+    modalTitle: (n: number) => `Selection (${n})`,
     closeModal: 'Close modal',
     intro: (n: number) =>
       `You have selected ${plural(n, 'photo', 'photos')}. Choose an export option below to share your selection:`,
-    copyLink: 'Copy Shareable Link',
-    linkCopied: 'Link Copied!',
-    copyList: 'Copy Text List (#1, #2...)',
-    listCopied: 'List Copied!',
+    copyLink: 'Copy shareable link',
+    linkCopied: 'Link copied!',
+    copyList: 'Copy text list (#1, #2...)',
+    listCopied: 'List copied!',
     /** Shown when the browser offers no clipboard (plain http) — copy by hand. */
     copyManualLink: 'Copy this link',
     copyManualList: 'Copy this list',
-    sendEmail: '✉️ Send Email to Photographer',
+    sendEmail: 'Send email to photographer',
     downloadSelected: 'Download selected (.zip)',
-    clearSelection: 'Clear Selection',
+    clearSelection: 'Clear selection',
     confirmClear: 'Clear all selected favorites?',
     listEmpty: (albumName: string) => `${albumName}: No photos selected.`,
     listSummary: (albumName: string, count: number, indices: string) =>
-      `${albumName} — Selected Photos (${count}): ${indices}`,
-    mailSubject: (n: number) => `Photo Selection (${plural(n, 'item', 'items')})`,
+      `${albumName} — Selected photos (${count}): ${indices}`,
+    mailSubject: (n: number) => `Photo selection (${plural(n, 'item', 'items')})`,
     mailBody: (list: string, url: string) =>
-      `Hello,\n\nHere is my photo selection:\n\n${list}\n\nShare Link: ${url}\n\nBest regards,`,
+      `Hello,\n\nHere is my photo selection:\n\n${list}\n\nShare link: ${url}\n\nBest regards,`,
   },
 
   /** Client proofing links (/proof/<token>). */
@@ -262,18 +262,18 @@ export const en = {
   },
 
   legal: {
-    navLabel: 'Legal Notice',
-    title: 'Legal Notice',
+    navLabel: 'Legal notice',
+    title: 'Legal notice',
     subtitle: 'Information pursuant to § 5 DDG',
     address: 'Address',
     contact: 'Contact',
     email: 'Email',
     phone: 'Phone',
     contactForm: 'Contact form',
-    taxSection: 'Tax Information',
+    taxSection: 'Tax information',
     taxId: 'Tax number',
     vatId: 'VAT ID',
-    extraInfo: 'Additional Information',
+    extraInfo: 'Additional information',
   },
 
   contact: {
@@ -296,6 +296,6 @@ export const en = {
 
   privacy: {
     navLabel: 'Privacy',
-    title: 'Privacy Policy',
+    title: 'Privacy policy',
   },
 };

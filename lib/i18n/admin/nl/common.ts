@@ -19,4 +19,26 @@ export const common: AdminDictionary['common'] = {
   none: 'Geen',
   unknown: 'Onbekend',
   errorWith: (message: string) => `Fout: ${message}`,
+  /**
+   * The photo grid layouts, keyed by the id written to `grid.layout`
+   * (lib/admin/layouts.ts).
+   */
+  layouts: {
+    masonry: { label: 'Masonry', desc: 'Dynamische, verspringende kolommen in Pinterest-stijl' },
+    uniform: { label: 'Gelijkmatig raster', desc: 'Strak raster met gelijke beeldverhouding' },
+    showcase: { label: 'Etalage', desc: 'Uitgelichte foto’s gemengd met kleinere tegels' },
+    filmstrip: { label: 'Filmstrook', desc: 'Horizontaal scrollbare filmstrook als tijdlijn' },
+    'editorial-flow': {
+      label: 'Redactionele stroom',
+      desc: 'Verhaalopmaak als in een tijdschrift, met wisselende fotoformaten',
+    },
+    justified: {
+      label: 'Uitgevuld (experimenteel)',
+      desc: 'Rijen van gelijke hoogte over de volle breedte',
+    },
+    essay: {
+      label: 'Verhaallayout',
+      desc: 'Tekst, citaten en foto’s samengevoegd tot één doorlopend verhaal',
+    },
+  },
 };
