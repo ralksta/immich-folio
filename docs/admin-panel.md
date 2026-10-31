@@ -95,6 +95,8 @@ Each album supports:
 
 - **Title override** — a display name instead of the Immich album name
 - **Description** — shown below the album title
+- **Unlisted** — reachable at its own URL, but absent from the menu, homepage, sitemap and map. Unlisting is not access control; add a password for anything private
+- **Link** — the album's public address, with a copy button and a **Random link** button for an unguessable slug. Changing it breaks existing links
 - **Password** — protect a single album (written as an scrypt hash)
 - **Cover image** — override the album cover with any asset
 - **Photo order** — Immich order, newest, oldest, filename, or **Manual** with a drag & drop editor
@@ -112,7 +114,7 @@ Group albums under custom URL paths (e.g. `/japan`, `/wedding-smith`). These are
 - **Album Cover Grid** — how the album covers are tiled: columns (empty = the site-wide grid setting) and gap in px (empty = the theme's own cover spacing). Hidden in the story layout
 - **Photo Grid (Albums On This Page)** — columns and gap for the photos inside those albums; empty follows _Settings › Grid_. Separate from the cover grid: one field used to size both until [#523](https://github.com/ralksta/immich-folio/issues/523)
 - **Enabled** — take the page offline without deleting it
-- **Hidden** _(experimental)_ — unlisted: reachable by direct link, absent from the navigation
+- **Unlisted** _(experimental)_ — reachable by direct link, absent from the navigation, homepage, sitemap and map
 - **Story layout** — turn the page into a scrolling story, with a block editor for the text
 
 A live preview shows the page as visitors will see it.
@@ -242,7 +244,7 @@ The admin panel works seamlessly with Docker deployments since the `content/` di
 ```yaml
 services:
   lightbox:
-    image: immich-folio
+    image: ghcr.io/ralksta/immich-folio:latest
     environment:
       - ADMIN_PASSWORD=your-secure-password
     volumes:

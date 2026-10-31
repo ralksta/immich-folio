@@ -32,6 +32,7 @@ import {
 } from './page-builder/SortableTiles';
 import PagePanel from './page-builder/PagePanel';
 import { isValidSlug } from '@/lib/journal';
+import { albumSlug } from '@/lib/config/schema';
 import NewPageDialog from './page-builder/NewPageDialog';
 import type { PageSummary, SlugTakenBy } from '@/lib/pages';
 import { findAlbumAddress } from './page-builder/findAlbumAddress';
@@ -320,6 +321,18 @@ export default function PageBuilder() {
   async function handleSave() {
     // Not reachable from the UI in this state, but Cmd+S still gets here.
     if (loadError) return;
+
+    // The server rejects a subpage with no albums and no sections. Catch it
+    // here so a restored draft that lost its last album says which page is
+    // wrong instead of failing with a 400 after a round trip. The editor's
+    // Discard button returns to the saved version in that case.
+    const emptyPages = gallery.subpages
+      .filter((sp) => sp.albums.length === 0 && !(sp.sections && sp.sections.length > 0))
+      .map((sp) => sp.title || sp.name || t.drag.untitled);
+    if (emptyPages.length > 0) {
+      setSaveStatus({ kind: 'error', message: t.pageNeedsAlbum(emptyPages.join(', ')) });
+      return;
+    }
 
     setSaving(true);
     setSaveStatus(null);
@@ -699,11 +712,28 @@ export default function PageBuilder() {
   function getEditingAlbumInfo(addr: ActiveEditAlbumAddress) {
     const album = ops.albumsAt(gallery, addr)?.[addr.albumIndex];
     if (!album) return null;
+    // The drawer shows the same slug the route will use: the custom one when
+    // set, otherwise the title's. A subpage album's address also carries its
+    // page, and only a standalone entry can choose the slug.
+    const displayName = album.title || getAlbumName(album.id);
+    const derivedSlug = albumSlug(displayName, album.id);
+    const effectiveSlug = album.slug || derivedSlug;
     return {
       album,
       name: getAlbumName(album.id),
       count: getAlbumCount(album.id),
       thumbnailId: getAlbumThumbnailId(album.id),
+      ...(addr.type === 'standalone'
+        ? {
+            link: {
+              path: `/${effectiveSlug}`,
+              slug: album.slug ?? '',
+              derived: derivedSlug,
+              onChange: (slug: string | undefined) =>
+                edit((g) => ops.updateAlbum(g, addr, addr.albumIndex, { slug })),
+            },
+          }
+        : {}),
       onUpdate: (updates: Partial<AlbumEntry>) =>
         edit((g) => ops.updateAlbum(g, addr, addr.albumIndex, updates)),
       onRemove: () => {
@@ -811,6 +841,7 @@ export default function PageBuilder() {
         onSave={handleSave}
         label={t.saveChanges}
         showPreview
+        onDiscard={discardDraft}
       />
 
       <DraftNotice
@@ -1169,6 +1200,7 @@ export default function PageBuilder() {
         return (
           <AlbumDrawer
             {...info}
+            showVisibility={editingAlbumAddress.type === 'standalone'}
             onClose={() => setEditingAlbumAddress(null)}
             onPickHero={setHeroPickerTarget}
             onEditOrder={setOrderEditorTarget}

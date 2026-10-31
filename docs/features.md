@@ -35,7 +35,7 @@ Everything Immich Folio does, grouped by what you are doing. The [README](../REA
 - **Markdown about page** — `content/about.md` with frontmatter for portrait, name, location, and gear list, editable from the admin panel
 - **Journal** — photo essays and travel stories at `/journal`, with drafts, per-entry passwords, cover images and reading times; new entries can start from a template (wedding, hiking, travel, …)
 - **Photo Essay mode** — long-form storytelling pages alternating text with fullbleed, paired and grid image layouts, facts lists, a slice of an album, and a map with the pins you choose — typed places, or photos placed by their GPS
-- **Unlisted pages** _(experimental)_ — reachable by direct link, absent from the navigation
+- **Unlisted pages and albums** _(experimental)_ — a page or standalone album reachable by its own direct link, absent from the navigation, homepage, sitemap and map; choose or randomly generate the album's slug, and add a password to make the link private
 - **Page on/off toggle** — take a page offline without deleting it
 - **External navigation links** _(experimental)_ — point the header at a shop, a blog, or a social profile
 - **Client proofing** — clients favorite photos and export the selection; picks stay in the visitor's browser and the URL, with nothing stored server-side (proofing links, below, do save them)

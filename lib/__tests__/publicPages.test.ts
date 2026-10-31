@@ -45,6 +45,19 @@ describe('publicPaths', () => {
     ]);
   });
 
+  it('leaves an unlisted standalone album out, but keeps its listed siblings', () => {
+    const paths = publicPaths(
+      site({
+        standaloneAlbums: [
+          { id: 'open', slug: 'portraits' },
+          { id: 'private', slug: 'client-preview', hidden: true },
+        ],
+      }),
+    );
+
+    expect(paths).toEqual(['/', '/portraits']);
+  });
+
   // ── Exclusions ────────────────────────────────────────────────
 
   it('yields nothing at all for a locked site', () => {

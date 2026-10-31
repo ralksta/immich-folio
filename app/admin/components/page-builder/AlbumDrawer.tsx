@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { DEFAULT_ALBUM_SORT } from '@/lib/albumSort';
+import { slugFieldValue } from '@/lib/journal';
 import { IconCamera, IconCopy, IconGripVertical, IconImage, IconTrash, IconX } from '../Icons';
 import { Listbox } from '../Listbox';
 import { sortOptions } from './sortOptions';
@@ -22,6 +23,31 @@ interface AlbumDrawerProps {
   onClose: () => void;
   onPickHero: (target: HeroPickerTarget | null) => void;
   onEditOrder: (target: OrderEditorTarget | null) => void;
+  /**
+   * Only standalone albums can be unlisted. A subpage album is hidden by
+   * hiding its page, so the control would be a no-op there.
+   */
+  showVisibility?: boolean;
+  /**
+   * The album's public address and, for standalone albums, the field that
+   * changes its slug. Undefined for an album inside a subpage, whose URL is
+   * built from the page and cannot be set here.
+   */
+  link?: {
+    path: string;
+    /** Custom slug, or '' while the derived one is used. */
+    slug: string;
+    /** The slug the title would produce, shown as the placeholder. */
+    derived: string;
+    onChange: (slug: string | undefined) => void;
+  };
+}
+
+/** Ten random base-36 characters, for a link that should not be guessable. */
+function randomSlug(): string {
+  const bytes = new Uint8Array(10);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => (b % 36).toString(36)).join('');
 }
 
 /**
@@ -39,12 +65,26 @@ export default function AlbumDrawer({
   onClose,
   onPickHero,
   onEditOrder,
+  showVisibility = false,
+  link,
 }: AlbumDrawerProps) {
   const dict = useAdminDictionary();
   const t = dict.pages.albumDrawer;
   const options = useMemo(() => sortOptions(dict.pages.sort), [dict]);
   const heroThumb = album.heroImage || thumbnailId;
   const cardRef = useModalDialog(onClose);
+  const [copied, setCopied] = useState(false);
+
+  async function copyLink() {
+    if (!link) return;
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}${link.path}`);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard blocked: the address is visible in the field to copy by hand.
+    }
+  }
 
   return (
     <div className="album-drawer-overlay open" onClick={() => onClose()}>
@@ -113,6 +153,79 @@ export default function AlbumDrawer({
                   rows={4}
                 />
               </div>
+
+              {link && (
+                <div className="admin-field">
+                  <label htmlFor="album-link">{t.link}</label>
+                  <div className="album-link-row">
+                    <span className="album-link-prefix" aria-hidden="true">
+                      /
+                    </span>
+                    <input
+                      id="album-link"
+                      value={link.slug}
+                      placeholder={link.derived}
+                      onChange={(e) => link.onChange(slugFieldValue(e.target.value) || undefined)}
+                      spellCheck={false}
+                      autoComplete="off"
+                      maxLength={64}
+                    />
+                    <button
+                      type="button"
+                      className="admin-btn admin-btn-sm"
+                      onClick={() => link.onChange(randomSlug())}
+                    >
+                      {t.randomLink}
+                    </button>
+                  </div>
+                  <div className="album-link-preview">
+                    <code>{link.path}</code>
+                    <button type="button" className="admin-btn admin-btn-sm" onClick={copyLink}>
+                      {copied ? t.linkCopied : t.copyLink}
+                    </button>
+                  </div>
+                  <span className="admin-field-hint">{t.linkHint}</span>
+                </div>
+              )}
+
+              {showVisibility && (
+                <div className="admin-field">
+                  <span className="admin-field-label">{t.visibility}</span>
+                  <button
+                    type="button"
+                    className={`admin-toggle-card ${album.hidden ? 'active' : ''}`}
+                    onClick={() => onUpdate({ hidden: album.hidden ? undefined : true })}
+                    aria-pressed={!!album.hidden}
+                    style={{
+                      padding: '10px 14px',
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div className="toggle-card-info" style={{ textAlign: 'left' }}>
+                      <span
+                        className="toggle-card-title"
+                        style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center' }}
+                      >
+                        {t.unlisted}
+                      </span>
+                      <span
+                        className="toggle-card-desc"
+                        style={{ fontSize: '0.8rem', display: 'block', opacity: 0.75 }}
+                      >
+                        {album.hidden ? t.unlistedDesc : t.listedDesc}
+                      </span>
+                    </div>
+                    <div className={`switch-toggle ${album.hidden ? 'on' : ''}`}>
+                      <span className="switch-slider" />
+                    </div>
+                  </button>
+                </div>
+              )}
 
               <div className="admin-field">
                 <label htmlFor="album-password">{t.passwordProtection}</label>

@@ -33,6 +33,7 @@ vi.mock('@/lib/auth', () => ({
 
 const config = vi.hoisted(() => ({
   subpages: [] as { slug: string; hidden?: boolean }[],
+  hiddenAlbums: [] as string[],
   seo: { noFollow: false },
 }));
 vi.mock('@/lib/config', async (importOriginal) => {
@@ -76,6 +77,7 @@ beforeEach(() => {
     { slug: 'private', hidden: true },
     { slug: 'handover', hidden: true },
   ];
+  config.hiddenAlbums = [];
   config.seo.noFollow = false;
   immich.isSubpageSlug.mockImplementation((slug: string) => slug in subpages);
   immich.getSubpageAlbums.mockImplementation(async (slug: string) => {
@@ -100,6 +102,14 @@ describe('hidden subpages stay out of search results', () => {
   it('keeps the site-wide nofollow on a hidden subpage', async () => {
     config.seo.noFollow = true;
     expect((await meta(['private'])).robots).toEqual({ index: false, follow: false });
+  });
+
+  it('marks an unlisted standalone album noindex too', async () => {
+    config.hiddenAlbums = [ICELAND.id];
+
+    expect((await meta(['iceland'])).robots).toEqual({ index: false, follow: true });
+    // A visible standalone album is untouched.
+    expect((await meta(['norway'])).robots).toBeUndefined();
   });
 
   it('leaves a visible subpage, its albums and standalone albums to the layout', async () => {

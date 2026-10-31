@@ -37,6 +37,8 @@ const everyOption: Required<Omit<AlbumEntryObject, 'grid'>> & Pick<AlbumEntryObj
   download: true,
   zoom: false,
   location: 'hidden',
+  hidden: true,
+  slug: 'client-preview',
   grid: { columns: 4, gap: 8, aspectRatio: '3/2', layout: 'masonry' },
 };
 

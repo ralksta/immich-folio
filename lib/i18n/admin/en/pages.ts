@@ -15,6 +15,9 @@ export const pages = {
   },
 
   builder: {
+    /** A subpage the server would refuse: it has no albums and no sections. */
+    pageNeedsAlbum: (pages: string) =>
+      `${pages} needs at least one album. Add one, or remove the page.`,
     albumListFailed: (error: string) =>
       `Immich albums did not load, so the album picker is empty. ${error}`,
     pageListFailed: (error: string) =>
@@ -97,6 +100,7 @@ export const pages = {
     removeAlbum: 'Remove album',
     passwordProtected: 'Password protected',
     customHero: 'Custom cover photo set',
+    unlisted: 'Unlisted standalone album',
     /** `label` is one of the `sort` labels. */
     photoOrder: (label: string) => `Photo order: ${label}`,
     /** English deliberately says "photos" for every count here. */
@@ -104,6 +108,11 @@ export const pages = {
   },
 
   albumDrawer: {
+    link: 'Link',
+    linkHint: 'This is the address visitors use. Leave the slug empty to derive it from the title.',
+    randomLink: 'Random link',
+    copyLink: 'Copy link',
+    linkCopied: 'Copied',
     heading: 'Edit Album Details',
     close: 'Close details',
     photos: (n: number) => `${n} ${n === 1 ? 'photo' : 'photos'}`,
@@ -117,6 +126,11 @@ export const pages = {
     downloads: 'Downloads',
     allowDownloads: 'Allow original downloads',
     allowDownloadsDesc: 'Visitors can download the whole album or their selected photos as a ZIP',
+    visibility: 'Visibility',
+    unlisted: 'Unlisted',
+    unlistedDesc:
+      'Reachable only by direct link — not in the menu, homepage, sitemap or map. The URL is guessable; add a password for anything private.',
+    listedDesc: 'Shown in the menu, homepage and sitemap, like every other standalone album.',
     zoomInherit: 'Inherit from page / site settings',
     zoomHint:
       "Lets visitors zoom into a photo in the viewer to check sharpness. JPEG and AVIF originals are shown without their GPS data; HEIC and RAW need Immich's full-size previews. PNG, WebP, GIF and photos edited in Immich are never zoomed. Applies where the album is listed here.",

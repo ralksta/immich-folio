@@ -162,6 +162,7 @@ export const shell: AdminDictionary['shell'] = {
 
   saveBar: {
     unsaved: 'Modifications non enregistrées',
+    discard: 'Annuler les modifications',
     preview: '↗ Aperçu du site',
     previewTitle: 'Ouvrir le site dans un nouvel onglet (sans cache)',
     saving: 'Enregistrement…',
