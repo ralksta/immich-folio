@@ -125,7 +125,7 @@ export const pages: AdminDictionary['pages'] = {
     visibility: 'Visibilidad',
     unlisted: 'No listado',
     unlistedDesc:
-      'Solo accesible mediante enlace directo: no aparece en el menú, la página de inicio, el sitemap ni el mapa. La URL es adivinable; añade una contraseña para lo que deba ser privado.',
+      'Solo accesible mediante enlace directo: no aparece en el menú, la página de inicio, el sitemap ni el mapa. Una URL basada en el título se puede adivinar, un enlace aleatorio apenas; añade una contraseña para lo que deba ser privado.',
     listedDesc:
       'Se muestra en el menú, la página de inicio y el sitemap, como cualquier otro álbum independiente.',
     heading: 'Editar detalles del álbum',

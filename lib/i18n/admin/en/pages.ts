@@ -129,7 +129,7 @@ export const pages = {
     visibility: 'Visibility',
     unlisted: 'Unlisted',
     unlistedDesc:
-      'Reachable only by direct link — not in the menu, homepage, sitemap or map. The URL is guessable; add a password for anything private.',
+      'Reachable only by direct link — not in the menu, homepage, sitemap or map. A title-based URL can be guessed, a random link hardly; add a password for anything private.',
     listedDesc: 'Shown in the menu, homepage and sitemap, like every other standalone album.',
     zoomInherit: 'Inherit from page / site settings',
     zoomHint:

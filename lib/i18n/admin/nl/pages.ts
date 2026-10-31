@@ -124,7 +124,7 @@ export const pages: AdminDictionary['pages'] = {
     visibility: 'Zichtbaarheid',
     unlisted: 'Niet vermeld',
     unlistedDesc:
-      'Alleen bereikbaar via een directe link — niet in het menu, op de homepage, in de sitemap of op de kaart. De URL is raadbaar; voeg een wachtwoord toe voor alles wat privé moet blijven.',
+      'Alleen bereikbaar via een directe link — niet in het menu, op de homepage, in de sitemap of op de kaart. Een URL op basis van de titel is te raden, een willekeurige link nauwelijks; voeg een wachtwoord toe voor alles wat privé moet blijven.',
     listedDesc:
       'Wordt net als elk ander los album getoond in het menu, op de homepage en in de sitemap.',
     heading: 'Albumdetails bewerken',
