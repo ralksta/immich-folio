@@ -198,7 +198,8 @@ describe('getMapData and hidden subpages', () => {
 describe('listedAlbumIds', () => {
   it('drops albums of offline and hidden subpages, keeps standalone and listed ones', () => {
     const ids = listedAlbumIds({
-      standaloneAlbums: ['s'],
+      standaloneAlbums: ['s', 'unlisted'],
+      hiddenAlbums: ['unlisted'],
       subpages: [
         { albumIds: ['v', 'shared'], enabled: true },
         { albumIds: ['off'], enabled: false },

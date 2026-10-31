@@ -172,6 +172,7 @@ export const shell: AdminDictionary['shell'] = {
 
   saveBar: {
     unsaved: 'Cambios sin guardar',
+    discard: 'Descartar cambios',
     preview: '↗ Previsualizar el sitio',
     previewTitle: 'Abrir el sitio en una pestaña nueva (sin caché)',
     saving: 'Guardando…',

@@ -77,6 +77,8 @@ Each album supports:
 
 - **Title override** — a display name instead of the Immich album name
 - **Description** — shown below the album title
+- **Unlisted** — reachable at its own URL, but absent from the menu, homepage, sitemap and map. Unlisting is not access control; add a password for anything private
+- **Link** — the album's public address, with a copy button and a **Random link** button for an unguessable slug. Changing it breaks existing links
 - **Password** — protect a single album (written as an scrypt hash)
 - **Cover image** — override the album cover with any asset
 - **Photo order** — Immich order, newest, oldest, filename, or **Manual** with a drag & drop editor
@@ -94,7 +96,7 @@ Group albums under custom URL paths (e.g. `/japan`, `/wedding-smith`).
 - **Album Cover Grid** — how the album covers are tiled: columns (empty = the site-wide grid setting) and gap in px (empty = the theme's own cover spacing). Hidden in essay mode
 - **Photo Grid (Albums On This Page)** — columns and gap for the photos inside those albums; empty follows _Settings › Grid_. Separate from the cover grid: one field used to size both until [#523](https://github.com/ralksta/immich-folio/issues/523)
 - **Enabled** — take the page offline without deleting it
-- **Hidden** _(experimental)_ — unlisted: reachable by direct link, absent from the navigation
+- **Unlisted** _(experimental)_ — reachable by direct link, absent from the navigation, homepage, sitemap and map
 - **Essay** — turn the page into a photo essay, with a block editor for the text
 
 A live preview shows the page as visitors will see it.

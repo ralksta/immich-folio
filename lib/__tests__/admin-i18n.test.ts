@@ -94,6 +94,8 @@ const SHARED_EVERYWHERE: string[] = [
   'system.backups.files.about',
   'system.backups.files.privacy',
   'system.backups.tabLabel',
+  // "Link" is the word German, Italian and Dutch use for it too.
+  'pages.albumDrawer.link',
 ];
 
 const TRANSLATIONS: [string, AdminDictionary, string[]][] = [

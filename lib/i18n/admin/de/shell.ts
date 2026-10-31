@@ -172,6 +172,7 @@ export const shell: AdminDictionary['shell'] = {
 
   saveBar: {
     unsaved: 'Ungespeicherte Änderungen',
+    discard: 'Änderungen verwerfen',
     preview: '↗ Vorschau',
     previewTitle: 'Website in neuem Tab öffnen (ohne Cache)',
     saving: 'Wird gespeichert...',

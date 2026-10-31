@@ -233,7 +233,18 @@ describe('PageBuilder: edits made while a save is in flight', () => {
         url === '/api/admin/gallery'
           ? { gallery: { hero: [], albums: [], subpages: [] }, version: 'v1' }
           : url === '/api/admin/albums'
-            ? { albums: [] }
+            ? {
+                albums: [
+                  {
+                    id: 'album-1',
+                    albumName: 'Album One',
+                    description: '',
+                    thumbnailAssetId: null,
+                    assetCount: 1,
+                    isConfigured: false,
+                  },
+                ],
+              }
             : { pages: [], taken: { subpages: [], albums: [], journal: [] } },
       // As written: hashed passwords make the server copy differ from the one sent.
       (sent) => ({
@@ -242,7 +253,7 @@ describe('PageBuilder: edits made while a save is in flight', () => {
         gallery: { ...(sent.gallery as object), hero: ['written-by-server'] },
       }),
     );
-    render(
+    const { container } = render(
       <NotificationProvider>
         <ConfirmProvider>
           <PageBuilder />
@@ -250,6 +261,14 @@ describe('PageBuilder: edits made while a save is in flight', () => {
       </NotificationProvider>,
     );
     fireEvent.click(await screen.findByRole('button', { name: 'New subpage' }));
+    // A page without an album is refused by the builder before the request;
+    // give this one an album so the save this test is about can happen.
+    const newRow = [...container.querySelectorAll<HTMLElement>('.pb-row-main')].find((el) =>
+      el.textContent?.includes('New subpage'),
+    );
+    fireEvent.click(newRow as HTMLElement);
+    fireEvent.click(await screen.findByRole('button', { name: /Add Album/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /Album One/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
     await waitFor(() => expect(releasePut).not.toBeNull());
 

@@ -32,7 +32,9 @@ export function hasAlbumOptions(entry: AlbumEntry): boolean {
     entry.location ||
     entry.download ||
     // `zoom: false` is an option too: it switches zoom off for this album.
-    entry.zoom !== undefined,
+    entry.zoom !== undefined ||
+    entry.hidden === true ||
+    entry.slug,
   );
 }
 
@@ -55,6 +57,8 @@ export function parseAlbumEntries(raw: RawAlbumEntry[] | undefined): AlbumEntry[
       location: value.location,
       download: value.download,
       zoom: typeof value.zoom === 'boolean' ? value.zoom : undefined,
+      hidden: value.hidden === true ? true : undefined,
+      slug: value.slug,
     };
   });
 }
@@ -87,6 +91,8 @@ export function serializeAlbumEntries(entries: AlbumEntry[]): RawAlbumEntry[] {
     if (entry.download) val.download = entry.download;
     // Both values mean something: false switches zoom off for this album.
     if (entry.zoom !== undefined) val.zoom = entry.zoom;
+    if (entry.hidden === true) val.hidden = true;
+    if (entry.slug) val.slug = entry.slug;
     return { [entry.id]: val };
   });
 }

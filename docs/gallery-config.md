@@ -194,18 +194,45 @@ albums:
       download: true
 ```
 
-| Key             | Description                                                                                     |
-| --------------- | ----------------------------------------------------------------------------------------------- |
-| `title`         | Display name instead of the Immich album name                                                   |
-| `description`   | Shown below the album title                                                                     |
-| `password`      | Gates this album alone — see [Password Protection](gallery-features.md#password-protection)     |
-| `heroImage`     | Asset UUID overriding the album cover                                                           |
-| `sort`          | Photo order — see [Photo Order Within an Album](#photo-order-within-an-album)                   |
-| `assetOrder`    | Pinned asset UUIDs for `sort: manual`                                                           |
-| `grid`          | **Experimental.** Grid override for this album only                                             |
-| `coverPosition` | **Experimental.** Focal point for the cover crop                                                |
-| `download`      | Offer originals for download — see [Originals download](gallery-features.md#originals-download) |
-| `zoom`          | [Photo zoom](gallery-features.md#photo-zoom) for this album, over its page and the site setting |
+| Key             | Description                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------ |
+| `title`         | Display name instead of the Immich album name                                                    |
+| `description`   | Shown below the album title                                                                      |
+| `password`      | Gates this album alone — see [Password Protection](gallery-features.md#password-protection)      |
+| `heroImage`     | Asset UUID overriding the album cover                                                            |
+| `sort`          | Photo order — see [Photo Order Within an Album](#photo-order-within-an-album)                    |
+| `assetOrder`    | Pinned asset UUIDs for `sort: manual`                                                            |
+| `grid`          | **Experimental.** Grid override for this album only                                              |
+| `coverPosition` | **Experimental.** Focal point for the cover crop                                                 |
+| `download`      | Offer originals for download — see [Originals download](gallery-features.md#originals-download)  |
+| `zoom`          | [Photo zoom](gallery-features.md#photo-zoom) for this album, over its page and the site setting  |
+| `hidden`        | Unlist a **standalone** album: reachable at its slug, absent from nav, homepage, sitemap and map |
+| `slug`          | Custom URL slug for a **standalone** album, instead of the one derived from its title            |
+
+### Unlisted albums
+
+A standalone album can be given its own link without appearing anywhere on the
+site:
+
+```yaml
+albums:
+  - '11111111-1111-1111-1111-111111111111':
+      title: Client Preview
+      hidden: true # not in the menu, homepage, sitemap or map
+      slug: x7k2m9p4 # → /x7k2m9p4
+      password: 'clientpass123' # optional, but the slug itself is guessable
+```
+
+`hidden` and `slug` only apply to a top-level `albums:` entry. An album inside a
+subpage is unlisted by setting `hidden: true` on that subpage instead; its URL
+comes from the page and the album title.
+
+Like an unlisted subpage, `hidden` is **unlisting, not access control**. Without
+`slug`, the address is derived from the album title and can be guessed. Give it
+a random `slug` (the admin panel's **Random link** button does this) and/or add a
+`password` for anything that must stay private. The album's photos still load for
+anyone with the link, and the album is excluded from the homepage, header menu,
+sitemap and `/map`.
 
 ### Per-album grid (experimental)
 

@@ -171,6 +171,7 @@ export const shell = {
 
   saveBar: {
     unsaved: 'Unsaved changes',
+    discard: 'Discard changes',
     preview: '↗ Preview Site',
     previewTitle: 'Open site in new tab (bypassing cache)',
     saving: 'Saving...',

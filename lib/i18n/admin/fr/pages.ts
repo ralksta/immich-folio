@@ -20,6 +20,9 @@ export const pages: AdminDictionary['pages'] = {
   },
 
   builder: {
+    /** A subpage the server would refuse: it has no albums and no sections. */
+    pageNeedsAlbum: (pages: string) =>
+      `${pages} doit contenir au moins un album. Ajoutez-en un ou supprimez la page.`,
     albumListFailed: (error: string) =>
       `Les albums Immich n’ont pas été chargés : le sélecteur d’albums est vide. ${error}`,
     pageListFailed: (error: string) =>
@@ -104,6 +107,7 @@ export const pages: AdminDictionary['pages'] = {
   },
 
   albumCard: {
+    unlisted: 'Album autonome non répertorié',
     reorder: (name: string) => `Réorganiser ${name}`,
     dragToReorder: 'Faire glisser pour réorganiser',
     editDetails: 'Modifier les détails',
@@ -117,6 +121,18 @@ export const pages: AdminDictionary['pages'] = {
   },
 
   albumDrawer: {
+    link: 'Lien',
+    linkHint:
+      'C’est l’adresse utilisée par les visiteurs. Laissez le slug vide pour le dériver du titre.',
+    randomLink: 'Lien aléatoire',
+    copyLink: 'Copier le lien',
+    linkCopied: 'Copié',
+    visibility: 'Visibilité',
+    unlisted: 'Non répertorié',
+    unlistedDesc:
+      'Accessible uniquement par lien direct — absent du menu, de la page d’accueil, du sitemap et de la carte. L’URL est devinable ; ajoutez un mot de passe pour tout contenu privé.',
+    listedDesc:
+      'Affiché dans le menu, la page d’accueil et le sitemap, comme tout autre album autonome.',
     heading: 'Modifier les détails de l’album',
     close: 'Fermer les détails',
     photos: (n: number) => `${n} ${isOne(n) ? 'photo' : 'photos'}`,

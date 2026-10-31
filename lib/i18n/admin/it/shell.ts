@@ -164,6 +164,7 @@ export const shell: AdminDictionary['shell'] = {
 
   saveBar: {
     unsaved: 'Modifiche non salvate',
+    discard: 'Annulla modifiche',
     preview: '↗ Anteprima del sito',
     previewTitle: 'Apri il sito in una nuova scheda (senza cache)',
     saving: 'Salvataggio...',

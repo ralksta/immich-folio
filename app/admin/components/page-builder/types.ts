@@ -29,6 +29,17 @@ export interface AlbumEntry {
    * undefined inherits (#467).
    */
   zoom?: boolean;
+  /**
+   * Unlisted standalone album: reachable at its own URL, absent from nav,
+   * sitemap and map. Only standalone entries show the control; the value is
+   * carried through on other entries so a save cannot drop it.
+   */
+  hidden?: boolean;
+  /**
+   * Custom URL slug for a standalone album. Empty means "derive it from the
+   * title"; only the standalone album drawer exposes it.
+   */
+  slug?: string;
 }
 
 export interface Section {

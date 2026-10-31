@@ -146,7 +146,14 @@ export const GET = withAdmin(async (request: NextRequest) => {
         })),
       ];
       findings.push(
-        checkAlbumSlugCollisions(slugGroups, config.albumOverrides, albums, slugify, t),
+        checkAlbumSlugCollisions(
+          slugGroups,
+          config.albumOverrides,
+          albums,
+          slugify,
+          config.albumSlugs,
+          t,
+        ),
       );
 
       // Originals whose metadata a download cannot clean. Through the album

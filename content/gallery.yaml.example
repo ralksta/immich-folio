@@ -41,6 +41,14 @@ albums:
       assetOrder: # pinned, in this order. Everything else follows automatically.
         - "asset-uuid-opening-frame"
         - "asset-uuid-second-frame"
+  # Unlisted standalone album: reachable at its own URL, absent from the menu,
+  # homepage, sitemap and map. Unlisting is not access control — the slug can be
+  # guessed — so add a password for anything that must stay private.
+  - "your-album-uuid-4":
+      title: "Client Preview"
+      hidden: true
+      slug: "x7k2m9p4" # optional: a hard-to-guess address (→ /x7k2m9p4)
+      password: "scrypt:..."
 
 # Subpages: group albums under custom URL paths.
 # One `subpages:` key for the whole file — every page below is one entry in it.
