@@ -150,3 +150,61 @@
 .leaflet-control-zoom a:hover {
   background: var(--bg-secondary, #222) !important;
 }
+
+/* ── Studio Modern overrides ───────────────────────────────── */
+
+[data-preset='studio-modern'] .map-marker {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 0;
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  box-shadow: 0 2px 12px rgba(230, 0, 18, 0.4);
+}
+
+[data-preset='studio-modern'] .map-marker:hover {
+  transform: scale(1.08);
+}
+
+[data-preset='studio-modern'] .leaflet-popup-content-wrapper,
+[data-preset='studio-modern'] .leaflet-popup-tip {
+  border-radius: 0 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-preset='studio-modern'][data-theme='light'] .leaflet-popup-content-wrapper,
+[data-preset='studio-modern'][data-theme='light'] .leaflet-popup-tip {
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-preset='studio-modern'] .map-popup__cover {
+  height: 130px;
+}
+
+[data-preset='studio-modern'] .map-popup__city {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+[data-preset='studio-modern'] .map-popup__country,
+[data-preset='studio-modern'] .map-popup__count {
+  font-family: var(--font-caption);
+  font-size: 0.625rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+[data-preset='studio-modern'] .map-popup__album-link {
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}

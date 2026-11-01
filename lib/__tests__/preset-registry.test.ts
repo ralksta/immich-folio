@@ -122,8 +122,14 @@ describe('preset registry', () => {
       if (!preset.ownStyles) return;
 
       it('has a stylesheet that globals.css imports', () => {
-        expect(fs.existsSync(path.join(root, 'app/themes', `${preset.id}.css`))).toBe(true);
+        const themePath = path.join(root, 'app/themes', `${preset.id}.css`);
+        expect(fs.existsSync(themePath)).toBe(true);
         expect(globalsCss).toContain(`@import url('./themes/${preset.id}.css');`);
+
+        const themeCss = fs.readFileSync(themePath, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+        expect(themeCss).not.toMatch(
+          /\.(admin-layout|map-page|map-container|map-marker|map-popup|leaflet-)/,
+        );
       });
 
       it('defines its palette in app/tokens.css for both colour modes', () => {
