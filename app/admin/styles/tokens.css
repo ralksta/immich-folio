@@ -73,18 +73,44 @@
   --admin-overlay: rgba(0, 0, 0, 0.4);
 }
 
-/* studio-modern restyles the admin in its preset file with a red accent and
-   warm greys. Two of its values are corrected here, one step more specific
-   (html) so the order the sheets load in does not matter: its muted text
-   (#6b6b66 dark, #8a8a84 light) sat at 3.0–3.6:1, and text on its red reads
-   better white (4.8:1) than black (4.4:1). */
-html[data-preset='studio-modern'] .admin-layout {
+/* studio-modern restyles the admin with a red accent and warm greys (#613).
+   Muted text (#8c8c86 dark, #6b6b66 light) clears 4.6:1 on every admin
+   surface, and text on its red reads better white (4.8:1) than black (4.4:1). */
+[data-preset='studio-modern'] .admin-layout {
+  --admin-bg: #0d0d0d;
+  --admin-bg-raised: #161616;
+  --admin-bg-elevated: #1c1c1c;
+  --admin-bg-input: #101010;
+  --admin-border: rgba(255, 255, 255, 0.12);
+  --admin-border-hover: rgba(255, 255, 255, 0.24);
+  --admin-border-focus: #e60012;
+  --admin-text: #f4f4f2;
+  --admin-text-secondary: #9c9c96;
   --admin-text-muted: #8c8c86;
+  --admin-accent: #e60012;
   --admin-on-accent: #ffffff;
+  --admin-btn-primary-bg: #e60012;
+  --admin-btn-primary-text: #ffffff;
+  --admin-btn-primary-hover: #c8000f;
+
+  font-family: var(--font-sans);
 }
 
-html[data-preset='studio-modern'][data-theme='light'] .admin-layout {
+[data-preset='studio-modern'][data-theme='light'] .admin-layout {
+  --admin-bg: #f4f4f1;
+  --admin-bg-raised: #ffffff;
+  --admin-bg-elevated: #f0f0ec;
+  --admin-bg-input: #ffffff;
+  --admin-border: rgba(0, 0, 0, 0.12);
+  --admin-border-hover: rgba(0, 0, 0, 0.24);
+  --admin-border-focus: #c8000f;
+  --admin-text: #161614;
+  --admin-text-secondary: #5a5a55;
   --admin-text-muted: #6b6b66;
+  --admin-accent: #c8000f;
+  --admin-btn-primary-bg: #c8000f;
+  --admin-btn-primary-text: #ffffff;
+  --admin-btn-primary-hover: #a5000c;
 }
 
 .admin-layout {
