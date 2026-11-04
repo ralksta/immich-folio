@@ -16,7 +16,9 @@ easier to live with.
   arrives complete. In v0.18.0, kept accent-coloured buttons readable when the
   accent is light, and made a mistyped accent fall back to the theme instead of
   turning every button invisible. In v0.19.0, gave the proofing dialog's
-  _Email to photographer_ an actual recipient.
+  _Email to photographer_ an actual recipient. In v0.22.0, added unlisted
+  albums: a gallery reachable only through its link, with a random address on
+  request.
 - **[@RichKidsDev](https://github.com/RichKidsDev)** — noticed that the
   Impressum still cited the TMG, which the DDG replaced in 2024. That report
   turned into a proper overhaul in v0.18.0: the right law by default, a heading
