@@ -78,10 +78,10 @@ Reading time and the index excerpt are computed from the text; you do not
 configure them.
 
 Every one of these fields is also a form control in the
-[Journal Studio](#journal-studio), behind **Story Settings**:
+[Journal Studio](#journal-studio), behind **Entry Settings**:
 
 <p align="center">
-  <img src="screenshots/admin-journal-settings.png" width="98%" alt="The Story Settings dialog: subtitle, author, publish date, cover photo, password and draft toggle" />
+  <img src="screenshots/admin-journal-settings.png" width="98%" alt="The Entry Settings dialog: subtitle, author, publish date, cover photo, password and draft toggle" />
 </p>
 <p align="center"><em>The same frontmatter, as a form — including the cover picker, the password field and the draft toggle.</em></p>
 
