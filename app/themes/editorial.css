@@ -74,45 +74,6 @@
   transform: scale(1.01);
 }
 
-/* Album cards: text below, editorial layout */
-[data-preset='editorial'] .album-card {
-  border: none;
-  border-radius: 0;
-  aspect-ratio: 16 / 9;
-}
-
-[data-preset='editorial'] .album-card:hover {
-  transform: none;
-  border-color: transparent;
-}
-
-[data-preset='editorial'] .album-card__overlay {
-  justify-content: flex-start;
-  padding: 28px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, transparent 40%);
-}
-
-[data-preset='editorial'] .album-card__title {
-  font-size: 2rem;
-  font-weight: 300;
-  letter-spacing: 0.02em;
-  text-transform: none;
-}
-
-[data-preset='editorial'] .album-card__count {
-  font-family: var(--font-caption);
-  font-style: italic;
-  font-size: 0.8rem;
-}
-
-[data-preset='editorial'] .album-card:hover .album-card__image {
-  transform: scale(1.015);
-  filter: brightness(0.8);
-  transition:
-    transform 1.5s ease,
-    filter 1.5s ease;
-}
-
 /* Section labels: pull-quote style with left border */
 [data-preset='editorial'] .section-label {
   font-family: var(--font-caption);

@@ -697,31 +697,6 @@
   font-weight: 500;
 }
 
-/* ── Standalone-Albumkarten (Homepage-Grid) ─────────────────── */
-[data-preset='studio-modern'] .album-card {
-  border-radius: 0;
-  border-color: var(--border-subtle);
-}
-
-[data-preset='studio-modern'] .album-card:hover {
-  border-color: var(--sm-accent);
-}
-
-[data-preset='studio-modern'] .album-card__title {
-  font-family: var(--font-sans);
-  font-weight: 500;
-  font-size: 1rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-[data-preset='studio-modern'] .album-card__count {
-  font-family: var(--font-caption);
-  font-size: 0.6875rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
 /* ── Album-Detail: Kopf ─────────────────────────────────────── */
 [data-preset='studio-modern'] .album-header {
   display: flex;

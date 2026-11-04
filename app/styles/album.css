@@ -426,15 +426,13 @@
    without hover — phones, and tablets wider than the 640px mobile rules — the
    overlays are simply always shown. */
 .photo-grid__item:is(:focus-visible, :has(:focus-visible)) .photo-grid__item-exif,
-.subpage-grid__item:is(:focus-visible, :has(:focus-visible)) .subpage-grid__item-overlay,
-.album-card:is(:focus-visible, :has(:focus-visible)) .album-card__overlay {
+.subpage-grid__item:is(:focus-visible, :has(:focus-visible)) .subpage-grid__item-overlay {
   opacity: 1;
 }
 
 @media (hover: none) {
   .photo-grid__item .photo-grid__item-exif,
-  .subpage-grid__item .subpage-grid__item-overlay,
-  .album-card .album-card__overlay {
+  .subpage-grid__item .subpage-grid__item-overlay {
     opacity: 1;
   }
 }
@@ -459,4 +457,3 @@
 .photo-grid__item:hover .photo-grid__item-play svg {
   transform: scale(1.1);
 }
-

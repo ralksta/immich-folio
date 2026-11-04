@@ -196,15 +196,6 @@
   color: var(--text-muted);
 }
 
-[data-preset='cyanotype'] .album-card {
-  border: 1px solid var(--border-subtle);
-}
-
-[data-preset='cyanotype'] .album-card:hover {
-  transform: none;
-  border-color: var(--border-hover);
-}
-
 /* ── Split hero: sheet list and title block ───────── */
 [data-preset='cyanotype'] .hero--split .hero__content {
   text-align: left;
