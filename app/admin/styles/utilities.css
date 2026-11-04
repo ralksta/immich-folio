@@ -5,8 +5,7 @@
 /* ── Drag Handles ──────────────────────────────────────────── */
 
 .hero-tile-drag,
-.album-tile-drag,
-.subpage-tile-drag {
+.album-tile-drag {
   position: absolute;
   z-index: 5;
   width: 24px;
@@ -27,8 +26,7 @@
 }
 
 .hero-tile-drag:active,
-.album-tile-drag:active,
-.subpage-tile-drag:active {
+.album-tile-drag:active {
   cursor: grabbing;
 }
 
@@ -42,28 +40,12 @@
   left: 6px;
 }
 
-.subpage-tile-drag {
-  top: 6px;
-  left: 6px;
-}
-
 .hero-tile:hover .hero-tile-drag,
-.album-tile:hover .album-tile-drag,
-.subpage-tile:hover .subpage-tile-drag {
+.album-tile:hover .album-tile-drag {
   opacity: 1;
 }
 
-/* ── Preview & Slug ───────────────────────────────────────────── */
-
-.subpage-slug-preview {
-  font-size: 0.72rem;
-  color: var(--admin-text-muted);
-  font-family: monospace;
-  padding: 0.15rem 0.4rem;
-  background: var(--admin-bg);
-  border-radius: 3px;
-  white-space: nowrap;
-}
+/* ── Save bar & preview ─────────────────────────────────────── */
 
 .save-bar-right {
   display: flex;
@@ -95,14 +77,6 @@
     width: calc(100% - 2rem);
     padding: 0.625rem 0.875rem;
     gap: 0.5rem;
-  }
-
-  .admin-header {
-    padding: 0.5rem 1rem;
-  }
-
-  .admin-header h1 {
-    display: none;
   }
 
   .settings-layout {

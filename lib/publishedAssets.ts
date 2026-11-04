@@ -238,11 +238,6 @@ export async function isPublishedAsset(assetId: string): Promise<boolean> {
   }
 }
 
-/** Drop the cached set, e.g. after a save that publishes or unpublishes photos. */
-export function invalidatePublishedAssets(): void {
-  current = null;
-}
-
 /** Test hook. */
 export function resetPublishedAssetsForTest(): void {
   current = null;

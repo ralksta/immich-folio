@@ -4,15 +4,6 @@
 
 /* ── Settings Editor ──────────────────────────────────────── */
 
-.settings-live-sync-note {
-  margin: 0 0 1.25rem;
-  font-size: 0.75rem;
-  color: var(--admin-text-muted);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .settings-layout {
   display: grid;
   grid-template-columns: 160px 1fr;
@@ -394,34 +385,6 @@
   font-size: 0.75rem;
   color: var(--admin-text-muted);
   line-height: 1.35;
-}
-
-.settings-subpanel {
-  padding: 1rem 1.25rem;
-  background: var(--admin-bg-raised);
-  border: 1px solid var(--admin-border);
-  border-radius: 12px;
-}
-
-.settings-subpanel-head {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  padding-bottom: 0.75rem;
-}
-
-.settings-subpanel-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--admin-text);
-}
-
-.settings-subpanel-desc {
-  font-size: 0.75rem;
-  color: var(--admin-text-muted);
 }
 
 /* Quiet marker on an album Immich still considers private (#515). Deliberately

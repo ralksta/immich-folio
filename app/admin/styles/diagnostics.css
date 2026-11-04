@@ -11,33 +11,6 @@
   gap: 1.5rem;
 }
 
-.diag-head {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 1rem;
-}
-
-.diag-head h2 {
-  margin: 0;
-  font-size: 1.35rem;
-  font-weight: 700;
-  text-wrap: balance;
-}
-
-.diag-sub {
-  margin: 0.3rem 0 0;
-  font-size: 0.8rem;
-  color: var(--admin-text-muted);
-}
-
-.diag-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
 /* ── Overview tiles ── */
 .diag-vitals {
   display: grid;

@@ -20,7 +20,6 @@
    presets — they must win over the :root defaults declared there. */
 
 /* ── Roter Signalpunkt (wiederverwendet) ────────────────────── */
-[data-preset='studio-modern'] .sm-dot::before,
 [data-preset='studio-modern'] .hero__subtitle::before,
 [data-preset='studio-modern'] .about__kicker::before,
 [data-preset='studio-modern'] .subpage-header__kicker::before,

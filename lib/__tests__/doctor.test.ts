@@ -304,7 +304,7 @@ describe('probeImmich', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it('makes the three calls with the key and returns the album list', async () => {
-    const fetchMock = vi.fn(async (url: string) =>
+    const fetchMock = vi.fn(async (url: string, _init?: RequestInit) =>
       url.endsWith('/albums')
         ? new Response(JSON.stringify([{ id: 'a1', albumName: 'Iceland' }]))
         : new Response('{}'),
