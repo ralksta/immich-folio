@@ -50,10 +50,8 @@ Releases up to and including v0.9.2 are documented in the
   keys, URLs, slugs, cookies and content files are unchanged.
 
 - **Next.js 16.4.3** ([#891](https://github.com/ralksta/immich-folio/pull/891)),
-  zod 4.6.7 ([#874](https://github.com/ralksta/immich-folio/pull/874)), and
-  current Prettier tooling
-  ([#875](https://github.com/ralksta/immich-folio/pull/875),
-  [#876](https://github.com/ralksta/immich-folio/pull/876)).
+  zod 4.6.7 and current Prettier tooling
+  ([#893](https://github.com/ralksta/immich-folio/pull/893)).
 
 ### Internal
 
