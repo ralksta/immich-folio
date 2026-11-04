@@ -31,6 +31,3 @@ export const STORY_LAYOUT = 'essay';
 
 /** Every layout a page may choose. */
 export const PAGE_LAYOUTS = [...PHOTO_LAYOUTS, STORY_LAYOUT] as const;
-
-export type PhotoLayout = (typeof PHOTO_LAYOUTS)[number];
-export type PageLayout = (typeof PAGE_LAYOUTS)[number];

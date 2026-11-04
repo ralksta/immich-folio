@@ -2,64 +2,6 @@
 /* Split out of admin.css (#533). Loaded from admin.css in a fixed order —
    later sheets override earlier ones, so the order there is the cascade. */
 
-/* ── Subpage Tile Badges & Hover Actions ─────────────────────── */
-.subpage-badge-protected {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
-  color: #ffca28;
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 202, 40, 0.3);
-  z-index: 2;
-}
-
-.subpage-hover-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(3px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.subpage-tile:hover .subpage-hover-overlay {
-  opacity: 1;
-}
-
-.hover-action-btn {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--admin-on-accent);
-  background: var(--admin-accent, #e60012);
-  padding: 0.4rem 0.85rem;
-  border-radius: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
-.subpage-tile-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.subpage-tile-slug {
-  font-size: 0.7rem;
-  color: var(--admin-text-muted);
-  font-family: var(--font-mono, monospace);
-  background: var(--admin-bg-input);
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-
 /* ── Subpage Editor Sheet (centered two-column modal) ─────────── */
 /* z-index 999 is load-bearing: the album detail modal (1000) and the
    portalled Listbox popup (1100) must stack above this sheet. */
@@ -255,38 +197,6 @@
   margin: 4px 0 0;
   font-size: 0.8rem;
   color: var(--admin-text-muted);
-}
-
-/* Published / hidden marker, replacing the traffic-light emoji. */
-/* Named apart from the header badge's .status-dot, which is a different dot. */
-.page-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  display: inline-block;
-  margin-right: 2px;
-}
-
-.page-status-dot.is-on {
-  background: #22c55e;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
-}
-
-.page-status-dot.is-off {
-  background: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
-}
-
-.input-with-icon {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-.input-with-icon > input {
-  width: 100%;
 }
 
 .input-slug-wrapper {

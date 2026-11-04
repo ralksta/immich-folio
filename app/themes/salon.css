@@ -157,26 +157,6 @@
   color: var(--text-muted);
 }
 
-[data-preset='salon'] .album-card {
-  border: none;
-  overflow: visible;
-  outline: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  outline-offset: 6px;
-  transition: outline-color 600ms ease;
-}
-
-[data-preset='salon'] .album-card:hover {
-  transform: none;
-  outline-color: var(--accent);
-}
-
-[data-preset='salon'] .album-card__title {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
 /* ── Fullbleed hero: a scrim tinted from the wall ─── */
 [data-preset='salon'] .hero__fullbleed-overlay {
   align-items: flex-start;

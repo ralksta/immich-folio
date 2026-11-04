@@ -494,23 +494,7 @@ h3 .svg-icon {
   background: var(--admin-bg-input) !important;
 }
 
-/* ── Modern Subpage Details Spacing ── */
-.subpage-detail {
-  margin-top: 1.5rem;
-  border: 1px solid var(--admin-border);
-  background: var(--admin-bg-elevated);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-}
-
-[data-theme='light'] .subpage-detail {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
-}
-
-.subpage-meta {
-  padding: 1.25rem;
-  background: var(--admin-bg-raised);
-  border-bottom: 1px solid var(--admin-border);
-}
+/* ── Small buttons ── */
 
 .admin-btn-sm {
   padding: 0.35rem 0.65rem !important;

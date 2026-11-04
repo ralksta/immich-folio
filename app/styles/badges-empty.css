@@ -23,12 +23,6 @@
   padding: 96px 24px;
 }
 
-.empty-state__icon {
-  font-size: 3rem;
-  margin-bottom: 16px;
-  opacity: 0.3;
-}
-
 .empty-state__text {
   font-size: 1.1rem;
   color: var(--text-secondary);
@@ -83,4 +77,3 @@
   border-color: var(--border-hover);
   opacity: 1;
 }
-

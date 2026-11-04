@@ -60,10 +60,6 @@
     }
   }
 
-  .album-grid {
-    grid-template-columns: 1fr;
-  }
-
   .subpage-grid {
     grid-template-columns: 1fr;
   }
@@ -81,10 +77,6 @@
 
   .album-header__title {
     font-size: 1.8rem;
-  }
-
-  .album-card__overlay {
-    opacity: 1;
   }
 
   .subpage-grid__item-overlay {

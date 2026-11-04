@@ -10,11 +10,11 @@
  * Uses Playwright to wait for images to fully load (not just blurhash placeholders).
  *
  * Usage:
- *   npx tsx scripts/screenshots.ts
- *   SCREENSHOT_GRID_PATH=/japan/koyasan-2023 npx tsx scripts/screenshots.ts
- *   SCREENSHOT_PORT=3100 npx tsx scripts/screenshots.ts
- *   SCREENSHOT_ONLY=admin,lightbox npx tsx scripts/screenshots.ts
- *   SCREENSHOT_ONLY=journal SCREENSHOT_JOURNAL_ALBUM="Yufuin" npx tsx scripts/screenshots.ts
+ *   npm run screenshots
+ *   SCREENSHOT_GRID_PATH=/japan/koyasan-2023 npm run screenshots
+ *   SCREENSHOT_PORT=3100 npm run screenshots
+ *   SCREENSHOT_ONLY=admin,lightbox npm run screenshots
+ *   SCREENSHOT_ONLY=journal SCREENSHOT_JOURNAL_ALBUM="Yufuin" npm run screenshots
  *
  * The journal section writes a throwaway entry built from a real album's
  * photos, shoots the public index, the entry and the studio, then deletes it.
@@ -1053,7 +1053,7 @@ async function discoverGridPath(page: Page): Promise<string> {
   throw new Error(
     'Could not find a public album page to screenshot. Every reachable page was ' +
       'password-protected or empty. Point the script at a specific album with ' +
-      'SCREENSHOT_GRID_PATH=/my-subpage/my-album npx tsx scripts/screenshots.ts',
+      'SCREENSHOT_GRID_PATH=/my-subpage/my-album npm run screenshots',
   );
 }
 

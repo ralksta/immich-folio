@@ -1,15 +1,15 @@
 'use client';
 
 /**
- * The two drag-sortable tiles of the page builder (#608): a hero photo, and
- * a subpage in the page list. Album cards are in ./AlbumCard.tsx.
+ * The drag-sortable items of the page builder (#608): a hero photo, and
+ * a subpage row in the structure list. Album cards are in ./AlbumCard.tsx.
  */
 
 import { useSortable } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import type { ReactNode } from 'react';
-import { IconFileText, IconFolder, IconGripVertical, IconLock, IconPencil, IconX } from '../Icons';
+import { IconFileText, IconFolder, IconGripVertical, IconLock, IconX } from '../Icons';
 import type { Subpage } from './types';
 import { useAdminDictionary } from '../AdminI18n';
 
@@ -59,109 +59,6 @@ export function SortableHeroTile({
     </div>
   );
 }
-
-// ── Sortable Subpage Tile ──────────────────────────────────────
-
-export function SortableSubpageTile({
-  sp,
-  spIndex,
-  isActive,
-  onClick,
-  getFirstThumb,
-}: {
-  sp: Subpage;
-  spIndex: number;
-  isActive: boolean;
-  onClick: () => void;
-  getFirstThumb: (sp: Subpage) => string | null;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: `subpage-${spIndex}`,
-  });
-  const t = useAdminDictionary().pages.tiles;
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 10 : undefined,
-  };
-
-  const totalAlbums =
-    sp.albums.length + (sp.sections?.reduce((sum, sec) => sum + sec.albums.length, 0) || 0);
-  const firstThumb = getFirstThumb(sp);
-  const slug = sp.name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`subpage-tile ${isActive ? 'active' : ''}`}
-      onClick={onClick}
-    >
-      <div
-        className="subpage-tile-drag"
-        {...attributes}
-        {...listeners}
-        aria-label={t.reorder(sp.name || t.pageFallback)}
-        title={t.dragToReorder}
-      >
-        <IconGripVertical size={18} className="svg-icon svg-drag" />
-      </div>
-
-      {sp.enabled === false && (
-        <span
-          className="subpage-badge-protected"
-          style={{ background: '#e60012', color: '#fff' }}
-          title={t.disabledTitle}
-        >
-          {t.disabled}
-        </span>
-      )}
-
-      {sp.hidden === true && sp.enabled !== false && (
-        <span className="subpage-badge-protected" title={t.unlistedTitle}>
-          {t.unlisted}
-        </span>
-      )}
-
-      {sp.password && (
-        <span className="subpage-badge-protected" title={t.passwordProtected}>
-          <IconLock size={12} /> {t.password}
-        </span>
-      )}
-
-      <div className="subpage-tile-cover">
-        {firstThumb ? (
-          <img src={`/api/admin/thumbnail/${firstThumb}`} alt="" loading="lazy" />
-        ) : (
-          <div className="subpage-tile-placeholder">
-            <IconFolder />
-          </div>
-        )}
-        <div className="subpage-hover-overlay">
-          <span className="hover-action-btn">
-            <IconPencil size={14} /> {t.editPage}
-          </span>
-        </div>
-      </div>
-      <div className="subpage-tile-info">
-        <div className="subpage-tile-title-row">
-          <span className="subpage-tile-name">{sp.title || sp.name}</span>
-          <span className="subpage-tile-slug">/{slug}</span>
-        </div>
-        <span className="subpage-tile-meta">
-          <IconFolder /> {t.albums(totalAlbums)}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// ── Component ──────────────────────────────────────────────────
 
 // ── Sortable Subpage Row (stage 4 structure list) ──────────────
 
