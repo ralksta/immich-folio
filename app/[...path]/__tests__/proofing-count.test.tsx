@@ -64,10 +64,10 @@ describe('proofing counts in the album grid', () => {
     store.set('folio_fav_wedding', JSON.stringify(['a2', 'gone', 'other-album']));
     render(<PhotoGrid assets={ASSETS} proofing albumName="Wedding" />);
 
-    expect(await screen.findByText('❤️ 1 Selected')).toBeTruthy();
+    expect(await screen.findByText('1 selected')).toBeTruthy();
 
-    fireEvent.click(screen.getByText('Share & Export'));
-    expect(screen.getByText('❤️ Selection (1)')).toBeTruthy();
+    fireEvent.click(screen.getByText('Share & export'));
+    expect(screen.getByText('Selection (1)')).toBeTruthy();
     expect(screen.getByText(/You have selected 1 photo\./)).toBeTruthy();
   });
 
@@ -75,20 +75,20 @@ describe('proofing counts in the album grid', () => {
     store.set('folio_fav_wedding', JSON.stringify(['gone', 'other-album']));
     render(<PhotoGrid assets={ASSETS} proofing albumName="Wedding" />);
     // `render` flushes the hydration effect, so the stored set is loaded here.
-    expect(screen.queryByText(/Selected/)).toBeNull();
-    expect(screen.queryByText('Share & Export')).toBeNull();
+    expect(screen.queryByText(/selected/)).toBeNull();
+    expect(screen.queryByText('Share & export')).toBeNull();
   });
 
-  it('keeps "Show All" reachable after the last favourite is removed in the filter', async () => {
+  it('keeps "Show all" reachable after the last favourite is removed in the filter', async () => {
     store.set('folio_fav_wedding', JSON.stringify(['a1']));
     render(<PhotoGrid assets={ASSETS} proofing albumName="Wedding" />);
-    fireEvent.click(await screen.findByText('❤️ 1 Selected'));
+    fireEvent.click(await screen.findByText('1 selected'));
     // Filtered to the one favourite; un-heart it and the grid is empty.
     fireEvent.click(screen.getByLabelText('Remove favorite'));
     expect(screen.queryByLabelText('Add favorite')).toBeNull();
-    // The empty state offers "Show All" too; this is about the bar's own.
+    // The empty state offers "Show all" too; this is about the bar's own.
     const bar = document.querySelector<HTMLElement>('.proofing-sticky-bar')!;
-    fireEvent.click(within(bar).getByText('Show All'));
+    fireEvent.click(within(bar).getByText('Show all'));
     expect(screen.getAllByLabelText('Add favorite')).toHaveLength(3);
   });
 
@@ -103,11 +103,11 @@ describe('proofing counts in the album grid', () => {
         encodedMailto={encodeEmail('hello@example.com')}
       />,
     );
-    fireEvent.click(await screen.findByText('Share & Export'));
+    fireEvent.click(await screen.findByText('Share & export'));
     const location = { href: 'http://localhost/wedding' };
     vi.stubGlobal('location', location);
-    fireEvent.click(screen.getByText('✉️ Send Email to Photographer'));
-    expect(decodeURIComponent(location.href)).toMatch(/Photo Selection \(1 items?\)/);
+    fireEvent.click(screen.getByText('Send email to photographer'));
+    expect(decodeURIComponent(location.href)).toMatch(/Photo selection \(1 items?\)/);
   });
 });
 
@@ -116,6 +116,6 @@ describe('proofing counts in an essay', () => {
     store.set('folio_fav_story', JSON.stringify(['a3', 'gone']));
     const essay = parseEssayMarkdown('---\ntitle: Story\n---\n\n![a1, a3](caption)\n');
     render(<EssayView essay={essay} assets={ASSETS} title="Story" proofing />);
-    expect(await screen.findByText('❤️ 1 Selected')).toBeTruthy();
+    expect(await screen.findByText('1 selected')).toBeTruthy();
   });
 });

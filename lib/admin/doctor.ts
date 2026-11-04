@@ -419,6 +419,7 @@ export function checkAlbumSlugCollisions(
   overrides: Record<string, string>,
   known: AlbumRef[],
   slugOf: (name: string) => string,
+  customSlugs: Record<string, string> = {},
   text: DoctorText = doctorEn,
 ): DoctorFinding {
   const t = text.albumSlugs;
@@ -428,16 +429,21 @@ export function checkAlbumSlugCollisions(
 
   for (const group of groups) {
     const named = group.albumIds
-      .map((id) => ({ id, name: overrides[id] ?? byId.get(id)?.albumName }))
-      .filter((a): a is { id: string; name: string } => !!a.name);
+      .map((id) => {
+        const name = overrides[id] ?? byId.get(id)?.albumName;
+        const custom = customSlugs[id];
+        // A custom slug decides the URL; the name is only for the message.
+        const slug = custom ?? (name ? slugOf(name) : '');
+        return name || custom ? { id, name: name ?? custom!, slug } : null;
+      })
+      .filter((a): a is { id: string; name: string; slug: string } => a !== null)
+      .filter((a) => a.slug);
 
     const bySlug = new Map<string, typeof named>();
     for (const album of named) {
-      const slug = slugOf(album.name);
-      if (!slug) continue; // Falls back to the id elsewhere, which is unique.
-      const list = bySlug.get(slug) ?? [];
+      const list = bySlug.get(album.slug) ?? [];
       list.push(album);
-      bySlug.set(slug, list);
+      bySlug.set(album.slug, list);
     }
 
     for (const [slug, collided] of bySlug) {

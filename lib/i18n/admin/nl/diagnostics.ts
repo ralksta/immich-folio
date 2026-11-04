@@ -114,8 +114,8 @@ export const diagnostics: AdminDictionary['diagnostics'] = {
     manageBackups: 'Back-ups beheren',
     cacheTitle: (n: number) => `Geheugencache bevat ${n} ${n === 1 ? 'item' : 'items'}`,
     cacheDetail:
-      'Albumlijsten en fotometadata uit Immich. Legen maakt de volgende paginaweergaven trager, verder niets.',
-    clearing: 'Legen…',
-    clearCache: 'Cache legen',
+      'Albumlijsten en fotometadata uit Immich. Herladen leegt de cache en leest de configuratie opnieuw in; de volgende paginaweergaven zijn trager, verder niets.',
+    clearing: 'Herladen…',
+    clearCache: 'Herladen',
   },
 };

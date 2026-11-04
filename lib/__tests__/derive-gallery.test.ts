@@ -178,6 +178,68 @@ describe('deriveGallery accepts valid structures', () => {
     expect(open?.hidden).toBeFalsy();
   });
 
+  // Unlisted standalone albums: their own URL still resolves, but listings
+  // leave them out. A `hidden` flag on an album inside a subpage is ignored;
+  // that page controls visibility for everything it shows.
+  it('derives unlisted standalone albums and ignores the flag on subpage albums', () => {
+    const result = deriveGallery({
+      albums: [
+        A,
+        { [B]: { title: 'Client Preview', hidden: true } },
+        { [A]: { hidden: true } },
+      ] as unknown as GalleryYaml['albums'],
+      subpages: [{ name: 'Open', albums: [{ [A]: { hidden: true } }] }],
+    } as unknown as GalleryYaml);
+
+    // album-1 is only on the subpage now, so only album-2 stays standalone.
+    expect(result.standaloneAlbums).toEqual([B]);
+    expect(result.hiddenAlbums).toEqual([B]);
+  });
+
+  it('keeps a hidden album in the allowlist so its direct link still loads', () => {
+    const result = deriveGallery({
+      albums: [{ [A]: { hidden: true } }],
+    } as unknown as GalleryYaml);
+
+    expect(result.hiddenAlbums).toEqual([A]);
+    expect(result.albums).toContain(A);
+    expect(result.standaloneAlbums).toContain(A);
+  });
+
+  it('collects a custom standalone slug, and ignores it on subpage albums', () => {
+    const result = deriveGallery({
+      albums: [{ [A]: { hidden: true, slug: 'client-preview' } }],
+      subpages: [{ name: 'Open', albums: [{ [B]: { slug: 'not-used' } }] }],
+    } as unknown as GalleryYaml);
+
+    expect(result.albumSlugs).toEqual({ [A]: 'client-preview' });
+  });
+
+  it('rejects a custom slug that is invalid, reserved or a subpage address', () => {
+    expect(() =>
+      deriveGallery({ albums: [{ [A]: { slug: 'not a slug' } }] } as unknown as GalleryYaml),
+    ).toThrow(/invalid slug/);
+
+    expect(() =>
+      deriveGallery({ albums: [{ [A]: { slug: 'about' } }] } as unknown as GalleryYaml),
+    ).toThrow(/built-in route/);
+
+    expect(() =>
+      deriveGallery({
+        albums: [{ [A]: { slug: 'client' } }],
+        subpages: [{ name: 'Client', albums: [B] }],
+      } as unknown as GalleryYaml),
+    ).toThrow(/already the subpage/);
+  });
+
+  it('rejects two standalone albums that resolve to the same custom slug', () => {
+    expect(() =>
+      deriveGallery({
+        albums: [{ [A]: { slug: 'preview' } }, { [B]: { slug: 'preview' } }],
+      } as unknown as GalleryYaml),
+    ).toThrow(/both produce the slug "preview"/);
+  });
+
   // EXPERIMENTAL: per-album grid overrides — merged over subpage/global grid.
   it('collects per-album grid overrides, dropping unknown layouts to masonry', () => {
     const result = deriveGallery({

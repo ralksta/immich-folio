@@ -129,6 +129,41 @@ h3 .svg-icon {
   font-style: italic;
 }
 
+/* Album link: slug field with its fixed slash, then the full path + copy. */
+.album-link-row,
+.album-link-preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.album-link-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.album-link-prefix {
+  color: var(--admin-text-secondary);
+}
+
+.album-link-preview {
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  background: var(--admin-bg-elevated);
+}
+
+.album-link-preview code {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+}
+
 /* Badges for status indications */
 .album-tile-badges {
   display: flex;
@@ -153,6 +188,10 @@ h3 .svg-icon {
   color: var(--admin-accent);
   border-color: rgba(245, 158, 11, 0.3);
   background: rgba(245, 158, 11, 0.05);
+}
+
+.album-tile-badges .badge-unlisted {
+  border-style: dashed;
 }
 
 .album-tile-badges .badge-hero {

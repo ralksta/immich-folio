@@ -38,7 +38,10 @@ export async function buildSiteShape(): Promise<SiteShape> {
       isProtected: isProtected(subpage.slug, 'subpage'),
       albums: resolve(subpage.albumIds),
     })),
-    standaloneAlbums: resolve(config.standaloneAlbums),
+    standaloneAlbums: resolve(config.standaloneAlbums).map((album) => ({
+      ...album,
+      hidden: config.hiddenAlbums.includes(album.id),
+    })),
     journal: journal.map((entry) => ({
       slug: entry.slug,
       draft: entry.frontmatter.draft === true,

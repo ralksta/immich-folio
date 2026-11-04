@@ -181,23 +181,6 @@ export const settings: AdminDictionary['settings'] = {
     title: 'Griglia e layout',
     sub: 'Configura le colonne della galleria fotografica e le proporzioni delle miniature.',
     layout: 'Algoritmo di layout',
-    layouts: {
-      masonry: { label: 'Masonry', desc: 'Colonne sfalsate dinamiche, in stile Pinterest' },
-      uniform: { label: 'Griglia uniforme', desc: 'Griglia pulita con proporzioni uguali' },
-      showcase: { label: 'Vetrina', desc: 'Foto in evidenza alternate a riquadri più piccoli' },
-      filmstrip: {
-        label: 'Pellicola',
-        desc: 'Striscia orizzontale scorrevole, come una pellicola',
-      },
-      'editorial-flow': {
-        label: 'Flusso editoriale',
-        desc: 'Impaginazione da rivista con foto di dimensioni diverse',
-      },
-      justified: {
-        label: 'Giustificato (sperimentale)',
-        desc: 'Righe di uguale altezza che riempiono tutta la larghezza',
-      },
-    },
     aspectRatio: 'Proporzioni',
     /** Keyed by the ratio value written to settings.yaml. */
     aspectRatios: {
@@ -212,7 +195,7 @@ export const settings: AdminDictionary['settings'] = {
     },
     spacingTitle: 'Spaziatura e colonne',
     spacingSub:
-      'Regola il numero di colonne e la spaziatura della griglia. Il numero di colonne vale anche per le copertine degli album in una sottopagina; la loro spaziatura resta quella del tema, a meno che una pagina non la modifichi.',
+      'Regola il numero di colonne e la spaziatura della griglia. Il numero di colonne vale anche per le copertine degli album in una pagina; la loro spaziatura resta quella del tema, a meno che una pagina non la modifichi.',
     columns: (min: number, max: number) => `Colonne (${min} - ${max})`,
     gap: 'Spaziatura (px)',
   },
@@ -289,11 +272,11 @@ export const settings: AdminDictionary['settings'] = {
       'Attualmente fornito dalla variabile d’ambiente {variable} ({value}). Un valore inserito qui ha la precedenza dopo il salvataggio.',
     metaTitle: 'Meta title SEO',
     metaTitlePlaceholder: 'Sostituisce il titolo del sito nei risultati di ricerca di Google',
-    titleTemplate: 'Modello del titolo delle sottopagine',
+    titleTemplate: 'Modello del titolo delle pagine',
     titleTemplateFallback: 'Il mio portfolio',
     /** {placeholder}: the literal `%s`. */
     titleTemplateHint:
-      'Modello per sottopagine e album. Usa {placeholder} come segnaposto per il titolo della pagina.',
+      'Modello per pagine e album. Usa {placeholder} come segnaposto per il titolo della pagina.',
     previewLabel: 'Anteprima:',
     previewExample: 'Paesaggi',
     metaDescription: 'Meta description SEO',

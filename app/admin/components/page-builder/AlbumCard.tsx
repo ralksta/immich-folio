@@ -3,7 +3,15 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { DEFAULT_ALBUM_SORT } from '@/lib/albumSort';
-import { IconCamera, IconGripVertical, IconImage, IconLock, IconPencil, IconTrash } from '../Icons';
+import {
+  IconCamera,
+  IconEyeOff,
+  IconGripVertical,
+  IconImage,
+  IconLock,
+  IconPencil,
+  IconTrash,
+} from '../Icons';
 import { useAdminDictionary } from '../AdminI18n';
 import type { AlbumEntry } from './types';
 
@@ -126,6 +134,11 @@ export default function AlbumCard({
             {album.title || name}
           </span>
           <div className="album-tile-badges">
+            {album.hidden && (
+              <span className="badge badge-unlisted" title={t.unlisted}>
+                <IconEyeOff size={12} />
+              </span>
+            )}
             {hasPassword && (
               <span className="badge badge-password" title={t.passwordProtected}>
                 <IconLock size={12} />

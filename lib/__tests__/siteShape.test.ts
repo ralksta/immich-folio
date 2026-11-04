@@ -4,6 +4,7 @@ vi.mock('@/lib/config', () => ({
   getConfig: () => ({
     subpages: [],
     standaloneAlbums: [],
+    hiddenAlbums: [],
     aboutEnabled: false,
     map: false,
   }),

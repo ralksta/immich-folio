@@ -9,10 +9,11 @@ export const journal: AdminDictionary['journal'] = {
     /** The page header's kicker. */
     kicker: 'Inhoud',
     title: 'Journal',
-    description: 'Verhalen, veldnotities en lange fotoessays, geschreven met een livevoorbeeld.',
+    description:
+      'Journalverhalen, veldnotities en lange reportages, geschreven met een livevoorbeeld.',
     newEntry: 'Nieuw journalverhaal',
     emptyTitle: 'Nog geen journalverhalen',
-    emptyText: 'Maak je eerste verhaal om reisverslagen of trouwreportages te delen.',
+    emptyText: 'Maak je eerste journalverhaal om een reisverslag of trouwreportage te delen.',
     createFirst: 'Eerste verhaal maken',
     /** Reading time on an entry card. */
     readingTime: (minutes: number) => `${minutes} min lezen`,
@@ -72,7 +73,7 @@ export const journal: AdminDictionary['journal'] = {
     wedding: {
       name: 'Bruiloft',
       description:
-        'Datum en locatie vooraan, één hero-foto, een zin uit de geloften, het feest als raster.',
+        'Datum en locatie vooraan, één openingsfoto, een zin uit de geloften, het feest als raster.',
     },
     hiking: {
       name: 'Wandelen / buiten',
@@ -127,14 +128,14 @@ export const journal: AdminDictionary['journal'] = {
     /** The top bar's back button. */
     allEntries: '← Alle verhalen',
     pages: '← Pagina’s',
-    storyTitlePlaceholder: 'Titel van het verhaal…',
-    storyTitleLabel: 'Titel van het verhaal',
+    storyTitlePlaceholder: 'Titel van het journalverhaal…',
+    storyTitleLabel: 'Titel van het journalverhaal',
     pageTitlePlaceholder: 'Paginatitel…',
     pageTitleLabel: 'Paginatitel',
     modeLabel: 'Editormodus',
     modeBlocks: 'Visuele blokken',
     modeMarkdown: 'Ruwe Markdown',
-    storySettings: 'Verhaalinstellingen',
+    storySettings: 'Instellingen van het journalverhaal',
     pageSettings: 'Pagina-instellingen',
     publish: 'Publiceren',
     unpublish: 'Publicatie intrekken',
@@ -165,7 +166,7 @@ export const journal: AdminDictionary['journal'] = {
 
   /** Titles of the photo picker, by what it is opened for. */
   pickerTitles: {
-    storyPhoto: 'Foto voor het verhaal kiezen',
+    storyPhoto: 'Foto voor het journalverhaal kiezen',
     photos: 'Foto’s toevoegen (elk een eigen blok)',
     pair: 'Foto’s voor het paar kiezen',
     pairPhoto: (n: number) => `Foto ${n} voor het paar kiezen`,
@@ -264,7 +265,7 @@ export const journal: AdminDictionary['journal'] = {
   },
 
   storySettings: {
-    title: 'Verhaalinstellingen & metadata',
+    title: 'Instellingen en metadata van het journalverhaal',
     subtitle: 'Ondertitel',
     subtitlePlaceholder: 'bijv. Veldnotities van onze winterreis',
     author: 'Auteur',

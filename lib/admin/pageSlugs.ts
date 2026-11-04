@@ -16,7 +16,8 @@ import type { SlugTakenBy } from '../pages';
 export async function takenPageSlugs(): Promise<SlugTakenBy> {
   const config = getConfig();
   const [albums, journal] = await Promise.all([
-    immich.getStandaloneAlbums().catch(() => []),
+    // Hidden albums keep their URL, so a content page must not take it.
+    immich.getStandaloneAlbums(false, true).catch(() => []),
     listJournalEntries().catch(() => []),
   ]);
   return {

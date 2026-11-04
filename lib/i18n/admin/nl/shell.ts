@@ -153,6 +153,7 @@ export const shell: AdminDictionary['shell'] = {
 
   saveBar: {
     unsaved: 'Niet-opgeslagen wijzigingen',
+    discard: 'Wijzigingen verwerpen',
     preview: '↗ Site bekijken',
     previewTitle: 'Site in een nieuw tabblad openen (cache omzeilen)',
     saving: 'Opslaan…',

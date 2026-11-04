@@ -43,6 +43,7 @@ import {
   slugify,
 } from '@/lib/config/schema';
 import { useAdminDictionary } from '../AdminI18n';
+import { PAGE_LAYOUTS } from '@/lib/admin/layouts';
 
 interface SubpageDrawerProps {
   sp: Subpage;
@@ -340,12 +341,11 @@ export default function SubpageDrawer({
                               SVG icon set is not available here — and a decorative emoji is
                               not a substitute for it.
                             */}
-                    <option value="masonry">{t.layouts.masonry}</option>
-                    <option value="uniform">{t.layouts.uniform}</option>
-                    <option value="showcase">{t.layouts.showcase}</option>
-                    <option value="filmstrip">{t.layouts.filmstrip}</option>
-                    <option value="editorial-flow">{t.layouts.editorialFlow}</option>
-                    <option value="essay">{t.layouts.essay}</option>
+                    {PAGE_LAYOUTS.map((id) => (
+                      <option key={id} value={id}>
+                        {dict.common.layouts[id].label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

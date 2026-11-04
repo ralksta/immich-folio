@@ -168,7 +168,7 @@ describe('StorySettingsModal as a dialog (A-9)', () => {
         onClose={onClose}
       />,
     );
-    const dialog = screen.getByRole('dialog', { name: /Story Settings/ });
+    const dialog = screen.getByRole('dialog', { name: /Entry Settings/ });
     expect(dialog.getAttribute('aria-modal')).toBe('true');
     escape();
     expect(onClose).toHaveBeenCalledTimes(1);

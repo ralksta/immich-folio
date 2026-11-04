@@ -17,6 +17,11 @@ interface SaveBarProps {
   label: string;
   /** Show the cache-bypassing preview link (page builder only). */
   showPreview?: boolean;
+  /**
+   * Throw the unsaved edits away and return to the server state. Optional: an
+   * editor without it simply does not offer the way out.
+   */
+  onDiscard?: () => void;
 }
 
 /**
@@ -34,6 +39,7 @@ export default function SaveBar({
   onSave,
   label,
   showPreview = false,
+  onDiscard,
 }: SaveBarProps) {
   const t = useAdminDictionary().shell.saveBar;
   if (!dirty && !saving && !status) return null;
@@ -51,6 +57,16 @@ export default function SaveBar({
         )}
       </div>
       <div className="save-bar-right">
+        {onDiscard && dirty && (
+          <button
+            type="button"
+            className="admin-btn admin-btn-ghost"
+            onClick={onDiscard}
+            disabled={saving}
+          >
+            {t.discard}
+          </button>
+        )}
         {showPreview && (
           <a
             href="/?fresh=1"

@@ -226,6 +226,29 @@ describe('checkAlbumSlugCollisions', () => {
     expect(f.level).toBe('error');
   });
 
+  it('uses a custom slug instead of the title when checking collisions', () => {
+    // Same title, but one album has a deliberately random link.
+    const f = checkAlbumSlugCollisions(
+      [{ context: 'gallery.yaml albums', albumIds: ['a', 'b'] }],
+      {},
+      known,
+      testSlug,
+      { b: 'x7k2m9p4' },
+    );
+    expect(f.level).toBe('ok');
+  });
+
+  it('flags two albums whose custom slugs are identical', () => {
+    const f = checkAlbumSlugCollisions(
+      [{ context: 'gallery.yaml albums', albumIds: ['a', 'b'] }],
+      {},
+      known,
+      testSlug,
+      { a: 'preview', b: 'preview' },
+    );
+    expect(f.level).toBe('error');
+  });
+
   it('says nothing about an id Immich does not know and has no override', () => {
     const f = checkAlbumSlugCollisions(
       [{ context: 'gallery.yaml albums', albumIds: ['a', 'ghost'] }],

@@ -226,6 +226,14 @@ export interface AppConfig {
   authSecret: string;
   albums: string[];
   standaloneAlbums: string[];
+  /**
+   * Standalone albums marked `hidden: true`, reachable by direct link only.
+   * Kept in `standaloneAlbums` so their route still resolves; listings filter
+   * this list out.
+   */
+  hiddenAlbums: string[];
+  /** Custom slug per standalone album id. Absent means derived from its title. */
+  albumSlugs: Record<string, string>;
   subpages: SubpageConfig[];
   /**
    * The header menu in gallery.yaml order: every subpage (hidden and disabled
@@ -409,6 +417,18 @@ export interface AlbumEntryObject {
   coverPosition?: string;
   /** Offer the original file for download from the lightbox (#475). Off by default. */
   download?: boolean;
+  /**
+   * Unlisted standalone album: reachable at its own `/album-slug`, but absent
+   * from the navigation, sitemap and map. Only read on a top-level `albums:`
+   * entry — an album inside a subpage is hidden by hiding the subpage.
+   */
+  hidden?: boolean;
+  /**
+   * Custom URL slug for a standalone album, instead of deriving it from the
+   * title. Only read on a top-level `albums:` entry. Useful for an unlisted
+   * album whose link should not be guessable; changing it breaks old links.
+   */
+  slug?: string;
   /**
    * Lightbox zoom to full resolution for this album, over the subpage and
    * site setting in either direction (#467). Absent inherits.
@@ -776,10 +796,12 @@ export function isListedSubpage(sp: { enabled?: boolean; hidden?: boolean }): bo
  */
 export function listedAlbumIds(config: {
   standaloneAlbums?: readonly string[];
+  hiddenAlbums?: readonly string[];
   subpages: ReadonlyArray<{ albumIds: readonly string[]; enabled?: boolean; hidden?: boolean }>;
 }): Set<string> {
+  const hidden = new Set(config.hiddenAlbums ?? []);
   return new Set([
-    ...(config.standaloneAlbums ?? []),
+    ...(config.standaloneAlbums ?? []).filter((id) => !hidden.has(id)),
     ...config.subpages.filter(isListedSubpage).flatMap((sp) => sp.albumIds),
   ]);
 }

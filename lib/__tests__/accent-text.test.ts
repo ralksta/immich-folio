@@ -101,6 +101,7 @@ describe('public styles use the text token for accent-coloured text', () => {
     'app/globals.css',
     ...fs.readdirSync(path.join(root, 'app', 'styles')).map((f) => `app/styles/${f}`),
     'app/leaflet.css',
+    'app/map/map.css',
     'app/journal/journal.css',
     'app/contact/contact.css',
     ...fs.readdirSync(path.join(root, 'app', 'themes')).map((f) => `app/themes/${f}`),

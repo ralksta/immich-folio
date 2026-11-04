@@ -22,7 +22,7 @@ export const pickers = {
 
   assetPicker: {
     /** Heading when the caller names no purpose of its own. */
-    defaultTitle: 'Select Hero Image',
+    defaultTitle: 'Select Photo',
     tabs: {
       albums: 'Albums',
       thisAlbum: 'This Album',

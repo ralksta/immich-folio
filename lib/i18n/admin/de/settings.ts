@@ -185,23 +185,6 @@ export const settings: AdminDictionary['settings'] = {
     title: 'Raster & Layout',
     sub: 'Spaltenstruktur der Galerie und Seitenverhältnis der Vorschaubilder einstellen.',
     layout: 'Layout-Algorithmus',
-    layouts: {
-      masonry: { label: 'Masonry', desc: 'Dynamische, versetzte Spalten im Pinterest-Stil' },
-      uniform: {
-        label: 'Gleichmäßiges Raster',
-        desc: 'Klares Raster mit gleichem Seitenverhältnis',
-      },
-      showcase: { label: 'Showcase', desc: 'Große Hero-Fotos gemischt mit kleineren Kacheln' },
-      filmstrip: { label: 'Filmstreifen', desc: 'Horizontal scrollbarer Filmstreifen' },
-      'editorial-flow': {
-        label: 'Editorial Flow',
-        desc: 'Magazin-Layout mit unterschiedlich großen Fotos',
-      },
-      justified: {
-        label: 'Blocksatz (experimentell)',
-        desc: 'Zeilen gleicher Höhe, die die volle Breite füllen',
-      },
-    },
     aspectRatio: 'Seitenverhältnis',
     /** Keyed by the ratio value written to settings.yaml. */
     aspectRatios: {
@@ -213,7 +196,7 @@ export const settings: AdminDictionary['settings'] = {
     },
     spacingTitle: 'Abstände & Spalten',
     spacingSub:
-      'Spaltenzahl und Abstand im Raster anpassen. Die Spaltenzahl gilt auch für die Albumcover auf einer Unterseite; deren Abstand bleibt beim Design, sofern eine Seite ihn nicht überschreibt.',
+      'Spaltenzahl und Abstand im Raster anpassen. Die Spaltenzahl gilt auch für die Albumcover auf einer Seite; deren Abstand bleibt beim Design, sofern eine Seite ihn nicht überschreibt.',
     columns: (min: number, max: number) => `Spalten (${min} - ${max})`,
     gap: 'Abstand (px)',
   },
@@ -292,12 +275,12 @@ export const settings: AdminDictionary['settings'] = {
       'Derzeit aus der Umgebungsvariable {variable} ({value}). Ein hier eingetragener Wert hat nach dem Speichern Vorrang.',
     metaTitle: 'SEO-Meta-Titel',
     metaTitlePlaceholder: 'Ersetzt den Website-Titel in den Google-Suchergebnissen',
-    titleTemplate: 'Titelvorlage für Unterseiten',
+    titleTemplate: 'Titelvorlage für Seiten',
     /** Site name used in the template example while no title is set. */
     titleTemplateFallback: 'Mein Portfolio',
     /** {placeholder}: the literal `%s`. */
     titleTemplateHint:
-      'Vorlage für Unterseiten & Alben. {placeholder} steht als Platzhalter für den Seitentitel.',
+      'Vorlage für Seiten & Alben. {placeholder} steht als Platzhalter für den Seitentitel.',
     previewLabel: 'Vorschau:',
     /** Example page title put into the template preview. */
     previewExample: 'Landschaften',

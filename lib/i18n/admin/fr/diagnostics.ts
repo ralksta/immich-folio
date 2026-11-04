@@ -126,8 +126,8 @@ export const diagnostics: AdminDictionary['diagnostics'] = {
     cacheTitle: (n: number) =>
       `Le cache en mémoire contient ${n} ${isOne(n) ? 'élément' : 'éléments'}`,
     cacheDetail:
-      'Listes d’albums et métadonnées des photos venant d’Immich. Le vider ralentit les prochains affichages de pages, rien de plus.',
-    clearing: 'Vidage…',
-    clearCache: 'Vider le cache',
+      'Listes d’albums et métadonnées des photos venant d’Immich. Recharger vide le cache et relit la configuration ; les prochains affichages sont plus lents, rien de plus.',
+    clearing: 'Rechargement…',
+    clearCache: 'Recharger',
   },
 };

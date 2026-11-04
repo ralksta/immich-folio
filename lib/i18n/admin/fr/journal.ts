@@ -13,11 +13,11 @@ export const journal: AdminDictionary['journal'] = {
     kicker: 'Contenu',
     title: 'Journal',
     description:
-      'Récits, carnets de terrain et longs essais photo, écrits avec un aperçu en direct.',
+      'Articles du journal, carnets de terrain et longs récits, écrits avec un aperçu en direct.',
     newEntry: 'Nouvel article du journal',
     emptyTitle: 'Aucun article pour le moment',
     emptyText:
-      'Créez votre premier récit pour partager des carnets de voyage ou des reportages de mariage.',
+      'Créez votre premier article pour partager un carnet de voyage ou un reportage de mariage.',
     createFirst: 'Créer le premier article',
     /** Reading time on an entry card. */
     readingTime: (minutes: number) => `${minutes} min`,
@@ -74,7 +74,7 @@ export const journal: AdminDictionary['journal'] = {
     wedding: {
       name: 'Mariage',
       description:
-        'La date et le lieu d’emblée, une image d’en-tête, une phrase des vœux, les invités en grille.',
+        'La date et le lieu d’emblée, une photo d’ouverture, une phrase des vœux, les invités en grille.',
     },
     hiking: {
       name: 'Randonnée / plein air',
@@ -130,14 +130,14 @@ export const journal: AdminDictionary['journal'] = {
     /** The top bar's back button. */
     allEntries: '← Tous les articles',
     pages: '← Pages',
-    storyTitlePlaceholder: 'Titre du récit…',
-    storyTitleLabel: 'Titre du récit',
+    storyTitlePlaceholder: 'Titre de l’article…',
+    storyTitleLabel: 'Titre de l’article',
     pageTitlePlaceholder: 'Titre de la page…',
     pageTitleLabel: 'Titre de la page',
     modeLabel: 'Mode de l’éditeur',
     modeBlocks: 'Blocs visuels',
     modeMarkdown: 'Markdown brut',
-    storySettings: 'Réglages du récit',
+    storySettings: 'Réglages de l’article',
     pageSettings: 'Réglages de la page',
     publish: 'Publier',
     unpublish: 'Dépublier',
@@ -168,7 +168,7 @@ export const journal: AdminDictionary['journal'] = {
 
   /** Titles of the photo picker, by what it is opened for. */
   pickerTitles: {
-    storyPhoto: 'Choisir une photo pour le récit',
+    storyPhoto: 'Choisir une photo pour l’article',
     photos: 'Ajouter des photos (un bloc chacune)',
     pair: 'Choisir les photos de la paire',
     pairPhoto: (n: number) => `Choisir la photo n° ${n} de la paire`,
@@ -267,7 +267,7 @@ export const journal: AdminDictionary['journal'] = {
   },
 
   storySettings: {
-    title: 'Réglages & métadonnées du récit',
+    title: 'Réglages & métadonnées de l’article',
     subtitle: 'Sous-titre',
     subtitlePlaceholder: 'par ex. Carnet de notre voyage d’hiver',
     author: 'Auteur',

@@ -64,6 +64,15 @@ export const PUT = withAdmin(async (request: Request) => {
           `Rename one of them.`,
       );
     }
+    const albumClash = Object.entries(derived.albumSlugs ?? {}).find(([, slug]) =>
+      pageSlugs.has(slug),
+    );
+    if (albumClash) {
+      throw new Error(
+        `Album slug "/${albumClash[1]}" would take the same URL as a content page. ` +
+          `Choose another link or rename the page.`,
+      );
+    }
   } catch (err) {
     const reason = err instanceof Error ? err.message : 'Invalid gallery structure';
     console.warn('[Admin] Rejected an unloadable gallery.yaml:', reason);

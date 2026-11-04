@@ -177,23 +177,6 @@ export const settings: AdminDictionary['settings'] = {
     title: 'Grille & moteur de mise en page',
     sub: 'Configurez la structure des colonnes de la galerie et le format des vignettes.',
     layout: 'Algorithme de mise en page',
-    layouts: {
-      masonry: { label: 'Maçonnerie', desc: 'Colonnes décalées dynamiques, façon Pinterest' },
-      uniform: { label: 'Grille uniforme', desc: 'Grille nette au format identique' },
-      showcase: {
-        label: 'Vitrine',
-        desc: 'Photos mises en avant mêlées à des vignettes plus petites',
-      },
-      filmstrip: { label: 'Pellicule', desc: 'Bande de film horizontale à faire défiler' },
-      'editorial-flow': {
-        label: 'Flux éditorial',
-        desc: 'Mise en page de magazine avec des photos de tailles variées',
-      },
-      justified: {
-        label: 'Justifiée (expérimental)',
-        desc: 'Rangées de même hauteur qui occupent toute la largeur',
-      },
-    },
     aspectRatio: 'Format',
     aspectRatios: {
       '1': { label: 'Carré (1:1)', desc: 'Recadrage carré au format 1:1' },
@@ -204,7 +187,7 @@ export const settings: AdminDictionary['settings'] = {
     },
     spacingTitle: 'Espacement & colonnes',
     spacingSub:
-      'Réglez le nombre de colonnes et l’espacement de la grille. Le nombre de colonnes dispose aussi les couvertures d’albums sur une sous-page ; leur espacement reste celui du thème, sauf si une page le remplace.',
+      'Réglez le nombre de colonnes et l’espacement de la grille. Le nombre de colonnes dispose aussi les couvertures d’albums sur une page ; leur espacement reste celui du thème, sauf si une page le remplace.',
     columns: (min: number, max: number) => `Colonnes (${min} - ${max})`,
     gap: 'Espacement (px)',
   },
@@ -277,10 +260,10 @@ export const settings: AdminDictionary['settings'] = {
       'Actuellement fournie par la variable d’environnement {variable} ({value}). Une valeur saisie ici est prioritaire une fois enregistrée.',
     metaTitle: 'Méta-titre SEO',
     metaTitlePlaceholder: 'Remplace le titre du site par défaut dans les résultats Google',
-    titleTemplate: 'Modèle de titre des sous-pages',
+    titleTemplate: 'Modèle de titre des pages',
     titleTemplateFallback: 'Mon portfolio',
     titleTemplateHint:
-      'Modèle pour les sous-pages et les albums. Utilisez {placeholder} à la place du titre de la page.',
+      'Modèle pour les pages et les albums. Utilisez {placeholder} à la place du titre de la page.',
     previewLabel: 'Aperçu :',
     previewExample: 'Paysages',
     metaDescription: 'Méta-description SEO',

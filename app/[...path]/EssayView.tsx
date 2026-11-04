@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { Lightbox, type LightboxWatermark } from '@/components/Lightbox';
+import { IconHeart } from '@/components/Icons';
 import { useProofing } from '@/components/useProofing';
 import { ProofingProvider, ProofingModal } from '@/components/ProofingLazy';
 import { FadeIn } from '@/components/FadeIn';
@@ -479,6 +480,12 @@ function EssayViewContent({
           {/* A count, not the album grid's filter toggle: a story's layout is
               authored, so there is nothing for "show favourites" to narrow. */}
           <span style={{ fontSize: '0.85rem', fontWeight: 500, padding: '6px 4px' }}>
+            <IconHeart
+              size={14}
+              fill="currentColor"
+              aria-hidden="true"
+              style={{ verticalAlign: '-2px', marginRight: '0.35em' }}
+            />
             {t.proofing.selected(selectedCount)}
           </span>
           <button

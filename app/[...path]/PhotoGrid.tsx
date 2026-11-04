@@ -14,6 +14,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Lightbox, type LightboxWatermark } from '@/components/Lightbox';
+import { IconHeart } from '@/components/Icons';
 import { FadeIn } from '@/components/FadeIn';
 import type { ProofSessionInit } from '@/components/ProofingContext';
 import { useProofing } from '@/components/useProofing';
@@ -452,7 +453,19 @@ function PhotoGridInner({
               cursor: 'pointer',
             }}
           >
-            {proofing.isFilterActive ? t.proofing.showAll : t.proofing.selected(selectedCount)}
+            {proofing.isFilterActive ? (
+              t.proofing.showAll
+            ) : (
+              <>
+                <IconHeart
+                  size={14}
+                  fill="currentColor"
+                  aria-hidden="true"
+                  style={{ verticalAlign: '-2px', marginRight: '0.35em' }}
+                />
+                {t.proofing.selected(selectedCount)}
+              </>
+            )}
           </button>
           <button
             type="button"

@@ -12,6 +12,7 @@ import { useCallback, useState } from 'react';
 import { useProofing } from './ProofingContext';
 import { useDictionary } from './I18nProvider';
 import { useModalDialog } from '@/hooks/useModalDialog';
+import { IconHeart } from './Icons';
 
 const barStyle: React.CSSProperties = {
   position: 'fixed',
@@ -117,7 +118,19 @@ export function ProofSessionControls() {
               cursor: 'pointer',
             }}
           >
-            {isFilterActive ? t.proofing.showAll : t.proofing.selected(count)}
+            {isFilterActive ? (
+              t.proofing.showAll
+            ) : (
+              <>
+                <IconHeart
+                  size={14}
+                  fill="currentColor"
+                  aria-hidden="true"
+                  style={{ verticalAlign: '-2px', marginRight: '0.35em' }}
+                />
+                {t.proofing.selected(count)}
+              </>
+            )}
           </button>
         )}
         <span

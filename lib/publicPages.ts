@@ -13,6 +13,8 @@
 export interface PublicAlbum {
   id: string;
   slug: string;
+  /** `hidden: true` on a standalone album — direct link only. */
+  hidden?: boolean;
 }
 
 export interface PublicSubpage {
@@ -88,7 +90,8 @@ export function publicPaths(site: SiteShape): string[] {
   }
 
   for (const album of site.standaloneAlbums) {
-    if (site.isAlbumProtected(album.id)) continue;
+    // Unlisted or locked: a listing would advertise the URL it withholds.
+    if (album.hidden || site.isAlbumProtected(album.id)) continue;
     paths.push(`/${album.slug}`);
   }
 

@@ -10,11 +10,11 @@ export const journal: AdminDictionary['journal'] = {
     kicker: 'Inhalt',
     title: 'Journal',
     description:
-      'Geschichten, Notizen von unterwegs und lange Fotoessays, geschrieben mit Live-Vorschau.',
+      'Journal-Einträge, Notizen von unterwegs und lange Reportagen, geschrieben mit Live-Vorschau.',
     newEntry: 'Neuer Journal-Eintrag',
     emptyTitle: 'Noch keine Journal-Einträge',
     emptyText:
-      'Schreib deine erste Geschichte, etwa ein Reisetagebuch oder eine Hochzeitsreportage.',
+      'Schreib deinen ersten Journal-Eintrag, etwa ein Reisetagebuch oder eine Hochzeitsreportage.',
     createFirst: 'Ersten Eintrag erstellen',
     /** Reading time on an entry card. */
     readingTime: (minutes: number) => `${minutes} Min.`,
@@ -73,7 +73,7 @@ export const journal: AdminDictionary['journal'] = {
     wedding: {
       name: 'Hochzeit',
       description:
-        'Datum und Ort vorweg, ein Hero-Bild, eine Zeile aus dem Eheversprechen, die Feier als Raster.',
+        'Datum und Ort vorweg, ein Aufmacherfoto, eine Zeile aus dem Eheversprechen, die Feier als Raster.',
     },
     hiking: {
       name: 'Wandern / Outdoor',
@@ -127,8 +127,8 @@ export const journal: AdminDictionary['journal'] = {
     /** The top bar's back button. */
     allEntries: '← Alle Einträge',
     pages: '← Seiten',
-    storyTitlePlaceholder: 'Titel der Geschichte...',
-    storyTitleLabel: 'Titel der Geschichte',
+    storyTitlePlaceholder: 'Titel des Eintrags...',
+    storyTitleLabel: 'Titel des Eintrags',
     pageTitlePlaceholder: 'Seitentitel...',
     pageTitleLabel: 'Seitentitel',
     modeLabel: 'Editormodus',
@@ -165,7 +165,7 @@ export const journal: AdminDictionary['journal'] = {
 
   /** Titles of the photo picker, by what it is opened for. */
   pickerTitles: {
-    storyPhoto: 'Foto für die Geschichte wählen',
+    storyPhoto: 'Foto für den Eintrag wählen',
     photos: 'Fotos hinzufügen (je ein Block)',
     pair: 'Fotos für das Paar wählen',
     pairPhoto: (n: number) => `Foto Nr. ${n} für das Paar wählen`,

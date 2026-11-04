@@ -110,6 +110,8 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
   let title: string;
   let subtitle = '';
   let description: string | undefined = undefined;
+  /** Set for a top-level album page, whose URL may be unlisted. */
+  let standaloneAlbumId: string | undefined;
   const photoCount = (assets: ImmichAsset[]) =>
     t.common.photos(assets.filter((a) => a.type === 'IMAGE' || a.type === 'VIDEO').length);
 
@@ -145,6 +147,7 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
     const album = await immich.getAlbumBySlug(slug);
     if (!album) return notFoundMetadata();
     if (await isLocked(album.id, 'album')) return lockedMetadata();
+    standaloneAlbumId = album.id;
     title = album.albumName;
     subtitle = photoCount(album.assets);
     if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
@@ -159,12 +162,14 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
     (subtitle ? `${title} — ${subtitle}` : undefined);
   const ogImage = photoAsset ? imageUrl(photoAsset, 'preview') : ogImageUrl(title, subtitle);
 
-  // A hidden subpage is reachable by link only: out of the nav, the home page
-  // and the sitemap. Indexing it, or an album below it, would undo that.
+  // An unlisted subpage or standalone album is reachable by link only: out of
+  // the nav, the home page and the sitemap. Indexing it, or an album below a
+  // hidden subpage, would undo that.
   const config = getConfig();
   const hidden =
-    (path.length === 2 || immich.isSubpageSlug(slug)) &&
-    config.subpages.some((sp) => sp.slug === slug && sp.hidden === true);
+    ((path.length === 2 || immich.isSubpageSlug(slug)) &&
+      config.subpages.some((sp) => sp.slug === slug && sp.hidden === true)) ||
+    (standaloneAlbumId !== undefined && config.hiddenAlbums.includes(standaloneAlbumId));
 
   return {
     title,
@@ -413,7 +418,11 @@ async function PathContent({ params, searchParams }: PathPageProps) {
         album={album}
         images={images}
         nav={nav}
-        structuredData={structuredDataFor(album, `/${subpageSlug}/${albumSlug}`, images.length)}
+        structuredData={
+          subpageData?.subpage.hidden
+            ? undefined
+            : structuredDataFor(album, `/${subpageSlug}/${albumSlug}`, images.length)
+        }
         layout={resolveLayout(mergeAlbumGrid(album.id, spGrid))}
         gridStyle={buildGridStyle(mergeAlbumGrid(album.id, spGrid))}
         backLinkHref={`/${subpageSlug}`}
@@ -759,7 +768,11 @@ async function PathContent({ params, searchParams }: PathPageProps) {
       backLinkHref="/"
       backLinkLabel={getServerDictionary().common.backToGallery}
       nav={albumNeighbours(await immich.getStandaloneAlbums(forceFresh), album.id)}
-      structuredData={structuredDataFor(album, `/${slug}`, images.length)}
+      structuredData={
+        config.hiddenAlbums.includes(album.id)
+          ? undefined
+          : structuredDataFor(album, `/${slug}`, images.length)
+      }
       watermark={config.watermark}
       showExifPanel={hasExifPanelContent(config.exif)}
       showGear={config.exif.camera}

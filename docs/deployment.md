@@ -127,16 +127,21 @@ PROOFING_WEBHOOK_URL=https://…         # notify on submitted client proofing s
 
 ## Docker Compose
 
+Every release is published to the GitHub Container Registry as
+`ghcr.io/ralksta/immich-folio`, for `linux/amd64` and `linux/arm64`. No checkout
+is needed — a folder with this `docker-compose.yml` is enough:
+
 ```yaml
 services:
   lightbox:
-    build: .
+    image: ghcr.io/ralksta/immich-folio:latest
     container_name: immich-folio
     restart: unless-stopped
     ports:
       - '7211:7211'
     env_file:
-      - .env.local
+      - path: .env.local
+        required: false
     volumes:
       - ./content:/app/content
 ```
@@ -145,23 +150,49 @@ services:
 docker compose up -d
 ```
 
-The gallery will be available at `http://localhost:7211`.
+The gallery will be available at `http://localhost:7211`. With an empty
+`content/` folder and no `.env.local` it opens the setup screen; the wizard
+token is in `docker compose logs lightbox` ([First-Run Setup](#first-run-setup)).
+
+| Tag                      | Follows                           |
+| ------------------------ | --------------------------------- |
+| `latest`                 | the newest release                |
+| `<x.y>`, e.g. `0.21`     | patch releases of that version    |
+| `<x.y.z>`, e.g. `0.21.0` | exactly that release, never moves |
+| `sha-<commit>`           | the build of one commit           |
+
+Pin a minor version (`:0.21`) if you would rather choose when a feature release
+arrives; until 1.0 a minor version can change behaviour. To update:
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+### Building from source
+
+The `docker-compose.yml` in the repository builds the image from the checkout
+instead (`build: .`) — the route for running your own changes:
+
+```bash
+git clone https://github.com/ralksta/immich-folio.git
+cd immich-folio
+docker compose up -d --build
+```
 
 ## Standalone Docker
 
 ```bash
-# Build
-docker build -t immich-folio .
-
-# Run
 docker run -d \
   --name immich-folio \
   --restart unless-stopped \
   -p 7211:7211 \
-  --env-file .env.local \
   -v ./content:/app/content \
-  immich-folio
+  ghcr.io/ralksta/immich-folio:latest
 ```
+
+Add `--env-file .env.local` to configure it through environment variables
+instead of the wizard. From a checkout, `docker build -t immich-folio .` builds
+the image locally; use `immich-folio` as the image name then.
 
 > [!IMPORTANT]
 > The `content/` volume mount lets you update `gallery.yaml` and `about.md`
@@ -202,7 +233,7 @@ counterpart.)
 It runs in the shipped image too:
 
 ```bash
-docker compose exec folio npm run doctor
+docker compose exec -u nextjs lightbox npm run doctor
 ```
 
 No secret is ever printed — only whether something is set, and where to look.
@@ -222,7 +253,7 @@ whose they are and leaves it at that. Run it through the container to have it
 checked as the app itself:
 
 ```bash
-docker compose exec folio npm run doctor
+docker compose exec -u nextjs lightbox npm run doctor
 ```
 
 The other is `TRUSTED_PROXY_HOPS`, judged against the

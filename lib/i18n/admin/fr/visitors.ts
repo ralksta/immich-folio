@@ -124,7 +124,7 @@ export const visitors: AdminDictionary['visitors'] = {
     dayViews: (date: string, n: number) => `${date} : ${n} ${isOne(n) ? 'vue' : 'vues'}`,
     noViews:
       'Aucune page vue enregistrée pour le moment. Visitez les pages du portfolio pour lancer le suivi !',
-    topPages: 'Pages et sous-pages les plus visitées',
+    topPages: 'Pages les plus visitées',
     noPages: 'Aucune page enregistrée pour le moment.',
     pageViews: (n: number) => `${n} ${isOne(n) ? 'vue' : 'vues'}`,
   },

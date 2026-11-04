@@ -115,7 +115,7 @@ export const visitors: AdminDictionary['visitors'] = {
     dayViews: (date: string, n: number) => `${date}: ${n} ${n === 1 ? 'weergave' : 'weergaven'}`,
     noViews:
       'Nog geen paginaweergaven geregistreerd. Bezoek pagina’s van je portfolio om het tellen te starten!',
-    topPages: 'Meest bezochte pagina’s & subpagina’s',
+    topPages: 'Meest bezochte pagina’s',
     noPages: 'Nog geen pagina’s geregistreerd.',
     pageViews: (n: number) => `${n} ${n === 1 ? 'weergave' : 'weergaven'}`,
   },

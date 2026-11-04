@@ -162,7 +162,9 @@ export default async function JournalIndexPage() {
                   )}
 
                   <div className="journal-card__footer">
-                    <span className="journal-card__read-more">{t.journal.readStory}</span>
+                    <span className="journal-card__read-more">
+                      {t.journal.readStory} <span aria-hidden="true">→</span>
+                    </span>
                     {entry.frontmatter.author && (
                       <span style={{ opacity: 0.65 }}>
                         {t.journal.by(entry.frontmatter.author)}

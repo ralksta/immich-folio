@@ -74,7 +74,7 @@ there is nothing there for a crawler.
 
 ## Client Proofing
 
-Lets a visitor mark favourites and export the selection — for handing a client a
+Lets a visitor mark favorites and export the selection — for handing a client a
 gallery and getting their picks back. A heart button sits on every photo in the
 grid; once something is picked, a bar appears with a filter and an export
 dialog.
@@ -302,7 +302,7 @@ are streamed from `/assets/:id/original`.
 Once enabled, visitors get a **Download album** link in the album header (every
 original as a ZIP), and — where [client proofing](#client-proofing) is on — a
 **Download selected (.zip)** action in the export dialog that zips just the
-favourited photos.
+favorited photos.
 
 The download route re-checks the allowlist, the `download` flag, every password
 gate on a route to the album, and that each asset really belongs to that album,

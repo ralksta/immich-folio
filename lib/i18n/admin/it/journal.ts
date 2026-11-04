@@ -10,11 +10,11 @@ export const journal: AdminDictionary['journal'] = {
     kicker: 'Contenuti',
     title: 'Diario',
     description:
-      'Racconti, appunti sul campo e lunghi saggi fotografici, scritti con un’anteprima dal vivo.',
+      'Articoli del diario, appunti sul campo e lunghi racconti, scritti con un’anteprima dal vivo.',
     newEntry: 'Nuovo articolo del diario',
     emptyTitle: 'Ancora nessun articolo nel diario',
     emptyText:
-      'Crea la tua prima storia per condividere diari di viaggio o reportage di matrimonio.',
+      'Crea il tuo primo articolo per condividere un diario di viaggio o un reportage di matrimonio.',
     createFirst: 'Crea il primo articolo',
     /** Reading time on an entry card. */
     readingTime: (minutes: number) => `${minutes} min`,
@@ -71,7 +71,7 @@ export const journal: AdminDictionary['journal'] = {
     wedding: {
       name: 'Matrimonio',
       description:
-        'Data e luogo in apertura, un’immagine hero, una frase dalle promesse, la festa come griglia.',
+        'Data e luogo in apertura, una foto d’apertura, una frase dalle promesse, la festa come griglia.',
     },
     hiking: {
       name: 'Escursionismo / Outdoor',
@@ -126,14 +126,14 @@ export const journal: AdminDictionary['journal'] = {
     /** The top bar's back button. */
     allEntries: '← Tutti gli articoli',
     pages: '← Pagine',
-    storyTitlePlaceholder: 'Titolo della storia...',
-    storyTitleLabel: 'Titolo della storia',
+    storyTitlePlaceholder: 'Titolo dell’articolo...',
+    storyTitleLabel: 'Titolo dell’articolo',
     pageTitlePlaceholder: 'Titolo della pagina...',
     pageTitleLabel: 'Titolo della pagina',
     modeLabel: 'Modalità dell’editor',
     modeBlocks: 'Blocchi visivi',
     modeMarkdown: 'Markdown grezzo',
-    storySettings: 'Impostazioni della storia',
+    storySettings: 'Impostazioni dell’articolo',
     pageSettings: 'Impostazioni della pagina',
     publish: 'Pubblica',
     unpublish: 'Ritira',
@@ -164,7 +164,7 @@ export const journal: AdminDictionary['journal'] = {
 
   /** Titles of the photo picker, by what it is opened for. */
   pickerTitles: {
-    storyPhoto: 'Seleziona una foto per la storia',
+    storyPhoto: 'Seleziona una foto per l’articolo',
     photos: 'Aggiungi foto (un blocco per foto)',
     pair: 'Seleziona le foto per la coppia',
     pairPhoto: (n: number) => `Seleziona la foto n. ${n} della coppia`,
@@ -263,7 +263,7 @@ export const journal: AdminDictionary['journal'] = {
   },
 
   storySettings: {
-    title: 'Impostazioni e metadati della storia',
+    title: 'Impostazioni e metadati dell’articolo',
     subtitle: 'Sottotitolo',
     subtitlePlaceholder: 'es. Appunti dal nostro viaggio d’inverno',
     author: 'Autore',

@@ -164,10 +164,10 @@ describe('JournalEditor shared album photo selection', () => {
 
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('dialog', { name: 'Select Album' })).toBeNull();
-    expect(screen.getByRole('dialog', { name: 'Select Photo for Story' })).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: 'Select Photo for the Entry' })).toBeTruthy();
 
     fireEvent.keyDown(document, { key: 'Escape' });
-    expect(screen.queryByRole('dialog', { name: 'Select Photo for Story' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Select Photo for the Entry' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Pick a photo' })).toBeNull();
   });
 

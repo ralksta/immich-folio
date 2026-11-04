@@ -32,7 +32,9 @@ export function hasAlbumOptions(entry: AlbumEntry): boolean {
     entry.location ||
     entry.download ||
     // `zoom: false` is an option too: it switches zoom off for this album.
-    entry.zoom !== undefined,
+    entry.zoom !== undefined ||
+    entry.hidden === true ||
+    entry.slug,
   );
 }
 
@@ -55,6 +57,8 @@ export function parseAlbumEntries(raw: RawAlbumEntry[] | undefined): AlbumEntry[
       location: value.location,
       download: value.download,
       zoom: typeof value.zoom === 'boolean' ? value.zoom : undefined,
+      hidden: value.hidden === true ? true : undefined,
+      slug: value.slug,
     };
   });
 }
@@ -82,11 +86,14 @@ export function serializeAlbumEntries(entries: AlbumEntry[]): RawAlbumEntry[] {
     // cannot quietly republish exact coordinates for an album deliberately
     // placed at city level or hidden from the map (#469).
     if (entry.location) val.location = entry.location;
-    // Same story as location: set by hand in YAML since #475, with no UI, so
-    // the builder was turning original downloads back off on the next save.
+    // The drawer's toggle (AlbumDrawer) writes this, but it was YAML-only long
+    // enough that the builder dropped it on every save (#475); keep persisting
+    // it whenever it is on. A missing key and `false` mean the same thing.
     if (entry.download) val.download = entry.download;
     // Both values mean something: false switches zoom off for this album.
     if (entry.zoom !== undefined) val.zoom = entry.zoom;
+    if (entry.hidden === true) val.hidden = true;
+    if (entry.slug) val.slug = entry.slug;
     return { [entry.id]: val };
   });
 }

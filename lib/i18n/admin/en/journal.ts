@@ -7,10 +7,10 @@ export const journal = {
     /** The page header's kicker. */
     kicker: 'Content',
     title: 'Journal',
-    description: 'Stories, field notes and longform photo essays, written with a live preview.',
+    description: 'Journal entries, field notes and long reads, written with a live preview.',
     newEntry: 'New Journal Entry',
     emptyTitle: 'No journal entries yet',
-    emptyText: 'Create your first story to share travel journals or wedding reportages.',
+    emptyText: 'Create your first journal entry to share a travel journal or a wedding reportage.',
     createFirst: 'Create First Entry',
     /** Reading time on an entry card. */
     readingTime: (minutes: number) => `${minutes} min`,
@@ -66,7 +66,7 @@ export const journal = {
     wedding: {
       name: 'Wedding',
       description:
-        'Date and venue up front, one hero image, a line from the vows, the party as a grid.',
+        'Date and venue up front, one opening photo, a line from the vows, the party as a grid.',
     },
     hiking: {
       name: 'Hiking / Outdoor',
@@ -117,14 +117,14 @@ export const journal = {
     /** The top bar's back button. */
     allEntries: '← All Entries',
     pages: '← Pages',
-    storyTitlePlaceholder: 'Story Title...',
-    storyTitleLabel: 'Story title',
+    storyTitlePlaceholder: 'Entry Title...',
+    storyTitleLabel: 'Entry title',
     pageTitlePlaceholder: 'Page title...',
     pageTitleLabel: 'Page title',
     modeLabel: 'Editor mode',
     modeBlocks: 'Visual Blocks',
     modeMarkdown: 'Raw Markdown',
-    storySettings: 'Story Settings',
+    storySettings: 'Entry Settings',
     pageSettings: 'Page Settings',
     publish: 'Publish',
     unpublish: 'Unpublish',
@@ -155,7 +155,7 @@ export const journal = {
 
   /** Titles of the photo picker, by what it is opened for. */
   pickerTitles: {
-    storyPhoto: 'Select Photo for Story',
+    storyPhoto: 'Select Photo for the Entry',
     photos: 'Add Photos (one block each)',
     pair: 'Select Photos for Pair',
     pairPhoto: (n: number) => `Select Photo #${n} for Pair`,
@@ -254,7 +254,7 @@ export const journal = {
   },
 
   storySettings: {
-    title: 'Story Settings & Metadata',
+    title: 'Entry Settings & Metadata',
     subtitle: 'Subtitle',
     subtitlePlaceholder: 'e.g. Field notes from our winter journey',
     author: 'Author',

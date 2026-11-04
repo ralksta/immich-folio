@@ -131,8 +131,8 @@ export const doctor = {
   albumSlugs: {
     /** Where a set of albums shares one URL prefix — the top level of the site… */
     contextStandalone: 'gallery.yaml albums',
-    /** …or a subpage. */
-    contextSubpage: (name: string) => `subpage "${name}"`,
+    /** …or a page. */
+    contextSubpage: (name: string) => `page "${name}"`,
     collision: (context: string, names: string[], slug: string) =>
       `${context}: "${names.join('" and "')}" all resolve to /${slug}`,
     errorTitle: (n: number) => `${n} album slug ${n === 1 ? 'collision' : 'collisions'} found`,
@@ -147,7 +147,7 @@ export const doctor = {
   passwords: {
     /** Where a password lives, listed in the findings below. */
     labelSite: 'Site password',
-    labelSubpage: (slug: string) => `Subpage ${slug}`,
+    labelSubpage: (slug: string) => `Page ${slug}`,
     labelAlbum: (slug: string) => `Album ${slug}`,
     labelJournal: (slug: string) => `Journal ${slug}`,
     bcryptTitle: (n: number) => `${n} password${n === 1 ? '' : 's'} still use bcrypt`,

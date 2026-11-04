@@ -10,8 +10,8 @@ import {
 import { FieldError } from './fields';
 import type { SectionProps } from './types';
 import { useAdminDictionary } from '../AdminI18n';
+import { PHOTO_LAYOUTS } from '@/lib/admin/layouts';
 
-const LAYOUTS = ['masonry', 'uniform', 'showcase', 'filmstrip', 'editorial-flow', 'justified'];
 const ASPECT_RATIOS = ['1', '3/2', '2/3', '16/9', 'auto'];
 
 function LayoutPreview({ value }: { value: string }) {
@@ -97,7 +97,8 @@ function AspectRatioPreview({ value }: { value: string }) {
 }
 
 export default function GridSection({ settings, update, fieldErrors }: SectionProps) {
-  const t = useAdminDictionary().settings.grid;
+  const dict = useAdminDictionary();
+  const t = dict.settings.grid;
   return (
     <div className="settings-panel">
       <div className="settings-section-header">
@@ -109,7 +110,7 @@ export default function GridSection({ settings, update, fieldErrors }: SectionPr
 
       <OptionGrid
         label={t.layout}
-        options={toOptions(LAYOUTS, t.layouts)}
+        options={toOptions(PHOTO_LAYOUTS, dict.common.layouts)}
         value={settings.grid?.layout || 'masonry'}
         onSelect={(v) => update('grid.layout', v)}
         cardClassName="grid-layout-card"

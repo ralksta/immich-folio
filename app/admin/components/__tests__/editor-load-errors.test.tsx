@@ -76,7 +76,7 @@ describe('PageBuilder', () => {
           : json({ error: 'disk full' }, 500);
     render(wrap(<PageBuilder />));
 
-    expect(await screen.findByRole('button', { name: 'New subpage' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'New Page' })).toBeTruthy();
     expect(await screen.findByText(/album picker is empty.*Immich is unreachable/)).toBeTruthy();
     expect(screen.getByText(/content pages did not load.*disk full/)).toBeTruthy();
   });
