@@ -13,7 +13,7 @@
 
 A self-hosted portfolio powered by [Immich](https://immich.app). It acts as a **secure reverse proxy** between your visitors and your private Immich instance: your Immich server stays on your local network, completely invisible to the outside world, while your albums are published as a gallery you control.
 
-**Latest: v0.21.0** — the whole admin panel in six languages, album photos in journals, and video playback and downloads without the recording location. → [Release notes](https://github.com/ralksta/immich-folio/releases/latest)
+**Latest: v0.22.0** — unlisted albums with their own links, a ready-made Docker image for amd64 and arm64, and one vocabulary across the admin panel. → [Release notes](https://github.com/ralksta/immich-folio/releases/latest)
 
 ## Features
 

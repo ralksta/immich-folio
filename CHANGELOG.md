@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [0.22.0] — 2026-11-04
+
+### Added
+
+- **Unlisted albums with custom links**
+  ([#878](https://github.com/ralksta/immich-folio/pull/878)). A standalone
+  album can set `hidden: true` (**Unlisted** in the album drawer): it keeps its
+  own `/<slug>` address and its photos, but stays out of the header menu, the
+  homepage links, the sitemap and `/map`, and is marked `noindex`. This is
+  unlisting, not access control, so add a password when the link must not
+  travel. The drawer shows the album's address with a copy button, and the
+  slug can be set by hand or generated with **Random link**; custom slugs are
+  checked against built-in routes, pages and each other. Changing a slug moves
+  the album, and the old link stops working. The page builder also stops a
+  page with no albums before saving, and the save bar gained **Discard
+  changes**. Contributed by [@lancetm714](https://github.com/lancetm714).
+
+- **A ready-made Docker image for amd64 and arm64**
+  ([#879](https://github.com/ralksta/immich-folio/pull/879), closes
+  [#877](https://github.com/ralksta/immich-folio/issues/877)). Every release was
+  already pushed to `ghcr.io/ralksta/immich-folio`, but only for amd64 and
+  without a word in the docs. It is now built natively for both architectures,
+  and the README and `docs/deployment.md` start from the image: a Compose file
+  in an empty folder, `docker compose up -d`, then `/install`. Tags are
+  `latest`, `x.y`, `x.y.z` and `sha-…`. The doctor command in the docs now
+  names the right service and runs as the app user:
+  `docker compose exec -u nextjs lightbox npm run doctor`.
+
+### Changed
+
+- **One name for each thing in the admin panel and the docs**
+  ([#873](https://github.com/ralksta/immich-folio/pull/873), closes
+  [#691](https://github.com/ralksta/immich-folio/issues/691)). A group of albums
+  is a **Page** (no longer also "Subpage" or "Collection"), a
+  `content/pages/*.md` file a **Content Page**, a post under `/journal` a
+  **Journal entry**, `grid.layout: essay` the **Story Layout**, and an album's
+  `heroImage` its **Cover Photo**. The layout pickers share one list of
+  labels, and "Clear cache" and "Reload" are both **Reload**. English visitor
+  strings use sentence case, with the heart, envelope and arrow drawn as
+  markup so screen readers no longer read out "red heart". Labels only: YAML
+  keys, URLs, slugs, cookies and content files are unchanged.
+
+- **Next.js 16.4.3** ([#891](https://github.com/ralksta/immich-folio/pull/891)),
+  zod 4.6.7 ([#874](https://github.com/ralksta/immich-folio/pull/874)), and
+  current Prettier tooling
+  ([#875](https://github.com/ralksta/immich-folio/pull/875),
+  [#876](https://github.com/ralksta/immich-folio/pull/876)).
+
+### Internal
+
+- The map, Leaflet and admin rules moved out of `studio-modern.css` into the
+  stylesheets of those surfaces, and a test keeps preset stylesheets from
+  styling them again ([#881](https://github.com/ralksta/immich-folio/pull/881),
+  closes [#613](https://github.com/ralksta/immich-folio/issues/613)).
+
 ## [0.21.0] — 2026-10-24
 
 ### Security
