@@ -57,3 +57,73 @@
   font-family: var(--font-sans);
   font-size: 0.875rem;
 }
+
+/* ── Studio Modern overrides ───────────────────────────────── */
+/* No side padding: .main already holds the page to --sm-gutter, and adding it
+   again here put the map page at twice the gutter of every other page (and
+   left a phone a map about 200px wide). */
+[data-preset='studio-modern'] .map-page__header {
+  padding: 64px 0 32px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+[data-preset='studio-modern'] .map-page__title {
+  font-family: var(--font-sans);
+  font-size: clamp(2.25rem, 4.6vw, 3.5rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+[data-preset='studio-modern'] .map-page__kicker {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 16px 0;
+}
+
+[data-preset='studio-modern'] .map-page__kicker::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sm-accent);
+  margin-right: 10px;
+  flex: 0 0 auto;
+}
+
+[data-preset='studio-modern'] .map-page__meta {
+  display: block;
+  flex: 0 0 auto;
+  text-align: right;
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  line-height: 1.8;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+[data-preset='studio-modern'] .map-page__subtitle {
+  font-family: var(--font-caption);
+  font-size: 0.6875rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+[data-preset='studio-modern'] .map-container {
+  margin: 0 0 var(--sm-gutter);
+  border: var(--sm-hairline);
+  border-radius: 0;
+}
