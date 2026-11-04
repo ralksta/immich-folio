@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   checkCdn,
   checkAuthSecret,
@@ -17,6 +17,7 @@ import {
   checkSettingValues,
   checkDownloadMetadata,
   checkZoomRenditions,
+  probeImmich,
   worstLevel,
 } from '../admin/doctor';
 
@@ -296,6 +297,60 @@ describe('checkWritable', () => {
     const f = checkWritable(['content/', 'content/.backups']);
     expect(f.level).toBe('error');
     expect(f.detail).toContain('content/.backups');
+  });
+});
+
+describe('probeImmich', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('makes the three calls with the key and returns the album list', async () => {
+    const fetchMock = vi.fn(async (url: string) =>
+      url.endsWith('/albums')
+        ? new Response(JSON.stringify([{ id: 'a1', albumName: 'Iceland' }]))
+        : new Response('{}'),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const probe = await probeImmich('http://immich/api', 'key', 1000);
+
+    expect(probe.calls).toEqual([
+      { endpoint: '/server/ping', ok: true },
+      { endpoint: '/albums', ok: true },
+      { endpoint: '/search/metadata', ok: true },
+    ]);
+    expect(probe.albums).toEqual([{ id: 'a1', albumName: 'Iceland' }]);
+    expect(fetchMock.mock.calls[0][0]).toBe('http://immich/api/server/ping');
+    const init = fetchMock.mock.calls[2][1] as RequestInit;
+    expect(init.method).toBe('POST');
+    expect((init.headers as Record<string, string>)['x-api-key']).toBe('key');
+    expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/json');
+  });
+
+  it('records failures and network errors instead of throwing', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.endsWith('/server/ping')) throw new TypeError('fetch failed');
+        return new Response('nope', { status: url.endsWith('/albums') ? 401 : 200 });
+      }),
+    );
+
+    const probe = await probeImmich('http://immich/api', 'key', 1000);
+
+    expect(probe.calls).toEqual([
+      { endpoint: '/server/ping', ok: false },
+      { endpoint: '/albums', ok: false },
+      { endpoint: '/search/metadata', ok: true },
+    ]);
+    expect(probe.albums).toEqual([]);
+  });
+
+  it('leaves the album list empty when /albums answers with something else', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('not json')),
+    );
+    expect((await probeImmich('http://immich/api', 'key', 1000)).albums).toEqual([]);
   });
 });
 

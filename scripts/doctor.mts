@@ -64,6 +64,7 @@ import {
   checkPrivacy,
   checkPasswords,
   checkSettingValues,
+  probeImmich,
   worstLevel,
   type AlbumRef,
   type DoctorFinding,
@@ -611,7 +612,6 @@ export async function gatherFindings(cwd: string, env: EnvLike): Promise<CliFind
   const configuredAlbums = collectAlbumIds(gallery.node);
 
   // ── Immich: the three calls Folio depends on ────────────────────────
-  const calls: Array<{ endpoint: string; ok: boolean }> = [];
   let albums: AlbumRef[] = [];
 
   if (!credentials.apiUrl || !credentials.apiKey) {
@@ -629,41 +629,9 @@ export async function gatherFindings(cwd: string, env: EnvLike): Promise<CliFind
       ? credentials.apiUrl
       : `${credentials.apiUrl}/api`;
     const timeout = Math.max(1000, parseInt(env.IMMICH_TIMEOUT_MS || '', 10) || 15000);
-    const headers = { 'x-api-key': credentials.apiKey, Accept: 'application/json' };
-
-    const call = async (endpoint: string, init?: RequestInit) => {
-      try {
-        const res = await fetch(`${base}${endpoint}`, {
-          headers,
-          signal: AbortSignal.timeout(timeout),
-          ...init,
-        });
-        calls.push({ endpoint, ok: res.ok });
-        return res.ok ? res : null;
-      } catch {
-        calls.push({ endpoint, ok: false });
-        return null;
-      }
-    };
-
-    await call('/server/ping');
-    const albumRes = await call('/albums');
-    await call('/search/metadata', {
-      method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ size: 1, page: 1 }),
-    });
-
-    if (albumRes) {
-      try {
-        const parsed: unknown = await albumRes.json();
-        if (Array.isArray(parsed)) albums = parsed as AlbumRef[];
-      } catch {
-        // A malformed body is already reflected by the call above.
-      }
-    }
-
-    findings.push(checkImmichCalls(calls));
+    const probe = await probeImmich(base, credentials.apiKey, timeout);
+    albums = probe.albums;
+    findings.push(checkImmichCalls(probe.calls));
 
     // Whenever albums are configured, run the check even if Immich answered
     // with an empty list — an API key regenerated under a different account,
