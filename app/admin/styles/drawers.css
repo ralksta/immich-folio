@@ -284,6 +284,7 @@ h3 .svg-icon {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  container-type: inline-size;
 }
 
 @media (max-width: 768px) {
