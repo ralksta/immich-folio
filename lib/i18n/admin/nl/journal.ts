@@ -274,6 +274,7 @@ export const journal: AdminDictionary['journal'] = {
     cover: 'Omslagfoto',
     coverAlt: 'Omslag',
     chooseCover: 'Omslag kiezen',
+    coverAutomatic: 'Eerste foto (automatisch)',
     password: 'Wachtwoordbeveiliging (optioneel)',
     draft: 'Als concept bewaren (verborgen in de openbare /journal-lijst)',
     done: 'Klaar',

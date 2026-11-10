@@ -242,10 +242,10 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
           {entries.map((entry) => (
             <div key={entry.slug} className="journal-admin-card">
               <div className="journal-admin-card-cover">
-                {entry.frontmatter.coverAssetId ? (
+                {entry.frontmatter.coverAssetId || entry.fallbackCoverAssetId ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={`/api/admin/thumbnail/${entry.frontmatter.coverAssetId}`}
+                    src={`/api/admin/thumbnail/${entry.frontmatter.coverAssetId || entry.fallbackCoverAssetId}`}
                     alt={entry.frontmatter.title || entry.slug}
                   />
                 ) : (

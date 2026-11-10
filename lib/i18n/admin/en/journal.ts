@@ -263,6 +263,7 @@ export const journal = {
     cover: 'Cover Photo',
     coverAlt: 'Cover',
     chooseCover: 'Choose Cover',
+    coverAutomatic: 'First photo (automatic)',
     password: 'Password Protection (Optional)',
     draft: 'Keep as Draft (Hidden from public /journal list)',
     done: 'Done',
