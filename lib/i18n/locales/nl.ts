@@ -118,6 +118,7 @@ export const nl: Dictionary = {
     initFailed: 'De kaart kon niet worden gestart',
     zoomIn: 'Inzoomen',
     zoomOut: 'Uitzoomen',
+    twoFingersHint: 'Gebruik twee vingers om de kaart te bewegen',
     leafletTitle: 'Een JavaScript-bibliotheek voor interactieve kaarten',
   },
 
