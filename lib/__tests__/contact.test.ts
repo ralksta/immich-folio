@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   MAX_MESSAGES,
+  MAX_FILL_MS,
   MIN_FILL_MS,
   deleteMessage,
   listMessages,
@@ -45,6 +46,13 @@ describe('validateContact', () => {
     expect(validateContact({ ...valid, startedAt: undefined }, NOW)).toEqual({
       ok: false,
       reason: 'spam',
+    });
+  });
+
+  it('reports a form older than 24h as expired (#904)', () => {
+    expect(validateContact({ ...valid, startedAt: NOW - MAX_FILL_MS - 1000 }, NOW)).toEqual({
+      ok: false,
+      reason: 'expired',
     });
   });
 

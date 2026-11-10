@@ -43,7 +43,7 @@ export const LIMITS = { name: 100, email: 200, message: 5000 } as const;
 export const MIN_FILL_MS = 3000;
 
 /** A form older than this was not filled in just now. */
-const MAX_FILL_MS = 24 * 60 * 60 * 1000;
+export const MAX_FILL_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Hard cap on stored messages. A flood that gets past the rate limit fills the
@@ -66,6 +66,7 @@ export function messagesDir(): string {
 export type ValidationResult =
   | { ok: true; name: string; email: string; message: string }
   | { ok: false; reason: 'invalid' }
+  | { ok: false; reason: 'expired' }
   /** Looks like a bot. The route answers as if it had worked, so the bot learns nothing. */
   | { ok: false; reason: 'spam' };
 
@@ -74,8 +75,11 @@ export function validateContact(input: ContactInput, now = Date.now()): Validati
     return { ok: false, reason: 'spam' };
   }
   const started = Number(input.startedAt);
-  if (!Number.isFinite(started) || now - started < MIN_FILL_MS || now - started > MAX_FILL_MS) {
+  if (!Number.isFinite(started) || now - started < MIN_FILL_MS) {
     return { ok: false, reason: 'spam' };
+  }
+  if (now - started > MAX_FILL_MS) {
+    return { ok: false, reason: 'expired' };
   }
 
   const text = (value: unknown) => (typeof value === 'string' ? value.trim() : '');

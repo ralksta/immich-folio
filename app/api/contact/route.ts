@@ -52,6 +52,10 @@ export async function POST(request: NextRequest) {
   if (!result.ok) {
     // A bot gets the same answer as a person, so it has nothing to tune against.
     if (result.reason === 'spam') return NextResponse.json({ ok: true });
+    // A submission on an expired page is not a bot signal to hide (#904).
+    if (result.reason === 'expired') {
+      return NextResponse.json({ error: 'Expired' }, { status: 409 });
+    }
     return NextResponse.json({ error: 'Invalid message' }, { status: 400 });
   }
 
