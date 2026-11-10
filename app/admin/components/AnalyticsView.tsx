@@ -4,7 +4,7 @@ import * as Icons from './Icons';
 import { useAdminFetch } from './useAdminFetch';
 import AdminLoadState from './AdminLoadState';
 import PageHeader from './PageHeader';
-import { lastDays } from './analyticsDays';
+import { deviceSplitRatio, lastDays } from './analyticsDays';
 import { rich, useAdminDictionary } from './AdminI18n';
 
 interface AnalyticsData {
@@ -48,10 +48,7 @@ export default function AnalyticsView() {
   const daysList = lastDays(data.days || {}, 14, new Date());
   const maxDayViews = Math.max(...daysList.map((d) => d.pageviews), 1);
 
-  const desktopRatio =
-    data.devices.desktop + data.devices.mobile > 0
-      ? Math.round((data.devices.desktop / (data.devices.desktop + data.devices.mobile)) * 100)
-      : 50;
+  const desktopRatio = deviceSplitRatio(data.devices);
 
   return (
     <div className="analytics-view">
@@ -96,9 +93,11 @@ export default function AnalyticsView() {
         <div className="metric-card">
           <span className="metric-label">{t.devices}</span>
           <span className="metric-value">
-            {desktopRatio}% / {100 - desktopRatio}%
+            {desktopRatio !== null ? `${desktopRatio}% / ${100 - desktopRatio}%` : '—'}
           </span>
-          <span className="metric-sub">{t.deviceSplit}</span>
+          <span className="metric-sub">
+            {desktopRatio !== null ? t.deviceSplit : t.noVisitsYet}
+          </span>
         </div>
       </div>
 

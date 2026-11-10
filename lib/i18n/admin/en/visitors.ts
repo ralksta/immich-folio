@@ -106,6 +106,7 @@ export const visitors = {
     daysRecorded: 'Days recorded',
     devices: 'Desktop vs Mobile',
     deviceSplit: 'Device distribution',
+    noVisitsYet: 'No visits yet',
     dailyTrend: 'Daily Traffic Trend (Last 14 Days)',
     /** Tooltip on one bar of the chart. */
     dayViews: (date: string, n: number) => `${date}: ${n} views`,

@@ -110,6 +110,7 @@ export const visitors: AdminDictionary['visitors'] = {
     daysRecorded: 'Geregistreerde dagen',
     devices: 'Desktop vs. mobiel',
     deviceSplit: 'Verdeling over apparaten',
+    noVisitsYet: 'Nog geen bezoeken',
     dailyTrend: 'Dagelijks verkeer (laatste 14 dagen)',
     /** Tooltip on one bar of the chart. */
     dayViews: (date: string, n: number) => `${date}: ${n} ${n === 1 ? 'weergave' : 'weergaven'}`,
