@@ -118,7 +118,7 @@ describe('proofing on', () => {
     fireEvent.click(first);
     // The heart, the selection bar and the modal all read the same state.
     expect(screen.getAllByLabelText('Remove favorite')).toHaveLength(1);
-    fireEvent.click(await screen.findByText('Share & export'));
+    fireEvent.click(await screen.findByRole('button', { name: /share/i }));
     expect(await screen.findByText(/You have selected 1 photo\./)).toBeTruthy();
     expect(loaded).toContain('ProofingContext');
     expect(loaded).toContain('ProofingModal');
