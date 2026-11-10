@@ -276,6 +276,7 @@ export const journal: AdminDictionary['journal'] = {
     cover: 'Photo de couverture',
     coverAlt: 'Couverture',
     chooseCover: 'Choisir la couverture',
+    coverAutomatic: 'Première photo (automatique)',
     password: 'Protection par mot de passe (facultatif)',
     draft: 'Garder en brouillon (masqué de la liste publique /journal)',
     done: 'Terminé',

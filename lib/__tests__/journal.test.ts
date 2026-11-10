@@ -9,6 +9,8 @@ import {
   renderInlineMarkdown,
   isValidSlug,
   sanitizeSlug,
+  findFirstPhotoAssetId,
+  findFirstAlbumRef,
 } from '../journal';
 
 describe('Journal Service & Parser', () => {
@@ -184,6 +186,43 @@ Testing the journal filesystem operations.`;
 
       const checkAfter = await readJournalEntry(testSlug);
       expect(checkAfter).toBeNull();
+    });
+  });
+
+  describe('findFirstPhotoAssetId and findFirstAlbumRef (#903)', () => {
+    it('finds photo from a photo block', () => {
+      const parsed = parseJournalMarkdown('![photo-1:wide](A caption)');
+      expect(findFirstPhotoAssetId(parsed.blocks)).toBe('photo-1');
+      expect(findFirstAlbumRef(parsed.blocks)).toBeUndefined();
+    });
+
+    it('finds photo from a photo-pair or photo-grid block', () => {
+      const pair = parseJournalMarkdown('![pair-1, pair-2](Two photos)');
+      expect(findFirstPhotoAssetId(pair.blocks)).toBe('pair-1');
+
+      const grid = parseJournalMarkdown('![grid-1, grid-2, grid-3](A grid)');
+      expect(findFirstPhotoAssetId(grid.blocks)).toBe('grid-1');
+    });
+
+    it('finds photo from a map block with photo items', () => {
+      const mapContent = '::map\nphoto: map-photo-1\n10, 20';
+      const parsed = parseJournalMarkdown(mapContent);
+      expect(findFirstPhotoAssetId(parsed.blocks)).toBe('map-photo-1');
+    });
+
+    it('finds album reference when no direct photo is present', () => {
+      const albumContent = '::album album-xyz\nskip: 2\ncount: 5\nlayout: grid';
+      const parsed = parseJournalMarkdown(albumContent);
+      expect(findFirstPhotoAssetId(parsed.blocks)).toBeUndefined();
+      expect(findFirstAlbumRef(parsed.blocks)).toEqual({ albumId: 'album-xyz', skip: 2 });
+    });
+
+    it('expands album block if albumLookup is supplied', () => {
+      const albumContent = '::album album-xyz\nskip: 1\ncount: 5\nlayout: grid';
+      const parsed = parseJournalMarkdown(albumContent);
+      const lookup = (id: string) =>
+        id === 'album-xyz' ? [{ id: 'album-asset-0' }, { id: 'album-asset-1' }] : undefined;
+      expect(findFirstPhotoAssetId(parsed.blocks, lookup)).toBe('album-asset-1');
     });
   });
 });

@@ -63,23 +63,34 @@ export default async function JournalIndexPage() {
   // Fetch cover image placeholders and URLs
   const enrichedEntries: EnrichedJournalEntry[] = await Promise.all(
     visibleEntries.map(async (entry) => {
-      if (!entry.frontmatter.coverAssetId) {
+      let coverId = entry.frontmatter.coverAssetId || entry.fallbackCoverAssetId;
+      if (!coverId && entry.firstAlbumId) {
+        try {
+          const rawAssets = await immich.getAlbumAssetsRaw(entry.firstAlbumId);
+          const skip = entry.firstAlbumSkip ?? 0;
+          coverId = rawAssets[skip]?.id;
+        } catch {
+          // ignore failed album fetch
+        }
+      }
+
+      if (!coverId) {
         return entry;
       }
 
       try {
-        const asset = await immich.getAssetInfo(entry.frontmatter.coverAssetId);
+        const asset = await immich.getAssetInfo(coverId);
         const ph = asset ? assetPlaceholder(asset) : null;
         return {
           ...entry,
-          coverUrl: imageUrl(asset ?? entry.frontmatter.coverAssetId, 'preview'),
+          coverUrl: imageUrl(asset ?? coverId, 'preview'),
           blurDataURL: ph?.blurDataURL,
           dominantColor: ph?.dominantColor,
         };
       } catch {
         return {
           ...entry,
-          coverUrl: imageUrl(entry.frontmatter.coverAssetId, 'preview'),
+          coverUrl: imageUrl(coverId, 'preview'),
         };
       }
     }),
