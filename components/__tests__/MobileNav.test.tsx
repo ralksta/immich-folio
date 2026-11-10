@@ -120,4 +120,29 @@ describe('MobileNav collapse (QA P-5)', () => {
     const { button } = header();
     expect(button.dataset.collapsed).toBe('true');
   });
+
+  it('closes the open panel when focus leaves the menu (#898)', () => {
+    phone = true;
+    render(
+      <div>
+        <nav>
+          <MobileNav>
+            <a href="#home">Home</a>
+            <a href="#about">About</a>
+          </MobileNav>
+        </nav>
+        <button id="after-nav">Theme Toggle</button>
+      </div>,
+    );
+    const button = screen.getByRole('button', { name: 'Open menu' });
+    fireEvent.click(button);
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+
+    const themeToggle = screen.getByRole('button', { name: 'Theme Toggle' });
+    const aboutLink = screen.getByRole('link', { name: 'About' });
+
+    // Focus leaving the panel to the next control closes the panel
+    fireEvent.focusOut(aboutLink, { relatedTarget: themeToggle });
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+  });
 });

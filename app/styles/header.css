@@ -110,13 +110,9 @@
   margin-left: -50vw;
   max-height: calc(100vh - 64px);
   overflow-y: auto;
-  background: rgba(26, 26, 26, 0.98);
+  background: color-mix(in srgb, var(--bg-primary) 98%, transparent);
   border-bottom: 1px solid var(--border-subtle);
   z-index: 101;
-}
-
-[data-theme='light'] .header__nav-links[data-open='true'] {
-  background: rgba(245, 245, 240, 0.98);
 }
 
 .header__nav-links[data-open='true'] .header__nav-link,
@@ -150,4 +146,3 @@
     display: contents;
   }
 }
-

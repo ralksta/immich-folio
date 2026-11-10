@@ -101,10 +101,20 @@ export function MobileNav({ children }: { children: React.ReactNode }) {
         buttonRef.current?.focus();
       }
     };
+    const onFocusOut = (e: FocusEvent) => {
+      const next = e.relatedTarget as Node | null;
+      // Tab past the last link moves focus to the theme toggle or into the page.
+      // Closing the panel prevents focus from hiding behind the open sheet (#898).
+      if (next && !buttonRef.current?.contains(next) && !panelRef.current?.contains(next)) {
+        close();
+      }
+    };
     document.addEventListener('keydown', onKey);
+    document.addEventListener('focusout', onFocusOut);
     document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', onKey);
+      document.removeEventListener('focusout', onFocusOut);
       document.body.style.overflow = '';
     };
   }, [open, close]);
