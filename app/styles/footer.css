@@ -14,6 +14,15 @@
   flex-wrap: wrap;
 }
 
+@media (min-width: 641px) {
+  /* Reserve space for the floating back-to-top button (32px offset + 44px size - 24px footer padding + 12px gap = 64px)
+     so the social icons never collide with it when scrolled to the end (#899). */
+  body:has(.scroll-to-top) .footer__inner,
+  body.has-scroll-to-top .footer__inner {
+    padding-right: calc(32px + 44px - 24px + 12px);
+  }
+}
+
 .footer__left {
   display: flex;
   flex-wrap: wrap;
@@ -65,4 +74,3 @@
 .footer__link:hover {
   color: var(--text-primary);
 }
-

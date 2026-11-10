@@ -16,6 +16,13 @@ export function ScrollToTop() {
   const frame = useRef<number | null>(null);
 
   useEffect(() => {
+    document.body.classList.add('has-scroll-to-top');
+    return () => {
+      document.body.classList.remove('has-scroll-to-top');
+    };
+  }, []);
+
+  useEffect(() => {
     const measure = () => {
       frame.current = null;
       setVisible(window.scrollY > SHOW_THRESHOLD);
