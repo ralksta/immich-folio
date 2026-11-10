@@ -128,7 +128,7 @@ export function ProofSessionControls() {
                   aria-hidden="true"
                   style={{ verticalAlign: '-2px', marginRight: '0.35em' }}
                 />
-                {t.proofing.selected(count)}
+                {t.proofing.onlySelected(count)}
               </>
             )}
           </button>

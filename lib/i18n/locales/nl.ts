@@ -207,7 +207,9 @@ export const nl: Dictionary = {
     showAll: 'Alles tonen',
     filterEmpty: "Geen foto's geselecteerd.",
     selected: (n: number) => `${n} geselecteerd`,
+    onlySelected: (n: number) => `Alleen selectie (${n})`,
     shareExport: 'Delen & exporteren',
+    shareSelection: 'Selectie delen',
     modalTitle: (n: number) => `Selectie (${n})`,
     closeModal: 'Venster sluiten',
     intro: (n: number) =>

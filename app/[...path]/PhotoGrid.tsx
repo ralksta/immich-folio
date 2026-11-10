@@ -418,69 +418,28 @@ function PhotoGridInner({
       {/* Kept while the filter is on: un-hearting the last favourite there
           empties the grid, and the bar holds the only way back to all photos. */}
       {proofing && !proofing.session && (selectedCount > 0 || proofing.isFilterActive) && (
-        <div
-          className="proofing-sticky-bar"
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            zIndex: 990,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '8px 16px',
-            borderRadius: 'var(--radius-lg)',
-            background: 'var(--bg-card, #1e1e1e)',
-            color: 'var(--text-primary, #ffffff)',
-            border: '1px solid var(--border-subtle, rgba(255,255,255,0.15))',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-            backdropFilter: 'blur(8px)',
-          }}
-        >
+        <div className="proofing-sticky-bar">
           <button
             type="button"
+            className="proofing-bar__filter-toggle"
+            aria-pressed={proofing.isFilterActive}
             onClick={() => proofing.setIsFilterActive((prev) => !prev)}
-            style={{
-              background: proofing.isFilterActive
-                ? 'var(--accent, #e60012)'
-                : 'var(--bg-card-hover)',
-              color: proofing.isFilterActive ? 'var(--on-accent, #fff)' : 'var(--text-primary)',
-              border: 'none',
-              padding: '6px 14px',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
           >
             {proofing.isFilterActive ? (
               t.proofing.showAll
             ) : (
               <>
-                <IconHeart
-                  size={14}
-                  fill="currentColor"
-                  aria-hidden="true"
-                  style={{ verticalAlign: '-2px', marginRight: '0.35em' }}
-                />
-                {t.proofing.selected(selectedCount)}
+                <IconHeart size={14} fill="currentColor" aria-hidden="true" />
+                {t.proofing.onlySelected(selectedCount)}
               </>
             )}
           </button>
           <button
             type="button"
+            className="proofing-bar__share-btn"
             onClick={() => proofing.setIsModalOpen(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'inherit',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-              textDecoration: 'underline',
-            }}
           >
-            {t.proofing.shareExport}
+            {t.proofing.shareSelection}
           </button>
         </div>
       )}
