@@ -54,7 +54,8 @@
    into <body>). */
 :global(body):has(> .overlay) :global(.header),
 :global(body):has(> .overlay) :global(.proofing-sticky-bar),
-:global(body):has(> .overlay) :global(.scroll-to-top) {
+:global(body):has(> .overlay) :global(.scroll-to-top),
+:global(body):has(> .overlay) :global(main) {
   visibility: hidden;
 }
 
@@ -575,13 +576,15 @@
   .close {
     top: 14px;
     right: 14px;
-    width: 40px;
-    height: 40px;
+    /* Maintain 44x44px touch-target minimum on phones (#901) */
+    width: 44px;
+    height: 44px;
   }
 
   .nav {
-    width: 40px;
-    height: 40px;
+    /* Maintain 44x44px touch-target minimum on phones (#901) */
+    width: 44px;
+    height: 44px;
   }
 
   .navPrev {
@@ -590,6 +593,10 @@
 
   .navNext {
     right: 8px;
+  }
+
+  .infoToggle {
+    min-height: 44px;
   }
 }
 
