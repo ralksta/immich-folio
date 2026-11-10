@@ -118,6 +118,7 @@ export const es: Dictionary = {
     initFailed: 'No se pudo inicializar el mapa',
     zoomIn: 'Acercar',
     zoomOut: 'Alejar',
+    twoFingersHint: 'Usa dos dedos para mover el mapa',
     leafletTitle: 'Una biblioteca de JavaScript para mapas interactivos',
   },
 

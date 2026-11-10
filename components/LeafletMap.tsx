@@ -11,7 +11,7 @@
  * and popup styling lives in app/leaflet.css, loaded globally.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { useDictionary } from './I18nProvider';
 import { escapeHtml } from '@/lib/escapeHtml';
@@ -37,6 +37,13 @@ interface LeafletMapProps {
   className?: string;
   /** Cap the zoom fitBounds may pick — a single pin otherwise zooms to the rooftop. */
   fitMaxZoom?: number;
+  /**
+   * When true, the map is embedded in an article or story (#902).
+   * Disables scrollWheelZoom so mouse wheel scrolls the page rather than trapping the reader.
+   * On mobile, disables 1-finger dragging so vertical touch swipes scroll the page,
+   * showing a short two-finger hint overlay if touched with one finger.
+   */
+  embedded?: boolean;
   onReady?: () => void;
   onError?: (err: unknown) => void;
 }
@@ -56,11 +63,14 @@ export function LeafletMap({
   line = false,
   className = 'map-container',
   fitMaxZoom,
+  embedded = false,
   onReady,
   onError,
 }: LeafletMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const [showTouchHint, setShowTouchHint] = useState(false);
+  const hintTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // Read inside the effect through a ref: the locale never changes on a
   // mounted page, and a new dictionary object must not rebuild the map.
   const t = useDictionary();
@@ -84,6 +94,26 @@ export function LeafletMap({
   });
 
   useEffect(() => {
+    return () => {
+      if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
+    };
+  }, []);
+
+  const handleTouch = (e: React.TouchEvent) => {
+    if (!embedded) return;
+    if (e.touches.length === 1) {
+      setShowTouchHint(true);
+      if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
+      hintTimeoutRef.current = setTimeout(() => {
+        setShowTouchHint(false);
+      }, 1500);
+    } else if (e.touches.length >= 2) {
+      if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
+      setShowTouchHint(false);
+    }
+  };
+
+  useEffect(() => {
     let cancelled = false;
 
     async function init() {
@@ -94,7 +124,17 @@ export function LeafletMap({
       // and the credit's link title are English in Leaflet; the site's
       // dictionary supplies them instead.
       const labels = labelsRef.current;
-      const map = L.map(containerRef.current, { zoomControl: false, attributionControl: true });
+      const map = L.map(containerRef.current, {
+        zoomControl: false,
+        attributionControl: true,
+        ...(embedded
+          ? {
+              scrollWheelZoom: false,
+              dragging: !L.Browser.mobile,
+              tap: false,
+            }
+          : {}),
+      });
       mapRef.current = map;
       L.control.zoom({ zoomInTitle: labels.zoomIn, zoomOutTitle: labels.zoomOut }).addTo(map);
       const prefix = map.attributionControl.options.prefix;
@@ -175,7 +215,21 @@ export function LeafletMap({
         mapRef.current = null;
       }
     };
-  }, [markersKey, line, fitMaxZoom]);
+  }, [markersKey, line, fitMaxZoom, embedded]);
 
-  return <div ref={containerRef} className={className} />;
+  return (
+    <div
+      ref={containerRef}
+      className={className}
+      style={{ position: 'relative' }}
+      onTouchStart={handleTouch}
+      onTouchMove={handleTouch}
+    >
+      {embedded && showTouchHint && (
+        <div className="map-gesture-hint" aria-live="polite">
+          {t.map.twoFingersHint}
+        </div>
+      )}
+    </div>
+  );
 }

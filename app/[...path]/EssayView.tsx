@@ -378,6 +378,7 @@ function EssayViewContent({
             <figure className="essay-figure essay-figure--wide">
               <LeafletMap
                 className="essay-map"
+                embedded
                 fitMaxZoom={13}
                 line={block.line}
                 markers={pins.map((pin, i) => ({
