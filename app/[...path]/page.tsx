@@ -643,6 +643,7 @@ async function PathContent({ params, searchParams }: PathPageProps) {
           images={images}
           layout={resolveLayout(mergeAlbumGrid(album.id, result.subpage.grid))}
           gridStyle={buildGridStyle(mergeAlbumGrid(album.id, result.subpage.grid))}
+          title={result.subpage.title}
           subtitle={result.subpage.subtitle}
           backLinkHref="/"
           backLinkLabel={getServerDictionary().common.backToGallery}

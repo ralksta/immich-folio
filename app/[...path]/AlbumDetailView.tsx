@@ -21,6 +21,8 @@ interface AlbumDetailViewProps {
   /** Omitted on a client proofing link, which has nowhere to go back to. */
   backLinkHref?: string;
   backLinkLabel?: string;
+  /** Heading override, e.g. a subpage's Display Title. Defaults to the album's name. */
+  title?: string;
   subtitle?: string;
   heroImageUrl?: string;
   heroBlurDataURL?: string;
@@ -62,6 +64,7 @@ export function AlbumDetailView({
   gridStyle,
   backLinkHref,
   backLinkLabel,
+  title,
   subtitle,
   heroImageUrl,
   heroBlurDataURL,
@@ -102,7 +105,7 @@ export function AlbumDetailView({
       <div className={`album-header${heroImageUrl ? ' album-header--has-hero' : ''}`}>
         <div className="album-header__main">
           {backLinkHref && <BackLink href={backLinkHref} label={backLinkLabel ?? ''} />}
-          <h1 className="album-header__title">{album.albumName}</h1>
+          <h1 className="album-header__title">{title || album.albumName}</h1>
           {subtitle && (
             <p className="subpage-subtitle" style={{ textAlign: 'left', marginLeft: 0 }}>
               {subtitle}
