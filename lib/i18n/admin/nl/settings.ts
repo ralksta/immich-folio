@@ -58,6 +58,15 @@ export const settings: AdminDictionary['settings'] = {
     aboutPageDesc: 'Portret, bio en uitrusting op /about',
     map: 'Kaart',
     mapDesc: 'Fotolocaties op een wereldkaart op /map',
+    mapTileProvider: 'Aanbieder van kaarttegels',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileProviderHint:
+      'Gebruikt op /map en in kaartblokken in het dagboek. CARTO-stijlen vereisen een API-sleutel (hieronder of via {variable}); zonder sleutel valt de kaart terug op OpenStreetMap.',
+    mapTileApiKey: 'CARTO-API-sleutel',
+    mapTileApiKeyPlaceholder: 'Optioneel als CARTO_API_KEY is ingesteld',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileApiKeyHint:
+      'Wordt door de browser van bezoekers meegestuurd bij tegelaanvragen — beperk de sleutel in je CARTO-account tot het domein van je site. {variable} overschrijft dit veld.',
     proofing: 'Klantselectie',
     proofingDesc: 'Bezoekers geven foto’s een hartje, filteren en exporteren een selectie',
     zoom: 'Fotozoom',

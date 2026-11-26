@@ -15,6 +15,7 @@
 export const ENV_LOCKS = {
   sitePassword: 'SITE_PASSWORD',
   'contact.notifyUrl': 'CONTACT_NOTIFY_URL',
+  'mapTiles.apiKey': 'CARTO_API_KEY',
 } as const;
 
 export type EnvLockedKey = keyof typeof ENV_LOCKS;

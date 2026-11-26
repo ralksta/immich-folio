@@ -201,6 +201,9 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
         title={frontmatter.title}
         subtitle={frontmatter.subtitle}
         watermark={config.watermark}
+        {...(essayForClient.blocks.some((b) => b.type === 'map')
+          ? { mapTiles: config.mapTiles }
+          : {})}
       />
       <JournalNav {...nav} />
     </div>

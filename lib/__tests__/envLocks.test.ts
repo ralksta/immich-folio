@@ -11,13 +11,16 @@ describe('resolveEnvLocks (#605)', () => {
     const locks = resolveEnvLocks({
       SITE_PASSWORD: 'hunter2',
       CONTACT_NOTIFY_URL: 'https://ntfy.sh/secret-topic',
+      CARTO_API_KEY: 'carto-secret-key',
     });
     expect(locks).toEqual({
       sitePassword: 'SITE_PASSWORD',
       'contact.notifyUrl': 'CONTACT_NOTIFY_URL',
+      'mapTiles.apiKey': 'CARTO_API_KEY',
     });
     expect(JSON.stringify(locks)).not.toContain('hunter2');
     expect(JSON.stringify(locks)).not.toContain('secret-topic');
+    expect(JSON.stringify(locks)).not.toContain('carto-secret-key');
   });
 
   it('does not lock title, subtitle or url: settings.yaml wins over those variables', () => {

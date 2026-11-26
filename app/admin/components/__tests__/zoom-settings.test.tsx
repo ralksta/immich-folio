@@ -34,6 +34,49 @@ describe('Settings › General › Photo zoom', () => {
   });
 });
 
+describe('Settings › General › Map tile provider', () => {
+  it('selects a runtime provider and shows the CARTO API key field when needed', () => {
+    const update = vi.fn();
+    render(<GeneralSection settings={{}} update={update} updateMany={vi.fn()} />);
+
+    const provider = screen.getByLabelText('Map tile provider') as HTMLSelectElement;
+    expect(provider.value).toBe('osm');
+    expect(screen.queryByLabelText('CARTO API key')).toBeNull();
+    fireEvent.change(provider, { target: { value: 'carto-dark-matter' } });
+    expect(update).toHaveBeenCalledWith('mapTiles.provider', 'carto-dark-matter');
+
+    cleanup();
+    render(
+      <GeneralSection
+        settings={{ mapTiles: { provider: 'carto-voyager' } }}
+        update={update}
+        updateMany={vi.fn()}
+      />,
+    );
+    const keyInput = screen.getByLabelText('CARTO API key') as HTMLInputElement;
+    expect(keyInput.type).toBe('password');
+    expect(keyInput.disabled).toBe(false);
+    fireEvent.change(keyInput, { target: { value: 'test-key' } });
+    expect(update).toHaveBeenLastCalledWith('mapTiles.apiKey', 'test-key');
+  });
+
+  it('locks the CARTO API key field when CARTO_API_KEY is set in the environment', () => {
+    render(
+      <GeneralSection
+        settings={{ mapTiles: { provider: 'carto-positron' } }}
+        update={vi.fn()}
+        updateMany={vi.fn()}
+        envLocks={{ 'mapTiles.apiKey': 'CARTO_API_KEY' }}
+      />,
+    );
+    const keyInput = screen.getByLabelText('CARTO API key') as HTMLInputElement;
+    expect(keyInput.disabled).toBe(true);
+    expect(document.getElementById('general-map-api-key-lock')?.textContent).toContain(
+      'CARTO_API_KEY',
+    );
+  });
+});
+
 describe('ZoomOverrideField', () => {
   const renderField = (value: boolean | undefined) => {
     const onChange = vi.fn();
