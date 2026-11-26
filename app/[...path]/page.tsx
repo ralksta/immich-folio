@@ -19,6 +19,7 @@ import type { Metadata } from 'next';
 import { immich, type ImmichAsset } from '@/lib/immich';
 import { notFound } from 'next/navigation';
 import { toPhotoItems } from './photoItems';
+import { displayTitle } from './displayTitle';
 import { imageUrl, assetPlaceholder, archiveUrl } from '@/lib/urls';
 import { ogImageUrl } from '@/lib/ogImage';
 import { encodeAssetId, decodeAssetId } from '@/lib/tokens';
@@ -124,7 +125,8 @@ export async function generateMetadata({ params, searchParams }: PathPageProps):
       const album = await immich.getAlbumBySlug(result.albums[0].slug, slug);
       if (!album) return notFoundMetadata();
       if (await isLocked(album.id, 'album')) return lockedMetadata();
-      title = album.albumName;
+      // Same title the page heading shows (its Display Title, else the album's name).
+      title = displayTitle(result.subpage.title, album.albumName);
       subtitle = photoCount(album.assets);
       if (photoAssetId) photoAsset = album.assets.find((a) => a.id === photoAssetId);
     } else {
@@ -632,7 +634,11 @@ async function PathContent({ params, searchParams }: PathPageProps) {
       );
 
       // Password gate for protected albums
-      const albumGate = await gateIfProtected(album.id, 'album', album.albumName);
+      const albumGate = await gateIfProtected(
+        album.id,
+        'album',
+        displayTitle(result.subpage.title, album.albumName),
+      );
       if (albumGate) return albumGate;
 
       const heroData = await getAlbumHeroData(album.id, config);
@@ -643,6 +649,7 @@ async function PathContent({ params, searchParams }: PathPageProps) {
           images={images}
           layout={resolveLayout(mergeAlbumGrid(album.id, result.subpage.grid))}
           gridStyle={buildGridStyle(mergeAlbumGrid(album.id, result.subpage.grid))}
+          title={displayTitle(result.subpage.title, album.albumName)}
           subtitle={result.subpage.subtitle}
           backLinkHref="/"
           backLinkLabel={getServerDictionary().common.backToGallery}
