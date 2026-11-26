@@ -37,3 +37,25 @@ describe('AlbumDetailView heading', () => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Immich Album Name');
   });
 });
+
+describe('AlbumDetailView title details', () => {
+  it('trims the display title and treats whitespace-only as unset', () => {
+    render(<AlbumDetailView {...base} title="  Padded Title  " />);
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Padded Title');
+    cleanup();
+    render(<AlbumDetailView {...base} title="   " />);
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Immich Album Name');
+  });
+
+  it('uses the same title for the hero image alt, falling back to the album name', () => {
+    const { container } = render(
+      <AlbumDetailView {...base} title=" Shown Title " heroImageUrl="/hero.jpg" />,
+    );
+    expect(container.querySelector('.album-hero img')?.getAttribute('alt')).toBe('Shown Title');
+    cleanup();
+    const again = render(<AlbumDetailView {...base} heroImageUrl="/hero.jpg" />);
+    expect(again.container.querySelector('.album-hero img')?.getAttribute('alt')).toBe(
+      'Immich Album Name',
+    );
+  });
+});

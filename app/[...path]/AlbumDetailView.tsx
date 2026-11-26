@@ -1,3 +1,4 @@
+import { displayTitle } from './displayTitle';
 import type { ImmichAlbum } from '@/lib/immich';
 import type { PhotoItem } from './PhotoGrid';
 import { PhotoGrid } from './PhotoGrid';
@@ -82,6 +83,7 @@ export function AlbumDetailView({
 }: AlbumDetailViewProps) {
   const metaDetail = albumMetaDetail(album, showGear);
   const t = getServerDictionary();
+  const heading = displayTitle(title, album.albumName);
 
   return (
     <>
@@ -90,7 +92,7 @@ export function AlbumDetailView({
         <div className="album-hero">
           <Image
             src={heroImageUrl}
-            alt={album.albumName}
+            alt={heading}
             fill
             priority
             sizes="100vw"
@@ -105,7 +107,7 @@ export function AlbumDetailView({
       <div className={`album-header${heroImageUrl ? ' album-header--has-hero' : ''}`}>
         <div className="album-header__main">
           {backLinkHref && <BackLink href={backLinkHref} label={backLinkLabel ?? ''} />}
-          <h1 className="album-header__title">{title || album.albumName}</h1>
+          <h1 className="album-header__title">{heading}</h1>
           {subtitle && (
             <p className="subpage-subtitle" style={{ textAlign: 'left', marginLeft: 0 }}>
               {subtitle}
