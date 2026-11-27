@@ -39,6 +39,9 @@
      error because of the theme. */
   --admin-warning: #f59e0b;
   --admin-error: #f87171;
+  /* Filled destructive button surface: >=4.8:1 with white text in both modes. */
+  --admin-danger-fill: #dc2626;
+  --admin-danger-fill-hover: #b91c1c;
   --admin-error-bg: #2d1111;
   --admin-error-border: #5c2020;
   --admin-btn-primary-bg: #ffffff;
@@ -76,7 +79,8 @@
 /* studio-modern restyles the admin with a red accent and warm greys (#613).
    Muted text (#8c8c86 dark, #6b6b66 light) clears 4.6:1 on every admin
    surface, and text on its red reads better white (4.8:1) than black (4.4:1). */
-[data-preset='studio-modern'] .admin-layout {
+[data-preset='studio-modern'] .admin-layout,
+[data-preset='studio-modern'] .admin-listbox-popup {
   --admin-bg: #0d0d0d;
   --admin-bg-raised: #161616;
   --admin-bg-elevated: #1c1c1c;
@@ -96,7 +100,8 @@
   font-family: var(--font-sans);
 }
 
-[data-preset='studio-modern'][data-theme='light'] .admin-layout {
+[data-preset='studio-modern'][data-theme='light'] .admin-layout,
+[data-preset='studio-modern'][data-theme='light'] .admin-listbox-popup {
   --admin-bg: #f4f4f1;
   --admin-bg-raised: #ffffff;
   --admin-bg-elevated: #f0f0ec;

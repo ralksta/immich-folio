@@ -178,8 +178,8 @@
 }
 
 /* Main: extra generous margins */
-[data-preset='monograph'] ~ body .main {
-  padding: 80px 60px 120px;
+[data-preset='monograph'] .main {
+  padding: calc(var(--header-height, 64px) + 48px) 60px 120px;
 }
 
 /* Subpage grid */
