@@ -144,6 +144,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  container-type: inline-size;
 }
 
 .subpage-drawer-footer {
@@ -186,7 +187,11 @@
   padding-left: 2rem;
 }
 
-@media (max-width: 1024px) {
+/* Collapse the two columns into one when the container is narrow (#906).
+   A container query is used instead of a viewport query because the editor
+   panel never gets the full viewport (it sits alongside the admin sidebar
+   and the page list). */
+@container (max-width: 820px) {
   .admin-sheet-columns,
   .admin-sheet-columns--settings-aside {
     grid-template-columns: 1fr;
