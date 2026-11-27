@@ -248,7 +248,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled, mapTiles }: Journa
                 {entry.frontmatter.coverAssetId || entry.fallbackCoverAssetId ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={`/api/admin/thumbnail/${entry.frontmatter.coverAssetId || entry.fallbackCoverAssetId}`}
+                    src={`/api/admin/thumbnail/${encodeURIComponent(entry.frontmatter.coverAssetId || entry.fallbackCoverAssetId || '')}`}
                     alt={entry.frontmatter.title || entry.slug}
                   />
                 ) : (

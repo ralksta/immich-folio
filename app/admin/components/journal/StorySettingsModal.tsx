@@ -147,7 +147,7 @@ export function StorySettingsModal({
                 {effectiveCoverAssetId ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={`/api/admin/thumbnail/${effectiveCoverAssetId}`}
+                    src={`/api/admin/thumbnail/${encodeURIComponent(effectiveCoverAssetId)}`}
                     alt={t.coverAlt}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
