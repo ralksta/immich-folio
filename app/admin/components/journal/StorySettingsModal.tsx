@@ -10,6 +10,7 @@ type Frontmatter = ParsedJournal['frontmatter'];
 
 interface StorySettingsModalProps {
   frontmatter: Frontmatter;
+  fallbackCoverAssetId?: string;
   onChange: (updates: Partial<Frontmatter>) => void;
   onPickAsset: (target: AssetPickTarget) => void;
   onClose: () => void;
@@ -18,6 +19,7 @@ interface StorySettingsModalProps {
 /** The entry's metadata — subtitle, author, date, cover, password, draft (#555). */
 export function StorySettingsModal({
   frontmatter,
+  fallbackCoverAssetId,
   onChange,
   onPickAsset,
   onClose,
@@ -25,6 +27,7 @@ export function StorySettingsModal({
   const cardRef = useModalDialog(onClose);
   const dict = useAdminDictionary();
   const t = dict.journal.storySettings;
+  const effectiveCoverAssetId = frontmatter.coverAssetId || fallbackCoverAssetId;
 
   return (
     <div className="journal-modal-overlay">
@@ -107,16 +110,27 @@ export function StorySettingsModal({
           </div>
 
           <div>
-            <label
+            <div
               style={{
-                display: 'block',
-                fontSize: '0.8rem',
-                opacity: 0.8,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'baseline',
                 marginBottom: '4px',
               }}
             >
-              {t.cover}
-            </label>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.8rem',
+                  opacity: 0.8,
+                }}
+              >
+                {t.cover}
+              </label>
+              {!frontmatter.coverAssetId && fallbackCoverAssetId && (
+                <span style={{ fontSize: '0.75rem', opacity: 0.65 }}>{t.coverAutomatic}</span>
+              )}
+            </div>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <div
                 style={{
@@ -130,10 +144,10 @@ export function StorySettingsModal({
                   justifyContent: 'center',
                 }}
               >
-                {frontmatter.coverAssetId ? (
+                {effectiveCoverAssetId ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={`/api/admin/thumbnail/${frontmatter.coverAssetId}`}
+                    src={`/api/admin/thumbnail/${effectiveCoverAssetId}`}
                     alt={t.coverAlt}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />

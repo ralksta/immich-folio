@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import type { Metadata } from 'next';
 import { readJournalEntryForRequest, listJournalEntriesForRequest } from '@/lib/journal.server';
-import type { ParsedJournal } from '@/lib/journal';
+import { findFirstPhotoAssetId, findFirstAlbumRef, type ParsedJournal } from '@/lib/journal';
 import { buildEssayPayload } from '@/app/[...path]/essayPayload';
 import { isAdminAuthenticated } from '@/lib/admin/auth';
 import { isAuthenticated } from '@/lib/auth';
@@ -55,16 +55,26 @@ export async function generateMetadata({ params }: JournalDetailPageProps): Prom
     ? t.journal.subtitle
     : frontmatter.subtitle || t.journal.entryDescription;
 
+  let coverId = !blocked ? frontmatter.coverAssetId : undefined;
+  if (!blocked && !coverId) {
+    coverId = findFirstPhotoAssetId(entry.parsed.blocks);
+    if (!coverId) {
+      const firstAlbum = findFirstAlbumRef(entry.parsed.blocks);
+      if (firstAlbum) {
+        try {
+          const rawAssets = await immich.getAlbumAssetsRaw(firstAlbum.albumId);
+          coverId = rawAssets[firstAlbum.skip ?? 0]?.id;
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }
+
   // The cover's asset for its edit marker (#831); the page body asks for the
   // same one, from the same cache.
-  const coverAsset =
-    !blocked && frontmatter.coverAssetId
-      ? await immich.getAssetInfo(frontmatter.coverAssetId).catch(() => null)
-      : null;
-  const ogImages =
-    !blocked && frontmatter.coverAssetId
-      ? [{ url: imageUrl(coverAsset ?? frontmatter.coverAssetId, 'preview') }]
-      : [];
+  const coverAsset = coverId ? await immich.getAssetInfo(coverId).catch(() => null) : null;
+  const ogImages = coverId ? [{ url: imageUrl(coverAsset ?? coverId, 'preview') }] : [];
 
   return {
     title,

@@ -40,7 +40,8 @@ vi.mock('@/components/JournalNav', () => ({ JournalNav: () => null }));
 vi.mock('@/components/BackLink', () => ({ BackLink: () => null }));
 vi.mock('@/components/PasswordGate', () => ({ default: function PasswordGate() {} }));
 
-const { default: JournalDetailPage } = await import('../[slug]/page');
+const { default: JournalDetailPage, generateMetadata: detailMetadata } =
+  await import('../[slug]/page');
 const { generateMetadata: indexMetadata } = await import('../page');
 const { getServerDictionary } = await import('@/lib/i18n/server');
 
@@ -90,5 +91,25 @@ describe('journal entry draft badge', () => {
       parsed: { frontmatter: { title: 'Trip' }, blocks: [] },
     });
     expect(await render()).not.toContain(getServerDictionary().journal.draft);
+  });
+
+  it('falls back to the first body photo for openGraph image when coverAssetId is unset (#903)', async () => {
+    admin = false;
+    readJournalEntry.mockResolvedValue({
+      slug: 'trip',
+      parsed: {
+        frontmatter: { title: 'Trip' },
+        blocks: [
+          { type: 'paragraph', html: 'Hello' },
+          { type: 'photo', assetId: 'body-photo-123', layout: 'contained' },
+        ],
+      },
+    });
+
+    const m = await detailMetadata({ params: Promise.resolve({ slug: 'trip' }) });
+    const images = m.openGraph?.images as Array<{ url: string }>;
+    expect(images).toHaveLength(1);
+    expect(images[0].url).toMatch(/^\/api\/image\//);
+    expect(images[0].url).toContain('size=preview');
   });
 });

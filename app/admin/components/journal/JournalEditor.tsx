@@ -2,7 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import type { ParsedJournal, JournalBlock } from '@/lib/journal';
-import { parseJournalMarkdown, serializeJournalMarkdown, collectAssetIds } from '@/lib/journal';
+import {
+  parseJournalMarkdown,
+  serializeJournalMarkdown,
+  collectAssetIds,
+  findFirstPhotoAssetId,
+} from '@/lib/journal';
 import {
   IconFileText,
   IconSparkles,
@@ -752,6 +757,7 @@ export function JournalEditor({
       {showMetaModal && !isPage && (
         <StorySettingsModal
           frontmatter={parsed.frontmatter}
+          fallbackCoverAssetId={findFirstPhotoAssetId(parsed.blocks, (id) => albumAssets[id])}
           onChange={handleFrontmatterChange}
           onPickAsset={setAssetPickerTarget}
           onClose={() => setShowMetaModal(false)}
