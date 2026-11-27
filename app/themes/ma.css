@@ -116,26 +116,16 @@
   --subpage-gap: 48px;
 }
 
-[data-preset='ma'] .subpage-grid__item:hover img,
-[data-preset='ma'] .album-card:hover .album-card__image {
+[data-preset='ma'] .subpage-grid__item:hover img {
   transform: none;
   filter: brightness(0.9);
 }
 
-[data-preset='ma'] .subpage-grid__item-title,
-[data-preset='ma'] .album-card__title {
+[data-preset='ma'] .subpage-grid__item-title {
   font-family: var(--font-serif);
   font-weight: 400;
   letter-spacing: 0.02em;
   text-transform: none;
-}
-
-[data-preset='ma'] .album-card {
-  border: none;
-}
-
-[data-preset='ma'] .album-card:hover {
-  transform: none;
 }
 
 [data-preset='ma'] .footer {

@@ -59,22 +59,6 @@
   color: rgba(255, 200, 150, 0.7);
 }
 
-/* Album cards */
-[data-preset='noir'] .album-card {
-  border: none;
-  border-radius: 0;
-}
-
-[data-preset='noir'] .album-card:hover {
-  transform: none;
-  border-color: transparent;
-}
-
-[data-preset='noir'] .album-card__title {
-  font-weight: 400;
-  letter-spacing: 0.04em;
-}
-
 /* Section labels */
 [data-preset='noir'] .section-label {
   font-family: var(--font-caption);

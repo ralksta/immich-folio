@@ -15,7 +15,10 @@
     "test:e2e": "playwright test",
     "test:e2e:admin": "playwright test e2e/admin-smoke.spec.ts",
     "doctor": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/doctor.mjs",
-    "audit:contrast": "node scripts/contrast-audit.mjs"
+    "audit:contrast": "node scripts/contrast-audit.mjs",
+    "knip": "knip",
+    "screenshots": "npx tsx scripts/screenshots.ts",
+    "screenshots:header": "npx tsx scripts/header.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -46,6 +49,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.7",
     "jsdom": "^29.1.1",
+    "knip": "^5.88.1",
     "prettier": "^3.9.10",
     "typescript": "^5",
     "vitest": "^4.1.12"

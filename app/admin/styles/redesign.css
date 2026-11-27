@@ -355,7 +355,6 @@
    analytics titles a mixed-case line of monospace (QA A-18). They read like
    the settings section headings; monospace stays with the paths. */
 .admin-layout .settings-section-header h3,
-.admin-layout .analytics-header h2,
 .admin-layout .analytics-section-title h3 {
   font-family: var(--admin-font);
   font-weight: 500;
@@ -364,7 +363,6 @@
 
 /* Section icons stay neutral; the accent is not decoration. */
 .admin-layout .settings-section-header h3 svg,
-.admin-layout .analytics-header h2 svg,
 .admin-layout .analytics-section-title h3 svg {
   color: var(--admin-text-muted);
 }
@@ -557,22 +555,13 @@
 
 /* A chosen option (preset, frame, layout…) is a place, so it keeps the accent,
    but as a hairline rather than a doubled frame. */
-.admin-layout .preset-card.active,
-.admin-layout .preset-btn.active {
+.admin-layout .preset-card.active {
   box-shadow: none;
 }
 
 /* Page builder section icons: neutral, like the settings headers. */
 .admin-layout .builder-section-header h2 svg {
   color: var(--admin-text-muted);
-}
-
-/* "Disabled" is a state, not an error. The badge sets its red inline, hence
-   !important; stage 2 moves the colour into the stylesheet (after #711). */
-.admin-layout .subpage-badge-protected[title='Page is disabled'] {
-  background: rgba(0, 0, 0, 0.72) !important;
-  color: var(--admin-text-secondary) !important;
-  border: 1px solid var(--admin-border-hover);
 }
 
 /* Every screen starts at the same left edge (stage 2 adds the shared page header). */

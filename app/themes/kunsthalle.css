@@ -257,21 +257,6 @@
   color: var(--text-muted);
 }
 
-/* Standalone album cards on the home page */
-[data-preset='kunsthalle'] .album-card {
-  border: none;
-  box-shadow: var(--kh-hang);
-}
-
-[data-preset='kunsthalle'] .album-card:hover {
-  transform: none;
-  box-shadow: var(--kh-hang-hover);
-}
-
-[data-preset='kunsthalle'] .album-card:hover .album-card__image {
-  transform: none;
-}
-
 /* ── Mosaic hero: a wall of works, the title below ── */
 [data-preset='kunsthalle'] .hero--mosaic {
   min-height: 0;

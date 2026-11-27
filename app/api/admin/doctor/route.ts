@@ -36,6 +36,7 @@ import {
   checkZoomRenditions,
   countForwardedHops,
   PROXY_MARKER_HEADERS,
+  probeImmich,
   worstLevel,
   type AlbumRef,
   type AlbumSlugGroup,
@@ -78,7 +79,6 @@ export const GET = withAdmin(async (request: NextRequest) => {
   if (cdn) findings.push(cdn);
 
   // ── Immich: the three calls Folio actually depends on ────────────────
-  const calls: Array<{ endpoint: string; ok: boolean }> = [];
   let albums: AlbumRef[] = [];
 
   if (config.needsCredentials) {
@@ -89,40 +89,13 @@ export const GET = withAdmin(async (request: NextRequest) => {
       detail: t.immichApi.notConfiguredDetail,
     });
   } else {
-    const headers = { 'x-api-key': config.immich.apiKey, Accept: 'application/json' };
-    const call = async (endpoint: string, init?: RequestInit) => {
-      try {
-        const res = await fetch(`${config.immich.apiUrl}${endpoint}`, {
-          headers,
-          signal: AbortSignal.timeout(config.immichTimeoutMs),
-          ...init,
-        });
-        calls.push({ endpoint, ok: res.ok });
-        return res.ok ? res : null;
-      } catch {
-        calls.push({ endpoint, ok: false });
-        return null;
-      }
-    };
-
-    await call('/server/ping');
-    const albumRes = await call('/albums');
-    await call('/search/metadata', {
-      method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ size: 1, page: 1 }),
-    });
-
-    if (albumRes) {
-      try {
-        const parsed: unknown = await albumRes.json();
-        if (Array.isArray(parsed)) albums = parsed as AlbumRef[];
-      } catch {
-        // A malformed body is already reflected by the call above.
-      }
-    }
-
-    findings.push(checkImmichCalls(calls, t));
+    const probe = await probeImmich(
+      config.immich.apiUrl,
+      config.immich.apiKey,
+      config.immichTimeoutMs,
+    );
+    albums = probe.albums;
+    findings.push(checkImmichCalls(probe.calls, t));
 
     // Whenever albums are configured, run the check even if Immich answered
     // with an empty list — an API key regenerated under a different account,

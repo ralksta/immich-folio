@@ -84,34 +84,6 @@
   transform: scale(1.01);
 }
 
-/* Album cards: warm rounded, gold hover */
-[data-preset='classic'] .album-card {
-  border-radius: 12px;
-  border: 1px solid rgba(196, 154, 60, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-}
-
-[data-preset='classic'][data-theme='light'] .album-card {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border-color: rgba(196, 154, 60, 0.15);
-}
-
-[data-preset='classic'] .album-card:hover {
-  border-color: var(--accent);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-[data-preset='classic'] .album-card__title {
-  font-weight: 400;
-  letter-spacing: 0.06em;
-}
-
-[data-preset='classic'] .album-card__count {
-  font-family: var(--font-caption);
-  font-style: italic;
-}
-
 /* Section labels: decorative centered dividers */
 [data-preset='classic'] .section-label {
   text-align: center;

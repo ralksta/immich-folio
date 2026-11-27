@@ -143,11 +143,6 @@ export const removeSubpage = (g: GalleryState, index: number): GalleryState => (
 export const updateSubpage = (g: GalleryState, index: number, updates: Partial<Subpage>) =>
   mapSubpage(g, index, (sp) => ({ ...sp, ...updates }));
 
-export const moveSubpage = (g: GalleryState, from: number, to: number): GalleryState => ({
-  ...g,
-  subpages: arrayMove(g.subpages, from, to),
-});
-
 export const addSection = (
   g: GalleryState,
   subpageIndex: number,

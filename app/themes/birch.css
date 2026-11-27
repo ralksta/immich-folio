@@ -40,8 +40,6 @@
     .subpage-grid__item-title,
     .subpage-grid__item-count,
     .subpage-grid__item-badge,
-    .album-card__title,
-    .album-card__count,
     .photo-grid__item-exif,
     .footer__name,
     .footer__legal-link,
@@ -121,14 +119,12 @@
   --subpage-gap: 16px;
 }
 
-[data-preset='birch'] .subpage-grid__item,
-[data-preset='birch'] .album-card {
+[data-preset='birch'] .subpage-grid__item {
   border-radius: var(--radius-sm);
   transition: transform 300ms ease;
 }
 
-[data-preset='birch'] .subpage-grid__item:hover,
-[data-preset='birch'] .album-card:hover {
+[data-preset='birch'] .subpage-grid__item:hover {
   transform: translateY(-2px);
 }
 
@@ -137,8 +133,7 @@
   filter: brightness(0.8);
 }
 
-[data-preset='birch'] .subpage-grid__item-title,
-[data-preset='birch'] .album-card__title {
+[data-preset='birch'] .subpage-grid__item-title {
   font-weight: 500;
 }
 

@@ -65,21 +65,6 @@
   color: var(--accent-text);
 }
 
-/* Album cards */
-.album-card {
-  border-radius: var(--radius-md);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-[data-theme='light'] .album-card {
-  border-color: rgba(0, 0, 0, 0.08);
-}
-
-.album-card:hover {
-  border-color: var(--accent);
-  transform: none;
-}
-
 /* Subpage grid */
 .subpage-grid__item {
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -104,4 +89,3 @@
   border-color: var(--accent);
   color: var(--accent-text);
 }
-

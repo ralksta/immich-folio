@@ -135,41 +135,6 @@
   transform: none;
 }
 
-/* Album cards: no overlay, text below */
-[data-preset='minimal'] .album-card {
-  border: none;
-  border-radius: 0;
-}
-
-[data-preset='minimal'] .album-card:hover {
-  border-color: transparent;
-  transform: none;
-}
-
-[data-preset='minimal'] .album-card:hover .album-card__image {
-  transform: none;
-  filter: none;
-}
-
-[data-preset='minimal'] .album-card__overlay {
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.4) 0%, transparent 30%);
-  opacity: 1;
-}
-
-[data-preset='minimal'] .album-card__title {
-  font-family: var(--font-sans);
-  font-size: 0.7rem;
-  font-weight: 400;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-}
-
-[data-preset='minimal'] .album-card__count {
-  font-size: 0.6rem;
-  font-weight: 400;
-  letter-spacing: 0.1em;
-}
-
 /* Section labels: numbered indices */
 [data-preset='minimal'] .section-label {
   font-size: 0.6rem;
