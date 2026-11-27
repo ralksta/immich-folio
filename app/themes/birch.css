@@ -40,8 +40,6 @@
     .subpage-grid__item-title,
     .subpage-grid__item-count,
     .subpage-grid__item-badge,
-    .album-card__title,
-    .album-card__count,
     .photo-grid__item-exif,
     .footer__name,
     .footer__legal-link,
@@ -68,11 +66,42 @@
   border-bottom-color: transparent;
 }
 
-/* The active link sits in a soft pill rather than on an underline. */
+/* The active link sits in a soft pill rather than on an underline.
+   Only size the pill compactly in the inline row, not inside the full-width
+   mobile dropdown panel. */
 [data-preset='birch'] .header__nav-link.active {
   border-bottom-color: transparent;
   background: var(--bg-card-hover);
   border-radius: 999px;
+}
+
+[data-preset='birch'] .header__nav-links:not([data-open='true']) .header__nav-link.active {
+  padding: 6px 14px;
+  margin: 12px 4px;
+}
+
+[data-preset='birch'] .header__nav-links[data-open='true'] .header__nav-link.active {
+  border-radius: 0;
+}
+
+/* Extend Birch's sentence-case signature to Journal, Essay and info pages. */
+[data-preset='birch']
+  :is(
+    .journal-index-header__kicker,
+    .journal-card__meta,
+    .essay-header__meta,
+    .essay-quote__author,
+    .essay-facts__label,
+    .about__name,
+    .about__location,
+    .about__section-label,
+    .contact-page__subtitle,
+    .contact-form__label,
+    .legal-subtitle
+  ) {
+  text-transform: none;
+  letter-spacing: 0;
+  font-style: normal;
 }
 
 /* ── Type ─────────────────────────────────────────── */
@@ -121,14 +150,12 @@
   --subpage-gap: 16px;
 }
 
-[data-preset='birch'] .subpage-grid__item,
-[data-preset='birch'] .album-card {
+[data-preset='birch'] .subpage-grid__item {
   border-radius: var(--radius-sm);
   transition: transform 300ms ease;
 }
 
-[data-preset='birch'] .subpage-grid__item:hover,
-[data-preset='birch'] .album-card:hover {
+[data-preset='birch'] .subpage-grid__item:hover {
   transform: translateY(-2px);
 }
 
@@ -137,8 +164,7 @@
   filter: brightness(0.8);
 }
 
-[data-preset='birch'] .subpage-grid__item-title,
-[data-preset='birch'] .album-card__title {
+[data-preset='birch'] .subpage-grid__item-title {
   font-weight: 500;
 }
 

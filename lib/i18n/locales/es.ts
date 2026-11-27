@@ -207,7 +207,9 @@ export const es: Dictionary = {
     showAll: 'Mostrar todo',
     filterEmpty: 'No hay fotos seleccionadas.',
     selected: (n: number) => `${n} ${n === 1 ? 'seleccionada' : 'seleccionadas'}`,
+    onlySelected: (n: number) => `Solo selección (${n})`,
     shareExport: 'Compartir y exportar',
+    shareSelection: 'Compartir selección',
     modalTitle: (n: number) => `Selección (${n})`,
     closeModal: 'Cerrar ventana',
     intro: (n: number) =>
@@ -282,6 +284,7 @@ export const es: Dictionary = {
     successText: 'Tu mensaje ha llegado. Te responderé por correo electrónico.',
     invalid: 'Rellena todos los campos con una dirección de correo válida.',
     tooMany: 'Demasiados mensajes en poco tiempo. Inténtalo de nuevo en un minuto.',
+    expired: 'Esta página lleva mucho tiempo abierta. Vuelve a cargarla para enviar tu mensaje.',
     failed: 'No se ha podido enviar el mensaje. Inténtalo más tarde.',
     privacy: (days: number) =>
       `Tu mensaje se guarda en el propio servidor de este sitio, solo se usa para responderte y se borra después de ${days} ${days === 1 ? 'día' : 'días'}.`,

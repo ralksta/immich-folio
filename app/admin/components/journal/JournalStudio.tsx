@@ -26,6 +26,7 @@ import { useModalDialog } from '@/hooks/useModalDialog';
 import AlbumPicker from '../AlbumPicker';
 import AssetPicker from '../AssetPicker';
 import { useAdminDictionary } from '../AdminI18n';
+import type { MapTilesConfig } from '@/lib/mapTiles';
 
 interface SharedAlbum {
   id: string;
@@ -42,9 +43,10 @@ interface JournalStudioProps {
   slug?: string;
   /** `config.map`, passed by the server route: a map block renders only when the site has a map. */
   mapEnabled?: boolean;
+  mapTiles?: MapTilesConfig;
 }
 
-export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioProps) {
+export function JournalStudio({ slug: activeSlug, mapEnabled, mapTiles }: JournalStudioProps) {
   const dict = useAdminDictionary();
   const t = dict.journal.studio;
   const tc = t.create;
@@ -196,6 +198,7 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
       <JournalEditor
         slug={activeSlug}
         mapEnabled={mapEnabled}
+        mapTiles={mapTiles}
         onBack={() => router.push('/admin/journal')}
       />
     );
@@ -242,10 +245,10 @@ export function JournalStudio({ slug: activeSlug, mapEnabled }: JournalStudioPro
           {entries.map((entry) => (
             <div key={entry.slug} className="journal-admin-card">
               <div className="journal-admin-card-cover">
-                {entry.frontmatter.coverAssetId ? (
+                {entry.frontmatter.coverAssetId || entry.fallbackCoverAssetId ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={`/api/admin/thumbnail/${entry.frontmatter.coverAssetId}`}
+                    src={`/api/admin/thumbnail/${entry.frontmatter.coverAssetId || entry.fallbackCoverAssetId}`}
                     alt={entry.frontmatter.title || entry.slug}
                   />
                 ) : (

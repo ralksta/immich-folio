@@ -179,7 +179,8 @@
   flex-direction: column;
   justify-content: flex-end;
   padding: 20px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 50%);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72) 0%, transparent 55%);
+  color: var(--lightbox-text, rgba(255, 255, 255, 0.95));
   opacity: 0;
   transition: opacity var(--transition-normal);
 }
@@ -193,12 +194,12 @@
   font-size: 1.2rem;
   font-weight: 400;
   letter-spacing: 0.03em;
+  color: var(--lightbox-text, rgba(255, 255, 255, 0.95));
 }
 
 .subpage-grid__item-count {
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--lightbox-text-secondary, rgba(255, 255, 255, 0.85));
   font-weight: 300;
   margin-top: 2px;
 }
-

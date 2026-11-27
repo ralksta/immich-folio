@@ -86,23 +86,6 @@
   min-height: calc(100vh - 70px);
 }
 
-.journal-studio-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.5rem 2rem;
-  border-bottom: 1px solid var(--admin-border, rgba(255, 255, 255, 0.08));
-}
-
-.journal-studio-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .journal-list-grid {
   display: grid;
   /* min(): on a phone the column is narrower than 320px, and a fixed minimum

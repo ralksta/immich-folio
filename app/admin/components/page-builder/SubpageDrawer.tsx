@@ -20,7 +20,7 @@ import {
   IconTrash,
   IconX,
 } from '../Icons';
-import AlbumCard, { SortableAlbumCard } from './AlbumCard';
+import { SortableAlbumCard } from './AlbumCard';
 import SubpagePreview from './SubpagePreview';
 import PasswordField from '../fields/PasswordField';
 import ZoomOverrideField from '../fields/ZoomOverrideField';
@@ -63,6 +63,7 @@ interface SubpageDrawerProps {
   removeSubpageAlbum: (subpageIndex: number, albumIndex: number) => void;
   removeSectionAlbum: (subpageIndex: number, sectionIndex: number, albumIndex: number) => void;
   onAlbumDragEnd: (event: DragEndEvent) => void;
+  onSectionAlbumDragEnd: (sectionIndex: number, event: DragEndEvent) => void;
   onPickAlbum: (target: PickerTarget | null) => void;
   onEditAlbum: (address: ActiveEditAlbumAddress | null) => void;
   onPickHero: (target: HeroPickerTarget | null) => void;
@@ -103,6 +104,7 @@ export default function SubpageDrawer({
   removeSubpageAlbum,
   removeSectionAlbum,
   onAlbumDragEnd,
+  onSectionAlbumDragEnd,
   onPickAlbum,
   onEditAlbum,
   onPickHero,
@@ -432,17 +434,19 @@ export default function SubpageDrawer({
             </div>
 
             <div className="admin-sheet-col admin-sheet-col--divided">
-              {/* Albums (if no sections) with DnD */}
-              {(!sp.sections || sp.sections.length === 0) && (
+              {/* Albums (when no sections exist, or when legacy loose albums are still present) */}
+              {(!sp.sections || sp.sections.length === 0 || sp.albums.length > 0) && (
                 <div className="subpage-albums">
                   <div className="subpage-albums-header">
                     <span>{t.albums}</span>
-                    <button
-                      className="admin-btn admin-btn-xs admin-btn-primary"
-                      onClick={() => onPickAlbum({ type: 'subpage', subpageIndex: spIndex })}
-                    >
-                      {t.addAlbum}
-                    </button>
+                    {(!sp.sections || sp.sections.length === 0) && (
+                      <button
+                        className="admin-btn admin-btn-xs admin-btn-primary"
+                        onClick={() => onPickAlbum({ type: 'subpage', subpageIndex: spIndex })}
+                      >
+                        {t.addAlbum}
+                      </button>
+                    )}
                   </div>
                   <DndContext
                     sensors={sensors}
@@ -518,27 +522,39 @@ export default function SubpageDrawer({
                           className="section-desc-input"
                         />
                       </div>
-                      <div className="album-list">
-                        {sec.albums.map((album, aIndex) => (
-                          <AlbumCard
-                            key={`${album.id}-${aIndex}`}
-                            album={album}
-                            name={getAlbumName(album.id)}
-                            count={getAlbumCount(album.id)}
-                            thumbnailId={getAlbumThumbnailId(album.id)}
-                            highlighted={album.id === highlightedAlbumId}
-                            onRemove={() => removeSectionAlbum(spIndex, secIndex, aIndex)}
-                            onEdit={() =>
-                              onEditAlbum({
-                                type: 'section',
-                                subpageIndex: spIndex,
-                                sectionIndex: secIndex,
-                                albumIndex: aIndex,
-                              })
-                            }
-                          />
-                        ))}
-                      </div>
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={(event) => onSectionAlbumDragEnd(secIndex, event)}
+                      >
+                        <SortableContext
+                          items={sec.albums.map((a, i) => `album-${a.id}-${i}`)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          <div className="album-list">
+                            {sec.albums.map((album, aIndex) => (
+                              <SortableAlbumCard
+                                key={`${album.id}-${aIndex}`}
+                                album={album}
+                                index={aIndex}
+                                name={getAlbumName(album.id)}
+                                count={getAlbumCount(album.id)}
+                                thumbnailId={getAlbumThumbnailId(album.id)}
+                                highlighted={album.id === highlightedAlbumId}
+                                onRemove={() => removeSectionAlbum(spIndex, secIndex, aIndex)}
+                                onEdit={() =>
+                                  onEditAlbum({
+                                    type: 'section',
+                                    subpageIndex: spIndex,
+                                    sectionIndex: secIndex,
+                                    albumIndex: aIndex,
+                                  })
+                                }
+                              />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </DndContext>
                       <button
                         className="admin-btn admin-btn-xs"
                         onClick={() =>
@@ -563,14 +579,6 @@ export default function SubpageDrawer({
                 >
                   {t.addSection}
                 </button>
-                {sp.sections && sp.sections.length > 0 && (
-                  <button
-                    className="admin-btn admin-btn-xs admin-btn-secondary"
-                    onClick={() => onPickAlbum({ type: 'subpage', subpageIndex: spIndex })}
-                  >
-                    {t.addLooseAlbum}
-                  </button>
-                )}
               </div>
             </div>
           </div>

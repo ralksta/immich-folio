@@ -64,9 +64,9 @@ describe('proofing counts in the album grid', () => {
     store.set('folio_fav_wedding', JSON.stringify(['a2', 'gone', 'other-album']));
     render(<PhotoGrid assets={ASSETS} proofing albumName="Wedding" />);
 
-    expect(await screen.findByText('1 selected')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /selected/i })).toBeTruthy();
 
-    fireEvent.click(screen.getByText('Share & export'));
+    fireEvent.click(screen.getByRole('button', { name: /share/i }));
     expect(screen.getByText('Selection (1)')).toBeTruthy();
     expect(screen.getByText(/You have selected 1 photo\./)).toBeTruthy();
   });
@@ -76,13 +76,13 @@ describe('proofing counts in the album grid', () => {
     render(<PhotoGrid assets={ASSETS} proofing albumName="Wedding" />);
     // `render` flushes the hydration effect, so the stored set is loaded here.
     expect(screen.queryByText(/selected/)).toBeNull();
-    expect(screen.queryByText('Share & export')).toBeNull();
+    expect(screen.queryByRole('button', { name: /share/i })).toBeNull();
   });
 
   it('keeps "Show all" reachable after the last favourite is removed in the filter', async () => {
     store.set('folio_fav_wedding', JSON.stringify(['a1']));
     render(<PhotoGrid assets={ASSETS} proofing albumName="Wedding" />);
-    fireEvent.click(await screen.findByText('1 selected'));
+    fireEvent.click(await screen.findByRole('button', { name: /selected/i }));
     // Filtered to the one favourite; un-heart it and the grid is empty.
     fireEvent.click(screen.getByLabelText('Remove favorite'));
     expect(screen.queryByLabelText('Add favorite')).toBeNull();
@@ -90,6 +90,17 @@ describe('proofing counts in the album grid', () => {
     const bar = document.querySelector<HTMLElement>('.proofing-sticky-bar')!;
     fireEvent.click(within(bar).getByText('Show all'));
     expect(screen.getAllByLabelText('Add favorite')).toHaveLength(3);
+  });
+
+  it('marks the filter toggle with aria-pressed (#905)', async () => {
+    store.set('folio_fav_wedding', JSON.stringify(['a1']));
+    render(<PhotoGrid assets={ASSETS} proofing albumName="Wedding" />);
+    const toggle = await screen.findByRole('button', { name: /selected/i });
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+
+    fireEvent.click(toggle);
+    const showAll = screen.getByRole('button', { name: 'Show all' });
+    expect(showAll.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('puts the album count into the email subject', async () => {
@@ -103,7 +114,7 @@ describe('proofing counts in the album grid', () => {
         encodedMailto={encodeEmail('hello@example.com')}
       />,
     );
-    fireEvent.click(await screen.findByText('Share & export'));
+    fireEvent.click(await screen.findByRole('button', { name: /share/i }));
     const location = { href: 'http://localhost/wedding' };
     vi.stubGlobal('location', location);
     fireEvent.click(screen.getByText('Send email to photographer'));

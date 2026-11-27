@@ -7,5 +7,6 @@ export default async function AdminJournalEntryPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  return <JournalStudio slug={slug} mapEnabled={getConfig().map} />;
+  const config = getConfig();
+  return <JournalStudio slug={slug} mapEnabled={config.map} mapTiles={config.mapTiles} />;
 }

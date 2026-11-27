@@ -54,7 +54,15 @@ export default function ContactForm({ retentionDays, renderedAt }: Props) {
         setState('done');
         return;
       }
-      setError(res.status === 400 ? t.invalid : res.status === 429 ? t.tooMany : t.failed);
+      setError(
+        res.status === 409
+          ? t.expired
+          : res.status === 400
+            ? t.invalid
+            : res.status === 429
+              ? t.tooMany
+              : t.failed,
+      );
     } catch {
       setError(t.failed);
     }

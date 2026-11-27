@@ -101,6 +101,39 @@ describe('getGoogleCss', () => {
     expect(await getGoogleCss(['Archivo'])).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it('uses compatible weight axes for single- and limited-weight preset families (#928)', async () => {
+    await getGoogleCss(['Gloock', 'Libre Baskerville', 'DM Mono']);
+    const urls = fetchMock.mock.calls.map(([url]) => String(url));
+    expect(urls).toContain('https://fonts.googleapis.com/css2?family=Gloock&display=swap');
+    expect(urls).toContain(
+      'https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap',
+    );
+    expect(urls).toContain(
+      'https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap',
+    );
+  });
+
+  it('falls back to an unparameterised family query when Google returns 400 on weights', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes(':wght@')) return new Response(null, { status: 400 });
+      if (url.includes('family=Custom+Display&display=swap')) return new Response(GOOGLE_CSS);
+      return new Response(null, { status: 404 });
+    });
+
+    expect(await getGoogleCss(['Custom Display'])).toBe(GOOGLE_CSS);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('still serves healthy families when one family in the theme fails', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes('Broken+Font')) return new Response(null, { status: 404 });
+      if (url.includes('Archivo')) return new Response(GOOGLE_CSS);
+      return new Response(null, { status: 404 });
+    });
+
+    expect(await getGoogleCss(['Broken Font', 'Archivo'])).toBe(GOOGLE_CSS);
+  });
 });
 
 describe('getFontFile', () => {

@@ -97,6 +97,35 @@ describe('LeafletMap tiles', () => {
       expect(tile.getAttribute('src')).toMatch(/^https:\/\/tile\.openstreetmap\.org\//);
       expect((tile as HTMLImageElement).referrerPolicy).toBe('strict-origin-when-cross-origin');
     }
+    const mapEl = container.querySelector('.map-container');
+    expect(mapEl?.getAttribute('data-map-tile-provider')).toBe('osm');
+    expect(mapEl?.getAttribute('data-map-filter-tiles')).toBe('true');
+  });
+
+  it('uses the configured CARTO style with ?key= and keeps referrerPolicy without CSS filtering', async () => {
+    const { container } = render(
+      <I18nProvider locale="en">
+        <LeafletMap
+          markers={[]}
+          tileConfig={{ provider: 'carto-voyager', apiKey: 'my-carto-key' }}
+        />
+      </I18nProvider>,
+    );
+
+    const tiles = await waitFor(() => {
+      const els = container.querySelectorAll('img.leaflet-tile');
+      if (els.length === 0) throw new Error('no tiles yet');
+      return [...els];
+    });
+    for (const tile of tiles) {
+      expect(tile.getAttribute('src')).toMatch(
+        /^https:\/\/basemaps\.cartocdn\.com\/rastertiles\/voyager\/.*\.png\?key=my-carto-key$/,
+      );
+      expect((tile as HTMLImageElement).referrerPolicy).toBe('strict-origin-when-cross-origin');
+    }
+    const mapEl = container.querySelector('.map-container');
+    expect(mapEl?.getAttribute('data-map-tile-provider')).toBe('carto-voyager');
+    expect(mapEl?.getAttribute('data-map-filter-tiles')).toBe('false');
   });
 
   describe('embedded map gesture handling (#902)', () => {

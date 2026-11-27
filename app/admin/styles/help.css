@@ -178,18 +178,3 @@
   font-size: 0.875rem;
   font-family: monospace;
 }
-
-/* Radio Group */
-.radio-group {
-  display: flex;
-  gap: 1rem;
-}
-
-.radio-group label {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.85rem;
-  color: var(--admin-text);
-  cursor: pointer;
-}

@@ -258,7 +258,3 @@ export const PRESET_REGISTRY: readonly PresetDefinition[] = [
 
 /** Preset ids in registry order: the order every picker shows them in. */
 export const PRESET_IDS: readonly string[] = PRESET_REGISTRY.map((p) => p.id);
-
-export function getPresetDefinition(id: string): PresetDefinition | undefined {
-  return PRESET_REGISTRY.find((p) => p.id === id);
-}

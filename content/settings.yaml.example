@@ -56,6 +56,14 @@ exifOnHover: true
 # Enable the interactive world map view (/map)
 map: true
 
+# Optional runtime tile provider for /map and journal map blocks.
+# OpenStreetMap is the default and needs no key. CARTO styles require an API
+# key (set here or via CARTO_API_KEY in the runtime environment); without a
+# key, the map falls back to OpenStreetMap.
+# mapTiles:
+#   provider: carto-voyager # osm | carto-voyager | carto-positron | carto-dark-matter
+#   apiKey: your-carto-api-key
+
 # Enable smooth page transitions between routes
 transitions: true
 

@@ -3,6 +3,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
 }
 
 .hero__left {
@@ -139,6 +140,7 @@
 .hero--fullbleed {
   position: relative;
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   overflow: hidden;
 }
 
@@ -265,12 +267,12 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   padding: 14px 28px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .hero--fullbleed .hero__nav-link {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.85);
   text-decoration-color: rgba(255, 255, 255, 0.25);
 }
 
@@ -285,6 +287,7 @@
   align-items: center;
   justify-content: center;
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   padding: 64px 40px;
 }
 
@@ -294,9 +297,10 @@
 }
 
 .hero--minimal .hero__title {
-  font-size: 4.5rem;
+  font-size: clamp(2.25rem, 9vw, 4.5rem);
   font-weight: 300;
   letter-spacing: 0.08em;
+  overflow-wrap: break-word;
   margin-bottom: 12px;
 }
 
@@ -309,6 +313,7 @@
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
 }
 
 .hero__stacked-image {
@@ -349,7 +354,7 @@
   font-weight: 300;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .hero__thumbnail-strip {
@@ -403,6 +408,7 @@
   align-items: center;
   justify-content: center;
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   padding: 64px 40px;
 }
 
@@ -490,6 +496,7 @@
   position: relative;
   display: block; /* override inherited 1fr 1fr split grid from .hero */
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
 }
 
 .hero__mosaic-grid {
@@ -498,6 +505,7 @@
   grid-template-rows: 1fr 1fr;
   gap: 2px;
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
 }
 
 .hero__mosaic-cell {
@@ -564,7 +572,7 @@
   font-weight: 300;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.85);
   margin-bottom: 24px;
 }
 
@@ -579,7 +587,7 @@
 .hero--mosaic .hero__nav-link {
   font-size: 0.7rem;
   letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.85);
   text-transform: uppercase;
   text-decoration: none;
   padding: 4px 0;
@@ -593,4 +601,3 @@
   color: #fff;
   border-bottom-color: #fff;
 }
-

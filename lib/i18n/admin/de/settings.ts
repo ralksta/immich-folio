@@ -34,6 +34,17 @@ export const settings: AdminDictionary['settings'] = {
     /** Shown when the server confirms a save without a message of its own. */
     saved: 'Gespeichert!',
     saveFailed: 'Speichern fehlgeschlagen',
+    validation: {
+      url: 'Muss eine vollständige http(s)-Adresse sein, z. B. https://photos.example.com.',
+      accent: 'Muss eine Hex-Farbe sein, z. B. #e60012.',
+      radius: (max: number) =>
+        `Muss eine Zahl von 0 bis ${max} sein (theme.radius in settings.yaml).`,
+      gridColumns: (min: number, max: number) => `Muss eine ganze Zahl von ${min} bis ${max} sein.`,
+      gridGap: (max: number) => `Muss eine ganze Zahl von 0 bis ${max} sein.`,
+      retentionDays: (max: number) => `Muss eine ganze Zahl von 1 bis ${max} Tagen sein.`,
+      navLinkLabel: 'Braucht eine Beschriftung, sonst wird der Link weggelassen.',
+      navLinkUrl: 'Muss eine vollständige http(s)-Adresse sein, sonst wird der Link weggelassen.',
+    },
   },
 
   general: {
@@ -64,6 +75,15 @@ export const settings: AdminDictionary['settings'] = {
     aboutPageDesc: 'Porträt, Biografie und Ausrüstung unter /about',
     map: 'Karte',
     mapDesc: 'Aufnahmeorte auf einer Weltkarte unter /map',
+    mapTileProvider: 'Kartenkachel-Anbieter',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileProviderHint:
+      'Gilt für /map und Kartenblöcke im Journal. CARTO-Stile benötigen einen API-Schlüssel (unten oder per {variable}); ohne Schlüssel fällt die Karte auf OpenStreetMap zurück.',
+    mapTileApiKey: 'CARTO-API-Schlüssel',
+    mapTileApiKeyPlaceholder: 'Optional, wenn CARTO_API_KEY gesetzt ist',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileApiKeyHint:
+      'Wird vom Browser der Besucher in Kachelanfragen mitgesendet — beschränke den Schlüssel in deinem CARTO-Konto auf deine Domain. {variable} überschreibt dieses Feld.',
     proofing: 'Kundenauswahl',
     proofingDesc: 'Besucher markieren, filtern und exportieren eine Auswahl von Fotos',
     zoom: 'Foto-Zoom',
@@ -105,6 +125,8 @@ export const settings: AdminDictionary['settings'] = {
     favicon: 'Favicon',
     faviconAlt: 'Aktuelles Favicon',
     faviconUpload: 'Icon hochladen',
+    faviconUploaded: 'Favicon aktualisiert.',
+    faviconReset: 'Favicon auf Standard zurückgesetzt.',
     faviconUploadFailed: 'Hochladen fehlgeschlagen',
     faviconResetFailed: 'Zurücksetzen fehlgeschlagen',
     faviconResetTitle: 'Favicon zurücksetzen?',

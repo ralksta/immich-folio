@@ -96,6 +96,50 @@ export function collectAssetIds(blocks: readonly JournalBlock[]): string[] {
 }
 
 /**
+ * Find the first photo asset id in the given blocks in reading order (#903).
+ * Optionally expands the first album block if `albumLookup` is provided.
+ */
+export function findFirstPhotoAssetId(
+  blocks: readonly JournalBlock[],
+  albumLookup?: (albumId: string) => readonly { id: string }[] | undefined,
+): string | undefined {
+  for (const block of blocks) {
+    if (block.type === 'photo') {
+      if (block.assetId) return block.assetId;
+    } else if (block.type === 'photo-pair' || block.type === 'photo-grid') {
+      const first = block.assetIds.find((id) => Boolean(id));
+      if (first) return first;
+    } else if (block.type === 'map') {
+      for (const item of block.items) {
+        if (item.kind === 'photo' && item.assetId) return item.assetId;
+      }
+    } else if (block.type === 'album') {
+      if (block.albumId && albumLookup) {
+        const assets = albumLookup(block.albumId);
+        const skip = block.skip ?? 0;
+        const asset = assets?.[skip];
+        if (asset?.id) return asset.id;
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Return the first album block reference in the given blocks if any (#903).
+ */
+export function findFirstAlbumRef(
+  blocks: readonly JournalBlock[],
+): { albumId: string; skip?: number } | undefined {
+  for (const block of blocks) {
+    if (block.type === 'album' && block.albumId) {
+      return { albumId: block.albumId, skip: block.skip };
+    }
+  }
+  return undefined;
+}
+
+/**
  * The same block with every asset id passed through `fn` — the one place that
  * knows which block types carry ids, so the page that swaps raw UUIDs for
  * tokens does not grow a branch per type.
@@ -127,6 +171,15 @@ export interface JournalEntrySummary {
   excerpt: string;
   wordCount: number;
   readingTimeMinutes: number;
+  /**
+   * First photo in the body, used as fallback cover on index cards and in studio (#903).
+   */
+  fallbackCoverAssetId?: string;
+  /**
+   * First album reference if no direct photo was found before an album block (#903).
+   */
+  firstAlbumId?: string;
+  firstAlbumSkip?: number;
 }
 
 const HTML_ESCAPES: Record<string, string> = {

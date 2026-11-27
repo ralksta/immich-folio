@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { useDictionary } from './I18nProvider';
 import { escapeHtml } from '@/lib/escapeHtml';
+import { getMapTileLayerOptions, type MapTilesConfig } from '@/lib/mapTiles';
 
 export interface LeafletMarker {
   lat: number;
@@ -44,6 +45,8 @@ interface LeafletMapProps {
    * showing a short two-finger hint overlay if touched with one finger.
    */
   embedded?: boolean;
+  /** Runtime tile-provider config from settings.yaml / CARTO_API_KEY (#853). */
+  tileConfig?: MapTilesConfig;
   onReady?: () => void;
   onError?: (err: unknown) => void;
 }
@@ -64,6 +67,7 @@ export function LeafletMap({
   className = 'map-container',
   fitMaxZoom,
   embedded = false,
+  tileConfig,
   onReady,
   onError,
 }: LeafletMapProps) {
@@ -75,6 +79,7 @@ export function LeafletMap({
   // mounted page, and a new dictionary object must not rebuild the map.
   const t = useDictionary();
   const labelsRef = useRef(t.map);
+  const tileOptions = getMapTileLayerOptions(tileConfig);
 
   // Callers rebuild the markers array on every render; the map is only
   // rebuilt when its content changes.
@@ -142,18 +147,13 @@ export function LeafletMap({
         map.attributionControl.setPrefix(localizedLeafletPrefix(prefix, labels.leafletTitle));
       }
 
-      // OpenStreetMap's own tiles: free to use with attribution and a Referer.
-      // Without one, every tile is an "Access blocked" image. The policy is set
-      // on the tiles themselves because a proxy in front of the site can
-      // replace the page's Referrer-Policy with one that sends nothing
-      // cross-origin (#851).
-      // CARTO's Dark Matter, used before, started answering every tile with
-      // "API KEY REQUIRED". The dark look comes from a filter in
-      // app/leaflet.css, so it follows the colour mode.
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19,
+      // Referrer-Policy is set on the tiles themselves because a proxy in front
+      // of the site can replace the page's Referrer-Policy with one that sends
+      // nothing cross-origin (#851). Both OpenStreetMap (tile usage policy) and
+      // domain-restricted CARTO keys rely on the Referer reaching the tile host.
+      L.tileLayer(tileOptions.url, {
+        attribution: tileOptions.attribution,
+        maxZoom: tileOptions.maxZoom,
         referrerPolicy: 'strict-origin-when-cross-origin',
       }).addTo(map);
 
@@ -215,13 +215,24 @@ export function LeafletMap({
         mapRef.current = null;
       }
     };
-  }, [markersKey, line, fitMaxZoom, embedded]);
+  }, [
+    markersKey,
+    line,
+    fitMaxZoom,
+    embedded,
+    tileOptions.id,
+    tileOptions.url,
+    tileOptions.attribution,
+    tileOptions.maxZoom,
+  ]);
 
   return (
     <div
       ref={containerRef}
       className={className}
       style={{ position: 'relative' }}
+      data-map-tile-provider={tileOptions.id}
+      data-map-filter-tiles={tileOptions.filterTiles ? 'true' : 'false'}
       onTouchStart={handleTouch}
       onTouchMove={handleTouch}
     >

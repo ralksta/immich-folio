@@ -16,6 +16,7 @@ import type { PhotoItem } from './PhotoGrid';
 import './essay.css';
 import { useDictionary } from '@/components/I18nProvider';
 import { formatJournalDate, journalDateTime } from '@/lib/journalDate';
+import type { MapTilesConfig } from '@/lib/mapTiles';
 
 /**
  * The map block is the only thing in an essay that needs Leaflet, and most
@@ -46,6 +47,8 @@ interface EssayViewProps {
   allowMailto?: boolean;
   /** `encodeEmail()` of the proofing recipient, when one is configured (#736). */
   encodedMailto?: string;
+  /** Runtime tile-provider config for map blocks (#853). */
+  mapTiles?: MapTilesConfig;
 }
 
 function EssayViewContent({
@@ -55,6 +58,7 @@ function EssayViewContent({
   subtitle,
   watermark,
   proofing: proofingEnabled = false,
+  mapTiles,
 }: EssayViewProps) {
   const t = useDictionary();
   const proofing = useProofing();
@@ -380,6 +384,7 @@ function EssayViewContent({
                 className="essay-map"
                 embedded
                 fitMaxZoom={13}
+                tileConfig={mapTiles}
                 line={block.line}
                 markers={pins.map((pin, i) => ({
                   lat: pin.lat,
@@ -459,50 +464,19 @@ function EssayViewContent({
       <div>{essay.blocks.map(renderBlock)}</div>
 
       {proofing && selectedCount > 0 && (
-        <div
-          className="proofing-sticky-bar"
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            zIndex: 990,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '8px 16px',
-            borderRadius: 'var(--radius-lg)',
-            background: 'var(--bg-card, #1e1e1e)',
-            color: 'var(--text-primary, #ffffff)',
-            border: '1px solid var(--border-subtle, rgba(255,255,255,0.15))',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-            backdropFilter: 'blur(8px)',
-          }}
-        >
+        <div className="proofing-sticky-bar">
           {/* A count, not the album grid's filter toggle: a story's layout is
               authored, so there is nothing for "show favourites" to narrow. */}
-          <span style={{ fontSize: '0.85rem', fontWeight: 500, padding: '6px 4px' }}>
-            <IconHeart
-              size={14}
-              fill="currentColor"
-              aria-hidden="true"
-              style={{ verticalAlign: '-2px', marginRight: '0.35em' }}
-            />
+          <span className="proofing-bar__count-label">
+            <IconHeart size={14} fill="currentColor" aria-hidden="true" />
             {t.proofing.selected(selectedCount)}
           </span>
           <button
             type="button"
+            className="proofing-bar__share-btn"
             onClick={() => proofing.setIsModalOpen(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'inherit',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-              textDecoration: 'underline',
-            }}
           >
-            {t.proofing.shareExport}
+            {t.proofing.shareSelection}
           </button>
         </div>
       )}

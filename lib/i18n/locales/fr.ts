@@ -210,7 +210,9 @@ export const fr: Dictionary = {
     showAll: 'Tout afficher',
     filterEmpty: 'Aucune photo sélectionnée.',
     selected: (n: number) => `${n} ${isOne(n) ? 'sélectionnée' : 'sélectionnées'}`,
+    onlySelected: (n: number) => `Sélection uniquement (${n})`,
     shareExport: 'Partager & exporter',
+    shareSelection: 'Partager la sélection',
     modalTitle: (n: number) => `Sélection (${n})`,
     closeModal: 'Fermer la fenêtre',
     intro: (n: number) =>
@@ -287,6 +289,8 @@ export const fr: Dictionary = {
     successText: 'Votre message est bien arrivé. Je vous répondrai par e-mail.',
     invalid: 'Veuillez remplir tous les champs avec une adresse e-mail valide.',
     tooMany: 'Trop de messages en peu de temps. Réessayez dans une minute.',
+    expired:
+      'Cette page est ouverte depuis longtemps. Veuillez la recharger pour envoyer votre message.',
     failed: 'Le message n’a pas pu être envoyé. Réessayez plus tard.',
     privacy: (days: number) =>
       `Votre message est conservé sur le serveur de ce site, sert uniquement à vous répondre et est supprimé après ${days} ${isOne(days) ? 'jour' : 'jours'}.`,

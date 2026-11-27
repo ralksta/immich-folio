@@ -258,42 +258,6 @@
   border-color: #ef4444;
 }
 
-/* ── Preset Grid & Buttons (Grid Layout & Aspect Ratio) ───────── */
-.preset-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.35rem;
-}
-
-.preset-btn {
-  padding: 0.45rem 0.85rem;
-  background: var(--admin-bg-input, #1c1c1c);
-  border: 1px solid var(--admin-border, #333333);
-  border-radius: 8px;
-  color: var(--admin-text-secondary, #cccccc);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  text-transform: capitalize;
-}
-
-.preset-btn:hover {
-  background: var(--admin-bg-elevated, #282828);
-  border-color: var(--admin-border-hover, #555555);
-  color: var(--admin-text, #ffffff);
-}
-
-.preset-btn.active {
-  background: var(--admin-bg-elevated, #2a2a2a);
-  border-color: var(--admin-accent, #e60012);
-  color: var(--admin-accent, #e60012);
-  font-weight: 600;
-  box-shadow: 0 0 0 1px var(--admin-accent, #e60012);
-}
-
 /* ── Theme Settings Section Upgrades ─────────────────────────── */
 .theme-settings-panel {
   display: flex;
