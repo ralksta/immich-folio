@@ -153,10 +153,22 @@ export const addSection = (
   subpageIndex: number,
   t: Defaults = adminEn.pages.defaults,
 ) =>
-  mapSubpage(g, subpageIndex, (sp) => ({
-    ...sp,
-    sections: [...(sp.sections || []), { title: t.sectionTitle, albums: [] }],
-  }));
+  mapSubpage(g, subpageIndex, (sp) => {
+    const existing = sp.sections || [];
+    // Adding the first section to a subpage that already has albums migrates
+    // those albums into the new section instead of hiding them in sp.albums (#929).
+    if (existing.length === 0 && sp.albums.length > 0) {
+      return {
+        ...sp,
+        albums: [],
+        sections: [{ title: t.sectionTitle, albums: sp.albums }],
+      };
+    }
+    return {
+      ...sp,
+      sections: [...existing, { title: t.sectionTitle, albums: [] }],
+    };
+  });
 
 export const removeSection = (g: GalleryState, subpageIndex: number, sectionIndex: number) =>
   mapSubpage(g, subpageIndex, (sp) => ({

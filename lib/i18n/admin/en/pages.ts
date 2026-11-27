@@ -36,6 +36,7 @@ export const pages = {
     createOffline: 'Could not create the page. Check the connection and try again.',
     /** Toasts after a removal; each offers `undo`. */
     pageRemoved: 'Page removed.',
+    sectionRemoved: 'Section removed.',
     albumRemoved: 'Album removed.',
     albumRemovedFromPage: 'Album removed from the page.',
     albumRemovedFromSection: 'Album removed from the section.',
@@ -215,7 +216,6 @@ export const pages = {
     sectionDescPlaceholder: 'Section description (optional)',
     sectionDesc: 'Section description',
     addSection: '+ Add Section',
-    addLooseAlbum: '+ Add Loose Album',
     deleteSubpage: 'Delete Page',
     done: 'Done',
   },

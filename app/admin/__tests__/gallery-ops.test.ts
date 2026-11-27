@@ -71,16 +71,27 @@ describe('hero, subpages and sections', () => {
     expect(g.subpages[3]).toEqual({ name: 'New page 4', albums: [], sections: undefined });
   });
 
-  it('adds, updates and removes sections', () => {
+  it('migrates existing albums into the first section, adds empty follow-up sections, updates and removes them', () => {
     let g = ops.addSection(state(), 0);
-    expect(g.subpages[0].sections).toEqual([{ title: 'New Section', albums: [] }]);
-    g = ops.updateSection(g, 0, 0, { title: 'Tokyo', description: 'Night' });
-    expect(g.subpages[0].sections![0]).toEqual({
+    expect(g.subpages[0].albums).toEqual([]);
+    expect(g.subpages[0].sections).toEqual([
+      { title: 'New Section', albums: [{ id: 'j1' }, { id: 'j2' }] },
+    ]);
+    // Reordering albums inside a section works through moveAlbum.
+    g = ops.moveAlbum(g, { type: 'section', subpageIndex: 0, sectionIndex: 0 }, 1, 0);
+    expect(g.subpages[0].sections![0].albums.map((a) => a.id)).toEqual(['j2', 'j1']);
+    // A second section starts empty.
+    g = ops.addSection(g, 0);
+    expect(g.subpages[0].sections).toHaveLength(2);
+    expect(g.subpages[0].sections![1]).toEqual({ title: 'New Section', albums: [] });
+    g = ops.updateSection(g, 0, 1, { title: 'Tokyo', description: 'Night' });
+    expect(g.subpages[0].sections![1]).toEqual({
       title: 'Tokyo',
       description: 'Night',
       albums: [],
     });
-    expect(ops.removeSection(g, 0, 0).subpages[0].sections).toEqual([]);
+    expect(ops.removeSection(g, 0, 1).subpages[0].sections).toHaveLength(1);
+    expect(ops.removeSection(ops.removeSection(g, 0, 1), 0, 0).subpages[0].sections).toEqual([]);
   });
 });
 
