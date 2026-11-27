@@ -683,9 +683,14 @@
 }
 
 .admin-btn.confirm-danger {
-  background: var(--admin-error);
-  border-color: var(--admin-error);
+  background: var(--admin-danger-fill);
+  border-color: var(--admin-danger-fill);
   color: #fff;
+}
+
+.admin-btn.confirm-danger:hover:not(:disabled) {
+  background: var(--admin-danger-fill-hover);
+  border-color: var(--admin-danger-fill-hover);
 }
 
 /* A caption over a group of buttons or a self-labelled switch: looks like a

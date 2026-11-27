@@ -3,6 +3,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
 }
 
 .hero__left {
@@ -139,6 +140,7 @@
 .hero--fullbleed {
   position: relative;
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   overflow: hidden;
 }
 
@@ -285,6 +287,7 @@
   align-items: center;
   justify-content: center;
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   padding: 64px 40px;
 }
 
@@ -309,6 +312,7 @@
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
 }
 
 .hero__stacked-image {
@@ -403,6 +407,7 @@
   align-items: center;
   justify-content: center;
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
   padding: 64px 40px;
 }
 
@@ -490,6 +495,7 @@
   position: relative;
   display: block; /* override inherited 1fr 1fr split grid from .hero */
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
 }
 
 .hero__mosaic-grid {
@@ -498,6 +504,7 @@
   grid-template-rows: 1fr 1fr;
   gap: 2px;
   min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
 }
 
 .hero__mosaic-cell {
@@ -593,4 +600,3 @@
   color: #fff;
   border-bottom-color: #fff;
 }
-

@@ -75,14 +75,14 @@
 /* Destructive action — must read as destructive before it is clicked. */
 .admin-btn.admin-btn-danger {
   background: transparent;
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: var(--admin-error);
+  border: 1px solid color-mix(in srgb, var(--admin-error) 40%, transparent);
 }
 
 .admin-btn.admin-btn-danger:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.14);
-  border-color: rgba(239, 68, 68, 0.6);
-  color: #fca5a5;
+  background: color-mix(in srgb, var(--admin-error) 14%, transparent);
+  border-color: color-mix(in srgb, var(--admin-error) 65%, transparent);
+  color: var(--admin-error);
 }
 
 /* Small buttons carry short action labels ("+ Add Album", "Pick several");

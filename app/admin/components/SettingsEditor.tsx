@@ -21,6 +21,14 @@ import { useVersionedSave } from './useVersionedSave';
 import type { Settings, SectionProps } from './settings/types';
 import type { EnvLocks } from '@/lib/admin/envLocks';
 import { validateSettingValues } from '@/lib/config/settingValues';
+import {
+  CONTACT_RETENTION_MAX,
+  PHOTO_GRID_COLUMNS_MAX,
+  PHOTO_GRID_COLUMNS_MIN,
+  PHOTO_GRID_GAP_MAX,
+} from '@/lib/config/schema';
+import { THEME_RADIUS_MAX } from '@/lib/config/theme';
+import type { SettingsFieldError } from '@/lib/config/settingsSchema';
 import GeneralSection from './settings/GeneralSection';
 import ThemeSection from './settings/ThemeSection';
 import GridSection from './settings/GridSection';
@@ -280,7 +288,7 @@ export default function SettingsEditor() {
         if (!editedMeanwhile) setDirty(false);
         setSaveStatus({
           kind: 'success',
-          message: typeof data.message === 'string' ? data.message : t.saved,
+          message: t.saved,
         });
         router.refresh();
         setTimeout(() => setSaveStatus(null), 5000);
@@ -347,8 +355,31 @@ export default function SettingsEditor() {
   const saveBarStatus: SaveStatus =
     [saveStatus, about.status].find((st) => st?.kind === 'error') ?? saveStatus ?? about.status;
 
+  const v = t.validation;
+  const formatFieldError = (err: SettingsFieldError): string => {
+    switch (err.code) {
+      case 'url':
+        return v.url;
+      case 'accent':
+        return v.accent;
+      case 'radius':
+        return v.radius(THEME_RADIUS_MAX);
+      case 'gridColumns':
+        return v.gridColumns(PHOTO_GRID_COLUMNS_MIN, PHOTO_GRID_COLUMNS_MAX);
+      case 'gridGap':
+        return v.gridGap(PHOTO_GRID_GAP_MAX);
+      case 'retentionDays':
+        return v.retentionDays(CONTACT_RETENTION_MAX);
+      case 'navLinkLabel':
+        return v.navLinkLabel;
+      case 'navLinkUrl':
+        return v.navLinkUrl;
+      default:
+        return err.message;
+    }
+  };
   const fieldErrors = Object.fromEntries(
-    validateSettingValues(settings).map((e) => [e.field, e.message]),
+    validateSettingValues(settings).map((e) => [e.field, formatFieldError(e)]),
   );
   const props: SectionProps = { settings, update, updateMany, envLocks, fieldErrors };
 

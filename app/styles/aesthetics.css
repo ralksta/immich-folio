@@ -2,7 +2,7 @@
 
 /* Generous spacing — gallery exhibition feel */
 .main {
-  padding: 64px 40px 120px;
+  padding: calc(var(--header-height, 64px) + 40px) 40px 120px;
 }
 
 .album-header {

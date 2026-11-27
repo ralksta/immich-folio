@@ -34,6 +34,17 @@ export const settings: AdminDictionary['settings'] = {
     /** Shown when the server confirms a save without a message of its own. */
     saved: '¡Guardado!',
     saveFailed: 'No se ha podido guardar',
+    validation: {
+      url: 'Debe ser una dirección http(s) completa, p. ej. https://photos.example.com.',
+      accent: 'Debe ser un color hexadecimal como #e60012.',
+      radius: (max: number) =>
+        `Debe ser un número entre 0 y ${max} (theme.radius en settings.yaml).`,
+      gridColumns: (min: number, max: number) => `Debe ser un número entero entre ${min} y ${max}.`,
+      gridGap: (max: number) => `Debe ser un número entero entre 0 y ${max}.`,
+      retentionDays: (max: number) => `Debe ser un número entero de días entre 1 y ${max}.`,
+      navLinkLabel: 'Necesita una etiqueta o el enlace se omitirá.',
+      navLinkUrl: 'Debe ser una dirección http(s) completa o el enlace se omitirá.',
+    },
   },
 
   general: {
@@ -115,6 +126,8 @@ export const settings: AdminDictionary['settings'] = {
     favicon: 'Favicon',
     faviconAlt: 'Favicon actual',
     faviconUpload: 'Subir icono',
+    faviconUploaded: 'Favicon actualizado.',
+    faviconReset: 'Favicon restablecido al predeterminado.',
     faviconUploadFailed: 'No se ha podido subir',
     faviconResetFailed: 'No se ha podido restablecer',
     faviconResetTitle: '¿Restablecer el favicon?',

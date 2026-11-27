@@ -21,6 +21,10 @@
    stylesheet, which is loaded after this one. */
 .leaflet-container.leaflet-container {
   background: var(--bg-secondary);
+  /* Trap Leaflet's internal 400–1000 pane/control z-indexes so maps never
+     paint over the fixed site header (100) or open mobile menu (101). */
+  isolation: isolate;
+  z-index: 0;
 }
 
 /* ── Popups ────────────────────────────────────────────────── */

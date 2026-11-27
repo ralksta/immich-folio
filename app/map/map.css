@@ -6,6 +6,7 @@
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - var(--header-height, 64px));
+  min-height: calc(100dvh - var(--header-height, 64px));
 }
 
 /* No horizontal padding or margin on the header and the map: the page sits

@@ -170,10 +170,22 @@ const themeObjectSchema = z.looseObject({
   heroStyle: str,
 });
 
+export type SettingsFieldErrorCode =
+  | 'url'
+  | 'accent'
+  | 'radius'
+  | 'gridColumns'
+  | 'gridGap'
+  | 'retentionDays'
+  | 'navLinkLabel'
+  | 'navLinkUrl';
+
 export interface SettingsFieldError {
   /** Dotted path to the offending field, e.g. `theme.radius`. */
   field: string;
   message: string;
+  /** Optional code for localized inline rendering in the admin panel. */
+  code?: SettingsFieldErrorCode;
 }
 
 export type SettingsValidation = { ok: true } | { ok: false; errors: SettingsFieldError[] };

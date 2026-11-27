@@ -31,6 +31,17 @@ export const settings: AdminDictionary['settings'] = {
     conflict: 'Non salvato: le impostazioni sono state modificate altrove.',
     saved: 'Salvato!',
     saveFailed: 'Salvataggio non riuscito',
+    validation: {
+      url: 'Deve essere un indirizzo http(s) completo, es. https://photos.example.com.',
+      accent: 'Deve essere un colore esadecimale come #e60012.',
+      radius: (max: number) =>
+        `Deve essere un numero da 0 a ${max} (theme.radius in settings.yaml).`,
+      gridColumns: (min: number, max: number) => `Deve essere un numero intero da ${min} a ${max}.`,
+      gridGap: (max: number) => `Deve essere un numero intero da 0 a ${max}.`,
+      retentionDays: (max: number) => `Deve essere un numero intero di giorni da 1 a ${max}.`,
+      navLinkLabel: 'Serve un’etichetta, altrimenti il link viene escluso.',
+      navLinkUrl: 'Deve essere un indirizzo http(s) completo, altrimenti il link viene escluso.',
+    },
   },
 
   general: {
@@ -112,6 +123,8 @@ export const settings: AdminDictionary['settings'] = {
     favicon: 'Favicon',
     faviconAlt: 'Favicon attuale',
     faviconUpload: 'Carica icona',
+    faviconUploaded: 'Favicon aggiornata.',
+    faviconReset: 'Favicon ripristinata al valore predefinito.',
     faviconUploadFailed: 'Caricamento non riuscito',
     faviconResetFailed: 'Ripristino non riuscito',
     faviconResetTitle: 'Ripristinare la favicon?',

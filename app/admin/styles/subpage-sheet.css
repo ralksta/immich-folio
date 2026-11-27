@@ -22,7 +22,7 @@
   width: 100%;
   max-width: 1100px;
   max-height: 90vh;
-  background: var(--admin-bg-card, #181818);
+  background: var(--admin-bg);
   border: 1px solid var(--admin-border, #333);
   border-radius: 16px;
   overflow: hidden;

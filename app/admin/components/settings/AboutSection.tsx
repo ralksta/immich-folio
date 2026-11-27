@@ -145,7 +145,6 @@ export function useAboutEditor(active: boolean) {
       } else if (result.kind === 'keep') {
         setAboutStatus({ kind: 'error', message: t.conflict });
       } else if (result.kind === 'saved') {
-        const data = result.data;
         const saved: AboutDraft = { meta: cleanedMeta, body: aboutBody, gearText: aboutGearText };
         // Edited while the request was out: those edits are not saved yet.
         const now = latest.current;
@@ -156,7 +155,7 @@ export function useAboutEditor(active: boolean) {
         if (!editedMeanwhile) setAboutDirty(false);
         setAboutStatus({
           kind: 'success',
-          message: typeof data.message === 'string' ? data.message : editor.saved,
+          message: editor.saved,
         });
         setTimeout(() => setAboutStatus(null), 4000);
       } else {

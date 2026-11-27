@@ -386,7 +386,7 @@ export default function GeneralSection({
                 const data = await res.json();
                 setFaviconStatus(
                   res.ok
-                    ? { kind: 'success', message: data.message }
+                    ? { kind: 'success', message: t.faviconUploaded }
                     : { kind: 'error', message: dict.common.errorWith(data.error) },
                 );
                 if (res.ok) setFaviconVersion((v) => v + 1);
@@ -428,7 +428,7 @@ export default function GeneralSection({
                 const data = await res.json();
                 setFaviconStatus(
                   res.ok
-                    ? { kind: 'success', message: data.message }
+                    ? { kind: 'success', message: t.faviconReset }
                     : { kind: 'error', message: dict.common.errorWith(data.error) },
                 );
                 if (res.ok) setFaviconVersion((v) => v + 1);

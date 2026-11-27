@@ -170,10 +170,16 @@ export function Listbox<T extends string>({
   // phase, because the scroll usually happens on an ancestor container.
   React.useEffect(() => {
     if (!open) return;
-    window.addEventListener('scroll', close, true);
+    // Ignore scrolls inside the popup list itself (wheel/touch scrolling or
+    // arrow-key scrollIntoView) so long dropdowns do not dismiss themselves.
+    const onScroll = (event: Event) => {
+      if (listRef.current?.contains(event.target as Node)) return;
+      close();
+    };
+    window.addEventListener('scroll', onScroll, true);
     window.addEventListener('resize', close);
     return () => {
-      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('scroll', onScroll, true);
       window.removeEventListener('resize', close);
     };
   }, [open, close]);
