@@ -265,12 +265,12 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   padding: 14px 28px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .hero--fullbleed .hero__nav-link {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.85);
   text-decoration-color: rgba(255, 255, 255, 0.25);
 }
 
@@ -294,9 +294,10 @@
 }
 
 .hero--minimal .hero__title {
-  font-size: 4.5rem;
+  font-size: clamp(2.25rem, 9vw, 4.5rem);
   font-weight: 300;
   letter-spacing: 0.08em;
+  overflow-wrap: break-word;
   margin-bottom: 12px;
 }
 
@@ -349,7 +350,7 @@
   font-weight: 300;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .hero__thumbnail-strip {
@@ -564,7 +565,7 @@
   font-weight: 300;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.85);
   margin-bottom: 24px;
 }
 
@@ -579,7 +580,7 @@
 .hero--mosaic .hero__nav-link {
   font-size: 0.7rem;
   letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.85);
   text-transform: uppercase;
   text-decoration: none;
   padding: 4px 0;
@@ -593,4 +594,3 @@
   color: #fff;
   border-bottom-color: #fff;
 }
-
