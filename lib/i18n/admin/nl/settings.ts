@@ -29,6 +29,18 @@ export const settings: AdminDictionary['settings'] = {
     conflict: 'Niet opgeslagen — de instellingen zijn elders gewijzigd.',
     saved: 'Opgeslagen!',
     saveFailed: 'Opslaan mislukt',
+    validation: {
+      url: 'Moet een volledig http(s)-adres zijn, bijv. https://photos.example.com.',
+      accent: 'Moet een hex-kleur zijn zoals #e60012.',
+      radius: (max: number) =>
+        `Moet een getal van 0 tot ${max} zijn (theme.radius in settings.yaml).`,
+      gridColumns: (min: number, max: number) =>
+        `Moet een geheel getal van ${min} tot ${max} zijn.`,
+      gridGap: (max: number) => `Moet een geheel getal van 0 tot ${max} zijn.`,
+      retentionDays: (max: number) => `Moet een geheel aantal dagen van 1 tot ${max} zijn.`,
+      navLinkLabel: 'Heeft een label nodig, anders wordt de link weggelaten.',
+      navLinkUrl: 'Moet een volledig http(s)-adres zijn, anders wordt de link weggelaten.',
+    },
   },
 
   general: {
@@ -97,6 +109,8 @@ export const settings: AdminDictionary['settings'] = {
     favicon: 'Favicon',
     faviconAlt: 'Huidige favicon',
     faviconUpload: 'Pictogram uploaden',
+    faviconUploaded: 'Favicon bijgewerkt.',
+    faviconReset: 'Favicon hersteld naar standaard.',
     faviconUploadFailed: 'Uploaden mislukt',
     faviconResetFailed: 'Herstellen mislukt',
     faviconResetTitle: 'Favicon herstellen?',

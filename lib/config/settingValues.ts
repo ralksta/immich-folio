@@ -55,6 +55,7 @@ export function validateSettingValues(input: unknown): SettingsFieldError[] {
   if (typeof s.url === 'string' && s.url.trim() !== '' && !normaliseSiteUrl(s.url)) {
     errors.push({
       field: 'url',
+      code: 'url',
       message: 'Must be a full http(s) address, e.g. https://photos.example.com.',
     });
   }
@@ -67,7 +68,11 @@ export function validateSettingValues(input: unknown): SettingsFieldError[] {
   // resolveTheme: anything but hex falls back to the preset's accent.
   const accent = theme?.accent;
   if (typeof accent === 'string' && accent.trim() !== '' && !isAccentHex(accent)) {
-    errors.push({ field: 'theme.accent', message: 'Must be a hex colour such as #e60012.' });
+    errors.push({
+      field: 'theme.accent',
+      code: 'accent',
+      message: 'Must be a hex colour such as #e60012.',
+    });
   }
 
   // resolveRadius clamps into 0–THEME_RADIUS_MAX. The panel has no input for
@@ -82,6 +87,7 @@ export function validateSettingValues(input: unknown): SettingsFieldError[] {
   ) {
     errors.push({
       field: 'theme.radius',
+      code: 'radius',
       message: `Must be a number from 0 to ${THEME_RADIUS_MAX} (theme.radius in settings.yaml).`,
     });
   }
@@ -94,12 +100,14 @@ export function validateSettingValues(input: unknown): SettingsFieldError[] {
   ) {
     errors.push({
       field: 'grid.columns',
+      code: 'gridColumns',
       message: `Must be a whole number from ${PHOTO_GRID_COLUMNS_MIN} to ${PHOTO_GRID_COLUMNS_MAX}.`,
     });
   }
   if (grid?.gap != null && !inRange(grid.gap, 0, PHOTO_GRID_GAP_MAX)) {
     errors.push({
       field: 'grid.gap',
+      code: 'gridGap',
       message: `Must be a whole number from 0 to ${PHOTO_GRID_GAP_MAX}.`,
     });
   }
@@ -109,6 +117,7 @@ export function validateSettingValues(input: unknown): SettingsFieldError[] {
   if (contact?.retentionDays != null && !inRange(contact.retentionDays, 1, CONTACT_RETENTION_MAX)) {
     errors.push({
       field: 'contact.retentionDays',
+      code: 'retentionDays',
       message: `Must be a whole number of days from 1 to ${CONTACT_RETENTION_MAX}.`,
     });
   }
@@ -123,12 +132,14 @@ export function validateSettingValues(input: unknown): SettingsFieldError[] {
       if (!label) {
         errors.push({
           field: `navLinks.${i}.label`,
+          code: 'navLinkLabel',
           message: 'Needs a label, or the link is left out.',
         });
       }
       if (!NAV_LINK_URL.test(url)) {
         errors.push({
           field: `navLinks.${i}.url`,
+          code: 'navLinkUrl',
           message: 'Must be a full http(s) address, or the link is left out.',
         });
       }

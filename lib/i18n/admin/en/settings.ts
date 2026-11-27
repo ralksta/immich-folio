@@ -32,6 +32,16 @@ export const settings = {
     /** Shown when the server confirms a save without a message of its own. */
     saved: 'Saved!',
     saveFailed: 'Failed to save',
+    validation: {
+      url: 'Must be a full http(s) address, e.g. https://photos.example.com.',
+      accent: 'Must be a hex colour such as #e60012.',
+      radius: (max: number) => `Must be a number from 0 to ${max} (theme.radius in settings.yaml).`,
+      gridColumns: (min: number, max: number) => `Must be a whole number from ${min} to ${max}.`,
+      gridGap: (max: number) => `Must be a whole number from 0 to ${max}.`,
+      retentionDays: (max: number) => `Must be a whole number of days from 1 to ${max}.`,
+      navLinkLabel: 'Needs a label, or the link is left out.',
+      navLinkUrl: 'Must be a full http(s) address, or the link is left out.',
+    },
   },
 
   general: {
@@ -102,6 +112,8 @@ export const settings = {
     favicon: 'Favicon',
     faviconAlt: 'Current favicon',
     faviconUpload: 'Upload icon',
+    faviconUploaded: 'Favicon updated.',
+    faviconReset: 'Favicon reset to default.',
     faviconUploadFailed: 'Upload failed',
     faviconResetFailed: 'Reset failed',
     faviconResetTitle: 'Reset the favicon?',

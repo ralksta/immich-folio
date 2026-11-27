@@ -376,7 +376,7 @@ export default function PageBuilder() {
           if (JSON.stringify(written) !== JSON.stringify(yamlData)) setGallery(asLoaded);
           setDirty(false);
         }
-        setSaveStatus({ kind: 'success', message: data.message || t.saved });
+        setSaveStatus({ kind: 'success', message: t.saved });
         setTimeout(() => setSaveStatus(null), 5000);
       } else if (!reportIfSessionExpired(result.res)) {
         setSaveStatus({

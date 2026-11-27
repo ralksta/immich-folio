@@ -4,6 +4,7 @@ import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import SettingsEditor from '../SettingsEditor';
 import { NotificationProvider } from '../Notifications';
 import { ConfirmProvider } from '../ConfirmDialog';
+import { AdminI18nProvider } from '../AdminI18n';
 
 const nav = vi.hoisted(() => ({ section: 'grid' }));
 vi.mock('next/navigation', () => ({
@@ -70,5 +71,45 @@ describe('Settings form: values the site would ignore', () => {
     fireEvent.change(accent, { target: { value: 'rot' } });
     expect(accent.getAttribute('aria-invalid')).toBe('true');
     expect(screen.getByText('Must be a hex colour such as #e60012.')).toBeTruthy();
+  });
+
+  it('renders localized German inline errors and save confirmation', async () => {
+    nav.section = 'theme';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init?: RequestInit) => {
+        if (init?.method === 'PUT') {
+          return new Response(
+            JSON.stringify({
+              message: 'Saved successfully. Backup of previous version created.',
+              version: 'v2',
+            }),
+            { status: 200 },
+          );
+        }
+        return new Response(
+          JSON.stringify({ settings: { title: 'Folio' }, version: 'v1', envLocks: {} }),
+          { status: 200 },
+        );
+      }),
+    );
+
+    render(
+      <AdminI18nProvider locale="de">
+        <NotificationProvider>
+          <ConfirmProvider>
+            <SettingsEditor />
+          </ConfirmProvider>
+        </NotificationProvider>
+      </AdminI18nProvider>,
+    );
+
+    const accent = (await screen.findByLabelText('Akzentfarbe (Hex)')) as HTMLInputElement;
+    fireEvent.change(accent, { target: { value: 'rot' } });
+    expect(screen.getByText('Muss eine Hex-Farbe sein, z. B. #e60012.')).toBeTruthy();
+
+    fireEvent.change(accent, { target: { value: '#e60012' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Änderungen speichern' }));
+    expect(await screen.findByText('Gespeichert!')).toBeTruthy();
   });
 });
