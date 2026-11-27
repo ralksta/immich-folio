@@ -187,11 +187,11 @@ export function Lightbox({
    * focus (the close button auto-focuses in an effect). Capturing during the
    * initial render pass guarantees we see what was active before mount (#900).
    */
-  const openerRef = useRef<HTMLElement | null>(null);
-  if (openerRef.current === null && typeof document !== 'undefined') {
-    openerRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  }
+  const [opener] = useState<HTMLElement | null>(() =>
+    typeof document !== 'undefined' && document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null,
+  );
 
   const indexRef = useRef(currentIndex);
   useEffect(() => {
@@ -205,13 +205,12 @@ export function Lightbox({
     document.addEventListener('keydown', onTab);
     return () => {
       document.removeEventListener('keydown', onTab);
-      const opener = openerRef.current;
       const group = opener?.closest('[data-lightbox-group]');
       const tile = group?.querySelector<HTMLElement>(`[data-lightbox-index="${indexRef.current}"]`);
       const target = tile ?? opener;
       if (target?.isConnected) target.focus();
     };
-  }, []);
+  }, [opener]);
 
   // Auto-focus the close button when the modal mounts
   useEffect(() => {
