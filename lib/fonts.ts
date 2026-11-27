@@ -24,6 +24,24 @@ import path from 'node:path';
 
 export const FONT_WEIGHTS = '300;400;500;600';
 
+/**
+ * Built-in preset families whose Google Fonts axis does not cover all of
+ * `FONT_WEIGHTS`. Requesting a non-existent weight returns HTTP 400 from the
+ * CSS2 API, so each built-in family asks only for weights it actually ships
+ * (`null` = single-weight family, requested without an explicit `:wght@` axis).
+ */
+export const FAMILY_WEIGHTS: Readonly<Record<string, string | null>> = {
+  'Playfair Display': '400;500;600',
+  'EB Garamond': '400;500;600',
+  'Bodoni Moda': '400;500;600',
+  Cinzel: '400;500;600',
+  'Libre Baskerville': '400;700',
+  'Space Mono': '400;700',
+  'Instrument Serif': null,
+  'DM Mono': '300;400;500',
+  Gloock: null,
+};
+
 /** Three slots in a theme; the dev toolbar asks for the same three. */
 export const MAX_FAMILIES = 3;
 
@@ -55,11 +73,53 @@ export function parseFamilies(raw: string[]): string[] | null {
   return families.every((f) => FAMILY_RE.test(f)) ? families : null;
 }
 
-function googleCssUrl(families: string[]): string {
-  const params = families
-    .map((f) => `family=${f.replace(/ /g, '+')}:wght@${FONT_WEIGHTS}`)
-    .join('&');
-  return `${GOOGLE_CSS}?${params}&display=swap`;
+function googleFamilyCssUrl(family: string, weights: string | null): string {
+  const encoded = family.replace(/ /g, '+');
+  const spec = weights ? `${encoded}:wght@${weights}` : encoded;
+  return `${GOOGLE_CSS}?family=${spec}&display=swap`;
+}
+
+/**
+ * Fetch and locally cache a single Google Font family stylesheet.
+ *
+ * Fetching one family at a time ensures a custom font with unusual weights
+ * cannot break the other font slots, and lets a 400 response on `:wght@…`
+ * retry cleanly with an unparameterised `family=<Name>` query.
+ */
+async function getFamilyCss(family: string): Promise<string | null> {
+  const weights = family in FAMILY_WEIGHTS ? FAMILY_WEIGHTS[family] : FONT_WEIGHTS;
+  const cacheKey = weights ? `${family}:${weights}` : family;
+  const name = `${sha(cacheKey)}.css`;
+  const css = await coalesce(`css:${name}`, async () => {
+    try {
+      return await fs.readFile(path.join(fontsDir(), name), 'utf8');
+    } catch {
+      // Not cached yet.
+    }
+    if ((failedUntil.get(name) ?? 0) > Date.now()) return null;
+    try {
+      let res = await fetchWithTimeout(googleFamilyCssUrl(family, weights));
+      // Custom fonts may not ship all weights in FONT_WEIGHTS; Google's CSS2
+      // API answers 400 in that case, so fall back to the family's default set.
+      if (res.status === 400 && weights !== null) {
+        res = await fetchWithTimeout(googleFamilyCssUrl(family, null));
+      }
+      if (!res.ok) {
+        console.warn(`[Folio] fonts: Google answered ${res.status} for ${family}`);
+        failedUntil.set(name, Date.now() + RETRY_AFTER_MS);
+        return null;
+      }
+      const text = await res.text();
+      await store(name, text);
+      return text;
+    } catch (err) {
+      console.warn(`[Folio] fonts: could not reach Google Fonts: ${(err as Error).message}`);
+      failedUntil.set(name, Date.now() + RETRY_AFTER_MS);
+      return null;
+    }
+  });
+  if (css) for (const [file, url] of fileUrls(css)) knownFiles.set(file, url);
+  return css;
 }
 
 const sha = (value: string) => crypto.createHash('sha256').update(value).digest('hex').slice(0, 32);
@@ -121,32 +181,9 @@ async function store(name: string, data: string | Uint8Array): Promise<void> {
  * fonts named after each family in the theme CSS.
  */
 export async function getGoogleCss(families: string[]): Promise<string | null> {
-  const name = `${sha(families.join('|'))}.css`;
-  const css = await coalesce(`css:${name}`, async () => {
-    try {
-      return await fs.readFile(path.join(fontsDir(), name), 'utf8');
-    } catch {
-      // Not cached yet.
-    }
-    if ((failedUntil.get(name) ?? 0) > Date.now()) return null;
-    try {
-      const res = await fetchWithTimeout(googleCssUrl(families));
-      if (!res.ok) {
-        console.warn(`[Folio] fonts: Google answered ${res.status} for ${families.join(', ')}`);
-        failedUntil.set(name, Date.now() + RETRY_AFTER_MS);
-        return null;
-      }
-      const text = await res.text();
-      await store(name, text);
-      return text;
-    } catch (err) {
-      console.warn(`[Folio] fonts: could not reach Google Fonts: ${(err as Error).message}`);
-      failedUntil.set(name, Date.now() + RETRY_AFTER_MS);
-      return null;
-    }
-  });
-  if (css) for (const [file, url] of fileUrls(css)) knownFiles.set(file, url);
-  return css;
+  const parts = await Promise.all(families.map((family) => getFamilyCss(family)));
+  const loaded = parts.filter((css): css is string => Boolean(css));
+  return loaded.length ? loaded.join('\n') : null;
 }
 
 /**
