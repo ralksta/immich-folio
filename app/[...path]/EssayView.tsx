@@ -382,6 +382,7 @@ function EssayViewContent({
             <figure className="essay-figure essay-figure--wide">
               <LeafletMap
                 className="essay-map"
+                embedded
                 fitMaxZoom={13}
                 tileConfig={mapTiles}
                 line={block.line}

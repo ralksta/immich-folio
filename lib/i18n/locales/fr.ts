@@ -120,6 +120,7 @@ export const fr: Dictionary = {
     initFailed: 'Impossible d’initialiser la carte',
     zoomIn: 'Zoom avant',
     zoomOut: 'Zoom arrière',
+    twoFingersHint: 'Utilisez deux doigts pour déplacer la carte',
     leafletTitle: 'Une bibliothèque JavaScript pour cartes interactives',
   },
 

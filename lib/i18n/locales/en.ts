@@ -119,6 +119,7 @@ export const en = {
     initFailed: 'Failed to initialize map',
     zoomIn: 'Zoom in',
     zoomOut: 'Zoom out',
+    twoFingersHint: 'Use two fingers to move the map',
     // The title on the Leaflet credit in the map's corner.
     leafletTitle: 'A JavaScript library for interactive maps',
   },

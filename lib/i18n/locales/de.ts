@@ -118,6 +118,7 @@ export const de: Dictionary = {
     initFailed: 'Karte konnte nicht initialisiert werden',
     zoomIn: 'Vergrößern',
     zoomOut: 'Verkleinern',
+    twoFingersHint: 'Verwende zwei Finger, um die Karte zu bewegen',
     leafletTitle: 'Eine JavaScript-Bibliothek für interaktive Karten',
   },
 
