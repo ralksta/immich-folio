@@ -281,6 +281,7 @@ export const it: Dictionary = {
     successText: 'Il tuo messaggio è arrivato. Ti risponderò via e-mail.',
     invalid: 'Compila tutti i campi con un indirizzo e-mail valido.',
     tooMany: 'Troppi messaggi in poco tempo. Riprova tra un minuto.',
+    expired: 'Questa pagina è aperta da molto tempo. Ricaricala per inviare il tuo messaggio.',
     failed: 'Non è stato possibile inviare il messaggio. Riprova più tardi.',
     privacy: (days: number) =>
       `Il tuo messaggio viene salvato sul server di questo sito, usato solo per risponderti e cancellato dopo ${days} ${days === 1 ? 'giorno' : 'giorni'}.`,
