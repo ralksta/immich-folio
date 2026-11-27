@@ -119,6 +119,7 @@ export const visitors: AdminDictionary['visitors'] = {
     daysRecorded: 'Jours enregistrés',
     devices: 'Ordinateur ou mobile',
     deviceSplit: 'Répartition par appareil',
+    noVisitsYet: 'Aucune visite pour l’instant',
     dailyTrend: 'Évolution quotidienne du trafic (14 derniers jours)',
     /** Tooltip on one bar of the chart. */
     dayViews: (date: string, n: number) => `${date} : ${n} ${isOne(n) ? 'vue' : 'vues'}`,

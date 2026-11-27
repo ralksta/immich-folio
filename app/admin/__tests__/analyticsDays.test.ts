@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { lastDays } from '../components/analyticsDays';
+import { deviceSplitRatio, lastDays } from '../components/analyticsDays';
 
 /**
  * "Last 14 Days" used to show the last 14 days that had any views, so quiet
@@ -31,5 +31,22 @@ describe('lastDays', () => {
   it('crosses a month boundary without skipping or repeating a day', () => {
     const out = lastDays({}, 3, new Date('2026-10-01T00:00:00Z'));
     expect(out.map((d) => d.date)).toEqual(['2026-09-29', '2026-09-30', '2026-10-01']);
+  });
+});
+
+describe('deviceSplitRatio (#907)', () => {
+  it('returns null when no views have been recorded', () => {
+    expect(deviceSplitRatio({ desktop: 0, mobile: 0 })).toBeNull();
+    expect(deviceSplitRatio({})).toBeNull();
+    expect(deviceSplitRatio(null)).toBeNull();
+    expect(deviceSplitRatio(undefined)).toBeNull();
+  });
+
+  it('calculates the desktop percentage when views exist', () => {
+    expect(deviceSplitRatio({ desktop: 1, mobile: 1 })).toBe(50);
+    expect(deviceSplitRatio({ desktop: 3, mobile: 1 })).toBe(75);
+    expect(deviceSplitRatio({ desktop: 1, mobile: 2 })).toBe(33);
+    expect(deviceSplitRatio({ desktop: 10, mobile: 0 })).toBe(100);
+    expect(deviceSplitRatio({ desktop: 0, mobile: 5 })).toBe(0);
   });
 });

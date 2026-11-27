@@ -116,6 +116,7 @@ export const visitors: AdminDictionary['visitors'] = {
     daysRecorded: 'Días registrados',
     devices: 'Ordenador frente a móvil',
     deviceSplit: 'Reparto por dispositivo',
+    noVisitsYet: 'Aún no hay visitas',
     dailyTrend: 'Tráfico diario (últimos 14 días)',
     /** Tooltip on one bar of the chart. */
     dayViews: (date: string, n: number) => `${date}: ${n} ${n === 1 ? 'visita' : 'visitas'}`,

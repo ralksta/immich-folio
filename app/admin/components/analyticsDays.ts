@@ -22,3 +22,17 @@ export function lastDays(
   }
   return out;
 }
+
+/**
+ * Desktop percentage of total recorded views, rounded to integer, or `null`
+ * when no devices have been recorded yet (#907).
+ */
+export function deviceSplitRatio(
+  devices?: { desktop?: number; mobile?: number } | null,
+): number | null {
+  const desktop = devices?.desktop ?? 0;
+  const mobile = devices?.mobile ?? 0;
+  const total = desktop + mobile;
+  if (total <= 0) return null;
+  return Math.round((desktop / total) * 100);
+}
