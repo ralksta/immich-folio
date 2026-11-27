@@ -206,7 +206,9 @@ export const es: Dictionary = {
     showAll: 'Mostrar todo',
     filterEmpty: 'No hay fotos seleccionadas.',
     selected: (n: number) => `${n} ${n === 1 ? 'seleccionada' : 'seleccionadas'}`,
+    onlySelected: (n: number) => `Solo selección (${n})`,
     shareExport: 'Compartir y exportar',
+    shareSelection: 'Compartir selección',
     modalTitle: (n: number) => `Selección (${n})`,
     closeModal: 'Cerrar ventana',
     intro: (n: number) =>

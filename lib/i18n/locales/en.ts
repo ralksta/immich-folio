@@ -212,7 +212,9 @@ export const en = {
     /** Shown in place of the grid when the filter is on and nothing is selected. */
     filterEmpty: 'No photos selected.',
     selected: (n: number) => `${n} selected`,
+    onlySelected: (n: number) => `Only selected (${n})`,
     shareExport: 'Share & export',
+    shareSelection: 'Share selection',
     modalTitle: (n: number) => `Selection (${n})`,
     closeModal: 'Close modal',
     intro: (n: number) =>

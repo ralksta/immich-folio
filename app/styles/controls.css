@@ -81,3 +81,80 @@
   color: var(--text-primary);
 }
 
+/* ── Floating Proofing Bar (#905) ────────────────── */
+.proofing-sticky-bar {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 990;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card, #1e1e1e);
+  color: var(--text-primary, #ffffff);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.15));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  max-width: calc(100vw - 32px);
+}
+
+.proofing-bar__filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  padding: 8px 14px;
+  min-height: 44px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.proofing-bar__filter-toggle[aria-pressed='true'] {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+}
+
+.proofing-bar__share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+  border: none;
+  padding: 8px 16px;
+  min-height: 44px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    opacity var(--transition-fast),
+    filter var(--transition-fast);
+}
+
+.proofing-bar__share-btn:hover {
+  filter: brightness(1.08);
+}
+
+.proofing-bar__count-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 8px 4px;
+  color: var(--text-primary);
+}
