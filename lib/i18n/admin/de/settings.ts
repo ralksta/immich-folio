@@ -64,6 +64,15 @@ export const settings: AdminDictionary['settings'] = {
     aboutPageDesc: 'Porträt, Biografie und Ausrüstung unter /about',
     map: 'Karte',
     mapDesc: 'Aufnahmeorte auf einer Weltkarte unter /map',
+    mapTileProvider: 'Kartenkachel-Anbieter',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileProviderHint:
+      'Gilt für /map und Kartenblöcke im Journal. CARTO-Stile benötigen einen API-Schlüssel (unten oder per {variable}); ohne Schlüssel fällt die Karte auf OpenStreetMap zurück.',
+    mapTileApiKey: 'CARTO-API-Schlüssel',
+    mapTileApiKeyPlaceholder: 'Optional, wenn CARTO_API_KEY gesetzt ist',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileApiKeyHint:
+      'Wird vom Browser der Besucher in Kachelanfragen mitgesendet — beschränke den Schlüssel in deinem CARTO-Konto auf deine Domain. {variable} überschreibt dieses Feld.',
     proofing: 'Kundenauswahl',
     proofingDesc: 'Besucher markieren, filtern und exportieren eine Auswahl von Fotos',
     zoom: 'Foto-Zoom',

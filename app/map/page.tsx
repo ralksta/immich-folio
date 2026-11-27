@@ -56,7 +56,7 @@ export default async function MapPage() {
             {t.common.collections(collectionCount)} · {t.common.albums(albumCount)}
           </p>
         </div>
-        <MapView />
+        <MapView tileConfig={config.mapTiles} />
       </div>
     </>
   );

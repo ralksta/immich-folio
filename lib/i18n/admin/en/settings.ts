@@ -61,6 +61,15 @@ export const settings = {
     aboutPageDesc: 'Portrait, bio and gear at /about',
     map: 'Map',
     mapDesc: 'Photo locations on a world map at /map',
+    mapTileProvider: 'Map tile provider',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileProviderHint:
+      'Used by /map and journal map blocks. CARTO styles require an API key (set below or via {variable}); without one, the map falls back to OpenStreetMap.',
+    mapTileApiKey: 'CARTO API key',
+    mapTileApiKeyPlaceholder: 'Optional when CARTO_API_KEY is set',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileApiKeyHint:
+      'Sent by visitors’ browsers in tile requests — restrict the key to your site’s domain in your CARTO account. {variable} overrides this field.',
     proofing: 'Client proofing',
     proofingDesc: 'Visitors heart, filter and export a selection of photos',
     zoom: 'Photo zoom',

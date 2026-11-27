@@ -86,6 +86,13 @@ export const settingsSchema = z.looseObject({
     .optional(),
 
   map: bool,
+  // Provider narrowed by resolveMapTiles, which falls back to 'osm'.
+  mapTiles: z
+    .looseObject({
+      provider: str,
+      apiKey: str,
+    })
+    .optional(),
   transitions: bool,
   scrollToTop: bool,
   analytics: bool,

@@ -604,6 +604,9 @@ async function PathContent({ params, searchParams }: PathPageProps) {
           proofing={essayProofing}
           allowMailto={config.proofing.allowMailto}
           encodedMailto={encodedMailto}
+          {...(essayParsed.blocks.some((b) => b.type === 'map')
+            ? { mapTiles: config.mapTiles }
+            : {})}
         />
       );
     }

@@ -9,6 +9,7 @@ import { isSiteUnlocked } from '@/lib/auth';
 import { isAdminPath } from '@/lib/admin/paths';
 import { isInstallPath } from '@/lib/install';
 import { cdnOrigin } from '@/lib/cdn';
+import { getMapTileLayerOptions } from '@/lib/mapTiles';
 
 /** Where a locked-out visitor is rewritten to. */
 const GATE_PATH = '/gate';
@@ -185,6 +186,7 @@ export function proxy(request: NextRequest) {
   // CDN mode (lib/cdn.ts) serves photos and videos from another origin. Media
   // has no directive of its own otherwise and falls back to default-src.
   const cdn = cdnOrigin();
+  const mapTileOrigin = getMapTileLayerOptions(getConfigOrNull()?.mapTiles).cspOrigin;
 
   // Define CSP directives
   const cspDirectives = [
@@ -198,7 +200,7 @@ export function proxy(request: NextRequest) {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
-    `img-src 'self' data: blob: https://tile.openstreetmap.org${cdn ? ` ${cdn}` : ''}`,
+    `img-src 'self' data: blob: ${mapTileOrigin}${cdn ? ` ${cdn}` : ''}`,
     ...(cdn ? [`media-src 'self' ${cdn}`] : []),
     "connect-src 'self'",
     "frame-ancestors 'none'",

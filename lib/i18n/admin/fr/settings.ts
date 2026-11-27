@@ -60,6 +60,15 @@ export const settings: AdminDictionary['settings'] = {
     aboutPageDesc: 'Portrait, biographie et matériel sur /about',
     map: 'Carte',
     mapDesc: 'Lieux des photos sur une carte du monde, sur /map',
+    mapTileProvider: 'Fournisseur de tuiles cartographiques',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileProviderHint:
+      'Utilisé pour /map et les blocs de carte du journal. Les styles CARTO nécessitent une clé API (définie ci-dessous ou via {variable}) ; sans clé, la carte revient à OpenStreetMap.',
+    mapTileApiKey: 'Clé API CARTO',
+    mapTileApiKeyPlaceholder: 'Facultatif si CARTO_API_KEY est définie',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileApiKeyHint:
+      'Envoyée par le navigateur des visiteurs dans les requêtes de tuiles — restreignez la clé au domaine de votre site dans votre compte CARTO. {variable} remplace ce champ.',
     proofing: 'Sélection client',
     proofingDesc: 'Les visiteurs marquent d’un cœur, filtrent et exportent une sélection de photos',
     zoom: 'Zoom sur les photos',

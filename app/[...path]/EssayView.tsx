@@ -16,6 +16,7 @@ import type { PhotoItem } from './PhotoGrid';
 import './essay.css';
 import { useDictionary } from '@/components/I18nProvider';
 import { formatJournalDate, journalDateTime } from '@/lib/journalDate';
+import type { MapTilesConfig } from '@/lib/mapTiles';
 
 /**
  * The map block is the only thing in an essay that needs Leaflet, and most
@@ -46,6 +47,8 @@ interface EssayViewProps {
   allowMailto?: boolean;
   /** `encodeEmail()` of the proofing recipient, when one is configured (#736). */
   encodedMailto?: string;
+  /** Runtime tile-provider config for map blocks (#853). */
+  mapTiles?: MapTilesConfig;
 }
 
 function EssayViewContent({
@@ -55,6 +58,7 @@ function EssayViewContent({
   subtitle,
   watermark,
   proofing: proofingEnabled = false,
+  mapTiles,
 }: EssayViewProps) {
   const t = useDictionary();
   const proofing = useProofing();
@@ -379,6 +383,7 @@ function EssayViewContent({
               <LeafletMap
                 className="essay-map"
                 fitMaxZoom={13}
+                tileConfig={mapTiles}
                 line={block.line}
                 markers={pins.map((pin, i) => ({
                   lat: pin.lat,

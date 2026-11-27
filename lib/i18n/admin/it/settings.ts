@@ -62,6 +62,15 @@ export const settings: AdminDictionary['settings'] = {
     aboutPageDesc: 'Ritratto, biografia e attrezzatura su /about',
     map: 'Mappa',
     mapDesc: 'I luoghi delle foto su una mappa del mondo su /map',
+    mapTileProvider: 'Fornitore di tasselli mappa',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileProviderHint:
+      'Usato per /map e per i blocchi mappa nel diario. Gli stili CARTO richiedono una chiave API (impostata qui sotto o tramite {variable}); senza chiave, la mappa torna a OpenStreetMap.',
+    mapTileApiKey: 'Chiave API CARTO',
+    mapTileApiKeyPlaceholder: 'Facoltativa se CARTO_API_KEY è impostata',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileApiKeyHint:
+      'Inviata dal browser dei visitatori nelle richieste dei tasselli: limita la chiave al dominio del tuo sito nel tuo account CARTO. {variable} prevale su questo campo.',
     proofing: 'Selezione del cliente',
     proofingDesc: 'I visitatori segnano col cuore, filtrano ed esportano una selezione di foto',
     zoom: 'Zoom delle foto',
