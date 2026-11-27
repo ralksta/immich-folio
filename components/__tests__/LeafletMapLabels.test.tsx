@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach } from 'vitest';
-import { render, cleanup, waitFor } from '@testing-library/react';
+import { render, cleanup, waitFor, fireEvent } from '@testing-library/react';
 import { I18nProvider } from '@/components/I18nProvider';
 import { LeafletMap, localizedLeafletPrefix } from '@/components/LeafletMap';
 import { de } from '@/lib/i18n/locales/de';
@@ -97,5 +97,80 @@ describe('LeafletMap tiles', () => {
       expect(tile.getAttribute('src')).toMatch(/^https:\/\/tile\.openstreetmap\.org\//);
       expect((tile as HTMLImageElement).referrerPolicy).toBe('strict-origin-when-cross-origin');
     }
+    const mapEl = container.querySelector('.map-container');
+    expect(mapEl?.getAttribute('data-map-tile-provider')).toBe('osm');
+    expect(mapEl?.getAttribute('data-map-filter-tiles')).toBe('true');
+  });
+
+  it('uses the configured CARTO style with ?key= and keeps referrerPolicy without CSS filtering', async () => {
+    const { container } = render(
+      <I18nProvider locale="en">
+        <LeafletMap
+          markers={[]}
+          tileConfig={{ provider: 'carto-voyager', apiKey: 'my-carto-key' }}
+        />
+      </I18nProvider>,
+    );
+
+    const tiles = await waitFor(() => {
+      const els = container.querySelectorAll('img.leaflet-tile');
+      if (els.length === 0) throw new Error('no tiles yet');
+      return [...els];
+    });
+    for (const tile of tiles) {
+      expect(tile.getAttribute('src')).toMatch(
+        /^https:\/\/basemaps\.cartocdn\.com\/rastertiles\/voyager\/.*\.png\?key=my-carto-key$/,
+      );
+      expect((tile as HTMLImageElement).referrerPolicy).toBe('strict-origin-when-cross-origin');
+    }
+    const mapEl = container.querySelector('.map-container');
+    expect(mapEl?.getAttribute('data-map-tile-provider')).toBe('carto-voyager');
+    expect(mapEl?.getAttribute('data-map-filter-tiles')).toBe('false');
+  });
+
+  describe('embedded map gesture handling (#902)', () => {
+    it('shows two-finger hint overlay on one-finger touch when embedded', async () => {
+      const { container } = render(
+        <I18nProvider locale="de">
+          <LeafletMap markers={[]} embedded />
+        </I18nProvider>,
+      );
+
+      const mapContainer = container.querySelector('.map-container')!;
+      expect(container.querySelector('.map-gesture-hint')).toBeNull();
+
+      // 1-finger touch
+      fireEvent.touchStart(mapContainer, {
+        touches: [{ clientX: 100, clientY: 100 }],
+      });
+
+      const hint = container.querySelector('.map-gesture-hint');
+      expect(hint).not.toBeNull();
+      expect(hint?.textContent).toBe(de.map.twoFingersHint);
+
+      // 2-finger touch clears hint
+      fireEvent.touchStart(mapContainer, {
+        touches: [
+          { clientX: 100, clientY: 100 },
+          { clientX: 150, clientY: 150 },
+        ],
+      });
+      expect(container.querySelector('.map-gesture-hint')).toBeNull();
+    });
+
+    it('does not show hint overlay when not embedded', async () => {
+      const { container } = render(
+        <I18nProvider locale="de">
+          <LeafletMap markers={[]} embedded={false} />
+        </I18nProvider>,
+      );
+
+      const mapContainer = container.querySelector('.map-container')!;
+      fireEvent.touchStart(mapContainer, {
+        touches: [{ clientX: 100, clientY: 100 }],
+      });
+
+      expect(container.querySelector('.map-gesture-hint')).toBeNull();
+    });
   });
 });

@@ -7,7 +7,7 @@
  * photo grid, and the admin panel behind it.
  *
  * Usage:
- *   npx tsx scripts/header.ts
+ *   npm run screenshots:header
  *
  * Run scripts/screenshots.ts first if the source shots are missing or stale —
  * this script only composes, it never captures.
@@ -109,7 +109,7 @@ async function main() {
   if (missing.length > 0) {
     console.error(
       `\n❌ Missing source screenshots:\n   ${missing.join('\n   ')}\n\n` +
-        `   Run \`npx tsx scripts/screenshots.ts\` against a running site first.\n`,
+        `   Run \`npm run screenshots\` against a running site first.\n`,
     );
     process.exit(1);
   }

@@ -29,6 +29,18 @@ export const settings: AdminDictionary['settings'] = {
     conflict: 'Niet opgeslagen — de instellingen zijn elders gewijzigd.',
     saved: 'Opgeslagen!',
     saveFailed: 'Opslaan mislukt',
+    validation: {
+      url: 'Moet een volledig http(s)-adres zijn, bijv. https://photos.example.com.',
+      accent: 'Moet een hex-kleur zijn zoals #e60012.',
+      radius: (max: number) =>
+        `Moet een getal van 0 tot ${max} zijn (theme.radius in settings.yaml).`,
+      gridColumns: (min: number, max: number) =>
+        `Moet een geheel getal van ${min} tot ${max} zijn.`,
+      gridGap: (max: number) => `Moet een geheel getal van 0 tot ${max} zijn.`,
+      retentionDays: (max: number) => `Moet een geheel aantal dagen van 1 tot ${max} zijn.`,
+      navLinkLabel: 'Heeft een label nodig, anders wordt de link weggelaten.',
+      navLinkUrl: 'Moet een volledig http(s)-adres zijn, anders wordt de link weggelaten.',
+    },
   },
 
   general: {
@@ -58,6 +70,15 @@ export const settings: AdminDictionary['settings'] = {
     aboutPageDesc: 'Portret, bio en uitrusting op /about',
     map: 'Kaart',
     mapDesc: 'Fotolocaties op een wereldkaart op /map',
+    mapTileProvider: 'Aanbieder van kaarttegels',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileProviderHint:
+      'Gebruikt op /map en in kaartblokken in het dagboek. CARTO-stijlen vereisen een API-sleutel (hieronder of via {variable}); zonder sleutel valt de kaart terug op OpenStreetMap.',
+    mapTileApiKey: 'CARTO-API-sleutel',
+    mapTileApiKeyPlaceholder: 'Optioneel als CARTO_API_KEY is ingesteld',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileApiKeyHint:
+      'Wordt door de browser van bezoekers meegestuurd bij tegelaanvragen — beperk de sleutel in je CARTO-account tot het domein van je site. {variable} overschrijft dit veld.',
     proofing: 'Klantselectie',
     proofingDesc: 'Bezoekers geven foto’s een hartje, filteren en exporteren een selectie',
     zoom: 'Fotozoom',
@@ -97,6 +118,8 @@ export const settings: AdminDictionary['settings'] = {
     favicon: 'Favicon',
     faviconAlt: 'Huidige favicon',
     faviconUpload: 'Pictogram uploaden',
+    faviconUploaded: 'Favicon bijgewerkt.',
+    faviconReset: 'Favicon hersteld naar standaard.',
     faviconUploadFailed: 'Uploaden mislukt',
     faviconResetFailed: 'Herstellen mislukt',
     faviconResetTitle: 'Favicon herstellen?',

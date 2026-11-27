@@ -34,6 +34,17 @@ export const settings: AdminDictionary['settings'] = {
     /** Shown when the server confirms a save without a message of its own. */
     saved: '¡Guardado!',
     saveFailed: 'No se ha podido guardar',
+    validation: {
+      url: 'Debe ser una dirección http(s) completa, p. ej. https://photos.example.com.',
+      accent: 'Debe ser un color hexadecimal como #e60012.',
+      radius: (max: number) =>
+        `Debe ser un número entre 0 y ${max} (theme.radius en settings.yaml).`,
+      gridColumns: (min: number, max: number) => `Debe ser un número entero entre ${min} y ${max}.`,
+      gridGap: (max: number) => `Debe ser un número entero entre 0 y ${max}.`,
+      retentionDays: (max: number) => `Debe ser un número entero de días entre 1 y ${max}.`,
+      navLinkLabel: 'Necesita una etiqueta o el enlace se omitirá.',
+      navLinkUrl: 'Debe ser una dirección http(s) completa o el enlace se omitirá.',
+    },
   },
 
   general: {
@@ -65,6 +76,15 @@ export const settings: AdminDictionary['settings'] = {
     aboutPageDesc: 'Retrato, biografía y equipo en /about',
     map: 'Mapa',
     mapDesc: 'Ubicaciones de las fotos en un mapa del mundo en /map',
+    mapTileProvider: 'Proveedor de teselas del mapa',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileProviderHint:
+      'Se usa en /map y en los bloques de mapa del diario. Los estilos de CARTO requieren una clave API (configurada abajo o mediante {variable}); sin ella, el mapa vuelve a OpenStreetMap.',
+    mapTileApiKey: 'Clave API de CARTO',
+    mapTileApiKeyPlaceholder: 'Opcional si CARTO_API_KEY está definida',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileApiKeyHint:
+      'El navegador del visitante la envía en las peticiones de teselas: restringe la clave al dominio de tu sitio en tu cuenta de CARTO. {variable} prevalece sobre este campo.',
     proofing: 'Selección por clientes',
     proofingDesc: 'Los visitantes marcan con un corazón, filtran y exportan una selección de fotos',
     zoom: 'Zoom de fotos',
@@ -106,6 +126,8 @@ export const settings: AdminDictionary['settings'] = {
     favicon: 'Favicon',
     faviconAlt: 'Favicon actual',
     faviconUpload: 'Subir icono',
+    faviconUploaded: 'Favicon actualizado.',
+    faviconReset: 'Favicon restablecido al predeterminado.',
     faviconUploadFailed: 'No se ha podido subir',
     faviconResetFailed: 'No se ha podido restablecer',
     faviconResetTitle: '¿Restablecer el favicon?',

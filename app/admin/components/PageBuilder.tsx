@@ -376,7 +376,7 @@ export default function PageBuilder() {
           if (JSON.stringify(written) !== JSON.stringify(yamlData)) setGallery(asLoaded);
           setDirty(false);
         }
-        setSaveStatus({ kind: 'success', message: data.message || t.saved });
+        setSaveStatus({ kind: 'success', message: t.saved });
         setTimeout(() => setSaveStatus(null), 5000);
       } else if (!reportIfSessionExpired(result.res)) {
         setSaveStatus({
@@ -600,6 +600,29 @@ export default function PageBuilder() {
     };
   }
 
+  function handleSectionAlbumDragEnd(spIndex: number) {
+    return (sectionIndex: number, event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      const sec = gallery.subpages[spIndex]?.sections?.[sectionIndex];
+      if (!sec) return;
+      const oldIndex = sec.albums.findIndex((a, i) => `album-${a.id}-${i}` === active.id);
+      const newIndex = sec.albums.findIndex((a, i) => `album-${a.id}-${i}` === over.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        edit((g) =>
+          ops.moveAlbum(
+            g,
+            { type: 'section', subpageIndex: spIndex, sectionIndex },
+            oldIndex,
+            newIndex,
+          ),
+        );
+      }
+    };
+  }
+
   // ── Subpages and sections ────────────────────────────────────
   const addSubpage = () => edit((g) => ops.addSubpage(g, dict.pages.defaults));
 
@@ -613,7 +636,7 @@ export default function PageBuilder() {
     edit((g) => ops.addSection(g, subpageIndex, dict.pages.defaults));
 
   const removeSection = (subpageIndex: number, sectionIndex: number) =>
-    edit((g) => ops.removeSection(g, subpageIndex, sectionIndex));
+    removeWithUndo(t.sectionRemoved, (g) => ops.removeSection(g, subpageIndex, sectionIndex));
 
   const updateSection = (subpageIndex: number, sectionIndex: number, updates: Partial<Section>) =>
     edit((g) => ops.updateSection(g, subpageIndex, sectionIndex, updates));
@@ -810,7 +833,17 @@ export default function PageBuilder() {
 
       if (name.includes(query) || title.includes(query) || subtitle.includes(query)) return true;
 
-      const albums = sp.albums || [];
+      const albums = [
+        ...(sp.albums || []),
+        ...(sp.sections || []).flatMap((sec) => sec.albums || []),
+      ];
+      const hasMatchingSection = (sp.sections || []).some(
+        (sec) =>
+          sec.title.toLowerCase().includes(query) ||
+          (sec.description || '').toLowerCase().includes(query),
+      );
+      if (hasMatchingSection) return true;
+
       const hasMatchingAlbum = albums.some((a) => {
         const aName = getAlbumName(a.id).toLowerCase();
         const aTitle = (a.title || '').toLowerCase();
@@ -1051,6 +1084,7 @@ export default function PageBuilder() {
                 removeSubpageAlbum={removeSubpageAlbum}
                 removeSectionAlbum={removeSectionAlbum}
                 onAlbumDragEnd={handleSubpageAlbumDragEnd(expandedSubpage)}
+                onSectionAlbumDragEnd={handleSectionAlbumDragEnd(expandedSubpage)}
                 onPickAlbum={setPickerTarget}
                 onEditAlbum={setEditingAlbumAddress}
                 onPickHero={setHeroPickerTarget}

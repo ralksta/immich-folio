@@ -118,6 +118,7 @@ export const it: Dictionary = {
     initFailed: 'Impossibile inizializzare la mappa',
     zoomIn: 'Ingrandisci',
     zoomOut: 'Riduci',
+    twoFingersHint: 'Usa due dita per spostare la mappa',
     leafletTitle: 'Una libreria JavaScript per mappe interattive',
   },
 
@@ -206,7 +207,9 @@ export const it: Dictionary = {
     showAll: 'Mostra tutto',
     filterEmpty: 'Nessuna foto selezionata.',
     selected: (n: number) => `${n} ${n === 1 ? 'selezionata' : 'selezionate'}`,
+    onlySelected: (n: number) => `Solo selezione (${n})`,
     shareExport: 'Condividi ed esporta',
+    shareSelection: 'Condividi selezione',
     modalTitle: (n: number) => `Selezione (${n})`,
     closeModal: 'Chiudi finestra',
     intro: (n: number) =>
@@ -281,6 +284,7 @@ export const it: Dictionary = {
     successText: 'Il tuo messaggio è arrivato. Ti risponderò via e-mail.',
     invalid: 'Compila tutti i campi con un indirizzo e-mail valido.',
     tooMany: 'Troppi messaggi in poco tempo. Riprova tra un minuto.',
+    expired: 'Questa pagina è aperta da molto tempo. Ricaricala per inviare il tuo messaggio.',
     failed: 'Non è stato possibile inviare il messaggio. Riprova più tardi.',
     privacy: (days: number) =>
       `Il tuo messaggio viene salvato sul server di questo sito, usato solo per risponderti e cancellato dopo ${days} ${days === 1 ? 'giorno' : 'giorni'}.`,

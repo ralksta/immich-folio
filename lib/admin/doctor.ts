@@ -721,6 +721,63 @@ export function checkWritable(unwritable: string[], text: DoctorText = doctorEn)
   return { id: 'content-writable', level: 'ok', title: t.okTitle, detail: t.okDetail };
 }
 
+export interface ImmichProbe {
+  calls: Array<{ endpoint: string; ok: boolean }>;
+  /** The album list, when `/albums` answered with one; else empty. */
+  albums: AlbumRef[];
+}
+
+/**
+ * Makes the three requests Folio depends on, for checkImmichCalls() to judge.
+ *
+ * Shared by the admin route and `npm run doctor`, so both probe the same calls.
+ * `base` already ends in `/api`. Never throws: a request that fails or times
+ * out is recorded as not ok, and a malformed album list leaves `albums` empty
+ * (the `/albums` call itself already reports the failure).
+ */
+export async function probeImmich(
+  base: string,
+  apiKey: string,
+  timeoutMs: number,
+): Promise<ImmichProbe> {
+  const calls: ImmichProbe['calls'] = [];
+  const headers = { 'x-api-key': apiKey, Accept: 'application/json' };
+  const call = async (endpoint: string, init?: RequestInit) => {
+    try {
+      const res = await fetch(`${base}${endpoint}`, {
+        headers,
+        signal: AbortSignal.timeout(timeoutMs),
+        ...init,
+      });
+      calls.push({ endpoint, ok: res.ok });
+      return res.ok ? res : null;
+    } catch {
+      calls.push({ endpoint, ok: false });
+      return null;
+    }
+  };
+
+  await call('/server/ping');
+  const albumRes = await call('/albums');
+  await call('/search/metadata', {
+    method: 'POST',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ size: 1, page: 1 }),
+  });
+
+  let albums: AlbumRef[] = [];
+  if (albumRes) {
+    try {
+      const parsed: unknown = await albumRes.json();
+      if (Array.isArray(parsed)) albums = parsed as AlbumRef[];
+    } catch {
+      // A malformed body is already reflected by the call above.
+    }
+  }
+
+  return { calls, albums };
+}
+
 /**
  * Whether the calls Folio actually makes to Immich succeed.
  *

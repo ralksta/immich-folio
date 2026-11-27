@@ -86,11 +86,6 @@ export function parseLatestTag(payload: unknown): string | null {
 
 let cached: { latest: string | null; at: number } | null = null;
 
-/** Drop the memoised answer. Exposed for tests. */
-export function resetUpdateCache(): void {
-  cached = null;
-}
-
 /**
  * The latest published version, or null if it is not known.
  *

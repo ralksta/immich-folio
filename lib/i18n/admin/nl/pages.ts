@@ -40,6 +40,7 @@ export const pages: AdminDictionary['pages'] = {
       'De pagina kon niet worden aangemaakt. Controleer de verbinding en probeer het opnieuw.',
     /** Toasts after a removal; each offers `undo`. */
     pageRemoved: 'Pagina verwijderd.',
+    sectionRemoved: 'Sectie verwijderd.',
     albumRemoved: 'Album verwijderd.',
     albumRemovedFromPage: 'Album van de pagina verwijderd.',
     albumRemovedFromSection: 'Album uit de sectie verwijderd.',
@@ -227,7 +228,6 @@ export const pages: AdminDictionary['pages'] = {
     sectionDescPlaceholder: 'Beschrijving van de sectie (optioneel)',
     sectionDesc: 'Beschrijving van de sectie',
     addSection: '+ Sectie toevoegen',
-    addLooseAlbum: '+ Los album toevoegen',
     deleteSubpage: 'Pagina verwijderen',
     done: 'Klaar',
   },

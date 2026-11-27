@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { Lightbox, type LightboxWatermark } from '@/components/Lightbox';
 import { IconHeart } from '@/components/Icons';
@@ -107,6 +107,10 @@ function PhotoGridInner({
   const t = useDictionary();
   const proofing = useProofing();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  // Tracks whether this session pushed a `?photo=` history entry when opening
+  // the lightbox, so closing can pop it via `history.back()` instead of
+  // pushing a second entry that traps Browser Back.
+  const pushedHistoryRef = useRef(false);
 
   const displayedAssets = useMemo(() => {
     if (proofing && proofing.isFilterActive) {
@@ -181,6 +185,7 @@ function PhotoGridInner({
       setLightboxIndex(displayedAssets.length - 1);
       return;
     }
+    pushedHistoryRef.current = false;
     setLightboxIndex(null);
     window.history.replaceState(
       null,
@@ -194,6 +199,7 @@ function PhotoGridInner({
     const handlePopState = () => {
       const token = parsePhotoQuery(window.location.search);
       const byToken = token ? displayedAssets.findIndex((a) => a.id === token) : -1;
+      if (byToken < 0) pushedHistoryRef.current = false;
       setLightboxIndex(byToken >= 0 ? byToken : null);
     };
 
@@ -206,11 +212,13 @@ function PhotoGridInner({
       setLightboxIndex(index);
       const asset = displayedAssets[index];
       if (asset) {
-        window.history.pushState(
-          null,
-          '',
-          window.location.pathname + buildPhotoQuery(window.location.search, asset.id),
-        );
+        const url = window.location.pathname + buildPhotoQuery(window.location.search, asset.id);
+        if (pushedHistoryRef.current) {
+          window.history.replaceState(null, '', url);
+        } else {
+          pushedHistoryRef.current = true;
+          window.history.pushState(null, '', url);
+        }
       }
     },
     [displayedAssets],
@@ -218,7 +226,12 @@ function PhotoGridInner({
 
   const closeLightbox = useCallback(() => {
     setLightboxIndex(null);
-    window.history.pushState(
+    if (pushedHistoryRef.current) {
+      pushedHistoryRef.current = false;
+      window.history.back();
+      return;
+    }
+    window.history.replaceState(
       null,
       '',
       window.location.pathname + buildPhotoQuery(window.location.search, null),
@@ -269,18 +282,6 @@ function PhotoGridInner({
         >
           <div
             className={`photo-grid__item${featured ? ' photo-grid__featured' : ''}`}
-            onClick={() => openLightbox(index)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                openLightbox(index);
-              }
-            }}
-            role="button"
-            tabIndex={0}
-            data-lightbox-index={index}
-            aria-label={t.lightbox.openPhoto(index + 1)}
-            aria-haspopup="dialog"
             style={{
               ...((layout === 'masonry' || layout === 'showcase') && !featured && asset.aspectRatio
                 ? { aspectRatio: `${asset.aspectRatio}` }
@@ -288,29 +289,53 @@ function PhotoGridInner({
               position: 'relative',
             }}
           >
-            {/* The photo's own box. Without a frame it covers the whole tile;
-                under passepartout globals.css insets it by the mat, so `fill`
-                and the placeholder colour stay on the photo, not on the mat. */}
-            <div
-              className="photo-grid__media"
-              style={asset.dominantColor ? { backgroundColor: asset.dominantColor } : undefined}
+            <button
+              type="button"
+              className="photo-grid__trigger"
+              onClick={() => openLightbox(index)}
+              data-lightbox-index={index}
+              aria-label={t.lightbox.openPhoto(index + 1)}
+              aria-haspopup="dialog"
             >
-              <Image
-                src={asset.thumbUrl}
-                alt={asset.caption ?? ''}
-                fill
-                sizes="(max-width: 600px) 50vw, (max-width: 1000px) 33vw, 25vw"
-                loading={index < 6 ? 'eager' : 'lazy'}
-                {...(asset.blurDataURL
-                  ? { placeholder: 'blur' as const, blurDataURL: asset.blurDataURL }
-                  : {})}
-              />
-            </div>
+              {/* The photo's own box. Without a frame it covers the whole tile;
+                  under passepartout globals.css insets it by the mat, so `fill`
+                  and the placeholder colour stay on the photo, not on the mat. */}
+              <div
+                className="photo-grid__media"
+                style={asset.dominantColor ? { backgroundColor: asset.dominantColor } : undefined}
+              >
+                <Image
+                  src={asset.thumbUrl}
+                  alt={asset.caption ?? ''}
+                  fill
+                  sizes="(max-width: 600px) 50vw, (max-width: 1000px) 33vw, 25vw"
+                  loading={index < 6 ? 'eager' : 'lazy'}
+                  {...(asset.blurDataURL
+                    ? { placeholder: 'blur' as const, blurDataURL: asset.blurDataURL }
+                    : {})}
+                />
+              </div>
+
+              {asset.type === 'video' && (
+                <div className="photo-grid__item-play" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="12" fillOpacity="0.55" />
+                    <polygon points="10,8 10,16 17,12" fill="white" />
+                  </svg>
+                </div>
+              )}
+              {exifLine && (
+                <div className="photo-grid__item-exif" aria-hidden="true">
+                  {exifLine}
+                </div>
+              )}
+            </button>
 
             {proofing && (
               <button
                 type="button"
                 className="photo-grid__fav-btn"
+                aria-pressed={isFav}
                 onClick={(e) => {
                   e.stopPropagation();
                   proofing.toggleFavorite(asset.id);
@@ -346,20 +371,6 @@ function PhotoGridInner({
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                 </svg>
               </button>
-            )}
-
-            {asset.type === 'video' && (
-              <div className="photo-grid__item-play" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="12" cy="12" r="12" fillOpacity="0.55" />
-                  <polygon points="10,8 10,16 17,12" fill="white" />
-                </svg>
-              </div>
-            )}
-            {exifLine && (
-              <div className="photo-grid__item-exif" aria-hidden="true">
-                {exifLine}
-              </div>
             )}
           </div>
 
@@ -418,69 +429,28 @@ function PhotoGridInner({
       {/* Kept while the filter is on: un-hearting the last favourite there
           empties the grid, and the bar holds the only way back to all photos. */}
       {proofing && !proofing.session && (selectedCount > 0 || proofing.isFilterActive) && (
-        <div
-          className="proofing-sticky-bar"
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            zIndex: 990,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '8px 16px',
-            borderRadius: 'var(--radius-lg)',
-            background: 'var(--bg-card, #1e1e1e)',
-            color: 'var(--text-primary, #ffffff)',
-            border: '1px solid var(--border-subtle, rgba(255,255,255,0.15))',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-            backdropFilter: 'blur(8px)',
-          }}
-        >
+        <div className="proofing-sticky-bar">
           <button
             type="button"
+            className="proofing-bar__filter-toggle"
+            aria-pressed={proofing.isFilterActive}
             onClick={() => proofing.setIsFilterActive((prev) => !prev)}
-            style={{
-              background: proofing.isFilterActive
-                ? 'var(--accent, #e60012)'
-                : 'var(--bg-card-hover)',
-              color: proofing.isFilterActive ? 'var(--on-accent, #fff)' : 'var(--text-primary)',
-              border: 'none',
-              padding: '6px 14px',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
           >
             {proofing.isFilterActive ? (
               t.proofing.showAll
             ) : (
               <>
-                <IconHeart
-                  size={14}
-                  fill="currentColor"
-                  aria-hidden="true"
-                  style={{ verticalAlign: '-2px', marginRight: '0.35em' }}
-                />
-                {t.proofing.selected(selectedCount)}
+                <IconHeart size={14} fill="currentColor" aria-hidden="true" />
+                {t.proofing.onlySelected(selectedCount)}
               </>
             )}
           </button>
           <button
             type="button"
+            className="proofing-bar__share-btn"
             onClick={() => proofing.setIsModalOpen(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'inherit',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-              textDecoration: 'underline',
-            }}
           >
-            {t.proofing.shareExport}
+            {t.proofing.shareSelection}
           </button>
         </div>
       )}

@@ -4,8 +4,10 @@ import { useState } from 'react';
 import * as Icons from '../Icons';
 import type { SaveStatus } from '../SaveBar';
 import { resolveExifDisplay } from '@/lib/config/schema';
+import { MAP_TILE_PROVIDERS, MAP_TILE_PROVIDER_IDS, isMapTileProvider } from '@/lib/mapTiles';
 import { SUPPORTED_LOCALES, getDictionary, resolveLocale, type Locale } from '@/lib/i18n';
 import { FeatureGroup, FeatureRow, SettingRow } from './fields';
+import EnvLockNote from '../fields/EnvLockNote';
 import type { SectionProps } from './types';
 import { useConfirm } from '../ConfirmDialog';
 import { rich, useAdminDictionary } from '../AdminI18n';
@@ -24,11 +26,18 @@ export default function GeneralSection({
   settings,
   update,
   updateMany,
+  envLocks,
   siteTitleEnv,
 }: SectionProps & { siteTitleEnv?: string | null }) {
   const confirm = useConfirm();
   const dict = useAdminDictionary();
   const t = dict.settings.general;
+  const mapApiKeyLock = envLocks?.['mapTiles.apiKey'];
+  const selectedMapProvider =
+    settings.mapTiles?.provider && isMapTileProvider(settings.mapTiles.provider)
+      ? settings.mapTiles.provider
+      : 'osm';
+  const selectedMapProviderDef = MAP_TILE_PROVIDERS[selectedMapProvider];
   // What the site shows while the field is empty, resolved as getConfig does:
   // SITE_TITLE, else the site language's word for a gallery (QA A-15).
   const fallbackTitle = siteTitleEnv || getDictionary(resolveLocale(settings.lang)).common.gallery;
@@ -188,6 +197,47 @@ export default function GeneralSection({
             onToggle={() => update('zoom', !settings.zoom)}
           />
         </div>
+        <div className="admin-field">
+          <label htmlFor="general-map-provider">{t.mapTileProvider}</label>
+          <select
+            id="general-map-provider"
+            value={selectedMapProvider}
+            onChange={(e) => update('mapTiles.provider', e.target.value)}
+            aria-describedby="general-map-provider-hint"
+          >
+            {MAP_TILE_PROVIDER_IDS.map((id) => (
+              <option key={id} value={id}>
+                {MAP_TILE_PROVIDERS[id].label}
+              </option>
+            ))}
+          </select>
+          <p id="general-map-provider-hint" className="admin-field-hint">
+            {rich(t.mapTileProviderHint, { variable: <code>CARTO_API_KEY</code> })}
+          </p>
+        </div>
+        {selectedMapProviderDef.requiresApiKey && (
+          <div className="admin-field">
+            <label htmlFor="general-map-api-key">{t.mapTileApiKey}</label>
+            <input
+              id="general-map-api-key"
+              type="password"
+              autoComplete="new-password"
+              value={settings.mapTiles?.apiKey || ''}
+              onChange={(e) => update('mapTiles.apiKey', e.target.value)}
+              placeholder={t.mapTileApiKeyPlaceholder}
+              disabled={!!mapApiKeyLock}
+              aria-describedby={
+                mapApiKeyLock ? 'general-map-api-key-lock' : 'general-map-api-key-hint'
+              }
+            />
+            {mapApiKeyLock && (
+              <EnvLockNote id="general-map-api-key-lock" variable={mapApiKeyLock} />
+            )}
+            <p id="general-map-api-key-hint" className="admin-field-hint">
+              {rich(t.mapTileApiKeyHint, { variable: <code>CARTO_API_KEY</code> })}
+            </p>
+          </div>
+        )}
         {/* Shown even while proofing is off globally: a subpage can switch it
             on for itself (`proofing: true`), so the address still has to be
             settable from here. */}
@@ -336,7 +386,7 @@ export default function GeneralSection({
                 const data = await res.json();
                 setFaviconStatus(
                   res.ok
-                    ? { kind: 'success', message: data.message }
+                    ? { kind: 'success', message: t.faviconUploaded }
                     : { kind: 'error', message: dict.common.errorWith(data.error) },
                 );
                 if (res.ok) setFaviconVersion((v) => v + 1);
@@ -378,7 +428,7 @@ export default function GeneralSection({
                 const data = await res.json();
                 setFaviconStatus(
                   res.ok
-                    ? { kind: 'success', message: data.message }
+                    ? { kind: 'success', message: t.faviconReset }
                     : { kind: 'error', message: dict.common.errorWith(data.error) },
                 );
                 if (res.ok) setFaviconVersion((v) => v + 1);

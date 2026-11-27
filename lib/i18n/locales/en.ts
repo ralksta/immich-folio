@@ -119,6 +119,7 @@ export const en = {
     initFailed: 'Failed to initialize map',
     zoomIn: 'Zoom in',
     zoomOut: 'Zoom out',
+    twoFingersHint: 'Use two fingers to move the map',
     // The title on the Leaflet credit in the map's corner.
     leafletTitle: 'A JavaScript library for interactive maps',
   },
@@ -212,7 +213,9 @@ export const en = {
     /** Shown in place of the grid when the filter is on and nothing is selected. */
     filterEmpty: 'No photos selected.',
     selected: (n: number) => `${n} selected`,
+    onlySelected: (n: number) => `Only selected (${n})`,
     shareExport: 'Share & export',
+    shareSelection: 'Share selection',
     modalTitle: (n: number) => `Selection (${n})`,
     closeModal: 'Close modal',
     intro: (n: number) =>
@@ -289,6 +292,7 @@ export const en = {
     successText: 'Your message has arrived. I will get back to you by email.',
     invalid: 'Please fill in every field with a valid email address.',
     tooMany: 'Too many messages in a short time. Please try again in a minute.',
+    expired: 'This page has been open for a long time. Please reload it to send your message.',
     failed: 'The message could not be sent. Please try again later.',
     privacy: (days: number) =>
       `Your message is stored on this site's own server, is only used to reply to you, and is deleted after ${days} ${days === 1 ? 'day' : 'days'}.`,

@@ -175,13 +175,6 @@ export function Lightbox({
     setCopyState('idle');
   }
 
-  // Auto-focus the close button when the modal mounts
-  useEffect(() => {
-    if (mounted) {
-      closeBtnRef.current?.focus();
-    }
-  }, [mounted]);
-
   /*
    * Focus stays inside the dialog while it is open, and goes back to the grid
    * when it closes (#696) — to the tile of the photo that was on screen last,
@@ -189,14 +182,23 @@ export function Lightbox({
    * browsed ahead continues from where they are. Tiles mark themselves with
    * `data-lightbox-index` inside a `data-lightbox-group`; without them the
    * opener gets focus back.
+   *
+   * The opener must be captured before anything inside the lightbox takes
+   * focus (the close button auto-focuses in an effect). Capturing during the
+   * initial render pass guarantees we see what was active before mount (#900).
    */
+  const [opener] = useState<HTMLElement | null>(() =>
+    typeof document !== 'undefined' && document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null,
+  );
+
   const indexRef = useRef(currentIndex);
   useEffect(() => {
     indexRef.current = currentIndex;
   }, [currentIndex]);
 
   useEffect(() => {
-    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const onTab = (e: KeyboardEvent) => {
       if (overlayRef.current) trapTabKey(overlayRef.current, e);
     };
@@ -208,7 +210,14 @@ export function Lightbox({
       const target = tile ?? opener;
       if (target?.isConnected) target.focus();
     };
-  }, []);
+  }, [opener]);
+
+  // Auto-focus the close button when the modal mounts
+  useEffect(() => {
+    if (mounted) {
+      closeBtnRef.current?.focus();
+    }
+  }, [mounted]);
 
   // Reset EXIF data when switching images; refetch if panel is open
   useEffect(() => {

@@ -20,6 +20,8 @@ import {
   calculateReadingTime,
   extractExcerpt,
   isValidSlug,
+  findFirstPhotoAssetId,
+  findFirstAlbumRef,
   type JournalEntrySummary,
   type ParsedJournal,
 } from '../journal';
@@ -203,11 +205,15 @@ type EntryFacts = Omit<JournalEntrySummary, 'slug' | 'filename'>;
 const summaryCache = new ParsedFileCache<EntryFacts>((content) => {
   const parsed = parseJournalMarkdown(content);
   const { words, minutes } = calculateReadingTime(content);
+  const fallbackCoverAssetId = findFirstPhotoAssetId(parsed.blocks);
+  const firstAlbum = !fallbackCoverAssetId ? findFirstAlbumRef(parsed.blocks) : undefined;
   return {
     frontmatter: parsed.frontmatter,
     excerpt: extractExcerpt(parsed),
     wordCount: words,
     readingTimeMinutes: minutes,
+    ...(fallbackCoverAssetId ? { fallbackCoverAssetId } : {}),
+    ...(firstAlbum ? { firstAlbumId: firstAlbum.albumId, firstAlbumSkip: firstAlbum.skip } : {}),
   };
 });
 

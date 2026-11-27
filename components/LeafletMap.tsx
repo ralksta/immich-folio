@@ -11,10 +11,11 @@
  * and popup styling lives in app/leaflet.css, loaded globally.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { useDictionary } from './I18nProvider';
 import { escapeHtml } from '@/lib/escapeHtml';
+import { getMapTileLayerOptions, type MapTilesConfig } from '@/lib/mapTiles';
 
 export interface LeafletMarker {
   lat: number;
@@ -37,6 +38,15 @@ interface LeafletMapProps {
   className?: string;
   /** Cap the zoom fitBounds may pick — a single pin otherwise zooms to the rooftop. */
   fitMaxZoom?: number;
+  /**
+   * When true, the map is embedded in an article or story (#902).
+   * Disables scrollWheelZoom so mouse wheel scrolls the page rather than trapping the reader.
+   * On mobile, disables 1-finger dragging so vertical touch swipes scroll the page,
+   * showing a short two-finger hint overlay if touched with one finger.
+   */
+  embedded?: boolean;
+  /** Runtime tile-provider config from settings.yaml / CARTO_API_KEY (#853). */
+  tileConfig?: MapTilesConfig;
   onReady?: () => void;
   onError?: (err: unknown) => void;
 }
@@ -56,15 +66,20 @@ export function LeafletMap({
   line = false,
   className = 'map-container',
   fitMaxZoom,
+  embedded = false,
+  tileConfig,
   onReady,
   onError,
 }: LeafletMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const [showTouchHint, setShowTouchHint] = useState(false);
+  const hintTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // Read inside the effect through a ref: the locale never changes on a
   // mounted page, and a new dictionary object must not rebuild the map.
   const t = useDictionary();
   const labelsRef = useRef(t.map);
+  const tileOptions = getMapTileLayerOptions(tileConfig);
 
   // Callers rebuild the markers array on every render; the map is only
   // rebuilt when its content changes.
@@ -84,6 +99,26 @@ export function LeafletMap({
   });
 
   useEffect(() => {
+    return () => {
+      if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
+    };
+  }, []);
+
+  const handleTouch = (e: React.TouchEvent) => {
+    if (!embedded) return;
+    if (e.touches.length === 1) {
+      setShowTouchHint(true);
+      if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
+      hintTimeoutRef.current = setTimeout(() => {
+        setShowTouchHint(false);
+      }, 1500);
+    } else if (e.touches.length >= 2) {
+      if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
+      setShowTouchHint(false);
+    }
+  };
+
+  useEffect(() => {
     let cancelled = false;
 
     async function init() {
@@ -94,7 +129,17 @@ export function LeafletMap({
       // and the credit's link title are English in Leaflet; the site's
       // dictionary supplies them instead.
       const labels = labelsRef.current;
-      const map = L.map(containerRef.current, { zoomControl: false, attributionControl: true });
+      const map = L.map(containerRef.current, {
+        zoomControl: false,
+        attributionControl: true,
+        ...(embedded
+          ? {
+              scrollWheelZoom: false,
+              dragging: !L.Browser.mobile,
+              tap: false,
+            }
+          : {}),
+      });
       mapRef.current = map;
       L.control.zoom({ zoomInTitle: labels.zoomIn, zoomOutTitle: labels.zoomOut }).addTo(map);
       const prefix = map.attributionControl.options.prefix;
@@ -102,18 +147,13 @@ export function LeafletMap({
         map.attributionControl.setPrefix(localizedLeafletPrefix(prefix, labels.leafletTitle));
       }
 
-      // OpenStreetMap's own tiles: free to use with attribution and a Referer.
-      // Without one, every tile is an "Access blocked" image. The policy is set
-      // on the tiles themselves because a proxy in front of the site can
-      // replace the page's Referrer-Policy with one that sends nothing
-      // cross-origin (#851).
-      // CARTO's Dark Matter, used before, started answering every tile with
-      // "API KEY REQUIRED". The dark look comes from a filter in
-      // app/leaflet.css, so it follows the colour mode.
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19,
+      // Referrer-Policy is set on the tiles themselves because a proxy in front
+      // of the site can replace the page's Referrer-Policy with one that sends
+      // nothing cross-origin (#851). Both OpenStreetMap (tile usage policy) and
+      // domain-restricted CARTO keys rely on the Referer reaching the tile host.
+      L.tileLayer(tileOptions.url, {
+        attribution: tileOptions.attribution,
+        maxZoom: tileOptions.maxZoom,
         referrerPolicy: 'strict-origin-when-cross-origin',
       }).addTo(map);
 
@@ -175,7 +215,32 @@ export function LeafletMap({
         mapRef.current = null;
       }
     };
-  }, [markersKey, line, fitMaxZoom]);
+  }, [
+    markersKey,
+    line,
+    fitMaxZoom,
+    embedded,
+    tileOptions.id,
+    tileOptions.url,
+    tileOptions.attribution,
+    tileOptions.maxZoom,
+  ]);
 
-  return <div ref={containerRef} className={className} />;
+  return (
+    <div
+      ref={containerRef}
+      className={className}
+      style={{ position: 'relative' }}
+      data-map-tile-provider={tileOptions.id}
+      data-map-filter-tiles={tileOptions.filterTiles ? 'true' : 'false'}
+      onTouchStart={handleTouch}
+      onTouchMove={handleTouch}
+    >
+      {embedded && showTouchHint && (
+        <div className="map-gesture-hint" aria-live="polite">
+          {t.map.twoFingersHint}
+        </div>
+      )}
+    </div>
+  );
 }

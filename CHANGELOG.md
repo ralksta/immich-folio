@@ -7,6 +7,104 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Releases up to and including v0.9.2 are documented in the
 [GitHub releases](https://github.com/ralksta/immich-folio/releases).
 
+## [0.23.0] — 2026-11-27
+
+### Added
+
+- **Configurable map tile providers at runtime**
+  ([#926](https://github.com/ralksta/immich-folio/pull/926), closes
+  [#853](https://github.com/ralksta/immich-folio/issues/853)). Choose between
+  OpenStreetMap, CARTO basemaps (Positron, Dark Matter, Voyager, with optional
+  `CARTO_API_KEY`) or a custom tile URL template in **Settings → General** or
+  `settings.yaml` (`map.tileProvider` / `map.tileUrl`). CSP headers and the
+  privacy summary follow the configured tile origin automatically.
+
+### Changed
+
+- **Next.js 16.4.5** ([#908](https://github.com/ralksta/immich-folio/pull/908),
+  includes security fix GHSA-mfr8-8qww-v76h) and updated dev tooling
+  (Prettier 3.10.1, axe-core 4.14.1, `@playwright/test` 1.65.1).
+
+### Fixed
+
+- **Local webfont cache now loads all 12 theme presets**
+  ([#936](https://github.com/ralksta/immich-folio/pull/936), closes
+  [#928](https://github.com/ralksta/immich-folio/issues/928)). `lib/fonts.ts`
+  fetches and caches each font family individually under `content/.fonts/` with
+  weight axes that Google Fonts actually serves (plus an automatic fallback on
+  HTTP 400 for custom fonts), fixing 7 presets (`studio`, `editorial`,
+  `classic`, `noir`, `monograph`, `cyanotype`, `salon`) that previously fell
+  back to system fonts while keeping 100% local same-origin serving.
+- **Light mode, contrast & cross-page theme polish**
+  ([#927](https://github.com/ralksta/immich-folio/pull/927),
+  [#936](https://github.com/ralksta/immich-folio/pull/936), closes
+  [#935](https://github.com/ralksta/immich-folio/issues/935)). Preset headers
+  keep their own surface in light mode; album cover overlays use legible light
+  text over a dark scrim; Leaflet maps isolate their z-index behind the fixed
+  header; `.main` top padding and `monograph` margins no longer crowd the
+  header; contrast failures in `noir`, `editorial`, `journal`, `essay` and
+  `hero` are fixed with semantic colour tokens; Birch keeps its compact active
+  nav pill and sentence-case style across info and journal pages; mobile
+  `hero--minimal` titles scale with `clamp()`, and Salon's filmstrip no longer
+  clips its outline fillet.
+- **Single-album subpages use their configured Display Title**
+  ([#925](https://github.com/ralksta/immich-folio/pull/925), closes
+  [#921](https://github.com/ralksta/immich-folio/issues/921)). Contributed by
+  [@MaxonT](https://github.com/MaxonT).
+- **Visitor UX & accessibility polish across Lightbox, Proofing, Navigation,
+  Journal, Map and Contact:**
+  - Lightbox restores focus to the active photo tile on close
+    ([#913](https://github.com/ralksta/immich-folio/pull/913)), pops its
+    history entry on close instead of trapping Browser Back
+    ([#927](https://github.com/ralksta/immich-folio/pull/927)), keeps 44 px
+    mobile touch targets and hides `main` under the overlay
+    ([#916](https://github.com/ralksta/immich-folio/pull/916)), and adds `dvh`,
+    `safe-area-inset-*`, EXIF panel viewport bounds and a working
+    `prefers-reduced-motion` zoom notice
+    ([#927](https://github.com/ralksta/immich-folio/pull/927)).
+  - PhotoGrid splits the lightbox trigger `<button>` and proofing heart button
+    into siblings (WCAG 4.1.2) with `aria-pressed`
+    ([#927](https://github.com/ralksta/immich-folio/pull/927)); the proofing
+    bar improves touch targets, action hierarchy and filter-toggle semantics
+    ([#917](https://github.com/ralksta/immich-folio/pull/917)).
+  - Mobile menu closes on `focusout` and uses the preset surface
+    ([#911](https://github.com/ralksta/immich-folio/pull/911)); the footer
+    reserves clearance for the fixed back-to-top button
+    ([#912](https://github.com/ralksta/immich-folio/pull/912)).
+  - Inline maps in stories and journal entries no longer trap wheel or
+    one-finger page scrolling
+    ([#919](https://github.com/ralksta/immich-folio/pull/919)); journal entries
+    without an explicit cover fall back to their first photo for index cards
+    and share images
+    ([#918](https://github.com/ralksta/immich-folio/pull/918)); expired contact
+    form submissions return `409` with clear user feedback
+    ([#914](https://github.com/ralksta/immich-folio/pull/914)).
+- **Admin UI & Page Builder fixes:**
+  - Adding the first section to a subpage migrates existing albums into it,
+    enables drag-and-drop sorting and search for section albums, adds Undo on
+    section removal and removes the non-rendering "Add Loose Album" button
+    ([#937](https://github.com/ralksta/immich-folio/pull/937), closes
+    [#929](https://github.com/ralksta/immich-folio/issues/929)).
+  - Page editor collapses columns via a container query at 1280–1400 px
+    ([#915](https://github.com/ralksta/immich-folio/pull/915)); `Listbox` no
+    longer dismisses itself when scrolling inside its popup
+    ([#927](https://github.com/ralksta/immich-folio/pull/927)); admin light
+    mode card and danger-button contrasts are fixed
+    ([#927](https://github.com/ralksta/immich-folio/pull/927)); analytics shows
+    a dash and hint when no device views are recorded
+    ([#910](https://github.com/ralksta/immich-folio/pull/910)); admin save
+    confirmations and inline setting validations are localized across all 6
+    admin languages ([#927](https://github.com/ralksta/immich-folio/pull/927)).
+
+### Internal
+
+- Removed dead code and unreferenced CSS, shared the Immich probe between the
+  admin doctor route and CLI, and added `knip`
+  ([#895](https://github.com/ralksta/immich-folio/pull/895)).
+- Extended `scripts/contrast-audit.mjs` to cover `/contact`, `/journal` and
+  per-preset accent tokens
+  ([#936](https://github.com/ralksta/immich-folio/pull/936)).
+
 ## [0.22.0] — 2026-11-04
 
 ### Added

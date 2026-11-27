@@ -5,15 +5,13 @@
   left: 0;
   width: 100%;
   z-index: 100;
-  background: rgba(26, 26, 26, 0.9);
+  /* Use the preset's own --bg-primary at (0,1,0) specificity so preset header
+     rules ([data-preset='...'] .header) keep winning in light mode too. */
+  background: color-mix(in srgb, var(--bg-primary) 92%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-subtle);
   padding: 0 24px;
-}
-
-[data-theme='light'] .header {
-  background: rgba(245, 245, 240, 0.9);
 }
 
 .header__nav {
@@ -110,13 +108,9 @@
   margin-left: -50vw;
   max-height: calc(100vh - 64px);
   overflow-y: auto;
-  background: rgba(26, 26, 26, 0.98);
+  background: color-mix(in srgb, var(--bg-primary) 98%, transparent);
   border-bottom: 1px solid var(--border-subtle);
   z-index: 101;
-}
-
-[data-theme='light'] .header__nav-links[data-open='true'] {
-  background: rgba(245, 245, 240, 0.98);
 }
 
 .header__nav-links[data-open='true'] .header__nav-link,
@@ -150,4 +144,3 @@
     display: contents;
   }
 }
-

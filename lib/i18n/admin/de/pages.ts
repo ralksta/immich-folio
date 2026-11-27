@@ -39,6 +39,7 @@ export const pages: AdminDictionary['pages'] = {
       'Die Seite konnte nicht erstellt werden. Prüfe die Verbindung und versuche es erneut.',
     /** Toasts after a removal; each offers `undo`. */
     pageRemoved: 'Seite entfernt.',
+    sectionRemoved: 'Abschnitt entfernt.',
     albumRemoved: 'Album entfernt.',
     albumRemovedFromPage: 'Album von der Seite entfernt.',
     albumRemovedFromSection: 'Album aus dem Abschnitt entfernt.',
@@ -227,7 +228,6 @@ export const pages: AdminDictionary['pages'] = {
     sectionDescPlaceholder: 'Beschreibung des Abschnitts (optional)',
     sectionDesc: 'Beschreibung des Abschnitts',
     addSection: '+ Abschnitt hinzufügen',
-    addLooseAlbum: '+ Album ohne Abschnitt hinzufügen',
     deleteSubpage: 'Seite löschen',
     done: 'Fertig',
   },

@@ -5,14 +5,13 @@
 
 /* ── Tiles ─────────────────────────────────────────────────── */
 
-/* OpenStreetMap's tiles are bright and colourful. Photographs should carry
-   the colour, so the map is muted in both modes, and inverted into a dark
-   map in dark mode (the default; light mode sets data-theme='light'). */
-.leaflet-tile-pane {
+/* Only providers that opt into filtering in lib/mapTiles.ts (OpenStreetMap)
+   get this muted/inverted look; CARTO styles carry their own palette. */
+[data-map-filter-tiles='true'] .leaflet-tile-pane {
   filter: invert(1) hue-rotate(180deg) grayscale(0.85) brightness(0.9) contrast(0.9);
 }
 
-[data-theme='light'] .leaflet-tile-pane {
+[data-theme='light'] [data-map-filter-tiles='true'] .leaflet-tile-pane {
   filter: grayscale(0.85) contrast(0.95);
 }
 
@@ -22,6 +21,10 @@
    stylesheet, which is loaded after this one. */
 .leaflet-container.leaflet-container {
   background: var(--bg-secondary);
+  /* Trap Leaflet's internal 400–1000 pane/control z-indexes so maps never
+     paint over the fixed site header (100) or open mobile menu (101). */
+  isolation: isolate;
+  z-index: 0;
 }
 
 /* ── Popups ────────────────────────────────────────────────── */
@@ -207,4 +210,33 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--accent-text);
+}
+
+/* ── Embedded gesture hint (#902) ────────────────── */
+.map-gesture-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  padding: 1rem 1.5rem;
+  z-index: 1000;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: map-hint-fade 0.2s ease-out;
+}
+
+@keyframes map-hint-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

@@ -29,6 +29,10 @@ easier to live with.
   photos rendering as landscape tiles, because the grid ignored the camera's
   EXIF orientation flag. That brought the masonry layout's stagger back for
   anyone whose camera records portrait frames that way, which is most of them.
+- **[@MaxonT](https://github.com/MaxonT)** — made single-album subpages use
+  their configured Display Title for the page heading, browser and social
+  metadata, share card, hero image alt text, and password gate instead of
+  falling back to the raw Immich album name.
 - **[Jules](https://jules.google.com)** — an automated reviewer that has been
   quietly hardening the project in the background: better screen-reader support
   in the photo grid, and a series of fixes keeping the public endpoints from

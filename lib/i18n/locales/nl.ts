@@ -118,6 +118,7 @@ export const nl: Dictionary = {
     initFailed: 'De kaart kon niet worden gestart',
     zoomIn: 'Inzoomen',
     zoomOut: 'Uitzoomen',
+    twoFingersHint: 'Gebruik twee vingers om de kaart te bewegen',
     leafletTitle: 'Een JavaScript-bibliotheek voor interactieve kaarten',
   },
 
@@ -207,7 +208,9 @@ export const nl: Dictionary = {
     showAll: 'Alles tonen',
     filterEmpty: "Geen foto's geselecteerd.",
     selected: (n: number) => `${n} geselecteerd`,
+    onlySelected: (n: number) => `Alleen selectie (${n})`,
     shareExport: 'Delen & exporteren',
+    shareSelection: 'Selectie delen',
     modalTitle: (n: number) => `Selectie (${n})`,
     closeModal: 'Venster sluiten',
     intro: (n: number) =>
@@ -283,6 +286,7 @@ export const nl: Dictionary = {
     successText: 'Je bericht is aangekomen. Ik antwoord je per e-mail.',
     invalid: 'Vul alle velden in met een geldig e-mailadres.',
     tooMany: 'Te veel berichten in korte tijd. Probeer het over een minuut opnieuw.',
+    expired: 'Deze pagina staat al lange tijd open. Vernieuw de pagina om je bericht te verzenden.',
     failed: 'Het bericht kon niet worden verstuurd. Probeer het later opnieuw.',
     privacy: (days: number) =>
       `Je bericht wordt op de eigen server van deze site bewaard, alleen gebruikt om je te antwoorden en na ${days} ${days === 1 ? 'dag' : 'dagen'} verwijderd.`,

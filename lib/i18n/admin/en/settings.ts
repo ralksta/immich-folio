@@ -32,6 +32,16 @@ export const settings = {
     /** Shown when the server confirms a save without a message of its own. */
     saved: 'Saved!',
     saveFailed: 'Failed to save',
+    validation: {
+      url: 'Must be a full http(s) address, e.g. https://photos.example.com.',
+      accent: 'Must be a hex colour such as #e60012.',
+      radius: (max: number) => `Must be a number from 0 to ${max} (theme.radius in settings.yaml).`,
+      gridColumns: (min: number, max: number) => `Must be a whole number from ${min} to ${max}.`,
+      gridGap: (max: number) => `Must be a whole number from 0 to ${max}.`,
+      retentionDays: (max: number) => `Must be a whole number of days from 1 to ${max}.`,
+      navLinkLabel: 'Needs a label, or the link is left out.',
+      navLinkUrl: 'Must be a full http(s) address, or the link is left out.',
+    },
   },
 
   general: {
@@ -61,6 +71,15 @@ export const settings = {
     aboutPageDesc: 'Portrait, bio and gear at /about',
     map: 'Map',
     mapDesc: 'Photo locations on a world map at /map',
+    mapTileProvider: 'Map tile provider',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileProviderHint:
+      'Used by /map and journal map blocks. CARTO styles require an API key (set below or via {variable}); without one, the map falls back to OpenStreetMap.',
+    mapTileApiKey: 'CARTO API key',
+    mapTileApiKeyPlaceholder: 'Optional when CARTO_API_KEY is set',
+    /** {variable}: CARTO_API_KEY. */
+    mapTileApiKeyHint:
+      'Sent by visitors’ browsers in tile requests — restrict the key to your site’s domain in your CARTO account. {variable} overrides this field.',
     proofing: 'Client proofing',
     proofingDesc: 'Visitors heart, filter and export a selection of photos',
     zoom: 'Photo zoom',
@@ -102,6 +121,8 @@ export const settings = {
     favicon: 'Favicon',
     faviconAlt: 'Current favicon',
     faviconUpload: 'Upload icon',
+    faviconUploaded: 'Favicon updated.',
+    faviconReset: 'Favicon reset to default.',
     faviconUploadFailed: 'Upload failed',
     faviconResetFailed: 'Reset failed',
     faviconResetTitle: 'Reset the favicon?',

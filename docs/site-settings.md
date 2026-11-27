@@ -114,6 +114,8 @@ exif: # which groups may be shown at all
   location: true # city and country
   caption: true # the description written in Immich
 map: true # the interactive world map at /map
+mapTiles: # optional runtime tile provider; defaults to OpenStreetMap
+  provider: osm # osm | carto-voyager | carto-positron | carto-dark-matter
 transitions: true # smooth page transitions between routes
 scrollToTop: true # floating back-to-top arrow on long pages
 analytics: true # cookieless view counts, see below
@@ -123,19 +125,34 @@ about:
   enabled: true # the /about page, rendered from content/about.md
 ```
 
-| Key             | Default | Notes                                                    |
-| --------------- | ------- | -------------------------------------------------------- |
-| `lang`          | `en`    | Interface language, `<html lang>`, dates                 |
-| `adminLang`     | `lang`  | Admin panel language, see below                          |
-| `mode`          | `dark`  | Visitor's starting colour mode, see below                |
-| `exifOnHover`   | on      | The grid hover overlay only, see below                   |
-| `exif.*`        | on      | Per-group EXIF visibility, see below                     |
-| `map`           | **off** | Opt-in: must be set to `true` explicitly                 |
-| `transitions`   | on      |                                                          |
-| `scrollToTop`   | on      |                                                          |
-| `analytics`     | on      |                                                          |
-| `zoom`          | **off** | Opt-in, see [Photo Zoom](gallery-features.md#photo-zoom) |
-| `about.enabled` | on      | Needs a `content/about.md` to show anything              |
+| Key             | Default | Notes                                                              |
+| --------------- | ------- | ------------------------------------------------------------------ |
+| `lang`          | `en`    | Interface language, `<html lang>`, dates                           |
+| `adminLang`     | `lang`  | Admin panel language, see below                                    |
+| `mode`          | `dark`  | Visitor's starting colour mode, see below                          |
+| `exifOnHover`   | on      | The grid hover overlay only, see below                             |
+| `exif.*`        | on      | Per-group EXIF visibility, see below                               |
+| `map`           | **off** | Opt-in: must be set to `true` explicitly                           |
+| `mapTiles`      | `osm`   | Runtime tile provider for `/map` and journal map blocks, see below |
+| `transitions`   | on      |                                                                    |
+| `scrollToTop`   | on      |                                                                    |
+| `analytics`     | on      |                                                                    |
+| `zoom`          | **off** | Opt-in, see [Photo Zoom](gallery-features.md#photo-zoom)           |
+| `about.enabled` | on      | Needs a `content/about.md` to show anything                        |
+
+### Map tile provider
+
+By default, `/map` and journal map blocks load tiles from OpenStreetMap (no API
+key required, muted/inverted via CSS to match the site's colour mode). You can
+switch to a CARTO raster style — `carto-voyager`, `carto-positron`, or
+`carto-dark-matter` — under **Admin › General › Map tile provider** or via
+`mapTiles:` in `settings.yaml`.
+
+CARTO styles require an API key (`mapTiles.apiKey` or the runtime environment
+variable `CARTO_API_KEY`, which takes precedence). Without a key, the map falls
+back to OpenStreetMap so it never renders "API KEY REQUIRED" tiles. Because
+visitors' browsers send the key with tile requests, restrict it to your site's
+domain in your CARTO account.
 
 ### Colour mode
 
