@@ -22,6 +22,7 @@
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { chromium } from '@playwright/test';
+import { accentForMode, accentText, onAccent, resolveTheme } from '../lib/config/theme.ts';
 
 const require = createRequire(import.meta.url);
 const axeSource = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
@@ -42,7 +43,21 @@ const PRESETS = [
   'salon',
   'birch',
 ];
-const FIXED_PAGES = ['/about', '/map', '/impressum'];
+const FIXED_PAGES = ['/about', '/map', '/contact', '/journal', '/impressum'];
+
+function presetThemeVars(preset) {
+  const theme = resolveTheme(preset);
+  const darkAccent = accentForMode(theme, 'dark');
+  const lightAccent = accentForMode(theme, 'light');
+  return {
+    '--accent-dark': darkAccent,
+    '--accent-light': lightAccent,
+    '--on-accent-dark': onAccent(darkAccent),
+    '--on-accent-light': onAccent(lightAccent),
+    '--accent-text-dark': accentText(darkAccent, 'dark'),
+    '--accent-text-light': accentText(lightAccent, 'light'),
+  };
+}
 
 const print = (line = '') => process.stdout.write(line + '\n');
 
@@ -95,12 +110,16 @@ async function auditPage(page, path) {
   const found = [];
   for (const theme of themes) {
     for (const preset of PRESETS) {
+      const vars = presetThemeVars(preset);
       await page.evaluate(
-        ([p, t]) => {
+        ([p, t, v]) => {
           document.documentElement.setAttribute('data-preset', p);
           document.documentElement.setAttribute('data-theme', t);
+          for (const [k, val] of Object.entries(v)) {
+            document.documentElement.style.setProperty(k, val);
+          }
         },
-        [preset, theme],
+        [preset, theme, vars],
       );
       await page.waitForTimeout(400); // let the theme transition settle
       const nodes = await page.evaluate(async () => {
